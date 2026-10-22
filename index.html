@@ -606,5 +606,31 @@
 <style>
   @media (max-width:1100px){ .bottom-row{grid-template-columns:1fr !important} .pos-grid{grid-template-columns:1fr !important} .fc-bias{grid-template-columns:1fr !important} }
 </style>
+
+<style>
+#gateOverlay{position:fixed;inset:0;z-index:99999;background:#0a1628;display:flex;align-items:center;justify-content:center;font-family:inherit}
+#gateBox{background:#0e1f3a;border:1px solid #24466e;border-radius:12px;padding:32px 28px;max-width:340px;width:90%;text-align:center;color:#dbe7f5}
+#gateBox h2{margin:0 0 6px;font-size:18px;color:#fff}
+#gateBox p{margin:0 0 16px;font-size:13px;color:#9db8d4}
+#gateInput{width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid #33527a;background:#0a1628;color:#fff;font-size:15px;text-align:center;letter-spacing:1px}
+#gateBtn{margin-top:12px;width:100%;padding:10px;border:0;border-radius:8px;background:#1f6feb;color:#fff;font-size:14px;cursor:pointer}
+#gateErr{display:none;margin-top:10px;font-size:12px;color:#ff8a8a}
+#gateLockBtn{position:fixed;right:10px;bottom:10px;z-index:9999;background:#0e1f3a;color:#9db8d4;border:1px solid #33527a;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;display:none}
+</style>
+<div id="gateOverlay"><div id="gateBox"><h2>USD/CAD Pro Trading Desk</h2><p>This page is passcode-protected. Enter the passcode provided by the owner.</p><input id="gateInput" type="password" placeholder="Passcode" autocomplete="off"/><button id="gateBtn">Unlock</button><div id="gateErr">Incorrect passcode.</div></div></div>
+<button id="gateLockBtn">Lock</button>
+<script>
+(function(){
+var HASH="5d7c5b4e5343d38fe8c3de0956bce9d031848ed6373d05ee6110cc87811347bf";
+var ov=document.getElementById('gateOverlay'), lk=document.getElementById('gateLockBtn');
+function unlock(){ov.style.display='none';lk.style.display='block';}
+if(sessionStorage.getItem('deskGate')==='ok'){unlock();}
+lk.addEventListener('click',function(){sessionStorage.removeItem('deskGate');location.reload();});
+async function sha(t){var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('');}
+async function tryCode(){var v=document.getElementById('gateInput').value.trim();if(!v)return;var d=await sha(v);if(d===HASH){sessionStorage.setItem('deskGate','ok');document.getElementById('gateErr').style.display='none';unlock();}else{document.getElementById('gateErr').style.display='block';}}
+document.getElementById('gateBtn').addEventListener('click',tryCode);
+document.getElementById('gateInput').addEventListener('keydown',function(e){if(e.key==='Enter')tryCode();});
+})();
+</script>
 </body>
 </html>
