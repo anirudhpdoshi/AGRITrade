@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" href="data:," />
+<title>USD/CAD Pro Trading Desk</title>
+<style>
+  :root{
+    --bg:#061627; --panel:#0a2138; --panel2:#0c2743; --line:#173856; --line2:#1e4568;
+    --ink:#dce9f5; --muted:#7f9bb3; --faint:#5b7a94;
+    --green:#2fbf71; --green-d:#14532d; --red:#e5484d; --red-d:#5b1d20;
+    --amber:#f0a832; --blue:#4da3ff; --cyan:#38c6d9; --violet:#9a7bff;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.35;-webkit-font-smoothing:antialiased}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .up{color:var(--green)} .dn{color:var(--red)} .amb{color:var(--amber)} .mut{color:var(--muted)} .faint{color:var(--faint)}
+  .desk{max-width:1760px;margin:0 auto;padding:6px 8px 4px}
+
+  /* header */
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 2px 6px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:9px;min-width:0}
+  .brand svg{flex:none}
+  .brand h1{font-size:19px;margin:0;font-weight:700;letter-spacing:.2px;white-space:nowrap}
+  .brand .sub{color:var(--muted);font-size:11px;white-space:nowrap}
+  .brand .sub b{color:var(--ink);font-weight:600}
+  .head-r{text-align:right;font-size:11px;color:var(--muted);white-space:nowrap}
+  .head-r .t{color:var(--ink);font-family:var(--mono);font-size:12px}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:5px;vertical-align:1px}
+
+  /* ribbon */
+  .ribbon{display:grid;grid-template-columns:1.25fr 1.15fr .95fr .8fr .8fr .95fr 1.35fr;gap:0;border:1px solid var(--line);border-top:none;background:var(--panel)}
+  .tile{padding:6px 10px;border-right:1px solid var(--line);min-width:0}
+  .tile:last-child{border-right:none}
+  .tile .lab{font-size:10px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tile .big{font-family:var(--mono);font-size:21px;font-weight:700;line-height:1.15}
+  .tile .big2{font-family:var(--mono);font-size:16px;font-weight:700;line-height:1.25}
+  .tile .small{font-size:11px;color:var(--muted)}
+  .badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.6px;padding:1px 5px;border-radius:3px;vertical-align:2px;margin-left:6px}
+  .badge.demo{background:#3d2c07;color:var(--amber);border:1px solid #7a5a12}
+  .badge.stale{background:var(--red-d);color:#ff9d9f;border:1px solid #8c2f33}
+  .unavail{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--faint);letter-spacing:1px;padding-top:5px}
+  .unavail-note{font-size:10px;color:var(--faint);line-height:1.3}
+  .levels{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:1px 7px;font-family:var(--mono);font-size:12px;align-items:center}
+  .levels .k{color:var(--muted);font-family:inherit;font-size:11px}
+  .arr{color:var(--cyan);font-size:11px}
+
+  /* panels */
+  .grid{display:grid;grid-template-columns:338px minmax(0,1fr) 336px;gap:7px;margin-top:7px}
+  table.rates{font-size:10.5px}
+  table.rates td,table.rates th{padding:2px 1px}
+  table.rates .chg{font-size:9px}
+  td.lft{text-align:left}
+  .col{display:flex;flex-direction:column;gap:8px;min-width:0}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 9px}
+  .panel h2{font-size:12.5px;margin:0 0 2px;font-weight:700;letter-spacing:.2px}
+  .panel h3{font-size:11.5px;margin:0 0 4px;font-weight:700}
+  .vin{font-size:9.5px;color:var(--faint);margin-top:5px;line-height:1.35}
+  .vin b{color:var(--muted);font-weight:600}
+  table{width:100%;border-collapse:collapse;font-size:11px}
+  th{color:var(--muted);font-weight:600;text-align:right;font-size:10px;padding:2px 2px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th:first-child{text-align:left}
+  td{padding:2px 2px;border-bottom:1px solid rgba(23,56,86,.55);text-align:right;font-family:var(--mono);white-space:nowrap}
+  td:first-child{text-align:left;font-family:inherit}
+  tr:last-child td{border-bottom:none}
+  tr.hl td{background:rgba(77,163,255,.08)}
+  .sect{font-size:10px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin:8px 0 2px;border-top:1px solid var(--line);padding-top:6px}
+  .sect:first-of-type{border-top:none;padding-top:2px;margin-top:4px}
+  ul.tight{margin:2px 0 2px 14px;padding:0}
+  ul.tight li{margin:1px 0}
+  .pill{display:inline-block;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:#3d2c07;color:var(--amber);border:1px solid #7a5a12}
+  .pill.green{background:var(--green-d);color:#7be2a8;border-color:#1d6b41}
+  .bar-row{display:flex;align-items:center;gap:7px;margin:3px 0;font-size:11px}
+  .bar-row .bl{width:106px;flex:none;color:var(--muted);white-space:nowrap}
+  .bar-track{flex:1;height:9px;background:#0d2c49;border-radius:2px;overflow:hidden;display:flex}
+  .bar-fill{height:100%}
+  .bar-val{font-family:var(--mono);width:118px;flex:none;text-align:right;white-space:nowrap;font-size:10.5px}
+  .scen{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .scen .card{border:1px solid var(--line);border-radius:5px;padding:7px 9px;background:var(--panel2)}
+  .scen .card h3{font-size:12px}
+  .prob{font-family:var(--mono);font-size:17px;font-weight:700}
+  .trade-grid{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:12px}
+  .trade-grid .k{color:var(--muted)}
+  .trade-grid .v{font-family:var(--mono);text-align:right}
+  footer{display:flex;justify-content:space-between;gap:14px;padding:6px 2px 2px;color:var(--faint);font-size:10px;border-top:1px solid var(--line);margin-top:8px;flex-wrap:wrap}
+  .origin-note{background:rgba(240,168,50,.09);border:1px solid #6d5518;border-radius:4px;padding:4px 8px;font-size:10.5px;color:#e8c87a;margin:4px 0}
+  .alert-chip{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:4px;letter-spacing:.3px}
+  .alert-chip.clear{background:var(--green-d);color:#7be2a8;border:1px solid #1d6b41}
+  .impact{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;letter-spacing:.4px}
+  .impact.high{background:var(--red-d);color:#ff9d9f;border:1px solid #8c2f33}
+  .impact.med{background:#3d2c07;color:var(--amber);border:1px solid #7a5a12}
+  .tag-below{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:var(--red-d);color:#ff9d9f;border:1px solid #8c2f33;white-space:nowrap}
+  .tag-above{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:var(--green-d);color:#7be2a8;border:1px solid #1d6b41;white-space:nowrap}
+  tr.cluster td{background:rgba(229,72,77,.10)}
+  .gauge-wrap{display:flex;gap:10px;align-items:flex-start}
+  .prox{margin-top:4px}
+  .prox .bar-row .bl{width:150px}
+  @media (max-width:1100px){
+    .grid{grid-template-columns:1fr 1fr}
+    .ribbon{grid-template-columns:repeat(4,1fr)}
+    .tile{border-bottom:1px solid var(--line)}
+  }
+  @media (max-width:680px){
+    .grid{grid-template-columns:1fr}
+    .ribbon{grid-template-columns:1fr 1fr}
+    .brand h1{font-size:16px;white-space:normal}
+    .brand .sub{white-space:normal}
+    .head-r{display:none}
+    .scen{grid-template-columns:1fr}
+    .tile .big{font-size:18px}
+    .tile .lab{white-space:normal}
+    table{font-size:11px}
+    td,th{white-space:normal}
+  }
+</style>
+</head>
+<body>
+<div class="desk">
+
+<header>
+  <div class="brand">
+    <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path fill="#e5484d" d="M12 1.5l1.6 3.6 2.9-2.3-.9 3.9 3.7-.6-2.2 3.2 3.4 1.6-3.3 1.9 1.2 3.6-3.4-1.5-.4 3.9L12 15.4l-2.6 3.4-.4-3.9-3.4 1.5 1.2-3.6L3.5 10.9l3.4-1.6L4.7 6.1l3.7.6-.9-3.9 2.9 2.3z"/></svg>
+    <div>
+      <h1>USD/CAD Pro Trading Desk</h1>
+      <div class="sub"><b>Macro Intelligence</b> &nbsp;|&nbsp; Forecast &nbsp;|&nbsp; Execution &nbsp;|&nbsp; Risk</div>
+    </div>
+  </div>
+  <div class="head-r">
+    <div class="t">Oct 21, 2026 · 11:45 UTC</div>
+    <div><span class="dot"></span>Calculated snapshot · Verified Oct 21, 2026</div>
+  </div>
+</header>
+
+<!-- ============ RIBBON ============ -->
+<section class="ribbon" aria-label="Key quotes">
+  <div class="tile">
+    <div class="lab">USD/CAD Spot (mid)</div>
+    <div class="big">1.404585<span class="badge demo">DEMO</span></div>
+    <div class="small"><span class="dn num">−0.00052 (−0.037%)</span> vs Oct 20 reference 1.4051</div>
+  </div>
+  <div class="tile">
+    <div class="lab">Bid / Ask · Session pull</div>
+    <div class="big2">1.40452 / 1.40465</div>
+    <div class="small">Spread <span class="num">1.3</span> pips · Oct 21, 06:37 ET</div>
+  </div>
+  <div class="tile">
+    <div class="lab" style="white-space:normal">Intraday Pivot (prior session HLC/3)</div>
+    <div class="big2">1.40678</div>
+    <div class="small">Oct 20 session: H <span class="num">1.41118</span> · L <span class="num">1.40325</span> · C <span class="num">1.40590</span> · TWAP unavailable — only 1 session pull stored</div>
+  </div>
+  <div class="tile">
+    <div class="lab">Realized Vol (20D)</div>
+    <div class="big2">3.12%</div>
+    <div class="small">Stand-in for implied vol — no FX vol surface stored; realized, not implied</div>
+  </div>
+  <div class="tile">
+    <div class="lab">CVOL Index</div>
+    <div class="big2">5.2337</div>
+    <div class="small"><span class="dn num">−0.1789</span> · Oct 21, 06:27 CT · delayed ≥10 min</div>
+  </div>
+  <div class="tile">
+    <div class="lab">Expiry Pins</div>
+    <div class="unavail">UNAVAILABLE</div>
+    <div class="unavail-note">No per-strike open interest stored — the stored options pull carries only the two 25-delta strikes (IVs and deltas, no OI)</div>
+  </div>
+  <div class="tile">
+    <div class="lab">Quick Trade Levels · Oct 21 daily pivots</div>
+    <div class="levels">
+      <span class="k">R2</span><span>1.41471 <span class="arr">pivot</span></span>
+      <span class="k">S1</span><span>1.40237 <span class="arr">pivot</span></span>
+      <span class="k">R1</span><span>1.41030 <span class="arr">pivot</span></span>
+      <span class="k">S2</span><span>1.39885 <span class="arr">pivot</span></span>
+    </div>
+    <div class="small">PP <span class="num">1.40678</span> · daily pivots, Oct 21</div>
+  </div>
+</section>
+
+<!-- ============ MAIN GRID ============ -->
+<div class="grid">
+
+  <!-- LEFT -->
+  <div class="col">
+    <section class="panel">
+      <h2>Macro &amp; Rates Matrix</h2>
+      <table class="rates" aria-label="Rates matrix">
+        <tr><th>Tenor</th><th>US %</th><th>CA %</th><th>Spread</th><th>1D Δ</th><th>20D %ile</th></tr>
+        <tr><td>1Y</td><td>4.50 <span class="up chg">+4.0</span></td><td>2.93 <span class="mut chg">0.0</span></td><td>145.6</td><td class="dn">−1.0</td><td>5</td></tr>
+        <tr class="hl"><td>2Y·widest</td><td>4.77 <span class="up chg">+3.0</span></td><td>3.33 <span class="up chg">+12.0</span></td><td>147.3</td><td class="up">+1.3</td><td>30</td></tr>
+        <tr><td>5Y</td><td>4.94 <span class="up chg">+5.0</span></td><td>3.64 <span class="up chg">+10.0</span></td><td>131.7</td><td class="up">+0.6</td><td>25</td></tr>
+        <tr><td>10Y</td><td>5.15 <span class="up chg">+6.0</span></td><td>3.93 <span class="up chg">+9.0</span></td><td>122.6</td><td class="up">+0.8</td><td>30</td></tr>
+        <tr><td>20Y</td><td>5.53 <span class="up chg">+6.0</span></td><td>4.10 <span class="mut chg">Oct 20 close</span></td><td>137.0</td><td class="mut">—</td><td style="font-size:9.5px;white-space:normal">accumulating daily closes (n=1)</td></tr>
+        <tr><td>30Y</td><td>5.48 <span class="up chg">+5.0</span></td><td>4.25 <span class="up chg">+7.0</span></td><td>123.3</td><td class="up">+1.2</td><td>30</td></tr>
+      </table>
+      <div class="vin">Yields: official closes, history thru <b>Oct 19</b>. Spreads &amp; percentiles: summary dated <b>Oct 20</b>; percentile = rank in trailing 20 obs. 20Y: Canada 20Y close now stored — series building (n=1 close); 20D percentile shows only once ≥20 closes are stored. WoW spread Δ: 1Y −11.0 · 2Y −12.7 · 5Y −14.1 · 10Y −12.2 · 20Y −11.8 · 30Y −10.9 bps.</div>
+      <div class="vin"><b>Canada 20Y — Oct 20 close 4.100%</b> (series building). Computed 20Y spread <b>137.0 bps</b> = U.S. Treasury 20Y 5.47% − Canada 20Y 4.10%, same date. Intraday live read <b>4.095%</b> (Oct 21) is not a close and is excluded from spread and percentile math. The summary-file 20Y construction (138.5 bps · 1D +0.8 · WoW −11.8) is carried in the notes above, not blended with the computed figure.</div>
+      <div class="vin"><b>Treasury primary, Oct 20</b> — U.S. yields (primary source): 1Y <b>4.51</b> · 2Y <b>4.79</b> · 5Y <b>4.94</b> · 10Y <b>5.12</b> · 20Y <b>5.47</b> · 30Y <b>5.42</b>. Cross-check on the stored series' latest date (Oct 19): Δ <b>0.0 bps</b> at every tenor — no tenor flagged over 3 bps; stored yields above are the cross-check basis.</div>
+
+      <div class="sect">FX &amp; Cross-Currency</div>
+      <table aria-label="FX crosses">
+        <tr><th>Pair</th><th>Latest</th><th>1D Chg</th></tr>
+        <tr><td>DXY (index)</td><td>101.728</td><td class="dn">−0.247%</td></tr>
+        <tr><td>EUR / USD <span class="mut" style="font-size:9.5px">primary · Oct 16</span></td><td>1.1231</td><td class="up">+0.241%</td></tr>
+        <tr><td>USD / JPY <span class="mut" style="font-size:9.5px">primary · Oct 16</span></td><td>158.0</td><td class="dn">−0.114%</td></tr>
+        <tr><td>USD/CAD <span class="mut" style="font-size:9.5px">primary · Oct 16</span></td><td>1.4157</td><td class="dn">−0.282%</td></tr>
+        <tr><td style="white-space:normal">Broad USD index — Federal Reserve broad USD index (DTWEXBGS) — NOT the ICE DXY <span class="mut" style="font-size:9.5px">· Oct 16</span></td><td>121.4048</td><td class="dn">−0.135%</td></tr>
+        <tr class="hl"><td>Cross-Currency Basis (3M)</td><td>+4.0 bps</td><td class="mut" style="font-size:9.5px">CIP-implied estimate</td></tr>
+        <tr><td class="mut" style="font-size:10px">Cross-check — EUR/USD (Oct 21)</td><td>1.1234</td><td class="mut">—</td></tr>
+        <tr><td class="mut" style="font-size:10px">Cross-check — USD/JPY (Oct 21)</td><td>157.88</td><td class="mut">—</td></tr>
+        <tr><td class="mut" style="font-size:10px">Cross-check — USD/CAD (Oct 21)</td><td>1.4046</td><td class="mut">—</td></tr>
+        <tr><td class="mut" style="font-size:10px">Fallback cross-check — DXY (Oct 21)</td><td>101.715</td><td class="mut">—</td></tr>
+        <tr><td class="mut" style="font-size:10px">Fallback cross-check — USD/CAD (Oct 21)</td><td>1.40806</td><td class="mut">—</td></tr>
+        <tr><td class="mut" style="font-size:10px">Fallback cross-check — EUR/USD (Oct 21)</td><td>1.12284</td><td class="mut">—</td></tr>
+        <tr><td class="mut" style="font-size:10px">Fallback cross-check — USD/JPY (Oct 21)</td><td>158.07401</td><td class="mut">—</td></tr>
+      </table>
+      <div class="origin-note"><b>Cross-source discrepancy (flag threshold 10 pips):</b> EUR/USD <span class="num">3.0 pips</span> — not flagged · USD/JPY <span class="num">12.0 pips</span> — <b>FLAGGED</b> · USD/CAD <span class="num">111.0 pips</span> — <b>FLAGGED</b> (primary obs Oct 16 vs cross-check obs Oct 21 — a vintage gap). The desk displays FRED API (H.10) as primary while any flagged discrepancy is unresolved. Both sources are kept with their own observation dates; values are never averaged and neither source is silently dropped. Gaps partly reflect different observation dates and fixing methodologies (Fed noon buying rates vs ECB reference rates).</div>
+      <div class="vin"><b>DEXCAUS cross-check (Oct 16):</b> DEXCAUS close <b>1.4157</b> vs stored reference series close <b>1.4161</b> = <b>−4.0 pips</b> (22 overlap days); vs traded close <b>1.41394</b> = gap <b>+17.6 pips</b> (14 overlap days). Fed noon buying rate (DEXCAUS) vs (a) the stored reference series closes and (b) traded closes (Barchart OHLC): reference-vs-traded gaps are methodology, not error (cf. the ~21.7-pip mean gap measured for the reference series) — reported, not reconciled away.</div>
+      <div class="vin">Primary: <b>FRED API (H.10) DEX</b> — module status ok, pulled <b>Oct 21, 14:09 UTC</b>; observation vintage <b>Oct 16</b>. Leaf labels verbatim: EUR/USD = FRED API (H.10) DEXUSEU (USD per EUR = EUR/USD) · USD/JPY = FRED API (H.10) DEXJPUS (JPY per USD = USD/JPY) · USD/CAD = FRED API (H.10) DEXCAUS (CAD per USD = USD/CAD) · broad index = FRED API (H.10) — Federal Reserve broad USD index (DTWEXBGS) — NOT the ICE DXY. DXY identity: DXY tile = stored DXY series. FRED DTWEXBGS is the Federal Reserve broad USD index — a different index, shown labeled, not a DXY replacement. Cross-check leaves (Oct 21) sit behind the primaries; second fallback leaves (Oct 21): DXY 101.715 · USD/CAD 1.40806 · EUR/USD 1.12284 · USD/JPY 158.07401 — fallback USD/CAD vs the FRED primary 1.4157 = <b>−76.4 pips</b>, flagged beyond the 10-pip threshold, reported not reconciled. Basis: <b>CIP-implied estimate</b> (simple interest, t = 0.25) — implied CAD rate 2.4897% vs actual Canada 3M 2.45%; inputs: spot mid <b>1.404585</b> · 3M forward points <b>−61.5095</b> (outright 1.39843) · US 3M <b>4.26%</b> (Oct 20) · CA 3M <b>2.45%</b> (Oct 19).</div>
+    </section>
+
+    <section class="panel">
+      <h2>Commodity &amp; Trade Engine</h2>
+      <table aria-label="Commodities">
+        <tr><th>Item</th><th>Price</th><th>1D %</th><th>20D %</th></tr>
+        <tr><td>WTI Crude <span class="mut" style="font-size:9.5px">(11-Minute Delay)</span></td><td>$98.75</td><td class="up">+0.95</td><td class="up">+5.60</td></tr>
+        <tr><td class="mut" style="font-size:10px">WTI — FRED API check (daily; publication-lagged) · Oct 14</td><td>$101.91</td><td class="mut">—</td><td class="mut">—</td></tr>
+        <tr><td>Brent Crude <span class="mut" style="font-size:9.5px">(11-Minute Delay)</span></td><td>$109.60</td><td class="up">+0.74</td><td>—</td></tr>
+        <tr><td class="mut" style="font-size:10px">Brent — FRED API secondary (publication-lagged) · Oct 14</td><td>$126.55</td><td class="mut">—</td><td class="mut">—</td></tr>
+        <tr><td>WCS (USD/bbl) <span class="mut" style="font-size:9.5px">(5-Hour Delay)</span></td><td>$85.47</td><td class="dn">−0.84</td><td>—</td></tr>
+        <tr class="hl"><td>WTI − WCS Differential</td><td>$13.28</td><td>—</td><td>—</td></tr>
+        <tr><td>Diluent Cost (est. at WTI parity)</td><td>$98.75</td><td>—</td><td>—</td></tr>
+        <tr><td style="white-space:normal;font-size:10.5px">Proxy — U.S. crude imports from Canada (proxy for Canadian energy exports until official StatCan data)</td><td>3,751 <span class="mut" style="font-size:9.5px">kb/d</span></td><td>—</td><td>—</td></tr>
+      </table>
+      <div style="margin:6px 0 2px"><span class="alert-chip clear">WCS ALERT: CLEAR</span> <span class="small">Discount <span class="num">$13.28/bbl</span> · margin <span class="num">$6.72</span> to the <span class="num">$20.00</span> threshold</span></div>
+      <div class="vin">Energy read <b>Oct 21, 11:45 UTC</b>; delay labels are the printed labels, verbatim. WTI cross-check: stored cache close <b>$99.89 (Oct 20)</b> vs delayed read $98.75 (Δ −$1.14, expected on a new trading day). Front-month futures cross-checks (Oct 21): WTI futures 98.62 (Δ −$0.13) · Brent futures 109.43 (Δ −$0.17) vs the delayed reads — cross-check deltas, not reconciliations. FRED API check leaves (obs <b>Oct 14</b>): WTI <b>$101.91</b> — freshest FRED WTI via the API; lags several days by publication design, the delayed read above remains the freshest energy primary. Brent <b>$126.55</b> — FRED API secondary (publication-lagged); same publication lag, the delayed read above remains the freshest Brent primary. Archive note: legacy file values WTI <b>$96.41</b> · Brent <b>$114.89</b>, both <b>Sep 22</b> — historical archive only, superseded by the FRED API leaves, never shown as current. Differential = WTI − WCS from the same run; the two legs carry different printed delays (minutes vs hours) — disclosed. Alert rule: a WCS discount beyond $20.00/bbl severely impairs Canadian producer netbacks and acts as a strong bearish CAD signal — clear by $6.72/bbl. Diluent: <b>estimate</b> at WTI parity (condensate priced near WTI parity) — an estimate by construction, not a condensate feed. Energy exports (Proxy): <b>3,751 kb/d</b>, week ending <b>Oct 9</b> (released Oct 15) — latest published; new report due Oct 21, still showing the prior report at the 07:35 ET pull. U.S. crude inventories: <b>−8.6M bbl</b> to 415.6M, 3% below the five-year average. The Proxy label is mandatory and stays on the line.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Forwards — USD/CAD Forward Curve</h2>
+      <table aria-label="Forward curve">
+        <tr><th>Tenor</th><th>Mid pts</th><th>Outright</th><th>Implied diff %</th></tr>
+        <tr><td>Overnight</td><td>−0.675</td><td>1.40464</td><td class="mut">—</td></tr>
+        <tr><td>Tomorrow</td><td>−0.685</td><td>1.40464</td><td class="mut">—</td></tr>
+        <tr><td>Spot</td><td>−0.680</td><td>1.40464</td><td class="mut">—</td></tr>
+        <tr><td>1W</td><td>−4.7995</td><td>1.40423</td><td>−1.777</td></tr>
+        <tr><td>2W</td><td>−9.3605</td><td>1.40377</td><td>−1.733</td></tr>
+        <tr><td>3W</td><td>−13.8115</td><td>1.40333</td><td>−1.704</td></tr>
+        <tr><td>1M</td><td>−20.8525</td><td>1.40262</td><td>−1.781</td></tr>
+        <tr><td>2M</td><td>−39.6635</td><td>1.40074</td><td>−1.694</td></tr>
+        <tr><td>3M</td><td>−61.5095</td><td>1.39856</td><td>−1.752</td></tr>
+        <tr><td>4M</td><td>−81.5645</td><td>1.39655</td><td>−1.742</td></tr>
+        <tr><td>5M</td><td>−98.677</td><td>1.39484</td><td>−1.686</td></tr>
+        <tr><td>6M</td><td>−118.848</td><td>1.39283</td><td>−1.692</td></tr>
+        <tr><td>7M</td><td>−139.641</td><td>1.39075</td><td>−1.704</td></tr>
+        <tr><td>8M</td><td>−156.8225</td><td>1.38903</td><td>−1.675</td></tr>
+        <tr><td>9M</td><td>−175.575</td><td>1.38715</td><td>−1.667</td></tr>
+        <tr><td>10M</td><td>−194.6975</td><td>1.38524</td><td>−1.663</td></tr>
+        <tr><td>11M</td><td>−212.307</td><td>1.38348</td><td>−1.649</td></tr>
+        <tr class="hl"><td>1Y</td><td>−229.7165</td><td>1.38174</td><td>−1.635</td></tr>
+        <tr><td>2Y</td><td>−408.317</td><td>1.36388</td><td>−1.453</td></tr>
+        <tr><td>3Y</td><td>−563</td><td>1.34841</td><td>−1.336</td></tr>
+        <tr><td>4Y</td><td>−710</td><td>1.33371</td><td>−1.264</td></tr>
+        <tr><td>5Y</td><td>−849</td><td>1.31981</td><td>−1.209</td></tr>
+        <tr><td>6Y</td><td class="faint" style="font-size:10px">N/A (market)</td><td>1.32029 <span class="mut" style="font-size:9.5px">theoretical (IRP)</span></td><td class="mut">—</td></tr>
+        <tr><td>7Y</td><td class="faint" style="font-size:10px">N/A (market)</td><td>1.31138 <span class="mut" style="font-size:9.5px">theoretical (IRP)</span></td><td class="mut">—</td></tr>
+        <tr><td>10Y</td><td class="faint" style="font-size:10px">N/A (market)</td><td>1.29069 <span class="mut" style="font-size:9.5px">theoretical (IRP)</span></td><td class="mut">—</td></tr>
+      </table>
+      <div class="vin">Session <b>Oct 21, 2026</b> · header spot <b>1.40471</b> (bid 1.40467 / ask 1.40476). Points in pips (1 pip = 0.0001); outright = header spot + mid points ÷ 10000. Implied diff approximates CAD minus USD (negative = US rates higher, USD at a forward discount). 6Y / 7Y / 10Y print N/A on the source page (market). Theoretical (IRP) outrights are calculated, never shown as market: outright = spot 1.404585 × (1 + rCAD·T)/(1 + rUSD·T), simple interest; 6Y/7Y US yields and spreads linearly interpolated 5Y→10Y (US 4.976% / 5.012%, spreads 129.9 / 128.1 bps); 10Y actual (US 5.12%, spread 122.6 bps); rCAD = rUSD − spread.</div>
+      <div class="origin-note" style="margin-top:5px"><b>Verification — CONSISTENT:</b> 1Y implied differential <b>+163.5 bps</b> vs stored 1Y spread <b>+145.6 bps</b>, gap <b>17.9 bps</b> (tolerance 50 bps). Residual is money-market vs bond-yield basis and tenor mismatch.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Policy Expectations — futures-implied</h2>
+      <div class="sect">Fed — meeting probabilities (futures-implied)</div>
+      <table aria-label="Fed meeting probabilities, futures-implied">
+        <tr><th>Meeting</th><th>Hold</th><th>Hike</th><th>Ease</th></tr>
+        <tr><td>Oct 28, 2026</td><td>85.1%</td><td>14.9%</td><td>0.0%</td></tr>
+        <tr><td>Dec 9, 2026</td><td>10.1%</td><td>89.9%</td><td>0.0%</td></tr>
+      </table>
+      <div class="small" style="margin-top:3px">Dec 9 hike split: <span class="num">+25 bp 76.7%</span> · <span class="num">+50 bp 13.2%</span>. Current target range <span class="num">375–400</span> (hold = range unchanged).</div>
+      <div class="sect">BoC — CORRA futures-implied path (futures-implied)</div>
+      <table aria-label="CORRA futures implied rates">
+        <tr><th>Contract</th><th>Implied rate</th></tr>
+        <tr><td>Dec 2026</td><td>2.73%</td></tr>
+        <tr><td>Mar 2027</td><td>3.02%</td></tr>
+      </table>
+      <div class="small" style="margin-top:3px">Current BoC overnight rate <span class="num">2.25%</span>. Implied rate = 100 − settlement (Dec 97.27 · Mar 96.98). Sep 2026 contract (2.3975%) is the settled front reference, not the forward path.</div>
+      <div class="vin">Every figure on this panel is <b>futures-implied</b> — market pricing, not a forecast. Fed probabilities as of <b>Oct 21, 06:20 CT</b>; CORRA as of <b>Oct 21, 07:35 ET</b> (real-time page); pulled Oct 21, 07:37 ET.</div>
+    </section>
+  </div>
+
+  <!-- CENTER -->
+  <div class="col">
+    <section class="panel">
+      <h2>USD/CAD Price — Daily Candles (Traded Closes) &amp; Calculated Levels</h2>
+      <svg viewBox="0 0 660 236" width="100%" role="img" aria-label="Candlestick chart of 18 daily USD/CAD traded-close bars from September 28 to October 21 2026, falling from about 1.428 to 1.4048, with calculated levels overlaid: 20-day high 1.4262, pivot R1 1.41030, spot 1.404585, pivot S1 1.40237 and 20-day low support 1.4004, plus a vertical Model Refit line at October 21 2026" style="display:block">
+        <!-- entry zone 1.4004-1.4068 -->
+        <rect x="30" y="158.8" width="592" height="35.8" fill="#4da3ff" opacity="0.10"/>
+        <!-- axis -->
+        <line x1="30" y1="208" x2="622" y2="208" stroke="#1e4568" stroke-width="1"/>
+        <!-- candles: y = 18 + (1.432 - price)/0.034 * 190 -->
+        <g stroke-width="1.4">
+          <line x1="46" y1="97.5" x2="46" y2="118.1" stroke="#2fbf71"/><rect x="38" y="99.5" width="16" height="18.6" fill="#2fbf71"/>
+          <line x1="79" y1="84.2" x2="79" y2="101.0" stroke="#2fbf71"/><rect x="71" y="90.5" width="16" height="9.0" fill="#2fbf71"/>
+          <line x1="112" y1="64.3" x2="112" y2="109.6" stroke="#2fbf71"/><rect x="104" y="66.8" width="16" height="23.8" fill="#2fbf71"/>
+          <line x1="145" y1="50.2" x2="145" y2="72.9" stroke="#e5484d"/><rect x="137" y="66.8" width="16" height="5.8" fill="#e5484d"/>
+          <line x1="178" y1="50.7" x2="178" y2="81.9" stroke="#2fbf71"/><rect x="170" y="57.1" width="16" height="15.5" fill="#2fbf71"/>
+          <line x1="211" y1="32.7" x2="211" y2="64.0" stroke="#2fbf71"/><rect x="203" y="51.1" width="16" height="3.1" fill="#2fbf71"/>
+          <line x1="244" y1="37.4" x2="244" y2="81.3" stroke="#e5484d"/><rect x="236" y="51.2" width="16" height="29.3" fill="#e5484d"/>
+          <line x1="277" y1="40.0" x2="277" y2="81.5" stroke="#2fbf71"/><rect x="269" y="53.5" width="16" height="27.0" fill="#2fbf71"/>
+          <line x1="310" y1="41.7" x2="310" y2="75.3" stroke="#e5484d"/><rect x="302" y="53.5" width="16" height="17.5" fill="#e5484d"/>
+          <line x1="343" y1="30.1" x2="343" y2="81.3" stroke="#2fbf71"/><rect x="335" y="53.9" width="16" height="17.1" fill="#2fbf71"/>
+          <line x1="376" y1="36.1" x2="376" y2="62.6" stroke="#2fbf71"/><rect x="368" y="39.2" width="16" height="6.4" fill="#2fbf71"/>
+          <line x1="409" y1="36.9" x2="409" y2="82.9" stroke="#2fbf71"/><rect x="401" y="75.2" width="16" height="1.6" fill="#2fbf71"/>
+          <line x1="442" y1="29.3" x2="442" y2="86.8" stroke="#2fbf71"/><rect x="434" y="64.9" width="16" height="11.1" fill="#2fbf71"/>
+          <line x1="475" y1="62.9" x2="475" y2="101.8" stroke="#e5484d"/><rect x="467" y="64.9" width="16" height="28.1" fill="#e5484d"/>
+          <line x1="508" y1="85.6" x2="508" y2="121.6" stroke="#e5484d"/><rect x="500" y="92.9" width="16" height="26.0" fill="#e5484d"/>
+          <line x1="541" y1="122.0" x2="541" y2="157.3" stroke="#e5484d"/><rect x="533" y="122.8" width="16" height="11.9" fill="#e5484d"/>
+          <line x1="574" y1="134.3" x2="574" y2="178.7" stroke="#e5484d"/><rect x="566" y="134.7" width="16" height="29.2" fill="#e5484d"/>
+          <line x1="607" y1="158.9" x2="607" y2="171.5" stroke="#e5484d"/><rect x="599" y="163.7" width="16" height="6.5" fill="#e5484d"/>
+        </g>
+        <!-- calculated level overlays -->
+        <g font-family="ui-monospace,Consolas,monospace" font-size="9.5">
+          <line x1="30" y1="50.4" x2="622" y2="50.4" stroke="#e5484d" stroke-dasharray="4 3"/><text x="626" y="53.4" fill="#ff9d9f">1.4262</text><text x="34" y="46.4" fill="#ff9d9f">R · 20D hi</text>
+          <line x1="30" y1="139.3" x2="622" y2="139.3" stroke="#f0a832" stroke-dasharray="4 3"/><text x="626" y="142.3" fill="#f0a832">1.41030</text><text x="34" y="135.3" fill="#f0a832">Pivot R1</text>
+          <line x1="30" y1="171.2" x2="622" y2="171.2" stroke="#2fbf71" stroke-width="1.6"/><text x="626" y="174.2" fill="#2fbf71">1.40459</text><text x="470" y="167.2" fill="#2fbf71">SPOT 1.404585</text>
+          <line x1="30" y1="183.6" x2="622" y2="183.6" stroke="#f0a832" stroke-dasharray="2 3"/><text x="626" y="186.6" fill="#f0a832">1.40237</text><text x="34" y="179.6" fill="#f0a832">Pivot S1</text>
+          <line x1="30" y1="194.6" x2="622" y2="194.6" stroke="#4da3ff" stroke-dasharray="4 3"/><text x="626" y="197.6" fill="#9cc8ff">1.4004</text><text x="380" y="190.6" fill="#9cc8ff">Entry zone 1.4004–1.4068 · S · 20D lo</text>
+          <text x="46" y="222" fill="#7f9bb3" text-anchor="middle">Sep 28</text>
+          <text x="277" y="222" fill="#7f9bb3" text-anchor="middle">Oct 07</text>
+          <text x="442" y="222" fill="#7f9bb3" text-anchor="middle">Oct 14</text>
+          <text x="607" y="222" fill="#7f9bb3" text-anchor="middle">Oct 21</text>
+          <line x1="607" y1="18" x2="607" y2="208" stroke="#f0a832" stroke-width="1.4" stroke-dasharray="5 3"/><text x="601" y="30" fill="#f0a832" text-anchor="end" font-weight="700">Model Refit · Oct 21</text>
+          <text x="34" y="12" fill="#7f9bb3">Latest close (Oct 21) 1.40476 · O 1.40592 H 1.40679 L 1.40454</text>
+        </g>
+      </svg>
+      <div class="small mut" style="margin-top:2px">18 daily bars · <b>Sep 28 – Oct 21, 2026</b> · traded closes. Overlays are calculated levels only: 20D high / low closes thru Oct 16, Oct 21 daily pivots, entry zone, and the Oct 21 session-pull spot. <b>Model Refit line (Oct 21, 2026):</b> the series break is accepted — the forecast series is never spliced across the reference-fixing vs traded-close methodology gap; the new origin is tracked cleanly on traded-close data from Oct 21 forward.</div>
+      <div class="sect">Signed drivers · desk rules (diagnostics, not causality)</div>
+      <div class="bar-row"><span class="bl">2Y spread 1D</span><div class="bar-track"><div class="bar-fill" style="width:31%;background:var(--green)"></div></div><span class="bar-val up">+1.3 bps · w 1.0</span></div>
+      <div class="bar-row"><span class="bl">10Y spread 1D</span><div class="bar-track"><div class="bar-fill" style="width:25%;background:var(--green)"></div></div><span class="bar-val up">+0.8 bps · w 0.8</span></div>
+      <div class="bar-row"><span class="bl">DXY 1D</span><div class="bar-track"><div class="bar-fill" style="width:31%;background:var(--red)"></div></div><span class="bar-val dn">−0.25% · w 1.0</span></div>
+      <div class="bar-row"><span class="bl">WTI 1D</span><div class="bar-track"><div class="bar-fill" style="width:22%;background:var(--red)"></div></div><span class="bar-val dn">+0.95% · w 0.7</span></div>
+      <div class="bar-row"><span class="bl">Crowding (contrarian)</span><div class="bar-track"><div class="bar-fill" style="width:25%;background:var(--red)"></div></div><span class="bar-val dn">−23.3% OI · w 0.8</span></div>
+      <div class="bar-row"><span class="bl">25D risk reversal</span><div class="bar-track"><div class="bar-fill" style="width:12.5%;background:var(--red)"></div></div><span class="bar-val dn">−0.16 pp · w 0.4</span></div>
+      <div class="vin"><b>Methodology:</b> traded-close series, kept separate from the reference-rate series — never merged or averaged. Oct 16 gap <b>−21.6 pips</b> (traded close 1.41394 vs stored reference close 1.4161); 15 overlapping days: mean |gap| 21.7 pips, max |gap| 49.7 pips — reference fixing vs traded close / day-boundary difference. Bar width = driver weight (max 1.0); colour = sign for USD/CAD.</div>
+    </section>
+
+    <div style="display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:8px" class="fc-bias">
+      <section class="panel">
+        <h2>Forecast &amp; Model Insights</h2>
+        <div class="small mut" style="margin-bottom:2px">Baseline Model — rolling 90-day OLS · 1D fwd log return ~ trailing 1D Δlog(DXY) + 1D 10Y spread change</div>
+        <div class="origin-note"><b>Model origin: Oct 16 close 1.4161.</b> Spot has since moved to <span class="num">1.404585</span> (Oct 21 session pull). Forecast &amp; scenario levels below stay anchored to the Oct 16 origin — they are not re-based to current spot.</div>
+        <table aria-label="Forecast horizons">
+          <tr><th>Horizon</th><th>P50</th><th>P10 – P90</th><th>Implied spot</th></tr>
+          <tr><td>1D</td><td class="dn">−0.105%</td><td>−0.388% to +0.178%</td><td>1.4146</td></tr>
+          <tr><td>5D</td><td colspan="3" class="faint" style="font-family:inherit;font-size:10.5px;text-align:left">NOT VALIDATED — failed the walk-forward validation gate; no forecast published</td></tr>
+          <tr><td>20D</td><td colspan="3" class="faint" style="font-family:inherit;font-size:10.5px;text-align:left">NOT VALIDATED — failed the walk-forward validation gate; no forecast published</td></tr>
+        </table>
+        <div class="vin">
+          <b>Backtest credentials (1D):</b> MAE <b>20.0 bps</b> vs zero-return 21.61 · hit rate <b>59.76%</b> · n = 342 origins · assumed round-trip cost 2.0 pips. Residual σ 22.09 bps; interval = P50 ± 1.2816 × in-sample residual σ (normal approx, disclosed).<br>
+          <b>Coefficients:</b> intercept 0.000065 · broad USD 0.3437 · 10Y spread 0.000289 /bp · trained on 90 pairs.
+        </div>
+        <div class="sect">Indicative extension — not a refit</div>
+        <table aria-label="Forecast indicative extension">
+          <tr><th>Horizon</th><th>P50</th><th>P10 – P90</th><th>Implied spot</th></tr>
+          <tr><td>1D ext.</td><td class="dn">−0.061%</td><td>−0.344% to +0.222%</td><td>1.4050</td></tr>
+        </table>
+        <div class="vin">
+          <b>Indicative extension — not a refit.</b> Stored Oct 16 coefficients applied to Oct 20 features (Δlog DXY <b>−0.002474</b> · 10Y spread Δ <b>+0.6 bps</b>); return expressed on the Oct 20 traded close <b>1.4059</b> as a level only — no returns were spliced. A clean refit is not possible: reference-convention closes for Oct 19–21 do not exist (only traded closes), and splicing them in would inject the measured ~21.7-pip methodology gap as a fake return.
+        </div>
+        <div class="sect">Volatility cone — no directional claim</div>
+        <table aria-label="Volatility cone">
+          <tr><th>Horizon</th><th>Expected move (1σ)</th><th>Range</th></tr>
+          <tr><td>5D</td><td>±0.439%</td><td>1.3984 – 1.4108</td></tr>
+          <tr><td>20D</td><td>±0.879%</td><td>1.3922 – 1.4169</td></tr>
+        </table>
+        <div class="vin"><b>Volatility cone — no directional claim.</b> Expected move = spot <b>1.404585</b> × Realized Vol (20D) <b>3.12%</b> × √(days/252); range = spot × (1 ± EM). This replaces a directional 5D/20D forecast — those horizons remain NOT VALIDATED above; the cone states a mathematical range only.</div>
+      </section>
+
+      <section class="panel">
+        <h2>Summary Bias</h2>
+        <div style="margin:3px 0 6px"><span class="pill">Conditional Bearish USD/CAD</span> <span class="mut small">score <span class="num">−0.234</span></span></div>
+        <h3>Top Drivers</h3>
+        <ul class="tight">
+          <li>2Y spread 1D change — <span class="num">+1.3 bps</span> DoD</li>
+          <li>DXY 1D change — <span class="num">−0.25%</span> DoD</li>
+          <li>10Y spread 1D change — <span class="num">+0.8 bps</span> DoD</li>
+        </ul>
+        <h3 style="margin-top:6px">Conflicting Signals</h3>
+        <ul class="tight">
+          <li>2Y spread 1D change — <span class="num">+1.3 bps</span> DoD (widening US–CA spread supports USD/CAD)</li>
+          <li>10Y spread 1D change — <span class="num">+0.8 bps</span> DoD</li>
+        </ul>
+        <div class="vin">All-driver read: WTI <span class="num">+0.95%</span> DoD (oil up → CAD firmer → USD/CAD down, w 0.7) and futures crowding <span class="num">−23.3%</span> of OI (contrarian, w 0.8) now outweigh the spread widening — the tilt flipped from neutral on the refreshed oil read.</div>
+        <h3 style="margin-top:6px">Key Levels</h3>
+        <div class="num" style="font-size:11.5px">Calculated 20D — Support&nbsp;&nbsp;1.4004 / 1.3740<br>Calculated 20D — Resistance&nbsp;&nbsp;1.4262 / 1.4262<br>Daily pivots (Oct 21) — S1 1.40237 · S2 1.39885<br>Daily pivots (Oct 21) — R1 1.41030 · R2 1.41471 · PP 1.40678</div>
+        <div class="vin">Pivot cross-check: pivot R1 sits inside the 20D high by construction — a horizon difference (daily pivots vs a 20-day range), not an error. The two independent pivot sets agree within <b>0.5 pip</b> (S1 gap −0.4 pips, R1 gap +0.2 pips). Levels are shown side by side, never blended.</div>
+        <h3 style="margin-top:6px">Seasonality — CONTEXT ONLY</h3>
+        <div style="font-size:11.5px">October average <span class="num up">+0.25%</span> · <span class="num">58.82%</span> positive months (2010–2026)</div>
+        <div class="vin">Historical seasonal tendency only — never a standalone signal and never blended into the forecast. Method: sign × weight of stored drivers; weights are stated desk rules — diagnostics, not causality. Calculated levels: daily closes thru <b>Oct 16</b>.</div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <h2>Scenario Engine (1–20 Days) — 1D distribution shown</h2>
+      <div class="origin-note" style="margin-top:0">Anchored to model origin <b>Oct 16 close 1.4161</b>; spot module now reads <span class="num">1.404585</span>. Method: normal forecast distribution N(P50, residual σ); neutral band ±0.25σ.</div>
+      <div class="scen">
+        <div class="card">
+          <h3 class="up">▲ Bullish USD/CAD</h3>
+          <div>Probability <span class="prob up">23.4%</span></div>
+          <div class="small mut">Expected Move <span class="num up">+0.185%</span></div>
+          <div class="small">Range <span class="num">1.4169 – 1.4186</span></div>
+        </div>
+        <div class="card">
+          <h3 class="mut">■ Neutral / Range</h3>
+          <div>Probability <span class="prob">17.7%</span></div>
+          <div class="small mut">Expected Move <span class="num">−0.002%</span></div>
+          <div class="small">Range <span class="num">1.4153 – 1.4169</span></div>
+        </div>
+        <div class="card">
+          <h3 class="dn">▼ Bearish USD/CAD</h3>
+          <div>Probability <span class="prob dn">58.9%</span></div>
+          <div class="small mut">Expected Move <span class="num dn">−0.251%</span></div>
+          <div class="small">Range <span class="num">1.4106 – 1.4153</span></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="col">
+    <section class="panel">
+      <h2>Catalyst &amp; Flow Monitor</h2>
+      <div class="origin-note" style="margin-top:0"><b>Canada CPI (Oct 19) printed below forecast on all four measures — a dovish surprise sweep.</b></div>
+      <div class="sect">Released — Canada CPI · Mon Oct 19 · 6:30am, as displayed (site tz)</div>
+      <table aria-label="Released Canada CPI">
+        <tr><th>Event</th><th>Impact</th><th>Actual</th><th>Forecast</th><th>Prev</th></tr>
+        <tr><td class="lft" style="white-space:normal">CPI m/m</td><td><span class="impact high">High</span></td><td>0.1%</td><td>0.2%</td><td>−0.1%</td></tr>
+        <tr><td class="lft" style="white-space:normal">Median CPI y/y</td><td><span class="impact high">High</span></td><td>1.9%</td><td>2.0%</td><td>2.0%</td></tr>
+        <tr><td class="lft" style="white-space:normal">Trimmed CPI y/y</td><td><span class="impact high">High</span></td><td>1.8%</td><td>1.9%</td><td>1.9%</td></tr>
+        <tr><td class="lft" style="white-space:normal">Common CPI y/y</td><td><span class="impact med">Med</span></td><td>2.4%</td><td>2.6%</td><td>2.6%</td></tr>
+      </table>
+      <div class="small" style="margin:3px 0">All four: <span class="tag-below">BELOW forecast</span> <span class="mut">Δ −0.1 · −0.1 · −0.1 · −0.2 (printed units)</span></div>
+      <div class="sect">Also released</div>
+      <table aria-label="Other released events">
+        <tr><th>Event</th><th>Impact</th><th>Actual</th><th>Forecast</th><th>Prev</th></tr>
+        <tr><td class="lft" style="white-space:normal">GBP · Average Earnings Index 3m/y (Oct 20, 12:00am)</td><td><span class="impact med">Med</span></td><td>3.7% <span class="tag-below">BELOW</span></td><td>3.8%</td><td>3.9%</td></tr>
+        <tr><td class="lft" style="white-space:normal">GBP · CPI y/y (Oct 21, 12:00am)</td><td><span class="impact high">High</span></td><td>3.5% <span class="tag-above">ABOVE</span></td><td>3.4%</td><td>3.1%</td></tr>
+      </table>
+      <div class="sect">Upcoming — times as displayed (site tz)</div>
+      <table aria-label="Upcoming events">
+        <tr><th>Date / Time</th><th>Event</th><th>Impact</th><th>Forecast</th><th>Prev</th></tr>
+        <tr><td>Oct 22, 6:30am</td><td class="lft" style="font-family:inherit;white-space:normal">USD · Unemployment Claims</td><td><span class="impact med">Med</span></td><td>200K</td><td>199K</td></tr>
+        <tr><td>Oct 23, 7:45am</td><td class="lft" style="font-family:inherit;white-space:normal">USD · Flash Manufacturing PMI</td><td><span class="impact med">Med</span></td><td>55.4</td><td>55.9</td></tr>
+        <tr><td>Oct 23, 7:45am</td><td class="lft" style="font-family:inherit;white-space:normal">USD · Flash Services PMI</td><td><span class="impact med">Med</span></td><td>57.8</td><td>58.8</td></tr>
+        <tr><td>Oct 23, 8:00am</td><td class="lft" style="font-family:inherit;white-space:normal">USD · Revised UoM Consumer Sentiment</td><td><span class="impact med">Med</span></td><td>46.3</td><td>46.3</td></tr>
+        <tr class="cluster"><td>Oct 28, 7:45am</td><td class="lft" style="font-family:inherit;white-space:normal">CAD · BoC Monetary Policy Report</td><td><span class="impact high">High</span></td><td class="faint">—</td><td class="faint">—</td></tr>
+        <tr class="cluster"><td>Oct 28, 7:45am</td><td class="lft" style="font-family:inherit;white-space:normal">CAD · BoC Overnight Rate</td><td><span class="impact high">High</span></td><td class="faint">—</td><td>2.25%</td></tr>
+        <tr class="cluster"><td>Oct 28, 8:30am</td><td class="lft" style="font-family:inherit;white-space:normal">CAD · BoC Press Conference</td><td><span class="impact high">High</span></td><td class="faint">—</td><td class="faint">—</td></tr>
+        <tr class="cluster"><td>Oct 28, 12:30pm</td><td class="lft" style="font-family:inherit;white-space:normal">USD · FOMC Press Conference</td><td><span class="impact high">High</span></td><td class="faint">—</td><td class="faint">—</td></tr>
+        <tr class="cluster"><td>Oct 28, 12:00pm</td><td class="lft" style="font-family:inherit;white-space:normal">USD · Federal Funds Rate</td><td><span class="impact high">High</span></td><td class="faint">—</td><td>4.00%</td></tr>
+        <tr><td>Oct 29, 6:30am</td><td class="lft" style="font-family:inherit;white-space:normal">USD · Advance GDP q/q</td><td><span class="impact high">High</span></td><td class="faint">—</td><td>2.2%</td></tr>
+        <tr><td>Oct 29, 6:30am</td><td class="lft" style="font-family:inherit;white-space:normal">USD · Core PCE Price Index m/m</td><td><span class="impact high">High</span></td><td class="faint">—</td><td>0.2%</td></tr>
+      </table>
+      <div class="origin-note"><b>High-impact cluster — Wed Oct 28:</b> 5 High-impact events, BoC and Fed decisions the same day (highlighted). This is the trade card's event-risk anchor.</div>
+      <div class="vin">Calendar pull <b>Oct 21, 2026, 07:05 ET</b> (pull time) — supersedes the Oct 11-vintage stored calendar. All event times are verbatim <b>as displayed (site tz)</b> — not relabeled as ET. Impact: High / Medium as graded at pull.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Latest News — official releases</h2>
+      <div class="sect">Bank of Canada — press releases</div>
+      <table aria-label="Bank of Canada press releases">
+        <tr><td class="lft" style="white-space:normal;font-family:inherit">Bank of Canada Board launches process to fill external Deputy Governor position</td><td>Sep 10, 2026</td></tr>
+        <tr><td class="lft" style="white-space:normal;font-family:inherit">Bank of Canada unveils new vertical $20 bank note</td><td>Sep 3, 2026</td></tr>
+        <tr><td class="lft" style="white-space:normal;font-family:inherit">Bank of Canada maintains the policy rate at 2¼%</td><td>Sep 2, 2026</td></tr>
+        <tr><td class="lft" style="white-space:normal;font-family:inherit">G7 2026 Cross-Border Coordination Exercise (CBCE)</td><td>Jul 31, 2026</td></tr>
+      </table>
+      <div class="sect">Statistics Canada — The Daily</div>
+      <table aria-label="Statistics Canada The Daily releases">
+        <tr><td class="lft" style="white-space:normal;font-family:inherit">Trade of culture and sport products, 2024</td><td>Oct 20, 2026</td></tr>
+        <tr><td class="lft" style="white-space:normal;font-family:inherit">Canadian Community Health Survey, 2025</td><td>Oct 20, 2026</td></tr>
+        <tr><td class="lft" style="white-space:normal;font-family:inherit">Monthly credit aggregates, August 2026</td><td>Oct 20, 2026</td></tr>
+        <tr><td class="lft" style="white-space:normal;font-family:inherit">Monthly Mineral Production Survey, August 2026</td><td>Oct 20, 2026</td></tr>
+      </table>
+      <div class="vin">Official releases only — central bank press releases and the national statistics daily release list, titles and dates as published. Pulled <b>Oct 21, 2026, 11:45 UTC</b>. No market-wire headlines are carried on this desk.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Market Sentiment — Retail</h2>
+      <div class="small mut" style="margin-bottom:4px">By traders · long = long USD/CAD · n = 24 long / 31 short</div>
+      <div class="bar-track" style="height:14px">
+        <div class="bar-fill" style="width:44%;background:var(--green)"></div>
+        <div class="bar-fill" style="width:56%;background:var(--red)"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:2px"><span class="up">Long 44%</span><span class="dn">Short 56%</span></div>
+      <div class="small mut" style="margin:7px 0 4px">By lots · 8.9 long / 34.0 short</div>
+      <div class="bar-track" style="height:14px">
+        <div class="bar-fill" style="width:21%;background:var(--green)"></div>
+        <div class="bar-fill" style="width:79%;background:var(--red)"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:2px"><span class="up">Long 21%</span><span class="dn">Short 79%</span></div>
+      <table style="margin-top:6px">
+        <tr><td>Avg entry — long</td><td>1.3982</td></tr>
+        <tr><td>Avg entry — short</td><td>1.3910</td></tr>
+        <tr><td>Avg return — long</td><td class="up">+0.8%</td></tr>
+        <tr><td>Avg return — short</td><td class="dn">−0.8%</td></tr>
+      </table>
+      <div class="small" style="margin-top:4px">Shorts are crowded by size (79% of lots) and underwater on average: avg short entry <span class="num">1.3910</span> vs spot <span class="num">1.404585</span>, avg return <span class="num dn">−0.8%</span>; avg long return <span class="num up">+0.8%</span>.</div>
+      <div class="vin">Pulled <b>Oct 21, 2026, 07:05 ET (pull time)</b> · age <b>0.2 h</b> at calculation. Asof basis: <b>pull time</b> — the sentiment panel carries no explicit timestamp (Oct 21 page load), labeled as such. Retail positioning from members' linked brokerage accounts; small self-selected sample, snapshot only.</div>
+    </section>
+  </div>
+</div>
+
+<!-- ============ BOTTOM ROW ============ -->
+<div style="display:grid;grid-template-columns:minmax(0,2.05fr) minmax(0,1fr);gap:8px;margin-top:8px" class="bottom-row">
+  <section class="panel">
+    <h2>Positioning &amp; Options</h2>
+    <div style="display:grid;grid-template-columns:1.25fr 1fr .95fr;gap:12px" class="pos-grid">
+      <div>
+        <h3>Speculative Net Position (CAD Futures)</h3>
+        <div class="num" style="font-size:19px;font-weight:700">−88,112 <span style="font-size:11px" class="mut">contracts</span></div>
+        <table>
+          <tr><td>Net as % of OI</td><td class="dn"><b>−23.3%</b></td></tr>
+          <tr><td>WoW change</td><td class="dn">−8,487</td></tr>
+          <tr><td>Long / Short</td><td>23,811 / 111,923</td></tr>
+          <tr><td>Open interest</td><td>378,204</td></tr>
+          <tr><td>Dealer net</td><td>+120,981</td></tr>
+        </table>
+        <div class="prox">
+          <div class="sect" style="margin-top:6px">Squeeze Watch — proximity to thresholds</div>
+          <div class="bar-row"><span class="bl">Crowding vs ±20% extreme</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--red)"></div></div><span class="bar-val dn">BREACHED</span></div>
+          <div class="bar-row"><span class="bl">25D RR vs −1.5% extreme</span><div class="bar-track"><div class="bar-fill" style="width:10.7%;background:var(--amber)"></div></div><span class="bar-val">10.7%</span></div>
+          <div class="bar-row"><span class="bl">Net percentile (3Y)</span><div class="bar-track"><div class="bar-fill" style="width:10.2%;background:var(--cyan)"></div></div><span class="bar-val">10.2 %ile</span></div>
+        </div>
+        <div class="vin">Report: positions as of <b>Tue Oct 13</b> (prior Oct 6), fetched Oct 17 · weekly cadence. Crowding framework: neutral −10%..+10% of OI; ≤ −20% = extreme.</div>
+      </div>
+      <div>
+        <h3>Net % of OI Gauge</h3>
+        <svg viewBox="0 0 200 118" width="100%" role="img" aria-label="Gauge of net positioning at minus 23.3 percent of open interest, in the red extreme zone beyond minus 20 percent" style="display:block;max-width:230px;margin:0 auto">
+          <g fill="none" stroke-width="15">
+            <path d="M 20 100 A 80 80 0 0 1 55 35.4" stroke="#e5484d"/>
+            <path d="M 55 35.4 A 80 80 0 0 1 79.4 21.2" stroke="#f0a832"/>
+            <path d="M 79.4 21.2 A 80 80 0 0 1 120.6 21.2" stroke="#47617c"/>
+            <path d="M 120.6 21.2 A 80 80 0 0 1 145 35.4" stroke="#f0a832"/>
+            <path d="M 145 35.4 A 80 80 0 0 1 180 100" stroke="#e5484d"/>
+          </g>
+          <line x1="100" y1="100" x2="44.6" y2="57.3" stroke="#dce9f5" stroke-width="2.5"/>
+          <circle cx="100" cy="100" r="5" fill="#dce9f5"/>
+          <g font-size="9" fill="#7f9bb3" font-family="ui-monospace,Consolas,monospace">
+            <text x="14" y="114">−40</text><text x="52" y="26">−20</text><text x="95" y="12">0</text><text x="138" y="26">+20</text><text x="172" y="114">+40</text>
+          </g>
+        </svg>
+        <div style="text-align:center;font-size:11px"><span class="dn"><b>−23.3%</b></span> · <span class="dn">Extreme Crowded Short</span><br><span class="mut">(High short-squeeze risk)</span></div>
+        <div class="vin" style="text-align:center">Zones recalibrated: centre −10%..+10% neutral grey · amber to ±20% · red only beyond ±20%.</div>
+        <div class="vin">Percentiles of net: 1Y <b>13.2</b> · 3Y <b>10.2</b> · 5Y <b>6.1</b>.</div>
+      </div>
+      <div>
+        <h3>Options Market</h3>
+        <table>
+          <tr><td>25D Risk Reversal</td><td><b>−0.16 pp</b></td></tr>
+          <tr><td>Call IV (25D)</td><td>4.55%</td></tr>
+          <tr><td>Put IV (25D)</td><td>4.71%</td></tr>
+          <tr><td>Underlying (CAD fut.)</td><td>0.7086</td></tr>
+          <tr><td>Realized Vol (20D)</td><td><b>3.12%</b></td></tr>
+          <tr><td>CVOL Index</td><td><b>5.2337</b> <span class="dn">−0.1789</span></td></tr>
+          <tr><td>Expiry Pins</td><td class="faint" style="font-size:10px">UNAVAILABLE</td></tr>
+        </table>
+        <div class="vin">RR as of <b>Oct 16</b> · contract D6Z26, expiry Dec 4, 2026 · single-expiry pull, nearest-to-25Δ strikes, theoretical IVs, single source. Label: <b>Neutral</b> (−0.5%..+0.5% band, inside ±1.5% extremes). Realized Vol (20D) <b>3.12%</b>: 20D rolling σ of daily log returns × √252 on the stored reference series thru Oct 16 close 1.4161 (7D: 3.11%) — a stand-in for implied vol, labeled realized. <b>CVOL Index</b> 5.2337 (−0.1789), Oct 21, 06:27 CT, delayed ≥10 min — an implied-vol index, never presented as a 1W/1M tenor vol. Dealer gamma and gamma flip are removed from the board by design — no defensible dealer options data exists and the figures are never inferred. Expiry Pins: unavailable — no per-strike open interest is stored (the options pull carries only the two 25-delta strikes, IVs and deltas, no OI); pins need per-strike OI into the nearest expiry (10:00 AM ET NY cut). Positioning percentile basis: percentile of current net within trailing 3Y of weekly nets = <b>10.2</b>.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Trade Idea <span class="mut" style="font-weight:400">(Conditional)</span></h2>
+    <div style="font-size:13.5px;font-weight:700;color:var(--blue);margin:2px 0 7px">Buy USD/CAD on pullback</div>
+    <div class="trade-grid">
+      <span class="k">Entry Zone</span><span class="v">1.4004 – 1.4068</span>
+      <span class="k">Target</span><span class="v">1.4262 / 1.4262</span>
+      <span class="k">Stop</span><span class="v">1.3996 (40.5 pips)</span>
+      <span class="k">Position Size</span><span class="v" style="font-family:inherit;font-size:11px">Interim table below</span>
+      <span class="k">R : R</span><span class="v">5.57 : 1</span>
+    </div>
+    <table aria-label="Interim position size by risk budget" style="margin-top:7px">
+      <tr><th>Risk budget</th><th>Units</th><th>Notional</th></tr>
+      <tr><td>$1,000</td><td>246,853</td><td>$346,489</td></tr>
+      <tr><td>$5,000</td><td>1,234,263</td><td>$1,732,442</td></tr>
+      <tr><td>$10,000</td><td>2,468,526</td><td>$3,464,885</td></tr>
+    </table>
+    <div class="vin" style="margin-top:3px"><b>Interim static formula — risk budget ÷ stop distance; ES engine (Phase 04) supersedes.</b> Units = risk budget ÷ stop distance (0.00405 = 40.5 pips); notional = units × entry mid 1.40362. No equity figure is assumed.</div>
+    <div class="origin-note"><b>Event Risk:</b> High-impact cluster 2026-10-28: BoC Monetary Policy Report; BoC Overnight Rate (prev 2.25%); BoC Press Conference; FOMC Press Conference; Federal Funds Rate (prev 4.00%) — BoC and Fed decisions land the same day; event-risk window, conditional levels only.</div>
+    <div class="vin">
+      Mechanical template from stored closes thru <b>Oct 16</b>: entry = 20D low close, zone top = support + 25% of (20D high − low); stop = support − 0.35 × 20D avg absolute daily change (0.00236, close-based proxy, disclosed); targets = 20D high, then 50D high. Conditional levels from stored closes only; not an executable signal — no live intraday feed is wired into this card.
+    </div>
+  </section>
+</div>
+
+<footer>
+  <span>Calculated from stored data only · Snapshot generated Oct 21, 2026, 11:45 UTC · Every panel carries its own data vintage — panels differ by design.</span>
+  <span>Verified Oct 21, 2026 · For informational purposes only. Not a recommendation to trade.</span>
+</footer>
+
+</div>
+<style>
+  @media (max-width:1100px){ .bottom-row{grid-template-columns:1fr !important} .pos-grid{grid-template-columns:1fr !important} .fc-bias{grid-template-columns:1fr !important} }
+</style>
+</body>
+</html>
