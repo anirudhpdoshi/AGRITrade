@@ -5197,11 +5197,11 @@
     "30Y": 5.42
    },
    "fxcross": {
-    "dxy": 101.653,
-    "dxy_chg": -0.125,
-    "eurusd": 1.1216,
-    "usdjpy": 156.82,
-    "usdcad_ref": 1.4015
+    "dxy": 101.651,
+    "dxy_chg": -0.127,
+    "eurusd": 1.1221,
+    "usdjpy": 156.74,
+    "usdcad_ref": 1.4008
    },
    "closes": [
     [
@@ -5280,16 +5280,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 99.05,
-     "chg": 1.9,
-     "pct": 1.96,
+     "last": 99.14,
+     "chg": 1.99,
+     "pct": 2.05,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 112.78,
-     "chg": 3.96,
-     "pct": 3.64,
+     "last": 112.86,
+     "chg": 4.04,
+     "pct": 3.71,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -5301,9 +5301,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 13.58,
+    "value": 13.67,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-22T20:35:00+00:00",
+    "obs_ts": "2026-10-22T20:45:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -5769,10 +5769,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.40149,
+    "mid": 1.40085,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-22T16:45:00-04:00",
+    "ts": "2026-10-22T16:55:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -5914,24 +5914,25 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-22T16:45:04-04:00",
+   "updated_at": "2026-10-22T16:55:46-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-22T16:45:00-04:00",
+    "fx_spot": "2026-10-22T16:55:00-04:00",
     "fx_closes": "2026-10-22T16:30:00-04:00",
     "yields": "2026-10-21T17:00:00-04:00",
     "policy": "2026-10-21T07:35:00-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-13T15:30:00-04:00",
     "cftc_grains": "2026-10-13T15:30:00-04:00",
-    "energy": "2026-10-22T16:35:00-04:00",
-    "crosses": "2026-10-22T16:35:00-04:00",
+    "energy": "2026-10-22T16:45:00-04:00",
+    "crosses": "2026-10-22T16:45:00-04:00",
     "grains_settle": "2026-10-20T14:20:00-04:00",
     "grains_quote": "2026-10-22T14:15:00-04:00",
     "options": "2026-10-22T08:00:00-04:00",
-    "news": "2026-10-22T16:45:04-04:00",
+    "news": "2026-10-22T16:55:46-04:00",
     "calendar": "2026-10-21T07:05:00-04:00",
-    "releases": "2026-10-19T08:30:00-04:00"
+    "releases": "2026-10-19T08:30:00-04:00",
+    "macro": "2026-10-22T16:55:46-04:00"
    },
    "sources": {
     "news": "Google News RSS search, refreshed every 15 min",
@@ -5948,13 +5949,1126 @@
      "energy",
      "crosses",
      "news",
-     "releases"
+     "releases",
+     "macro"
     ],
     "failed": [],
-    "at": "2026-10-22T16:45:04-04:00"
+    "at": "2026-10-22T16:55:46-04:00"
    },
-   "releases_checked": "2026-10-22T16:45:04-04:00"
-  }
+   "releases_checked": "2026-10-22T16:45:04-04:00",
+   "macro_checked": "2026-10-22T16:55:46-04:00",
+   "macro_errors": {
+    "ca_retail": "RuntimeError: values outside sanity range 40000-120000: 62122558.0 — wrong series id?"
+   }
+  },
+  "macro": [
+   {
+    "key": "us_cpi",
+    "name": "CPI",
+    "group": "us",
+    "unit": "%",
+    "dec": 1,
+    "good": "heat",
+    "freq": "M",
+    "measure": "y/y",
+    "period": "Sep '26",
+    "obs_date": "2026-09-01",
+    "value": 3.72,
+    "prior": 3.35,
+    "chg": 0.36,
+    "history": [
+     [
+      "Sep '25",
+      3.02
+     ],
+     [
+      "Nov '25",
+      2.7
+     ],
+     [
+      "Dec '25",
+      2.65
+     ],
+     [
+      "Jan '26",
+      2.39
+     ],
+     [
+      "Feb '26",
+      2.43
+     ],
+     [
+      "Mar '26",
+      3.29
+     ],
+     [
+      "Apr '26",
+      3.78
+     ],
+     [
+      "May '26",
+      4.17
+     ],
+     [
+      "Jun '26",
+      3.46
+     ],
+     [
+      "Jul '26",
+      3.3
+     ],
+     [
+      "Aug '26",
+      3.35
+     ],
+     [
+      "Sep '26",
+      3.72
+     ]
+    ],
+    "src": "FRED CPIAUCSL"
+   },
+   {
+    "key": "us_core_cpi",
+    "name": "Core CPI",
+    "group": "us",
+    "unit": "%",
+    "dec": 1,
+    "good": "heat",
+    "freq": "M",
+    "measure": "y/y",
+    "period": "Sep '26",
+    "obs_date": "2026-09-01",
+    "value": 2.57,
+    "prior": 2.45,
+    "chg": 0.12,
+    "history": [
+     [
+      "Sep '25",
+      3.02
+     ],
+     [
+      "Nov '25",
+      2.6
+     ],
+     [
+      "Dec '25",
+      2.65
+     ],
+     [
+      "Jan '26",
+      2.51
+     ],
+     [
+      "Feb '26",
+      2.47
+     ],
+     [
+      "Mar '26",
+      2.6
+     ],
+     [
+      "Apr '26",
+      2.74
+     ],
+     [
+      "May '26",
+      2.82
+     ],
+     [
+      "Jun '26",
+      2.57
+     ],
+     [
+      "Jul '26",
+      2.47
+     ],
+     [
+      "Aug '26",
+      2.45
+     ],
+     [
+      "Sep '26",
+      2.57
+     ]
+    ],
+    "src": "FRED CPILFESL"
+   },
+   {
+    "key": "us_core_pce",
+    "name": "Core PCE",
+    "group": "us",
+    "unit": "%",
+    "dec": 1,
+    "good": "heat",
+    "freq": "M",
+    "measure": "y/y",
+    "period": "Aug '26",
+    "obs_date": "2026-08-01",
+    "value": 3.01,
+    "prior": 2.98,
+    "chg": 0.02,
+    "history": [
+     [
+      "Sep '25",
+      2.82
+     ],
+     [
+      "Oct '25",
+      2.7
+     ],
+     [
+      "Nov '25",
+      2.72
+     ],
+     [
+      "Dec '25",
+      2.87
+     ],
+     [
+      "Jan '26",
+      2.94
+     ],
+     [
+      "Feb '26",
+      2.96
+     ],
+     [
+      "Mar '26",
+      3.11
+     ],
+     [
+      "Apr '26",
+      3.08
+     ],
+     [
+      "May '26",
+      3.16
+     ],
+     [
+      "Jun '26",
+      3.04
+     ],
+     [
+      "Jul '26",
+      2.98
+     ],
+     [
+      "Aug '26",
+      3.01
+     ]
+    ],
+    "src": "FRED PCEPILFE"
+   },
+   {
+    "key": "us_nfp",
+    "name": "Nonfarm payrolls",
+    "group": "us",
+    "unit": "K",
+    "dec": 0,
+    "good": "up",
+    "freq": "M",
+    "measure": "m/m",
+    "period": "Sep '26",
+    "obs_date": "2026-09-01",
+    "value": 29.0,
+    "prior": 133.0,
+    "chg": -104.0,
+    "history": [
+     [
+      "Oct '25",
+      -140.0
+     ],
+     [
+      "Nov '25",
+      41.0
+     ],
+     [
+      "Dec '25",
+      -17.0
+     ],
+     [
+      "Jan '26",
+      160.0
+     ],
+     [
+      "Feb '26",
+      -156.0
+     ],
+     [
+      "Mar '26",
+      214.0
+     ],
+     [
+      "Apr '26",
+      148.0
+     ],
+     [
+      "May '26",
+      63.0
+     ],
+     [
+      "Jun '26",
+      31.0
+     ],
+     [
+      "Jul '26",
+      -10.0
+     ],
+     [
+      "Aug '26",
+      133.0
+     ],
+     [
+      "Sep '26",
+      29.0
+     ]
+    ],
+    "src": "FRED PAYEMS"
+   },
+   {
+    "key": "us_ur",
+    "name": "Unemployment rate",
+    "group": "us",
+    "unit": "%",
+    "dec": 1,
+    "good": "down",
+    "freq": "M",
+    "measure": "",
+    "period": "Sep '26",
+    "obs_date": "2026-09-01",
+    "value": 4.2,
+    "prior": 4.1,
+    "chg": 0.1,
+    "history": [
+     [
+      "Sep '25",
+      4.4
+     ],
+     [
+      "Nov '25",
+      4.5
+     ],
+     [
+      "Dec '25",
+      4.4
+     ],
+     [
+      "Jan '26",
+      4.3
+     ],
+     [
+      "Feb '26",
+      4.4
+     ],
+     [
+      "Mar '26",
+      4.3
+     ],
+     [
+      "Apr '26",
+      4.3
+     ],
+     [
+      "May '26",
+      4.3
+     ],
+     [
+      "Jun '26",
+      4.2
+     ],
+     [
+      "Jul '26",
+      4.1
+     ],
+     [
+      "Aug '26",
+      4.1
+     ],
+     [
+      "Sep '26",
+      4.2
+     ]
+    ],
+    "src": "FRED UNRATE"
+   },
+   {
+    "key": "us_claims",
+    "name": "Initial jobless claims",
+    "group": "us",
+    "unit": "K",
+    "dec": 0,
+    "good": "down",
+    "freq": "W",
+    "measure": "",
+    "period": "Oct 17",
+    "obs_date": "2026-10-17",
+    "value": 194.0,
+    "prior": 200.0,
+    "chg": -6.0,
+    "history": [
+     [
+      "Aug 1",
+      200.0
+     ],
+     [
+      "Aug 8",
+      212.0
+     ],
+     [
+      "Aug 15",
+      207.0
+     ],
+     [
+      "Aug 22",
+      204.0
+     ],
+     [
+      "Aug 29",
+      207.0
+     ],
+     [
+      "Sep 5",
+      207.0
+     ],
+     [
+      "Sep 12",
+      198.0
+     ],
+     [
+      "Sep 19",
+      198.0
+     ],
+     [
+      "Sep 26",
+      199.0
+     ],
+     [
+      "Oct 3",
+      198.0
+     ],
+     [
+      "Oct 10",
+      200.0
+     ],
+     [
+      "Oct 17",
+      194.0
+     ]
+    ],
+    "src": "FRED ICSA"
+   },
+   {
+    "key": "us_cclaims",
+    "name": "Continuing claims",
+    "group": "us",
+    "unit": "K",
+    "dec": 0,
+    "good": "down",
+    "freq": "W",
+    "measure": "",
+    "period": "Oct 10",
+    "obs_date": "2026-10-10",
+    "value": 1728.0,
+    "prior": 1703.0,
+    "chg": 25.0,
+    "history": [
+     [
+      "Jul 25",
+      1799.0
+     ],
+     [
+      "Aug 1",
+      1781.0
+     ],
+     [
+      "Aug 8",
+      1796.0
+     ],
+     [
+      "Aug 15",
+      1771.0
+     ],
+     [
+      "Aug 22",
+      1775.0
+     ],
+     [
+      "Aug 29",
+      1765.0
+     ],
+     [
+      "Sep 5",
+      1717.0
+     ],
+     [
+      "Sep 12",
+      1712.0
+     ],
+     [
+      "Sep 19",
+      1699.0
+     ],
+     [
+      "Sep 26",
+      1714.0
+     ],
+     [
+      "Oct 3",
+      1703.0
+     ],
+     [
+      "Oct 10",
+      1728.0
+     ]
+    ],
+    "src": "FRED CCSA"
+   },
+   {
+    "key": "us_ahe",
+    "name": "Avg hourly earnings",
+    "group": "us",
+    "unit": "%",
+    "dec": 1,
+    "good": "heat",
+    "freq": "M",
+    "measure": "y/y",
+    "period": "Sep '26",
+    "obs_date": "2026-09-01",
+    "value": 3.02,
+    "prior": 3.11,
+    "chg": -0.09,
+    "history": [
+     [
+      "Oct '25",
+      3.92
+     ],
+     [
+      "Nov '25",
+      3.93
+     ],
+     [
+      "Dec '25",
+      3.73
+     ],
+     [
+      "Jan '26",
+      3.66
+     ],
+     [
+      "Feb '26",
+      3.7
+     ],
+     [
+      "Mar '26",
+      3.43
+     ],
+     [
+      "Apr '26",
+      3.57
+     ],
+     [
+      "May '26",
+      3.34
+     ],
+     [
+      "Jun '26",
+      3.38
+     ],
+     [
+      "Jul '26",
+      3.21
+     ],
+     [
+      "Aug '26",
+      3.11
+     ],
+     [
+      "Sep '26",
+      3.02
+     ]
+    ],
+    "src": "FRED CES0500000003"
+   },
+   {
+    "key": "us_retail",
+    "name": "Retail sales",
+    "group": "us",
+    "unit": "%",
+    "dec": 1,
+    "good": "up",
+    "freq": "M",
+    "measure": "m/m",
+    "period": "Sep '26",
+    "obs_date": "2026-09-01",
+    "value": 0.77,
+    "prior": 1.29,
+    "chg": -0.52,
+    "history": [
+     [
+      "Oct '25",
+      -0.02
+     ],
+     [
+      "Nov '25",
+      0.67
+     ],
+     [
+      "Dec '25",
+      0.11
+     ],
+     [
+      "Jan '26",
+      -0.62
+     ],
+     [
+      "Feb '26",
+      0.87
+     ],
+     [
+      "Mar '26",
+      1.66
+     ],
+     [
+      "Apr '26",
+      0.59
+     ],
+     [
+      "May '26",
+      1.04
+     ],
+     [
+      "Jun '26",
+      0.2
+     ],
+     [
+      "Jul '26",
+      -0.41
+     ],
+     [
+      "Aug '26",
+      1.29
+     ],
+     [
+      "Sep '26",
+      0.77
+     ]
+    ],
+    "src": "FRED RSAFS"
+   },
+   {
+    "key": "us_gdp",
+    "name": "Real GDP (q/q ann.)",
+    "group": "us",
+    "unit": "%",
+    "dec": 1,
+    "good": "up",
+    "freq": "Q",
+    "measure": "",
+    "period": "Q2 '26",
+    "obs_date": "2026-04-01",
+    "value": 2.2,
+    "prior": 2.5,
+    "chg": -0.3,
+    "history": [
+     [
+      "Q3 '24",
+      3.2
+     ],
+     [
+      "Q4 '24",
+      2.4
+     ],
+     [
+      "Q1 '25",
+      0.1
+     ],
+     [
+      "Q2 '25",
+      4.0
+     ],
+     [
+      "Q3 '25",
+      3.9
+     ],
+     [
+      "Q4 '25",
+      0.2
+     ],
+     [
+      "Q1 '26",
+      2.5
+     ],
+     [
+      "Q2 '26",
+      2.2
+     ]
+    ],
+    "src": "FRED A191RL1Q225SBEA"
+   },
+   {
+    "key": "us_umich",
+    "name": "UMich sentiment",
+    "group": "us",
+    "unit": "",
+    "dec": 1,
+    "good": "up",
+    "freq": "M",
+    "measure": "",
+    "period": "Aug '26",
+    "obs_date": "2026-08-01",
+    "value": 51.7,
+    "prior": 55.2,
+    "chg": -3.5,
+    "history": [
+     [
+      "Sep '25",
+      55.1
+     ],
+     [
+      "Oct '25",
+      53.6
+     ],
+     [
+      "Nov '25",
+      51.0
+     ],
+     [
+      "Dec '25",
+      52.9
+     ],
+     [
+      "Jan '26",
+      56.4
+     ],
+     [
+      "Feb '26",
+      56.6
+     ],
+     [
+      "Mar '26",
+      53.3
+     ],
+     [
+      "Apr '26",
+      49.8
+     ],
+     [
+      "May '26",
+      44.8
+     ],
+     [
+      "Jun '26",
+      49.5
+     ],
+     [
+      "Jul '26",
+      55.2
+     ],
+     [
+      "Aug '26",
+      51.7
+     ]
+    ],
+    "src": "FRED UMCSENT"
+   },
+   {
+    "key": "ca_cpi",
+    "name": "CPI",
+    "group": "ca",
+    "unit": "%",
+    "dec": 1,
+    "good": "heat",
+    "freq": "M",
+    "measure": "y/y",
+    "period": "Sep '26",
+    "obs_date": "2026-09-01",
+    "value": 3.09,
+    "prior": 3.03,
+    "chg": 0.06,
+    "history": [
+     [
+      "Oct '25",
+      2.16
+     ],
+     [
+      "Nov '25",
+      2.22
+     ],
+     [
+      "Dec '25",
+      2.36
+     ],
+     [
+      "Jan '26",
+      2.29
+     ],
+     [
+      "Feb '26",
+      1.78
+     ],
+     [
+      "Mar '26",
+      2.39
+     ],
+     [
+      "Apr '26",
+      2.82
+     ],
+     [
+      "May '26",
+      3.23
+     ],
+     [
+      "Jun '26",
+      2.8
+     ],
+     [
+      "Jul '26",
+      3.03
+     ],
+     [
+      "Aug '26",
+      3.03
+     ],
+     [
+      "Sep '26",
+      3.09
+     ]
+    ],
+    "src": "Bank of Canada Valet V41690973"
+   },
+   {
+    "key": "ca_trim",
+    "name": "CPI-trim",
+    "group": "ca",
+    "unit": "%",
+    "dec": 1,
+    "good": "heat",
+    "freq": "M",
+    "measure": "",
+    "period": "Sep '26",
+    "obs_date": "2026-09-01",
+    "value": 1.8,
+    "prior": 1.9,
+    "chg": -0.1,
+    "history": [
+     [
+      "Oct '25",
+      3.0
+     ],
+     [
+      "Nov '25",
+      2.9
+     ],
+     [
+      "Dec '25",
+      2.7
+     ],
+     [
+      "Jan '26",
+      2.4
+     ],
+     [
+      "Feb '26",
+      2.3
+     ],
+     [
+      "Mar '26",
+      2.2
+     ],
+     [
+      "Apr '26",
+      2.0
+     ],
+     [
+      "May '26",
+      2.0
+     ],
+     [
+      "Jun '26",
+      1.9
+     ],
+     [
+      "Jul '26",
+      1.9
+     ],
+     [
+      "Aug '26",
+      1.9
+     ],
+     [
+      "Sep '26",
+      1.8
+     ]
+    ],
+    "src": "Bank of Canada Valet CPI_TRIM"
+   },
+   {
+    "key": "ca_median",
+    "name": "CPI-median",
+    "group": "ca",
+    "unit": "%",
+    "dec": 1,
+    "good": "heat",
+    "freq": "M",
+    "measure": "",
+    "period": "Sep '26",
+    "obs_date": "2026-09-01",
+    "value": 1.9,
+    "prior": 2.0,
+    "chg": -0.1,
+    "history": [
+     [
+      "Oct '25",
+      2.9
+     ],
+     [
+      "Nov '25",
+      2.8
+     ],
+     [
+      "Dec '25",
+      2.6
+     ],
+     [
+      "Jan '26",
+      2.5
+     ],
+     [
+      "Feb '26",
+      2.3
+     ],
+     [
+      "Mar '26",
+      2.3
+     ],
+     [
+      "Apr '26",
+      2.1
+     ],
+     [
+      "May '26",
+      2.1
+     ],
+     [
+      "Jun '26",
+      1.9
+     ],
+     [
+      "Jul '26",
+      2.0
+     ],
+     [
+      "Aug '26",
+      2.0
+     ],
+     [
+      "Sep '26",
+      1.9
+     ]
+    ],
+    "src": "Bank of Canada Valet CPI_MEDIAN"
+   },
+   {
+    "key": "ca_emp",
+    "name": "Employment change",
+    "group": "ca",
+    "unit": "K",
+    "dec": 1,
+    "good": "up",
+    "freq": "M",
+    "measure": "m/m",
+    "period": "Sep '26",
+    "obs_date": "2026-09-01",
+    "value": -68.3,
+    "prior": -41.7,
+    "chg": -26.6,
+    "history": [
+     [
+      "Oct '25",
+      73.7
+     ],
+     [
+      "Nov '25",
+      52.3
+     ],
+     [
+      "Dec '25",
+      10.1
+     ],
+     [
+      "Jan '26",
+      -24.8
+     ],
+     [
+      "Feb '26",
+      -83.9
+     ],
+     [
+      "Mar '26",
+      14.1
+     ],
+     [
+      "Apr '26",
+      -17.7
+     ],
+     [
+      "May '26",
+      87.8
+     ],
+     [
+      "Jun '26",
+      18.2
+     ],
+     [
+      "Jul '26",
+      75.1
+     ],
+     [
+      "Aug '26",
+      -41.7
+     ],
+     [
+      "Sep '26",
+      -68.3
+     ]
+    ],
+    "src": "Statistics Canada 2062811"
+   },
+   {
+    "key": "ca_ur",
+    "name": "Unemployment rate",
+    "group": "ca",
+    "unit": "%",
+    "dec": 1,
+    "good": "down",
+    "freq": "M",
+    "measure": "",
+    "period": "Sep '26",
+    "obs_date": "2026-09-01",
+    "value": 6.5,
+    "prior": 6.4,
+    "chg": 0.1,
+    "history": [
+     [
+      "Oct '25",
+      6.9
+     ],
+     [
+      "Nov '25",
+      6.6
+     ],
+     [
+      "Dec '25",
+      6.8
+     ],
+     [
+      "Jan '26",
+      6.5
+     ],
+     [
+      "Feb '26",
+      6.7
+     ],
+     [
+      "Mar '26",
+      6.7
+     ],
+     [
+      "Apr '26",
+      6.9
+     ],
+     [
+      "May '26",
+      6.6
+     ],
+     [
+      "Jun '26",
+      6.5
+     ],
+     [
+      "Jul '26",
+      6.4
+     ],
+     [
+      "Aug '26",
+      6.4
+     ],
+     [
+      "Sep '26",
+      6.5
+     ]
+    ],
+    "src": "Statistics Canada 2062815"
+   },
+   {
+    "key": "ca_gdp",
+    "name": "Real GDP",
+    "group": "ca",
+    "unit": "%",
+    "dec": 1,
+    "good": "up",
+    "freq": "M",
+    "measure": "m/m",
+    "period": "Jul '26",
+    "obs_date": "2026-07-01",
+    "value": -0.0,
+    "prior": 0.37,
+    "chg": -0.38,
+    "history": [
+     [
+      "Aug '25",
+      -0.06
+     ],
+     [
+      "Sep '25",
+      0.22
+     ],
+     [
+      "Oct '25",
+      -0.28
+     ],
+     [
+      "Nov '25",
+      0.09
+     ],
+     [
+      "Dec '25",
+      0.11
+     ],
+     [
+      "Jan '26",
+      -0.01
+     ],
+     [
+      "Feb '26",
+      0.16
+     ],
+     [
+      "Mar '26",
+      -0.15
+     ],
+     [
+      "Apr '26",
+      0.65
+     ],
+     [
+      "May '26",
+      0.33
+     ],
+     [
+      "Jun '26",
+      0.37
+     ],
+     [
+      "Jul '26",
+      -0.0
+     ]
+    ],
+    "src": "Statistics Canada 65201210"
+   }
+  ]
  },
  "NEWS": {
   "corn": [
@@ -6009,10 +7123,10 @@
   ],
   "wheat": [
    [
-    "2026-10-22 18:59 UTC",
-    "www.producer.com",
+    "2026-10-22 18:49 UTC",
+    "www.albertafarmexpress.ca",
     "U.S. Grain/Oilseed Review: Soybeans rebound, little movement for corn, wheat",
-    "https://news.google.com/rss/articles/CBMisgFBVV95cUxQRWFyYW1lWHpTSGJyT2FSNUFQS3Vtd1NmY1Q0Rjk3RG1NTGU1S3o0Y1Y4QUx6SnBMV1RlUE1ZbWZMRkVab1VINTFnUGFjVF9kTUs3azNST25MU0VlNmI5WVRaNERERUdBSWNObDRHcHZsRXFQekRnOV93NG1qN01sNXdJdC1nd1NtMEJsUVpyYy1VVVZVeHRZOW8wMldkNFJSZFpsVXlXd3Zpem95RmEzQU53?oc=5"
+    "https://news.google.com/rss/articles/CBMivgFBVV95cUxQMng0bWh1OWRoYUxCVjgxb0FuZ3F1MHBrSHZaSTU3MFREUEJVWE05amtLNGhSakJxUGw0MEY2SVBlNE1IcmhrSkdnY3AwQUpRQzE0MDA2Y3NzYjhiYkhkTktrUUp4ajdaM0Zpb1RWeU56LXBmVEVGc1Jib0VOTWhhU3l2LWJBSmxhd0g4b0tJcmg1dmRNWTBaS2JIejRnNHB0MGg0QmlhR0tTbVZQSXAwOFhoYlZPUWdIbFIzTll3?oc=5"
    ],
    [
     "2026-10-22 16:57 UTC",
@@ -6025,6 +7139,12 @@
     "www.indexbox.io",
     "USDA Export Sales: Soybeans and Corn Outpace Wheat - News and Statistics",
     "https://news.google.com/rss/articles/CBMijAFBVV95cUxNeUlVbnM1ME1JR2lucDN1YUs4dXkwN1FnOXBRQ2FIYjJDZXQ0ZjlISHJGQ0pOd05SeldFOG5UdkMtQ3FuWF9EekhkdVZ6ZkhqZXdyNHViR1JYZV9DWWlVZXl5bGdSdE8xd1NVc2Q3MEFCUGVaZXhEV3kzZ1ppVDd2Z2RKM1NVVl82bHZxbg?oc=5"
+   ],
+   [
+    "2026-10-22 16:05 UTC",
+    "www.vietnam.vn",
+    "Natural gas prices fell for the fourth consecutive session to $2.79/MMBtu.",
+    "https://news.google.com/rss/articles/CBMilAFBVV95cUxPd2huQXdXcFQwNDR0RkppSnB2ZmZvcDA5RW5aelBYa1NmNWlPVlZRZ3kwdDlZLWdaMFNMbzZ4MW02U1V5NHlnSFBzcVFmWEU0ZllFZ2twS3RVRWF1Z0JfcThfYTk5czZXOWt1QXJrX2RkcS05X01qSXhkRW9QVklQT2E1YXNTMjEzM1RKSDdEczBFYlA5?oc=5"
    ],
    [
     "2026-10-22 15:24 UTC",
@@ -6049,12 +7169,6 @@
     "www.agrolatam.com",
     "U.S. Wheat Market Faces New Crisis as Exports Fall and Farm Prices Weaken",
     "https://news.google.com/rss/articles/CBMihAFBVV95cUxQWUFGdndON2lBd0pjbGg1VFFjVEpXRUpoeHpEQVBaNzJydTA5dmNqeWpXWFU0NHV3eGsxVnRaems3TFhTMTVIMEhCOFFTZFNmbzByWWJQakdtU2ZETC02anpTcXRXNWpnaG9uMnNyUEJWclNJMzhhUFFJTERiTVplRi1OYmY?oc=5"
-   ],
-   [
-    "2026-10-22 10:13 UTC",
-    "english.nv.ua",
-    "Russian grain exports collapse fourfold as Black Sea ports stall",
-    "https://news.google.com/rss/articles/CBMilwFBVV95cUxPNWRuXzBiYThJcV8xOG9lc1RYSXNHMnBaVGNxLUJHaEoyT1dLemdUSGVuSXJPSWs2N2VsWGRLUFliSS16Qk5XN05pbXFYU2EyQ2lUeURWQUFxN0VlcmFsZmFMSzA0NTRmVEp6Wnk1X0tYYnpPVkFmeTRzTk5CeGJNR2lGUVdyTzBBOWxfQ1p5WnQ0a3NIdWcw0gGQAUFVX3lxTE82Mk9pVVFkTXM0Y2tYVm5lbDFCWnByb2lmTFd2V29XZmczazBsTWdHTEE0amc5bUROUGZNV2dlQ2szNTZUcmhRb3dRQUZZUXQ0OGIyeUtFNWIyYjh4MUM4Si1oY01uMGZHczJodWgyUVNPSWZnYjltanJDMDVYbGo3ZnZ2bjBNRHJDWlg2VDJrNg?oc=5"
    ]
   ],
   "soybeans": [
@@ -6065,28 +7179,16 @@
     "https://news.google.com/rss/articles/CBMivgFBVV95cUxNN19iMXk3YnYxZ3JwWFBlSFVrdEE3TmlLNmhoYVlxallOZWtFVU5oSGlhS1lUM2Rva21EN0dDcUZ0dkRoaUk3NTRKMHA2MFJvREQ4VDY4ZU5kVkR3YWJKYUR2SDMyYy1FRC1ZV19hVjBQcGoxY3JLWFJEV3ktbFVaQ0s0dFhYR1dVMGo2U0xjSm5SUHgxdll5c3p1Sk5TbEtwR2drMTN5Q1ZmTmM4MGZZbS1QU3o1ZmR1QmlZRGNn?oc=5"
    ],
    [
+    "2026-10-22 18:52 UTC",
+    "www.bernama.com",
+    "CPO Futures End Higher On Firmer Soybean Oil Futures, Export Outlook",
+    "https://news.google.com/rss/articles/CBMiY0FVX3lxTFBmTUlUNGVQOC1OV29EMjMzZlpBWjdQNEgwblYwYXJVVE1UbXdyVVZEMHlFOGF0YUJnc0RNdnZKaF9HU3pBR1hLMUY1TWI0S3FTZGVuNncwR2FaOGQ4LXdPQjJRMA?oc=5"
+   ],
+   [
     "2026-10-22 18:49 UTC",
     "www.country-guide.ca",
     "U.S. Grain/Oilseed Review: Soybeans rebound, little movement for corn, wheat",
     "https://news.google.com/rss/articles/CBMitwFBVV95cUxNajRvMmR5NnlLRjFnWUdlVUl2dTI5ekkza3lWQUIwMmEwc2NHYWswVDVjMjJUQU5jUjhtVFBOZmNJT3BwTmFtRjUtQnhIRXpiV2FVR3NibVFmOVMtYWx0VktKODlLandlblF5SEdWV2JLNDhJY1ZmQUI0UXdZMk9rZ2JHRmVTYS05U1VNLWVyZk5QS19QNXl2VHpsbzRMZ2U5Z3dRdkpvV0pRSXRjbW1aZWFwaElvcEE?oc=5"
-   ],
-   [
-    "2026-10-22 18:35 UTC",
-    "kchanews.com",
-    "China Trade Uncertainty Adds Pressure to U.S. Soybean Markets",
-    "https://news.google.com/rss/articles/CBMimAFBVV95cUxQMWlhNWhwcDdlek81bkVOR0g4U1Y2OFJ1UDhkSnlNTnJlTEJvZ3pHUko2cUhIdjQ5U09taGxYaTd0MFd3bGVrX2pqWU5YNUR3VmJ6RlNEUkRSZlY2VlZUSE81dDRuVEl0ZzNZTHROYVBQREdBVTNzdTN2WmQ1aUZ4RlJuUXJVR3VNUnVzcm5CaFhuQkpnRVdFWA?oc=5"
-   ],
-   [
-    "2026-10-22 16:40 UTC",
-    "www.indexbox.io",
-    "USDA Export Sales: Soybeans and Corn Outpace Wheat - News and Statistics",
-    "https://news.google.com/rss/articles/CBMijAFBVV95cUxNeUlVbnM1ME1JR2lucDN1YUs4dXkwN1FnOXBRQ2FIYjJDZXQ0ZjlISHJGQ0pOd05SeldFOG5UdkMtQ3FuWF9EekhkdVZ6ZkhqZXdyNHViR1JYZV9DWWlVZXl5bGdSdE8xd1NVc2Q3MEFCUGVaZXhEV3kzZ1ppVDd2Z2RKM1NVVl82bHZxbg?oc=5"
-   ],
-   [
-    "2026-10-22 14:50 UTC",
-    "www.stuttgartdailyleader.com",
-    "Arkansas soybean harvest close to finish, Mississippi River at Memphis shrinks again",
-    "https://news.google.com/rss/articles/CBMivgFBVV95cUxOdXF0OFI2ZGNEVUd1MElILUFVMW1mNWY5akVYeHdNRE5PU3J6VUhEWE82cWVjcS1yQk5hYUN4WWtDV01GWjl0aHBpSVl3em5nOEVrVTd4RVIteEREekI5LUxyYlZ5R3Q4bW5HekJpU0c0cW9LaGdvM1ZlMHhXb3ZTUjBjQ1RzTWEza2NiVFItdUVybGJRb3FCZHcySjB4ZDd0Sy1HNFBraGd3RjBXSm9IUU42OG4tcFIyUDZPaG9B?oc=5"
    ],
    [
     "2026-10-22 13:59 UTC",
@@ -6101,10 +7203,22 @@
     "https://news.google.com/rss/articles/CBMikgFBVV95cUxPQ2JYdFpxaEZwU0t1UExtZzVvQXluZmJGcGRQOUUxdEpicXItN2JyZ3JFVXhfTEY5d1dxSHZmbE5qZms3THltc3BsSmVDeXIyNXVvYUNVMTBXZGJUSU1MS3dHdmNxX0QzSE5sV1N2VEo1WFF4QjU3U1JxOFo1MlhzYnRjX0pTeXQ4emtjdUJTcWZJdw?oc=5"
    ],
    [
-    "2026-10-22 09:10 UTC",
-    "ukragroconsult.com",
-    "Wheat and soybeans decline, while corn rises in Chicago on Wednesday",
-    "https://news.google.com/rss/articles/CBMipgFBVV95cUxONUJOcDk0cUk5anVaQ1c5VTA1QkRobVVUWllURU9nU3ZnTWppNVlaR3dGTVhycmVlQjlJQWxhcmcxbkt0VkVuQXNYM3VBMTdjaEJmWUx4endjSEZXbFpTSDN6cG16UkdkTjE2YTc4Q0RFOVdHTzNZdi1wVFpDSk1MYWg4WmU1TDVLc3NZSkZGUW9tSDRZSTNuWllteDZpQi03Z2dDa1BR?oc=5"
+    "2026-10-22 07:49 UTC",
+    "leadership.ng",
+    "India Threatens 45% Tariff On Soybean Cargoes Linked To Nigeria",
+    "https://news.google.com/rss/articles/CBMijgFBVV95cUxPQ2ZsMU5EVFF3NEdMQVBMdkJ6U1otMFJSaXNMX2JjTE91d0xZYUNlTGRpMXJDZUNGeW1BU1g4RUFGQnlaRUI1WVpScDNSQ3lZSWV2M1NjWm4teVFWUzUtQzhrem5Db3c0YjZjTWhpNkZkWHB5SkFxWU5WblhuZlJ6M29PY1V2RUIzemJ2OHVR?oc=5"
+   ],
+   [
+    "2026-10-22 06:55 UTC",
+    "commodity-board.com",
+    "Soybean Market Overview: Record US Crop Meets Strong Export Demand — CMB News",
+    "https://news.google.com/rss/articles/CBMijwFBVV95cUxPejdsNTdfeDdkQnRZeVplNWFrWXpfdUdERUcxRmZTb3k4SGRDQV9YTTR2eUZVUHVIaGxrNkNMMjdQeHljTXNZcHNoaWRyc1hXQTJkU1BXdHRSVlpxdmNSbmN6UEo0Y0R6X0Jzc3hRbEE4YTE0MmhKMWhTcDBERmRjbUw4SmdPYzRROWxoOExFYw?oc=5"
+   ],
+   [
+    "2026-10-21 20:41 UTC",
+    "www.indexbox.io",
+    "Brazil Soybean Planting Hits 30.1% for 2026/27, Prices Ease - News and Statistics",
+    "https://news.google.com/rss/articles/CBMiiAFBVV95cUxQUmR5YWxrLTdTTjFNV2trYV9jcFVpeGRKOG1JcDQ4cm5TWkIxejU4cFBJVm5uMUVzNlBnTklNQ3ZtNTBtYVdIYWtQOHVyWXpubDc3SldIVkUwczBYZUFjdEtRV1lWZ0cyUzZGbXhNWUZKNEVmeHhfUHU0emNReXkwOG5rUWtlTUw5?oc=5"
    ]
   ],
   "fx": [
