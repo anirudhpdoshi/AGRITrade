@@ -606,7 +606,7 @@ def settles(D, N):
 
 
 # ------------------------------------------------------------------ USDA export sales (needs FAS_API_KEY)
-FAS = "https://apps.fas.usda.gov/OpenData/api/esr"
+FAS = "https://api.fas.usda.gov/api/esr"   # key goes in the X-Api-Key header
 ESR_MATCH = {"corn": ["corn"], "soybeans": ["soybeans"], "wheat": ["all wheat", "wheat - all", "wheat"]}
 
 
@@ -621,8 +621,12 @@ def exports(D, N):
     if last and NOW - datetime.fromisoformat(last) < timedelta(hours=6):
         print("  checked <6h ago — skipping")
         return False
-    H = {**UA, "API_KEY": key}
+    H = {"X-Api-Key": key}
     comms = get(f"{FAS}/commodities", headers=H).json()
+    try:
+        latest_my = {str(x.get("commodityCode")): int(x["marketYear"]) for x in get(f"{FAS}/datareleasedates", headers=H).json() if x.get("marketYear")}
+    except Exception:
+        latest_my = {}
     E = D.setdefault("exports", {})
     changed = []
     for k, names in ESR_MATCH.items():
@@ -636,7 +640,8 @@ def exports(D, N):
         stored = {w[0]: w[2] for w in ex["weeks"]}
         best = None
         for c in cand[:3]:
-            for my in (NOW.year + 1, NOW.year):
+            years = [latest_my[str(c["commodityCode"])]] if str(c["commodityCode"]) in latest_my else []
+            for my in years + [y for y in (NOW.year + 1, NOW.year) if y not in years]:
                 try:
                     rows = get(f"{FAS}/exports/commodityCode/{c['commodityCode']}/allCountries/marketYear/{my}", headers=H).json()
                 except Exception:
