@@ -281,7 +281,7 @@
 
   /* keyless reference-rate poll — used when no key, or the stream goes quiet */
   function pollRef() {
-    if (document.hidden) return;
+    if (document.hidden || window.DESK_LOCKED) return;
     if (ws && Date.now() - liveTickAt < 90000) return;   // stream healthy
     fetch("https://api.coinbase.com/v2/exchange-rates?currency=USD", { cache: "no-store" })
       .then(function (r) { return r.json(); })
@@ -294,7 +294,7 @@
     return [].map.call(document.querySelectorAll("details.rail-card"), function (d) { return d.open; });
   }
   function pollData() {
-    if (document.hidden) return;
+    if (document.hidden || window.DESK_LOCKED) return;
     fetch("data.json?t=" + Date.now(), { cache: "no-store" })
       .then(function (r) { if (!r.ok) throw r.status; return r.json(); })
       .then(function (j) {
@@ -346,7 +346,7 @@
     if (mergeLive(L)) rerender(before); else paintStrip();
   }
   function pollLive() {
-    if (document.hidden) return;
+    if (document.hidden || window.DESK_LOCKED) return;
     var h = { Accept: "application/vnd.github.raw+json" };
     if (liveEtag) h["If-None-Match"] = liveEtag;
     fetch(LIVE_API, { headers: h, cache: "no-store" })

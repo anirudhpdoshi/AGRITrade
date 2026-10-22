@@ -247,7 +247,73 @@ table.es-tbl{font-size:12.5px} table.es-tbl tr.hl-row td{color:var(--amber)}
 @media (prefers-reduced-motion:reduce){.dot.on,.flash-up,.flash-dn{animation:none}}
 </style>
 </head>
-<body>
+<body class="locked">
+<!-- owner passcode gate · SHA-256 of the passcode only (no plain text) · re-locks after 20 min idle -->
+<style>
+body.locked{overflow:hidden}
+body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-select:none}
+#gateOverlay{position:fixed;inset:0;z-index:99999;background:rgba(10,15,22,.96);display:flex;align-items:center;justify-content:center;padding:16px}
+#gateBox{background:var(--panel,#101825);border:1px solid var(--line2,#28374e);border-radius:12px;padding:28px 24px;max-width:340px;width:100%;text-align:center;color:var(--ink,#dbe4f0)}
+#gateBox h2{margin:0 0 6px;font-size:18px;color:#fff}
+#gateBox p{margin:0 0 16px;font-size:13px;color:var(--muted,#8494ab)}
+#gateInput{width:100%;box-sizing:border-box;padding:11px;border-radius:8px;border:1px solid #33465f;background:var(--bg,#0a0f16);color:#fff;font-size:16px;text-align:center;letter-spacing:2px}
+#gateBtn{margin-top:12px;width:100%;padding:11px;border:0;border-radius:8px;background:#1f6feb;color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+#gateBtn:disabled{opacity:.5;cursor:default}
+#gateErr{min-height:18px;margin-top:10px;font-size:12.5px;color:#ff9d97}
+#gateLockBtn{position:fixed;left:12px;bottom:12px;z-index:9998;background:var(--panel,#101825);color:var(--muted,#8494ab);border:1px solid #33465f;border-radius:8px;padding:6px 11px;font-size:12px;cursor:pointer;display:none}
+</style>
+<div id="gateOverlay" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <form id="gateBox" autocomplete="off">
+    <h2 id="gateTitle">Grain &amp; USD/CAD Desk</h2>
+    <p id="gateMsg">Enter the owner passcode to open the desk.</p>
+    <input id="gateInput" type="password" inputmode="text" placeholder="Passcode" aria-label="Passcode" autocomplete="current-password">
+    <button id="gateBtn" type="submit">Unlock</button>
+    <div id="gateErr" aria-live="polite"></div>
+  </form>
+</div>
+<button id="gateLockBtn" type="button" title="Lock the desk now">&#128274; Lock</button>
+<script>
+(function(){
+  "use strict";
+  var HASH="5d7c5b4e5343d38fe8c3de0956bce9d031848ed6373d05ee6110cc87811347bf";
+  var IDLE_MS=20*60*1000, KEY="deskGateAt", ACT="deskGateActive";
+  var ov=document.getElementById("gateOverlay"), lk=document.getElementById("gateLockBtn"),
+      inp=document.getElementById("gateInput"), btn=document.getElementById("gateBtn"),
+      err=document.getElementById("gateErr"), msg=document.getElementById("gateMsg");
+  var fails=0, coolUntil=0;
+  function ss(k,v){ try{ if(v===undefined) return sessionStorage.getItem(k); if(v===null) sessionStorage.removeItem(k); else sessionStorage.setItem(k,v); }catch(e){ return null; } }
+  function lastActive(){ return +(ss(ACT)||0); }
+  function touch(){ if(!window.DESK_LOCKED) ss(ACT, String(Date.now())); }
+  function lock(reason){
+    window.DESK_LOCKED=true; ss(KEY,null); ss(ACT,null);
+    document.body.classList.add("locked"); ov.style.display="flex"; lk.style.display="none";
+    msg.textContent = reason==="idle" ? "Locked after 20 minutes without activity. Enter the passcode to continue." : "Enter the owner passcode to open the desk.";
+    inp.value=""; setTimeout(function(){ try{ inp.focus(); }catch(e){} }, 50);
+  }
+  function unlock(){
+    window.DESK_LOCKED=false; ss(KEY,"ok"); touch();
+    document.body.classList.remove("locked"); ov.style.display="none"; lk.style.display="block"; err.textContent="";
+  }
+  async function sha(t){ var b=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)); return Array.from(new Uint8Array(b)).map(function(x){ return x.toString(16).padStart(2,"0"); }).join(""); }
+  document.getElementById("gateBox").addEventListener("submit", async function(e){
+    e.preventDefault();
+    if(Date.now()<coolUntil){ err.textContent="Too many attempts — wait "+Math.ceil((coolUntil-Date.now())/1000)+" s."; return; }
+    var v=inp.value.trim(); if(!v) return;
+    btn.disabled=true;
+    var ok=(await sha(v))===HASH;
+    btn.disabled=false;
+    if(ok){ fails=0; unlock(); }
+    else { fails++; inp.value=""; err.textContent="Incorrect passcode."+(fails>=5?" Locked for 30 s.":""); if(fails>=5){ coolUntil=Date.now()+30000; fails=0; } }
+  });
+  lk.addEventListener("click", function(){ lock("manual"); });
+  ["pointerdown","keydown","scroll","touchstart","wheel"].forEach(function(ev){ window.addEventListener(ev, touch, {passive:true}); });
+  function check(){ if(!window.DESK_LOCKED && Date.now()-lastActive()>IDLE_MS) lock("idle"); }
+  document.addEventListener("visibilitychange", function(){ if(!document.hidden) check(); });
+  setInterval(check, 15000);
+  /* start locked unless this tab unlocked within the last 20 minutes */
+  if(ss(KEY)==="ok" && Date.now()-lastActive()<=IDLE_MS){ unlock(); } else { lock("start"); }
+})();
+</script>
 
 <div class="snapshot-banner" id="status-strip" role="status" aria-live="polite"><b>STATIC SNAPSHOT</b> — built Thu, Oct 22, 2026 · 2:28 p.m. EDT (America/Toronto) — data frozen at build time from verified records, the same drop-in series behind the desk cards. News, alerts and the economic calendar sit in each tab's right-hand rail, frozen as held at build time. The live dashboard is the gated app; this copy does not update.</div>
 
