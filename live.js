@@ -22,7 +22,7 @@
   var CADENCE = {
     fx_spot: 15, grains_quote: 30, energy: 120, news: 240,
     crosses: 1440, fx_closes: 1440, yields: 1440, policy: 1440, sentiment: 1440,
-    options: 1440, grains_settle: 1440, calendar: 10080, releases: 46080, cftc_fx: 10080, cftc_grains: 10080
+    options: 1440, grains_settle: 1440, calendar: 10080, releases: 46080, macro: 240, cftc_fx: 10080, cftc_grains: 10080
   };
 
   /* ------------------------------------------------------------------ utils */
@@ -54,11 +54,12 @@
   }
   /* hours of Sat/Sun (ET) between two instants — so Monday doesn't look stale */
   function weekendMs(a, b) {
-    var ms = 0, step = 3600000;
-    a = Math.max(a, b - 45 * 86400000);
-    for (var t = a; t < b; t += step) {
+    // whole weekend days between a and b (ET); one Intl call per day, capped at 60 days
+    var ms = 0, day = 86400000;
+    a = Math.max(a, b - 60 * day);
+    for (var t = a; t < b; t += day) {
       var wd = etParts(new Date(t)).wd;
-      if (wd === "Sat" || wd === "Sun") ms += Math.min(step, b - t);
+      if (wd === "Sat" || wd === "Sun") ms += Math.min(day, b - t);
     }
     return ms;
   }
@@ -293,7 +294,7 @@
           var k = t.getAttribute("data-src");
           if (before[k] !== DATA.meta.asof[k]) { t.classList.add("just-updated"); setTimeout(function () { t.classList.remove("just-updated"); }, 2600); }
         });
-        if (last !== null && liveTickAt && liveTickAt > new Date(DATA.meta.asof.fx_spot).getTime()) paintSpot(last, false);
+        if (last !== null && liveTickAt && liveTickAt > new Date(DATA.meta.asof.fx_spot).getTime()) { lastFwdPaint = 0; paintSpot(last, false); }
         paintPills(); paintStrip();
       })
       .catch(function () {});

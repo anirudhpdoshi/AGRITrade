@@ -23,7 +23,7 @@ FX options, forecast/scenarios/bias, trade template, calendar.
 
 Usage:  python scripts/update_data.py [--only fx_spot,news] [--dry-run]
 """
-import argparse, csv, io, json, re, statistics, sys, traceback
+import argparse, csv, io, json, re, sys, traceback
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
@@ -394,9 +394,137 @@ def releases(D, N):
     return True
 
 
+# ------------------------------------------------------------------ macro monitor
+# (key, name, group, source, series id, transform, unit, decimals, good-direction, sanity range of the RAW series)
+#   transform: level | yoy (% vs 12 months earlier) | diff (change vs prior, K) | pct (% change vs prior)
+#   good: "up" / "down" = which way is economically stronger; "heat" = inflation (up = hotter)
+MACRO = [
+    ("us_cpi",      "CPI",                 "us", "fred", "CPIAUCSL",        "yoy",   "%",  1, "heat", (200, 500)),
+    ("us_core_cpi", "Core CPI",            "us", "fred", "CPILFESL",        "yoy",   "%",  1, "heat", (200, 500)),
+    ("us_core_pce", "Core PCE",            "us", "fred", "PCEPILFE",        "yoy",   "%",  1, "heat", (80, 200)),
+    ("us_nfp",      "Nonfarm payrolls",    "us", "fred", "PAYEMS",          "diff",  "K",  0, "up",   (120000, 200000)),
+    ("us_ur",       "Unemployment rate",   "us", "fred", "UNRATE",          "level", "%",  1, "down", (2, 15)),
+    ("us_claims",   "Initial jobless claims", "us", "fred", "ICSA",         "level", "K",  0, "down", (100000, 1500000)),
+    ("us_cclaims",  "Continuing claims",   "us", "fred", "CCSA",            "level", "K",  0, "down", (800000, 6000000)),
+    ("us_ahe",      "Avg hourly earnings", "us", "fred", "CES0500000003",   "yoy",   "%",  1, "heat", (20, 60)),
+    ("us_retail",   "Retail sales",        "us", "fred", "RSAFS",           "pct",   "%",  1, "up",   (400000, 1200000)),
+    ("us_gdp",      "Real GDP (q/q ann.)", "us", "fred", "A191RL1Q225SBEA", "level", "%",  1, "up",   (-40, 40)),
+    ("us_umich",    "UMich sentiment",     "us", "fred", "UMCSENT",         "level", "",   1, "up",   (20, 120)),
+    ("ca_cpi",      "CPI",                 "ca", "valet", "V41690973",      "yoy",   "%",  1, "heat", (100, 250)),
+    ("ca_trim",     "CPI-trim",            "ca", "valet", "CPI_TRIM",       "level", "%",  1, "heat", (-2, 12)),
+    ("ca_median",   "CPI-median",          "ca", "valet", "CPI_MEDIAN",     "level", "%",  1, "heat", (-2, 12)),
+    ("ca_emp",      "Employment change",   "ca", "statcan", 2062811,        "diff",  "K",  1, "up",   (15000, 25000)),
+    ("ca_ur",       "Unemployment rate",   "ca", "statcan", 2062815,        "level", "%",  1, "down", (2, 20)),
+    ("ca_gdp",      "Real GDP",            "ca", "statcan", 65201210,       "pct",   "%",  1, "up",   (1500000, 3500000)),
+    ("ca_retail",   "Retail sales",        "ca", "statcan", 52367097,       "pct",   "%",  1, "up",   (40000, 120000)),
+]
+
+
+def _fred(sid, start):
+    url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}&cosd={start}"
+    rows = list(csv.reader(io.StringIO(get(url).text)))
+    return [(r[0], float(r[1])) for r in rows[1:] if len(r) > 1 and _num(r[1]) is not None]
+
+
+def _valet_series(sid, n):
+    j = valet(f"observations/{sid}/json?recent={n}")
+    return sorted((o["d"], _num(o.get(sid, {}).get("v"))) for o in j["observations"] if _num(o.get(sid, {}).get("v")) is not None)
+
+
+def _statcan(vec, n):
+    r = requests.post("https://www150.statcan.gc.ca/t1/wds/rest/getDataFromVectorsAndLatestNPeriods",
+                      headers={**UA, "Content-Type": "application/json"},
+                      data=json.dumps([{"vectorId": vec, "latestN": n}]), timeout=25)
+    r.raise_for_status()
+    obj = r.json()[0]
+    if obj.get("status") != "SUCCESS":
+        raise RuntimeError(f"StatCan v{vec}: {obj.get('status')}")
+    return sorted((p["refPer"][:10], float(p["value"])) for p in obj["object"]["vectorDataPoint"] if p.get("value") is not None)
+
+
+def _label(d, freq):
+    y, m, day = int(d[:4]), int(d[5:7]), int(d[8:10])
+    if freq == "W":
+        return f"{MONTHS[m-1]} {day}"
+    if freq == "Q":
+        return f"Q{(m-1)//3+1} '{str(y)[2:]}"
+    return f"{MONTHS[m-1]} '{str(y)[2:]}"
+
+
+def _freq(points):
+    if len(points) < 3:
+        return "M"
+    a, b = datetime.fromisoformat(points[-2][0]), datetime.fromisoformat(points[-1][0])
+    gap = (b - a).days
+    return "W" if gap <= 8 else "Q" if gap >= 80 else "M"
+
+
+def _transform(points, how):
+    out = []
+    byd = dict(points)
+    for i, (d, v) in enumerate(points):
+        if how == "level":
+            out.append((d, v))
+        elif how in ("diff", "pct") and i > 0:
+            pv = points[i-1][1]
+            out.append((d, (v - pv) if how == "diff" else (v / pv - 1) * 100))
+        elif how == "yoy":
+            base = byd.get(f"{int(d[:4]) - 1}{d[4:]}")
+            if base:
+                out.append((d, (v / base - 1) * 100))
+    return out
+
+
+def macro(D, N):
+    meta = D["meta"]
+    last = meta.get("macro_checked")
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=2):
+        print("  checked <2h ago — skipping")
+        return False
+    old = {m["key"]: m for m in D.get("macro", [])}
+    start = (NOW - timedelta(days=800)).date().isoformat()
+    out, errs = [], {}
+    for key, name, group, src, sid, how, unit, dec, good, (lo, hi) in MACRO:
+        try:
+            raw = (_fred(sid, start) if src == "fred" else _valet_series(sid, 30) if src == "valet" else _statcan(sid, 30))
+            if len(raw) < 3:
+                raise RuntimeError("too few points")
+            if not all(lo <= v <= hi for _, v in raw[-6:]):
+                raise RuntimeError(f"values outside sanity range {lo}-{hi}: {raw[-1][1]} — wrong series id?")
+            fq = _freq(raw)
+            pts = _transform(raw, how)
+            if how == "diff" or (unit == "K" and how == "level"):
+                pts = [(d, v / 1000 if (how == "level" and src == "fred") else v) for d, v in pts]  # FRED claims are persons -> K
+            pts = pts[-12:]
+            if len(pts) < 2:
+                raise RuntimeError("too few transformed points")
+            val, prv = pts[-1][1], pts[-2][1]
+            out.append({"key": key, "name": name, "group": group, "unit": unit, "dec": dec, "good": good,
+                        "freq": fq, "measure": {"yoy": "y/y", "diff": "m/m", "pct": "m/m", "level": ""}[how],
+                        "period": _label(pts[-1][0], fq), "obs_date": pts[-1][0],
+                        "value": round(val, dec + 1), "prior": round(prv, dec + 1), "chg": round(val - prv, dec + 1),
+                        "history": [[_label(d, fq), round(v, dec + 1)] for d, v in pts],
+                        "src": {"fred": "FRED", "valet": "Bank of Canada Valet", "statcan": "Statistics Canada"}[src] + f" {sid}"})
+        except Exception as e:
+            errs[key] = f"{type(e).__name__}: {e}"[:200]
+            if key in old:
+                out.append(old[key])  # keep the last good reading
+    if not out:
+        raise RuntimeError(f"all macro series failed: {errs}")
+    D["macro"] = out
+    meta["macro_checked"] = iso(NOW)
+    meta["asof"]["macro"] = iso(NOW)
+    if errs:
+        meta["macro_errors"] = errs
+    else:
+        meta.pop("macro_errors", None)
+    print(f"  macro: {len(out) - len(errs)} fresh, {len(errs)} failed {list(errs)}")
+    return True
+
+
 BLOCKS = [("fx_spot", fx_spot), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("releases", releases)]
+          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro)]
 
 
 def main():

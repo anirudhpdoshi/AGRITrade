@@ -189,6 +189,23 @@ details.rail-card[open ] .hint-closed{display:none}
 .es-tblh{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:16px 0 4px;font-weight:700}
 table.es-tbl{font-size:12.5px} table.es-tbl tr.hl-row td{color:var(--amber)}
 
+.kv.ev-past{opacity:.55}
+
+.m-legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-family:"IBM Plex Mono",monospace;font-size:11px;margin:4px 0 2px}
+.m-h{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px;font-weight:700}
+.m-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px}
+.mcard{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px 8px;min-width:0}
+.mcard .mk{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mcard .mk span{color:var(--faint);font-weight:500;text-transform:none;letter-spacing:0}
+.mcard .mv{font-family:"IBM Plex Mono",monospace;font-size:21px;font-weight:600;margin-top:2px}
+.mcard .mc{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mcard .mc span{color:var(--faint);font-weight:400}
+.mcard .mp{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);margin-top:4px}
+.m-spark{display:block;width:100%;height:34px;margin-top:6px}
+.mdiff{border-color:#33465f;background:#111d2e}
+.heat{color:var(--amber)} .cool{color:var(--cyan)}
+@media (max-width:760px){.m-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mcard .mv{font-size:18px}.mcard .mk,.mcard .mc{white-space:normal}}
+
 /* ---- live layer ---- */
 .snapshot-banner.live{background:#0f2a1d;border-bottom-color:#2f8a5b;color:#c9f0da}
 .snapshot-banner.stale{background:#3a2a10;border-bottom-color:#a0782a;color:#ffe6b8}
@@ -252,6 +269,24 @@ function asOf(key, withTime){
   if(withTime){ o.hour="numeric"; o.minute="2-digit"; }
   return d.toLocaleString("en-US",o)+(withTime?" ET":"");
 }
+/* calendar times are stored as printed by the source calendar (US Mountain);
+   evEpoch converts them so the page can show Toronto time and sort past/future */
+function zonedMs(y,mo,d,h,mi,tz){
+  var guess=Date.UTC(y,mo-1,d,h,mi), p={};
+  new Intl.DateTimeFormat("en-US",{timeZone:tz,year:"numeric",month:"numeric",day:"numeric",hour:"numeric",minute:"numeric",hourCycle:"h23"})
+    .formatToParts(new Date(guess)).forEach(function(x){ p[x.type]=+x.value; });
+  return guess-(Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute)-guess);
+}
+function evEpoch(e){
+  var dm=/^(\d{4})-(\d{2})-(\d{2})$/.exec(e.date), tm=/^(\d{1,2}):(\d{2})\s*(am|pm)$/i.exec(e.time||"");
+  if(!dm) return NaN;
+  if(!tm) return zonedMs(+dm[1],+dm[2],+dm[3],12,0,DATA.fx.events_tz||"America/Denver");
+  return zonedMs(+dm[1],+dm[2],+dm[3],(+tm[1])%12+(tm[3].toLowerCase()==="pm"?12:0),+tm[2],DATA.fx.events_tz||"America/Denver");
+}
+function etLabel(ms,withDay){
+  return new Date(ms).toLocaleString("en-US",withDay?{timeZone:"America/Toronto",weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}:{timeZone:"America/Toronto",hour:"numeric",minute:"2-digit"});
+}
+function safeUrl(u){ return /^https?:\/\//i.test(u||"") ? esc(u) : "#"; }
 function isAuto(key){ var m=DATA.meta||{}; return m.asof && m.built_at && new Date(m.asof[key])>new Date(m.built_at); }
 function fmt(n, d){ return n.toLocaleString("en-US",{minimumFractionDigits:(d==null?0:d), maximumFractionDigits:(d==null?0:d)}); }
 function money(v){ return "$" + fmt(v, v < 10 ? (Math.round(v*100)%25===0?2:4) : 2); }
@@ -291,7 +326,7 @@ function railCard(title, latestHTML, bodyHTML, open){
 
 function newsRailHTML(items){
   var lis = items.map(function(n){
-    return '<li><div class="news-meta">'+n[0]+' · '+esc(n[1])+'</div><a href="'+n[3]+'" target="_blank" rel="noopener">'+esc(n[2])+'</a></li>';
+    return '<li><div class="news-meta">'+n[0]+' · '+esc(n[1])+'</div><a href="'+safeUrl(n[3])+'" target="_blank" rel="noopener">'+esc(n[2])+'</a></li>';
   }).join("");
   var latest = items[0];
   var latestHTML = 'Latest: <b>'+esc(latest[2])+'</b><br><span class="news-meta">'+latest[0]+' · '+esc(latest[1])+'</span>';
@@ -311,30 +346,43 @@ function grainAlertsHTML(key){
 }
 
 function fxAlertsHTML(){
-  var body='<div class="alert"><div class="a-t">Spread alert</div><div class="a-big">\u22125.6 bps</div>'+
-    '<div class="a-sub">10Y US\u2013Canada spread move today</div>'+
-    '<div class="kv"><span class="kk">Current spread</span><span class="vv">116.8 bps</span></div>'+
-    '<div class="kv"><span class="kk">Day open</span><span class="vv">122.4 bps</span></div>'+
-    '<div class="kv"><span class="kk">US 10Y</span><span class="vv">4.959%</span></div>'+
-    '<div class="kv"><span class="kk">Canada 10Y</span><span class="vv">3.791%</span></div>'+
-    '<div class="kv"><span class="kk">Checked</span><span class="vv">Oct 22, 2026 \u00b7 1:32pm ET</span></div></div>'+
-    '<div class="checkline">Monitor: US\u2013Canada yield spread monitor \u00b7 hourly weekday checks, 8:30am\u20134:30pm ET \u00b7 an alert fires when a tenor\u2019s spread moves \u22655 bps on the day. This entry is frozen exactly as the feed held it at build time, with its real checked stamp.</div>'+
+  var fx=DATA.fx, hits=fx.rates.filter(function(r){ return r.dod!=null && Math.abs(r.dod)>=5; })
+    .sort(function(x,y){ return Math.abs(y.dod)-Math.abs(x.dod); });
+  var cards=hits.map(function(r){
+    return '<div class="alert"><div class="a-t">Spread alert · '+r.t+'</div><div class="a-big">'+sgn(r.dod,1)+' bps</div>'+
+      '<div class="a-sub">'+r.t+' US–Canada spread move on the day</div>'+
+      '<div class="kv"><span class="kk">Current spread</span><span class="vv">'+fmt(r.sp,1)+' bps</span></div>'+
+      '<div class="kv"><span class="kk">Prior close</span><span class="vv">'+fmt(r.sp-r.dod,1)+' bps</span></div>'+
+      '<div class="kv"><span class="kk">US '+r.t+' · Canada '+r.t+'</span><span class="vv">'+fmt(r.us,2)+'% · '+fmt(r.ca,2)+'%</span></div></div>';
+  }).join("");
+  var body=(cards||'<div class="checkline">No US–Canada spread moved ≥5 bps on the day (closes '+asOf('yields')+').</div>')+
+    '<div class="checkline">Rule: an alert shows when any tenor’s spread moves ≥5 bps versus the prior official close. Price-level crossings pop up as toasts while the page is open.</div>'+
     '<div class="checkline" id="fx-levelcheck">'+fxLevelCheck(DATA.fx.feed.mid)+'</div>'+
-    '<div class="stamp">Alerts frozen at build \u00b7 Thu, Oct 22, 2026 \u00b7 generated only from observed moves between consecutive checks, deduped, newest first in the live app</div>';
-  return railCard('Alerts — frozen at build',
-    'Latest alert: <b>10Y US\u2013Canada spread \u22125.6 bps today</b> \u00b7 116.8 vs day open 122.4 \u00b7 checked Oct 22, 2026 \u00b7 1:32pm ET', body);
+    '<div class="stamp">Spread alerts from official closes '+asOf('yields')+' · level check re-priced on every live tick</div>';
+  var latest=hits.length?'<b>'+hits[0].t+' US–Canada spread '+sgn(hits[0].dod,1)+' bps</b> · '+fmt(hits[0].sp,1)+' vs '+fmt(hits[0].sp-hits[0].dod,1)+' · closes '+asOf('yields')
+    : 'No spread alert · largest move '+(function(){ var m=fx.rates.filter(function(r){return r.dod!=null;}).sort(function(x,y){return Math.abs(y.dod)-Math.abs(x.dod);})[0]; return m?m.t+' '+sgn(m.dod,1)+' bps':'n/a'; })();
+  return railCard('Alerts', latest, body);
 }
 
 function fxCalendarHTML(){
-  var fx=DATA.fx;
-  var evRows=fx.events.map(function(e){
-    return '<div class="kv"><span class="kk">'+e.date+' \u00b7 '+esc(e.time)+' \u00b7 '+e.ccy+' \u2014 '+esc(e.event)+(e.impact==='High'?' <span class="chip miss">HIGH</span>':'')+'</span><span class="vv">'+(e.fc?('fc '+esc(e.fc)):'')+(e.prev?(' \u00b7 prev '+esc(e.prev)):'')+'</span></div>';
+  var fx=DATA.fx, now=Date.now();
+  var evs=fx.events.map(function(e){ return {e:e, t:evEpoch(e)}; }).sort(function(x,y){ return x.t-y.t; });
+  var rows=evs.map(function(o){
+    var e=o.e, past=o.t<now;
+    return '<div class="kv'+(past?' ev-past':'')+'"><span class="kk">'+etLabel(o.t,true)+' · '+e.ccy+' — '+esc(e.event)+(e.impact==='High'?' <span class="chip miss">HIGH</span>':'')+(past?' <span class="chip inline">OUT</span>':'')+'</span>'+
+      '<span class="vv">'+(e.fc?('fc '+esc(e.fc)):'')+(e.prev?(' · prev '+esc(e.prev)):'')+'</span></div>';
   }).join("");
-  var body=evRows+
-    '<p class="read" style="font-size:13px">Nearest high-impact cluster: <b>Wed, Oct 28</b> \u2014 BoC rate decision, Monetary Policy Report and press conference land the same day as the FOMC decision and press conference. Seasonality context (2010\u20132026): October averages +0.25% with 58.8% of Octobers positive \u2014 context only, never a signal.</p>'+
-    '<div class="stamp">Calendar frozen as pulled Oct 21, 2026, 07:05 ET \u00b7 times as displayed on the source calendar \u00b7 this snapshot carries no countdown and no live verification \u00b7 verified actuals appear only on this FX tab (Latest verified releases tile)</div>';
-  return railCard('Economic calendar — frozen',
-    'Next high-impact cluster: <b>Wed, Oct 28</b> \u2014 BoC decision, MPR &amp; press conference the same day as the FOMC decision &amp; press conference', body);
+  var nx=evs.filter(function(o){ return o.e.impact==='High' && o.t>now; })[0], cluster='', latest='No upcoming high-impact event in the stored calendar';
+  if(nx){
+    var day=nx.e.date, names=evs.filter(function(o){ return o.e.impact==='High' && o.e.date===day; }).map(function(o){ return o.e.ccy+' '+o.e.event; });
+    cluster='<p class="read" style="font-size:13px">Next high-impact: <b>'+etLabel(nx.t,true)+' ET</b> — '+esc(names.join(' · '))+'.</p>';
+    latest='Next high-impact: <b>'+etLabel(nx.t,true)+' ET</b> — '+esc(names.slice(0,3).join(' · '))+(names.length>3?' …':'');
+  }
+  var sc=fx.season&&fx.season.cur;
+  var season=sc?'<p class="read" style="font-size:13px">Seasonality ('+esc(sc.month_full)+'): average '+sgn(sc.avg_pct,2,'%')+' with '+fmt(sc.pct_positive,1)+'% of years positive — '+esc(sc.label.toLowerCase())+'.</p>':'';
+  var body=rows+cluster+season+
+    '<div class="stamp">Times converted to Toronto (ET) · calendar list as pulled '+asOf('calendar',true)+' · released numbers appear in the Macro monitor and Latest releases tiles</div>';
+  return railCard('Economic calendar', latest, body);
 }
 
 /* ---------------- fan levels: live-re-anchored stack, as the app renders it ----------------
@@ -1096,11 +1144,64 @@ function sparkPath(vals, W, H){
 function kpi(label, valHTML, subHTML, spark, id){
   return '<div class="kpi"'+(id?' id="'+id+'"':'')+'><div class="kpi-k">'+label+'</div><div class="kpi-v">'+valHTML+'</div><div class="kpi-s">'+(subHTML||'')+'</div>'+(spark||'')+'</div>';
 }
+/* ---------------- Macro monitor ---------------- */
+function macroSpark(h, colr){
+  var v=h.map(function(x){ return x[1]; });
+  if(v.length<2) return '';
+  var W=160, H=34, mn=Math.min.apply(null,v), mx=Math.max.apply(null,v), r=(mx-mn)||1;
+  var pts=v.map(function(y,i){ return [(i/(v.length-1)*(W-6)+3), (H-4-(y-mn)/r*(H-8))]; });
+  var d=pts.map(function(p,i){ return (i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1); }).join('');
+  var z=(mn<0&&mx>0)?'<line x1="0" x2="'+W+'" y1="'+(H-4-(0-mn)/r*(H-8)).toFixed(1)+'" y2="'+(H-4-(0-mn)/r*(H-8)).toFixed(1)+'" stroke="#28374e" stroke-dasharray="2 3"/>':'';
+  var L=pts[pts.length-1];
+  return '<svg viewBox="0 0 '+W+' '+H+'" class="m-spark" aria-hidden="true">'+z+'<path d="'+d+'" fill="none" stroke="'+colr+'" stroke-width="1.6" stroke-linejoin="round"/>'+
+    '<circle cx="'+L[0].toFixed(1)+'" cy="'+L[1].toFixed(1)+'" r="2.8" fill="'+colr+'"/></svg>';
+}
+function macroCard(m){
+  var u=m.unit==='K'?'K':m.unit, ch=m.chg, flat=Math.abs(ch)<Math.pow(10,-m.dec)/2;
+  var tone=flat?'neu':m.good==='heat'?(ch>0?'heat':'cool'):((m.good==='up')===(ch>0)?'up':'dn');
+  var col={up:'#3fb97f',dn:'#e0655f',heat:'#e8a33d',cool:'#38b6c9',neu:'#8494ab'}[tone];
+  var arrow=flat?'▸':ch>0?'▲':'▼';
+  var chU=(m.unit==='%'||m.measure==='y/y')?' pp':m.unit==='K'?'K':'';
+  var mv=Math.abs(m.value)<Math.pow(10,-m.dec)/2?0:m.value;   /* no "-0.0" */
+  var val=(m.measure==='m/m'&&mv>0?'+':'')+fmt(mv,m.dec)+u;
+  var hist=m.history.map(function(h){ return h[0]+': '+fmt(h[1],m.dec)+u; }).join(' · ');
+  return '<div class="mcard" title="'+esc(m.name+' — last '+m.history.length+' readings: '+hist)+'">'+
+    '<div class="mk">'+esc(m.name)+(m.measure?' <span>'+m.measure+'</span>':'')+'</div>'+
+    '<div class="mv">'+val+'</div>'+
+    '<div class="mc '+tone+'">'+arrow+' '+(flat?'unch.':sgn(ch,m.dec,chU))+' <span>vs '+esc(m.history.length>1?m.history[m.history.length-2][0]:'prior')+'</span></div>'+
+    macroSpark(m.history,col)+
+    '<div class="mp">'+esc(m.period)+' · '+({W:'weekly',M:'monthly',Q:'quarterly'}[m.freq]||'')+'</div></div>';
+}
+function macroDiffs(){
+  var M={}; (DATA.macro||[]).forEach(function(m){ M[m.key]=m; });
+  var fx=DATA.fx, out=[];
+  function card(name, val, sub, tip){ return '<div class="mcard mdiff" title="'+esc(tip)+'"><div class="mk">'+name+'</div><div class="mv">'+val+'</div><div class="mc neu">'+sub+'</div><div class="mp">US minus Canada</div></div>'; }
+  if(M.us_cpi&&M.ca_cpi){ var g=M.us_cpi.value-M.ca_cpi.value; out.push(card('CPI gap', sgn(g,1,' pp'), 'US '+fmt(M.us_cpi.value,1)+'% vs CA '+fmt(M.ca_cpi.value,1)+'%', 'Inflation differential: '+M.us_cpi.period+' vs '+M.ca_cpi.period)); }
+  if(M.us_ur&&M.ca_ur){ var u=M.us_ur.value-M.ca_ur.value; out.push(card('Unemployment gap', sgn(u,1,' pp'), 'US '+fmt(M.us_ur.value,1)+'% vs CA '+fmt(M.ca_ur.value,1)+'%', 'Labour-market slack differential')); }
+  var fr=/(\d{3})-(\d{3})/.exec(fx.policy.fed_range||'');
+  if(fr){ var fed=(+fr[1]+ +fr[2])/200, pg=fed-fx.policy.corra_now; out.push(card('Policy rate gap', sgn(pg,2,' pp'), 'Fed mid '+fmt(fed,3)+'% vs BoC '+fmt(fx.policy.corra_now,2)+'%', 'Fed funds range midpoint minus BoC overnight target')); }
+  var two=fx.rates.filter(function(r){ return r.t==='2Y'; })[0];
+  if(two){ out.push(card('2Y yield gap', fmt(two.sp,0)+' bps', '<span class="'+cls(two.wow)+'">'+sgn(two.wow,1)+'</span> on the week', 'US 2Y minus Canada 2Y — the rate gap USD/CAD tracks most closely')); }
+  return out.join('');
+}
+function fxMacroHTML(){
+  var all=DATA.macro||[];
+  if(!all.length) return '<div class="tile wide" data-src="macro"><h2>Macro monitor</h2><p class="note">US and Canada indicators load on the next data refresh.</p></div>';
+  function grp(g){ return all.filter(function(m){ return m.group===g; }).map(macroCard).join(''); }
+  var errs=DATA.meta.macro_errors?Object.keys(DATA.meta.macro_errors).length:0;
+  return '<div class="tile wide" data-src="macro"><h2>Macro monitor <span class="h2note">— latest print, change vs prior, last 12 readings · hover a card for the values</span></h2>'+
+    '<div class="m-legend"><span class="up">▲ stronger</span><span class="dn">▼ weaker</span><span class="heat">▲ inflation hotter</span><span class="cool">▼ inflation cooler</span></div>'+
+    '<h3 class="m-h">United States <span class="chip inline">USD</span></h3><div class="m-grid">'+grp('us')+'</div>'+
+    '<h3 class="m-h">Canada <span class="chip inline">CAD</span></h3><div class="m-grid">'+grp('ca')+'</div>'+
+    '<h3 class="m-h">US − Canada differentials <span class="h2note">— what moves USD/CAD</span></h3><div class="m-grid">'+macroDiffs()+'</div>'+
+    '<div class="stamp">FRED (BLS, BEA, DOL, Census, UMich) · Bank of Canada Valet · Statistics Canada · checked '+asOf('macro',true)+' · refreshed every 2h'+(errs?' · '+errs+' series kept at their last good reading':'')+'</div></div>';
+}
 function fxKpiHTML(){
   var fx=DATA.fx, R={}; fx.rates.forEach(function(r){ R[r.t]=r; });
   var chg=(fx.feed.mid/fx.spot.ref-1)*100, p=fx.pos, wti=fx.energy[0], ten=R["10Y"];
   var closes=fx.closes.map(function(c){ return c[1]; }), nets=(p.series||[]).map(function(r){ return r.net; });
-  var ev=fx.events.filter(function(e){ return e.impact==='High'; })[0];
+  var ev=fx.events.map(function(e){ return {e:e,t:evEpoch(e)}; }).filter(function(o){ return o.e.impact==='High' && o.t>Date.now(); })
+    .sort(function(a,b){ return a.t-b.t; }).map(function(o){ return o.e; })[0];
   return '<div class="tile wide kpi-strip">'+
     kpi('USD/CAD', '<span id="kpi-spot">'+fmt(fx.feed.mid,5)+'</span>', '<span id="kpi-spot-chg" class="'+cls(chg)+'">'+sgn(chg,2,'%')+'</span> vs '+fmt(fx.spot.ref,4), sparkPath(closes,120,26), 'kpi-spot-card')+
     kpi('10Y US–CA', fmt(ten.sp,1)+'<small> bps</small>', '<span class="'+cls(ten.dod)+'">'+sgn(ten.dod,1)+'</span> d/d · <span class="'+cls(ten.wow)+'">'+sgn(ten.wow,1)+'</span> w/w')+
@@ -1278,7 +1379,7 @@ function renderFX(){
   /* closes chart */
   T.closes='<div class="tile wide" data-src="fx_closes"><h2>USD/CAD — daily closes <span class="h2note">· END-OF-DAY CADENCE · '+fmtShortDate(fx.closes[0][0])+' – '+fmtShortDate(fx.closes[fx.closes.length-1][0])+'</span></h2>'+
     fxClosesSVG(fx)+
-    '<div class="stamp">END-OF-DAY CADENCE · stored daily bars · last updated Wed, Oct 21, 2026 (last bar '+fmt(fx.closes[fx.closes.length-1][1],5)+') · every bar is dated on the axis; period high and low are marked on the chart with values and dates · MA20 is not drawn: only 18 daily bars are stored in this window and a 20-day average needs 20 closes — no line is fabricated from a short window; the desk\u2019s full-series 20D close range ('+fmt(fx.levels.s20,4)+' \u2013 '+fmt(fx.levels.r20,4)+') is carried in the Key levels tile below</div></div>';
+    '<div class="stamp">END-OF-DAY CADENCE · '+esc((DATA.meta.sources&&DATA.meta.sources.fx_closes)||'stored daily bars')+' · last bar '+fmtDate(fx.closes[fx.closes.length-1][0])+' ('+fmt(fx.closes[fx.closes.length-1][1],5)+') · every bar is dated on the axis; period high and low are marked on the chart with values and dates · MA20 is not drawn: only 18 daily bars are stored in this window and a 20-day average needs 20 closes — no line is fabricated from a short window; the desk\u2019s full-series 20D close range ('+fmt(fx.levels.s20,4)+' \u2013 '+fmt(fx.levels.r20,4)+') is carried in the Key levels tile below</div></div>';
   /* rates table */
   var rAsOf=fx.rates.map(function(r){ return r.asof; }).filter(Boolean).sort().pop();
   var rrows=fx.rates.map(function(r){
@@ -1292,7 +1393,7 @@ function renderFX(){
   }).join("");
   T.yields='<div class="tile wide" data-src="yields"><h2>US–Canada yield spreads <span class="h2note">— official closes, '+asOf('yields')+' · spreads in bps</span></h2>'+
     '<table><thead><tr><th>Tenor</th><th>US</th><th>Canada</th><th>Spread</th><th>Δ 1D</th><th>Δ Week</th><th>20D %ile</th></tr></thead><tbody>'+rrows+'</tbody></table>'+
-    '<div class="read">Spreads run '+fmt(Math.min.apply(null,fx.rates.map(function(r){return r.sp;})),0)+'–'+fmt(Math.max.apply(null,fx.rates.map(function(r){return r.sp;})),0)+' bps across tenors, widest at the '+fx.widest+'. Every tenor narrowed on the week. US par curve (Oct 21): 3M '+fmt(fx.treasury['3M'],2)+'% · 2Y '+fmt(fx.treasury['2Y'],2)+'% · 10Y '+fmt(fx.treasury['10Y'],2)+'% · 30Y '+fmt(fx.treasury['30Y'],2)+'%.</div>'+
+    '<div class="read">Spreads run '+fmt(Math.min.apply(null,fx.rates.map(function(r){return r.sp;})),0)+'–'+fmt(Math.max.apply(null,fx.rates.map(function(r){return r.sp;})),0)+' bps across tenors, widest at the '+fx.widest+'. '+(function(){ var w=fx.rates.filter(function(r){return r.wow!=null;}), nar=w.filter(function(r){return r.wow<0;}).length; return nar===w.length?'Every tenor narrowed on the week.':nar===0?'Every tenor widened on the week.':nar+' of '+w.length+' tenors narrowed on the week.'; })()+' US par curve ('+asOf('yields')+'): 3M '+fmt(fx.treasury['3M'],2)+'% · 2Y '+fmt(fx.treasury['2Y'],2)+'% · 10Y '+fmt(fx.treasury['10Y'],2)+'% · 30Y '+fmt(fx.treasury['30Y'],2)+'%.</div>'+
     '<div class="stamp">Yields = official daily closes ('+asOf('yields')+') · spread Δ vs prior official close · Canada 20Y has no official benchmark series — the 20Y spread uses the desk\u2019s stored series (see desk notes)</div></div>';
   /* bias + scenarios */
   var sc=fx.scen;
@@ -1345,20 +1446,20 @@ function renderFX(){
     '<div class="stamp">Energy quotes are delayed public reads as stored by the desk — delay labels printed on the tile, as the desk carries them</div></div>';
   /* levels & trade template */
   T.levels='<div class="tile" data-src="fx_closes"><h2>Key levels &amp; conditional template</h2>'+
-    '<div class="kv"><span class="kk">Prior-session pivot (H+L+C)/3 · Oct 20</span><span class="vv">'+fmt(fx.levels.pivot,5)+'</span></div>'+
+    '<div class="kv"><span class="kk">Prior-session pivot (H+L+C)/3</span><span class="vv">'+fmt(fx.levels.pivot,5)+'</span></div>'+
     '<div class="kv"><span class="kk">20D range (closes)</span><span class="vv">'+fmt(fx.levels.s20,4)+' – '+fmt(fx.levels.r20,4)+'</span></div>'+
     '<div class="kv"><span class="kk">50D range (closes)</span><span class="vv">'+fmt(fx.levels.s50,4)+' – '+fmt(fx.levels.r50,4)+'</span></div>'+
     '<div class="kv"><span class="kk">Template</span><span class="vv" style="font-family:inherit;font-weight:600;font-size:12.5px">'+esc(fx.trade.dir)+'</span></div>'+
     '<div class="kv"><span class="kk">Entry zone · stop · target</span><span class="vv">'+fmt(fx.trade.entry[0],4)+'–'+fmt(fx.trade.entry[1],4)+' · '+fmt(fx.trade.stop,4)+' · '+fmt(fx.trade.targets[0],4)+'</span></div>'+
     '<div class="kv"><span class="kk">R:R to first target</span><span class="vv">'+fmt(fx.trade.rr,2)+' · stop '+fmt(fx.trade.stop_pips,1)+' pips</span></div>'+
     '<p class="read" style="font-size:13px">Event risk: '+esc(fx.trade.event_note)+'.</p>'+
-    '<div class="stamp">Levels from stored daily closes through Oct 16, 2026 (close-based ranges) · pivot substitutes for VWAP until intraday pulls accumulate — VWAP unavailable: '+esc(fx.vwap_reason)+' · conditional template, educational only</div></div>';
+    '<div class="stamp">20D/50D ranges from daily closes through '+fmtDate(fx.closes[fx.closes.length-1][0])+' \u00b7 pivot from the prior session\u2019s high/low/close \u00b7 template entry/stop/targets are the desk\u2019s Oct 16 build and do not move with the ranges \u00b7 pivot substitutes for VWAP until intraday pulls accumulate — VWAP unavailable: '+esc(fx.vwap_reason)+' · conditional template, educational only</div></div>';
   /* forwards — CIP-theoretical, recomputed by live.js on every spot tick */
   T.forwards='<div class="tile wide" data-src="fx_spot"><h2>Forward curve <span class="h2note">— CIP-theoretical</span></h2>'+
     '<p class="note" style="margin:0 0 6px;font-size:12.5px;color:#b9c7da">CIP-theoretical \u2014 computed from spot + rate differentials, not traded quotes</p>'+
     '<div id="fx-fwd">'+fxForwardsHTML(fx.feed.mid)+'</div>'+
     '<div class="stamp">F = spot \u00d7 (1 + CAD rate \u00d7 T) \u00f7 (1 + US rate \u00d7 T) \u00b7 sub-1Y legs: US 3M bill '+fmt(fx.treasury["3M"],2)+'% vs BoC overnight '+fmt(fx.policy.corra_now,2)+'% \u00b7 1Y\u20135Y legs: benchmark yields from the spreads table ('+asOf('yields')+') \u00b7 negative points = US rates higher, USD at a forward discount \u00b7 <span id="fx-fwd-spot">spot '+fmt(fx.feed.mid,5)+'</span></div></div>';
-  html+=fxKpiHTML()+T.spot+T.levels+T.closes+T.releases+T.cftc+T.yields+T.forwards+T.bias+T.policy+T.forecast+T.sentiment+T.energy;
+  html+=fxKpiHTML()+fxMacroHTML()+T.spot+T.levels+T.closes+T.releases+T.cftc+T.yields+T.forwards+T.bias+T.policy+T.forecast+T.sentiment+T.energy;
   html+='</div><aside class="rail">'+fxAlertsHTML()+fxCalendarHTML()+newsRailHTML(NEWS.fx)+'</aside></div>';
   document.getElementById('panel-fx').innerHTML=html;
 }
