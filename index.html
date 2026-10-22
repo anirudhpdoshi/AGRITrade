@@ -117,6 +117,36 @@ svg{display:block;width:100%;height:auto}
 .trendline-note{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:#b18cff;margin:10px 0 0}
 .note{font-size:11.5px;color:var(--muted);margin:8px 0 0;line-height:1.55}
 
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 332px;gap:14px;align-items:start}
+.layout>.grid{min-width:0}
+.rail{display:flex;flex-direction:column;gap:14px;position:sticky;top:70px;min-width:0}
+details.rail-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+details.rail-card>summary{cursor:pointer;padding:13px 15px;list-style:none}
+details.rail-card>summary::-webkit-details-marker{display:none}
+details.rail-card>summary:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.rail-title{font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.rail-title .hint{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:0;text-transform:none;color:var(--cyan);font-weight:500;white-space:nowrap}
+details.rail-card .hint-open{display:none}
+details.rail-card[open ] .hint-open{display:inline}
+details.rail-card[open ] .hint-closed{display:none}
+.rail-latest{font-size:12.5px;color:#b9c7da;margin-top:6px;line-height:1.5}
+.rail-latest b{color:#fff}
+.rail-body{padding:2px 15px 13px;border-top:1px solid var(--line)}
+.rail-body .news-list li{padding:8px 0}
+.rail-body .stamp{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);margin-top:10px;border-top:1px dashed var(--line);padding-top:9px;line-height:1.55}
+.alert{border:1px solid #6e2b26;background:#2a1210;border-radius:8px;padding:10px 12px 4px;margin-top:10px}
+.alert .a-t{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#ff9d97}
+.alert .a-big{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:600;color:#ff9d97;line-height:1.25}
+.alert .a-sub{font-size:12.5px;color:#e8c9c5}
+.alert .kv{border-color:#46201c;font-size:12.5px}
+.alert .kv .kk{color:#c9a49f}
+.checkline{font-size:12.5px;color:#b9c7da;padding:8px 0;border-bottom:1px solid var(--line);line-height:1.55}
+.checkline:last-child{border-bottom:0}
+.checkline b{color:#fff}
+.consensus{border:1px solid var(--line2);border-radius:8px;padding:10px 14px 4px;margin-top:10px;background:var(--panel2)}
+.consensus h3{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:2px 0 4px;font-weight:700}
+@media (max-width:1020px){.layout{grid-template-columns:1fr}.rail{position:static}}
+
 @media (max-width:760px){
   .grid{grid-template-columns:1fr}
   .big{font-size:25px}
@@ -136,7 +166,7 @@ svg{display:block;width:100%;height:auto}
 </head>
 <body>
 
-<div class="snapshot-banner" role="note"><b>STATIC SNAPSHOT</b> — built Thu, Oct 22, 2026 · 11:30 a.m. EDT (America/Toronto) — data frozen at build time from verified records, the same drop-in series behind the desk cards. The live dashboard is the gated app; this copy does not update.</div>
+<div class="snapshot-banner" role="note"><b>STATIC SNAPSHOT</b> — built Thu, Oct 22, 2026 · 1:51 p.m. EDT (America/Toronto) — data frozen at build time from verified records, the same drop-in series behind the desk cards. News, alerts and the economic calendar sit in each tab's right-hand rail, frozen as held at build time. The live dashboard is the gated app; this copy does not update.</div>
 
 <header class="topbar">
   <h1>Grain &amp; USD/CAD Dashboard — Snapshot</h1>
@@ -157,7 +187,7 @@ svg{display:block;width:100%;height:auto}
 </main>
 
 <footer class="foot">
-  Snapshot of the merged dashboard refreshed Oct 22, 2026 from the previous day's verified records — the same manual drop-in series behind the daily cards. Grain settlements and per-contract OI run through Tue, Oct 20, 2026; options chains are the Oct 21, 2026 pull (OI as of the Oct 20 close) with far-month chains at their Sep 30, 2026 vintage; CFTC figures are the weekly report dated Tue, Oct 13, 2026. Export Sales runs through the Oct 22, 2026 release (week ending Oct 15, 2026), verified Oct 22, 2026. Each fan's market marker and right-edge label stack are frozen at the build-time delayed quote (9:30am ET, Thu, Oct 22, 2026). The USD/CAD spot tile is a demo-account session snapshot, labeled as such on its face. Nothing on this page refreshes.
+  Snapshot of the merged dashboard refreshed Oct 22, 2026 from the previous day's verified records — the same manual drop-in series behind the daily cards. Grain settlements and per-contract OI run through Tue, Oct 20, 2026; options chains are the Oct 21, 2026 pull (OI as of the Oct 20 close) with far-month chains at their Sep 30, 2026 vintage; CFTC figures are the weekly report dated Tue, Oct 13, 2026. Export Sales runs through the Oct 22, 2026 release (week ending Oct 15, 2026), verified Oct 22, 2026. Each fan's market marker and right-edge label stack are frozen at the build-time delayed quote (9:30am ET, Thu, Oct 22, 2026). The USD/CAD headline spot is the feed value refreshed Thu, Oct 22, 2026, 12:01 p.m. ET, frozen at build; the demo-account session snapshot is carried only as a clearly labeled fallback. Forward outrights are CIP-theoretical, computed at build from that spot and rate differentials — not traded quotes. News, alerts and the economic calendar are frozen in each tab's right-hand rail. Nothing on this page refreshes.
 </footer>
 
 <script>
@@ -223,12 +253,58 @@ fx: [
  ["2026-10-20 16:13 UTC","www.bloomberg.com","Canadian Dollar Hits Nearly One-Month High After Alberta Vote","https://www.bloomberg.com/news/articles/2026-10-20/canadian-dollar-hits-nearly-one-month-high-after-alberta-vote"]]
 };
 
-function newsTile(items){
+/* ---------------- right-panel rails (frozen at build) ---------------- */
+function railCard(title, latestHTML, bodyHTML, open){
+  return '<details class="rail-card"'+(open?' open':'')+'><summary><div class="rail-title"><span>'+title+'</span>'+
+    '<span class="hint hint-closed">expand &#9662;</span><span class="hint hint-open">collapse &#9652;</span></div>'+
+    (latestHTML?'<div class="rail-latest">'+latestHTML+'</div>':'')+'</summary><div class="rail-body">'+bodyHTML+'</div></details>';
+}
+
+function newsRailHTML(items){
   var lis = items.map(function(n){
     return '<li><div class="news-meta">'+n[0]+' · '+esc(n[1])+'</div><a href="'+n[3]+'" target="_blank" rel="noopener">'+esc(n[2])+'</a></li>';
   }).join("");
-  return '<div class="tile wide"><h2>News rail <span class="h2note">— frozen headlines as pulled Oct 21, 2026</span></h2><ul class="news-list">'+lis+'</ul>'+
-    '<div class="stamp">Headlines frozen in this snapshot · publish times UTC as carried on the rail · titles link out to the publisher</div></div>';
+  var latest = items[0];
+  var latestHTML = 'Latest: <b>'+esc(latest[2])+'</b><br><span class="news-meta">'+latest[0]+' · '+esc(latest[1])+'</span>';
+  return railCard('News — frozen at build', latestHTML,
+    '<ul class="news-list">'+lis+'</ul>'+
+    '<div class="stamp">Headlines frozen in this snapshot as pulled Oct 21, 2026 · publish times UTC as carried on the rail · titles link out to the publisher</div>');
+}
+
+function grainAlertsHTML(key){
+  var g=DATA.grains[key], meta=GMETA[key], FL=fanLevels(g, meta), L=g.fan.intraday[0];
+  var body='<div class="checkline"><b>Level check (frozen):</b> '+esc(FL.read)+'.</div>'+
+    '<div class="checkline">No price-cross alert was recorded in the frozen feed at build time. Crossings are logged only when a delayed quote is observed on both sides of a labeled level between consecutive checks — never from a single reading.</div>'+
+    '<div class="stamp">Alerts &amp; level checks frozen at build · Thu, Oct 22, 2026 · levels are the fan tile\u2019s labeled day-10 stack (walls, expected MAs, \u03c3 bands)</div>';
+  return railCard('Alerts &amp; level checks',
+    'Latest check: market '+money2(L)+' vs the labeled fan levels · '+g.fan.intraday[1]+' · frozen', body);
+}
+
+function fxAlertsHTML(){
+  var body='<div class="alert"><div class="a-t">Spread alert</div><div class="a-big">\u22125.6 bps</div>'+
+    '<div class="a-sub">10Y US\u2013Canada spread move today</div>'+
+    '<div class="kv"><span class="kk">Current spread</span><span class="vv">116.8 bps</span></div>'+
+    '<div class="kv"><span class="kk">Day open</span><span class="vv">122.4 bps</span></div>'+
+    '<div class="kv"><span class="kk">US 10Y</span><span class="vv">4.959%</span></div>'+
+    '<div class="kv"><span class="kk">Canada 10Y</span><span class="vv">3.791%</span></div>'+
+    '<div class="kv"><span class="kk">Checked</span><span class="vv">Oct 22, 2026 \u00b7 1:32pm ET</span></div></div>'+
+    '<div class="checkline">Monitor: US\u2013Canada yield spread monitor \u00b7 hourly weekday checks, 8:30am\u20134:30pm ET \u00b7 an alert fires when a tenor\u2019s spread moves \u22655 bps on the day. This entry is frozen exactly as the feed held it at build time, with its real checked stamp.</div>'+
+    '<div class="checkline"><b>Price level check (frozen):</b> USD/CAD feed value 1.40217 sits above the 20D support 1.4004 and below the prior-session pivot 1.40678 \u2014 no level-cross alert in the frozen feed at build time.</div>'+
+    '<div class="stamp">Alerts frozen at build \u00b7 Thu, Oct 22, 2026 \u00b7 generated only from observed moves between consecutive checks, deduped, newest first in the live app</div>';
+  return railCard('Alerts — frozen at build',
+    'Latest alert: <b>10Y US\u2013Canada spread \u22125.6 bps today</b> \u00b7 116.8 vs day open 122.4 \u00b7 checked Oct 22, 2026 \u00b7 1:32pm ET', body);
+}
+
+function fxCalendarHTML(){
+  var fx=DATA.fx;
+  var evRows=fx.events.map(function(e){
+    return '<div class="kv"><span class="kk">'+e.date+' \u00b7 '+esc(e.time)+' \u00b7 '+e.ccy+' \u2014 '+esc(e.event)+(e.impact==='High'?' <span class="chip miss">HIGH</span>':'')+'</span><span class="vv">'+(e.fc?('fc '+esc(e.fc)):'')+(e.prev?(' \u00b7 prev '+esc(e.prev)):'')+'</span></div>';
+  }).join("");
+  var body=evRows+
+    '<p class="read" style="font-size:13px">Nearest high-impact cluster: <b>Wed, Oct 28</b> \u2014 BoC rate decision, Monetary Policy Report and press conference land the same day as the FOMC decision and press conference. Seasonality context (2010\u20132026): October averages +0.25% with 58.8% of Octobers positive \u2014 context only, never a signal.</p>'+
+    '<div class="stamp">Calendar frozen as pulled Oct 21, 2026, 07:05 ET \u00b7 times as displayed on the source calendar \u00b7 this snapshot carries no countdown and no live verification \u00b7 verified actuals appear only on this FX tab (Latest verified releases tile)</div>';
+  return railCard('Economic calendar — frozen',
+    'Next high-impact cluster: <b>Wed, Oct 28</b> \u2014 BoC decision, MPR &amp; press conference the same day as the FOMC decision &amp; press conference', body);
 }
 
 /* ---------------- fan levels: live-re-anchored stack, as the app renders it ----------------
@@ -416,16 +492,26 @@ function exportSVG(key){
     s+='<rect x="'+x.toFixed(1)+'" y="'+Y(w[2]).toFixed(1)+'" width="'+bwid.toFixed(1)+'" height="'+(PT+ph-Y(w[2])).toFixed(1)+'" fill="'+(isL?'#e8a33d':'#38b6c9')+'" opacity="'+(isL?1:0.85)+'"/>';
     s+='<text x="'+CX(i).toFixed(1)+'" y="'+(Y(w[2])-4).toFixed(1)+'" fill="#8494ab" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+fmtKMT(w[2])+'</text>';
   });
-  /* estimate whiskers with low–high labels (verified ranges only) */
-  var wlab=[];
+  /* estimate whiskers with low–high labels (verified ranges only) —
+     labels staggered between two heights on dark backing plates, and
+     pushed off the bar's own actual-value label, so nothing overprints */
+  var wlab=[], widx=0;
   weeks.forEach(function(w,i){
     if(w[3]==null||w[4]==null) return;
     var cx=CX(i), mid=(w[3]+w[4])/2;
-    wlab.push([cx, Y(mid)-14]);
     s+='<line x1="'+cx+'" y1="'+Y(w[4]).toFixed(1)+'" x2="'+cx+'" y2="'+Y(w[3]).toFixed(1)+'" stroke="#4ade80" stroke-width="2"/>';
     s+='<line x1="'+(cx-5)+'" y1="'+Y(w[4]).toFixed(1)+'" x2="'+(cx+5)+'" y2="'+Y(w[4]).toFixed(1)+'" stroke="#4ade80" stroke-width="2"/>';
     s+='<line x1="'+(cx-5)+'" y1="'+Y(w[3]).toFixed(1)+'" x2="'+(cx+5)+'" y2="'+Y(w[3]).toFixed(1)+'" stroke="#4ade80" stroke-width="2"/>';
-    s+='<text x="'+cx+'" y="'+(Y(mid)-14).toFixed(1)+'" fill="#4ade80" font-size="9" font-family="IBM Plex Mono" text-anchor="middle">'+fmtKMT(w[3])+'–'+fmtKMT(w[4])+'</text>';
+    var barLabY=Y(w[2])-4;
+    var candA=Y(mid)-32, candB=Y(mid)-15, ly=(widx%2===0)?candA:candB;
+    if(Math.abs(ly-barLabY)<15) ly = (ly===candA)?candB:candA;
+    if(Math.abs(ly-barLabY)<15) ly=Y(mid)+24;
+    widx++;
+    wlab.push([cx, ly]);
+    var rl=fmt(Math.round(w[3]/1000))+'k\u2013'+fmt(Math.round(w[4]/1000))+'k MT';
+    var rw=rl.length*5.5+9;
+    s+='<rect x="'+(cx-rw/2).toFixed(1)+'" y="'+(ly-10).toFixed(1)+'" width="'+rw.toFixed(1)+'" height="14" rx="3" fill="#0d141f" opacity="0.9"/>';
+    s+='<text x="'+cx+'" y="'+ly.toFixed(1)+'" fill="#4ade80" font-size="9" font-family="IBM Plex Mono" text-anchor="middle">'+rl+'</text>';
   });
   /* trendline — dashed, labeled at start, end and slope on the line */
   var midI=Math.floor(weeks.length/2), midV=tl[1]+tl[0]*midI;
@@ -475,14 +561,23 @@ function exportTileHTML(key){
   var read="Net sales are "+dir+" over the "+weeks.length+" weeks (trendline "+slopeTxt+"). Latest week (ending "+fmtDate(latest[0])+") at "+fmtKMT(latest[2])+" is "+fmtKVal(Math.abs(diff))+" "+(diff>=0?"above":"below")+" the trendline."+
     " Verified estimates on "+estWeeks.length+" of "+weeks.length+" weeks: "+ni+" inline, "+nb+" beat, "+nm+" miss.";
   var ranges=estWeeks.map(function(w){ return fmtShortDate(w[0])+": "+fmtKMT(w[3])+"–"+fmtKMT(w[4]); }).join(" · ");
+  var cmid=(latest[3]+latest[4])/2, cspread=latest[2]-cmid, cspct=cspread/cmid*100;
+  var consBlock = verdict
+    ? '<div class="consensus"><h3>Consensus vs actual — latest week (w/e '+fmtShortDate(latest[0])+')</h3>'+
+      '<div class="kv"><span class="kk">Consensus — verified estimate range</span><span class="vv">'+fmtFullMT(latest[3])+' – '+fmtFullMT(latest[4])+'</span></div>'+
+      '<div class="kv"><span class="kk">Consensus midpoint</span><span class="vv">'+fmtFullMT(cmid)+'</span></div>'+
+      '<div class="kv"><span class="kk">Actual</span><span class="vv">'+fmtFullMT(latest[2])+'</span></div>'+
+      '<div class="kv"><span class="kk">Spread — actual minus consensus midpoint</span><span class="vv"><span class="'+cls(cspread)+'">'+sgn(cspread,0)+' MT ('+sgn(cspct,1,'%')+')</span></span></div>'+
+      '<div class="kv"><span class="kk">Verdict vs the range</span><span class="vv"><span class="chip '+chipCls+'">'+verdict+'</span></span></div></div>'
+    : '';
   return '<div class="tile wide"><h2>Export Sales — 10-week trend <span class="h2note">USDA FAS · weekly net sales · current marketing year</span></h2>'+
     '<div class="es-head"><div class="k">Latest release · week ending '+fmtDate(latest[0])+' · released '+fmtDate(latest[1])+'</div>'+
     '<div class="es-big">Latest actual (w/e '+fmtShortDate(latest[0])+'): '+fmtFullMT(latest[2])+' <span class="chip '+chipCls+'">'+verdict+'</span></div>'+
-    '<p class="read" style="margin-top:4px">'+vline+'</p></div>'+
+    '<p class="read" style="margin-top:4px">'+vline+'</p></div>'+ consBlock +
     '<p class="trendline-note">Trendline: start '+fmtFullMT(tl[1])+' (w/e '+fmtShortDate(weeks[0][0])+') → end '+fmtFullMT(tl[2])+' (w/e '+fmtShortDate(latest[0])+') · '+fmtTrendSlope(tl[0])+'</p>'+
     '<div class="legend"><span><span class="sw" style="background:#38b6c9"></span>Weekly net sales (actual)</span><span><span class="sw" style="background:#e8a33d"></span>Latest release</span><span><span class="sw" style="background:#b18cff"></span>Trendline (10-week fit, from the verified dataset)</span><span><span class="sw" style="background:#4ade80"></span>Estimate range (verified, low–high)</span></div>'+
     exportSVG(key)+
-    '<p class="note">X axis: week-ending dates in short form, rotated so no two labels overlap. Every bar carries its actual value; the dashed trendline is labeled at its start ('+fmtKMT(tl[1])+') and end ('+fmtKMT(tl[2])+') with its slope on the line. Estimate whiskers carry their low–high label and appear only on weeks with a verified published range — weeks without one carry no marker.</p>'+
+    '<p class="note">X axis: week-ending dates in short form, rotated so no two labels overlap. Every bar carries its actual value; the dashed trendline is labeled at its start ('+fmtKMT(tl[1])+') and end ('+fmtKMT(tl[2])+') with its slope on the line. Estimate whiskers carry their low–high label, staggered between two heights on dark backing plates so no two labels touch, and appear only on weeks with a verified published range — weeks without one carry no marker. The Consensus vs Actual block above the chart states the latest week\u2019s range, midpoint, actual and spread explicitly.</p>'+
     '<p class="note"><span style="color:#4ade80">Verified estimate ranges:</span> '+ranges+'</p>'+
     '<p class="read"><b>Read:</b> '+read+'</p>'+
     '<div class="stamp">DATA NOTE: USDA FAS weekly net sales (current marketing year) · Releases '+fmtDate(weeks[0][1])+' – '+fmtDate(latest[1])+' · Verified estimates on '+estWeeks.length+' of '+weeks.length+' weeks · Verified Oct 22, 2026 · frozen in this snapshot</div></div>';
@@ -640,19 +735,52 @@ function skewSVG(g, meta){
 }
 
 function cftcSVG(series){
-  var W=360,H=120,PT=14,PB=20, pw=W-8, ph=H-PT-PB;
+  var W=760,H=280,PL=58,PR=16,PT=38,PB=42, pw=W-PL-PR, ph=H-PT-PB;
   var vals=series.map(function(r){return r.net;});
-  var mx=Math.max.apply(null,vals.concat([0])), mn=Math.min.apply(null,vals.concat([0]));
-  var bw=pw/series.length;
+  var rawMx=Math.max.apply(null,vals.concat([0])), rawMn=Math.min.apply(null,vals.concat([0]));
+  var rng=(rawMx-rawMn)||1, mx=rawMx+rng*0.16, mn=rawMn-rng*0.16;
+  var slot=pw/series.length, bw=slot*0.55;
   function Y(v){ return PT+ph*(1-(v-mn)/(mx-mn)); }
-  var s='<line x1="4" y1="'+Y(0)+'" x2="'+(4+pw)+'" y2="'+Y(0)+'" stroke="#3d5a80" stroke-width="1"/>';
+  function CX(i){ return PL+slot*i+slot/2; }
+  var s='';
+  for(var gi=0;gi<=4;gi++){ var gy=PT+ph*gi/4, gv=mx-(mx-mn)*gi/4;
+    s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
+    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+(gv>=0?'+':'\u2212')+fmt(Math.round(Math.abs(gv)/1000))+'k</text>'; }
+  if(mn<0) s+='<line x1="'+PL+'" y1="'+Y(0)+'" x2="'+(PL+pw)+'" y2="'+Y(0)+'" stroke="#3d5a80" stroke-width="1.2"/>';
+  /* bars */
   series.forEach(function(r,i){
-    var x=4+i*bw, y=Y(Math.max(r.net,0)), h=Math.abs(Y(r.net)-Y(0));
-    s+='<rect x="'+(x+2).toFixed(1)+'" y="'+(r.net>=0?Y(r.net):Y(0)).toFixed(1)+'" width="'+(bw-4).toFixed(1)+'" height="'+Math.max(h,1).toFixed(1)+'" fill="'+(r.net>=0?'#3fb97f':'#e0655f')+'"/>';
+    var x=CX(i)-bw/2, top=r.net>=0?Y(r.net):Y(0), h=Math.max(Math.abs(Y(r.net)-Y(0)),1);
+    s+='<rect x="'+x.toFixed(1)+'" y="'+top.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" fill="'+(r.net>=0?'#3fb97f':'#e0655f')+'"/>';
   });
-  s+='<text x="4" y="'+(H-4)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">'+series[0].date.slice(5)+'</text>';
-  s+='<text x="'+(4+pw)+'" y="'+(H-4)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end">'+series[series.length-1].date.slice(5)+' (latest)</text>';
-  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Managed money net position, last 10 weekly reports">'+s+'</svg>';
+  /* trend line connecting the weekly nets */
+  var tp=''; series.forEach(function(r,i){ tp+=(tp?'L':'M')+CX(i).toFixed(1)+' '+Y(r.net).toFixed(1); });
+  s+='<path d="'+tp+'" fill="none" stroke="#e8eef4" stroke-width="2"/>';
+  series.forEach(function(r,i){ s+='<circle cx="'+CX(i).toFixed(1)+'" cy="'+Y(r.net).toFixed(1)+'" r="3" fill="#e8eef4"/>'; });
+  /* every bar labeled with its net value (backing plate, clear of the trend line) */
+  series.forEach(function(r,i){
+    var txt=(r.net>=0?'+':'\u2212')+fmt(Math.abs(r.net));
+    var ly = r.net>=0 ? Y(r.net)-17 : Y(r.net)+21;
+    var twd=txt.length*5.9+8;
+    s+='<rect x="'+(CX(i)-twd/2).toFixed(1)+'" y="'+(ly-10).toFixed(1)+'" width="'+twd.toFixed(1)+'" height="14" rx="3" fill="#0d141f" opacity="0.88"/>';
+    s+='<text x="'+CX(i).toFixed(1)+'" y="'+ly.toFixed(1)+'" fill="'+(r.net>=0?'#5fd598':'#ff9d97')+'" font-size="9.5" font-weight="600" font-family="IBM Plex Mono" text-anchor="middle">'+txt+'</text>';
+  });
+  /* every bar labeled with its week date */
+  series.forEach(function(r,i){
+    s+='<text x="'+CX(i).toFixed(1)+'" y="'+(PT+ph+17)+'" fill="#8494ab" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+fmtShortDate(r.date)+'</text>';
+  });
+  s+='<text x="'+PL+'" y="'+(PT+ph+34)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">WEEKLY REPORT DATES \u00b7 WHITE LINE = TREND ACROSS THE 10 WEEKLY NETS</text>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Managed money net position by week, every bar labeled with its net value and report date, with a trend line connecting the weekly nets">'+s+'</svg>';
+}
+
+function cftcRead(series){
+  var last=series[series.length-1], prev=series[series.length-2], ref4=series[series.length-5];
+  var wow=last.net-prev.net, four=last.net-ref4.net;
+  var vals=series.map(function(r){return r.net;});
+  var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals);
+  var pctR=(mx>mn)?Math.round((last.net-mn)/(mx-mn)*100):50;
+  var zone = pctR>=80 ? 'near the top of the range' : pctR<=20 ? 'near the bottom of the range' : 'mid-range';
+  return 'Net exposure trend: week over week <b>'+sgn(wow,0)+'</b> \u00b7 4-week direction '+(four>0?'<b>rising</b>':four<0?'<b>falling</b>':'<b>flat</b>')+
+    ' ('+sgn(four,0)+' vs '+fmtDate(ref4.date)+') \u00b7 latest net sits at <b>'+pctR+'%</b> of its 10-week range ('+sgn(mn,0)+' to '+sgn(mx,0)+') \u2014 '+zone+'.';
 }
 
 /* ---------------- rollover (same drop-in series as the per-commodity rollover cards) ---------------- */
@@ -832,7 +960,7 @@ function renderGrain(key){
   var g=DATA.grains[key], meta=GMETA[key], f=g.fan, last=g.cftc[g.cftc.length-1], prev=g.cftc[g.cftc.length-2];
   var MA50={corn:"5.10", soybeans:"12.75", wheat:"7.05"}[key];
   var wow = last.net - prev.net;
-  var html='<div class="grid">';
+  var html='<div class="layout"><div class="grid">';
   /* fan tile */
   var FL=fanLevels(g, meta);
   html+='<div class="tile wide"><h2>'+meta.name+' '+meta.contract+' — 10-day σ fan <span class="h2note">settle fan anchored Tue, Oct 20, 2026 · live fan re-anchored on the delayed quote frozen at build</span></h2>'+
@@ -869,16 +997,18 @@ function renderGrain(key){
   /* rollover — full card replication */
   html+=rollTileHTML(key);
   /* skew */
-  html+='<div class="tile"><h2>IV skew <span class="h2note">— liquid side · ±2σ window</span></h2>'+ skewSVG(g, meta)+
+  html+='<div class="tile wide"><h2>IV skew <span class="h2note">— liquid side · ±2σ window</span></h2>'+ skewSVG(g, meta)+
     '<div class="legend"><span><span class="sw" style="background:var(--put)"></span>Puts below futures</span><span><span class="sw" style="background:var(--call)"></span>Calls at/above futures</span></div>'+
     '<div class="stamp">Per-strike theoretical IV, end-of-day Oct 20, 2026 vintage (read Oct 21) · window = futures ± 2× the 10-day σ · market-implied, not a prediction</div></div>';
   /* CFTC */
-  html+='<div class="tile"><h2>CFTC managed money <span class="h2note">— weekly, latest verified</span></h2>'+
+  html+='<div class="tile wide"><h2>CFTC managed money <span class="h2note">— weekly, latest verified · every bar labeled, trend line across the weekly nets</span></h2>'+
     '<div class="big" style="color:'+(last.net>=0?'var(--green)':'var(--red)')+'">'+(last.net>=0?'+':'−')+fmt(Math.abs(last.net))+' <span style="font-size:14px;color:var(--muted)">net contracts</span></div>'+
     '<div class="stat-row">'+stat("Long", fmt(last.long)) + stat("Short", fmt(last.short)) +
     stat("Week over week", '<span class="'+cls(wow)+'">'+sgn(wow,0)+'</span>')+
     stat("Report date", "Tue, Oct 13, 2026")+'</div>'+
     cftcSVG(g.cftc)+
+    '<p class="read">'+cftcRead(g.cftc)+'</p>'+
+    '<div class="legend"><span><span class="sw" style="background:#3fb97f"></span>Net long week</span><span><span class="sw" style="background:#e0655f"></span>Net short week</span><span><span class="sw" style="background:#e8eef4"></span>Trend line (weekly nets)</span><span>Value label on every bar, on a dark backing plate so the trend line never overprints it</span></div>'+
     '<div class="stamp">Managed-money net, trailing 10 weekly reports · weekly data — never a live figure · DATA NOTE: latest verified vintage Oct 13, 2026</div></div>';
   /* insight companion: contract facts */
   html+='<div class="tile wide"><h2>Contract facts</h2><div class="facts-cols">'+
@@ -888,16 +1018,17 @@ function renderGrain(key){
     '<div class="kv"><span class="kk">Settle vs MA20</span><span class="vv">'+sgn(f.anchor-parseFloat(f.ma20),2,'')+' ('+sgn((f.anchor/parseFloat(f.ma20)-1)*100,1,'%')+')</span></div>'+
     '<div class="kv"><span class="kk">Settle vs MA50</span><span class="vv">'+sgn(f.anchor-parseFloat(MA50),2,'')+' ('+sgn((f.anchor/parseFloat(MA50)-1)*100,1,'%')+')</span></div>'+
     '</div><div class="stamp">All values frozen from the Oct 21, 2026 verified pull</div></div>';
-  html+='</div>';
-  html+=newsTile(NEWS[key]);
+  html+='</div><aside class="rail">'+grainAlertsHTML(key)+newsRailHTML(NEWS[key])+'</aside></div>';
   document.getElementById('panel-'+key).innerHTML=html;
 }
 
 /* ---------------- FX tab render ---------------- */
 function fxClosesSVG(fx){
-  var rows=fx.closes, W=760,H=260,PL=52,PR=70,PT=16,PB=30, pw=W-PL-PR, ph=H-PT-PB;
+  var rows=fx.closes, W=760,H=300,PL=52,PR=76,PT=22,PB=46, pw=W-PL-PR, ph=H-PT-PB;
   var vals=rows.map(function(r){return r[1];});
-  var lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals), pad=(hi-lo)*0.15; lo-=pad; hi+=pad;
+  var rawLo=Math.min.apply(null,vals), rawHi=Math.max.apply(null,vals);
+  var hiI=vals.indexOf(rawHi), loI=vals.indexOf(rawLo);
+  var lo=rawLo, hi=rawHi, pad=(hi-lo)*0.16; lo-=pad; hi+=pad;
   function X(i){ return PL+pw*i/(rows.length-1); } function Y(v){ return PT+ph*(1-(v-lo)/(hi-lo)); }
   var s='';
   for(var i=0;i<=4;i++){ var gy=PT+ph*i/4, gv=hi-(hi-lo)*i/4;
@@ -907,27 +1038,45 @@ function fxClosesSVG(fx){
   rows.forEach(function(r,i){ if(i>0){ area+='L'+X(i).toFixed(1)+' '+Y(r[1]).toFixed(1); line+='L'+X(i).toFixed(1)+' '+Y(r[1]).toFixed(1); } });
   s+='<path d="'+area+'L'+X(rows.length-1)+' '+(PT+ph)+'L'+X(0)+' '+(PT+ph)+'Z" fill="#38b6c9" opacity="0.10"/>';
   s+='<path d="'+line+'" fill="none" stroke="#38b6c9" stroke-width="2"/>';
+  /* period high marker — value + date, on a backing plate above the point */
+  var hx=X(hiI), hy=Y(rawHi), hTxt='HIGH '+rawHi.toFixed(5)+' \u00b7 '+fmtShortDate(rows[hiI][0]);
+  var hw=hTxt.length*6.4+10;
+  s+='<circle cx="'+hx+'" cy="'+hy+'" r="3.4" fill="#5fd598"/>';
+  s+='<rect x="'+(hx-hw/2).toFixed(1)+'" y="'+(hy-26).toFixed(1)+'" width="'+hw.toFixed(1)+'" height="16" rx="3" fill="#0d141f" opacity="0.9"/>';
+  s+='<text x="'+hx+'" y="'+(hy-14).toFixed(1)+'" fill="#5fd598" font-size="10.5" font-weight="600" font-family="IBM Plex Mono" text-anchor="middle">'+hTxt+'</text>';
+  /* period low marker — value + date (the low is also the last bar) */
+  var lx=X(loI), ly=Y(rawLo), lTxt='LOW '+rawLo.toFixed(5)+' \u00b7 '+fmtShortDate(rows[loI][0]);
+  var lw=lTxt.length*6.4+10;
+  s+='<circle cx="'+lx+'" cy="'+ly+'" r="3.4" fill="#ff9d97"/>';
+  s+='<rect x="'+(lx-lw+8).toFixed(1)+'" y="'+(ly+8).toFixed(1)+'" width="'+lw.toFixed(1)+'" height="16" rx="3" fill="#0d141f" opacity="0.9"/>';
+  s+='<text x="'+(lx+2).toFixed(1)+'" y="'+(ly+20).toFixed(1)+'" fill="#ff9d97" font-size="10.5" font-weight="600" font-family="IBM Plex Mono" text-anchor="end">'+lTxt+'</text>';
+  /* last value */
   var li=rows.length-1;
   s+='<circle cx="'+X(li)+'" cy="'+Y(rows[li][1])+'" r="3.6" fill="#fff"/>';
-  s+='<text x="'+(X(li)+8)+'" y="'+(Y(rows[li][1])+4)+'" fill="#fff" font-size="11.5" font-weight="600" font-family="IBM Plex Mono">'+rows[li][1].toFixed(5)+'</text>';
-  s+='<text x="'+PL+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono">'+rows[0][0]+'</text>';
-  s+='<text x="'+(PL+pw)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+rows[li][0]+' · LAST BAR</text>';
-  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="USD/CAD daily closes, end of day">'+s+'</svg>';
+  s+='<text x="'+(X(li)+8)+'" y="'+(Y(rows[li][1])-8)+'" fill="#fff" font-size="11.5" font-weight="600" font-family="IBM Plex Mono">LAST '+rows[li][1].toFixed(5)+'</text>';
+  /* full date axis — every bar dated, rotated so none overlap */
+  rows.forEach(function(r,i){
+    var cx=X(i), ay=PT+ph+10;
+    s+='<text x="'+cx.toFixed(1)+'" y="'+ay+'" transform="rotate(-38 '+cx.toFixed(1)+' '+ay+')" fill="#5b6b82" font-size="9.5" font-family="IBM Plex Mono" text-anchor="end">'+fmtShortDate(r[0])+'</text>';
+  });
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="USD/CAD daily closes, end of day, full date axis, period high and low marked with values and dates, last value labeled">'+s+'</svg>';
 }
 
 function renderFX(){
-  var fx=DATA.fx, html='<div class="grid">';
-  /* spot + cross-check */
-  html+='<div class="tile"><h2>USD/CAD spot <span class="chip demo">DEMO SNAPSHOT</span></h2>'+
+  var fx=DATA.fx, html='<div class="layout"><div class="grid">';
+  /* spot — headline is the feed value frozen at build; DEMO is only the labeled fallback */
+  var avMid=1.40217, avBid=1.40212, avAsk=1.40223;
+  html+='<div class="tile"><h2>USD/CAD spot — feed value <span class="chip frozen">FROZEN AT BUILD</span></h2>'+
+    '<div class="big">'+fmt(avMid,5)+'</div>'+
+    '<div class="stat-row">'+stat("Bid", fmt(avBid,5)) + stat("Ask", fmt(avAsk,5)) +
+    stat("Spread", fmt((avAsk-avBid)*10000,1)+" pips") +
+    stat("Vs Oct 20 reference "+fmt(fx.spot.ref,4), '<span class="'+cls((avMid/fx.spot.ref-1)*100)+'">'+sgn((avMid/fx.spot.ref-1)*100,3,'%')+'</span>')+'</div>'+
+    '<div class="stamp">Feed value refreshed Thu, Oct 22, 2026 · 12:01:42 p.m. ET — frozen in this snapshot at build · hourly-cadence feed value, not a streaming quote · this is the headline rate; the DEMO tile beside it is fallback only</div></div>';
+  html+='<div class="tile"><h2>USD/CAD spot — fallback <span class="chip demo">DEMO SNAPSHOT</span></h2>'+
     '<div class="big">SELL '+fmt(fx.spot.bid,5)+' &nbsp;·&nbsp; BUY '+fmt(fx.spot.offer,5)+'</div>'+
     '<div class="stat-row">'+stat("Mid", fmt(fx.spot.mid,5)) + stat("Spread", fmt(fx.spot.spread_pips,1)+" pips") +
-    stat("Vs Oct 20 reference "+fmt(fx.spot.ref,4), '<span class="'+cls(fx.spot.chg_pct)+'">'+sgn(fx.spot.chg_pct,3,'%')+'</span>')+'</div>'+
-    '<div class="stamp">DEMO snapshot — Oct 21, 06:37 ET — session pull, frozen · never a live quote on this page</div></div>';
-  html+='<div class="tile"><h2>Independent spot cross-check</h2>'+
-    '<div class="big">'+fmt(1.40346174,5)+'</div>'+
-    '<div class="stat-row">'+stat("Bid", fmt(1.40345999,5)) + stat("Ask", fmt(1.40349823,5)) +
-    stat("Gap vs DEMO mid", fmt(Math.abs(1.40346174-fx.spot.mid)*10000,1)+" pips")+'</div>'+
-    '<div class="stamp">Refreshed 2026-10-22 04:50:20 UTC — frozen in this snapshot · independent second source, agrees with the DEMO snapshot within ~11 pips</div></div>';
+    stat("Gap vs feed value", fmt(Math.abs(avMid-fx.spot.mid)*10000,1)+" pips")+'</div>'+
+    '<div class="stamp">DEMO snapshot — Oct 21, 06:37 ET — session pull, frozen · carried only as the clearly labeled fallback, never the headline rate on this page</div></div>';
   /* macro results */
   html+='<div class="tile wide"><h2>Latest verified releases <span class="h2note">— FX tab only · prints cross-checked before publication</span></h2>'+
     '<div class="grid" style="gap:10px">'+
@@ -937,7 +1086,7 @@ function renderFX(){
   /* closes chart */
   html+='<div class="tile wide"><h2>USD/CAD — daily closes <span class="h2note">· END-OF-DAY CADENCE · stored daily bars, Sep 28 – Oct 21, 2026</span></h2>'+
     fxClosesSVG(fx)+
-    '<div class="stamp">Daily closes only — this chart is end-of-day data by design and is labeled as such · last bar Wed, Oct 21, 2026: '+fmt(fx.closes[fx.closes.length-1][1],5)+'</div></div>';
+    '<div class="stamp">END-OF-DAY CADENCE · stored daily bars · last updated Wed, Oct 21, 2026 (last bar '+fmt(fx.closes[fx.closes.length-1][1],5)+') · every bar is dated on the axis; period high and low are marked on the chart with values and dates · MA20 is not drawn: only 18 daily bars are stored in this window and a 20-day average needs 20 closes — no line is fabricated from a short window; the desk\u2019s full-series 20D close range ('+fmt(fx.levels.s20,4)+' \u2013 '+fmt(fx.levels.r20,4)+') is carried in the Key levels tile below</div></div>';
   /* rates table */
   var rrows=fx.rates.map(function(r){
     return '<tr><td class="lbl" data-l="">'+r.t+(r.t===fx.widest?' · widest':'')+'</td>'+
@@ -1011,21 +1160,18 @@ function renderFX(){
     '<div class="kv"><span class="kk">R:R to first target</span><span class="vv">'+fmt(fx.trade.rr,2)+' · stop '+fmt(fx.trade.stop_pips,1)+' pips</span></div>'+
     '<p class="read" style="font-size:13px">Event risk: '+esc(fx.trade.event_note)+'.</p>'+
     '<div class="stamp">Levels from stored daily closes through Oct 16, 2026 (close-based ranges) · pivot substitutes for VWAP until intraday pulls accumulate — VWAP unavailable: '+esc(fx.vwap_reason)+' · conditional template, educational only</div></div>';
-  /* forwards */
-  var fwRows=fx.forwards.map(function(c){
-    return '<div class="kv"><span class="kk">'+c.tenor+'</span><span class="vv">'+fmt(c.out,5)+(c.diff!=null?' <span class="neu" style="font-weight:400">('+sgn(c.diff,2,'%')+' diff)</span>':'')+'</span></div>';
+  /* forwards — CIP-theoretical, computed at build from the frozen feed spot + rate differentials */
+  var cipSpot=1.40217;
+  var cipRows=[["1W",7,4.25,2.25],["2W",14,4.25,2.25],["1M",30,4.25,2.25],["2M",61,4.25,2.25],["3M",91,4.25,2.25],["6M",182,4.25,2.25],["9M",273,4.25,2.25],["1Y",365,4.51,2.93],["2Y",730,4.79,3.32],["5Y",1825,4.94,3.62]];
+  var fwRows=cipRows.map(function(c){
+    var T=c[1]/365, F=cipSpot*(1+c[3]/100*T)/(1+c[2]/100*T);
+    var pts=(F-cipSpot)*10000, ann=(F/cipSpot-1)/T*100;
+    return '<div class="kv"><span class="kk">'+c[0]+'</span><span class="vv">'+fmt(F,5)+' <span class="neu" style="font-weight:400">('+sgn(pts,1,' pts')+' \u00b7 '+sgn(ann,2,'%')+' ann. diff)</span></span></div>';
   }).join("");
-  html+='<div class="tile"><h2>Forward curve <span class="h2note">— outrights, session Oct 21, 2026</span></h2>'+fwRows+
-    '<div class="stamp">Session spot header 1.40471 (bid 1.40467 / ask 1.40476) · negative differentials = US rates higher, USD at a forward discount · stored session data, frozen</div></div>';
-  /* events */
-  var evRows=fx.events.map(function(e){
-    return '<div class="kv"><span class="kk">'+e.date+' · '+esc(e.time)+' · '+e.ccy+' — '+esc(e.event)+(e.impact==='High'?' <span class="chip miss">HIGH</span>':'')+'</span><span class="vv">'+(e.fc?('fc '+esc(e.fc)):'')+(e.prev?(' · prev '+esc(e.prev)):'')+'</span></div>';
-  }).join("");
-  html+='<div class="tile wide"><h2>Stored event calendar <span class="h2note">— as pulled Oct 21, 2026, 07:05 ET · times as displayed on the source calendar</span></h2>'+evRows+
-    '<p class="read" style="font-size:13.5px">Nearest high-impact cluster: <b>Wed, Oct 28</b> — BoC rate decision, Monetary Policy Report and press conference land the same day as the FOMC decision and press conference. Seasonality context (2010–2026): October averages '+sgn(fx.season.cur.avg_pct,2,'%')+' with '+fmt(fx.season.cur.pct_positive,1)+'% of Octobers positive — context only, never a signal.</p>'+
-    '<div class="stamp">Calendar frozen from the Oct 21 pull · this snapshot carries no countdown and no live verification</div></div>';
-  html+='</div>';
-  html+=newsTile(NEWS.fx);
+  html+='<div class="tile"><h2>Forward curve <span class="h2note">— CIP-theoretical</span></h2>'+
+    '<p class="note" style="margin:0 0 6px;font-size:12.5px;color:#b9c7da">CIP-theoretical \u2014 computed from spot + rate differentials, not traded quotes</p>'+fwRows+
+    '<div class="stamp">Computed at build \u00b7 Thu, Oct 22, 2026 \u00b7 1:51 p.m. EDT \u00b7 spot 1.40217 (feed value, Oct 22, 12:01 p.m. ET) \u00b7 F = spot \u00d7 (1 + CAD rate \u00d7 T) \u00f7 (1 + US rate \u00d7 T) \u00b7 sub-1Y legs: US 3M bill 4.25% vs BoC overnight 2.25% \u00b7 1Y\u20135Y legs: the benchmark yields in the spreads table above (official closes, Oct 20) \u00b7 negative points = US rates higher, USD at a forward discount \u00b7 recomputed whenever spot or rates update in the live app; frozen here \u00b7 the old frozen Oct 21 session outrights are retired</div></div>';
+  html+='</div><aside class="rail">'+fxAlertsHTML()+fxCalendarHTML()+newsRailHTML(NEWS.fx)+'</aside></div>';
   document.getElementById('panel-fx').innerHTML=html;
 }
 
