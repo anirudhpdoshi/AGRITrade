@@ -409,6 +409,7 @@ MACRO = [
     ("us_ahe",      "Avg hourly earnings", "us", "fred", "CES0500000003",   "yoy",   "%",  1, "heat", (20, 60)),
     ("us_retail",   "Retail sales",        "us", "fred", "RSAFS",           "pct",   "%",  1, "up",   (400000, 1200000)),
     ("us_gdp",      "Real GDP (q/q ann.)", "us", "fred", "A191RL1Q225SBEA", "level", "%",  1, "up",   (-40, 40)),
+    ("us_policy",   "Fed funds (effective)", "us", "fred", "FEDFUNDS",      "level", "%",  2, "heat", (0, 10)),
     ("us_umich",    "UMich sentiment",     "us", "fred", "UMCSENT",         "level", "",   1, "up",   (20, 120)),
     ("ca_cpi",      "CPI",                 "ca", "valet", "V41690973",      "yoy",   "%",  1, "heat", (100, 250)),
     ("ca_trim",     "CPI-trim",            "ca", "valet", "CPI_TRIM",       "level", "%",  1, "heat", (-2, 12)),
@@ -416,7 +417,7 @@ MACRO = [
     ("ca_emp",      "Employment change",   "ca", "statcan", 2062811,        "diff",  "K",  1, "up",   (15000, 25000)),
     ("ca_ur",       "Unemployment rate",   "ca", "statcan", 2062815,        "level", "%",  1, "down", (2, 20)),
     ("ca_gdp",      "Real GDP",            "ca", "statcan", 65201210,       "pct",   "%",  1, "up",   (1500000, 3500000)),
-    ("ca_retail",   "Retail sales",        "ca", "statcan", 52367097,       "pct",   "%",  1, "up",   (40e6, 120e6)),  # $ thousands
+    ("ca_policy",   "BoC overnight rate",  "ca", "valet", "V39079",         "level", "%",  2, "heat", (0, 10)),
 ]
 
 
@@ -444,7 +445,7 @@ def _statcan(vec, n):
 
 def _label(d, freq):
     y, m, day = int(d[:4]), int(d[5:7]), int(d[8:10])
-    if freq == "W":
+    if freq in ("W", "D"):
         return f"{MONTHS[m-1]} {day}"
     if freq == "Q":
         return f"Q{(m-1)//3+1} '{str(y)[2:]}"
@@ -456,7 +457,7 @@ def _freq(points):
         return "M"
     a, b = datetime.fromisoformat(points[-2][0]), datetime.fromisoformat(points[-1][0])
     gap = (b - a).days
-    return "W" if gap <= 8 else "Q" if gap >= 80 else "M"
+    return "D" if gap <= 4 else "W" if gap <= 8 else "Q" if gap >= 80 else "M"
 
 
 def _transform(points, how):
@@ -492,6 +493,9 @@ def macro(D, N):
             if not all(lo <= v <= hi for _, v in raw[-6:]):
                 raise RuntimeError(f"values outside sanity range {lo}-{hi}: {raw[-1][1]} — wrong series id?")
             fq = _freq(raw)
+            age = (NOW.date() - datetime.fromisoformat(raw[-1][0][:10]).date()).days
+            if age > {"D": 10, "W": 30, "M": 130, "Q": 250}.get(fq, 130):
+                raise RuntimeError(f"latest observation {raw[-1][0]} is {age} days old — discontinued series?")
             pts = _transform(raw, how)
             if how == "diff" or (unit == "K" and how == "level"):
                 pts = [(d, v / 1000 if (how == "level" and src == "fred") else v) for d, v in pts]  # FRED claims are persons -> K

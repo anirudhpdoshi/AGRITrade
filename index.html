@@ -1170,7 +1170,7 @@ function macroCard(m){
     '<div class="mv">'+val+'</div>'+
     '<div class="mc '+tone+'">'+arrow+' '+(flat?'unch.':sgn(ch,m.dec,chU))+' <span>vs '+esc(m.history.length>1?m.history[m.history.length-2][0]:'prior')+'</span></div>'+
     macroSpark(m.history,col)+
-    '<div class="mp">'+esc(m.period)+' · '+({W:'weekly',M:'monthly',Q:'quarterly'}[m.freq]||'')+'</div></div>';
+    '<div class="mp">'+esc(m.period)+' · '+({D:'daily',W:'weekly',M:'monthly',Q:'quarterly'}[m.freq]||'')+'</div></div>';
 }
 function macroDiffs(){
   var M={}; (DATA.macro||[]).forEach(function(m){ M[m.key]=m; });
