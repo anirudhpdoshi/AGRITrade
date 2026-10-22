@@ -396,7 +396,7 @@ def main():
     D, N = doc["DATA"], doc["NEWS"]
     before = json.dumps(doc, sort_keys=True)
     only = set(a.only.split(",")) if a.only else None
-    ok, failed = [], []
+    ok, failed, errors = [], [], {}
     for name, fn in BLOCKS:
         if only and name not in only:
             continue
@@ -409,8 +409,13 @@ def main():
             restored = json.loads(snapshot)
             D.clear(); D.update(restored["D"]); N.clear(); N.update(restored["N"])
             failed.append(name)
+            errors[name] = f"{type(e).__name__}: {e}"[:300]
             print(f"  FAILED: {e}")
             traceback.print_exc(limit=1, file=sys.stdout)
+    if errors:
+        D["meta"]["last_errors"] = errors  # no timestamp: a repeating failure won't commit every run
+    else:
+        D["meta"].pop("last_errors", None)
     if json.dumps(doc, sort_keys=True) == before:
         print("no changes")
         return 1 if not ok else 0
