@@ -44,8 +44,8 @@ def iso(dt):
     return dt.astimezone(TOR).isoformat(timespec="seconds")
 
 
-def get(url, **kw):
-    r = requests.get(url, headers=UA, timeout=25, **kw)
+def get(url, headers=None, **kw):
+    r = requests.get(url, headers={**UA, **(headers or {})}, timeout=25, **kw)
     r.raise_for_status()
     return r
 
