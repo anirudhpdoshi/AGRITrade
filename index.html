@@ -1,636 +1,1050 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="color-scheme" content="dark" />
-<link rel="icon" href="data:," />
-<title>USD/CAD Pro Trading Desk</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:,">
+<title>Merged Dashboard — Static Snapshot (Oct 22, 2026)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#061627; --panel:#0a2138; --panel2:#0c2743; --line:#173856; --line2:#1e4568;
-    --ink:#dce9f5; --muted:#7f9bb3; --faint:#5b7a94;
-    --green:#2fbf71; --green-d:#14532d; --red:#e5484d; --red-d:#5b1d20;
-    --amber:#f0a832; --blue:#4da3ff; --cyan:#38c6d9; --violet:#9a7bff;
-    --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,monospace;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0}
-  body{background:var(--bg);color:var(--ink);font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.35;-webkit-font-smoothing:antialiased}
-  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
-  .up{color:var(--green)} .dn{color:var(--red)} .amb{color:var(--amber)} .mut{color:var(--muted)} .faint{color:var(--faint)}
-  .desk{max-width:1760px;margin:0 auto;padding:6px 8px 4px}
+:root{
+  color-scheme: dark;
+  --bg:#0a0f16; --panel:#101825; --panel2:#0d141f; --line:#1e2a3a; --line2:#28374e;
+  --ink:#dbe4f0; --muted:#8494ab; --faint:#5b6b82;
+  --amber:#e8a33d; --green:#3fb97f; --red:#e0655f; --cyan:#38b6c9;
+  --call:#3fb97f; --put:#e0655f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:"Libre Franklin",system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+a{color:var(--cyan);text-decoration:none}
+a:hover{text-decoration:underline}
 
-  /* header */
-  header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 2px 6px;border-bottom:1px solid var(--line)}
-  .brand{display:flex;align-items:center;gap:9px;min-width:0}
-  .brand svg{flex:none}
-  .brand h1{font-size:19px;margin:0;font-weight:700;letter-spacing:.2px;white-space:nowrap}
-  .brand .sub{color:var(--muted);font-size:11px;white-space:nowrap}
-  .brand .sub b{color:var(--ink);font-weight:600}
-  .head-r{text-align:right;font-size:11px;color:var(--muted);white-space:nowrap}
-  .head-r .t{color:var(--ink);font-family:var(--mono);font-size:12px}
-  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:5px;vertical-align:1px}
+.snapshot-banner{position:sticky;top:0;z-index:50;background:#3a1414;border-bottom:2px solid #a33b32;color:#ffd9d4;
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;letter-spacing:.02em;text-align:center;padding:9px 14px;line-height:1.5}
+.snapshot-banner b{color:#fff;font-weight:600}
 
-  /* ribbon */
-  .ribbon{display:grid;grid-template-columns:1.25fr 1.15fr .95fr .8fr .8fr .95fr 1.35fr;gap:0;border:1px solid var(--line);border-top:none;background:var(--panel)}
-  .tile{padding:6px 10px;border-right:1px solid var(--line);min-width:0}
-  .tile:last-child{border-right:none}
-  .tile .lab{font-size:10px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .tile .big{font-family:var(--mono);font-size:21px;font-weight:700;line-height:1.15}
-  .tile .big2{font-family:var(--mono);font-size:16px;font-weight:700;line-height:1.25}
-  .tile .small{font-size:11px;color:var(--muted)}
-  .badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.6px;padding:1px 5px;border-radius:3px;vertical-align:2px;margin-left:6px}
-  .badge.demo{background:#3d2c07;color:var(--amber);border:1px solid #7a5a12}
-  .badge.stale{background:var(--red-d);color:#ff9d9f;border:1px solid #8c2f33}
-  .unavail{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--faint);letter-spacing:1px;padding-top:5px}
-  .unavail-note{font-size:10px;color:var(--faint);line-height:1.3}
-  .levels{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:1px 7px;font-family:var(--mono);font-size:12px;align-items:center}
-  .levels .k{color:var(--muted);font-family:inherit;font-size:11px}
-  .arr{color:var(--cyan);font-size:11px}
+.topbar{max-width:1280px;margin:0 auto;padding:18px 16px 0}
+.topbar h1{font-size:21px;font-weight:800;margin:0;letter-spacing:.01em}
+.topbar .sub{color:var(--muted);font-size:13px;margin-top:3px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
+.tab-btn{appearance:none;border:1px solid var(--line2);background:var(--panel);color:var(--muted);
+  font-family:inherit;font-size:14px;font-weight:700;padding:10px 18px;border-radius:8px;cursor:pointer;letter-spacing:.03em}
+.tab-btn .sym{font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:12px;color:var(--faint);margin-left:7px}
+.tab-btn[aria-selected="true"]{background:#1a2a42;color:#fff;border-color:#3d5a80}
+.tab-btn[aria-selected="true"] .sym{color:#9db8d8}
+.tab-btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 
-  /* panels */
-  .grid{display:grid;grid-template-columns:338px minmax(0,1fr) 336px;gap:7px;margin-top:7px}
-  table.rates{font-size:10.5px}
-  table.rates td,table.rates th{padding:2px 1px}
-  table.rates .chg{font-size:9px}
-  td.lft{text-align:left}
-  .col{display:flex;flex-direction:column;gap:8px;min-width:0}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 9px}
-  .panel h2{font-size:12.5px;margin:0 0 2px;font-weight:700;letter-spacing:.2px}
-  .panel h3{font-size:11.5px;margin:0 0 4px;font-weight:700}
-  .vin{font-size:9.5px;color:var(--faint);margin-top:5px;line-height:1.35}
-  .vin b{color:var(--muted);font-weight:600}
-  table{width:100%;border-collapse:collapse;font-size:11px}
-  th{color:var(--muted);font-weight:600;text-align:right;font-size:10px;padding:2px 2px;border-bottom:1px solid var(--line);white-space:nowrap}
-  th:first-child{text-align:left}
-  td{padding:2px 2px;border-bottom:1px solid rgba(23,56,86,.55);text-align:right;font-family:var(--mono);white-space:nowrap}
-  td:first-child{text-align:left;font-family:inherit}
-  tr:last-child td{border-bottom:none}
-  tr.hl td{background:rgba(77,163,255,.08)}
-  .sect{font-size:10px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin:8px 0 2px;border-top:1px solid var(--line);padding-top:6px}
-  .sect:first-of-type{border-top:none;padding-top:2px;margin-top:4px}
-  ul.tight{margin:2px 0 2px 14px;padding:0}
-  ul.tight li{margin:1px 0}
-  .pill{display:inline-block;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:#3d2c07;color:var(--amber);border:1px solid #7a5a12}
-  .pill.green{background:var(--green-d);color:#7be2a8;border-color:#1d6b41}
-  .bar-row{display:flex;align-items:center;gap:7px;margin:3px 0;font-size:11px}
-  .bar-row .bl{width:106px;flex:none;color:var(--muted);white-space:nowrap}
-  .bar-track{flex:1;height:9px;background:#0d2c49;border-radius:2px;overflow:hidden;display:flex}
-  .bar-fill{height:100%}
-  .bar-val{font-family:var(--mono);width:118px;flex:none;text-align:right;white-space:nowrap;font-size:10.5px}
-  .scen{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-  .scen .card{border:1px solid var(--line);border-radius:5px;padding:7px 9px;background:var(--panel2)}
-  .scen .card h3{font-size:12px}
-  .prob{font-family:var(--mono);font-size:17px;font-weight:700}
-  .trade-grid{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:12px}
-  .trade-grid .k{color:var(--muted)}
-  .trade-grid .v{font-family:var(--mono);text-align:right}
-  footer{display:flex;justify-content:space-between;gap:14px;padding:6px 2px 2px;color:var(--faint);font-size:10px;border-top:1px solid var(--line);margin-top:8px;flex-wrap:wrap}
-  .origin-note{background:rgba(240,168,50,.09);border:1px solid #6d5518;border-radius:4px;padding:4px 8px;font-size:10.5px;color:#e8c87a;margin:4px 0}
-  .alert-chip{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:4px;letter-spacing:.3px}
-  .alert-chip.clear{background:var(--green-d);color:#7be2a8;border:1px solid #1d6b41}
-  .impact{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;letter-spacing:.4px}
-  .impact.high{background:var(--red-d);color:#ff9d9f;border:1px solid #8c2f33}
-  .impact.med{background:#3d2c07;color:var(--amber);border:1px solid #7a5a12}
-  .tag-below{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:var(--red-d);color:#ff9d9f;border:1px solid #8c2f33;white-space:nowrap}
-  .tag-above{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:var(--green-d);color:#7be2a8;border:1px solid #1d6b41;white-space:nowrap}
-  tr.cluster td{background:rgba(229,72,77,.10)}
-  .gauge-wrap{display:flex;gap:10px;align-items:flex-start}
-  .prox{margin-top:4px}
-  .prox .bar-row .bl{width:150px}
-  @media (max-width:1100px){
-    .grid{grid-template-columns:1fr 1fr}
-    .ribbon{grid-template-columns:repeat(4,1fr)}
-    .tile{border-bottom:1px solid var(--line)}
-  }
-  @media (max-width:680px){
-    .grid{grid-template-columns:1fr}
-    .ribbon{grid-template-columns:1fr 1fr}
-    .brand h1{font-size:16px;white-space:normal}
-    .brand .sub{white-space:normal}
-    .head-r{display:none}
-    .scen{grid-template-columns:1fr}
-    .tile .big{font-size:18px}
-    .tile .lab{white-space:normal}
-    table{font-size:11px}
-    td,th{white-space:normal}
-  }
+main{max-width:1280px;margin:0 auto;padding:14px 16px 30px}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;min-width:0}
+.tile.wide{grid-column:1/-1}
+.tile h2{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 4px}
+.tile h2 .h2note{letter-spacing:.02em;text-transform:none;font-weight:500;color:var(--faint)}
+.tile .stamp{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);margin-top:12px;border-top:1px dashed var(--line);padding-top:9px;line-height:1.55}
+.big{font-family:"IBM Plex Mono",monospace;font-size:30px;font-weight:600;line-height:1.1}
+.med{font-family:"IBM Plex Mono",monospace;font-size:19px;font-weight:600}
+.stat-row{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:10px}
+.stat .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600}
+.stat .v{font-family:"IBM Plex Mono",monospace;font-size:16px;font-weight:600;margin-top:1px}
+.stat .v small{font-size:11.5px;color:var(--muted);font-weight:400}
+.up{color:var(--green)} .dn{color:var(--red)} .neu{color:var(--muted)}
+.chip{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;letter-spacing:.05em;vertical-align:2px}
+.chip.beat{background:#123626;color:#5fd598;border:1px solid #1f5c3d}
+.chip.miss{background:#3d1a18;color:#ff9d97;border:1px solid #6e2b26}
+.chip.inline{background:#1c2f4a;color:#9db8d8;border:1px solid #33465f}
+.chip.demo{background:#3a2a10;color:#f2c169;border:1px solid #6e5518}
+.chip.frozen{background:#232f42;color:#9db8d8;border:1px solid #33465f}
+.read{color:#b9c7da;font-size:14px;margin-top:8px}
+.read b{color:#fff}
+
+.toggle{display:inline-flex;border:1px solid var(--line2);border-radius:7px;overflow:hidden;margin-left:auto}
+.toggle button{appearance:none;border:0;background:transparent;color:var(--muted);font-family:"IBM Plex Mono",monospace;
+  font-size:12px;font-weight:600;padding:5px 13px;cursor:pointer}
+.toggle button[aria-pressed="true"]{background:#1a2a42;color:#fff}
+.tile-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tile-head h2{margin:0}
+
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line2);font-weight:600}
+th:first-child,td:first-child{text-align:left}
+td{font-family:"IBM Plex Mono",monospace;text-align:right;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td.lbl{font-family:inherit;white-space:normal}
+tr:last-child td{border-bottom:0}
+
+.news-list{list-style:none;margin:6px 0 0;padding:0}
+.news-list li{padding:9px 0;border-bottom:1px solid var(--line)}
+.news-list li:last-child{border-bottom:0}
+.news-meta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint)}
+.news-list a{color:var(--ink);font-weight:600;font-size:14px;line-height:1.4;display:block;margin-top:2px}
+.news-list a:hover{color:var(--cyan);text-decoration:none}
+
+.roll-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:10px 28px;margin-top:16px}
+.roll-grid h3,.beh-wrap h3{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 4px;font-weight:700}
+table.mini{font-size:12.5px}
+table.mini th,table.mini td{padding:5px 6px}
+table.mini tr.hl td{color:var(--amber);font-weight:600}
+.beh-wrap{margin-top:16px}
+.beh-row{display:grid;grid-template-columns:62px 1fr 1fr;gap:12px;padding:5px 0;border-bottom:1px solid var(--line);font-size:12.5px;align-items:baseline}
+.beh-row .bd{font-family:"IBM Plex Mono",monospace;color:var(--faint);white-space:nowrap}
+.beh-row .bt{font-family:"IBM Plex Mono",monospace}
+.beh-row.hl .bd,.beh-row.hl .bt{color:var(--amber);font-weight:600}
+.beh-head{border-bottom:1px solid var(--line2)}
+.beh-head .bd,.beh-head .bt{font-family:inherit;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:600}
+.facts-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 34px}
+svg{display:block;width:100%;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.foot{max-width:1280px;margin:0 auto;padding:0 16px 34px;color:var(--faint);font-size:12.5px;line-height:1.6}
+.kv{display:flex;justify-content:space-between;gap:14px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.kv:last-child{border-bottom:0}
+.kv .kk{color:var(--muted)} .kv .vv{font-family:"IBM Plex Mono",monospace;font-weight:600;text-align:right}
+
+.posread{font-family:"IBM Plex Mono",monospace;font-size:13.5px;font-weight:600;color:var(--ink);margin:10px 0 0}
+.badges{margin:10px 0 2px}
+.badge{display:inline-block;background:#3a2b12;color:var(--amber);font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;padding:3px 9px;border-radius:5px;margin:0 6px 4px 0}
+.badge.dim{background:var(--panel2);color:var(--muted);font-weight:500}
+.spreadline{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);margin:6px 0 0}
+.decode{font-size:12px;color:var(--muted);border-top:1px solid var(--line);margin:10px 0 0;padding-top:8px}
+.es-head{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:8px}
+.es-head .k{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.es-big{font-family:"IBM Plex Mono",monospace;font-size:21px;font-weight:600;margin-top:4px;line-height:1.3}
+.trendline-note{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:#b18cff;margin:10px 0 0}
+.note{font-size:11.5px;color:var(--muted);margin:8px 0 0;line-height:1.55}
+
+@media (max-width:760px){
+  .grid{grid-template-columns:1fr}
+  .big{font-size:25px}
+  table,thead,tbody,tr,td{display:block}
+  thead{display:none}
+  tr{border-bottom:1px solid var(--line2);padding:6px 0}
+  tr:last-child{border-bottom:0}
+  td{border-bottom:0;text-align:left;padding:3px 8px;display:flex;justify-content:space-between;gap:12px;white-space:normal}
+  td::before{content:attr(data-l);font-family:"Libre Franklin",sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600;padding-top:2px}
+  td.lbl{font-weight:700}
+  td.lbl::before{content:""}
+  .roll-grid{grid-template-columns:1fr}
+  .facts-cols{grid-template-columns:1fr}
+  .beh-row{grid-template-columns:50px 1fr 1fr;gap:8px;font-size:11.5px}
+}
 </style>
 </head>
 <body>
-<div class="desk">
 
-<header>
-  <div class="brand">
-    <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path fill="#e5484d" d="M12 1.5l1.6 3.6 2.9-2.3-.9 3.9 3.7-.6-2.2 3.2 3.4 1.6-3.3 1.9 1.2 3.6-3.4-1.5-.4 3.9L12 15.4l-2.6 3.4-.4-3.9-3.4 1.5 1.2-3.6L3.5 10.9l3.4-1.6L4.7 6.1l3.7.6-.9-3.9 2.9 2.3z"/></svg>
-    <div>
-      <h1>USD/CAD Pro Trading Desk</h1>
-      <div class="sub"><b>Macro Intelligence</b> &nbsp;|&nbsp; Forecast &nbsp;|&nbsp; Execution &nbsp;|&nbsp; Risk</div>
-    </div>
-  </div>
-  <div class="head-r">
-    <div class="t">Oct 21, 2026 · 11:45 UTC</div>
-    <div><span class="dot"></span>Calculated snapshot · Verified Oct 21, 2026</div>
-  </div>
+<div class="snapshot-banner" role="note"><b>STATIC SNAPSHOT</b> — built Thu, Oct 22, 2026 · 11:30 a.m. EDT (America/Toronto) — data frozen at build time from verified records, the same drop-in series behind the desk cards. The live dashboard is the gated app; this copy does not update.</div>
+
+<header class="topbar">
+  <h1>Grain &amp; USD/CAD Dashboard — Snapshot</h1>
+  <div class="sub">Four-tab desk view replicating the desk cards on the same verified records: rollover migration and calendar spreads run Sep 25 – Oct 20, 2026 from the per-contract OI drop-ins; options bars are the Oct 21, 2026 chain pull; the Export Sales tile carries the Oct 22, 2026 release (week ending Oct 15). Every tile keeps its own settlement date, chain date, or vintage stamp.</div>
+  <nav class="tabs" role="tablist" aria-label="Dashboard tabs">
+    <button class="tab-btn" role="tab" id="tabbtn-corn" aria-selected="true" aria-controls="panel-corn" data-tab="corn">Corn<span class="sym">ZCZ26</span></button>
+    <button class="tab-btn" role="tab" id="tabbtn-wheat" aria-selected="false" aria-controls="panel-wheat" data-tab="wheat">Wheat<span class="sym">ZWZ26</span></button>
+    <button class="tab-btn" role="tab" id="tabbtn-soybeans" aria-selected="false" aria-controls="panel-soybeans" data-tab="soybeans">Soybeans<span class="sym">ZSX26</span></button>
+    <button class="tab-btn" role="tab" id="tabbtn-fx" aria-selected="false" aria-controls="panel-fx" data-tab="fx">USD/CAD<span class="sym">Desk</span></button>
+  </nav>
 </header>
 
-<!-- ============ RIBBON ============ -->
-<section class="ribbon" aria-label="Key quotes">
-  <div class="tile">
-    <div class="lab">USD/CAD Spot (mid)</div>
-    <div class="big">1.404585<span class="badge demo">DEMO</span></div>
-    <div class="small"><span class="dn num">−0.00052 (−0.037%)</span> vs Oct 20 reference 1.4051</div>
-  </div>
-  <div class="tile">
-    <div class="lab">Bid / Ask · Session pull</div>
-    <div class="big2">1.40452 / 1.40465</div>
-    <div class="small">Spread <span class="num">1.3</span> pips · Oct 21, 06:37 ET</div>
-  </div>
-  <div class="tile">
-    <div class="lab" style="white-space:normal">Intraday Pivot (prior session HLC/3)</div>
-    <div class="big2">1.40678</div>
-    <div class="small">Oct 20 session: H <span class="num">1.41118</span> · L <span class="num">1.40325</span> · C <span class="num">1.40590</span> · TWAP unavailable — only 1 session pull stored</div>
-  </div>
-  <div class="tile">
-    <div class="lab">Realized Vol (20D)</div>
-    <div class="big2">3.12%</div>
-    <div class="small">Stand-in for implied vol — no FX vol surface stored; realized, not implied</div>
-  </div>
-  <div class="tile">
-    <div class="lab">CVOL Index</div>
-    <div class="big2">5.2337</div>
-    <div class="small"><span class="dn num">−0.1789</span> · Oct 21, 06:27 CT · delayed ≥10 min</div>
-  </div>
-  <div class="tile">
-    <div class="lab">Expiry Pins</div>
-    <div class="unavail">UNAVAILABLE</div>
-    <div class="unavail-note">No per-strike open interest stored — the stored options pull carries only the two 25-delta strikes (IVs and deltas, no OI)</div>
-  </div>
-  <div class="tile">
-    <div class="lab">Quick Trade Levels · Oct 21 daily pivots</div>
-    <div class="levels">
-      <span class="k">R2</span><span>1.41471 <span class="arr">pivot</span></span>
-      <span class="k">S1</span><span>1.40237 <span class="arr">pivot</span></span>
-      <span class="k">R1</span><span>1.41030 <span class="arr">pivot</span></span>
-      <span class="k">S2</span><span>1.39885 <span class="arr">pivot</span></span>
-    </div>
-    <div class="small">PP <span class="num">1.40678</span> · daily pivots, Oct 21</div>
-  </div>
-</section>
+<main>
+  <section class="tab-panel active" id="panel-corn" role="tabpanel" aria-labelledby="tabbtn-corn"></section>
+  <section class="tab-panel" id="panel-wheat" role="tabpanel" aria-labelledby="tabbtn-wheat"></section>
+  <section class="tab-panel" id="panel-soybeans" role="tabpanel" aria-labelledby="tabbtn-soybeans"></section>
+  <section class="tab-panel" id="panel-fx" role="tabpanel" aria-labelledby="tabbtn-fx"></section>
+</main>
 
-<!-- ============ MAIN GRID ============ -->
-<div class="grid">
-
-  <!-- LEFT -->
-  <div class="col">
-    <section class="panel">
-      <h2>Macro &amp; Rates Matrix</h2>
-      <table class="rates" aria-label="Rates matrix">
-        <tr><th>Tenor</th><th>US %</th><th>CA %</th><th>Spread</th><th>1D Δ</th><th>20D %ile</th></tr>
-        <tr><td>1Y</td><td>4.50 <span class="up chg">+4.0</span></td><td>2.93 <span class="mut chg">0.0</span></td><td>145.6</td><td class="dn">−1.0</td><td>5</td></tr>
-        <tr class="hl"><td>2Y·widest</td><td>4.77 <span class="up chg">+3.0</span></td><td>3.33 <span class="up chg">+12.0</span></td><td>147.3</td><td class="up">+1.3</td><td>30</td></tr>
-        <tr><td>5Y</td><td>4.94 <span class="up chg">+5.0</span></td><td>3.64 <span class="up chg">+10.0</span></td><td>131.7</td><td class="up">+0.6</td><td>25</td></tr>
-        <tr><td>10Y</td><td>5.15 <span class="up chg">+6.0</span></td><td>3.93 <span class="up chg">+9.0</span></td><td>122.6</td><td class="up">+0.8</td><td>30</td></tr>
-        <tr><td>20Y</td><td>5.53 <span class="up chg">+6.0</span></td><td>4.10 <span class="mut chg">Oct 20 close</span></td><td>137.0</td><td class="mut">—</td><td style="font-size:9.5px;white-space:normal">accumulating daily closes (n=1)</td></tr>
-        <tr><td>30Y</td><td>5.48 <span class="up chg">+5.0</span></td><td>4.25 <span class="up chg">+7.0</span></td><td>123.3</td><td class="up">+1.2</td><td>30</td></tr>
-      </table>
-      <div class="vin">Yields: official closes, history thru <b>Oct 19</b>. Spreads &amp; percentiles: summary dated <b>Oct 20</b>; percentile = rank in trailing 20 obs. 20Y: Canada 20Y close now stored — series building (n=1 close); 20D percentile shows only once ≥20 closes are stored. WoW spread Δ: 1Y −11.0 · 2Y −12.7 · 5Y −14.1 · 10Y −12.2 · 20Y −11.8 · 30Y −10.9 bps.</div>
-      <div class="vin"><b>Canada 20Y — Oct 20 close 4.100%</b> (series building). Computed 20Y spread <b>137.0 bps</b> = U.S. Treasury 20Y 5.47% − Canada 20Y 4.10%, same date. Intraday live read <b>4.095%</b> (Oct 21) is not a close and is excluded from spread and percentile math. The summary-file 20Y construction (138.5 bps · 1D +0.8 · WoW −11.8) is carried in the notes above, not blended with the computed figure.</div>
-      <div class="vin"><b>Treasury primary, Oct 20</b> — U.S. yields (primary source): 1Y <b>4.51</b> · 2Y <b>4.79</b> · 5Y <b>4.94</b> · 10Y <b>5.12</b> · 20Y <b>5.47</b> · 30Y <b>5.42</b>. Cross-check on the stored series' latest date (Oct 19): Δ <b>0.0 bps</b> at every tenor — no tenor flagged over 3 bps; stored yields above are the cross-check basis.</div>
-
-      <div class="sect">FX &amp; Cross-Currency</div>
-      <table aria-label="FX crosses">
-        <tr><th>Pair</th><th>Latest</th><th>1D Chg</th></tr>
-        <tr><td>DXY (index)</td><td>101.728</td><td class="dn">−0.247%</td></tr>
-        <tr><td>EUR / USD <span class="mut" style="font-size:9.5px">primary · Oct 16</span></td><td>1.1231</td><td class="up">+0.241%</td></tr>
-        <tr><td>USD / JPY <span class="mut" style="font-size:9.5px">primary · Oct 16</span></td><td>158.0</td><td class="dn">−0.114%</td></tr>
-        <tr><td>USD/CAD <span class="mut" style="font-size:9.5px">primary · Oct 16</span></td><td>1.4157</td><td class="dn">−0.282%</td></tr>
-        <tr><td style="white-space:normal">Broad USD index — Federal Reserve broad USD index (DTWEXBGS) — NOT the ICE DXY <span class="mut" style="font-size:9.5px">· Oct 16</span></td><td>121.4048</td><td class="dn">−0.135%</td></tr>
-        <tr class="hl"><td>Cross-Currency Basis (3M)</td><td>+4.0 bps</td><td class="mut" style="font-size:9.5px">CIP-implied estimate</td></tr>
-        <tr><td class="mut" style="font-size:10px">Cross-check — EUR/USD (Oct 21)</td><td>1.1234</td><td class="mut">—</td></tr>
-        <tr><td class="mut" style="font-size:10px">Cross-check — USD/JPY (Oct 21)</td><td>157.88</td><td class="mut">—</td></tr>
-        <tr><td class="mut" style="font-size:10px">Cross-check — USD/CAD (Oct 21)</td><td>1.4046</td><td class="mut">—</td></tr>
-        <tr><td class="mut" style="font-size:10px">Fallback cross-check — DXY (Oct 21)</td><td>101.715</td><td class="mut">—</td></tr>
-        <tr><td class="mut" style="font-size:10px">Fallback cross-check — USD/CAD (Oct 21)</td><td>1.40806</td><td class="mut">—</td></tr>
-        <tr><td class="mut" style="font-size:10px">Fallback cross-check — EUR/USD (Oct 21)</td><td>1.12284</td><td class="mut">—</td></tr>
-        <tr><td class="mut" style="font-size:10px">Fallback cross-check — USD/JPY (Oct 21)</td><td>158.07401</td><td class="mut">—</td></tr>
-      </table>
-      <div class="origin-note"><b>Cross-source discrepancy (flag threshold 10 pips):</b> EUR/USD <span class="num">3.0 pips</span> — not flagged · USD/JPY <span class="num">12.0 pips</span> — <b>FLAGGED</b> · USD/CAD <span class="num">111.0 pips</span> — <b>FLAGGED</b> (primary obs Oct 16 vs cross-check obs Oct 21 — a vintage gap). The desk displays FRED API (H.10) as primary while any flagged discrepancy is unresolved. Both sources are kept with their own observation dates; values are never averaged and neither source is silently dropped. Gaps partly reflect different observation dates and fixing methodologies (Fed noon buying rates vs ECB reference rates).</div>
-      <div class="vin"><b>DEXCAUS cross-check (Oct 16):</b> DEXCAUS close <b>1.4157</b> vs stored reference series close <b>1.4161</b> = <b>−4.0 pips</b> (22 overlap days); vs traded close <b>1.41394</b> = gap <b>+17.6 pips</b> (14 overlap days). Fed noon buying rate (DEXCAUS) vs (a) the stored reference series closes and (b) traded closes (Barchart OHLC): reference-vs-traded gaps are methodology, not error (cf. the ~21.7-pip mean gap measured for the reference series) — reported, not reconciled away.</div>
-      <div class="vin">Primary: <b>FRED API (H.10) DEX</b> — module status ok, pulled <b>Oct 21, 14:09 UTC</b>; observation vintage <b>Oct 16</b>. Leaf labels verbatim: EUR/USD = FRED API (H.10) DEXUSEU (USD per EUR = EUR/USD) · USD/JPY = FRED API (H.10) DEXJPUS (JPY per USD = USD/JPY) · USD/CAD = FRED API (H.10) DEXCAUS (CAD per USD = USD/CAD) · broad index = FRED API (H.10) — Federal Reserve broad USD index (DTWEXBGS) — NOT the ICE DXY. DXY identity: DXY tile = stored DXY series. FRED DTWEXBGS is the Federal Reserve broad USD index — a different index, shown labeled, not a DXY replacement. Cross-check leaves (Oct 21) sit behind the primaries; second fallback leaves (Oct 21): DXY 101.715 · USD/CAD 1.40806 · EUR/USD 1.12284 · USD/JPY 158.07401 — fallback USD/CAD vs the FRED primary 1.4157 = <b>−76.4 pips</b>, flagged beyond the 10-pip threshold, reported not reconciled. Basis: <b>CIP-implied estimate</b> (simple interest, t = 0.25) — implied CAD rate 2.4897% vs actual Canada 3M 2.45%; inputs: spot mid <b>1.404585</b> · 3M forward points <b>−61.5095</b> (outright 1.39843) · US 3M <b>4.26%</b> (Oct 20) · CA 3M <b>2.45%</b> (Oct 19).</div>
-    </section>
-
-    <section class="panel">
-      <h2>Commodity &amp; Trade Engine</h2>
-      <table aria-label="Commodities">
-        <tr><th>Item</th><th>Price</th><th>1D %</th><th>20D %</th></tr>
-        <tr><td>WTI Crude <span class="mut" style="font-size:9.5px">(11-Minute Delay)</span></td><td>$98.75</td><td class="up">+0.95</td><td class="up">+5.60</td></tr>
-        <tr><td class="mut" style="font-size:10px">WTI — FRED API check (daily; publication-lagged) · Oct 14</td><td>$101.91</td><td class="mut">—</td><td class="mut">—</td></tr>
-        <tr><td>Brent Crude <span class="mut" style="font-size:9.5px">(11-Minute Delay)</span></td><td>$109.60</td><td class="up">+0.74</td><td>—</td></tr>
-        <tr><td class="mut" style="font-size:10px">Brent — FRED API secondary (publication-lagged) · Oct 14</td><td>$126.55</td><td class="mut">—</td><td class="mut">—</td></tr>
-        <tr><td>WCS (USD/bbl) <span class="mut" style="font-size:9.5px">(5-Hour Delay)</span></td><td>$85.47</td><td class="dn">−0.84</td><td>—</td></tr>
-        <tr class="hl"><td>WTI − WCS Differential</td><td>$13.28</td><td>—</td><td>—</td></tr>
-        <tr><td>Diluent Cost (est. at WTI parity)</td><td>$98.75</td><td>—</td><td>—</td></tr>
-        <tr><td style="white-space:normal;font-size:10.5px">Proxy — U.S. crude imports from Canada (proxy for Canadian energy exports until official StatCan data)</td><td>3,751 <span class="mut" style="font-size:9.5px">kb/d</span></td><td>—</td><td>—</td></tr>
-      </table>
-      <div style="margin:6px 0 2px"><span class="alert-chip clear">WCS ALERT: CLEAR</span> <span class="small">Discount <span class="num">$13.28/bbl</span> · margin <span class="num">$6.72</span> to the <span class="num">$20.00</span> threshold</span></div>
-      <div class="vin">Energy read <b>Oct 21, 11:45 UTC</b>; delay labels are the printed labels, verbatim. WTI cross-check: stored cache close <b>$99.89 (Oct 20)</b> vs delayed read $98.75 (Δ −$1.14, expected on a new trading day). Front-month futures cross-checks (Oct 21): WTI futures 98.62 (Δ −$0.13) · Brent futures 109.43 (Δ −$0.17) vs the delayed reads — cross-check deltas, not reconciliations. FRED API check leaves (obs <b>Oct 14</b>): WTI <b>$101.91</b> — freshest FRED WTI via the API; lags several days by publication design, the delayed read above remains the freshest energy primary. Brent <b>$126.55</b> — FRED API secondary (publication-lagged); same publication lag, the delayed read above remains the freshest Brent primary. Archive note: legacy file values WTI <b>$96.41</b> · Brent <b>$114.89</b>, both <b>Sep 22</b> — historical archive only, superseded by the FRED API leaves, never shown as current. Differential = WTI − WCS from the same run; the two legs carry different printed delays (minutes vs hours) — disclosed. Alert rule: a WCS discount beyond $20.00/bbl severely impairs Canadian producer netbacks and acts as a strong bearish CAD signal — clear by $6.72/bbl. Diluent: <b>estimate</b> at WTI parity (condensate priced near WTI parity) — an estimate by construction, not a condensate feed. Energy exports (Proxy): <b>3,751 kb/d</b>, week ending <b>Oct 9</b> (released Oct 15) — latest published; new report due Oct 21, still showing the prior report at the 07:35 ET pull. U.S. crude inventories: <b>−8.6M bbl</b> to 415.6M, 3% below the five-year average. The Proxy label is mandatory and stays on the line.</div>
-    </section>
-
-    <section class="panel">
-      <h2>Forwards — USD/CAD Forward Curve</h2>
-      <table aria-label="Forward curve">
-        <tr><th>Tenor</th><th>Mid pts</th><th>Outright</th><th>Implied diff %</th></tr>
-        <tr><td>Overnight</td><td>−0.675</td><td>1.40464</td><td class="mut">—</td></tr>
-        <tr><td>Tomorrow</td><td>−0.685</td><td>1.40464</td><td class="mut">—</td></tr>
-        <tr><td>Spot</td><td>−0.680</td><td>1.40464</td><td class="mut">—</td></tr>
-        <tr><td>1W</td><td>−4.7995</td><td>1.40423</td><td>−1.777</td></tr>
-        <tr><td>2W</td><td>−9.3605</td><td>1.40377</td><td>−1.733</td></tr>
-        <tr><td>3W</td><td>−13.8115</td><td>1.40333</td><td>−1.704</td></tr>
-        <tr><td>1M</td><td>−20.8525</td><td>1.40262</td><td>−1.781</td></tr>
-        <tr><td>2M</td><td>−39.6635</td><td>1.40074</td><td>−1.694</td></tr>
-        <tr><td>3M</td><td>−61.5095</td><td>1.39856</td><td>−1.752</td></tr>
-        <tr><td>4M</td><td>−81.5645</td><td>1.39655</td><td>−1.742</td></tr>
-        <tr><td>5M</td><td>−98.677</td><td>1.39484</td><td>−1.686</td></tr>
-        <tr><td>6M</td><td>−118.848</td><td>1.39283</td><td>−1.692</td></tr>
-        <tr><td>7M</td><td>−139.641</td><td>1.39075</td><td>−1.704</td></tr>
-        <tr><td>8M</td><td>−156.8225</td><td>1.38903</td><td>−1.675</td></tr>
-        <tr><td>9M</td><td>−175.575</td><td>1.38715</td><td>−1.667</td></tr>
-        <tr><td>10M</td><td>−194.6975</td><td>1.38524</td><td>−1.663</td></tr>
-        <tr><td>11M</td><td>−212.307</td><td>1.38348</td><td>−1.649</td></tr>
-        <tr class="hl"><td>1Y</td><td>−229.7165</td><td>1.38174</td><td>−1.635</td></tr>
-        <tr><td>2Y</td><td>−408.317</td><td>1.36388</td><td>−1.453</td></tr>
-        <tr><td>3Y</td><td>−563</td><td>1.34841</td><td>−1.336</td></tr>
-        <tr><td>4Y</td><td>−710</td><td>1.33371</td><td>−1.264</td></tr>
-        <tr><td>5Y</td><td>−849</td><td>1.31981</td><td>−1.209</td></tr>
-        <tr><td>6Y</td><td class="faint" style="font-size:10px">N/A (market)</td><td>1.32029 <span class="mut" style="font-size:9.5px">theoretical (IRP)</span></td><td class="mut">—</td></tr>
-        <tr><td>7Y</td><td class="faint" style="font-size:10px">N/A (market)</td><td>1.31138 <span class="mut" style="font-size:9.5px">theoretical (IRP)</span></td><td class="mut">—</td></tr>
-        <tr><td>10Y</td><td class="faint" style="font-size:10px">N/A (market)</td><td>1.29069 <span class="mut" style="font-size:9.5px">theoretical (IRP)</span></td><td class="mut">—</td></tr>
-      </table>
-      <div class="vin">Session <b>Oct 21, 2026</b> · header spot <b>1.40471</b> (bid 1.40467 / ask 1.40476). Points in pips (1 pip = 0.0001); outright = header spot + mid points ÷ 10000. Implied diff approximates CAD minus USD (negative = US rates higher, USD at a forward discount). 6Y / 7Y / 10Y print N/A on the source page (market). Theoretical (IRP) outrights are calculated, never shown as market: outright = spot 1.404585 × (1 + rCAD·T)/(1 + rUSD·T), simple interest; 6Y/7Y US yields and spreads linearly interpolated 5Y→10Y (US 4.976% / 5.012%, spreads 129.9 / 128.1 bps); 10Y actual (US 5.12%, spread 122.6 bps); rCAD = rUSD − spread.</div>
-      <div class="origin-note" style="margin-top:5px"><b>Verification — CONSISTENT:</b> 1Y implied differential <b>+163.5 bps</b> vs stored 1Y spread <b>+145.6 bps</b>, gap <b>17.9 bps</b> (tolerance 50 bps). Residual is money-market vs bond-yield basis and tenor mismatch.</div>
-    </section>
-
-    <section class="panel">
-      <h2>Policy Expectations — futures-implied</h2>
-      <div class="sect">Fed — meeting probabilities (futures-implied)</div>
-      <table aria-label="Fed meeting probabilities, futures-implied">
-        <tr><th>Meeting</th><th>Hold</th><th>Hike</th><th>Ease</th></tr>
-        <tr><td>Oct 28, 2026</td><td>85.1%</td><td>14.9%</td><td>0.0%</td></tr>
-        <tr><td>Dec 9, 2026</td><td>10.1%</td><td>89.9%</td><td>0.0%</td></tr>
-      </table>
-      <div class="small" style="margin-top:3px">Dec 9 hike split: <span class="num">+25 bp 76.7%</span> · <span class="num">+50 bp 13.2%</span>. Current target range <span class="num">375–400</span> (hold = range unchanged).</div>
-      <div class="sect">BoC — CORRA futures-implied path (futures-implied)</div>
-      <table aria-label="CORRA futures implied rates">
-        <tr><th>Contract</th><th>Implied rate</th></tr>
-        <tr><td>Dec 2026</td><td>2.73%</td></tr>
-        <tr><td>Mar 2027</td><td>3.02%</td></tr>
-      </table>
-      <div class="small" style="margin-top:3px">Current BoC overnight rate <span class="num">2.25%</span>. Implied rate = 100 − settlement (Dec 97.27 · Mar 96.98). Sep 2026 contract (2.3975%) is the settled front reference, not the forward path.</div>
-      <div class="vin">Every figure on this panel is <b>futures-implied</b> — market pricing, not a forecast. Fed probabilities as of <b>Oct 21, 06:20 CT</b>; CORRA as of <b>Oct 21, 07:35 ET</b> (real-time page); pulled Oct 21, 07:37 ET.</div>
-    </section>
-  </div>
-
-  <!-- CENTER -->
-  <div class="col">
-    <section class="panel">
-      <h2>USD/CAD Price — Daily Candles (Traded Closes) &amp; Calculated Levels</h2>
-      <svg viewBox="0 0 660 236" width="100%" role="img" aria-label="Candlestick chart of 18 daily USD/CAD traded-close bars from September 28 to October 21 2026, falling from about 1.428 to 1.4048, with calculated levels overlaid: 20-day high 1.4262, pivot R1 1.41030, spot 1.404585, pivot S1 1.40237 and 20-day low support 1.4004, plus a vertical Model Refit line at October 21 2026" style="display:block">
-        <!-- entry zone 1.4004-1.4068 -->
-        <rect x="30" y="158.8" width="592" height="35.8" fill="#4da3ff" opacity="0.10"/>
-        <!-- axis -->
-        <line x1="30" y1="208" x2="622" y2="208" stroke="#1e4568" stroke-width="1"/>
-        <!-- candles: y = 18 + (1.432 - price)/0.034 * 190 -->
-        <g stroke-width="1.4">
-          <line x1="46" y1="97.5" x2="46" y2="118.1" stroke="#2fbf71"/><rect x="38" y="99.5" width="16" height="18.6" fill="#2fbf71"/>
-          <line x1="79" y1="84.2" x2="79" y2="101.0" stroke="#2fbf71"/><rect x="71" y="90.5" width="16" height="9.0" fill="#2fbf71"/>
-          <line x1="112" y1="64.3" x2="112" y2="109.6" stroke="#2fbf71"/><rect x="104" y="66.8" width="16" height="23.8" fill="#2fbf71"/>
-          <line x1="145" y1="50.2" x2="145" y2="72.9" stroke="#e5484d"/><rect x="137" y="66.8" width="16" height="5.8" fill="#e5484d"/>
-          <line x1="178" y1="50.7" x2="178" y2="81.9" stroke="#2fbf71"/><rect x="170" y="57.1" width="16" height="15.5" fill="#2fbf71"/>
-          <line x1="211" y1="32.7" x2="211" y2="64.0" stroke="#2fbf71"/><rect x="203" y="51.1" width="16" height="3.1" fill="#2fbf71"/>
-          <line x1="244" y1="37.4" x2="244" y2="81.3" stroke="#e5484d"/><rect x="236" y="51.2" width="16" height="29.3" fill="#e5484d"/>
-          <line x1="277" y1="40.0" x2="277" y2="81.5" stroke="#2fbf71"/><rect x="269" y="53.5" width="16" height="27.0" fill="#2fbf71"/>
-          <line x1="310" y1="41.7" x2="310" y2="75.3" stroke="#e5484d"/><rect x="302" y="53.5" width="16" height="17.5" fill="#e5484d"/>
-          <line x1="343" y1="30.1" x2="343" y2="81.3" stroke="#2fbf71"/><rect x="335" y="53.9" width="16" height="17.1" fill="#2fbf71"/>
-          <line x1="376" y1="36.1" x2="376" y2="62.6" stroke="#2fbf71"/><rect x="368" y="39.2" width="16" height="6.4" fill="#2fbf71"/>
-          <line x1="409" y1="36.9" x2="409" y2="82.9" stroke="#2fbf71"/><rect x="401" y="75.2" width="16" height="1.6" fill="#2fbf71"/>
-          <line x1="442" y1="29.3" x2="442" y2="86.8" stroke="#2fbf71"/><rect x="434" y="64.9" width="16" height="11.1" fill="#2fbf71"/>
-          <line x1="475" y1="62.9" x2="475" y2="101.8" stroke="#e5484d"/><rect x="467" y="64.9" width="16" height="28.1" fill="#e5484d"/>
-          <line x1="508" y1="85.6" x2="508" y2="121.6" stroke="#e5484d"/><rect x="500" y="92.9" width="16" height="26.0" fill="#e5484d"/>
-          <line x1="541" y1="122.0" x2="541" y2="157.3" stroke="#e5484d"/><rect x="533" y="122.8" width="16" height="11.9" fill="#e5484d"/>
-          <line x1="574" y1="134.3" x2="574" y2="178.7" stroke="#e5484d"/><rect x="566" y="134.7" width="16" height="29.2" fill="#e5484d"/>
-          <line x1="607" y1="158.9" x2="607" y2="171.5" stroke="#e5484d"/><rect x="599" y="163.7" width="16" height="6.5" fill="#e5484d"/>
-        </g>
-        <!-- calculated level overlays -->
-        <g font-family="ui-monospace,Consolas,monospace" font-size="9.5">
-          <line x1="30" y1="50.4" x2="622" y2="50.4" stroke="#e5484d" stroke-dasharray="4 3"/><text x="626" y="53.4" fill="#ff9d9f">1.4262</text><text x="34" y="46.4" fill="#ff9d9f">R · 20D hi</text>
-          <line x1="30" y1="139.3" x2="622" y2="139.3" stroke="#f0a832" stroke-dasharray="4 3"/><text x="626" y="142.3" fill="#f0a832">1.41030</text><text x="34" y="135.3" fill="#f0a832">Pivot R1</text>
-          <line x1="30" y1="171.2" x2="622" y2="171.2" stroke="#2fbf71" stroke-width="1.6"/><text x="626" y="174.2" fill="#2fbf71">1.40459</text><text x="470" y="167.2" fill="#2fbf71">SPOT 1.404585</text>
-          <line x1="30" y1="183.6" x2="622" y2="183.6" stroke="#f0a832" stroke-dasharray="2 3"/><text x="626" y="186.6" fill="#f0a832">1.40237</text><text x="34" y="179.6" fill="#f0a832">Pivot S1</text>
-          <line x1="30" y1="194.6" x2="622" y2="194.6" stroke="#4da3ff" stroke-dasharray="4 3"/><text x="626" y="197.6" fill="#9cc8ff">1.4004</text><text x="380" y="190.6" fill="#9cc8ff">Entry zone 1.4004–1.4068 · S · 20D lo</text>
-          <text x="46" y="222" fill="#7f9bb3" text-anchor="middle">Sep 28</text>
-          <text x="277" y="222" fill="#7f9bb3" text-anchor="middle">Oct 07</text>
-          <text x="442" y="222" fill="#7f9bb3" text-anchor="middle">Oct 14</text>
-          <text x="607" y="222" fill="#7f9bb3" text-anchor="middle">Oct 21</text>
-          <line x1="607" y1="18" x2="607" y2="208" stroke="#f0a832" stroke-width="1.4" stroke-dasharray="5 3"/><text x="601" y="30" fill="#f0a832" text-anchor="end" font-weight="700">Model Refit · Oct 21</text>
-          <text x="34" y="12" fill="#7f9bb3">Latest close (Oct 21) 1.40476 · O 1.40592 H 1.40679 L 1.40454</text>
-        </g>
-      </svg>
-      <div class="small mut" style="margin-top:2px">18 daily bars · <b>Sep 28 – Oct 21, 2026</b> · traded closes. Overlays are calculated levels only: 20D high / low closes thru Oct 16, Oct 21 daily pivots, entry zone, and the Oct 21 session-pull spot. <b>Model Refit line (Oct 21, 2026):</b> the series break is accepted — the forecast series is never spliced across the reference-fixing vs traded-close methodology gap; the new origin is tracked cleanly on traded-close data from Oct 21 forward.</div>
-      <div class="sect">Signed drivers · desk rules (diagnostics, not causality)</div>
-      <div class="bar-row"><span class="bl">2Y spread 1D</span><div class="bar-track"><div class="bar-fill" style="width:31%;background:var(--green)"></div></div><span class="bar-val up">+1.3 bps · w 1.0</span></div>
-      <div class="bar-row"><span class="bl">10Y spread 1D</span><div class="bar-track"><div class="bar-fill" style="width:25%;background:var(--green)"></div></div><span class="bar-val up">+0.8 bps · w 0.8</span></div>
-      <div class="bar-row"><span class="bl">DXY 1D</span><div class="bar-track"><div class="bar-fill" style="width:31%;background:var(--red)"></div></div><span class="bar-val dn">−0.25% · w 1.0</span></div>
-      <div class="bar-row"><span class="bl">WTI 1D</span><div class="bar-track"><div class="bar-fill" style="width:22%;background:var(--red)"></div></div><span class="bar-val dn">+0.95% · w 0.7</span></div>
-      <div class="bar-row"><span class="bl">Crowding (contrarian)</span><div class="bar-track"><div class="bar-fill" style="width:25%;background:var(--red)"></div></div><span class="bar-val dn">−23.3% OI · w 0.8</span></div>
-      <div class="bar-row"><span class="bl">25D risk reversal</span><div class="bar-track"><div class="bar-fill" style="width:12.5%;background:var(--red)"></div></div><span class="bar-val dn">−0.16 pp · w 0.4</span></div>
-      <div class="vin"><b>Methodology:</b> traded-close series, kept separate from the reference-rate series — never merged or averaged. Oct 16 gap <b>−21.6 pips</b> (traded close 1.41394 vs stored reference close 1.4161); 15 overlapping days: mean |gap| 21.7 pips, max |gap| 49.7 pips — reference fixing vs traded close / day-boundary difference. Bar width = driver weight (max 1.0); colour = sign for USD/CAD.</div>
-    </section>
-
-    <div style="display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:8px" class="fc-bias">
-      <section class="panel">
-        <h2>Forecast &amp; Model Insights</h2>
-        <div class="small mut" style="margin-bottom:2px">Baseline Model — rolling 90-day OLS · 1D fwd log return ~ trailing 1D Δlog(DXY) + 1D 10Y spread change</div>
-        <div class="origin-note"><b>Model origin: Oct 16 close 1.4161.</b> Spot has since moved to <span class="num">1.404585</span> (Oct 21 session pull). Forecast &amp; scenario levels below stay anchored to the Oct 16 origin — they are not re-based to current spot.</div>
-        <table aria-label="Forecast horizons">
-          <tr><th>Horizon</th><th>P50</th><th>P10 – P90</th><th>Implied spot</th></tr>
-          <tr><td>1D</td><td class="dn">−0.105%</td><td>−0.388% to +0.178%</td><td>1.4146</td></tr>
-          <tr><td>5D</td><td colspan="3" class="faint" style="font-family:inherit;font-size:10.5px;text-align:left">NOT VALIDATED — failed the walk-forward validation gate; no forecast published</td></tr>
-          <tr><td>20D</td><td colspan="3" class="faint" style="font-family:inherit;font-size:10.5px;text-align:left">NOT VALIDATED — failed the walk-forward validation gate; no forecast published</td></tr>
-        </table>
-        <div class="vin">
-          <b>Backtest credentials (1D):</b> MAE <b>20.0 bps</b> vs zero-return 21.61 · hit rate <b>59.76%</b> · n = 342 origins · assumed round-trip cost 2.0 pips. Residual σ 22.09 bps; interval = P50 ± 1.2816 × in-sample residual σ (normal approx, disclosed).<br>
-          <b>Coefficients:</b> intercept 0.000065 · broad USD 0.3437 · 10Y spread 0.000289 /bp · trained on 90 pairs.
-        </div>
-        <div class="sect">Indicative extension — not a refit</div>
-        <table aria-label="Forecast indicative extension">
-          <tr><th>Horizon</th><th>P50</th><th>P10 – P90</th><th>Implied spot</th></tr>
-          <tr><td>1D ext.</td><td class="dn">−0.061%</td><td>−0.344% to +0.222%</td><td>1.4050</td></tr>
-        </table>
-        <div class="vin">
-          <b>Indicative extension — not a refit.</b> Stored Oct 16 coefficients applied to Oct 20 features (Δlog DXY <b>−0.002474</b> · 10Y spread Δ <b>+0.6 bps</b>); return expressed on the Oct 20 traded close <b>1.4059</b> as a level only — no returns were spliced. A clean refit is not possible: reference-convention closes for Oct 19–21 do not exist (only traded closes), and splicing them in would inject the measured ~21.7-pip methodology gap as a fake return.
-        </div>
-        <div class="sect">Volatility cone — no directional claim</div>
-        <table aria-label="Volatility cone">
-          <tr><th>Horizon</th><th>Expected move (1σ)</th><th>Range</th></tr>
-          <tr><td>5D</td><td>±0.439%</td><td>1.3984 – 1.4108</td></tr>
-          <tr><td>20D</td><td>±0.879%</td><td>1.3922 – 1.4169</td></tr>
-        </table>
-        <div class="vin"><b>Volatility cone — no directional claim.</b> Expected move = spot <b>1.404585</b> × Realized Vol (20D) <b>3.12%</b> × √(days/252); range = spot × (1 ± EM). This replaces a directional 5D/20D forecast — those horizons remain NOT VALIDATED above; the cone states a mathematical range only.</div>
-      </section>
-
-      <section class="panel">
-        <h2>Summary Bias</h2>
-        <div style="margin:3px 0 6px"><span class="pill">Conditional Bearish USD/CAD</span> <span class="mut small">score <span class="num">−0.234</span></span></div>
-        <h3>Top Drivers</h3>
-        <ul class="tight">
-          <li>2Y spread 1D change — <span class="num">+1.3 bps</span> DoD</li>
-          <li>DXY 1D change — <span class="num">−0.25%</span> DoD</li>
-          <li>10Y spread 1D change — <span class="num">+0.8 bps</span> DoD</li>
-        </ul>
-        <h3 style="margin-top:6px">Conflicting Signals</h3>
-        <ul class="tight">
-          <li>2Y spread 1D change — <span class="num">+1.3 bps</span> DoD (widening US–CA spread supports USD/CAD)</li>
-          <li>10Y spread 1D change — <span class="num">+0.8 bps</span> DoD</li>
-        </ul>
-        <div class="vin">All-driver read: WTI <span class="num">+0.95%</span> DoD (oil up → CAD firmer → USD/CAD down, w 0.7) and futures crowding <span class="num">−23.3%</span> of OI (contrarian, w 0.8) now outweigh the spread widening — the tilt flipped from neutral on the refreshed oil read.</div>
-        <h3 style="margin-top:6px">Key Levels</h3>
-        <div class="num" style="font-size:11.5px">Calculated 20D — Support&nbsp;&nbsp;1.4004 / 1.3740<br>Calculated 20D — Resistance&nbsp;&nbsp;1.4262 / 1.4262<br>Daily pivots (Oct 21) — S1 1.40237 · S2 1.39885<br>Daily pivots (Oct 21) — R1 1.41030 · R2 1.41471 · PP 1.40678</div>
-        <div class="vin">Pivot cross-check: pivot R1 sits inside the 20D high by construction — a horizon difference (daily pivots vs a 20-day range), not an error. The two independent pivot sets agree within <b>0.5 pip</b> (S1 gap −0.4 pips, R1 gap +0.2 pips). Levels are shown side by side, never blended.</div>
-        <h3 style="margin-top:6px">Seasonality — CONTEXT ONLY</h3>
-        <div style="font-size:11.5px">October average <span class="num up">+0.25%</span> · <span class="num">58.82%</span> positive months (2010–2026)</div>
-        <div class="vin">Historical seasonal tendency only — never a standalone signal and never blended into the forecast. Method: sign × weight of stored drivers; weights are stated desk rules — diagnostics, not causality. Calculated levels: daily closes thru <b>Oct 16</b>.</div>
-      </section>
-    </div>
-
-    <section class="panel">
-      <h2>Scenario Engine (1–20 Days) — 1D distribution shown</h2>
-      <div class="origin-note" style="margin-top:0">Anchored to model origin <b>Oct 16 close 1.4161</b>; spot module now reads <span class="num">1.404585</span>. Method: normal forecast distribution N(P50, residual σ); neutral band ±0.25σ.</div>
-      <div class="scen">
-        <div class="card">
-          <h3 class="up">▲ Bullish USD/CAD</h3>
-          <div>Probability <span class="prob up">23.4%</span></div>
-          <div class="small mut">Expected Move <span class="num up">+0.185%</span></div>
-          <div class="small">Range <span class="num">1.4169 – 1.4186</span></div>
-        </div>
-        <div class="card">
-          <h3 class="mut">■ Neutral / Range</h3>
-          <div>Probability <span class="prob">17.7%</span></div>
-          <div class="small mut">Expected Move <span class="num">−0.002%</span></div>
-          <div class="small">Range <span class="num">1.4153 – 1.4169</span></div>
-        </div>
-        <div class="card">
-          <h3 class="dn">▼ Bearish USD/CAD</h3>
-          <div>Probability <span class="prob dn">58.9%</span></div>
-          <div class="small mut">Expected Move <span class="num dn">−0.251%</span></div>
-          <div class="small">Range <span class="num">1.4106 – 1.4153</span></div>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <!-- RIGHT -->
-  <div class="col">
-    <section class="panel">
-      <h2>Catalyst &amp; Flow Monitor</h2>
-      <div class="origin-note" style="margin-top:0"><b>Canada CPI (Oct 19) printed below forecast on all four measures — a dovish surprise sweep.</b></div>
-      <div class="sect">Released — Canada CPI · Mon Oct 19 · 6:30am, as displayed (site tz)</div>
-      <table aria-label="Released Canada CPI">
-        <tr><th>Event</th><th>Impact</th><th>Actual</th><th>Forecast</th><th>Prev</th></tr>
-        <tr><td class="lft" style="white-space:normal">CPI m/m</td><td><span class="impact high">High</span></td><td>0.1%</td><td>0.2%</td><td>−0.1%</td></tr>
-        <tr><td class="lft" style="white-space:normal">Median CPI y/y</td><td><span class="impact high">High</span></td><td>1.9%</td><td>2.0%</td><td>2.0%</td></tr>
-        <tr><td class="lft" style="white-space:normal">Trimmed CPI y/y</td><td><span class="impact high">High</span></td><td>1.8%</td><td>1.9%</td><td>1.9%</td></tr>
-        <tr><td class="lft" style="white-space:normal">Common CPI y/y</td><td><span class="impact med">Med</span></td><td>2.4%</td><td>2.6%</td><td>2.6%</td></tr>
-      </table>
-      <div class="small" style="margin:3px 0">All four: <span class="tag-below">BELOW forecast</span> <span class="mut">Δ −0.1 · −0.1 · −0.1 · −0.2 (printed units)</span></div>
-      <div class="sect">Also released</div>
-      <table aria-label="Other released events">
-        <tr><th>Event</th><th>Impact</th><th>Actual</th><th>Forecast</th><th>Prev</th></tr>
-        <tr><td class="lft" style="white-space:normal">GBP · Average Earnings Index 3m/y (Oct 20, 12:00am)</td><td><span class="impact med">Med</span></td><td>3.7% <span class="tag-below">BELOW</span></td><td>3.8%</td><td>3.9%</td></tr>
-        <tr><td class="lft" style="white-space:normal">GBP · CPI y/y (Oct 21, 12:00am)</td><td><span class="impact high">High</span></td><td>3.5% <span class="tag-above">ABOVE</span></td><td>3.4%</td><td>3.1%</td></tr>
-      </table>
-      <div class="sect">Upcoming — times as displayed (site tz)</div>
-      <table aria-label="Upcoming events">
-        <tr><th>Date / Time</th><th>Event</th><th>Impact</th><th>Forecast</th><th>Prev</th></tr>
-        <tr><td>Oct 22, 6:30am</td><td class="lft" style="font-family:inherit;white-space:normal">USD · Unemployment Claims</td><td><span class="impact med">Med</span></td><td>200K</td><td>199K</td></tr>
-        <tr><td>Oct 23, 7:45am</td><td class="lft" style="font-family:inherit;white-space:normal">USD · Flash Manufacturing PMI</td><td><span class="impact med">Med</span></td><td>55.4</td><td>55.9</td></tr>
-        <tr><td>Oct 23, 7:45am</td><td class="lft" style="font-family:inherit;white-space:normal">USD · Flash Services PMI</td><td><span class="impact med">Med</span></td><td>57.8</td><td>58.8</td></tr>
-        <tr><td>Oct 23, 8:00am</td><td class="lft" style="font-family:inherit;white-space:normal">USD · Revised UoM Consumer Sentiment</td><td><span class="impact med">Med</span></td><td>46.3</td><td>46.3</td></tr>
-        <tr class="cluster"><td>Oct 28, 7:45am</td><td class="lft" style="font-family:inherit;white-space:normal">CAD · BoC Monetary Policy Report</td><td><span class="impact high">High</span></td><td class="faint">—</td><td class="faint">—</td></tr>
-        <tr class="cluster"><td>Oct 28, 7:45am</td><td class="lft" style="font-family:inherit;white-space:normal">CAD · BoC Overnight Rate</td><td><span class="impact high">High</span></td><td class="faint">—</td><td>2.25%</td></tr>
-        <tr class="cluster"><td>Oct 28, 8:30am</td><td class="lft" style="font-family:inherit;white-space:normal">CAD · BoC Press Conference</td><td><span class="impact high">High</span></td><td class="faint">—</td><td class="faint">—</td></tr>
-        <tr class="cluster"><td>Oct 28, 12:30pm</td><td class="lft" style="font-family:inherit;white-space:normal">USD · FOMC Press Conference</td><td><span class="impact high">High</span></td><td class="faint">—</td><td class="faint">—</td></tr>
-        <tr class="cluster"><td>Oct 28, 12:00pm</td><td class="lft" style="font-family:inherit;white-space:normal">USD · Federal Funds Rate</td><td><span class="impact high">High</span></td><td class="faint">—</td><td>4.00%</td></tr>
-        <tr><td>Oct 29, 6:30am</td><td class="lft" style="font-family:inherit;white-space:normal">USD · Advance GDP q/q</td><td><span class="impact high">High</span></td><td class="faint">—</td><td>2.2%</td></tr>
-        <tr><td>Oct 29, 6:30am</td><td class="lft" style="font-family:inherit;white-space:normal">USD · Core PCE Price Index m/m</td><td><span class="impact high">High</span></td><td class="faint">—</td><td>0.2%</td></tr>
-      </table>
-      <div class="origin-note"><b>High-impact cluster — Wed Oct 28:</b> 5 High-impact events, BoC and Fed decisions the same day (highlighted). This is the trade card's event-risk anchor.</div>
-      <div class="vin">Calendar pull <b>Oct 21, 2026, 07:05 ET</b> (pull time) — supersedes the Oct 11-vintage stored calendar. All event times are verbatim <b>as displayed (site tz)</b> — not relabeled as ET. Impact: High / Medium as graded at pull.</div>
-    </section>
-
-    <section class="panel">
-      <h2>Latest News — official releases</h2>
-      <div class="sect">Bank of Canada — press releases</div>
-      <table aria-label="Bank of Canada press releases">
-        <tr><td class="lft" style="white-space:normal;font-family:inherit">Bank of Canada Board launches process to fill external Deputy Governor position</td><td>Sep 10, 2026</td></tr>
-        <tr><td class="lft" style="white-space:normal;font-family:inherit">Bank of Canada unveils new vertical $20 bank note</td><td>Sep 3, 2026</td></tr>
-        <tr><td class="lft" style="white-space:normal;font-family:inherit">Bank of Canada maintains the policy rate at 2¼%</td><td>Sep 2, 2026</td></tr>
-        <tr><td class="lft" style="white-space:normal;font-family:inherit">G7 2026 Cross-Border Coordination Exercise (CBCE)</td><td>Jul 31, 2026</td></tr>
-      </table>
-      <div class="sect">Statistics Canada — The Daily</div>
-      <table aria-label="Statistics Canada The Daily releases">
-        <tr><td class="lft" style="white-space:normal;font-family:inherit">Trade of culture and sport products, 2024</td><td>Oct 20, 2026</td></tr>
-        <tr><td class="lft" style="white-space:normal;font-family:inherit">Canadian Community Health Survey, 2025</td><td>Oct 20, 2026</td></tr>
-        <tr><td class="lft" style="white-space:normal;font-family:inherit">Monthly credit aggregates, August 2026</td><td>Oct 20, 2026</td></tr>
-        <tr><td class="lft" style="white-space:normal;font-family:inherit">Monthly Mineral Production Survey, August 2026</td><td>Oct 20, 2026</td></tr>
-      </table>
-      <div class="vin">Official releases only — central bank press releases and the national statistics daily release list, titles and dates as published. Pulled <b>Oct 21, 2026, 11:45 UTC</b>. No market-wire headlines are carried on this desk.</div>
-    </section>
-
-    <section class="panel">
-      <h2>Market Sentiment — Retail</h2>
-      <div class="small mut" style="margin-bottom:4px">By traders · long = long USD/CAD · n = 24 long / 31 short</div>
-      <div class="bar-track" style="height:14px">
-        <div class="bar-fill" style="width:44%;background:var(--green)"></div>
-        <div class="bar-fill" style="width:56%;background:var(--red)"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:2px"><span class="up">Long 44%</span><span class="dn">Short 56%</span></div>
-      <div class="small mut" style="margin:7px 0 4px">By lots · 8.9 long / 34.0 short</div>
-      <div class="bar-track" style="height:14px">
-        <div class="bar-fill" style="width:21%;background:var(--green)"></div>
-        <div class="bar-fill" style="width:79%;background:var(--red)"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:2px"><span class="up">Long 21%</span><span class="dn">Short 79%</span></div>
-      <table style="margin-top:6px">
-        <tr><td>Avg entry — long</td><td>1.3982</td></tr>
-        <tr><td>Avg entry — short</td><td>1.3910</td></tr>
-        <tr><td>Avg return — long</td><td class="up">+0.8%</td></tr>
-        <tr><td>Avg return — short</td><td class="dn">−0.8%</td></tr>
-      </table>
-      <div class="small" style="margin-top:4px">Shorts are crowded by size (79% of lots) and underwater on average: avg short entry <span class="num">1.3910</span> vs spot <span class="num">1.404585</span>, avg return <span class="num dn">−0.8%</span>; avg long return <span class="num up">+0.8%</span>.</div>
-      <div class="vin">Pulled <b>Oct 21, 2026, 07:05 ET (pull time)</b> · age <b>0.2 h</b> at calculation. Asof basis: <b>pull time</b> — the sentiment panel carries no explicit timestamp (Oct 21 page load), labeled as such. Retail positioning from members' linked brokerage accounts; small self-selected sample, snapshot only.</div>
-    </section>
-  </div>
-</div>
-
-<!-- ============ BOTTOM ROW ============ -->
-<div style="display:grid;grid-template-columns:minmax(0,2.05fr) minmax(0,1fr);gap:8px;margin-top:8px" class="bottom-row">
-  <section class="panel">
-    <h2>Positioning &amp; Options</h2>
-    <div style="display:grid;grid-template-columns:1.25fr 1fr .95fr;gap:12px" class="pos-grid">
-      <div>
-        <h3>Speculative Net Position (CAD Futures)</h3>
-        <div class="num" style="font-size:19px;font-weight:700">−88,112 <span style="font-size:11px" class="mut">contracts</span></div>
-        <table>
-          <tr><td>Net as % of OI</td><td class="dn"><b>−23.3%</b></td></tr>
-          <tr><td>WoW change</td><td class="dn">−8,487</td></tr>
-          <tr><td>Long / Short</td><td>23,811 / 111,923</td></tr>
-          <tr><td>Open interest</td><td>378,204</td></tr>
-          <tr><td>Dealer net</td><td>+120,981</td></tr>
-        </table>
-        <div class="prox">
-          <div class="sect" style="margin-top:6px">Squeeze Watch — proximity to thresholds</div>
-          <div class="bar-row"><span class="bl">Crowding vs ±20% extreme</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--red)"></div></div><span class="bar-val dn">BREACHED</span></div>
-          <div class="bar-row"><span class="bl">25D RR vs −1.5% extreme</span><div class="bar-track"><div class="bar-fill" style="width:10.7%;background:var(--amber)"></div></div><span class="bar-val">10.7%</span></div>
-          <div class="bar-row"><span class="bl">Net percentile (3Y)</span><div class="bar-track"><div class="bar-fill" style="width:10.2%;background:var(--cyan)"></div></div><span class="bar-val">10.2 %ile</span></div>
-        </div>
-        <div class="vin">Report: positions as of <b>Tue Oct 13</b> (prior Oct 6), fetched Oct 17 · weekly cadence. Crowding framework: neutral −10%..+10% of OI; ≤ −20% = extreme.</div>
-      </div>
-      <div>
-        <h3>Net % of OI Gauge</h3>
-        <svg viewBox="0 0 200 118" width="100%" role="img" aria-label="Gauge of net positioning at minus 23.3 percent of open interest, in the red extreme zone beyond minus 20 percent" style="display:block;max-width:230px;margin:0 auto">
-          <g fill="none" stroke-width="15">
-            <path d="M 20 100 A 80 80 0 0 1 55 35.4" stroke="#e5484d"/>
-            <path d="M 55 35.4 A 80 80 0 0 1 79.4 21.2" stroke="#f0a832"/>
-            <path d="M 79.4 21.2 A 80 80 0 0 1 120.6 21.2" stroke="#47617c"/>
-            <path d="M 120.6 21.2 A 80 80 0 0 1 145 35.4" stroke="#f0a832"/>
-            <path d="M 145 35.4 A 80 80 0 0 1 180 100" stroke="#e5484d"/>
-          </g>
-          <line x1="100" y1="100" x2="44.6" y2="57.3" stroke="#dce9f5" stroke-width="2.5"/>
-          <circle cx="100" cy="100" r="5" fill="#dce9f5"/>
-          <g font-size="9" fill="#7f9bb3" font-family="ui-monospace,Consolas,monospace">
-            <text x="14" y="114">−40</text><text x="52" y="26">−20</text><text x="95" y="12">0</text><text x="138" y="26">+20</text><text x="172" y="114">+40</text>
-          </g>
-        </svg>
-        <div style="text-align:center;font-size:11px"><span class="dn"><b>−23.3%</b></span> · <span class="dn">Extreme Crowded Short</span><br><span class="mut">(High short-squeeze risk)</span></div>
-        <div class="vin" style="text-align:center">Zones recalibrated: centre −10%..+10% neutral grey · amber to ±20% · red only beyond ±20%.</div>
-        <div class="vin">Percentiles of net: 1Y <b>13.2</b> · 3Y <b>10.2</b> · 5Y <b>6.1</b>.</div>
-      </div>
-      <div>
-        <h3>Options Market</h3>
-        <table>
-          <tr><td>25D Risk Reversal</td><td><b>−0.16 pp</b></td></tr>
-          <tr><td>Call IV (25D)</td><td>4.55%</td></tr>
-          <tr><td>Put IV (25D)</td><td>4.71%</td></tr>
-          <tr><td>Underlying (CAD fut.)</td><td>0.7086</td></tr>
-          <tr><td>Realized Vol (20D)</td><td><b>3.12%</b></td></tr>
-          <tr><td>CVOL Index</td><td><b>5.2337</b> <span class="dn">−0.1789</span></td></tr>
-          <tr><td>Expiry Pins</td><td class="faint" style="font-size:10px">UNAVAILABLE</td></tr>
-        </table>
-        <div class="vin">RR as of <b>Oct 16</b> · contract D6Z26, expiry Dec 4, 2026 · single-expiry pull, nearest-to-25Δ strikes, theoretical IVs, single source. Label: <b>Neutral</b> (−0.5%..+0.5% band, inside ±1.5% extremes). Realized Vol (20D) <b>3.12%</b>: 20D rolling σ of daily log returns × √252 on the stored reference series thru Oct 16 close 1.4161 (7D: 3.11%) — a stand-in for implied vol, labeled realized. <b>CVOL Index</b> 5.2337 (−0.1789), Oct 21, 06:27 CT, delayed ≥10 min — an implied-vol index, never presented as a 1W/1M tenor vol. Dealer gamma and gamma flip are removed from the board by design — no defensible dealer options data exists and the figures are never inferred. Expiry Pins: unavailable — no per-strike open interest is stored (the options pull carries only the two 25-delta strikes, IVs and deltas, no OI); pins need per-strike OI into the nearest expiry (10:00 AM ET NY cut). Positioning percentile basis: percentile of current net within trailing 3Y of weekly nets = <b>10.2</b>.</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="panel">
-    <h2>Trade Idea <span class="mut" style="font-weight:400">(Conditional)</span></h2>
-    <div style="font-size:13.5px;font-weight:700;color:var(--blue);margin:2px 0 7px">Buy USD/CAD on pullback</div>
-    <div class="trade-grid">
-      <span class="k">Entry Zone</span><span class="v">1.4004 – 1.4068</span>
-      <span class="k">Target</span><span class="v">1.4262 / 1.4262</span>
-      <span class="k">Stop</span><span class="v">1.3996 (40.5 pips)</span>
-      <span class="k">Position Size</span><span class="v" style="font-family:inherit;font-size:11px">Interim table below</span>
-      <span class="k">R : R</span><span class="v">5.57 : 1</span>
-    </div>
-    <table aria-label="Interim position size by risk budget" style="margin-top:7px">
-      <tr><th>Risk budget</th><th>Units</th><th>Notional</th></tr>
-      <tr><td>$1,000</td><td>246,853</td><td>$346,489</td></tr>
-      <tr><td>$5,000</td><td>1,234,263</td><td>$1,732,442</td></tr>
-      <tr><td>$10,000</td><td>2,468,526</td><td>$3,464,885</td></tr>
-    </table>
-    <div class="vin" style="margin-top:3px"><b>Interim static formula — risk budget ÷ stop distance; ES engine (Phase 04) supersedes.</b> Units = risk budget ÷ stop distance (0.00405 = 40.5 pips); notional = units × entry mid 1.40362. No equity figure is assumed.</div>
-    <div class="origin-note"><b>Event Risk:</b> High-impact cluster 2026-10-28: BoC Monetary Policy Report; BoC Overnight Rate (prev 2.25%); BoC Press Conference; FOMC Press Conference; Federal Funds Rate (prev 4.00%) — BoC and Fed decisions land the same day; event-risk window, conditional levels only.</div>
-    <div class="vin">
-      Mechanical template from stored closes thru <b>Oct 16</b>: entry = 20D low close, zone top = support + 25% of (20D high − low); stop = support − 0.35 × 20D avg absolute daily change (0.00236, close-based proxy, disclosed); targets = 20D high, then 50D high. Conditional levels from stored closes only; not an executable signal — no live intraday feed is wired into this card.
-    </div>
-  </section>
-</div>
-
-<footer>
-  <span>Calculated from stored data only · Snapshot generated Oct 21, 2026, 11:45 UTC · Every panel carries its own data vintage — panels differ by design.</span>
-  <span>Verified Oct 21, 2026 · For informational purposes only. Not a recommendation to trade.</span>
+<footer class="foot">
+  Snapshot of the merged dashboard refreshed Oct 22, 2026 from the previous day's verified records — the same manual drop-in series behind the daily cards. Grain settlements and per-contract OI run through Tue, Oct 20, 2026; options chains are the Oct 21, 2026 pull (OI as of the Oct 20 close) with far-month chains at their Sep 30, 2026 vintage; CFTC figures are the weekly report dated Tue, Oct 13, 2026. Export Sales runs through the Oct 22, 2026 release (week ending Oct 15, 2026), verified Oct 22, 2026. Each fan's market marker and right-edge label stack are frozen at the build-time delayed quote (9:30am ET, Thu, Oct 22, 2026). The USD/CAD spot tile is a demo-account session snapshot, labeled as such on its face. Nothing on this page refreshes.
 </footer>
 
-</div>
-<style>
-  @media (max-width:1100px){ .bottom-row{grid-template-columns:1fr !important} .pos-grid{grid-template-columns:1fr !important} .fc-bias{grid-template-columns:1fr !important} }
-</style>
-
-<style>
-#gateOverlay{position:fixed;inset:0;z-index:99999;background:#0a1628;display:flex;align-items:center;justify-content:center;font-family:inherit}
-#gateBox{background:#0e1f3a;border:1px solid #24466e;border-radius:12px;padding:32px 28px;max-width:340px;width:90%;text-align:center;color:#dbe7f5}
-#gateBox h2{margin:0 0 6px;font-size:18px;color:#fff}
-#gateBox p{margin:0 0 16px;font-size:13px;color:#9db8d4}
-#gateInput{width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid #33527a;background:#0a1628;color:#fff;font-size:15px;text-align:center;letter-spacing:1px}
-#gateBtn{margin-top:12px;width:100%;padding:10px;border:0;border-radius:8px;background:#1f6feb;color:#fff;font-size:14px;cursor:pointer}
-#gateErr{display:none;margin-top:10px;font-size:12px;color:#ff8a8a}
-#gateLockBtn{position:fixed;right:10px;bottom:10px;z-index:9999;background:#0e1f3a;color:#9db8d4;border:1px solid #33527a;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;display:none}
-</style>
-<div id="gateOverlay"><div id="gateBox"><h2>USD/CAD Pro Trading Desk</h2><p>This page is passcode-protected. Enter the passcode provided by the owner.</p><input id="gateInput" type="password" placeholder="Passcode" autocomplete="off"/><button id="gateBtn">Unlock</button><div id="gateErr">Incorrect passcode.</div></div></div>
-<button id="gateLockBtn">Lock</button>
 <script>
-(function(){
-var HASH="5d7c5b4e5343d38fe8c3de0956bce9d031848ed6373d05ee6110cc87811347bf";
-var ov=document.getElementById('gateOverlay'), lk=document.getElementById('gateLockBtn');
-function unlock(){ov.style.display='none';lk.style.display='block';}
-if(sessionStorage.getItem('deskGate')==='ok'){unlock();}
-lk.addEventListener('click',function(){sessionStorage.removeItem('deskGate');location.reload();});
-async function sha(t){var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('');}
-async function tryCode(){var v=document.getElementById('gateInput').value.trim();if(!v)return;var d=await sha(v);if(d===HASH){sessionStorage.setItem('deskGate','ok');document.getElementById('gateErr').style.display='none';unlock();}else{document.getElementById('gateErr').style.display='block';}}
-document.getElementById('gateBtn').addEventListener('click',tryCode);
-document.getElementById('gateInput').addEventListener('keydown',function(e){if(e.key==='Enter')tryCode();});
-})();
+"use strict";
+var DATA = {"grains": {"corn": {"fan": {"anchor": 4.62, "sig": 0.07197429178644897, "settle_date": "2026-10-20", "r5": [4.3, 4.94], "r10": [4.17, 5.07], "r10_99": [4.03, 5.21], "z": "-1.64", "ma20": "4.98", "pcr": "0.79", "put_wall": [5.0, "44,877"], "call_wall": [5.0, "45,873"], "near_expiry": "Dec-26", "intraday": [4.5625, "9:30am ET"], "iv_10d_rel": 0.03432, "iv_chain_iv": 17.23, "iv_as_of": "2026-10-21", "iv_note": null}, "history": [{"d": "2026-09-15T00:00:00", "s": 5.35625, "ma20": 5.2709, "ma50": 4.9272}, {"d": "2026-09-16T00:00:00", "s": 5.3425, "ma20": 5.2941, "ma50": 4.9412}, {"d": "2026-09-17T00:00:00", "s": 5.305, "ma20": 5.3103, "ma50": 4.9561}, {"d": "2026-09-18T00:00:00", "s": 5.275, "ma20": 5.3223, "ma50": 4.9712}, {"d": "2026-09-21T00:00:00", "s": 5.43, "ma20": 5.3396, "ma50": 4.9876}, {"d": "2026-09-22T00:00:00", "s": 5.3666, "ma20": 5.3501, "ma50": 5.0023}, {"d": "2026-09-24T00:00:00", "s": 5.275, "ma20": 5.3521, "ma50": 5.0157}, {"d": "2026-09-25T00:00:00", "s": 5.2825, "ma20": 5.348, "ma50": 5.0274}, {"d": "2026-09-28T00:00:00", "s": 5.23, "ma20": 5.3428, "ma50": 5.0392}, {"d": "2026-09-29T00:00:00", "s": 5.22, "ma20": 5.3355, "ma50": 5.0501}, {"d": "2026-09-30T00:00:00", "s": 5.0075, "ma20": 5.3171, "ma50": 5.0557}, {"d": "2026-10-01T00:00:00", "s": 5.0225, "ma20": 5.2952, "ma50": 5.0611}, {"d": "2026-10-02T00:00:00", "s": 4.9775, "ma20": 5.2723, "ma50": 5.0637}, {"d": "2026-10-05T00:00:00", "s": 4.9725, "ma20": 5.2506, "ma50": 5.0656}, {"d": "2026-10-06T00:00:00", "s": 5.08, "ma20": 5.2363, "ma50": 5.0697}, {"d": "2026-10-07T00:00:00", "s": 5.02, "ma20": 5.2205, "ma50": 5.0753}, {"d": "2026-10-08T00:00:00", "s": 5.0025, "ma20": 5.2068, "ma50": 5.0793}, {"d": "2026-10-09T00:00:00", "s": 4.7975, "ma20": 5.1799, "ma50": 5.0809}, {"d": "2026-10-12T00:00:00", "s": 4.83, "ma20": 5.1563, "ma50": 5.0838}, {"d": "2026-10-13T00:00:00", "s": 4.8275, "ma20": 5.131, "ma50": 5.0876}, {"d": "2026-10-14T00:00:00", "s": 4.8075, "ma20": 5.1036, "ma50": 5.0892}, {"d": "2026-10-15T00:00:00", "s": 4.78, "ma20": 5.0755, "ma50": 5.0917}, {"d": "2026-10-16T00:00:00", "s": 4.7425, "ma20": 5.0473, "ma50": 5.0946}, {"d": "2026-10-19T00:00:00", "s": 4.67, "ma20": 5.0171, "ma50": 5.0956}, {"d": "2026-10-20T00:00:00", "s": 4.62, "ma20": 4.9766, "ma50": 5.0956}], "tail50": [4.61625, 4.605, 4.80625, 4.72, 4.8325, 4.895, 4.88, 4.98, 5.035, 5.085, 5.155, 5.235, 5.365, 5.335, 5.365, 5.37625, 5.46, 5.435, 5.40625, 5.3675, 5.335, 5.27625, 5.33625, 5.3025, 5.3325, 5.35625, 5.3425, 5.305, 5.275, 5.43, 5.3666, 5.275, 5.2825, 5.23, 5.22, 5.0075, 5.0225, 4.9775, 4.9725, 5.08, 5.02, 5.0025, 4.7975, 4.83, 4.8275, 4.8075, 4.78, 4.7425, 4.67, 4.62], "near": {"rows": [[2.5, 0, 154], [2.7, 0, 100], [2.8, 0, 110], [2.9, 0, 1282], [3.0, 0, 1929], [3.1, 0, 8315], [3.2, 0, 900], [3.3, 0, 453], [3.4, 0, 1550], [3.5, 0, 1241], [3.6, 0, 3885], [3.65, 0, 558], [3.7, 0, 5527], [3.75, 0, 2617], [3.8, 2450, 3947], [3.85, 0, 2799], [3.9, 0, 1937], [3.95, 0, 2322], [4.0, 168, 13647], [4.05, 0, 2189], [4.1, 94, 19776], [4.15, 37, 5210], [4.2, 1150, 21477], [4.25, 505, 9182], [4.3, 2188, 19951], [4.35, 1107, 5729], [4.4, 5817, 16966], [4.45, 722, 9295], [4.5, 10640, 29420], [4.55, 3011, 8446], [4.6, 11973, 22597], [4.65, 6285, 11208], [4.7, 19225, 20073], [4.75, 11408, 11174], [4.8, 22190, 25634], [4.85, 12876, 10625], [4.9, 41071, 31838], [4.95, 10082, 11953], [5.0, 45873, 44877], [5.05, 7936, 4588], [5.1, 18285, 12163], [5.15, 4013, 4725], [5.2, 32632, 15606], [5.25, 10907, 3367], [5.3, 39255, 16123], [5.35, 16318, 4114], [5.4, 17553, 6377], [5.45, 4009, 515], [5.5, 41331, 1634], [5.55, 4811, 55], [5.6, 21545, 811], [5.65, 7014, 71], [5.7, 16357, 160], [5.75, 5695, 16], [5.8, 12651, 175], [5.85, 2046, 12], [5.9, 4489, 2], [5.95, 1219, 0], [6.0, 31043, 2], [6.05, 696, 0], [6.1, 6268, 0], [6.15, 306, 0], [6.2, 2713, 9], [6.25, 262, 0], [6.3, 2718, 0], [6.35, 144, 0], [6.4, 8565, 0], [6.45, 144, 0], [6.5, 11851, 350], [6.55, 3626, 0], [6.6, 1457, 0], [6.65, 30, 0], [6.7, 422, 0], [6.75, 92, 0], [6.8, 857, 0], [6.9, 4871, 0], [7.0, 6812, 620], [7.1, 434, 0], [7.2, 385, 0], [7.3, 523, 0], [7.4, 3258, 0], [7.5, 1670, 0], [7.6, 971, 0], [8.0, 1677, 0], [8.5, 4298, 0], [9.0, 2873, 0], [9.2, 388, 0], [9.4, 100, 0], [9.5, 390, 0], [10.0, 5436, 0], [11.0, 1142, 0], [12.0, 650, 0]], "calls": 584010, "puts": 462388, "call_wall": [5.0, 45873], "put_wall": [5.0, 44877], "pcr": 0.79, "iv": 17.23, "chain": "Dec-26", "expires": "2026-11-20", "contract": "ZCZ26"}, "far": {"rows": [[2.9, 0, 1], [3.0, 0, 111], [3.1, 0, 100], [3.4, 0, 175], [3.5, 0, 1], [3.6, 0, 234], [3.65, 0, 100], [3.7, 0, 100], [3.75, 0, 211], [3.8, 0, 128], [3.85, 0, 232], [3.9, 0, 67], [3.95, 0, 189], [4.0, 500, 1705], [4.05, 0, 327], [4.1, 0, 2181], [4.15, 0, 798], [4.2, 225, 5015], [4.25, 3, 2609], [4.3, 1466, 7471], [4.35, 42, 860], [4.4, 221, 3628], [4.45, 871, 1506], [4.5, 2133, 5461], [4.55, 1183, 2311], [4.6, 839, 3221], [4.65, 1455, 2750], [4.7, 3815, 6150], [4.75, 3018, 2067], [4.8, 3242, 9979], [4.85, 2544, 3222], [4.9, 3276, 5621], [4.95, 1361, 2800], [5.0, 12094, 22567], [5.05, 901, 3079], [5.1, 6681, 6331], [5.15, 1671, 1859], [5.2, 7940, 6940], [5.25, 2206, 8156], [5.3, 8904, 4306], [5.35, 1495, 1550], [5.4, 7537, 4665], [5.45, 1747, 1025], [5.5, 20632, 6404], [5.55, 2790, 478], [5.6, 12828, 1295], [5.65, 810, 581], [5.7, 4352, 501], [5.75, 2481, 148], [5.8, 5150, 169], [5.85, 2200, 125], [5.9, 2708, 189], [6.0, 27655, 634], [6.1, 4393, 95], [6.2, 18785, 49], [6.3, 17655, 39], [6.4, 4971, 2], [6.5, 7818, 198], [6.6, 822, 0], [6.7, 1015, 3], [6.8, 2408, 0], [6.9, 173, 0], [7.0, 20734, 0], [7.1, 394, 0], [7.2, 426, 0], [7.3, 241, 0], [7.4, 228, 0], [7.5, 4330, 1115], [7.6, 275, 0], [7.7, 266, 0], [7.8, 300, 0], [8.0, 663, 0], [8.1, 121, 0], [8.2, 136, 0], [8.3, 1, 0], [8.4, 50, 0], [9.0, 1417, 0], [10.0, 3072, 0], [11.0, 553, 0], [12.0, 114, 0], [13.0, 102, 0], [14.0, 110, 0], [15.0, 49, 0]], "calls": 250598, "puts": 143834, "call_wall": [6.0, 27655], "put_wall": [5.0, 22567], "pcr": 0.57}, "skew": [[4.2, 19.59, "P"], [4.25, 16.65, "P"], [4.3, 17.8, "P"], [4.35, 18.11, "P"], [4.4, 17.9, "P"], [4.45, 17.3, "P"], [4.5, 17.61, "P"], [4.55, 17.56, "P"], [4.6, 17.16, "P"], [4.65, 17.83, "C"], [4.7, 18.28, "C"], [4.75, 18.55, "C"], [4.8, 18.75, "C"], [4.85, 18.98, "C"], [4.9, 18.96, "C"], [4.95, 19.9, "C"], [5.0, 20.52, "C"], [5.05, 22.29, "C"]], "cftc": [{"date": "2026-08-11", "long": 312829, "short": 186954, "net": 125875}, {"date": "2026-08-18", "long": 321475, "short": 139783, "net": 181692}, {"date": "2026-08-25", "long": 411762, "short": 94314, "net": 317448}, {"date": "2026-09-01", "long": 467856, "short": 66853, "net": 401003}, {"date": "2026-09-08", "long": 491034, "short": 76575, "net": 414459}, {"date": "2026-09-15", "long": 483738, "short": 69278, "net": 414460}, {"date": "2026-09-22", "long": 471466, "short": 67369, "net": 404097}, {"date": "2026-09-29", "long": 439843, "short": 58623, "net": 381220}, {"date": "2026-10-06", "long": 393249, "short": 63410, "net": 329839}, {"date": "2026-10-13", "long": 330244, "short": 83819, "net": 246425}], "roll": [{"contract": "ZCZ26", "expiry": "Dec-26", "settle": 4.62, "oi_oct19": 823888, "oi_pct": 65.9}, {"contract": "ZCH27", "expiry": "Mar-27", "settle": 4.76, "oi_oct19": 425970, "oi_pct": 34.1}, {"contract": "ZCK27", "expiry": "May-27", "settle": 4.84, "oi_oct19": null, "oi_pct": 0.0}]}, "soybeans": {"fan": {"anchor": 12.4825, "sig": 0.1334221327862859, "settle_date": "2026-10-20", "r5": [11.9, 13.07], "r10": [11.66, 13.31], "r10_99": [11.4, 13.57], "z": "-1.88", "ma20": "12.87", "pcr": "1.07", "put_wall": [12.0, "18,763"], "call_wall": [13.0, "18,160"], "near_expiry": "Nov-26", "intraday": [12.4, "9:30am ET"], "iv_10d_rel": 0.02313, "iv_chain_iv": 11.61, "iv_as_of": "2026-10-21", "iv_note": null}, "history": [{"d": "2026-09-15T00:00:00", "s": 13.1875, "ma20": 12.8167, "ma50": 12.3181}, {"d": "2026-09-16T00:00:00", "s": 13.205, "ma20": 12.8686, "ma50": 12.3426}, {"d": "2026-09-17T00:00:00", "s": 13.1975, "ma20": 12.9099, "ma50": 12.3681}, {"d": "2026-09-18T00:00:00", "s": 13.035, "ma20": 12.9434, "ma50": 12.3925}, {"d": "2026-09-21T00:00:00", "s": 13.28, "ma20": 12.9876, "ma50": 12.4199}, {"d": "2026-09-22T00:00:00", "s": 13.255, "ma20": 13.0382, "ma50": 12.4461}, {"d": "2026-09-24T00:00:00", "s": 13.175, "ma20": 13.0781, "ma50": 12.4714}, {"d": "2026-09-25T00:00:00", "s": 13.19, "ma20": 13.1046, "ma50": 12.4948}, {"d": "2026-09-28T00:00:00", "s": 12.8825, "ma20": 13.1148, "ma50": 12.5135}, {"d": "2026-09-29T00:00:00", "s": 12.9775, "ma20": 13.1196, "ma50": 12.5324}, {"d": "2026-09-30T00:00:00", "s": 12.93, "ma20": 13.1221, "ma50": 12.5458}, {"d": "2026-10-01T00:00:00", "s": 12.84, "ma20": 13.1053, "ma50": 12.5581}, {"d": "2026-10-02T00:00:00", "s": 12.7825, "ma20": 13.0893, "ma50": 12.5659}, {"d": "2026-10-05T00:00:00", "s": 12.8075, "ma20": 13.0715, "ma50": 12.5733}, {"d": "2026-10-06T00:00:00", "s": 13.03, "ma20": 13.0681, "ma50": 12.5832}, {"d": "2026-10-07T00:00:00", "s": 12.975, "ma20": 13.0587, "ma50": 12.5999}, {"d": "2026-10-08T00:00:00", "s": 12.875, "ma20": 13.0477, "ma50": 12.6135}, {"d": "2026-10-09T00:00:00", "s": 12.92, "ma20": 13.0276, "ma50": 12.6333}, {"d": "2026-10-12T00:00:00", "s": 12.8775, "ma20": 13.0232, "ma50": 12.6531}, {"d": "2026-10-13T00:00:00", "s": 12.8375, "ma20": 13.013, "ma50": 12.6723}, {"d": "2026-10-14T00:00:00", "s": 12.7725, "ma20": 12.9923, "ma50": 12.6893}, {"d": "2026-10-15T00:00:00", "s": 12.63, "ma20": 12.9635, "ma50": 12.7064}, {"d": "2026-10-16T00:00:00", "s": 12.6125, "ma20": 12.9343, "ma50": 12.7237}, {"d": "2026-10-19T00:00:00", "s": 12.535, "ma20": 12.9093, "ma50": 12.7388}, {"d": "2026-10-20T00:00:00", "s": 12.4825, "ma20": 12.8694, "ma50": 12.7533}], "tail50": [11.795, 11.6875, 11.8325, 11.8225, 11.925, 12.16, 12.1675, 12.3725, 12.365, 12.395, 12.2425, 12.3775, 12.66, 12.68, 12.88, 12.88, 13.1775, 13.1025, 13.1625, 13.0975, 13.1625, 13.095, 13.3225, 12.965, 13.0425, 13.1875, 13.205, 13.1975, 13.035, 13.28, 13.255, 13.175, 13.19, 12.8825, 12.9775, 12.93, 12.84, 12.7825, 12.8075, 13.03, 12.975, 12.875, 12.92, 12.8775, 12.8375, 12.7725, 12.63, 12.6125, 12.535, 12.4825], "near": {"rows": [[5.4, 0, 355], [6.0, 0, 355], [6.6, 0, 25], [6.8, 0, 12], [7.0, 0, 10], [7.2, 0, 124], [7.6, 0, 1], [8.0, 0, 5586], [8.2, 0, 595], [8.4, 0, 3546], [8.5, 0, 434], [8.6, 0, 331], [8.8, 0, 2105], [8.9, 0, 380], [9.0, 0, 1101], [9.1, 0, 214], [9.2, 0, 749], [9.3, 0, 213], [9.4, 0, 1615], [9.5, 0, 495], [9.6, 0, 598], [9.7, 0, 728], [9.8, 0, 1555], [9.9, 0, 3624], [10.0, 1208, 8178], [10.1, 0, 1109], [10.2, 158, 2305], [10.3, 0, 2486], [10.4, 139, 1893], [10.5, 112, 4637], [10.6, 848, 3176], [10.7, 1026, 4731], [10.8, 3109, 7850], [10.9, 300, 2542], [11.0, 2109, 10721], [11.1, 307, 3848], [11.2, 1317, 7078], [11.3, 315, 4225], [11.4, 666, 5175], [11.5, 1304, 8310], [11.6, 1441, 4388], [11.7, 975, 4926], [11.8, 4171, 9722], [11.9, 2568, 5394], [12.0, 14633, 18763], [12.04, 0, 7], [12.1, 1781, 3505], [12.14, 0, 815], [12.16, 0, 139], [12.18, 4, 121], [12.2, 4235, 8247], [12.22, 0, 314], [12.24, 2, 346], [12.26, 0, 450], [12.28, 0, 431], [12.3, 2646, 4452], [12.32, 10, 1021], [12.34, 65, 2161], [12.36, 0, 315], [12.38, 311, 1244], [12.4, 4305, 11128], [12.42, 0, 772], [12.44, 115, 461], [12.46, 14, 772], [12.48, 315, 387], [12.5, 7625, 13902], [12.52, 3046, 567], [12.54, 3052, 1212], [12.56, 3153, 611], [12.58, 3078, 648], [12.6, 7211, 6513], [12.62, 578, 1124], [12.64, 808, 369], [12.66, 386, 762], [12.68, 167, 121], [12.7, 3821, 8205], [12.72, 140, 319], [12.74, 99, 406], [12.76, 262, 298], [12.78, 118, 272], [12.8, 11367, 8985], [12.82, 176, 241], [12.84, 382, 421], [12.86, 298, 155], [12.88, 610, 96], [12.9, 2785, 7900], [12.92, 243, 113], [12.94, 627, 313], [12.96, 219, 64], [12.98, 268, 107], [13.0, 18160, 12317], [13.02, 533, 59], [13.04, 211, 16], [13.06, 220, 6], [13.08, 179, 8], [13.1, 6575, 5588], [13.12, 109, 15], [13.14, 333, 0], [13.16, 251, 9], [13.18, 867, 2], [13.2, 6396, 6581], [13.22, 407, 18], [13.24, 619, 0], [13.26, 323, 0], [13.28, 371, 0], [13.3, 5176, 386], [13.32, 237, 1], [13.34, 107, 0], [13.36, 107, 0], [13.38, 742, 2], [13.4, 9534, 52], [13.42, 683, 0], [13.44, 317, 0], [13.46, 554, 0], [13.48, 2243, 0], [13.5, 10488, 9], [13.52, 597, 1], [13.54, 255, 0], [13.56, 599, 0], [13.58, 338, 0], [13.6, 5233, 10], [13.62, 417, 0], [13.64, 87, 0], [13.66, 333, 10], [13.68, 282, 3], [13.7, 2391, 22], [13.72, 571, 0], [13.74, 434, 2], [13.76, 560, 88], [13.78, 512, 0], [13.8, 14180, 14], [13.82, 325, 0], [13.9, 1587, 0], [14.0, 8096, 0], [14.1, 681, 0], [14.2, 1772, 0], [14.3, 1284, 0], [14.4, 3235, 0], [14.5, 6088, 0], [14.6, 3958, 0], [14.7, 732, 0], [14.8, 1202, 0], [14.9, 111, 0], [15.0, 5448, 0], [15.1, 321, 0], [15.2, 319, 0], [15.3, 220, 0], [15.4, 304, 0], [15.5, 268, 0], [15.6, 4626, 0], [15.7, 71, 0], [15.8, 351, 0], [15.9, 100, 0], [16.0, 3037, 0], [16.1, 108, 0], [16.2, 300, 0], [16.4, 106, 0], [16.5, 150, 0], [16.6, 338, 0], [16.8, 122, 0], [17.0, 4339, 0], [17.2, 235, 0], [17.4, 53, 0], [17.6, 194, 0], [17.8, 75, 0], [18.0, 88, 0], [19.0, 127, 0], [20.0, 421, 0], [30.0, 666, 0]], "calls": 245017, "puts": 262239, "call_wall": [13.0, 18160], "put_wall": [12.0, 18763], "pcr": 1.07, "iv": 11.61, "chain": "Nov-26", "expires": "2026-10-23", "contract": "ZSX26"}, "far": {"rows": [[7.8, 0, 1], [8.0, 0, 37], [8.4, 0, 74], [8.6, 0, 54], [8.8, 0, 347], [8.9, 0, 71], [9.0, 0, 249], [9.3, 0, 17], [9.5, 0, 13], [9.6, 0, 13], [9.7, 0, 29], [9.8, 0, 255], [9.9, 0, 311], [10.0, 3, 791], [10.5, 0, 171], [10.6, 0, 376], [10.7, 0, 196], [10.8, 0, 886], [10.9, 23, 373], [11.0, 144, 1244], [11.1, 260, 851], [11.2, 50, 570], [11.3, 194, 514], [11.4, 444, 1127], [11.5, 135, 2703], [11.6, 362, 587], [11.7, 155, 2176], [11.8, 424, 1065], [11.9, 730, 555], [12.0, 748, 6457], [12.1, 612, 698], [12.2, 1019, 2640], [12.3, 339, 4645], [12.4, 1103, 1225], [12.5, 2432, 3583], [12.6, 925, 1157], [12.7, 303, 962], [12.8, 2413, 2135], [12.9, 284, 206], [13.0, 2136, 1308], [13.1, 277, 299], [13.2, 2553, 588], [13.3, 2557, 361], [13.4, 2568, 292], [13.5, 2114, 49], [13.6, 3802, 130], [13.7, 11, 0], [13.8, 701, 176], [13.9, 45, 0], [14.0, 8051, 60], [14.1, 36, 0], [14.2, 1360, 64], [14.3, 22, 0], [14.4, 2475, 40], [14.5, 16, 0], [14.6, 3785, 20], [14.8, 446, 1], [14.9, 9, 0], [15.0, 7644, 0], [15.1, 41, 0], [15.2, 422, 0], [15.3, 9, 0], [15.4, 1486, 0], [15.5, 1, 0], [15.6, 361, 0], [15.8, 134, 0], [16.0, 3837, 0], [16.2, 114, 0], [16.3, 30, 0], [16.4, 254, 0], [16.5, 51, 0], [16.6, 100, 0], [16.8, 79, 0], [17.0, 90, 0], [17.2, 127, 0], [17.4, 38, 0], [17.6, 3, 0], [17.8, 4, 0], [18.0, 621, 0], [18.2, 268, 0], [18.4, 162, 0], [18.6, 50, 0], [18.8, 176, 0], [19.6, 10, 0], [20.0, 173, 0], [25.0, 1, 0]], "calls": 62352, "puts": 42752, "call_wall": [14.0, 8051], "put_wall": [12.0, 6457], "pcr": 0.69}, "skew": [[11.66, 37.76, "P"], [11.7, 35.99, "P"], [11.8, 31.56, "P"], [11.9, 27.09, "P"], [11.92, 26.19, "P"], [11.94, 25.29, "P"], [11.96, 24.38, "P"], [11.98, 23.48, "P"], [12.0, 22.57, "P"], [12.02, 21.66, "P"], [12.04, 20.74, "P"], [12.06, 19.82, "P"], [12.08, 18.9, "P"], [12.1, 17.97, "P"], [12.12, 17.04, "P"], [12.14, 16.1, "P"], [12.16, 15.16, "P"], [12.18, 14.2, "P"], [12.2, 15.0, "P"], [12.22, 13.94, "P"], [12.24, 12.87, "P"], [12.26, 12.9, "P"], [12.28, 12.61, "P"], [12.3, 13.4, "P"], [12.32, 12.0, "P"], [12.34, 11.59, "P"], [12.36, 12.21, "P"], [12.38, 11.58, "P"], [12.4, 15.28, "P"], [12.42, 9.44, "P"], [12.44, 14.62, "P"], [12.46, 10.82, "P"], [12.48, 5.61, "P"], [12.5, 13.71, "C"], [12.52, 19.83, "C"], [12.54, 17.24, "C"], [12.56, 13.5, "C"], [12.58, 19.1, "C"], [12.6, 14.88, "C"], [12.62, 18.78, "C"], [12.64, 16.54, "C"], [12.66, 17.71, "C"], [12.68, 15.48, "C"], [12.7, 16.47, "C"], [12.72, 17.45, "C"], [12.74, 18.42, "C"], [12.76, 22.19, "C"], [12.78, 21.92, "C"], [12.8, 21.28, "C"], [12.82, 19.88, "C"], [12.84, 20.74, "C"], [12.86, 24.06, "C"], [12.88, 22.43, "C"], [12.9, 23.27, "C"], [12.92, 24.1, "C"], [12.94, 24.92, "C"], [12.96, 25.75, "C"], [12.98, 26.56, "C"], [13.0, 27.38, "C"], [13.02, 28.19, "C"], [13.04, 28.99, "C"], [13.06, 29.79, "C"], [13.08, 30.59, "C"], [13.1, 31.38, "C"], [13.12, 32.17, "C"], [13.14, 32.96, "C"], [13.16, 33.74, "C"], [13.18, 34.52, "C"], [13.2, 35.29, "C"], [13.22, 36.06, "C"], [13.24, 36.83, "C"], [13.26, 37.6, "C"], [13.28, 38.36, "C"], [13.3, 39.12, "C"], [13.32, 39.87, "C"]], "cftc": [{"date": "2026-08-11", "long": 169712, "short": 60603, "net": 109109}, {"date": "2026-08-18", "long": 197446, "short": 45664, "net": 151782}, {"date": "2026-08-25", "long": 239335, "short": 38656, "net": 200679}, {"date": "2026-09-01", "long": 270450, "short": 35530, "net": 234920}, {"date": "2026-09-08", "long": 293215, "short": 35957, "net": 257258}, {"date": "2026-09-15", "long": 282581, "short": 41080, "net": 241501}, {"date": "2026-09-22", "long": 300742, "short": 35583, "net": 265159}, {"date": "2026-09-29", "long": 280875, "short": 34317, "net": 246558}, {"date": "2026-10-06", "long": 289942, "short": 31876, "net": 258066}, {"date": "2026-10-13", "long": 285231, "short": 35424, "net": 249807}], "roll": [{"contract": "ZSX26", "expiry": "Nov-26", "settle": 12.4825, "oi_oct19": 269046, "oi_pct": 46.7}, {"contract": "ZSF27", "expiry": "Jan-27", "settle": 12.635, "oi_oct19": 306739, "oi_pct": 53.3}, {"contract": "ZSH27", "expiry": "Mar-27", "settle": 12.7325, "oi_oct19": null, "oi_pct": 0.0}]}, "wheat": {"fan": {"anchor": 6.4325, "sig": 0.0984083461206766, "settle_date": "2026-10-20", "r5": [6.0, 6.86], "r10": [5.82, 7.04], "r10_99": [5.63, 7.23], "z": "-2.09", "ma20": "6.82", "pcr": "0.62", "put_wall": [6.5, "7,992"], "call_wall": [8.0, "12,699"], "near_expiry": "Dec-26", "intraday": [6.2825, "9:30am ET"], "iv_10d_rel": 0.04524, "iv_chain_iv": 22.71, "iv_as_of": "2026-10-21", "iv_note": null}, "history": [{"d": "2026-09-15T00:00:00", "s": 7.285, "ma20": 7.3426, "ma50": 6.9676}, {"d": "2026-09-16T00:00:00", "s": 7.3075, "ma20": 7.3674, "ma50": 6.987}, {"d": "2026-09-17T00:00:00", "s": 7.27, "ma20": 7.3821, "ma50": 7.0077}, {"d": "2026-09-18T00:00:00", "s": 7.1425, "ma20": 7.3892, "ma50": 7.0238}, {"d": "2026-09-21T00:00:00", "s": 7.2675, "ma20": 7.403, "ma50": 7.0383}, {"d": "2026-09-22T00:00:00", "s": 7.1725, "ma20": 7.4119, "ma50": 7.0516}, {"d": "2026-09-24T00:00:00", "s": 7.07, "ma20": 7.4138, "ma50": 7.061}, {"d": "2026-09-25T00:00:00", "s": 7.0325, "ma20": 7.3912, "ma50": 7.0633}, {"d": "2026-09-28T00:00:00", "s": 6.8875, "ma20": 7.3552, "ma50": 7.0629}, {"d": "2026-09-29T00:00:00", "s": 6.9275, "ma20": 7.3096, "ma50": 7.0614}, {"d": "2026-09-30T00:00:00", "s": 6.7575, "ma20": 7.2605, "ma50": 7.0583}, {"d": "2026-10-01T00:00:00", "s": 6.8275, "ma20": 7.2106, "ma50": 7.0557}, {"d": "2026-10-02T00:00:00", "s": 6.83, "ma20": 7.1651, "ma50": 7.0477}, {"d": "2026-10-05T00:00:00", "s": 6.9225, "ma20": 7.1341, "ma50": 7.0434}, {"d": "2026-10-06T00:00:00", "s": 7.0425, "ma20": 7.1192, "ma50": 7.0451}, {"d": "2026-10-07T00:00:00", "s": 6.865, "ma20": 7.089, "ma50": 7.047}, {"d": "2026-10-08T00:00:00", "s": 6.8325, "ma20": 7.0662, "ma50": 7.0476}, {"d": "2026-10-09T00:00:00", "s": 6.71, "ma20": 7.0311, "ma50": 7.0463}, {"d": "2026-10-12T00:00:00", "s": 6.7225, "ma20": 7.0046, "ma50": 7.0445}, {"d": "2026-10-13T00:00:00", "s": 6.6925, "ma20": 6.9783, "ma50": 7.0468}, {"d": "2026-10-14T00:00:00", "s": 6.7325, "ma20": 6.9506, "ma50": 7.0476}, {"d": "2026-10-15T00:00:00", "s": 6.7, "ma20": 6.9203, "ma50": 7.0501}, {"d": "2026-10-16T00:00:00", "s": 6.605, "ma20": 6.887, "ma50": 7.05}, {"d": "2026-10-19T00:00:00", "s": 6.5525, "ma20": 6.8575, "ma50": 7.051}, {"d": "2026-10-20T00:00:00", "s": 6.4325, "ma20": 6.8157, "ma50": 7.0479}], "tail50": [6.5925, 6.4825, 6.6975, 6.6825, 6.895, 6.8925, 6.8125, 6.975, 7.0, 6.9925, 6.995, 7.0325, 7.4825, 7.6075, 7.84, 7.74, 7.825, 7.74, 7.5425, 7.34, 7.47, 7.2875, 7.4125, 7.2525, 7.22, 7.285, 7.3075, 7.27, 7.1425, 7.2675, 7.1725, 7.07, 7.0325, 6.8875, 6.9275, 6.7575, 6.8275, 6.83, 6.9225, 7.0425, 6.865, 6.8325, 6.71, 6.7225, 6.6925, 6.7325, 6.7, 6.605, 6.5525, 6.4325], "near": {"rows": [[3.3, 0, 100], [4.0, 0, 3], [4.2, 0, 1], [4.4, 0, 114], [4.5, 0, 5], [4.55, 0, 10], [4.6, 0, 23], [4.65, 0, 100], [4.7, 0, 142], [4.75, 0, 84], [4.8, 0, 168], [4.85, 0, 41], [4.9, 0, 127], [4.95, 0, 150], [5.0, 0, 1933], [5.05, 0, 660], [5.1, 0, 343], [5.15, 0, 269], [5.2, 0, 2886], [5.25, 0, 157], [5.3, 0, 550], [5.35, 0, 160], [5.4, 0, 402], [5.45, 0, 133], [5.5, 28, 3196], [5.55, 0, 489], [5.6, 1, 1001], [5.65, 4, 1133], [5.7, 741, 1218], [5.75, 700, 503], [5.8, 14, 2007], [5.85, 37, 761], [5.9, 118, 989], [5.95, 184, 264], [6.0, 2255, 4997], [6.05, 84, 976], [6.1, 258, 5480], [6.15, 389, 1745], [6.2, 1498, 4411], [6.25, 106, 971], [6.3, 526, 4493], [6.35, 570, 969], [6.4, 1766, 4233], [6.45, 379, 1753], [6.5, 3438, 7992], [6.55, 1477, 1253], [6.6, 2729, 5092], [6.65, 2175, 2116], [6.7, 3909, 3589], [6.75, 3290, 1872], [6.8, 5937, 3607], [6.85, 1942, 1154], [6.9, 3136, 1394], [6.95, 679, 566], [7.0, 8853, 5217], [7.05, 1231, 162], [7.1, 4410, 794], [7.15, 858, 206], [7.2, 2292, 1859], [7.25, 3865, 315], [7.3, 3712, 686], [7.35, 1043, 88], [7.4, 2664, 1622], [7.45, 1361, 338], [7.5, 8276, 693], [7.55, 449, 36], [7.6, 2646, 1024], [7.65, 981, 70], [7.7, 3237, 601], [7.75, 4475, 339], [7.8, 3389, 314], [7.85, 348, 263], [7.9, 885, 68], [7.95, 193, 11], [8.0, 12699, 440], [8.05, 405, 10], [8.1, 574, 48], [8.15, 440, 22], [8.2, 2287, 31], [8.25, 1822, 12], [8.3, 1063, 39], [8.35, 120, 1], [8.4, 1674, 42], [8.45, 201, 0], [8.5, 5911, 79], [8.55, 39, 0], [8.6, 972, 7], [8.65, 59, 0], [8.7, 983, 21], [8.75, 120, 0], [8.8, 2582, 6], [8.85, 56, 0], [8.9, 690, 2], [8.95, 156, 0], [9.0, 4818, 1], [9.05, 82, 0], [9.1, 389, 0], [9.15, 43, 0], [9.2, 646, 0], [9.25, 396, 0], [9.3, 789, 0], [9.35, 41, 0], [9.4, 701, 0], [9.45, 174, 0], [9.5, 1674, 2], [9.55, 319, 0], [9.6, 581, 0], [9.65, 117, 0], [9.7, 653, 0], [9.75, 56, 0], [9.8, 209, 0], [9.9, 74, 0], [10.0, 5388, 0], [10.1, 147, 0], [10.2, 101, 0], [10.3, 88, 0], [10.4, 175, 0], [10.5, 799, 0], [10.6, 185, 0], [10.7, 22, 0], [10.8, 261, 0], [10.9, 145, 0], [11.0, 1892, 0], [11.1, 73, 0], [11.2, 97, 0], [11.3, 24, 0], [11.4, 200, 0], [11.5, 487, 0], [11.6, 44, 0], [11.7, 223, 0], [12.0, 927, 0], [14.0, 372, 0], [16.0, 296, 0], [18.0, 368, 0], [20.0, 433, 0]], "calls": 150900, "puts": 94254, "call_wall": [8.0, 12699], "put_wall": [6.5, 7992], "pcr": 0.62, "iv": 22.71, "chain": "Dec-26", "expires": "2026-11-20", "contract": "ZWZ26"}, "far": {"rows": [[3.0, 0, 299], [3.6, 0, 600], [3.7, 0, 299], [4.0, 0, 168], [4.4, 0, 100], [4.5, 0, 126], [4.6, 0, 100], [4.8, 0, 63], [4.85, 0, 16], [4.9, 0, 16], [4.95, 0, 22], [5.0, 0, 127], [5.05, 0, 63], [5.1, 0, 46], [5.15, 0, 316], [5.2, 0, 140], [5.25, 0, 42], [5.3, 0, 98], [5.35, 0, 57], [5.4, 0, 52], [5.45, 0, 78], [5.5, 342, 1392], [5.55, 0, 16], [5.6, 1, 112], [5.65, 0, 52], [5.7, 0, 79], [5.75, 78, 151], [5.8, 1, 526], [5.85, 300, 27], [5.9, 0, 22], [5.95, 3, 106], [6.0, 66, 402], [6.05, 2, 27], [6.1, 49, 205], [6.15, 10, 16], [6.2, 109, 323], [6.25, 68, 61], [6.3, 268, 563], [6.35, 83, 122], [6.4, 56, 310], [6.45, 35, 36], [6.5, 449, 480], [6.55, 46, 68], [6.6, 176, 648], [6.65, 179, 181], [6.7, 56, 397], [6.75, 254, 112], [6.8, 173, 157], [6.85, 29, 28], [6.9, 157, 94], [6.95, 34, 55], [7.0, 417, 319], [7.05, 194, 140], [7.1, 240, 63], [7.15, 130, 85], [7.2, 273, 357], [7.3, 675, 202], [7.4, 569, 374], [7.5, 2378, 50], [7.6, 1247, 19], [7.7, 272, 21], [7.8, 303, 70], [7.9, 1199, 152], [8.0, 2921, 50], [8.1, 32, 0], [8.2, 601, 0], [8.3, 57, 0], [8.4, 11, 2], [8.5, 980, 46], [8.6, 1676, 0], [8.7, 28, 0], [8.8, 365, 5], [8.9, 25, 7], [9.0, 2482, 10], [9.1, 16, 2], [9.2, 73, 3], [9.3, 2, 0], [9.4, 387, 4], [9.5, 609, 0], [9.6, 10, 0], [9.7, 118, 0], [9.8, 54, 2], [9.9, 18, 0], [10.0, 2745, 26], [10.1, 17, 0], [10.2, 5, 0], [10.3, 26, 1], [10.5, 448, 0], [10.6, 2, 0], [10.7, 39, 0], [10.8, 12, 0], [11.0, 1028, 0], [11.1, 27, 0], [11.2, 3, 0], [11.9, 81, 0], [12.0, 1577, 0], [14.0, 2077, 0], [16.0, 333, 0], [18.0, 581, 0]], "calls": 30387, "puts": 11606, "call_wall": [8.0, 2921], "put_wall": [5.5, 1392], "pcr": 0.38}, "skew": [[5.85, 20.3, "P"], [5.9, 19.13, "P"], [5.95, 19.03, "P"], [6.0, 23.34, "P"], [6.05, 21.46, "P"], [6.1, 20.86, "P"], [6.15, 23.82, "P"], [6.2, 22.69, "P"], [6.25, 23.85, "P"], [6.3, 21.47, "P"], [6.35, 21.59, "P"], [6.4, 26.03, "P"], [6.45, 29.66, "C"], [6.5, 26.95, "C"], [6.55, 28.41, "C"], [6.6, 25.89, "C"], [6.65, 28.67, "C"], [6.7, 27.28, "C"], [6.75, 27.69, "C"], [6.8, 28.14, "C"], [6.85, 28.92, "C"], [6.9, 29.29, "C"], [6.95, 29.49, "C"], [7.0, 29.8, "C"], [7.05, 31.92, "C"]], "cftc": [{"date": "2026-08-11", "long": 78009, "short": 111409, "net": -33400}, {"date": "2026-08-18", "long": 78911, "short": 104239, "net": -25328}, {"date": "2026-08-25", "long": 87501, "short": 101098, "net": -13597}, {"date": "2026-09-01", "long": 109614, "short": 94710, "net": 14904}, {"date": "2026-09-08", "long": 100506, "short": 95633, "net": 4873}, {"date": "2026-09-15", "long": 95798, "short": 99472, "net": -3674}, {"date": "2026-09-22", "long": 88801, "short": 100817, "net": -12016}, {"date": "2026-09-29", "long": 82747, "short": 104856, "net": -22109}, {"date": "2026-10-06", "long": 86954, "short": 115784, "net": -28830}, {"date": "2026-10-13", "long": 89109, "short": 121664, "net": -32555}], "roll": [{"contract": "ZWZ26", "expiry": "Dec-26", "settle": 6.4325, "oi_oct19": 244814, "oi_pct": 64.6}, {"contract": "ZWH27", "expiry": "Mar-27", "settle": 6.585, "oi_oct19": 133969, "oi_pct": 35.4}, {"contract": "ZWK27", "expiry": "May-27", "settle": 6.6675, "oi_oct19": null, "oi_pct": 0.0}]}}, "fx": {"spot": {"bid": 1.40452, "offer": 1.40465, "mid": 1.404585, "spread_pips": 1.3, "chg_pct": -0.037, "ref": 1.4051}, "rates": [{"t": "1Y", "us": 4.51, "ca": 2.93, "sp": 147.8, "dod": 2.2, "wow": -11.9, "pct": 10.0}, {"t": "2Y", "us": 4.79, "ca": 3.32, "sp": 150.2, "dod": 2.9, "wow": -9.8, "pct": 35.0}, {"t": "5Y", "us": 4.94, "ca": 3.62, "sp": 134.7, "dod": 3.0, "wow": -11.0, "pct": 35.0}, {"t": "10Y", "us": 5.12, "ca": 3.9, "sp": 124.8, "dod": 2.2, "wow": -10.6, "pct": 35.0}, {"t": "20Y", "us": 5.47, "ca": 4.1, "sp": 139.5, "dod": 1.0, "wow": -10.4, "pct": null}, {"t": "30Y", "us": 5.42, "ca": 4.2, "sp": 124.8, "dod": 1.5, "wow": -9.0, "pct": 30.0}], "widest": "2Y", "treasury": {"3M": 4.25, "1Y": 4.52, "2Y": 4.81, "3Y": 4.89, "5Y": 4.95, "7Y": 5.03, "10Y": 5.13, "20Y": 5.47, "30Y": 5.42}, "fxcross": {"dxy": 101.657, "dxy_chg": -0.072, "eurusd": 1.1234, "usdjpy": 157.88, "usdcad_ref": 1.4046}, "closes": [["2026-09-28", 1.41741], ["2026-09-29", 1.41902], ["2026-09-30", 1.42327], ["2026-10-01", 1.42223], ["2026-10-02", 1.42501], ["2026-10-05", 1.42607], ["2026-10-06", 1.42082], ["2026-10-07", 1.42565], ["2026-10-08", 1.42252], ["2026-10-09", 1.42558], ["2026-10-12", 1.42821], ["2026-10-13", 1.42162], ["2026-10-14", 1.42361], ["2026-10-15", 1.41859], ["2026-10-16", 1.41394], ["2026-10-19", 1.41112], ["2026-10-20", 1.4059], ["2026-10-21", 1.40476]], "energy": [{"name": "WTI Crude", "last": 98.38, "chg": 1.23, "pct": 1.27, "delay": "11-minute delay"}, {"name": "Brent Crude", "last": 110.37, "chg": 1.55, "pct": 1.42, "delay": "11-minute delay"}, {"name": "Western Canadian Select", "last": 85.47, "chg": -0.72, "pct": -0.84, "delay": "20-hour delay"}], "wcs_diff": {"value": 12.91, "source": "computed: WTI last minus WCS last (same stored run)", "obs_ts": "2026-10-22T02:20:55+00:00", "pub_ts": "2026-10-22T02:20:55+00:00", "stale_flag": false, "note": "the two legs carry different printed delays (WTI minutes vs WCS hours) \u2014 disclosed, not hidden"}, "pos": {"net": -88112, "long": 23811, "short": 111923, "oi": 378204, "pct_oi": -23.3, "wow": -8487, "label": "Extreme Crowded Short (High short-squeeze risk)", "p1y": 13.2, "p3y": 10.2}, "sent": {"status": "ok", "asof": {"pulled_at_et": "2026-10-21T07:05:00-04:00", "asof_basis": "pull time \u2014 the sentiment panel carries no explicit timestamp (labeled as such)", "panel_asof_text": "2026-10-21 page load (no explicit panel timestamp)", "age_hours": 15.3}, "stale_flag": false, "stale_note": null, "source": "stored sentiment pull, Oct 21 07:05 ET", "traders": {"long_pct": 44, "short_pct": 56, "long_n": 24, "short_n": 31, "instrument": "USD/CAD (long = long USD/CAD)"}, "lots": {"long_pct": 21, "short_pct": 79, "long_n": 8.9, "short_n": 34.0}, "avg_entries": {"long": 1.3982, "short": 1.391}, "avg_returns_pct": {"long": 0.8, "short": -0.8}}, "fxopt": {"rr": -0.16, "rr_label": "Neutral (-0.5%..+0.5% framework band, inside +-1.5% extremes)", "civ": 4.55, "piv": 4.71, "rvol": 3.12, "pins_reason": "no per-strike OI is stored anywhere \u2014 the stored options pull carries only the two 25d strikes (IVs and deltas, no open interest); expiry pins need per-strike OI into the nearest expiry (10:00 AM ET NY cut)"}, "policy": {"fed": [{"meeting": "2026-10-28", "no_change_pct": 85.1, "hike_pct": 14.9, "ease_pct": 0.0, "ranges": [{"label": "375-400 (current)", "prob_pct": 85.1}, {"label": "400-425", "prob_pct": 14.9}]}, {"meeting": "2026-12-09", "no_change_pct": 10.1, "hike_pct": 89.9, "ease_pct": 0.0, "ranges": [{"label": "375-400 (current)", "prob_pct": 10.1}, {"label": "400-425", "prob_pct": 76.7}, {"label": "425-450", "prob_pct": 13.2}]}], "fed_range": "375-400 (per pull ranges)", "corra_now": 2.25, "corra": [{"month": "2026-12", "implied_rate_pct": 2.73, "settlement": 97.27, "oi": 304951, "role": "forward BoC path"}, {"month": "2027-03", "implied_rate_pct": 3.02, "settlement": 96.98, "oi": 327524, "role": "forward BoC path"}]}, "fc": {"p50_pct": -0.105, "p10": -0.388, "p90": 0.178, "spot50": 1.4146, "mae": 20.0, "zero_mae": 21.61, "hit": 0.5976, "h5_reason": "backtest: OLS 5D MAE 62.17 bps loses to zero-return 57.33 and is net-negative after costs (hit 46.8%)", "h20_reason": "backtest: OLS 20D MAE 176.55 bps vs zero 119.32; hit rate 26.4%; signal inverts at the monthly horizon"}, "scen": {"status": "ok", "horizon": "1D", "model": "OLS baseline", "asof": {"origin_date": "2026-10-16", "base_spot_close": 1.4161, "base_source": "usdcad_daily.csv close at origin", "train_pairs": 90}, "method": "normal forecast distribution N(P50, residual sigma); neutral band = +/-0.25 sigma; probabilities and conditional expected moves from that distribution", "bullish_usdcad": {"probability_pct": 23.4, "expected_move_pct": 0.185, "range": [1.4169, 1.4186]}, "neutral": {"probability_pct": 17.7, "expected_move_pct": -0.002, "range": [1.4153, 1.4169]}, "bearish_usdcad": {"probability_pct": 58.9, "expected_move_pct": -0.251, "range": [1.4106, 1.4153]}, "spot_base": 1.4161, "spot_module_mid": 1.404585}, "bias": {"label": "Conditional Bearish USD/CAD", "score": -0.234, "drivers": [{"name": "2Y spread 1D change", "sign": 1, "weight": 1.0, "detail": "+2.9 bps DoD (widening US-CA spread supports USD/CAD)"}, {"name": "10Y spread 1D change", "sign": 1, "weight": 0.8, "detail": "+2.2 bps DoD"}, {"name": "DXY 1D change", "sign": -1, "weight": 1.0, "detail": "-0.07% DoD (broad USD)"}, {"name": "WTI 1D change", "sign": -1, "weight": 0.7, "detail": "+1.27% DoD (oil up -> CAD firmer -> USD/CAD down)"}, {"name": "CFTC crowding (contrarian)", "sign": -1, "weight": 0.8, "detail": "funds net -23.3% of OI \u2014 extreme crowded short CAD, squeeze risk argues against chasing USD/CAD up"}, {"name": "25D risk reversal", "sign": -1, "weight": 0.4, "detail": "RR -0.16 pp (negative = CAD puts bid over calls)"}]}, "levels": {"s20": 1.4004, "r20": 1.4262, "s50": 1.374, "r50": 1.4262, "aad": 0.00236, "pivot": 1.40678, "pivot_h": 1.41118, "pivot_l": 1.40325, "pivot_c": 1.4059}, "trade": {"dir": "Buy USD/CAD on pullback (support-derived template)", "entry": [1.4004, 1.4068], "stop": 1.3996, "targets": [1.4262, 1.4262], "rr": 5.57, "stop_pips": 40.5, "event_note": "High-impact cluster 2026-10-28: BoC Monetary Policy Report; BoC Overnight Rate (prev 2.25%); BoC Press Conference; FOMC Press Conference; Federal Funds Rate (prev 4.00%) \u2014 BoC and Fed decisions land the same day; event-risk window, conditional levels only"}, "forwards": [{"tenor": "1W", "out": 1.40423, "diff": -1.777}, {"tenor": "2W", "out": 1.40377, "diff": -1.733}, {"tenor": "1M", "out": 1.40262, "diff": -1.781}, {"tenor": "2M", "out": 1.40074, "diff": -1.694}, {"tenor": "3M", "out": 1.39856, "diff": -1.752}, {"tenor": "6M", "out": 1.39283, "diff": -1.692}, {"tenor": "9M", "out": 1.38715, "diff": -1.667}, {"tenor": "1Y", "out": 1.38174, "diff": -1.635}, {"tenor": "2Y", "out": 1.36388, "diff": -1.453}, {"tenor": "5Y", "out": 1.31981, "diff": -1.209}], "season": {"cur": {"month": "Oct", "month_full": "October", "avg_pct": 0.25, "pct_positive": 58.82, "label": "CONTEXT ONLY"}, "best": {"label": "Jan 2015", "pct": 9.61}, "worst": {"label": "Apr 2015", "pct": -4.81}}, "events": [{"date": "2026-10-22", "time": "6:30am", "ccy": "USD", "event": "Unemployment Claims", "impact": "Medium", "fc": "200K", "prev": "199K"}, {"date": "2026-10-23", "time": "7:45am", "ccy": "USD", "event": "Flash Manufacturing PMI", "impact": "Medium", "fc": "55.4", "prev": "55.9"}, {"date": "2026-10-23", "time": "7:45am", "ccy": "USD", "event": "Flash Services PMI", "impact": "Medium", "fc": "57.8", "prev": "58.8"}, {"date": "2026-10-23", "time": "8:00am", "ccy": "USD", "event": "Revised UoM Consumer Sentiment", "impact": "Medium", "fc": "46.3", "prev": "46.3"}, {"date": "2026-10-28", "time": "7:45am", "ccy": "CAD", "event": "BoC Monetary Policy Report", "impact": "High", "fc": null, "prev": null}, {"date": "2026-10-28", "time": "7:45am", "ccy": "CAD", "event": "BoC Overnight Rate", "impact": "High", "fc": null, "prev": "2.25%"}, {"date": "2026-10-28", "time": "8:30am", "ccy": "CAD", "event": "BoC Press Conference", "impact": "High", "fc": null, "prev": null}, {"date": "2026-10-28", "time": "12:30pm", "ccy": "USD", "event": "FOMC Press Conference", "impact": "High", "fc": null, "prev": null}, {"date": "2026-10-28", "time": "12:00pm", "ccy": "USD", "event": "Federal Funds Rate", "impact": "High", "fc": null, "prev": "4.00%"}, {"date": "2026-10-29", "time": "6:30am", "ccy": "USD", "event": "Advance GDP q/q", "impact": "High", "fc": null, "prev": "2.2%"}, {"date": "2026-10-29", "time": "6:30am", "ccy": "USD", "event": "Core PCE Price Index m/m", "impact": "High", "fc": null, "prev": "0.2%"}], "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC \u00a711 once pulls accumulate)"}};
+
+/* ---------------- helpers ---------------- */
+function fmt(n, d){ return n.toLocaleString("en-US",{minimumFractionDigits:(d==null?0:d), maximumFractionDigits:(d==null?0:d)}); }
+function money(v){ return "$" + fmt(v, v < 10 ? (Math.round(v*100)%25===0?2:4) : 2); }
+function money2(v){ return "$" + fmt(v,2); }
+function sgn(v, d, suf){ var s = (v>0?"+":v<0?"−":"") + fmt(Math.abs(v), d==null?1:d) + (suf||""); return s; }
+function cls(v){ return v>0 ? "up" : v<0 ? "dn" : "neu"; }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function stat(k, v, small){ return '<div class="stat"><div class="k">'+k+'</div><div class="v">'+v+(small?' <small>'+small+'</small>':'')+'</div></div>'; }
+
+/* ---------------- grain meta (verified pipeline summary text, Oct 21 2026) ---------------- */
+var GMETA = {
+ corn: { name:"Corn", contract:"ZCZ26", chainNear:"Dec-26", chainFar:"Mar-27", accent:"#e8a33d",
+   ma100:"4.84", insight:'Settle <b>$4.62</b> sits below the 20-day ($4.98), 50-day ($5.10) and 100-day ($4.84) averages, with a z-score of <b>−1.64</b> — between 1σ and 2σ under the mean. Options concentrate at the same strike on both sides: the $5.00 call wall (45,873) and $5.00 put wall (44,877) pin the near-term range, and PCR 0.79 reads call-heavy.',
+   spreads:[["Dec-26 / Mar-27","−14¢","contango","Δ −0.5¢ vs prior"],["Mar-27 / May-27","−8¢","contango","Δ 0.0¢ vs prior"]],
+   fnd:"First notice day Mon, Nov 30, 2026 · hard exit Fri, Nov 27, 2026", optExp:"Fri, Nov 20, 2026",
+   deltaNote:"Largest ΔOI in the latest desk summary: calls +3,289 at $4.65 · puts +1,331 at $4.60" },
+ wheat: { name:"Wheat", contract:"ZWZ26", chainNear:"Dec-26", chainFar:"Mar-27", accent:"#d97b4f",
+   ma100:"6.75", insight:'Settle <b>$6.43¼</b> is below the 20-day ($6.82), 50-day ($7.05) and 100-day ($6.75) averages, and the z-score of <b>−2.09</b> puts it beyond −2σ — statistically stretched to the downside. The call wall sits far overhead at $8.00 (12,699) against a $6.50 put wall (7,992); PCR 0.62 is the most call-heavy of the three grains.',
+   spreads:[["Dec-26 / Mar-27","−15¢","contango","Δ −0.5¢ vs prior"],["Mar-27 / May-27","−8¢","contango","Δ −1.5¢ vs prior"]],
+   fnd:"First notice day Mon, Nov 30, 2026 · hard exit Fri, Nov 27, 2026", optExp:"Fri, Nov 20, 2026",
+   deltaNote:"Largest ΔOI in the latest desk summary: calls +1,014 at $6.70 · puts +558 at $6.10" },
+ soybeans: { name:"Soybeans", contract:"ZSX26", chainNear:"Nov-26", chainFar:"Jan-27", accent:"#3fb97f",
+   ma100:"12.25", insight:'Settle <b>$12.48¼</b> is below the 20-day ($12.87) and 50-day ($12.75) averages but still above the 100-day ($12.25); z-score <b>−1.88</b>. Positioning is balanced (PCR 1.07) between the $13.00 call wall (18,160) and $12.00 put wall (18,763), and these options expire Fri, Oct 23, 2026 — two days after this snapshot\u2019s data pull.',
+   spreads:[["Nov-26 / Jan-27","−15¢","contango","Δ 0.0¢ vs prior"],["Jan-27 / Mar-27","−10¢","contango","Δ −0.75¢ vs prior"]],
+   fnd:"First notice day Fri, Oct 30, 2026 · hard exit Thu, Oct 29, 2026", optExp:"Fri, Oct 23, 2026",
+   deltaNote:"Largest ΔOI in the latest desk summary: calls +2,900 at $12.52 · puts +490 at $12.32" }
+};
+
+var NEWS = {
+corn: [
+ ["2026-10-21 15:30 UTC","apnews.com","In Honduras, hard hit by drought, authorities hope to make it rain using contentious tactic","https://apnews.com/article/cloud-seeding-climate-drought-nino-honduras-5a9d24498aa5a90c7594d9f35aff1857"],
+ ["2026-10-21 12:02 UTC","www.prnewswire.com","Crafty Ramen Brings Restaurant-Quality Frozen Ramen to Target and Kroger Freezer Aisles Nationwide","https://www.prnewswire.com/news-releases/crafty-ramen-brings-restaurant-quality-frozen-ramen-to-target-and-kroger-freezer-aisles-nationwide-302914594.html"],
+ ["2026-10-21 11:37 UTC","www.investing.com","Nutanix and Supermicro plan joint AI inference system for 2027","https://www.investing.com/news/assorted/nutanix-and-supermicro-plan-joint-ai-inference-system-for-2027-432SI-4962605"],
+ ["2026-10-21 11:32 UTC","www.wsj.com","The Morning Risk Report: Instacart Settles Employment Discrimination Case","https://www.wsj.com/risk-compliance-journal/the-morning-risk-report-instacart-settles-employment-discrimination-case-57ee23b8"],
+ ["2026-10-21 11:19 UTC","www.wsj.com","Trump Hands Out $8 Billion to Farmers; Kroger Targets Earnings Growth","https://www.wsj.com/cfo-journal/trump-hands-out-8-billion-to-farmers-kroger-targets-earnings-growth-b3446f86"],
+ ["2026-10-21 10:32 UTC","www.channelnewsasia.com","AT&T raises annual profit forecast on strong demand for bundled plans","https://www.channelnewsasia.com/business/att-raises-annual-profit-forecast-strong-demand-bundled-plans-6478646"]],
+wheat: [
+ ["2026-10-21 04:37 UTC","www.bloomberg.com","Wheat Hits 11-Week Low as Risk Premiums Ease on Ukraine Talks","https://www.bloomberg.com/news/articles/2026-10-21/wheat-hits-11-week-low-as-risk-premiums-ease-on-ukraine-talks"],
+ ["2026-10-20 17:45 UTC","www.accessnewswire.com","Cairnspring Mills Opens Blue Mountain Mill on Umatilla Indian Reservation","https://www.accessnewswire.com/newsroom/en/food-and-beverage-products/cairnspring-mills-opens-blue-mountain-mill-on-umatilla-indian-reservatio-1239037"],
+ ["2026-10-20 14:20 UTC","www.accessnewswire.com","Nearly 5,000 Acres of North American Grasslands Destroyed Each Day","https://www.accessnewswire.com/newsroom/en/business-and-professional-services/nearly-5-000-acres-of-north-american-grasslands-destroyed-each-d-1238938"],
+ ["2026-10-20 13:09 UTC","www.investing.com","Grain futures rise after hitting multi-week lows on Tuesday","https://www.investing.com/news/commodities-news/grain-futures-rise-after-hitting-multiweek-lows-on-tuesday-93CH-4960207"],
+ ["2026-10-20 11:06 UTC","www.reuters.com","Truck drivers' protest puts Italy's pasta production at risk","https://www.reuters.com/business/retail-consumer/truck-drivers-protest-puts-italys-pasta-production-risk-2026-10-20/"],
+ ["2026-10-20 10:02 UTC","www.reuters.com","Could disillusioned Kansas voters send their first Democrat to the US Senate in 94 years?","https://www.reuters.com/world/us/could-disillusioned-kansas-voters-send-their-first-democrat-us-senate-94-years-2026-10-20/"]],
+soybeans: [
+ ["2026-10-21 07:36 UTC","www.benzinga.com","Trump Administration Offers Farmers $8 Billion In Diesel Relief, Credits This GOP Senator as Midterms Approach","https://www.benzinga.com/news/politics/26/10/62487110/trump-administration-offers-farmers-8-billion-in-diesel-relief-credits-this-gop-senator-as-midterms-approach-when-republicans-win-we-will-pass-even-more-funding"],
+ ["2026-10-20 14:20 UTC","www.accessnewswire.com","Nearly 5,000 Acres of North American Grasslands Destroyed Each Day","https://www.accessnewswire.com/newsroom/en/business-and-professional-services/nearly-5-000-acres-of-north-american-grasslands-destroyed-each-d-1238938"],
+ ["2026-10-20 13:09 UTC","www.investing.com","Grain futures rise after hitting multi-week lows on Tuesday","https://www.investing.com/news/commodities-news/grain-futures-rise-after-hitting-multiweek-lows-on-tuesday-93CH-4960207"],
+ ["2026-10-20 02:04 UTC","www.reuters.com","China's September US soybean imports rebound from zero a year earlier, data shows","https://www.reuters.com/world/china/chinas-september-us-soybean-imports-rebound-zero-year-earlier-data-shows-2026-10-20/"],
+ ["2026-10-19 11:15 UTC","www.prnewswire.com","Out of Hormuz Energy Shocks, the Ingredients for a Global Food Crisis","https://www.prnewswire.com/news-releases/out-of-hormuz-energy-shocks-the-ingredients-for-a-global-food-crisis-302912525.html"],
+ ["2026-10-16 10:03 UTC","www.reuters.com","On the campaign trail, JB Pritzker courts farmers like he's running for president","https://www.reuters.com/world/us/campaign-trail-jb-pritzker-courts-farmers-like-hes-running-president-2026-10-16/"]],
+fx: [
+ ["2026-10-21 15:52 UTC","www.aljazeera.com","Canada wants to expand its LNG business. Critics raise red flags","https://www.aljazeera.com/economy/longform/2026/10/21/canada-wants-to-expand-its-lng-business-critics-raise-red-flags-2"],
+ ["2026-10-20 21:01 UTC","www.prnewswire.com","Kat Florence Hotels Introduces Up To $20,000 Value Auction Wine Bottle Tastings For Guests","https://www.prnewswire.com/news-releases/kat-florence-hotels-introduces-up-to-20-000-value-auction-wine-bottle-tastings-for-guests-star-sommelier-host-elizabeth-davies-and-top-chef-canada-star-shai-ann-tyson-302914648.html"],
+ ["2026-10-20 20:32 UTC","abcnews.com","New Jersey food importer files lawsuit challenging Trump's 50% tariffs on Canadian goods","https://abcnews.com/US/wireStory/new-jersey-food-importer-files-lawsuit-challenging-trumps-137425192"],
+ ["2026-10-20 20:03 UTC","apnews.com","New Jersey food importer files lawsuit challenging Trump's 50% tariffs on Canadian goods","https://apnews.com/article/canada-trump-tariffs-lawsuit-3c3097a0ec530327281a89ecc05452ff"],
+ ["2026-10-20 19:30 UTC","www.bbc.co.uk","Trump sued over Canadian tariffs in latest legal challenge","https://www.bbc.co.uk/news/articles/cqrkyj13m588o"],
+ ["2026-10-20 16:13 UTC","www.bloomberg.com","Canadian Dollar Hits Nearly One-Month High After Alberta Vote","https://www.bloomberg.com/news/articles/2026-10-20/canadian-dollar-hits-nearly-one-month-high-after-alberta-vote"]]
+};
+
+function newsTile(items){
+  var lis = items.map(function(n){
+    return '<li><div class="news-meta">'+n[0]+' · '+esc(n[1])+'</div><a href="'+n[3]+'" target="_blank" rel="noopener">'+esc(n[2])+'</a></li>';
+  }).join("");
+  return '<div class="tile wide"><h2>News rail <span class="h2note">— frozen headlines as pulled Oct 21, 2026</span></h2><ul class="news-list">'+lis+'</ul>'+
+    '<div class="stamp">Headlines frozen in this snapshot · publish times UTC as carried on the rail · titles link out to the publisher</div></div>';
+}
+
+/* ---------------- fan levels: live-re-anchored stack, as the app renders it ----------------
+   Every value derives from the fan math, chain IV, trailing MAs and options
+   walls already in DATA — the live anchor is the delayed quote frozen at
+   build time (fan.intraday). Nothing new is sourced. */
+function fanLevels(g, meta){
+  var f=g.fan, L=f.intraday[0], w10=f.sig*Math.sqrt(10), ivH=L*f.iv_10d_rel;
+  var lastH=g.history[g.history.length-1];
+  var cw=g.near.call_wall, pwl=g.near.put_wall, cl=meta.chainNear;
+  var E="#e8eef4", C99="#ff9d9d", CY="#38b6c9";
+  var levels=[
+    {key:"p3", name:"+3σ", label:"+3σ "+money2(L+3*w10), value:L+3*w10, color:E},
+    {key:"ci99p", name:"99% CI +", label:"99% CI +"+money2(L+2.58*w10), value:L+2.58*w10, color:C99},
+    {key:"p2", name:"+2σ ≈ 95% CI", label:"+2σ ≈ 95% CI "+money2(L+2*w10), value:L+2*w10, color:E},
+    {key:"ivp", name:"IV +2σ", label:"IV +2σ "+money2(L+ivH), value:L+ivH, color:CY},
+    {key:"p1", name:"+1σ", label:"+1σ "+money2(L+w10), value:L+w10, color:E},
+    {key:"ma50", name:"exp MA50", label:"exp MA50 "+money2(lastH.ma50), value:lastH.ma50, color:"#b18cff"},
+    {key:"ma20", name:"exp MA20", label:"exp MA20 "+money2(lastH.ma20), value:lastH.ma20, color:"#f0c169"},
+    {key:"ctr", name:"anchor", label:"Live anchor "+money2(L), value:L, color:CY, bold:true},
+    {key:"m1", name:"−1σ", label:"−1σ "+money2(L-w10), value:L-w10, color:E},
+    {key:"ivm", name:"IV −2σ", label:"IV −2σ "+money2(L-ivH), value:L-ivH, color:CY},
+    {key:"m2", name:"−2σ ≈ 95% CI", label:"−2σ ≈ 95% CI "+money2(L-2*w10), value:L-2*w10, color:E},
+    {key:"ci99m", name:"99% CI −", label:"99% CI "+money2(L-2.58*w10), value:L-2.58*w10, color:C99},
+    {key:"m3", name:"−3σ", label:"−3σ "+money2(L-3*w10), value:L-3*w10, color:E},
+    {key:"callwall", name:money2(cw[0])+" call wall", value:cw[0], color:"#b18cff",
+      lines:[cl+" "+money2(cw[0])+" call wall", fmt(cw[1])+" OI"]},
+    {key:"putwall", name:money2(pwl[0])+" put wall", value:pwl[0], color:"#b18cff",
+      lines:[cl+" "+money2(pwl[0])+" put wall", fmt(pwl[1])+" OI"]},
+    {key:"market", name:"market", label:"MARKET (delayed) "+money2(L), value:L, color:"#ff6b6b", bold:true}
+  ];
+  /* one-line market position read — only from the labeled levels above
+     and the same frozen quote that draws the marker */
+  var others=levels.filter(function(l){ return l.key!=="market"; });
+  var above=others.filter(function(l){ return l.value>L; }).sort(function(a,b){ return a.value-b.value; })[0];
+  var below=others.filter(function(l){ return l.value<L; }).sort(function(a,b){ return b.value-a.value; })[0];
+  function cents(v){ return Math.round(Math.abs(v)*100)+"¢"; }
+  var parts=[];
+  if(above) parts.push(cents(above.value-L)+" below "+above.name+" "+money2(above.value));
+  if(below) parts.push(cents(L-below.value)+" above "+below.name+" "+money2(below.value));
+  var band = (L>=L-w10 && L<=L+w10) ? "inside the ±1σ band"
+    : (L>=L-2*w10 && L<=L+2*w10) ? "inside the ±2σ band · outside ±1σ" : "outside the ±2σ band";
+  var read="Market "+money2(L)+" — "+parts.join(" · ")+(parts.length?" · ":"")+band+" · as of "+f.intraday[1];
+  return { levels:levels, read:read };
+}
+
+function fanSVG2(g, meta, FL){
+  var f=g.fan, hist=g.history, A=f.anchor, sig=f.sig, L=f.intraday[0];
+  var W=820,H=380,PL=46,PR=196,PT=16,PB=30, pw=W-PL-PR, ph=H-PT-PB;
+  var NH=hist.length, FD=10, span=NH-1+FD;
+  var lo=Infinity, hi=-Infinity, i, d;
+  for(i=0;i<NH;i++){ lo=Math.min(lo,hist[i].s); hi=Math.max(hi,hist[i].s); }
+  lo=Math.min(lo, f.r10_99[0]); hi=Math.max(hi, f.r10_99[1]);
+  FL.levels.forEach(function(l){ lo=Math.min(lo,l.value); hi=Math.max(hi,l.value); });
+  var pad=(hi-lo)*0.05; lo-=pad; hi+=pad;
+  function X(x){ return PL + pw*(x/span); }
+  function Y(y){ return PT + ph*(1-(y-lo)/(hi-lo)); }
+  var s='';
+  for(i=0;i<=4;i++){ var gy=PT+ph*i/4, gv=hi-(hi-lo)*i/4;
+    s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a" stroke-width="1"/>';
+    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+gv.toFixed(2)+'</text>'; }
+  function conePath(anchorVal, mult){
+    var pts=[], ptsB=[], dd;
+    for(dd=0;dd<=FD;dd++){ var off=mult*sig*Math.sqrt(dd); pts.push([X(NH-1+dd),Y(anchorVal+off)]); ptsB.push([X(NH-1+dd),Y(anchorVal-off)]); }
+    ptsB.reverse();
+    var all=pts.concat(ptsB), p='M'+all[0][0].toFixed(1)+' '+all[0][1].toFixed(1);
+    for(var j=1;j<all.length;j++) p+='L'+all[j][0].toFixed(1)+' '+all[j][1].toFixed(1);
+    return p+'Z';
+  }
+  /* settle-anchored fan (amber family accent) + live-re-anchored fan (cyan) */
+  s+='<path d="'+conePath(A,2.58)+'" fill="'+meta.accent+'" opacity="0.07"/>';
+  s+='<path d="'+conePath(A,1.96)+'" fill="'+meta.accent+'" opacity="0.12"/>';
+  s+='<path d="'+conePath(A,1.0)+'" fill="'+meta.accent+'" opacity="0.15"/>';
+  s+='<path d="'+conePath(L,2.0)+'" fill="#38b6c9" opacity="0.08"/>';
+  s+='<path d="'+conePath(L,1.0)+'" fill="#38b6c9" opacity="0.15"/>';
+  s+='<line x1="'+X(NH-1)+'" y1="'+PT+'" x2="'+X(NH-1)+'" y2="'+(PT+ph)+'" stroke="#3d5a80" stroke-width="1" stroke-dasharray="3 3"/>';
+  s+='<text x="'+(X(NH-1)-5)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">HISTORY · 25 SETTLES</text>';
+  s+='<text x="'+(X(NH-1)+6)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono">10-DAY FAN</text>';
+  function maLine(key, color){
+    var p='';
+    hist.forEach(function(hh,idx){ if(hh[key]==null) return; p+=(p?'L':'M')+X(idx).toFixed(1)+' '+Y(hh[key]).toFixed(1); });
+    return '<path d="'+p+'" fill="none" stroke="'+color+'" stroke-width="1.8"/>';
+  }
+  s+=maLine('ma20','#f0c169')+maLine('ma50','#b18cff');
+  var lastH=hist[NH-1];
+  /* exp MA extensions: flat zero-drift lines at the last trailing values */
+  s+='<line x1="'+X(NH-1)+'" y1="'+Y(lastH.ma20)+'" x2="'+X(span)+'" y2="'+Y(lastH.ma20)+'" stroke="#f0c169" stroke-width="1.4" stroke-dasharray="2 3"/>';
+  s+='<line x1="'+X(NH-1)+'" y1="'+Y(lastH.ma50)+'" x2="'+X(span)+'" y2="'+Y(lastH.ma50)+'" stroke="#b18cff" stroke-width="1.4" stroke-dasharray="2 3"/>';
+  /* options wall lines */
+  s+='<line x1="'+PL+'" y1="'+Y(g.near.call_wall[0])+'" x2="'+(PL+pw)+'" y2="'+Y(g.near.call_wall[0])+'" stroke="#b18cff" stroke-width="1" stroke-dasharray="2 3" opacity="0.75"/>';
+  s+='<line x1="'+PL+'" y1="'+Y(g.near.put_wall[0])+'" x2="'+(PL+pw)+'" y2="'+Y(g.near.put_wall[0])+'" stroke="#b18cff" stroke-width="1" stroke-dasharray="2 3" opacity="0.75"/>';
+  /* IV-implied band edges (live fan, day-10 width held across the fan) */
+  var ivH=L*f.iv_10d_rel;
+  s+='<line x1="'+X(NH-1)+'" y1="'+Y(L+ivH)+'" x2="'+X(span)+'" y2="'+Y(L+ivH)+'" stroke="#38b6c9" stroke-width="1" stroke-dasharray="6 4" opacity="0.8"/>';
+  s+='<line x1="'+X(NH-1)+'" y1="'+Y(L-ivH)+'" x2="'+X(span)+'" y2="'+Y(L-ivH)+'" stroke="#38b6c9" stroke-width="1" stroke-dasharray="6 4" opacity="0.8"/>';
+  /* settlements line */
+  var sp=''; hist.forEach(function(hh,idx){ sp+=(sp?'L':'M')+X(idx).toFixed(1)+' '+Y(hh.s).toFixed(1); });
+  s+='<path d="'+sp+'" fill="none" stroke="#dbe4f0" stroke-width="2"/>';
+  s+='<circle cx="'+X(NH-1)+'" cy="'+Y(A)+'" r="3.6" fill="#fff"/>';
+  s+='<line x1="'+X(NH-1)+'" y1="'+Y(A)+'" x2="'+X(span)+'" y2="'+Y(A)+'" stroke="#8494ab" stroke-width="1" stroke-dasharray="5 4"/>';
+  s+='<line x1="'+X(NH-1)+'" y1="'+Y(L)+'" x2="'+X(span)+'" y2="'+Y(L)+'" stroke="#38b6c9" stroke-width="1.8"/>';
+  /* MARKET marker — the frozen build-time delayed quote */
+  s+='<line x1="'+PL+'" y1="'+Y(L)+'" x2="'+(PL+pw)+'" y2="'+Y(L)+'" stroke="#ff6b6b" stroke-width="1.6" stroke-dasharray="7 3"/>';
+  var mly=Y(L)-8; if(mly<PT+12) mly=Y(L)+16;
+  s+='<text x="'+(PL+6)+'" y="'+mly.toFixed(1)+'" fill="#ff9d9d" font-size="10.5" font-weight="600" font-family="IBM Plex Mono">MARKET (delayed) '+money2(L)+' · as of '+f.intraday[1]+'</text>';
+  s+='<circle cx="'+X(span)+'" cy="'+Y(L)+'" r="4" fill="#ff6b6b"/>';
+  /* right-edge label stack with de-collision (the app's algorithm):
+     labels sit at their true price unless a neighbour is too close, in
+     which case they are spaced to a minimum gap and a leader line ties
+     each label back to its true level — no overlapping label text */
+  var rx=PL+pw, top=PT+6, bot=PT+ph-6;
+  var items=FL.levels.map(function(l){ return { l:l, trueY:Y(l.value), h:l.lines?25:14 }; })
+    .filter(function(it){ return it.trueY>=top-60 && it.trueY<=bot+60; })
+    .sort(function(a,b){ return a.trueY-b.trueY; });
+  var ys=items.map(function(it){ return Math.min(Math.max(it.trueY, top), bot); });
+  for(i=1;i<items.length;i++){ var need=items[i-1].h/2+items[i].h/2+3; ys[i]=Math.max(ys[i], ys[i-1]+need); }
+  if(ys.length && ys[ys.length-1]>bot){
+    ys[ys.length-1]=bot;
+    for(i=items.length-2;i>=0;i--){ need=items[i].h/2+items[i+1].h/2+3; ys[i]=Math.min(ys[i], ys[i+1]-need); }
+    if(ys[0]<top){ ys[0]=top;
+      for(i=1;i<items.length;i++){ need=items[i-1].h/2+items[i].h/2+3; ys[i]=Math.max(ys[i], ys[i-1]+need); } }
+  }
+  items.forEach(function(it,idx){
+    var ly=ys[idx];
+    s+='<line x1="'+(rx-1)+'" y1="'+it.trueY.toFixed(1)+'" x2="'+(rx+9)+'" y2="'+ly.toFixed(1)+'" stroke="'+it.l.color+'" stroke-width="1"/>';
+    s+='<circle cx="'+(rx-1)+'" cy="'+it.trueY.toFixed(1)+'" r="2" fill="'+it.l.color+'"/>';
+    if(it.l.lines){
+      s+='<text x="'+(rx+13)+'" y="'+(ly-2).toFixed(1)+'" fill="'+it.l.color+'" font-size="10" font-weight="600" font-family="IBM Plex Mono"><tspan x="'+(rx+13)+'">'+it.l.lines[0]+'</tspan><tspan x="'+(rx+13)+'" dy="11">'+it.l.lines[1]+'</tspan></text>';
+    } else {
+      s+='<text x="'+(rx+13)+'" y="'+(ly+3.5).toFixed(1)+'" fill="'+it.l.color+'" font-size="10.5" font-weight="'+(it.l.bold?700:500)+'" font-family="IBM Plex Mono">'+it.l.label+'</text>';
+    }
+  });
+  s+='<text x="'+PL+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono">'+hist[0].d.slice(0,10)+'</text>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Settlement history with settle-anchored and live-re-anchored 10-day sigma fans for '+meta.name+', right-edge labeled levels at day 10, and the market marker frozen at the build-time delayed quote">'+s+'</svg>';
+}
+
+/* ---------------- Export Sales — 10-week trend (verified dataset, Oct 22, 2026) ----------------
+   Weeks: [week_ending, release_date, actual_mt, estimate_low_mt|null, estimate_high_mt|null].
+   Trend: [slope_mt_per_week, start_mt, end_mt] — OLS fit carried in the dataset. */
+var EXPORT = {
+corn: { trend:[-11172.5, 1155724.8, 1055172.2], weeks:[
+ ["2026-08-13","2026-08-20",1049000,null,null],["2026-08-20","2026-08-27",1100000,800000,1600000],
+ ["2026-08-27","2026-09-03",1156800,null,null],["2026-09-03","2026-09-11",1928700,700000,1700000],
+ ["2026-09-10","2026-09-17",1026700,1000000,2000000],["2026-09-17","2026-09-24",838328,500000,1600000],
+ ["2026-09-24","2026-10-01",535989,500000,1300000],["2026-10-01","2026-10-08",769468,635030,1651278],
+ ["2026-10-08","2026-10-16",1122400,500000,1200000],["2026-10-15","2026-10-22",1527100,700000,1500000]]},
+soybeans: { trend:[-102921.2, 2076438.7, 1150147.7], weeks:[
+ ["2026-08-13","2026-08-20",1808000,null,null],["2026-08-20","2026-08-27",2550000,1100000,3100000],
+ ["2026-08-27","2026-09-03",1854200,null,null],["2026-09-03","2026-09-11",2637300,null,null],
+ ["2026-09-10","2026-09-17",1702000,900000,2400000],["2026-09-17","2026-09-24",582432,500000,2000000],
+ ["2026-09-24","2026-10-01",1033545,null,null],["2026-10-01","2026-10-08",549377,435448,1197482],
+ ["2026-10-08","2026-10-16",574878,489879,1197482],["2026-10-15","2026-10-22",2841200,1800000,3000000]]},
+wheat: { trend:[-6351.3, 348348.1, 291185.9], weeks:[
+ ["2026-08-13","2026-08-20",393700,null,null],["2026-08-20","2026-08-27",402500,200000,550000],
+ ["2026-08-27","2026-09-03",313500,null,null],["2026-09-03","2026-09-11",194200,null,null],
+ ["2026-09-10","2026-09-17",325900,200000,500000],["2026-09-17","2026-09-24",267553,200000,550000],
+ ["2026-09-24","2026-10-01",289255,250000,450000],["2026-10-01","2026-10-08",451562,null,null],
+ ["2026-10-08","2026-10-16",319900,300000,600000],["2026-10-15","2026-10-22",239600,250000,550000]]}
+};
+var MONS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function fmtShortDate(iso){ var p=iso.split("-"); return MONS[+p[1]-1]+" "+(+p[2]); }
+function fmtDate(iso){ return fmtShortDate(iso)+", "+iso.slice(0,4); }
+function fmtKMT(v){ return fmt(Math.round(v/1000))+"k MT"; }
+function fmtKVal(v){ var k=v/1000; return (Math.abs(k)>=100 ? fmt(Math.round(k)) : k.toFixed(1))+"k MT"; }
+function fmtFullMT(v){ return fmt(Math.round(v))+" MT"; }
+function fmtTrendSlope(slope){ var mag=fmt(Math.round(Math.abs(slope))); var sign=slope>0?"+":slope<0?"−":""; return "trend "+sign+mag+" MT/wk"; }
+function esVerdict(w){ if(w[3]==null||w[4]==null) return null; if(w[2]>w[4]) return "BEAT"; if(w[2]<w[3]) return "MISS"; return "INLINE"; }
+
+function exportSVG(key){
+  var E=EXPORT[key], weeks=E.weeks, tl=E.trend;
+  var W=760,H=310,PL=54,PR=12,PT=38,PB=48, pw=W-PL-PR, ph=H-PT-PB;
+  var ymax=0, i;
+  weeks.forEach(function(w){ ymax=Math.max(ymax, w[2], w[4]||0); });
+  ymax=Math.max(ymax, tl[1], tl[2]); ymax*=1.14;
+  function Y(v){ return PT+ph*(1-v/ymax); }
+  var bw=pw/weeks.length;
+  function CX(i){ return PL+bw*i+bw/2; }
+  var s='';
+  for(i=0;i<=3;i++){ var gy=PT+ph*i/3, gv=ymax*(1-i/3);
+    s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
+    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+fmt(Math.round(gv/1000))+'k</text>'; }
+  /* bars + actual value labels */
+  weeks.forEach(function(w,i){
+    var isL = i===weeks.length-1, bwid=bw*0.55, x=CX(i)-bwid/2;
+    s+='<rect x="'+x.toFixed(1)+'" y="'+Y(w[2]).toFixed(1)+'" width="'+bwid.toFixed(1)+'" height="'+(PT+ph-Y(w[2])).toFixed(1)+'" fill="'+(isL?'#e8a33d':'#38b6c9')+'" opacity="'+(isL?1:0.85)+'"/>';
+    s+='<text x="'+CX(i).toFixed(1)+'" y="'+(Y(w[2])-4).toFixed(1)+'" fill="#8494ab" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+fmtKMT(w[2])+'</text>';
+  });
+  /* estimate whiskers with low–high labels (verified ranges only) */
+  var wlab=[];
+  weeks.forEach(function(w,i){
+    if(w[3]==null||w[4]==null) return;
+    var cx=CX(i), mid=(w[3]+w[4])/2;
+    wlab.push([cx, Y(mid)-14]);
+    s+='<line x1="'+cx+'" y1="'+Y(w[4]).toFixed(1)+'" x2="'+cx+'" y2="'+Y(w[3]).toFixed(1)+'" stroke="#4ade80" stroke-width="2"/>';
+    s+='<line x1="'+(cx-5)+'" y1="'+Y(w[4]).toFixed(1)+'" x2="'+(cx+5)+'" y2="'+Y(w[4]).toFixed(1)+'" stroke="#4ade80" stroke-width="2"/>';
+    s+='<line x1="'+(cx-5)+'" y1="'+Y(w[3]).toFixed(1)+'" x2="'+(cx+5)+'" y2="'+Y(w[3]).toFixed(1)+'" stroke="#4ade80" stroke-width="2"/>';
+    s+='<text x="'+cx+'" y="'+(Y(mid)-14).toFixed(1)+'" fill="#4ade80" font-size="9" font-family="IBM Plex Mono" text-anchor="middle">'+fmtKMT(w[3])+'–'+fmtKMT(w[4])+'</text>';
+  });
+  /* trendline — dashed, labeled at start, end and slope on the line */
+  var midI=Math.floor(weeks.length/2), midV=tl[1]+tl[0]*midI;
+  s+='<line x1="'+CX(0)+'" y1="'+Y(tl[1]).toFixed(1)+'" x2="'+CX(weeks.length-1)+'" y2="'+Y(tl[2]).toFixed(1)+'" stroke="#b18cff" stroke-width="2" stroke-dasharray="6 4"/>';
+  s+='<circle cx="'+CX(0)+'" cy="'+Y(tl[1]).toFixed(1)+'" r="3" fill="#b18cff"/>';
+  s+='<circle cx="'+CX(weeks.length-1)+'" cy="'+Y(tl[2]).toFixed(1)+'" r="3" fill="#b18cff"/>';
+  /* trend endpoint labels: above the point unless a whisker label sits
+     there — then below it — always on a dark backing so nothing overprints */
+  function trendLabel(x, v, text){
+    var yA=Y(v)-8, y=yA, i2;
+    for(i2=0;i2<wlab.length;i2++){ if(Math.abs(wlab[i2][0]-x)<78 && Math.abs(wlab[i2][1]-yA)<15){ y=Y(v)+17; break; } }
+    var wdt=text.length*6.2+10;
+    return '<rect x="'+(x-wdt/2).toFixed(1)+'" y="'+(y-11).toFixed(1)+'" width="'+wdt.toFixed(1)+'" height="15" rx="3" fill="#0d141f" opacity="0.88"/>'+
+      '<text x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" fill="#b18cff" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+text+'</text>';
+  }
+  s+=trendLabel(CX(0), tl[1], fmtKMT(tl[1]));
+  s+=trendLabel(CX(weeks.length-1), tl[2], fmtKMT(tl[2]));
+  /* slope label rides the line at the middle point, shifted clear of whisker labels */
+  var slTxt=fmtTrendSlope(tl[0]), slY=Y(midV)-18;
+  for(i=0;i<wlab.length;i++){ if(Math.abs(wlab[i][0]-CX(midI))<104 && Math.abs(wlab[i][1]-slY)<15){ slY=Y(midV)+19; break; } }
+  var slW=slTxt.length*6.2+10;
+  s+='<rect x="'+(CX(midI)-slW/2).toFixed(1)+'" y="'+(slY-11).toFixed(1)+'" width="'+slW.toFixed(1)+'" height="15" rx="3" fill="#0d141f" opacity="0.88"/>';
+  s+='<text x="'+CX(midI).toFixed(1)+'" y="'+slY.toFixed(1)+'" fill="#b18cff" font-size="10" font-weight="600" font-family="IBM Plex Mono" text-anchor="middle">'+slTxt+'</text>';
+  /* x axis: week-ending dates, rotated so none overlap */
+  weeks.forEach(function(w,i){
+    var cx=CX(i), ly=PT+ph+8;
+    s+='<text x="'+cx.toFixed(1)+'" y="'+ly+'" transform="rotate(-35 '+cx.toFixed(1)+' '+ly+')" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end">'+fmtShortDate(w[0])+'</text>';
+  });
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Weekly export net sales over the last 10 releases with a labeled trendline and verified estimate ranges">'+s+'</svg>';
+}
+
+function exportTileHTML(key){
+  var E=EXPORT[key], weeks=E.weeks, tl=E.trend;
+  var latest=weeks[weeks.length-1];
+  var verdict=esVerdict(latest);
+  var chipCls = verdict==="BEAT" ? "beat" : verdict==="MISS" ? "miss" : "inline";
+  var vline = verdict
+    ? verdict+" — "+(verdict==="BEAT"?"above":verdict==="MISS"?"below":"inside")+" the verified estimate range "+fmtFullMT(latest[3])+" – "+fmtFullMT(latest[4])+"."
+    : "No verified estimate range for this week — no beat / miss judged.";
+  var estWeeks=weeks.filter(function(w){ return w[3]!=null; });
+  var nb=0, nm=0, ni=0;
+  estWeeks.forEach(function(w){ var v=esVerdict(w); if(v==="BEAT") nb++; else if(v==="MISS") nm++; else if(v==="INLINE") ni++; });
+  var dir = tl[0]>0 ? "trending higher" : tl[0]<0 ? "trending lower" : "flat";
+  var slopeTxt=(tl[0]>=0?"+":"−")+fmtKVal(Math.abs(tl[0]))+" per week";
+  var trendAtLatest=tl[1]+tl[0]*(weeks.length-1);
+  var diff=latest[2]-trendAtLatest;
+  var read="Net sales are "+dir+" over the "+weeks.length+" weeks (trendline "+slopeTxt+"). Latest week (ending "+fmtDate(latest[0])+") at "+fmtKMT(latest[2])+" is "+fmtKVal(Math.abs(diff))+" "+(diff>=0?"above":"below")+" the trendline."+
+    " Verified estimates on "+estWeeks.length+" of "+weeks.length+" weeks: "+ni+" inline, "+nb+" beat, "+nm+" miss.";
+  var ranges=estWeeks.map(function(w){ return fmtShortDate(w[0])+": "+fmtKMT(w[3])+"–"+fmtKMT(w[4]); }).join(" · ");
+  return '<div class="tile wide"><h2>Export Sales — 10-week trend <span class="h2note">USDA FAS · weekly net sales · current marketing year</span></h2>'+
+    '<div class="es-head"><div class="k">Latest release · week ending '+fmtDate(latest[0])+' · released '+fmtDate(latest[1])+'</div>'+
+    '<div class="es-big">Latest actual (w/e '+fmtShortDate(latest[0])+'): '+fmtFullMT(latest[2])+' <span class="chip '+chipCls+'">'+verdict+'</span></div>'+
+    '<p class="read" style="margin-top:4px">'+vline+'</p></div>'+
+    '<p class="trendline-note">Trendline: start '+fmtFullMT(tl[1])+' (w/e '+fmtShortDate(weeks[0][0])+') → end '+fmtFullMT(tl[2])+' (w/e '+fmtShortDate(latest[0])+') · '+fmtTrendSlope(tl[0])+'</p>'+
+    '<div class="legend"><span><span class="sw" style="background:#38b6c9"></span>Weekly net sales (actual)</span><span><span class="sw" style="background:#e8a33d"></span>Latest release</span><span><span class="sw" style="background:#b18cff"></span>Trendline (10-week fit, from the verified dataset)</span><span><span class="sw" style="background:#4ade80"></span>Estimate range (verified, low–high)</span></div>'+
+    exportSVG(key)+
+    '<p class="note">X axis: week-ending dates in short form, rotated so no two labels overlap. Every bar carries its actual value; the dashed trendline is labeled at its start ('+fmtKMT(tl[1])+') and end ('+fmtKMT(tl[2])+') with its slope on the line. Estimate whiskers carry their low–high label and appear only on weeks with a verified published range — weeks without one carry no marker.</p>'+
+    '<p class="note"><span style="color:#4ade80">Verified estimate ranges:</span> '+ranges+'</p>'+
+    '<p class="read"><b>Read:</b> '+read+'</p>'+
+    '<div class="stamp">DATA NOTE: USDA FAS weekly net sales (current marketing year) · Releases '+fmtDate(weeks[0][1])+' – '+fmtDate(latest[1])+' · Verified estimates on '+estWeeks.length+' of '+weeks.length+' weeks · Verified Oct 22, 2026 · frozen in this snapshot</div></div>';
+}
+
+/* ---------------- SVG chart builders ---------------- */
+function fanSVG(g, meta){
+  var f = g.fan, hist = g.history, A = f.anchor, sig = f.sig, tail = g.tail50;
+  var W=760,H=320,PL=46,PR=118,PT=16,PB=30, pw=W-PL-PR, ph=H-PT-PB;
+  var NH=hist.length, FD=10, span=NH-1+FD;
+  var lo=Infinity, hi=-Infinity, i, d, v;
+  for(i=0;i<NH;i++){ lo=Math.min(lo,hist[i].s); hi=Math.max(hi,hist[i].s); }
+  lo=Math.min(lo, f.r10_99[0]); hi=Math.max(hi, f.r10_99[1]);
+  var pad=(hi-lo)*0.06; lo-=pad; hi+=pad;
+  function X(x){ return PL + pw*(x/span); }
+  function Y(y){ return PT + ph*(1-(y-lo)/(hi-lo)); }
+  var s='';
+  /* gridlines: 4 horizontal */
+  for(i=0;i<=4;i++){ var gy=PT+ph*i/4, gv=hi-(hi-lo)*i/4;
+    s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a" stroke-width="1"/>';
+    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+gv.toFixed(2)+'</text>'; }
+  function cone(mult, fill){
+    var top='', bot='';
+    for(d=0;d<=FD;d++){ var off=mult*sig*Math.sqrt(d);
+      top+='L'+X(NH-1+d).toFixed(1)+' '+Y(A+off).toFixed(1);
+      bot='L'+X(NH-1+d).toFixed(1)+' '+Y(A-off).toFixed(1)+bot; }
+    return '<path d="M'+X(NH-1)+' '+Y(A)+top+bot.replace(/^L/,'L')+'Z" fill="'+fill+'" stroke="none"/>';
+  }
+  /* build cone path properly: forward along top, backward along bottom */
+  function conePath(mult){
+    var pts=[], ptsB=[], dd;
+    for(dd=0;dd<=FD;dd++){ var off=mult*sig*Math.sqrt(dd); pts.push([X(NH-1+dd),Y(A+off)]); ptsB.push([X(NH-1+dd),Y(A-off)]); }
+    ptsB.reverse();
+    var all=pts.concat(ptsB), p='M'+all[0][0].toFixed(1)+' '+all[0][1].toFixed(1);
+    for(var j=1;j<all.length;j++) p+='L'+all[j][0].toFixed(1)+' '+all[j][1].toFixed(1);
+    return p+'Z';
+  }
+  s+='<path d="'+conePath(2.576)+'" fill="'+meta.accent+'" opacity="0.07"/>';
+  s+='<path d="'+conePath(1.96)+'" fill="'+meta.accent+'" opacity="0.13"/>';
+  s+='<path d="'+conePath(1.0)+'" fill="'+meta.accent+'" opacity="0.16"/>';
+  /* divider between history and forecast */
+  s+='<line x1="'+X(NH-1)+'" y1="'+PT+'" x2="'+X(NH-1)+'" y2="'+(PT+ph)+'" stroke="#3d5a80" stroke-width="1" stroke-dasharray="3 3"/>';
+  s+='<text x="'+(X(NH-1)-5)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">HISTORY · 25 SETTLES</text>';
+  s+='<text x="'+(X(NH-1)+6)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono">10-DAY FAN</text>';
+  /* expected MA extensions (zero-drift: future closes = anchor) */
+  function expMA(w){
+    var pts=[];
+    for(d=1;d<=FD;d++){
+      var win = tail.slice(tail.length-(w-d)).concat(Array(d).fill(A));
+      var m = win.reduce(function(a,b){return a+b;},0)/w;
+      pts.push([X(NH-1+d), Y(m)]);
+    }
+    var last = hist[NH-1][ w===20 ? 'ma20':'ma50'];
+    var p='M'+X(NH-1)+' '+Y(last);
+    pts.forEach(function(q){ p+='L'+q[0].toFixed(1)+' '+q[1].toFixed(1); });
+    return {path:p, end:pts[FD-1][1], val:(tail.slice(tail.length-(w-FD)).concat(Array(FD).fill(A)).reduce(function(a,b){return a+b;},0)/w)};
+  }
+  var e20=expMA(20), e50=expMA(50);
+  /* MA history lines */
+  function maLine(key, color){
+    var p='';
+    hist.forEach(function(hh,idx){ if(hh[key]==null) return; p+=(p?'L':'M')+X(idx).toFixed(1)+' '+Y(hh[key]).toFixed(1); });
+    return '<path d="'+p+'" fill="none" stroke="'+color+'" stroke-width="1.8"/>';
+  }
+  s+=maLine('ma20','#e8a33d')+maLine('ma50','#9d7bd8');
+  s+='<path d="'+e20.path+'" fill="none" stroke="#e8a33d" stroke-width="1.6" stroke-dasharray="2 3"/>';
+  s+='<path d="'+e50.path+'" fill="none" stroke="#9d7bd8" stroke-width="1.6" stroke-dasharray="2 3"/>';
+  /* settlements line */
+  var sp=''; hist.forEach(function(hh,idx){ sp+=(sp?'L':'M')+X(idx).toFixed(1)+' '+Y(hh.s).toFixed(1); });
+  s+='<path d="'+sp+'" fill="none" stroke="#dbe4f0" stroke-width="2"/>';
+  s+='<circle cx="'+X(NH-1)+'" cy="'+Y(A)+'" r="3.6" fill="#fff"/>';
+  /* anchor dashed center */
+  s+='<line x1="'+X(NH-1)+'" y1="'+Y(A)+'" x2="'+X(span)+'" y2="'+Y(A)+'" stroke="#8494ab" stroke-width="1" stroke-dasharray="5 4"/>';
+  /* right edge labels */
+  var rx=PL+pw+8;
+  s+='<text x="'+rx+'" y="'+(Y(f.r10_99[1])+4)+'" fill="#8494ab" font-size="11" font-family="IBM Plex Mono">99% '+f.r10_99[1].toFixed(2)+'</text>';
+  s+='<text x="'+rx+'" y="'+(Y(f.r10[1])+4)+'" fill="#c8d4e6" font-size="11" font-family="IBM Plex Mono">95% '+f.r10[1].toFixed(2)+'</text>';
+  s+='<text x="'+rx+'" y="'+(Y(A)+4)+'" fill="#fff" font-size="11.5" font-weight="600" font-family="IBM Plex Mono">'+A.toFixed(2)+'</text>';
+  s+='<text x="'+rx+'" y="'+(Y(f.r10[0])+4)+'" fill="#c8d4e6" font-size="11" font-family="IBM Plex Mono">95% '+f.r10[0].toFixed(2)+'</text>';
+  s+='<text x="'+rx+'" y="'+(Y(f.r10_99[0])+4)+'" fill="#8494ab" font-size="11" font-family="IBM Plex Mono">99% '+f.r10_99[0].toFixed(2)+'</text>';
+  var y20l=e20.end-6, y50l=e50.end+14;
+  if (y50l-y20l<17){ var midl=(y20l+y50l)/2; y20l=midl-10; y50l=midl+10; }
+  s+='<text x="'+rx+'" y="'+y20l+'" fill="#e8a33d" font-size="10.5" font-family="IBM Plex Mono">exp MA20 '+e20.val.toFixed(2)+'</text>';
+  s+='<text x="'+rx+'" y="'+y50l+'" fill="#9d7bd8" font-size="10.5" font-family="IBM Plex Mono">exp MA50 '+e50.val.toFixed(2)+'</text>';
+  /* date labels */
+  s+='<text x="'+PL+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono">'+hist[0].d.slice(0,10)+'</text>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Settlement history and 10-day sigma fan for '+meta.name+'">'+s+'</svg>';
+}
+
+function oiSVG(rows, ds){
+  var W=760,H=280,PL=46,PR=14,PT=22,PB=34, pw=W-PL-PR, ph=H-PT-PB;
+  var max=0; rows.forEach(function(r){ max=Math.max(max,r[1],r[2]); });
+  max*=1.12;
+  var n=rows.length, bw=pw/n;
+  function Y(v){ return PT+ph*(1-v/max); }
+  var s='';
+  for(var i=0;i<=3;i++){ var gy=PT+ph*i/3, gv=max*(1-i/3);
+    s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
+    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+Math.round(gv/1000)+'k</text>'; }
+  rows.forEach(function(r,idx){
+    var x=PL+idx*bw, cw=Math.max(1,bw*0.38);
+    var isCW = Math.abs(r[0]-ds.call_wall[0])<0.001, isPW = Math.abs(r[0]-ds.put_wall[0])<0.001;
+    if(r[1]>0) s+='<rect x="'+x.toFixed(1)+'" y="'+Y(r[1]).toFixed(1)+'" width="'+cw.toFixed(1)+'" height="'+(PT+ph-Y(r[1])).toFixed(1)+'" fill="'+(isCW?'#ffd27a':'#3fb97f')+'"/>';
+    if(r[2]>0) s+='<rect x="'+(x+cw+1).toFixed(1)+'" y="'+Y(r[2]).toFixed(1)+'" width="'+cw.toFixed(1)+'" height="'+(PT+ph-Y(r[2])).toFixed(1)+'" fill="'+(isPW?'#ff9d97':'#b34a44')+'"/>';
+  });
+  /* wall markers + strike labels (every nth) */
+  var step = n>110 ? 16 : n>70 ? 10 : 6;
+  var lastLabeled=-step;
+  rows.forEach(function(r,idx){
+    if(idx%step===0 || (idx===n-1 && idx-lastLabeled>=Math.ceil(step/2))){
+      if(idx%step===0) lastLabeled=idx;
+      s+='<text x="'+(PL+idx*bw+bw/2).toFixed(1)+'" y="'+(PT+ph+16)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+r[0].toFixed(2)+'</text>';
+    }
+  });
+  function wallMark(wall, oi, label, color, mode){
+    var idx=-1; rows.forEach(function(r,i2){ if(Math.abs(r[0]-wall)<0.001) idx=i2; });
+    if(idx<0) return '';
+    var x=PL+idx*bw+bw/2, anchor='middle', tx=x;
+    if(mode==='left'){ anchor='end'; tx=x-5; } if(mode==='right'){ anchor='start'; tx=x+5; }
+    return '<line x1="'+x+'" y1="'+(PT-4)+'" x2="'+x+'" y2="'+(PT+ph)+'" stroke="'+color+'" stroke-width="1.4" stroke-dasharray="4 3"/>'+
+      '<text x="'+tx+'" y="'+(PT-10)+'" fill="'+color+'" font-size="11" font-weight="600" font-family="IBM Plex Mono" text-anchor="'+anchor+'">'+label+' '+wall.toFixed(2)+' · '+fmt(oi)+'</text>';
+  }
+  var sameStrike = Math.abs(ds.call_wall[0]-ds.put_wall[0])<0.001;
+  s+=wallMark(ds.call_wall[0], ds.call_wall[1], 'CALL WALL', '#ffd27a', sameStrike?'left':'');
+  s+=wallMark(ds.put_wall[0], ds.put_wall[1], 'PUT WALL', '#ff9d97', sameStrike?'right':'');
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Open interest by strike">'+s+'</svg>';
+}
+
+function skewSVG(g, meta){
+  var pts=g.skew, A=g.fan.anchor;
+  var W=760,H=250,PL=46,PR=16,PT=18,PB=30, pw=W-PL-PR, ph=H-PT-PB;
+  var xs=pts.map(function(p){return p[0];}), ys=pts.map(function(p){return p[1];});
+  var x0=Math.min.apply(null,xs), x1=Math.max.apply(null,xs);
+  var y0=Math.min.apply(null,ys)*0.92, y1=Math.max.apply(null,ys)*1.06;
+  function X(v){ return PL+pw*(v-x0)/(x1-x0); } function Y(v){ return PT+ph*(1-(v-y0)/(y1-y0)); }
+  var s='';
+  for(var i=0;i<=3;i++){ var gy=PT+ph*i/3, gv=y1-(y1-y0)*i/3;
+    s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
+    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+gv.toFixed(0)+'%</text>'; }
+  function seg(type, color){
+    var pp=pts.filter(function(p){return p[2]===type;}); if(!pp.length) return '';
+    var d=''; pp.forEach(function(p){ d+=(d?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1); });
+    var out='<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="1.8"/>';
+    pp.forEach(function(p){ out+='<circle cx="'+X(p[0]).toFixed(1)+'" cy="'+Y(p[1]).toFixed(1)+'" r="2.4" fill="'+color+'"/>'; });
+    return out;
+  }
+  s+=seg('P','#e0655f')+seg('C','#3fb97f');
+  s+='<line x1="'+X(A)+'" y1="'+PT+'" x2="'+X(A)+'" y2="'+(PT+ph)+'" stroke="#3d5a80" stroke-dasharray="3 3"/>';
+  s+='<text x="'+X(A)+'" y="'+(PT+ph+18)+'" fill="#8494ab" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">FUT '+A.toFixed(2)+'</text>';
+  s+='<text x="'+PL+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono">'+x0.toFixed(2)+'</text>';
+  s+='<text x="'+(PL+pw)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+x1.toFixed(2)+'</text>';
+  s+='<line x1="'+PL+'" y1="'+Y(g.fan.iv_chain_iv)+'" x2="'+(PL+pw)+'" y2="'+Y(g.fan.iv_chain_iv)+'" stroke="#e8a33d" stroke-width="1" stroke-dasharray="5 4"/>';
+  s+='<text x="'+(PL+pw)+'" y="'+(Y(g.fan.iv_chain_iv)-6)+'" fill="#e8a33d" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">CHAIN IV '+g.fan.iv_chain_iv.toFixed(2)+'%</text>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Implied volatility skew for '+meta.name+'">'+s+'</svg>';
+}
+
+function cftcSVG(series){
+  var W=360,H=120,PT=14,PB=20, pw=W-8, ph=H-PT-PB;
+  var vals=series.map(function(r){return r.net;});
+  var mx=Math.max.apply(null,vals.concat([0])), mn=Math.min.apply(null,vals.concat([0]));
+  var bw=pw/series.length;
+  function Y(v){ return PT+ph*(1-(v-mn)/(mx-mn)); }
+  var s='<line x1="4" y1="'+Y(0)+'" x2="'+(4+pw)+'" y2="'+Y(0)+'" stroke="#3d5a80" stroke-width="1"/>';
+  series.forEach(function(r,i){
+    var x=4+i*bw, y=Y(Math.max(r.net,0)), h=Math.abs(Y(r.net)-Y(0));
+    s+='<rect x="'+(x+2).toFixed(1)+'" y="'+(r.net>=0?Y(r.net):Y(0)).toFixed(1)+'" width="'+(bw-4).toFixed(1)+'" height="'+Math.max(h,1).toFixed(1)+'" fill="'+(r.net>=0?'#3fb97f':'#e0655f')+'"/>';
+  });
+  s+='<text x="4" y="'+(H-4)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">'+series[0].date.slice(5)+'</text>';
+  s+='<text x="'+(4+pw)+'" y="'+(H-4)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end">'+series[series.length-1].date.slice(5)+' (latest)</text>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Managed money net position, last 10 weekly reports">'+s+'</svg>';
+}
+
+/* ---------------- rollover (same drop-in series as the per-commodity rollover cards) ---------------- */
+var ROLLS = {"corn":{"front":"ZCZ26","def":"ZCH27","dailyN":[["09-25",926030,392452,29.8,-13.75],["09-28",926746,395855,29.9,-13.5],["09-29",913756,395423,30.2,-14.0],["09-30",919540,396542,30.1,-14.75],["10-05",894052,403490,31.1,-14.25],["10-06",896602,409553,31.4,-14.25],["10-07",894150,419031,31.9,-15.0],["10-08",887521,430359,32.7,-15.0],["10-09",866535,435516,33.4,-14.5],["10-12",848216,431070,33.7,-14.25],["10-13",845756,427047,33.6,-13.75],["10-14",843697,428278,33.7,-13.5],["10-15",835215,427717,33.9,-13.0],["10-16",839199,426342,33.7,-12.25],["10-19",823888,425970,34.1,-13.5],["10-20",810759,431897,34.8,-14.0]],"dailyT":[["Sep 25","926,030","392,452","—","29.8%","—","-13.8¢","—"],["Sep 28","926,746","395,855","+4,119","29.9%","+0.2","-13.5¢","+0.3"],["Sep 29","913,756","395,423","-13,422","30.2%","+0.3","-14.0¢","-0.5"],["Sep 30","919,540","396,542","+6,903","30.1%","-0.1","-14.7¢","-0.7"],["Oct 05","894,052","403,490","-18,540","31.1%","+1.0","-14.3¢","+0.5"],["Oct 06","896,602","409,553","+8,613","31.4%","+0.3","-14.3¢","+0.0"],["Oct 07","894,150","419,031","+7,026","31.9%","+0.6","-15.0¢","-0.8"],["Oct 08","887,521","430,359","+4,699","32.7%","+0.7","-15.0¢","+0.0"],["Oct 09","866,535","435,516","-15,829","33.4%","+0.8","-14.5¢","+0.5"],["Oct 12","848,216","431,070","-22,765","33.7%","+0.2","-14.3¢","+0.2"],["Oct 13","845,756","427,047","-6,483","33.6%","-0.1","-13.8¢","+0.5"],["Oct 14","843,697","428,278","-828","33.7%","+0.1","-13.5¢","+0.3"],["Oct 15","835,215","427,717","-9,043","33.9%","+0.2","-13.0¢","+0.5"],["Oct 16","839,199","426,342","+2,609","33.7%","-0.2","-12.3¢","+0.7"],["Oct 19","823,888","425,970","-15,683","34.1%","+0.4","-13.5¢","-1.2"],["Oct 20","810,759","431,897","-7,202","34.8%","+0.7","-14.0¢","-0.5"]],"beh":[["Sep 28","+716 OI / -5.2¢ → new shorts","+3,403 OI / -5.5¢ → new shorts"],["Sep 29","-12,990 OI / -1.0¢ → long liquidation","-432 OI / -0.5¢ → steady"],["Sep 30","+5,784 OI / -21.2¢ → new shorts","+1,119 OI / -20.5¢ → new shorts"],["Oct 05","-25,488 OI / -3.5¢ → long liquidation","+6,948 OI / -4.0¢ → new shorts"],["Oct 06","+2,550 OI / +10.7¢ → new longs","+6,063 OI / +10.7¢ → new longs"],["Oct 07","-2,452 OI / -6.0¢ → long liquidation","+9,478 OI / -5.3¢ → new shorts"],["Oct 08","-6,629 OI / -1.7¢ → long liquidation","+11,328 OI / -1.8¢ → new shorts"],["Oct 09","-20,986 OI / -20.5¢ → long liquidation","+5,157 OI / -21.0¢ → new shorts"],["Oct 12","-18,319 OI / +3.2¢ → short covering","-4,446 OI / +3.0¢ → short covering"],["Oct 13","-2,460 OI / -0.3¢ → long liquidation","-4,023 OI / -0.8¢ → long liquidation"],["Oct 14","-2,059 OI / -2.0¢ → long liquidation","+1,231 OI / -2.2¢ → steady"],["Oct 15","-8,482 OI / -2.7¢ → long liquidation","-561 OI / -3.2¢ → steady"],["Oct 16","+3,984 OI / -3.8¢ → new shorts","-1,375 OI / -4.5¢ → steady"],["Oct 19","-15,311 OI / -7.2¢ → long liquidation","-372 OI / -6.0¢ → long liquidation"],["Oct 20","-13,129 OI / -5.0¢ → long liquidation","+5,927 OI / -4.5¢ → new shorts"]],"stats":{"roll":"34.8%","fnet":"-115,271","dnet":"+39,445","cnet":"-75,826","pace":"+1.4 pp/wk","thr":"not crossed","sp":"-14.0¢ contango","mm":"+246,425 (COT 2026-10-13)","fnd":"Mon Nov 30, 2026","hard":"Fri Nov 27, 2026","state":"PRE-ROLL (39 days to FND)","plan":"Monitor carry & liquidity; core roll window T-10 to T-5"}},"soybeans":{"front":"ZSX26","def":"ZSF27","dailyN":[["09-25",458563,214979,31.9,-13.5],["09-28",441623,203318,31.5,-14.75],["09-29",436210,205120,32.0,-15.0],["09-30",428759,212123,33.1,-16.25],["10-05",427316,222563,34.2,-16.75],["10-06",430283,226570,34.5,-16.25],["10-07",409691,238441,36.8,-17.0],["10-08",378062,236646,38.5,-16.75],["10-09",350258,246303,41.3,-16.75],["10-12",333261,256676,43.5,-17.0],["10-13",313504,277593,47.0,-16.25],["10-14",301636,278885,48.0,-14.75],["10-15",295219,284638,49.1,-14.75],["10-16",289307,294024,50.4,-14.5],["10-19",269046,306739,53.3,-15.25],["10-20",254438,323480,56.0,-15.25]],"dailyT":[["Sep 25","458,563","214,979","—","31.9%","—","-13.5¢","—"],["Sep 28","441,623","203,318","-28,601","31.5%","-0.4","-14.7¢","-1.2"],["Sep 29","436,210","205,120","-3,611","32.0%","+0.5","-15.0¢","-0.3"],["Sep 30","428,759","212,123","-448","33.1%","+1.1","-16.2¢","-1.2"],["Oct 05","427,316","222,563","+8,997","34.2%","+1.1","-16.8¢","-0.5"],["Oct 06","430,283","226,570","+6,974","34.5%","+0.2","-16.3¢","+0.5"],["Oct 07","409,691","238,441","-8,721","36.8%","+2.3","-17.0¢","-0.7"],["Oct 08","378,062","236,646","-33,424","38.5%","+1.7","-16.8¢","+0.2"],["Oct 09","350,258","246,303","-18,147","41.3%","+2.8","-16.8¢","+0.0"],["Oct 12","333,261","256,676","-6,624","43.5%","+2.2","-17.0¢","-0.2"],["Oct 13","313,504","277,593","+1,160","47.0%","+3.5","-16.2¢","+0.8"],["Oct 14","301,636","278,885","-10,576","48.0%","+1.1","-14.7¢","+1.5"],["Oct 15","295,219","284,638","-664","49.1%","+1.0","-14.7¢","+0.0"],["Oct 16","289,307","294,024","+3,474","50.4%","+1.3","-14.5¢","+0.2"],["Oct 19","269,046","306,739","-7,546","53.3%","+2.9","-15.2¢","-0.8"],["Oct 20","254,438","323,480","+2,133","56.0%","+2.7","-15.2¢","+0.0"]],"beh":[["Sep 28","-16,940 OI / -30.7¢ → long liquidation","-11,661 OI / -29.5¢ → long liquidation"],["Sep 29","-5,413 OI / +9.5¢ → short covering","+1,802 OI / +9.8¢ → new longs"],["Sep 30","-7,451 OI / -4.7¢ → long liquidation","+7,003 OI / -3.5¢ → new shorts"],["Oct 05","-1,443 OI / -12.3¢ → long liquidation","+10,440 OI / -11.7¢ → new shorts"],["Oct 06","+2,967 OI / +22.3¢ → new longs","+4,007 OI / +21.8¢ → new longs"],["Oct 07","-20,592 OI / -5.5¢ → long liquidation","+11,871 OI / -4.8¢ → new shorts"],["Oct 08","-31,629 OI / -10.0¢ → long liquidation","-1,795 OI / -10.2¢ → long liquidation"],["Oct 09","-27,804 OI / +4.5¢ → short covering","+9,657 OI / +4.5¢ → new longs"],["Oct 12","-16,997 OI / -4.3¢ → long liquidation","+10,373 OI / -4.0¢ → new shorts"],["Oct 13","-19,757 OI / -4.0¢ → long liquidation","+20,917 OI / -4.7¢ → new shorts"],["Oct 14","-11,868 OI / -6.5¢ → long liquidation","+1,292 OI / -8.0¢ → new shorts"],["Oct 15","-6,417 OI / -14.3¢ → long liquidation","+5,753 OI / -14.3¢ → new shorts"],["Oct 16","-5,912 OI / -1.8¢ → long liquidation","+9,386 OI / -2.0¢ → new shorts"],["Oct 19","-20,261 OI / -7.8¢ → long liquidation","+12,715 OI / -7.0¢ → new shorts"],["Oct 20","-14,608 OI / -5.3¢ → long liquidation","+16,741 OI / -5.3¢ → new shorts"]],"stats":{"roll":"56.0%","fnet":"-204,125","dnet":"+108,501","cnet":"-95,624","pace":"+6.7 pp/wk","thr":"crossed","sp":"-15.2¢ contango","mm":"+249,807 (COT 2026-10-13)","fnd":"Fri Oct 30, 2026","hard":"Thu Oct 29, 2026","state":"ROLL WINDOW OPEN (8 days to FND)","plan":"Execute core roll now; zero longs by FND-1"}},"wheat":{"front":"ZWZ26","def":"ZWH27","dailyN":[["09-25",255623,106916,29.5,-15.0],["09-28",253338,107818,29.9,-14.75],["09-29",252789,107707,29.9,-14.25],["09-30",258584,113583,30.5,-15.0],["10-05",251979,112087,30.8,-14.0],["10-06",254587,114566,31.0,-13.25],["10-07",254554,115676,31.2,-14.5],["10-08",251400,117122,31.8,-14.5],["10-09",252568,120762,32.3,-14.25],["10-12",251302,122686,32.8,-13.75],["10-13",249549,123281,33.1,-14.0],["10-14",252366,125669,33.2,-13.25],["10-16",246446,133371,35.1,-14.5],["10-19",244814,133969,35.4,-14.75],["10-20",246598,132481,34.9,-15.25]],"dailyT":[["Sep 25","255,623","106,916","—","29.5%","—","-15.0¢","—"],["Sep 28","253,338","107,818","-1,383","29.9%","+0.4","-14.7¢","+0.3"],["Sep 29","252,789","107,707","-660","29.9%","+0.0","-14.3¢","+0.5"],["Sep 30","258,584","113,583","+11,671","30.5%","+0.6","-15.0¢","-0.7"],["Oct 05","251,979","112,087","-8,101","30.8%","+0.3","-14.0¢","+1.0"],["Oct 06","254,587","114,566","+5,087","31.0%","+0.2","-13.2¢","+0.8"],["Oct 07","254,554","115,676","+1,077","31.2%","+0.2","-14.5¢","-1.3"],["Oct 08","251,400","117,122","-1,708","31.8%","+0.5","-14.5¢","-0.0"],["Oct 09","252,568","120,762","+4,808","32.3%","+0.6","-14.3¢","+0.3"],["Oct 12","251,302","122,686","+658","32.8%","+0.5","-13.8¢","+0.5"],["Oct 13","249,549","123,281","-1,158","33.1%","+0.3","-14.0¢","-0.2"],["Oct 14","252,366","125,669","+5,205","33.2%","+0.2","-13.3¢","+0.7"],["Oct 16","246,446","133,371","+1,782","35.1%","+1.9","-14.5¢","-1.2"],["Oct 19","244,814","133,969","-1,034","35.4%","+0.3","-14.7¢","-0.3"],["Oct 20","246,598","132,481","+296","34.9%","-0.4","-15.2¢","-0.5"]],"beh":[["Sep 28","-2,285 OI / -14.5¢ → long liquidation","+902 OI / -14.7¢ → new shorts"],["Sep 29","-549 OI / +4.0¢ → steady","-111 OI / +3.5¢ → steady"],["Sep 30","+5,795 OI / -17.0¢ → new shorts","+5,876 OI / -16.3¢ → new shorts"],["Oct 05","-6,605 OI / +16.5¢ → short covering","-1,496 OI / +15.5¢ → short covering"],["Oct 06","+2,608 OI / +12.0¢ → new longs","+2,479 OI / +11.2¢ → new longs"],["Oct 07","-33 OI / -17.8¢ → long liquidation","+1,110 OI / -16.5¢ → new shorts"],["Oct 08","-3,154 OI / -3.3¢ → long liquidation","+1,446 OI / -3.2¢ → steady"],["Oct 09","+1,168 OI / -12.2¢ → new shorts","+3,640 OI / -12.5¢ → new shorts"],["Oct 12","-1,266 OI / +1.3¢ → steady","+1,924 OI / +0.8¢ → steady"],["Oct 13","-1,753 OI / -3.0¢ → steady","+595 OI / -2.8¢ → steady"],["Oct 14","+2,817 OI / +4.0¢ → new longs","+2,388 OI / +3.3¢ → new longs"],["Oct 16","-5,920 OI / -12.7¢ → long liquidation","+7,702 OI / -11.5¢ → new shorts"],["Oct 19","-1,632 OI / -5.3¢ → long liquidation","+598 OI / -5.0¢ → steady"],["Oct 20","+1,784 OI / -12.0¢ → new shorts","-1,488 OI / -11.5¢ → long liquidation"]],"stats":{"roll":"34.9%","fnet":"-9,025","dnet":"+25,565","cnet":"+16,540","pace":"+1.5 pp/wk","thr":"not crossed","sp":"-15.2¢ contango","mm":"-32,555 (COT 2026-10-13)","fnd":"Mon Nov 30, 2026","hard":"Fri Nov 27, 2026","state":"PRE-ROLL (39 days to FND)","plan":"Monitor carry & liquidity; core roll window T-10 to T-5"}}};
+
+function rollSVG(R){
+  var rows=R.dailyN, n=rows.length;
+  var W=760,H=300,PL=48,PR=48,PT=30,PB=28, pw=W-PL-PR, ph=H-PT-PB;
+  var maxOI=0, spMin=0, i, r;
+  rows.forEach(function(r){ maxOI=Math.max(maxOI,r[1]+r[2]); spMin=Math.min(spMin,r[4]); });
+  var yMax=maxOI*1.22, spLo=spMin*1.18;
+  var gw=pw/n, bw=Math.max(3,Math.min(15,gw*0.36));
+  function Y(v){ return PT+ph*(1-v/yMax); }
+  function YS(v){ return PT+ph*(1-(v-spLo)/(0-spLo)); }
+  function X(i){ return PL+gw*i+gw/2; }
+  var s='';
+  for(i=0;i<=4;i++){ var gy=PT+ph*i/4, gv=yMax*(1-i/4), gs=spLo*(i/4);
+    s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
+    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+Math.round(gv/1000)+'k</text>';
+    s+='<text x="'+(PL+pw+6)+'" y="'+(gy+4)+'" fill="#a8894a" font-size="10.5" font-family="IBM Plex Mono">'+gs.toFixed(0)+'¢</text>'; }
+  rows.forEach(function(r,i){
+    var cx=X(i);
+    s+='<rect x="'+(cx-bw-1).toFixed(1)+'" y="'+Y(r[1]).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(PT+ph-Y(r[1])).toFixed(1)+'" fill="#2f6db3"/>';
+    s+='<rect x="'+(cx+1).toFixed(1)+'" y="'+Y(r[2]).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(PT+ph-Y(r[2])).toFixed(1)+'" fill="#2b8f61"/>';
+  });
+  s+='<line x1="'+PL+'" y1="'+YS(0)+'" x2="'+(PL+pw)+'" y2="'+YS(0)+'" stroke="#28374e"/>';
+  var lp=''; rows.forEach(function(r,i){ lp+=(lp?'L':'M')+X(i).toFixed(1)+' '+YS(r[4]).toFixed(1); });
+  s+='<path d="'+lp+'" fill="none" stroke="#f5c542" stroke-width="1.8"/>';
+  rows.forEach(function(r,i){ s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+YS(r[4]).toFixed(1)+'" r="2.6" fill="#f5c542"/>'; });
+  rows.forEach(function(r,i){
+    if(i%2!==0 && i!==n-1) return;
+    var top=Math.max(r[1],r[2]), off=(i%4===2)?24:10;
+    s+='<text x="'+X(i).toFixed(1)+'" y="'+(Y(top)-off).toFixed(1)+'" fill="#f5c542" font-size="10.5" font-weight="600" font-family="IBM Plex Mono" text-anchor="middle">'+r[3].toFixed(1)+'%</text>';
+  });
+  var MN={'09':'Sep','10':'Oct'};
+  rows.forEach(function(r,i){
+    if(i%3!==0 && i!==n-1) return;
+    s+='<text x="'+X(i).toFixed(1)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">'+MN[r[0].slice(0,2)]+' '+r[0].slice(3)+'</text>';
+  });
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Open interest migration front versus deferred with calendar spread">'+s+'</svg>';
+}
+
+function rollSVG2(R){
+  var rows=R.dailyN, n=rows.length;
+  var W=760,H=300,PL=48,PR=48,PT=30,PB=28, pw=W-PL-PR, ph=H-PT-PB;
+  var maxOI=0, spMin=0, i, r;
+  rows.forEach(function(r){ maxOI=Math.max(maxOI,r[1]+r[2]); spMin=Math.min(spMin,r[4]); });
+  var yMax=maxOI*1.30, spLo=spMin*1.18;
+  var gw=pw/n, bw=Math.max(3,Math.min(15,gw*0.36));
+  function Y(v){ return PT+ph*(1-v/yMax); }
+  function YS(v){ return PT+ph*(1-(v-spLo)/(0-spLo)); }
+  function X(i){ return PL+gw*i+gw/2; }
+  var s='';
+  for(i=0;i<=4;i++){ var gy=PT+ph*i/4, gv=yMax*(1-i/4), gs=spLo*(i/4);
+    s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
+    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+Math.round(gv/1000)+'k</text>';
+    s+='<text x="'+(PL+pw+6)+'" y="'+(gy+4)+'" fill="#a8894a" font-size="10.5" font-family="IBM Plex Mono">'+gs.toFixed(0)+'¢</text>'; }
+  rows.forEach(function(r,i){
+    var cx=X(i);
+    s+='<rect x="'+(cx-bw-1).toFixed(1)+'" y="'+Y(r[1]).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(PT+ph-Y(r[1])).toFixed(1)+'" fill="#2f6db3"/>';
+    s+='<rect x="'+(cx+1).toFixed(1)+'" y="'+Y(r[2]).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(PT+ph-Y(r[2])).toFixed(1)+'" fill="#2b8f61"/>';
+  });
+  s+='<line x1="'+PL+'" y1="'+YS(0)+'" x2="'+(PL+pw)+'" y2="'+YS(0)+'" stroke="#28374e"/>';
+  var lp=''; rows.forEach(function(r,i){ lp+=(lp?'L':'M')+X(i).toFixed(1)+' '+YS(r[4]).toFixed(1); });
+  s+='<path d="'+lp+'" fill="none" stroke="#f5c542" stroke-width="1.8"/>';
+  rows.forEach(function(r,i){ s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+YS(r[4]).toFixed(1)+'" r="2.6" fill="#f5c542"/>'; });
+  /* spread line labeled with its first and latest values, on the line */
+  s+='<text x="'+X(0).toFixed(1)+'" y="'+(YS(rows[0][4])-8).toFixed(1)+'" fill="#f5c542" font-size="10" font-weight="600" font-family="IBM Plex Mono" text-anchor="middle">'+rows[0][4].toFixed(1)+'¢</text>';
+  s+='<text x="'+X(n-1).toFixed(1)+'" y="'+(YS(rows[n-1][4])-8).toFixed(1)+'" fill="#f5c542" font-size="10" font-weight="600" font-family="IBM Plex Mono" text-anchor="middle">'+rows[n-1][4].toFixed(1)+'¢</text>';
+  /* roll % labels run vertically above each bar — neighbours never collide */
+  rows.forEach(function(r,i){
+    var top=Math.max(r[1],r[2]), ty=Y(top)-4, cx=X(i);
+    s+='<text x="'+cx.toFixed(1)+'" y="'+ty.toFixed(1)+'" transform="rotate(-90 '+cx.toFixed(1)+' '+ty.toFixed(1)+')" fill="#f5c542" font-size="9.5" font-weight="600" font-family="IBM Plex Mono" text-anchor="start">'+r[3].toFixed(1)+'%</text>';
+  });
+  var MN={'09':'Sep','10':'Oct'};
+  rows.forEach(function(r,i){
+    if(i%3!==0 && i!==n-1) return;
+    s+='<text x="'+X(i).toFixed(1)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">'+MN[r[0].slice(0,2)]+' '+r[0].slice(3)+'</text>';
+  });
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Open interest migration front versus deferred with calendar spread, roll percent labels vertical, spread line labeled first and latest">'+s+'</svg>';
+}
+
+function rollBadges(R){
+  var st=R.stats, m=/\((\d+) days? to FND\)/.exec(st.state);
+  var fnd=st.fnd.replace(/^[A-Za-z]+ /,''), hard=st.hard.replace(/^[A-Za-z]+ /,'');
+  return '<div class="badges"><span class="badge">FND '+fnd+(m?' · '+m[1]+' days':'')+'</span>'+
+    '<span class="badge">Hard exit '+hard+' (FND−1)</span>'+
+    '<span class="badge dim">Chart axis shows the data window only — not stretched to FND</span></div>';
+}
+
+function rollSpreadLine(R){
+  var rows=R.dailyN, MN={'09':'Sep','10':'Oct'};
+  function dl(r){ return MN[r[0].slice(0,2)]+' '+r[0].slice(3); }
+  var a=rows[0], b=rows[rows.length-1];
+  return '<p class="spreadline">Spread '+R.front+' − '+R.def+': first '+a[4].toFixed(1)+'¢ ('+dl(a)+') → latest '+b[4].toFixed(1)+'¢ ('+dl(b)+') · roll % labels run vertically above each bar so neighbours never collide</p>';
+}
+
+function rollTileHTML(key){
+  var R=ROLLS[key], meta=GMETA[key], st=R.stats, lastT=R.dailyT[R.dailyT.length-1];
+  var dT=R.dailyT.slice(-10);
+  var dRows=dT.map(function(r,i){
+    return '<tr'+(i===dT.length-1?' class="hl"':'')+'><td class="lbl" data-l="">'+r[0]+'</td><td data-l="Front OI">'+r[1]+'</td><td data-l="Def OI">'+r[2]+'</td><td data-l="Net ΔOI">'+r[3]+'</td><td data-l="Roll %">'+r[4]+'</td><td data-l="Δ pp">'+r[5]+'</td><td data-l="Spread">'+r[6]+'</td><td data-l="Δ¢">'+r[7]+'</td></tr>';
+  }).join("");
+  var statRows=[
+    ['Underlying / front month', meta.name+' ('+meta.chainNear+') / '+R.front],
+    ['Deferred month', meta.name+' ('+meta.chainFar+') / '+R.def],
+    ['Current roll progress','<b>'+st.roll+'</b>'],
+    ['Front OI net (window)', st.fnet],
+    ['Deferred OI net (window)', st.dnet],
+    ['Combined OI net (window)','<b>'+st.cnet+'</b>'],
+    ['Roll pace', st.pace],
+    ['Liquidity threshold 40%', st.thr],
+    ['Calendar spread', st.sp],
+    ['Managed money net', st.mm],
+    ['First notice day (FND)', st.fnd],
+    ['Hard exit deadline (FND−1)', st.hard],
+    ['Delivery window status','<b>'+st.state+'</b>'],
+    ['Action plan', st.plan]
+  ].map(function(kv){ return '<div class="kv"><span class="kk">'+kv[0]+'</span><span class="vv" style="font-family:inherit;font-weight:500;font-size:12.5px">'+kv[1]+'</span></div>'; }).join("");
+  var bT=R.beh.slice(-9);
+  var behRows=bT.map(function(b,i){
+    return '<div class="beh-row'+(i===bT.length-1?' hl':'')+'"><span class="bd">'+b[0]+'</span><span class="bt">'+esc(b[1])+'</span><span class="bt">'+esc(b[2])+'</span></div>';
+  }).join("");
+  return '<div class="tile wide"><div class="tile-head"><h2>Rollover — '+meta.chainNear+' → '+meta.chainFar+' <span class="h2note">· OI migration &amp; calendar spread · the rollover card\u2019s own series · chain Oct 20, 2026</span></h2></div>'+
+    '<div class="stat-row" style="margin-top:8px">'+
+    stat('Roll progress · Oct 20', st.roll) + stat('Front OI · Oct 20', lastT[1]) +
+    stat('Deferred OI · Oct 20', lastT[2]) + stat('Calendar spread', st.sp) +
+    stat('Roll pace', st.pace) + stat('Delivery window', st.state) +
+    '</div>'+
+    rollSVG2(R)+
+    rollBadges(R)+
+    rollSpreadLine(R)+
+    '<div class="legend"><span><span class="sw" style="background:#2f6db3"></span>Front OI ('+R.front+')</span><span><span class="sw" style="background:#2b8f61"></span>Deferred OI ('+R.def+')</span><span><span class="sw" style="background:#f5c542"></span>Calendar spread ¢/bu (right axis)</span><span>Bar labels: roll % = deferred OI ÷ (front + deferred OI)</span></div>'+
+    '<div class="roll-grid"><div><h3>Daily summary — last 10 sessions</h3><table class="mini"><thead><tr><th>Date</th><th>Front OI</th><th>Def OI</th><th>Net ΔOI</th><th>Roll %</th><th>Δ pp</th><th>Spread</th><th>Δ¢</th></tr></thead><tbody>'+dRows+'</tbody></table></div>'+
+    '<div><h3>Roll statistics &amp; timing</h3>'+statRows+'</div></div>'+
+    '<div class="beh-wrap"><h3>Trader behaviour — what each session\u2019s flow says · last 9 session deltas</h3>'+
+    '<div class="beh-row beh-head"><span class="bd">Date</span><span class="bt">Front ('+R.front+') — unwinding</span><span class="bt">Deferred ('+R.def+') — adding</span></div>'+behRows+
+    '<p class="decode">Decode: price↑+OI↑ = new longs · price↓+OI↑ = new shorts · price↑+OI↓ = short covering · price↓+OI↓ = long liquidation</p>'+
+    '<div class="stamp" style="border:0;margin-top:4px;padding-top:8px">Latest session (Oct 20) highlighted, as on the card</div></div>'+
+    '<div class="stamp">'+meta.deltaNote+' · per-contract OI and settlements: EOD manual drop-ins — DATA NOTE: per-contract OI via manual drop-ins (last Oct 20); settlements (last Oct 20), identical to the rollover cards</div></div>';
+}
+
+/* ---------------- grain tab render ---------------- */
+var grainState = { corn:"near", wheat:"near", soybeans:"near" };
+
+function positioningHTML(key){
+  var g=DATA.grains[key], meta=GMETA[key], side=grainState[key], ds=g[side];
+  var isNear = side==="near";
+  var head = isNear
+    ? meta.chainNear+' options · chain pull Oct 21, 2026 · OI as of Oct 20 close'
+    : meta.chainFar+' options · chain vintage Sep 30, 2026';
+  var extra = isNear
+    ? stat("Chain IV", fmt(ds.iv,2)+"%") + stat("Options expire", meta.optExp)
+    : stat("Range read", "Put wall "+money2(ds.put_wall[0])+" → call wall "+money2(ds.call_wall[0]));
+  return '<div class="tile-head"><h2>Options positioning — <span class="h2note">'+head+'</span></h2>'+
+    '<span class="toggle" role="group" aria-label="Near or far option month">'+
+    '<button data-grain="'+key+'" data-side="near" aria-pressed="'+(isNear)+'">NEAR · '+meta.chainNear.toUpperCase()+'</button>'+
+    '<button data-grain="'+key+'" data-side="far" aria-pressed="'+(!isNear)+'">FAR · '+meta.chainFar.toUpperCase()+'</button></span></div>'+
+    '<div class="stat-row">'+
+    stat("Call OI", fmt(ds.calls)) + stat("Put OI", fmt(ds.puts)) +
+    stat("Put/Call (OI)", fmt(ds.pcr,2)) +
+    stat("Call wall", money2(ds.call_wall[0]), fmt(ds.call_wall[1])+" OI") +
+    stat("Put wall", money2(ds.put_wall[0]), fmt(ds.put_wall[1])+" OI") + extra +
+    '</div>'+
+    (isNear ? '' : '<div class="stamp" style="border:0;margin-top:10px;padding-top:0">FAR MONTH — chain data vintage Sep 30, 2026, frozen. Range the market is defining: '+money2(ds.put_wall[0])+' – '+money2(ds.call_wall[0])+'.</div>');
+}
+
+function oiTileHTML(key){
+  var g=DATA.grains[key], meta=GMETA[key], side=grainState[key], ds=g[side];
+  var isNear = side==="near";
+  return '<div class="tile-head"><h2>Open interest by strike — <span class="h2note">'+(isNear?meta.chainNear:meta.chainFar)+' · '+(isNear?'Oct 21, 2026 chain pull':'Sep 30, 2026 vintage')+'</span></h2></div>'+
+    oiSVG(ds.rows, ds)+
+    '<div class="legend"><span><span class="sw" style="background:var(--call)"></span>Call OI</span><span><span class="sw" style="background:var(--put)"></span>Put OI</span><span><span class="sw" style="background:#ffd27a"></span>Call wall strike</span><span><span class="sw" style="background:#ff9d97"></span>Put wall strike</span></div>';
+}
+
+function renderGrain(key){
+  var g=DATA.grains[key], meta=GMETA[key], f=g.fan, last=g.cftc[g.cftc.length-1], prev=g.cftc[g.cftc.length-2];
+  var MA50={corn:"5.10", soybeans:"12.75", wheat:"7.05"}[key];
+  var wow = last.net - prev.net;
+  var html='<div class="grid">';
+  /* fan tile */
+  var FL=fanLevels(g, meta);
+  html+='<div class="tile wide"><h2>'+meta.name+' '+meta.contract+' — 10-day σ fan <span class="h2note">settle fan anchored Tue, Oct 20, 2026 · live fan re-anchored on the delayed quote frozen at build</span></h2>'+
+    '<div class="stat-row" style="margin:6px 0 10px">'+
+    stat("Settle · Oct 20", money2(f.anchor)) + stat("Live anchor (delayed)", money2(f.intraday[0]), f.intraday[1]+" · frozen at build") +
+    stat("Daily σ", "$"+fmt(f.sig,4)) +
+    stat("Chain IV", fmt(f.iv_chain_iv,2)+"%") + stat("Z-score", f.z) +
+    stat("MA20", "$"+f.ma20) + stat("MA50", "$"+MA50) +
+    stat("Settle 10-day 95% range", f.r10[0].toFixed(2)+" – "+f.r10[1].toFixed(2)) +
+    stat("Settle 10-day 99% range", f.r10_99[0].toFixed(2)+" – "+f.r10_99[1].toFixed(2)) +
+    '</div>'+ fanSVG2(g, meta, FL)+
+    '<p class="posread">'+esc(FL.read)+'</p>'+
+    '<div class="legend"><span><span class="sw" style="background:#dbe4f0"></span>Verified settlements (25)</span><span><span class="sw" style="background:'+meta.accent+'"></span>Settle-anchored fan (LATEST VERIFIED)</span><span><span class="sw" style="background:#38b6c9"></span>Live-anchored fan (delayed quote, frozen)</span><span><span class="sw" style="background:#f0c169"></span>MA20</span><span><span class="sw" style="background:#b18cff"></span>MA50 / options walls</span><span><span class="sw" style="background:#ff6b6b"></span>Market (delayed)</span><span>Right-edge labels: every live-fan level at day 10, spaced apart with leader lines to each level\u2019s true price — no label overlaps another · exp MA20 / exp MA50 are flat zero-drift extensions of the last trailing values, labeled \u201cexp\u201d — never predictions · IV band uses chain IV '+fmt(f.iv_chain_iv,2)+'% × √(10/252)</span></div>'+
+    '<div class="stamp">Market marker, label stack and position read are frozen at the build-time delayed quote ('+f.intraday[1]+', Thu, Oct 22, 2026) — this snapshot does not update · the settle fan\u2019s end values stay in the ranges above — one label stack only · settlements verified through Oct 20, 2026</div></div>';
+  /* export sales — 10-week trend */
+  html+=exportTileHTML(key);
+  /* insight */
+  html+='<div class="tile"><h2>Insight</h2><p class="read">'+meta.insight+'</p>'+
+    '<div class="stamp">Read from the Oct 22, 2026 desk summary · MA100 $'+meta.ma100+'</div></div>';
+  /* spreads */
+  var spRows = meta.spreads.map(function(sp){
+    return '<div class="kv"><span class="kk">'+sp[0]+'</span><span class="vv">'+sp[1]+' <span class="neu" style="font-weight:400">('+sp[2]+(sp[3]?' · '+sp[3]:'')+')</span></span></div>';
+  }).join("");
+  var settleRows = g.roll.map(function(r){
+    return '<div class="kv"><span class="kk">'+r.contract+' · '+r.expiry+'</span><span class="vv">'+money2(r.settle)+'</span></div>';
+  }).join("");
+  html+='<div class="tile"><h2>Spread details <span class="h2note">— calendar spreads, Oct 20 settles</span></h2>'+spRows+
+    '<div style="margin-top:10px">'+settleRows+'</div>'+
+    '<div class="stamp">Front-minus-next convention · all three curves in contango at the Oct 20 settle · settles cross-checked across two independent closes · day-over-day Δ as carried in the Oct 22 desk summary · the full session-by-session spread series is in the rollover tile below</div></div>';
+  /* positioning (toggle target) */
+  html+='<div class="tile wide" id="pos-'+key+'">'+positioningHTML(key)+'</div>';
+  /* OI chart (toggle target) */
+  html+='<div class="tile wide" id="oi-'+key+'">'+oiTileHTML(key)+'</div>';
+  /* rollover — full card replication */
+  html+=rollTileHTML(key);
+  /* skew */
+  html+='<div class="tile"><h2>IV skew <span class="h2note">— liquid side · ±2σ window</span></h2>'+ skewSVG(g, meta)+
+    '<div class="legend"><span><span class="sw" style="background:var(--put)"></span>Puts below futures</span><span><span class="sw" style="background:var(--call)"></span>Calls at/above futures</span></div>'+
+    '<div class="stamp">Per-strike theoretical IV, end-of-day Oct 20, 2026 vintage (read Oct 21) · window = futures ± 2× the 10-day σ · market-implied, not a prediction</div></div>';
+  /* CFTC */
+  html+='<div class="tile"><h2>CFTC managed money <span class="h2note">— weekly, latest verified</span></h2>'+
+    '<div class="big" style="color:'+(last.net>=0?'var(--green)':'var(--red)')+'">'+(last.net>=0?'+':'−')+fmt(Math.abs(last.net))+' <span style="font-size:14px;color:var(--muted)">net contracts</span></div>'+
+    '<div class="stat-row">'+stat("Long", fmt(last.long)) + stat("Short", fmt(last.short)) +
+    stat("Week over week", '<span class="'+cls(wow)+'">'+sgn(wow,0)+'</span>')+
+    stat("Report date", "Tue, Oct 13, 2026")+'</div>'+
+    cftcSVG(g.cftc)+
+    '<div class="stamp">Managed-money net, trailing 10 weekly reports · weekly data — never a live figure · DATA NOTE: latest verified vintage Oct 13, 2026</div></div>';
+  /* insight companion: contract facts */
+  html+='<div class="tile wide"><h2>Contract facts</h2><div class="facts-cols">'+
+    '<div class="kv"><span class="kk">Benchmark contract</span><span class="vv">'+meta.contract+' ('+meta.chainNear+')</span></div>'+
+    '<div class="kv"><span class="kk">Options expiry ('+meta.chainNear+')</span><span class="vv">'+meta.optExp+'</span></div>'+
+    '<div class="kv"><span class="kk">Far option month</span><span class="vv">'+meta.chainFar+' · Sep 30, 2026 vintage</span></div>'+
+    '<div class="kv"><span class="kk">Settle vs MA20</span><span class="vv">'+sgn(f.anchor-parseFloat(f.ma20),2,'')+' ('+sgn((f.anchor/parseFloat(f.ma20)-1)*100,1,'%')+')</span></div>'+
+    '<div class="kv"><span class="kk">Settle vs MA50</span><span class="vv">'+sgn(f.anchor-parseFloat(MA50),2,'')+' ('+sgn((f.anchor/parseFloat(MA50)-1)*100,1,'%')+')</span></div>'+
+    '</div><div class="stamp">All values frozen from the Oct 21, 2026 verified pull</div></div>';
+  html+='</div>';
+  html+=newsTile(NEWS[key]);
+  document.getElementById('panel-'+key).innerHTML=html;
+}
+
+/* ---------------- FX tab render ---------------- */
+function fxClosesSVG(fx){
+  var rows=fx.closes, W=760,H=260,PL=52,PR=70,PT=16,PB=30, pw=W-PL-PR, ph=H-PT-PB;
+  var vals=rows.map(function(r){return r[1];});
+  var lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals), pad=(hi-lo)*0.15; lo-=pad; hi+=pad;
+  function X(i){ return PL+pw*i/(rows.length-1); } function Y(v){ return PT+ph*(1-(v-lo)/(hi-lo)); }
+  var s='';
+  for(var i=0;i<=4;i++){ var gy=PT+ph*i/4, gv=hi-(hi-lo)*i/4;
+    s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
+    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+gv.toFixed(4)+'</text>'; }
+  var area='M'+X(0)+' '+Y(rows[0][1]); var line=area;
+  rows.forEach(function(r,i){ if(i>0){ area+='L'+X(i).toFixed(1)+' '+Y(r[1]).toFixed(1); line+='L'+X(i).toFixed(1)+' '+Y(r[1]).toFixed(1); } });
+  s+='<path d="'+area+'L'+X(rows.length-1)+' '+(PT+ph)+'L'+X(0)+' '+(PT+ph)+'Z" fill="#38b6c9" opacity="0.10"/>';
+  s+='<path d="'+line+'" fill="none" stroke="#38b6c9" stroke-width="2"/>';
+  var li=rows.length-1;
+  s+='<circle cx="'+X(li)+'" cy="'+Y(rows[li][1])+'" r="3.6" fill="#fff"/>';
+  s+='<text x="'+(X(li)+8)+'" y="'+(Y(rows[li][1])+4)+'" fill="#fff" font-size="11.5" font-weight="600" font-family="IBM Plex Mono">'+rows[li][1].toFixed(5)+'</text>';
+  s+='<text x="'+PL+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono">'+rows[0][0]+'</text>';
+  s+='<text x="'+(PL+pw)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+rows[li][0]+' · LAST BAR</text>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="USD/CAD daily closes, end of day">'+s+'</svg>';
+}
+
+function renderFX(){
+  var fx=DATA.fx, html='<div class="grid">';
+  /* spot + cross-check */
+  html+='<div class="tile"><h2>USD/CAD spot <span class="chip demo">DEMO SNAPSHOT</span></h2>'+
+    '<div class="big">SELL '+fmt(fx.spot.bid,5)+' &nbsp;·&nbsp; BUY '+fmt(fx.spot.offer,5)+'</div>'+
+    '<div class="stat-row">'+stat("Mid", fmt(fx.spot.mid,5)) + stat("Spread", fmt(fx.spot.spread_pips,1)+" pips") +
+    stat("Vs Oct 20 reference "+fmt(fx.spot.ref,4), '<span class="'+cls(fx.spot.chg_pct)+'">'+sgn(fx.spot.chg_pct,3,'%')+'</span>')+'</div>'+
+    '<div class="stamp">DEMO snapshot — Oct 21, 06:37 ET — session pull, frozen · never a live quote on this page</div></div>';
+  html+='<div class="tile"><h2>Independent spot cross-check</h2>'+
+    '<div class="big">'+fmt(1.40346174,5)+'</div>'+
+    '<div class="stat-row">'+stat("Bid", fmt(1.40345999,5)) + stat("Ask", fmt(1.40349823,5)) +
+    stat("Gap vs DEMO mid", fmt(Math.abs(1.40346174-fx.spot.mid)*10000,1)+" pips")+'</div>'+
+    '<div class="stamp">Refreshed 2026-10-22 04:50:20 UTC — frozen in this snapshot · independent second source, agrees with the DEMO snapshot within ~11 pips</div></div>';
+  /* macro results */
+  html+='<div class="tile wide"><h2>Latest verified releases <span class="h2note">— FX tab only · prints cross-checked before publication</span></h2>'+
+    '<div class="grid" style="gap:10px">'+
+    '<div><span class="med">Canada CPI (Sep) — 3.1% y/y</span> <span class="chip beat">BEAT</span><div class="read">Consensus 3.0% y/y · headline came in a tenth hotter than expected.</div></div>'+
+    '<div><span class="med">US Employment (Sep) — +29K</span> <span class="chip miss">MISS</span><div class="read">Payrolls +29K vs ~90K consensus · unemployment 4.2%.</div></div>'+
+    '</div><div class="stamp">Verified actuals only · events without a verified consensus are not scored on this page</div></div>';
+  /* closes chart */
+  html+='<div class="tile wide"><h2>USD/CAD — daily closes <span class="h2note">· END-OF-DAY CADENCE · stored daily bars, Sep 28 – Oct 21, 2026</span></h2>'+
+    fxClosesSVG(fx)+
+    '<div class="stamp">Daily closes only — this chart is end-of-day data by design and is labeled as such · last bar Wed, Oct 21, 2026: '+fmt(fx.closes[fx.closes.length-1][1],5)+'</div></div>';
+  /* rates table */
+  var rrows=fx.rates.map(function(r){
+    return '<tr><td class="lbl" data-l="">'+r.t+(r.t===fx.widest?' · widest':'')+'</td>'+
+    '<td data-l="US yield">'+fmt(r.us,2)+'%</td><td data-l="CA yield">'+fmt(r.ca,2)+'%</td>'+
+    '<td data-l="Spread"><b>'+fmt(r.sp,1)+'</b></td>'+
+    '<td data-l="Δ 1D"><span class="'+cls(r.dod)+'">'+sgn(r.dod,1)+'</span></td>'+
+    '<td data-l="Δ WoW"><span class="'+cls(r.wow)+'">'+sgn(r.wow,1)+'</span></td>'+
+    '<td data-l="20D %ile">'+(r.pct==null?'n/a':fmt(r.pct,0)+'th')+'</td></tr>';
+  }).join("");
+  html+='<div class="tile wide"><h2>US–Canada yield spreads <span class="h2note">— official closes, Oct 20, 2026 · spreads in bps</span></h2>'+
+    '<table><thead><tr><th>Tenor</th><th>US</th><th>Canada</th><th>Spread</th><th>Δ 1D</th><th>Δ Week</th><th>20D %ile</th></tr></thead><tbody>'+rrows+'</tbody></table>'+
+    '<div class="read">Spreads run '+fmt(Math.min.apply(null,fx.rates.map(function(r){return r.sp;})),0)+'–'+fmt(Math.max.apply(null,fx.rates.map(function(r){return r.sp;})),0)+' bps across tenors, widest at the '+fx.widest+'. Every tenor narrowed on the week. US par curve (Oct 21): 3M '+fmt(fx.treasury['3M'],2)+'% · 2Y '+fmt(fx.treasury['2Y'],2)+'% · 10Y '+fmt(fx.treasury['10Y'],2)+'% · 30Y '+fmt(fx.treasury['30Y'],2)+'%.</div>'+
+    '<div class="stamp">Yields = official daily closes (Oct 20) · spread Δ vs prior official close · Canada 20Y has no official benchmark series — the 20Y spread uses the desk\u2019s stored series (see desk notes)</div></div>';
+  /* bias + scenarios */
+  var sc=fx.scen;
+  var drv=fx.bias.drivers.map(function(d){
+    return '<div class="kv"><span class="kk">'+esc(d.name)+'</span><span class="vv" style="font-family:inherit;font-weight:500;font-size:12.5px">'+esc(d.detail)+'</span></div>';
+  }).join("");
+  html+='<div class="tile"><h2>Desk bias — 1-day</h2>'+
+    '<div class="med">'+esc(fx.bias.label)+'</div>'+
+    '<div class="stat-row">'+stat("Bearish USD/CAD scenario", fmt(sc.bearish_usdcad.probability_pct,1)+"%", sc.bearish_usdcad.range[0].toFixed(4)+"–"+sc.bearish_usdcad.range[1].toFixed(4))+
+    stat("Neutral", fmt(sc.neutral.probability_pct,1)+"%")+stat("Bullish USD/CAD", fmt(sc.bullish_usdcad.probability_pct,1)+"%", sc.bullish_usdcad.range[0].toFixed(4)+"–"+sc.bullish_usdcad.range[1].toFixed(4))+'</div>'+
+    '<div style="margin-top:8px">'+drv+'</div>'+
+    '<div class="stamp">Bias score '+fx.bias.score+' (stored-driver weights, diagnostics not causality) · scenario probabilities from the 1D OLS forecast distribution at the Oct 16 origin · frozen</div></div>';
+  /* forecast */
+  html+='<div class="tile"><h2>Forecast — 90-day OLS baseline <span class="h2note">· model refit Oct 21, 2026</span></h2>'+
+    '<div class="stat-row">'+stat("1D expected (P50)", '<span class="'+cls(fx.fc.p50_pct)+'">'+sgn(fx.fc.p50_pct,3,'%')+'</span>')+
+    stat("Implied spot P50", fmt(fx.fc.spot50,4))+stat("P10 – P90", fmt(1.4161*(1+fx.fc.p10/100),4)+" – "+fmt(1.4161*(1+fx.fc.p90/100),4))+
+    stat("Backtest MAE", fmt(fx.fc.mae,1)+" bps", "vs "+fmt(fx.fc.zero_mae,1)+" zero-return")+
+    stat("Hit rate", fmt(fx.fc.hit*100,1)+"%")+'</div>'+
+    '<p class="read" style="font-size:13.5px">1D is the only horizon that clears the walk-forward gate. <b>5D:</b> shown as a neutral cone only — '+esc(fx.fc.h5_reason)+'. <b>20D:</b> neutral cone only — '+esc(fx.fc.h20_reason)+'.</p>'+
+    '<div class="stamp">Forecast origin Fri, Oct 16, 2026 · base close 1.4161 · the series is never spliced across the methodology gap — refit marker Oct 21, 2026 · educational, not a trade recommendation</div></div>';
+  /* policy expectations */
+  var fedRows=fx.policy.fed.map(function(mt){
+    return '<div class="kv"><span class="kk">Fed · '+mt.meeting+'</span><span class="vv">Hold '+fmt(mt.no_change_pct,1)+'% · Hike '+fmt(mt.hike_pct,1)+'% · Ease '+fmt(mt.ease_pct,1)+'%</span></div>';
+  }).join("");
+  var corRows=fx.policy.corra.map(function(c){
+    return '<div class="kv"><span class="kk">CORRA · '+c.month+'</span><span class="vv">Implied '+fmt(c.implied_rate_pct,2)+'%</span></div>';
+  }).join("");
+  html+='<div class="tile"><h2>Policy expectations <span class="h2note">— futures-implied</span></h2>'+fedRows+
+    '<div class="kv"><span class="kk">Fed current range</span><span class="vv">'+esc(fx.policy.fed_range)+' bps</span></div>'+corRows+
+    '<div class="kv"><span class="kk">BoC overnight (current)</span><span class="vv">'+fmt(fx.policy.corra_now,2)+'%</span></div>'+
+    '<div class="stamp">Fed probabilities pulled Oct 21, 06:20 CT · CORRA implied rates pulled Oct 21, 07:35 ET · futures-implied, not forecasts</div></div>';
+  /* positioning & sentiment */
+  html+='<div class="tile"><h2>Positioning &amp; sentiment</h2>'+
+    '<div class="kv"><span class="kk">CFTC CAD — leveraged funds net (Oct 13)</span><span class="vv">'+sgn(fx.pos.net,0)+' contracts</span></div>'+
+    '<div class="kv"><span class="kk">Net as % of open interest</span><span class="vv">'+fmt(fx.pos.pct_oi,1)+'% of '+fmt(fx.pos.oi)+'</span></div>'+
+    '<div class="kv"><span class="kk">Week over week</span><span class="vv">'+sgn(fx.pos.wow,0)+'</span></div>'+
+    '<div class="kv"><span class="kk">Crowding read</span><span class="vv" style="font-family:inherit;font-weight:600;font-size:12.5px">'+esc(fx.pos.label)+'</span></div>'+
+    '<div class="kv"><span class="kk">Retail traders (Oct 21 pull)</span><span class="vv">'+fx.sent.traders.long_pct+'% long / '+fx.sent.traders.short_pct+'% short</span></div>'+
+    '<div class="kv"><span class="kk">Retail lots</span><span class="vv">'+fx.sent.lots.long_pct+'% long / '+fx.sent.lots.short_pct+'% short</span></div>'+
+    '<div class="kv"><span class="kk">25Δ risk reversal (Oct 16)</span><span class="vv">'+sgn(fx.fxopt.rr,2,' pp')+' · neutral band</span></div>'+
+    '<div class="kv"><span class="kk">Realized vol (20D)</span><span class="vv">'+fmt(fx.fxopt.rvol,2)+'%</span></div>'+
+    '<div class="stamp">CFTC = weekly report dated Tue, Oct 13, 2026 (net percentile: 1Y '+fmt(fx.pos.p1y,1)+'th · 3Y '+fmt(fx.pos.p3y,1)+'th) · retail panel carries no explicit timestamp on the source page — pull time Oct 21, 07:05 ET · FX options as of Oct 16 — expiry pins unavailable: '+esc(fx.fxopt.pins_reason)+'</div></div>';
+  /* energy */
+  var enRows=fx.energy.map(function(e){
+    return '<div class="kv"><span class="kk">'+e.name+' <span style="color:var(--faint)">('+e.delay+')</span></span><span class="vv">$'+fmt(e.last,2)+' <span class="'+cls(e.pct)+'">'+sgn(e.pct,2,'%')+'</span></span></div>';
+  }).join("");
+  html+='<div class="tile"><h2>Energy <span class="h2note">— delayed reads stored Oct 22, 02:20 UTC</span></h2>'+enRows+
+    '<div class="kv"><span class="kk">WTI – WCS differential</span><span class="vv">$'+fmt(fx.wcs_diff.value,2)+'/bbl</span></div>'+
+    '<div class="kv"><span class="kk">DXY (Oct 21)</span><span class="vv">'+fmt(fx.fxcross.dxy,3)+' <span class="'+cls(fx.fxcross.dxy_chg)+'">'+sgn(fx.fxcross.dxy_chg,2,'%')+'</span></span></div>'+
+    '<div class="kv"><span class="kk">Reference crosses (Oct 21)</span><span class="vv">EUR/USD '+fmt(fx.fxcross.eurusd,4)+' · USD/JPY '+fmt(fx.fxcross.usdjpy,2)+' · USD/CAD ref '+fmt(fx.fxcross.usdcad_ref,4)+'</span></div>'+
+    '<div class="stamp">Energy quotes are delayed public reads as stored by the desk — delay labels printed on the tile, as the desk carries them</div></div>';
+  /* levels & trade template */
+  html+='<div class="tile"><h2>Key levels &amp; conditional template</h2>'+
+    '<div class="kv"><span class="kk">Prior-session pivot (H+L+C)/3 · Oct 20</span><span class="vv">'+fmt(fx.levels.pivot,5)+'</span></div>'+
+    '<div class="kv"><span class="kk">20D range (closes)</span><span class="vv">'+fmt(fx.levels.s20,4)+' – '+fmt(fx.levels.r20,4)+'</span></div>'+
+    '<div class="kv"><span class="kk">50D range (closes)</span><span class="vv">'+fmt(fx.levels.s50,4)+' – '+fmt(fx.levels.r50,4)+'</span></div>'+
+    '<div class="kv"><span class="kk">Template</span><span class="vv" style="font-family:inherit;font-weight:600;font-size:12.5px">'+esc(fx.trade.dir)+'</span></div>'+
+    '<div class="kv"><span class="kk">Entry zone · stop · target</span><span class="vv">'+fmt(fx.trade.entry[0],4)+'–'+fmt(fx.trade.entry[1],4)+' · '+fmt(fx.trade.stop,4)+' · '+fmt(fx.trade.targets[0],4)+'</span></div>'+
+    '<div class="kv"><span class="kk">R:R to first target</span><span class="vv">'+fmt(fx.trade.rr,2)+' · stop '+fmt(fx.trade.stop_pips,1)+' pips</span></div>'+
+    '<p class="read" style="font-size:13px">Event risk: '+esc(fx.trade.event_note)+'.</p>'+
+    '<div class="stamp">Levels from stored daily closes through Oct 16, 2026 (close-based ranges) · pivot substitutes for VWAP until intraday pulls accumulate — VWAP unavailable: '+esc(fx.vwap_reason)+' · conditional template, educational only</div></div>';
+  /* forwards */
+  var fwRows=fx.forwards.map(function(c){
+    return '<div class="kv"><span class="kk">'+c.tenor+'</span><span class="vv">'+fmt(c.out,5)+(c.diff!=null?' <span class="neu" style="font-weight:400">('+sgn(c.diff,2,'%')+' diff)</span>':'')+'</span></div>';
+  }).join("");
+  html+='<div class="tile"><h2>Forward curve <span class="h2note">— outrights, session Oct 21, 2026</span></h2>'+fwRows+
+    '<div class="stamp">Session spot header 1.40471 (bid 1.40467 / ask 1.40476) · negative differentials = US rates higher, USD at a forward discount · stored session data, frozen</div></div>';
+  /* events */
+  var evRows=fx.events.map(function(e){
+    return '<div class="kv"><span class="kk">'+e.date+' · '+esc(e.time)+' · '+e.ccy+' — '+esc(e.event)+(e.impact==='High'?' <span class="chip miss">HIGH</span>':'')+'</span><span class="vv">'+(e.fc?('fc '+esc(e.fc)):'')+(e.prev?(' · prev '+esc(e.prev)):'')+'</span></div>';
+  }).join("");
+  html+='<div class="tile wide"><h2>Stored event calendar <span class="h2note">— as pulled Oct 21, 2026, 07:05 ET · times as displayed on the source calendar</span></h2>'+evRows+
+    '<p class="read" style="font-size:13.5px">Nearest high-impact cluster: <b>Wed, Oct 28</b> — BoC rate decision, Monetary Policy Report and press conference land the same day as the FOMC decision and press conference. Seasonality context (2010–2026): October averages '+sgn(fx.season.cur.avg_pct,2,'%')+' with '+fmt(fx.season.cur.pct_positive,1)+'% of Octobers positive — context only, never a signal.</p>'+
+    '<div class="stamp">Calendar frozen from the Oct 21 pull · this snapshot carries no countdown and no live verification</div></div>';
+  html+='</div>';
+  html+=newsTile(NEWS.fx);
+  document.getElementById('panel-fx').innerHTML=html;
+}
+
+/* ---------------- wiring ---------------- */
+document.querySelectorAll('.tab-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.setAttribute('aria-selected', b===btn ? 'true':'false'); });
+    document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.toggle('active', p.id==='panel-'+btn.getAttribute('data-tab')); });
+  });
+});
+document.querySelector('main').addEventListener('click', function(ev){
+  var b = ev.target.closest ? ev.target.closest('.toggle button') : null;
+  if(!b) return;
+  var key=b.getAttribute('data-grain'); grainState[key]=b.getAttribute('data-side');
+  document.getElementById('pos-'+key).innerHTML=positioningHTML(key);
+  document.getElementById('oi-'+key).innerHTML=oiTileHTML(key);
+});
+
+renderGrain('corn'); renderGrain('wheat'); renderGrain('soybeans'); renderFX();
 </script>
 </body>
 </html>
