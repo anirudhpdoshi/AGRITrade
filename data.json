@@ -5197,11 +5197,11 @@
     "30Y": 5.42
    },
    "fxcross": {
-    "dxy": 101.652,
-    "dxy_chg": -0.126,
-    "eurusd": 1.1221,
+    "dxy": 101.649,
+    "dxy_chg": -0.129,
+    "eurusd": 1.1216,
     "usdjpy": 156.75,
-    "usdcad_ref": 1.4009
+    "usdcad_ref": 1.4006
    },
    "closes": [
     [
@@ -5280,16 +5280,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 99.14,
-     "chg": 1.99,
-     "pct": 2.05,
+     "last": 99.13,
+     "chg": 1.98,
+     "pct": 2.04,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 112.88,
-     "chg": 4.06,
-     "pct": 3.73,
+     "last": 112.93,
+     "chg": 4.11,
+     "pct": 3.78,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -5301,9 +5301,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 13.67,
+    "value": 13.66,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-22T20:45:00+00:00",
+    "obs_ts": "2026-10-22T20:50:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -5769,10 +5769,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.40088,
+    "mid": 1.40084,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-22T16:57:00-04:00",
+    "ts": "2026-10-22T16:59:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -5914,25 +5914,25 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-22T16:57:25-04:00",
+   "updated_at": "2026-10-22T16:59:48-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-22T16:57:00-04:00",
+    "fx_spot": "2026-10-22T16:59:00-04:00",
     "fx_closes": "2026-10-22T16:30:00-04:00",
     "yields": "2026-10-21T17:00:00-04:00",
     "policy": "2026-10-21T07:35:00-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-13T15:30:00-04:00",
     "cftc_grains": "2026-10-13T15:30:00-04:00",
-    "energy": "2026-10-22T16:45:00-04:00",
-    "crosses": "2026-10-22T16:45:00-04:00",
+    "energy": "2026-10-22T16:50:00-04:00",
+    "crosses": "2026-10-22T16:50:00-04:00",
     "grains_settle": "2026-10-20T14:20:00-04:00",
     "grains_quote": "2026-10-22T14:15:00-04:00",
     "options": "2026-10-22T08:00:00-04:00",
-    "news": "2026-10-22T16:57:25-04:00",
+    "news": "2026-10-22T16:59:48-04:00",
     "calendar": "2026-10-21T07:05:00-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
-    "macro": "2026-10-22T16:57:25-04:00"
+    "macro": "2026-10-22T16:59:48-04:00"
    },
    "sources": {
     "news": "Google News RSS search, refreshed every 15 min",
@@ -5953,9 +5953,10 @@
      "macro"
     ],
     "failed": [],
-    "at": "2026-10-22T16:57:25-04:00"
+    "at": "2026-10-22T16:59:48-04:00"
    },
-   "releases_checked": "2026-10-22T16:45:04-04:00"
+   "releases_checked": "2026-10-22T16:45:04-04:00",
+   "macro_checked": "2026-10-22T16:59:48-04:00"
   },
   "macro": [
    {
@@ -6603,6 +6604,72 @@
     "src": "FRED A191RL1Q225SBEA"
    },
    {
+    "key": "us_policy",
+    "name": "Fed funds (effective)",
+    "group": "us",
+    "unit": "%",
+    "dec": 2,
+    "good": "heat",
+    "freq": "M",
+    "measure": "",
+    "period": "Sep '26",
+    "obs_date": "2026-09-01",
+    "value": 3.75,
+    "prior": 3.63,
+    "chg": 0.12,
+    "history": [
+     [
+      "Oct '25",
+      4.09
+     ],
+     [
+      "Nov '25",
+      3.88
+     ],
+     [
+      "Dec '25",
+      3.72
+     ],
+     [
+      "Jan '26",
+      3.64
+     ],
+     [
+      "Feb '26",
+      3.64
+     ],
+     [
+      "Mar '26",
+      3.64
+     ],
+     [
+      "Apr '26",
+      3.64
+     ],
+     [
+      "May '26",
+      3.63
+     ],
+     [
+      "Jun '26",
+      3.63
+     ],
+     [
+      "Jul '26",
+      3.63
+     ],
+     [
+      "Aug '26",
+      3.63
+     ],
+     [
+      "Sep '26",
+      3.75
+     ]
+    ],
+    "src": "FRED FEDFUNDS"
+   },
+   {
     "key": "us_umich",
     "name": "UMich sentiment",
     "group": "us",
@@ -7063,17 +7130,77 @@
      ]
     ],
     "src": "Statistics Canada 65201210"
+   },
+   {
+    "key": "ca_policy",
+    "name": "BoC overnight rate",
+    "group": "ca",
+    "unit": "%",
+    "dec": 2,
+    "good": "heat",
+    "freq": "D",
+    "measure": "",
+    "period": "Oct 21",
+    "obs_date": "2026-10-21",
+    "value": 2.25,
+    "prior": 2.25,
+    "chg": 0.0,
+    "history": [
+     [
+      "Oct 6",
+      2.25
+     ],
+     [
+      "Oct 7",
+      2.25
+     ],
+     [
+      "Oct 8",
+      2.25
+     ],
+     [
+      "Oct 9",
+      2.25
+     ],
+     [
+      "Oct 12",
+      2.25
+     ],
+     [
+      "Oct 13",
+      2.25
+     ],
+     [
+      "Oct 14",
+      2.25
+     ],
+     [
+      "Oct 15",
+      2.25
+     ],
+     [
+      "Oct 16",
+      2.25
+     ],
+     [
+      "Oct 19",
+      2.25
+     ],
+     [
+      "Oct 20",
+      2.25
+     ],
+     [
+      "Oct 21",
+      2.25
+     ]
+    ],
+    "src": "Bank of Canada Valet V39079"
    }
   ]
  },
  "NEWS": {
   "corn": [
-   [
-    "2026-10-22 20:21 UTC",
-    "stjosephpost.com",
-    "Commodity markets daily recap",
-    "https://news.google.com/rss/articles/CBMidkFVX3lxTE5PbV9xWjlMalhQMGVWZnVrck54Mnc1THBkUE1ES09FNDJ5VUQzVUI4NnYtR0hNeGI0RkVIWGU1SEtEQVBFRjZtUUhaVUhWZEFKRXJyTTA0R3c1dHZtUENiYzV2c2o0QlZ4MF9Qb1ZtTjdVZGlnMHc?oc=5"
-   ],
    [
     "2026-10-22 19:09 UTC",
     "www.marketscreener.com",
@@ -7115,14 +7242,20 @@
     "graintrade.com.ua",
     "Increased supply of new crop collapses quotes and increases pressure on corn prices in Ukraine",
     "https://news.google.com/rss/articles/CBMizAFBVV95cUxQSml5SktqdHhVT2F2dERmSENfV3gxRi02aFY4ZExvYTJrd2w4N1VNTVkzeHVaNjd1S2FMMUZfcDdlcnl1LXA3MlhwMVh5eElzQVVyY1dGRmhRTTRaTEp0akdXdVcxcWlSdDVXamUxTUFfLWd0NnJhZzZIa1NlTXNrbS1tdEhaTU13RWN1WWFSMkJrY3NzQTktUE9yQmNYM0hQUnBZT3l3enB4bkdhaVZ4TzBFa0VlclVDY2tmM0RoeV9YSXBUMF9PM3M3UHk?oc=5"
+   ],
+   [
+    "2026-10-22 02:26 UTC",
+    "www.tradingview.com",
+    "Corn Remains Near a 2-Month Low",
+    "https://news.google.com/rss/articles/CBMiigFBVV95cUxNV0V3U01VU3B2QWlaUmhfLTB0ZHdlQkhsVENIOVJxSUlJeUZWUnFOQzRlSF8xdmViaHVsY3FsWEY5elZPVjhXN3RmYUFnbmxodkQ5SWJkMjg4bkdPMU5VOFBVLWtlSEo4eG1YVUVOcWEzX3IxWThMejVJSkY5SW9sZkdhWXlvOXVnZnc?oc=5"
    ]
   ],
   "wheat": [
    [
-    "2026-10-22 18:49 UTC",
-    "www.albertafarmexpress.ca",
+    "2026-10-22 18:59 UTC",
+    "www.producer.com",
     "U.S. Grain/Oilseed Review: Soybeans rebound, little movement for corn, wheat",
-    "https://news.google.com/rss/articles/CBMivgFBVV95cUxQMng0bWh1OWRoYUxCVjgxb0FuZ3F1MHBrSHZaSTU3MFREUEJVWE05amtLNGhSakJxUGw0MEY2SVBlNE1IcmhrSkdnY3AwQUpRQzE0MDA2Y3NzYjhiYkhkTktrUUp4ajdaM0Zpb1RWeU56LXBmVEVGc1Jib0VOTWhhU3l2LWJBSmxhd0g4b0tJcmg1dmRNWTBaS2JIejRnNHB0MGg0QmlhR0tTbVZQSXAwOFhoYlZPUWdIbFIzTll3?oc=5"
+    "https://news.google.com/rss/articles/CBMisgFBVV95cUxQRWFyYW1lWHpTSGJyT2FSNUFQS3Vtd1NmY1Q0Rjk3RG1NTGU1S3o0Y1Y4QUx6SnBMV1RlUE1ZbWZMRkVab1VINTFnUGFjVF9kTUs3azNST25MU0VlNmI5WVRaNERERUdBSWNObDRHcHZsRXFQekRnOV93NG1qN01sNXdJdC1nd1NtMEJsUVpyYy1VVVZVeHRZOW8wMldkNFJSZFpsVXlXd3Zpem95RmEzQU53?oc=5"
    ],
    [
     "2026-10-22 16:57 UTC",
@@ -7135,6 +7268,12 @@
     "www.indexbox.io",
     "USDA Export Sales: Soybeans and Corn Outpace Wheat - News and Statistics",
     "https://news.google.com/rss/articles/CBMijAFBVV95cUxNeUlVbnM1ME1JR2lucDN1YUs4dXkwN1FnOXBRQ2FIYjJDZXQ0ZjlISHJGQ0pOd05SeldFOG5UdkMtQ3FuWF9EekhkdVZ6ZkhqZXdyNHViR1JYZV9DWWlVZXl5bGdSdE8xd1NVc2Q3MEFCUGVaZXhEV3kzZ1ppVDd2Z2RKM1NVVl82bHZxbg?oc=5"
+   ],
+   [
+    "2026-10-22 16:05 UTC",
+    "www.vietnam.vn",
+    "Natural gas prices fell for the fourth consecutive session to $2.79/MMBtu.",
+    "https://news.google.com/rss/articles/CBMilAFBVV95cUxPd2huQXdXcFQwNDR0RkppSnB2ZmZvcDA5RW5aelBYa1NmNWlPVlZRZ3kwdDlZLWdaMFNMbzZ4MW02U1V5NHlnSFBzcVFmWEU0ZllFZ2twS3RVRWF1Z0JfcThfYTk5czZXOWt1QXJrX2RkcS05X01qSXhkRW9QVklQT2E1YXNTMjEzM1RKSDdEczBFYlA5?oc=5"
    ],
    [
     "2026-10-22 15:24 UTC",
@@ -7159,12 +7298,6 @@
     "www.agrolatam.com",
     "U.S. Wheat Market Faces New Crisis as Exports Fall and Farm Prices Weaken",
     "https://news.google.com/rss/articles/CBMihAFBVV95cUxQWUFGdndON2lBd0pjbGg1VFFjVEpXRUpoeHpEQVBaNzJydTA5dmNqeWpXWFU0NHV3eGsxVnRaems3TFhTMTVIMEhCOFFTZFNmbzByWWJQakdtU2ZETC02anpTcXRXNWpnaG9uMnNyUEJWclNJMzhhUFFJTERiTVplRi1OYmY?oc=5"
-   ],
-   [
-    "2026-10-22 10:13 UTC",
-    "english.nv.ua",
-    "Russian grain exports collapse fourfold as Black Sea ports stall",
-    "https://news.google.com/rss/articles/CBMilwFBVV95cUxPNWRuXzBiYThJcV8xOG9lc1RYSXNHMnBaVGNxLUJHaEoyT1dLemdUSGVuSXJPSWs2N2VsWGRLUFliSS16Qk5XN05pbXFYU2EyQ2lUeURWQUFxN0VlcmFsZmFMSzA0NTRmVEp6Wnk1X0tYYnpPVkFmeTRzTk5CeGJNR2lGUVdyTzBBOWxfQ1p5WnQ0a3NIdWcw0gGQAUFVX3lxTE82Mk9pVVFkTXM0Y2tYVm5lbDFCWnByb2lmTFd2V29XZmczazBsTWdHTEE0amc5bUROUGZNV2dlQ2szNTZUcmhRb3dRQUZZUXQ0OGIyeUtFNWIyYjh4MUM4Si1oY01uMGZHczJodWgyUVNPSWZnYjltanJDMDVYbGo3ZnZ2bjBNRHJDWlg2VDJrNg?oc=5"
    ]
   ],
   "soybeans": [
@@ -7173,6 +7306,12 @@
     "www.marketscreener.com",
     "Soybean Futures Gain Amid Strong Export Sales -- Daily Grain Highlights",
     "https://news.google.com/rss/articles/CBMivgFBVV95cUxNN19iMXk3YnYxZ3JwWFBlSFVrdEE3TmlLNmhoYVlxallOZWtFVU5oSGlhS1lUM2Rva21EN0dDcUZ0dkRoaUk3NTRKMHA2MFJvREQ4VDY4ZU5kVkR3YWJKYUR2SDMyYy1FRC1ZV19hVjBQcGoxY3JLWFJEV3ktbFVaQ0s0dFhYR1dVMGo2U0xjSm5SUHgxdll5c3p1Sk5TbEtwR2drMTN5Q1ZmTmM4MGZZbS1QU3o1ZmR1QmlZRGNn?oc=5"
+   ],
+   [
+    "2026-10-22 18:52 UTC",
+    "www.bernama.com",
+    "CPO Futures End Higher On Firmer Soybean Oil Futures, Export Outlook",
+    "https://news.google.com/rss/articles/CBMiY0FVX3lxTFBmTUlUNGVQOC1OV29EMjMzZlpBWjdQNEgwblYwYXJVVE1UbXdyVVZEMHlFOGF0YUJnc0RNdnZKaF9HU3pBR1hLMUY1TWI0S3FTZGVuNncwR2FaOGQ4LXdPQjJRMA?oc=5"
    ],
    [
     "2026-10-22 18:49 UTC",
@@ -7209,12 +7348,6 @@
     "commodity-board.com",
     "Indian record soybean oil imports and impact on global soybeans — CMB News",
     "https://news.google.com/rss/articles/CBMikgFBVV95cUxPQ2JYdFpxaEZwU0t1UExtZzVvQXluZmJGcGRQOUUxdEpicXItN2JyZ3JFVXhfTEY5d1dxSHZmbE5qZms3THltc3BsSmVDeXIyNXVvYUNVMTBXZGJUSU1MS3dHdmNxX0QzSE5sV1N2VEo1WFF4QjU3U1JxOFo1MlhzYnRjX0pTeXQ4emtjdUJTcWZJdw?oc=5"
-   ],
-   [
-    "2026-10-22 09:10 UTC",
-    "ukragroconsult.com",
-    "Wheat and soybeans decline, while corn rises in Chicago on Wednesday",
-    "https://news.google.com/rss/articles/CBMipgFBVV95cUxONUJOcDk0cUk5anVaQ1c5VTA1QkRobVVUWllURU9nU3ZnTWppNVlaR3dGTVhycmVlQjlJQWxhcmcxbkt0VkVuQXNYM3VBMTdjaEJmWUx4endjSEZXbFpTSDN6cG16UkdkTjE2YTc4Q0RFOVdHTzNZdi1wVFpDSk1MYWg4WmU1TDVLc3NZSkZGUW9tSDRZSTNuWllteDZpQi03Z2dDa1BR?oc=5"
    ]
   ],
   "fx": [
