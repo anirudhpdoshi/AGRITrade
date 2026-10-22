@@ -197,11 +197,13 @@
   }
 
   function paintSpot(p, flash) {
-    var fx = DATA.fx, big = $("fx-spot-big"); if (!big) return;
-    big.textContent = fmtN(p, 5);
-    if (flash && last !== null && p !== last) {
-      big.classList.remove("flash-up", "flash-dn"); void big.offsetWidth;
-      big.classList.add(p > last ? "flash-up" : "flash-dn");
+    var fx = DATA.fx, big = $("fx-spot-big");
+    if (big) {
+      big.textContent = fmtN(p, 5);
+      if (flash && last !== null && p !== last) {
+        big.classList.remove("flash-up", "flash-dn"); void big.offsetWidth;
+        big.classList.add(p > last ? "flash-up" : "flash-dn");
+      }
     }
     var chg = (p / fx.spot.ref - 1) * 100, c = $("fx-spot-chg");
     var ks = $("kpi-spot"), kc = $("kpi-spot-chg");
@@ -210,8 +212,6 @@
     if (c) { c.textContent = (chg > 0 ? "+" : chg < 0 ? "−" : "") + fmtN(Math.abs(chg), 3) + "%"; c.className = chg > 0 ? "up" : chg < 0 ? "dn" : "neu"; }
     var fresh = Date.now() - liveTickAt < 90000, chip = $("fx-spot-chip");
     if (chip) { chip.textContent = fresh ? "LIVE" : "LAST TICK"; chip.className = fresh ? "chip live" : "chip frozen"; }
-    ["fx-spot-bid", "fx-spot-ask"].forEach(function (id) { var e = $(id); if (e) e.textContent = "—"; });
-    var sp = $("fx-spot-spread"); if (sp) sp.textContent = "mid only";
     if (ticks.length) {
       var ys = ticks.map(function (t) { return t[1]; }), hl = $("fx-spot-hl");
       if (hl) hl.textContent = fmtN(Math.max.apply(null, ys), 5) + " / " + fmtN(Math.min.apply(null, ys), 5);
@@ -219,7 +219,7 @@
     var sk = $("fx-spark"); if (sk) sk.innerHTML = sparkSVG();
     var st = $("fx-spot-stamp");
     if (st) st.textContent = "Streaming mid · " + feedName + " · last tick " + etClock(new Date(liveTickAt || Date.now())) +
-      " ET · " + ticks.length + " ticks this session · bid/ask shown only from the dealable feed value";
+      " ET · " + ticks.length + " ticks this session";
     if (Date.now() - lastFwdPaint > 2000 && typeof window.fxForwardsHTML === "function") {
       lastFwdPaint = Date.now();
       var fw = $("fx-fwd"); if (fw) fw.innerHTML = window.fxForwardsHTML(p);

@@ -164,7 +164,7 @@ details.rail-card[open ] .hint-closed{display:none}
 }
 
 /* ---- USD/CAD dashboard ---- */
-.kpi-strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;padding:0;overflow:hidden}
+.kpi-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;padding:0;overflow:hidden}
 .kpi{padding:12px 14px 10px;border-right:1px solid var(--line);min-width:0;position:relative}
 .kpi:last-child{border-right:0}
 .kpi-k{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
@@ -206,6 +206,9 @@ table.es-tbl{font-size:12.5px} table.es-tbl tr.hl-row td{color:var(--amber)}
 .heat{color:var(--amber)} .cool{color:var(--cyan)}
 @media (max-width:760px){.m-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mcard .mv{font-size:18px}.mcard .mk,.mcard .mc{white-space:normal}}
 
+.sl-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 28px;align-items:start}
+@media (max-width:760px){.sl-grid{grid-template-columns:1fr}}
+
 /* ---- live layer ---- */
 .snapshot-banner.live{background:#0f2a1d;border-bottom-color:#2f8a5b;color:#c9f0da}
 .snapshot-banner.stale{background:#3a2a10;border-bottom-color:#a0782a;color:#ffe6b8}
@@ -237,7 +240,7 @@ table.es-tbl{font-size:12.5px} table.es-tbl tr.hl-row td{color:var(--amber)}
 
 <header class="topbar">
   <h1>Grain &amp; USD/CAD Desk</h1>
-  <div class="sub">Four-tab desk view replicating the desk cards on the same verified records: rollover migration and calendar spreads run Sep 25 – Oct 20, 2026 from the per-contract OI drop-ins; options bars are the Oct 22, 2026 chain pull; the Export Sales tile carries the Oct 22, 2026 release (week ending Oct 15). Every tile keeps its own settlement date, chain date, or vintage stamp.</div>
+  <div class="sub">Corn · Wheat · Soybeans · USD/CAD — every tile carries its own as-of time; the strip above shows what is live.</div>
   <nav class="tabs" role="tablist" aria-label="Dashboard tabs">
     <button class="tab-btn" role="tab" id="tabbtn-corn" aria-selected="true" aria-controls="panel-corn" data-tab="corn">Corn<span class="sym">ZCZ26</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-wheat" aria-selected="false" aria-controls="panel-wheat" data-tab="wheat">Wheat<span class="sym">ZWZ26</span></button>
@@ -254,7 +257,7 @@ table.es-tbl{font-size:12.5px} table.es-tbl tr.hl-row td{color:var(--amber)}
 </main>
 
 <footer class="foot">
-  Snapshot of the merged dashboard refreshed Oct 22, 2026 from the previous day's verified records — the same manual drop-in series behind the daily cards. Grain settlements and per-contract OI run through Tue, Oct 20, 2026; options chains are the Oct 22, 2026 pull (OI as of the Oct 21 close), near and far chains alike; CFTC figures are the weekly report dated Tue, Oct 13, 2026. Export Sales runs through the Oct 22, 2026 release (week ending Oct 15, 2026), verified Oct 22, 2026. Each fan's market marker and right-edge label stack are frozen at the build-time delayed quote (9:30am ET, Thu, Oct 22, 2026). The USD/CAD headline spot is the feed value refreshed Thu, Oct 22, 2026, 12:01 p.m. ET, frozen at build; the demo-account session snapshot is carried only as a clearly labeled fallback. Forward outrights are CIP-theoretical, computed at build from that spot and rate differentials — not traded quotes. News, alerts and the economic calendar are frozen in each tab's right-hand rail. Nothing on this page refreshes.
+  Sources: CBOT delayed quotes, CFTC, USDA FAS, Bank of Canada, Statistics Canada, US Treasury, FRED/BLS, Google News. Auto-refreshed every 15 minutes on weekdays; grain settlements, options chains and model outputs are manual drop-ins. Educational use only — not trading advice.
 </footer>
 
 <script>
@@ -1180,8 +1183,6 @@ function macroDiffs(){
   if(M.us_ur&&M.ca_ur){ var u=M.us_ur.value-M.ca_ur.value; out.push(card('Unemployment gap', sgn(u,1,' pp'), 'US '+fmt(M.us_ur.value,1)+'% vs CA '+fmt(M.ca_ur.value,1)+'%', 'Labour-market slack differential')); }
   var fr=/(\d{3})-(\d{3})/.exec(fx.policy.fed_range||'');
   if(fr){ var fed=(+fr[1]+ +fr[2])/200, pg=fed-fx.policy.corra_now; out.push(card('Policy rate gap', sgn(pg,2,' pp'), 'Fed mid '+fmt(fed,3)+'% vs BoC '+fmt(fx.policy.corra_now,2)+'%', 'Fed funds range midpoint minus BoC overnight target')); }
-  var two=fx.rates.filter(function(r){ return r.t==='2Y'; })[0];
-  if(two){ out.push(card('2Y yield gap', fmt(two.sp,0)+' bps', '<span class="'+cls(two.wow)+'">'+sgn(two.wow,1)+'</span> on the week', 'US 2Y minus Canada 2Y — the rate gap USD/CAD tracks most closely')); }
   return out.join('');
 }
 function fxMacroHTML(){
@@ -1200,15 +1201,12 @@ function fxKpiHTML(){
   var fx=DATA.fx, R={}; fx.rates.forEach(function(r){ R[r.t]=r; });
   var chg=(fx.feed.mid/fx.spot.ref-1)*100, p=fx.pos, wti=fx.energy[0], ten=R["10Y"];
   var closes=fx.closes.map(function(c){ return c[1]; }), nets=(p.series||[]).map(function(r){ return r.net; });
-  var ev=fx.events.map(function(e){ return {e:e,t:evEpoch(e)}; }).filter(function(o){ return o.e.impact==='High' && o.t>Date.now(); })
-    .sort(function(a,b){ return a.t-b.t; }).map(function(o){ return o.e; })[0];
   return '<div class="tile wide kpi-strip">'+
     kpi('USD/CAD', '<span id="kpi-spot">'+fmt(fx.feed.mid,5)+'</span>', '<span id="kpi-spot-chg" class="'+cls(chg)+'">'+sgn(chg,2,'%')+'</span> vs '+fmt(fx.spot.ref,4), sparkPath(closes,120,26), 'kpi-spot-card')+
     kpi('10Y US–CA', fmt(ten.sp,1)+'<small> bps</small>', '<span class="'+cls(ten.dod)+'">'+sgn(ten.dod,1)+'</span> d/d · <span class="'+cls(ten.wow)+'">'+sgn(ten.wow,1)+'</span> w/w')+
     kpi('CFTC CAD net', sgn(Math.round(p.net/1000),0)+'<small>k</small>', fmt(p.pct_oi,1)+'% of OI · <span class="'+cls(p.wow)+'">'+sgn(Math.round(p.wow/100)/10,1)+'k</span> w/w', sparkPath(nets,120,26))+
     kpi('1-day bias', esc(fx.bias.label.replace(' USD/CAD','').replace('Conditional ','')), 'bear '+fmt(fx.scen.bearish_usdcad.probability_pct,0)+'% · bull '+fmt(fx.scen.bullish_usdcad.probability_pct,0)+'%')+
     kpi('WTI', '$'+fmt(wti.last,2), '<span class="'+cls(wti.pct)+'">'+sgn(wti.pct,2,'%')+'</span> · WCS diff $'+fmt(fx.wcs_diff.value,2))+
-    kpi('Next event', ev?fmtShortDate(ev.date):'—', ev?esc(ev.ccy+' '+ev.event):'')+
     '</div>';
 }
 
@@ -1366,14 +1364,21 @@ function renderFX(){
   /* spot — feed value from data.json; live.js streams over it */
   var fd=fx.feed, avMid=fd.mid, avBid=fd.bid, avAsk=fd.ask;
   var refChg=(avMid/fx.spot.ref-1)*100;
-  T.spot='<div class="tile" id="fx-spot-tile" data-src="fx_spot"><h2>USD/CAD spot <span class="chip frozen" id="fx-spot-chip">FEED VALUE</span></h2>'+
-    '<div class="big" id="fx-spot-big">'+fmt(avMid,5)+'</div>'+
+  T.spot='<div class="tile wide" id="fx-spot-tile" data-src="fx_spot"><h2>USD/CAD spot &amp; key levels <span class="chip frozen" id="fx-spot-chip">FEED VALUE</span></h2>'+
+    '<div class="sl-grid"><div>'+
     '<div id="fx-spark" class="spark" aria-hidden="true"></div>'+
-    '<div class="stat-row">'+stat("Bid", '<span id="fx-spot-bid">'+(avBid!=null?fmt(avBid,5):'\u2014')+'</span>') + stat("Ask", '<span id="fx-spot-ask">'+(avAsk!=null?fmt(avAsk,5):'\u2014')+'</span>') +
-    stat("Spread", '<span id="fx-spot-spread">'+(avBid!=null&&avAsk!=null?fmt((avAsk-avBid)*10000,1)+" pips":"mid only")+"</span>") +
-    stat("Vs reference "+fmt(fx.spot.ref,4), '<span id="fx-spot-chg" class="'+cls(refChg)+'">'+sgn(refChg,3,'%')+'</span>')+
+    '<div class="stat-row">'+(avBid!=null&&avAsk!=null?stat("Bid", fmt(avBid,5)) + stat("Ask", fmt(avAsk,5)) + stat("Spread", fmt((avAsk-avBid)*10000,1)+" pips"):'') +
+    stat("Vs prior close "+fmt(fx.spot.ref,4), '<span id="fx-spot-chg" class="'+cls(refChg)+'">'+sgn(refChg,3,'%')+'</span>')+
     stat("Session hi / lo", '<span id="fx-spot-hl">—</span>')+'</div>'+
-    '<div class="stamp" id="fx-spot-stamp">Feed value '+asOf('fx_spot',true)+' · '+esc(fd.source)+' · streams live when a quote feed is connected</div></div>';
+    '<div class="stamp" id="fx-spot-stamp">Feed value '+asOf('fx_spot',true)+' · '+esc(fd.source)+'</div>'+
+    '</div><div>'+
+    '<div class="kv"><span class="kk">Prior-session pivot (H+L+C)/3</span><span class="vv">'+fmt(fx.levels.pivot,5)+'</span></div>'+
+    '<div class="kv"><span class="kk">Pivot high / low</span><span class="vv">'+fmt(fx.levels.pivot_h,5)+' / '+fmt(fx.levels.pivot_l,5)+'</span></div>'+
+    '<div class="kv"><span class="kk">20D range (closes)</span><span class="vv">'+fmt(fx.levels.s20,4)+' – '+fmt(fx.levels.r20,4)+'</span></div>'+
+    '<div class="kv"><span class="kk">50D range (closes)</span><span class="vv">'+fmt(fx.levels.s50,4)+' – '+fmt(fx.levels.r50,4)+'</span></div>'+
+    '<div class="kv"><span class="kk">Template · '+esc(fx.trade.dir.replace(/ \(.*\)$/,''))+'</span><span class="vv">'+fmt(fx.trade.entry[0],4)+'–'+fmt(fx.trade.entry[1],4)+' · stop '+fmt(fx.trade.stop,4)+' · tgt '+fmt(fx.trade.targets[0],4)+'</span></div>'+
+    '<div class="stamp">Ranges from daily closes through '+fmtDate(fx.closes[fx.closes.length-1][0])+' · template levels are the desk’s Oct 16 build (R:R '+fmt(fx.trade.rr,2)+') · educational only</div>'+
+    '</div></div></div>';
   /* macro results */
   T.releases=fxReleasesHTML();
   /* closes chart */
@@ -1400,20 +1405,18 @@ function renderFX(){
   var drv=fx.bias.drivers.map(function(d){
     return '<div class="kv"><span class="kk">'+esc(d.name)+'</span><span class="vv" style="font-family:inherit;font-weight:500;font-size:12.5px">'+esc(d.detail)+'</span></div>';
   }).join("");
-  T.bias='<div class="tile"><h2>Desk bias — 1-day</h2>'+
-    '<div class="med">'+esc(fx.bias.label)+'</div>'+
-    '<div class="stat-row">'+stat("Bearish USD/CAD scenario", fmt(sc.bearish_usdcad.probability_pct,1)+"%", sc.bearish_usdcad.range[0].toFixed(4)+"–"+sc.bearish_usdcad.range[1].toFixed(4))+
-    stat("Neutral", fmt(sc.neutral.probability_pct,1)+"%")+stat("Bullish USD/CAD", fmt(sc.bullish_usdcad.probability_pct,1)+"%", sc.bullish_usdcad.range[0].toFixed(4)+"–"+sc.bullish_usdcad.range[1].toFixed(4))+'</div>'+
-    '<div style="margin-top:8px">'+drv+'</div>'+
-    '<div class="stamp">Bias score '+fx.bias.score+' (stored-driver weights, diagnostics not causality) · scenario probabilities from the 1D OLS forecast distribution at the Oct 16 origin · frozen</div></div>';
-  /* forecast */
-  T.forecast='<div class="tile wide"><h2>Forecast — 90-day OLS baseline <span class="h2note">· model refit Oct 21, 2026</span></h2>'+
-    '<div class="stat-row">'+stat("1D expected (P50)", '<span class="'+cls(fx.fc.p50_pct)+'">'+sgn(fx.fc.p50_pct,3,'%')+'</span>')+
-    stat("Implied spot P50", fmt(fx.fc.spot50,4))+stat("P10 – P90", fmt(fx.scen.asof.base_spot_close*(1+fx.fc.p10/100),4)+" – "+fmt(fx.scen.asof.base_spot_close*(1+fx.fc.p90/100),4))+
-    stat("Backtest MAE", fmt(fx.fc.mae,1)+" bps", "vs "+fmt(fx.fc.zero_mae,1)+" zero-return")+
-    stat("Hit rate", fmt(fx.fc.hit*100,1)+"%")+'</div>'+
-    '<p class="read" style="font-size:13.5px">1D is the only horizon that clears the walk-forward gate. <b>5D:</b> shown as a neutral cone only — '+esc(fx.fc.h5_reason)+'. <b>20D:</b> neutral cone only — '+esc(fx.fc.h20_reason)+'.</p>'+
-    '<div class="stamp">Forecast origin Fri, Oct 16, 2026 · base close 1.4161 · the series is never spliced across the methodology gap — refit marker Oct 21, 2026 · educational, not a trade recommendation</div></div>';
+  T.model='<div class="tile wide"><h2>Model view — 1-day bias &amp; OLS forecast <span class="h2note">· stored model run, origin '+fmtDate(fx.scen.asof.origin_date)+'</span></h2>'+
+    '<div class="sl-grid"><div>'+
+    '<div class="med">'+esc(fx.bias.label)+' <span class="neu" style="font-size:13px">score '+fx.bias.score+'</span></div>'+
+    '<div class="stat-row">'+stat("Bearish", fmt(sc.bearish_usdcad.probability_pct,1)+"%", sc.bearish_usdcad.range[0].toFixed(4)+"–"+sc.bearish_usdcad.range[1].toFixed(4))+
+    stat("Neutral", fmt(sc.neutral.probability_pct,1)+"%")+stat("Bullish", fmt(sc.bullish_usdcad.probability_pct,1)+"%", sc.bullish_usdcad.range[0].toFixed(4)+"–"+sc.bullish_usdcad.range[1].toFixed(4))+'</div>'+
+    '</div><div>'+
+    '<div class="stat-row" style="margin-top:0">'+stat("1D P50", '<span class="'+cls(fx.fc.p50_pct)+'">'+sgn(fx.fc.p50_pct,3,'%')+'</span>', fmt(fx.fc.spot50,4))+
+    stat("P10 – P90", fmt(fx.scen.asof.base_spot_close*(1+fx.fc.p10/100),4)+" – "+fmt(fx.scen.asof.base_spot_close*(1+fx.fc.p90/100),4))+
+    stat("Backtest MAE", fmt(fx.fc.mae,1)+" bps", "vs "+fmt(fx.fc.zero_mae,1)+" zero-return")+stat("Hit rate", fmt(fx.fc.hit*100,1)+"%")+'</div>'+
+    '<p class="read" style="font-size:13px">Only the 1D horizon clears the walk-forward gate; 5D and 20D are shown as neutral cones (they lose to a zero-return forecast in backtest).</p>'+
+    '</div></div>'+
+    '<div class="stamp">Base close '+fmt(fx.scen.asof.base_spot_close,4)+' · drivers (2Y/10Y spread moves, DXY, WTI, CFTC crowding, risk reversal) are on their own tiles · manual model run — not refreshed automatically · educational, not a trade recommendation</div></div>';
   /* policy expectations */
   var fedRows=fx.policy.fed.map(function(mt){
     return '<div class="kv"><span class="kk">Fed · '+mt.meeting+'</span><span class="vv">Hold '+fmt(mt.no_change_pct,1)+'% · Hike '+fmt(mt.hike_pct,1)+'% · Ease '+fmt(mt.ease_pct,1)+'%</span></div>';
@@ -1422,7 +1425,7 @@ function renderFX(){
     return '<div class="kv"><span class="kk">CORRA · '+c.month+'</span><span class="vv">Implied '+fmt(c.implied_rate_pct,2)+'%</span></div>';
   }).join("");
   T.policy='<div class="tile" data-src="policy"><h2>Policy expectations <span class="h2note">— futures-implied</span></h2>'+fedRows+
-    '<div class="kv"><span class="kk">Fed current range</span><span class="vv">'+esc(fx.policy.fed_range)+' bps</span></div>'+corRows+
+    '<div class="kv"><span class="kk">Fed funds target</span><span class="vv">'+(function(){ var f=/(\d{3})-(\d{3})/.exec(fx.policy.fed_range||''); return f?fmt(f[1]/100,2)+'\u2013'+fmt(f[2]/100,2)+'%':esc(fx.policy.fed_range); })()+'</span></div>'+corRows+
     '<div class="kv"><span class="kk">BoC overnight (current)</span><span class="vv">'+fmt(fx.policy.corra_now,2)+'%</span></div>'+
     '<div class="stamp">Fed probabilities pulled Oct 21, 06:20 CT · CORRA implied rates pulled Oct 21, 07:35 ET · futures-implied, not forecasts</div></div>';
   /* positioning & sentiment */
@@ -1434,32 +1437,22 @@ function renderFX(){
     '<div class="kv"><span class="kk">25\u0394 risk reversal</span><span class="vv">'+sgn(fx.fxopt.rr,2,' pp')+' \u00b7 neutral band</span></div>'+
     '<div class="kv"><span class="kk">1M implied vol · call / put</span><span class="vv">'+fmt(fx.fxopt.civ,2)+'% / '+fmt(fx.fxopt.piv,2)+'%</span></div>'+
     '<div class="kv"><span class="kk">Realized vol (20D)</span><span class="vv">'+fmt(fx.fxopt.rvol,2)+'%</span></div>'+
-    '<div class="stamp">retail panel carries no explicit timestamp on the source page — pull time Oct 21, 07:05 ET · FX options as of Oct 16 — expiry pins unavailable: '+esc(fx.fxopt.pins_reason)+'</div></div>';
+    '<div class="stamp">Retail panel pulled '+asOf('sentiment',true)+' \u00b7 FX options as of Oct 16 \u00b7 manual drop-ins</div></div>';
   /* energy */
   var enRows=fx.energy.map(function(e){
     return '<div class="kv"><span class="kk">'+e.name+' <span style="color:var(--faint)">('+e.delay+')</span></span><span class="vv">$'+fmt(e.last,2)+' <span class="'+cls(e.pct)+'">'+sgn(e.pct,2,'%')+'</span></span></div>';
   }).join("");
-  T.energy='<div class="tile" data-src="energy"><h2>Energy <span class="h2note">— delayed reads · '+asOf('energy',true)+'</span></h2>'+enRows+
+  T.energy='<div class="tile wide" data-src="energy"><h2>Energy <span class="h2note">— delayed reads · '+asOf('energy',true)+'</span></h2>'+enRows+
     '<div class="kv"><span class="kk">WTI – WCS differential</span><span class="vv">$'+fmt(fx.wcs_diff.value,2)+'/bbl</span></div>'+
     '<div class="kv"><span class="kk">DXY ('+asOf('crosses')+')</span><span class="vv">'+fmt(fx.fxcross.dxy,3)+' <span class="'+cls(fx.fxcross.dxy_chg)+'">'+sgn(fx.fxcross.dxy_chg,2,'%')+'</span></span></div>'+
-    '<div class="kv"><span class="kk">Reference crosses ('+asOf('crosses')+')</span><span class="vv">EUR/USD '+fmt(fx.fxcross.eurusd,4)+' · USD/JPY '+fmt(fx.fxcross.usdjpy,2)+' · USD/CAD ref '+fmt(fx.fxcross.usdcad_ref,4)+'</span></div>'+
-    '<div class="stamp">Energy quotes are delayed public reads as stored by the desk — delay labels printed on the tile, as the desk carries them</div></div>';
-  /* levels & trade template */
-  T.levels='<div class="tile" data-src="fx_closes"><h2>Key levels &amp; conditional template</h2>'+
-    '<div class="kv"><span class="kk">Prior-session pivot (H+L+C)/3</span><span class="vv">'+fmt(fx.levels.pivot,5)+'</span></div>'+
-    '<div class="kv"><span class="kk">20D range (closes)</span><span class="vv">'+fmt(fx.levels.s20,4)+' – '+fmt(fx.levels.r20,4)+'</span></div>'+
-    '<div class="kv"><span class="kk">50D range (closes)</span><span class="vv">'+fmt(fx.levels.s50,4)+' – '+fmt(fx.levels.r50,4)+'</span></div>'+
-    '<div class="kv"><span class="kk">Template</span><span class="vv" style="font-family:inherit;font-weight:600;font-size:12.5px">'+esc(fx.trade.dir)+'</span></div>'+
-    '<div class="kv"><span class="kk">Entry zone · stop · target</span><span class="vv">'+fmt(fx.trade.entry[0],4)+'–'+fmt(fx.trade.entry[1],4)+' · '+fmt(fx.trade.stop,4)+' · '+fmt(fx.trade.targets[0],4)+'</span></div>'+
-    '<div class="kv"><span class="kk">R:R to first target</span><span class="vv">'+fmt(fx.trade.rr,2)+' · stop '+fmt(fx.trade.stop_pips,1)+' pips</span></div>'+
-    '<p class="read" style="font-size:13px">Event risk: '+esc(fx.trade.event_note)+'.</p>'+
-    '<div class="stamp">20D/50D ranges from daily closes through '+fmtDate(fx.closes[fx.closes.length-1][0])+' \u00b7 pivot from the prior session\u2019s high/low/close \u00b7 template entry/stop/targets are the desk\u2019s Oct 16 build and do not move with the ranges \u00b7 pivot substitutes for VWAP until intraday pulls accumulate — VWAP unavailable: '+esc(fx.vwap_reason)+' · conditional template, educational only</div></div>';
+    '<div class="kv"><span class="kk">EUR/USD \u00b7 USD/JPY</span><span class="vv">'+fmt(fx.fxcross.eurusd,4)+' \u00b7 '+fmt(fx.fxcross.usdjpy,2)+'</span></div>'+
+    '<div class="stamp">Delayed quotes \u00b7 WCS leg is the last stored read</div></div>';
   /* forwards — CIP-theoretical, recomputed by live.js on every spot tick */
   T.forwards='<div class="tile wide" data-src="fx_spot"><h2>Forward curve <span class="h2note">— CIP-theoretical</span></h2>'+
     '<p class="note" style="margin:0 0 6px;font-size:12.5px;color:#b9c7da">CIP-theoretical \u2014 computed from spot + rate differentials, not traded quotes</p>'+
     '<div id="fx-fwd">'+fxForwardsHTML(fx.feed.mid)+'</div>'+
-    '<div class="stamp">F = spot \u00d7 (1 + CAD rate \u00d7 T) \u00f7 (1 + US rate \u00d7 T) \u00b7 sub-1Y legs: US 3M bill '+fmt(fx.treasury["3M"],2)+'% vs BoC overnight '+fmt(fx.policy.corra_now,2)+'% \u00b7 1Y\u20135Y legs: benchmark yields from the spreads table ('+asOf('yields')+') \u00b7 negative points = US rates higher, USD at a forward discount \u00b7 <span id="fx-fwd-spot">spot '+fmt(fx.feed.mid,5)+'</span></div></div>';
-  html+=fxKpiHTML()+fxMacroHTML()+T.spot+T.levels+T.closes+T.releases+T.cftc+T.yields+T.forwards+T.bias+T.policy+T.forecast+T.sentiment+T.energy;
+    '<div class="stamp">F = spot \u00d7 (1 + CAD rate \u00d7 T) \u00f7 (1 + US rate \u00d7 T) \u00b7 sub-1Y: US 3M bill vs BoC overnight \u00b7 1Y\u20135Y: benchmark yields ('+asOf('yields')+') \u00b7 <span id="fx-fwd-spot">spot '+fmt(fx.feed.mid,5)+'</span></div></div>';
+  html+=fxKpiHTML()+fxMacroHTML()+T.spot+T.closes+T.releases+T.cftc+T.yields+T.forwards+T.model+T.policy+T.sentiment+T.energy;
   html+='</div><aside class="rail">'+fxAlertsHTML()+fxCalendarHTML()+newsRailHTML(NEWS.fx)+'</aside></div>';
   document.getElementById('panel-fx').innerHTML=html;
 }

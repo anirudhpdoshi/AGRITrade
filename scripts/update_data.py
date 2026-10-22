@@ -409,7 +409,6 @@ MACRO = [
     ("us_ahe",      "Avg hourly earnings", "us", "fred", "CES0500000003",   "yoy",   "%",  1, "heat", (20, 60)),
     ("us_retail",   "Retail sales",        "us", "fred", "RSAFS",           "pct",   "%",  1, "up",   (400000, 1200000)),
     ("us_gdp",      "Real GDP (q/q ann.)", "us", "fred", "A191RL1Q225SBEA", "level", "%",  1, "up",   (-40, 40)),
-    ("us_policy",   "Fed funds (effective)", "us", "fred", "FEDFUNDS",      "level", "%",  2, "heat", (0, 10)),
     ("us_umich",    "UMich sentiment",     "us", "fred", "UMCSENT",         "level", "",   1, "up",   (20, 120)),
     ("ca_cpi",      "CPI",                 "ca", "valet", "V41690973",      "yoy",   "%",  1, "heat", (100, 250)),
     ("ca_trim",     "CPI-trim",            "ca", "valet", "CPI_TRIM",       "level", "%",  1, "heat", (-2, 12)),
@@ -417,7 +416,6 @@ MACRO = [
     ("ca_emp",      "Employment change",   "ca", "statcan", 2062811,        "diff",  "K",  1, "up",   (15000, 25000)),
     ("ca_ur",       "Unemployment rate",   "ca", "statcan", 2062815,        "level", "%",  1, "down", (2, 20)),
     ("ca_gdp",      "Real GDP",            "ca", "statcan", 65201210,       "pct",   "%",  1, "up",   (1500000, 3500000)),
-    ("ca_policy",   "BoC overnight rate",  "ca", "valet", "V39079",         "level", "%",  2, "heat", (0, 10)),
 ]
 
 
