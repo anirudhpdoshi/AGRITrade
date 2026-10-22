@@ -294,8 +294,8 @@
     return [].map.call(document.querySelectorAll("details.rail-card"), function (d) { return d.open; });
   }
   function pollData() {
-    if (document.hidden || window.DESK_LOCKED) return;
-    fetch("data.json?t=" + Date.now(), { cache: "no-store" })
+    if (document.hidden || window.DESK_LOCKED) return Promise.resolve();
+    return fetch("data.json?t=" + Date.now(), { cache: "no-store" })
       .then(function (r) { if (!r.ok) throw r.status; return r.json(); })
       .then(function (j) {
         if (!j || !j.DATA || !j.DATA.meta) return;
@@ -346,10 +346,10 @@
     if (mergeLive(L)) rerender(before); else paintStrip();
   }
   function pollLive() {
-    if (document.hidden || window.DESK_LOCKED) return;
+    if (document.hidden || window.DESK_LOCKED) return Promise.resolve();
     var h = { Accept: "application/vnd.github.raw+json" };
     if (liveEtag) h["If-None-Match"] = liveEtag;
-    fetch(LIVE_API, { headers: h, cache: "no-store" })
+    return fetch(LIVE_API, { headers: h, cache: "no-store" })
       .then(function (r) {
         if (r.status === 304) return null;              // unchanged: does not count against GitHub's rate limit
         if (!r.ok) throw r.status;
@@ -358,7 +358,7 @@
       })
       .then(function (j) { if (j) applyLive(j); })
       .catch(function () {                              // API rate-limited or down: raw CDN (can be ~5 min stale)
-        fetch(LIVE_RAW + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j) applyLive(j); }).catch(function () {});
+        return fetch(LIVE_RAW + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j) applyLive(j); }).catch(function () {});
       });
   }
 
@@ -390,6 +390,17 @@
     document.addEventListener("visibilitychange", function () { if (!document.hidden) { pollData(); pollRef(); pollLive(); } });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
+
+  function onUnlock() {
+    document.body.classList.add("refreshing");
+    liveEtag = "";                                   // force a full read, not a 304
+    var done = function () { document.body.classList.remove("refreshing"); paintPills(); paintStrip(); };
+    var guard = setTimeout(done, 8000);
+    Promise.all([pollData(), pollLive()]).then(function () { clearTimeout(guard); done(); }, function () { clearTimeout(guard); done(); });
+    pollRef();
+  }
+  window.addEventListener("desk:unlock", onUnlock);
+  if (window.DESK_LOCKED === false) onUnlock();      // live.js arrived after an unlock
 
   window.DESK_LIVE = { onTick: onTick, pollData: pollData, applyLive: applyLive }; // handy for testing in the console
 })();
