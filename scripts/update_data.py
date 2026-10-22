@@ -332,6 +332,13 @@ def news(D, N):
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
+def _num(x):
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return None  # BLS prints "-" for months it never published
+
+
 def _set_release(D, key, hist, sub=None):
     """Update one release: last 8 readings; a new period means a fresh print today (consensus unknown)."""
     rel = next(r for r in D["fx"]["releases"] if r["key"] == key)
@@ -353,7 +360,8 @@ def releases(D, N):
         return False
     # Canada CPI, all-items, NSA index -> y/y %
     j = valet("observations/V41690973/json?recent=24")
-    idx = sorted((o["d"], float(o["V41690973"]["v"])) for o in j["observations"] if o.get("V41690973", {}).get("v"))
+    idx = sorted((o["d"], _num(o.get("V41690973", {}).get("v"))) for o in j["observations"])
+    idx = [(d, v) for d, v in idx if v is not None]
     byd = dict(idx)
     cpi = []
     for d, v in idx:
@@ -370,10 +378,14 @@ def releases(D, N):
     r.raise_for_status()
     out = {}
     for ser in r.json()["Results"]["series"]:
-        pts = sorted((int(x["year"]), int(x["period"][1:]), float(x["value"])) for x in ser["data"] if x["period"].startswith("M") and x["period"] != "M13")
+        pts = sorted((int(x["year"]), int(x["period"][1:]), _num(x["value"])) for x in ser["data"]
+                     if x["period"].startswith("M") and x["period"] != "M13" and _num(x["value"]) is not None)
         out[ser["seriesID"]] = pts
     lv, ur = out["CES0000000001"], out["LNS14000000"]
-    nfp = [(f"{MONTHS[m-1]} {y}", int(round(v - lv[i-1][2]))) for i, (y, m, v) in enumerate(lv) if i > 0]
+    def consecutive(a, b):
+        return (b[0] * 12 + b[1]) - (a[0] * 12 + a[1]) == 1
+    nfp = [(f"{MONTHS[m-1]} {y}", int(round(v - lv[i-1][2]))) for i, (y, m, v) in enumerate(lv)
+           if i > 0 and consecutive(lv[i-1], (y, m))]
     urh = [(f"{MONTHS[m-1]} {y}", v) for y, m, v in ur]
     _set_release(D, "us_nfp", nfp, urh)
     meta["releases_checked"] = iso(NOW)
