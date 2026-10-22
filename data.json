@@ -5197,11 +5197,11 @@
     "30Y": 5.42
    },
    "fxcross": {
-    "dxy": 101.651,
-    "dxy_chg": -0.127,
+    "dxy": 101.652,
+    "dxy_chg": -0.126,
     "eurusd": 1.1221,
-    "usdjpy": 156.74,
-    "usdcad_ref": 1.4008
+    "usdjpy": 156.75,
+    "usdcad_ref": 1.4009
    },
    "closes": [
     [
@@ -5287,9 +5287,9 @@
     },
     {
      "name": "Brent Crude",
-     "last": 112.86,
-     "chg": 4.04,
-     "pct": 3.71,
+     "last": 112.88,
+     "chg": 4.06,
+     "pct": 3.73,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -5769,10 +5769,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.40085,
+    "mid": 1.40088,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-22T16:55:00-04:00",
+    "ts": "2026-10-22T16:57:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -5914,10 +5914,10 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-22T16:55:46-04:00",
+   "updated_at": "2026-10-22T16:57:25-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-22T16:55:00-04:00",
+    "fx_spot": "2026-10-22T16:57:00-04:00",
     "fx_closes": "2026-10-22T16:30:00-04:00",
     "yields": "2026-10-21T17:00:00-04:00",
     "policy": "2026-10-21T07:35:00-04:00",
@@ -5929,10 +5929,10 @@
     "grains_settle": "2026-10-20T14:20:00-04:00",
     "grains_quote": "2026-10-22T14:15:00-04:00",
     "options": "2026-10-22T08:00:00-04:00",
-    "news": "2026-10-22T16:55:46-04:00",
+    "news": "2026-10-22T16:57:25-04:00",
     "calendar": "2026-10-21T07:05:00-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
-    "macro": "2026-10-22T16:55:46-04:00"
+    "macro": "2026-10-22T16:57:25-04:00"
    },
    "sources": {
     "news": "Google News RSS search, refreshed every 15 min",
@@ -5953,12 +5953,10 @@
      "macro"
     ],
     "failed": [],
-    "at": "2026-10-22T16:55:46-04:00"
+    "at": "2026-10-22T16:57:25-04:00"
    },
    "releases_checked": "2026-10-22T16:45:04-04:00",
-   "macro_errors": {
-    "ca_retail": "RuntimeError: values outside sanity range 40000-120000: 62122558.0 — wrong series id?"
-   }
+   "macro_checked": "2026-10-22T16:57:25-04:00"
   },
   "macro": [
    {
@@ -7066,11 +7064,83 @@
      ]
     ],
     "src": "Statistics Canada 65201210"
+   },
+   {
+    "key": "ca_retail",
+    "name": "Retail sales",
+    "group": "ca",
+    "unit": "%",
+    "dec": 1,
+    "good": "up",
+    "freq": "M",
+    "measure": "m/m",
+    "period": "Dec '22",
+    "obs_date": "2022-12-01",
+    "value": 0.54,
+    "prior": -0.04,
+    "chg": 0.58,
+    "history": [
+     [
+      "Jan '22",
+      3.57
+     ],
+     [
+      "Feb '22",
+      0.33
+     ],
+     [
+      "Mar '22",
+      0.5
+     ],
+     [
+      "Apr '22",
+      0.64
+     ],
+     [
+      "May '22",
+      2.17
+     ],
+     [
+      "Jun '22",
+      0.72
+     ],
+     [
+      "Jul '22",
+      -2.25
+     ],
+     [
+      "Aug '22",
+      0.34
+     ],
+     [
+      "Sep '22",
+      -0.64
+     ],
+     [
+      "Oct '22",
+      1.26
+     ],
+     [
+      "Nov '22",
+      -0.04
+     ],
+     [
+      "Dec '22",
+      0.54
+     ]
+    ],
+    "src": "Statistics Canada 52367097"
    }
   ]
  },
  "NEWS": {
   "corn": [
+   [
+    "2026-10-22 20:21 UTC",
+    "stjosephpost.com",
+    "Commodity markets daily recap",
+    "https://news.google.com/rss/articles/CBMidkFVX3lxTE5PbV9xWjlMalhQMGVWZnVrck54Mnc1THBkUE1ES09FNDJ5VUQzVUI4NnYtR0hNeGI0RkVIWGU1SEtEQVBFRjZtUUhaVUhWZEFKRXJyTTA0R3c1dHZtUENiYzV2c2o0QlZ4MF9Qb1ZtTjdVZGlnMHc?oc=5"
+   ],
    [
     "2026-10-22 19:09 UTC",
     "www.marketscreener.com",
@@ -7078,10 +7148,10 @@
     "https://news.google.com/rss/articles/CBMivgFBVV95cUxNN19iMXk3YnYxZ3JwWFBlSFVrdEE3TmlLNmhoYVlxallOZWtFVU5oSGlhS1lUM2Rva21EN0dDcUZ0dkRoaUk3NTRKMHA2MFJvREQ4VDY4ZU5kVkR3YWJKYUR2SDMyYy1FRC1ZV19hVjBQcGoxY3JLWFJEV3ktbFVaQ0s0dFhYR1dVMGo2U0xjSm5SUHgxdll5c3p1Sk5TbEtwR2drMTN5Q1ZmTmM4MGZZbS1QU3o1ZmR1QmlZRGNn?oc=5"
    ],
    [
-    "2026-10-22 18:49 UTC",
-    "www.country-guide.ca",
+    "2026-10-22 18:59 UTC",
+    "www.producer.com",
     "U.S. Grain/Oilseed Review: Soybeans rebound, little movement for corn, wheat",
-    "https://news.google.com/rss/articles/CBMitwFBVV95cUxNajRvMmR5NnlLRjFnWUdlVUl2dTI5ekkza3lWQUIwMmEwc2NHYWswVDVjMjJUQU5jUjhtVFBOZmNJT3BwTmFtRjUtQnhIRXpiV2FVR3NibVFmOVMtYWx0VktKODlLandlblF5SEdWV2JLNDhJY1ZmQUI0UXdZMk9rZ2JHRmVTYS05U1VNLWVyZk5QS19QNXl2VHpsbzRMZ2U5Z3dRdkpvV0pRSXRjbW1aZWFwaElvcEE?oc=5"
+    "https://news.google.com/rss/articles/CBMisgFBVV95cUxQRWFyYW1lWHpTSGJyT2FSNUFQS3Vtd1NmY1Q0Rjk3RG1NTGU1S3o0Y1Y4QUx6SnBMV1RlUE1ZbWZMRkVab1VINTFnUGFjVF9kTUs3azNST25MU0VlNmI5WVRaNERERUdBSWNObDRHcHZsRXFQekRnOV93NG1qN01sNXdJdC1nd1NtMEJsUVpyYy1VVVZVeHRZOW8wMldkNFJSZFpsVXlXd3Zpem95RmEzQU53?oc=5"
    ],
    [
     "2026-10-22 15:24 UTC",
@@ -7112,12 +7182,6 @@
     "graintrade.com.ua",
     "Increased supply of new crop collapses quotes and increases pressure on corn prices in Ukraine",
     "https://news.google.com/rss/articles/CBMizAFBVV95cUxQSml5SktqdHhVT2F2dERmSENfV3gxRi02aFY4ZExvYTJrd2w4N1VNTVkzeHVaNjd1S2FMMUZfcDdlcnl1LXA3MlhwMVh5eElzQVVyY1dGRmhRTTRaTEp0akdXdVcxcWlSdDVXamUxTUFfLWd0NnJhZzZIa1NlTXNrbS1tdEhaTU13RWN1WWFSMkJrY3NzQTktUE9yQmNYM0hQUnBZT3l3enB4bkdhaVZ4TzBFa0VlclVDY2tmM0RoeV9YSXBUMF9PM3M3UHk?oc=5"
-   ],
-   [
-    "2026-10-22 02:26 UTC",
-    "www.tradingview.com",
-    "Corn Remains Near a 2-Month Low",
-    "https://news.google.com/rss/articles/CBMiigFBVV95cUxNV0V3U01VU3B2QWlaUmhfLTB0ZHdlQkhsVENIOVJxSUlJeUZWUnFOQzRlSF8xdmViaHVsY3FsWEY5elZPVjhXN3RmYUFnbmxodkQ5SWJkMjg4bkdPMU5VOFBVLWtlSEo4eG1YVUVOcWEzX3IxWThMejVJSkY5SW9sZkdhWXlvOXVnZnc?oc=5"
    ]
   ],
   "wheat": [
@@ -7138,12 +7202,6 @@
     "www.indexbox.io",
     "USDA Export Sales: Soybeans and Corn Outpace Wheat - News and Statistics",
     "https://news.google.com/rss/articles/CBMijAFBVV95cUxNeUlVbnM1ME1JR2lucDN1YUs4dXkwN1FnOXBRQ2FIYjJDZXQ0ZjlISHJGQ0pOd05SeldFOG5UdkMtQ3FuWF9EekhkdVZ6ZkhqZXdyNHViR1JYZV9DWWlVZXl5bGdSdE8xd1NVc2Q3MEFCUGVaZXhEV3kzZ1ppVDd2Z2RKM1NVVl82bHZxbg?oc=5"
-   ],
-   [
-    "2026-10-22 16:05 UTC",
-    "www.vietnam.vn",
-    "Natural gas prices fell for the fourth consecutive session to $2.79/MMBtu.",
-    "https://news.google.com/rss/articles/CBMilAFBVV95cUxPd2huQXdXcFQwNDR0RkppSnB2ZmZvcDA5RW5aelBYa1NmNWlPVlZRZ3kwdDlZLWdaMFNMbzZ4MW02U1V5NHlnSFBzcVFmWEU0ZllFZ2twS3RVRWF1Z0JfcThfYTk5czZXOWt1QXJrX2RkcS05X01qSXhkRW9QVklQT2E1YXNTMjEzM1RKSDdEczBFYlA5?oc=5"
    ],
    [
     "2026-10-22 15:24 UTC",
@@ -7168,6 +7226,12 @@
     "www.agrolatam.com",
     "U.S. Wheat Market Faces New Crisis as Exports Fall and Farm Prices Weaken",
     "https://news.google.com/rss/articles/CBMihAFBVV95cUxQWUFGdndON2lBd0pjbGg1VFFjVEpXRUpoeHpEQVBaNzJydTA5dmNqeWpXWFU0NHV3eGsxVnRaems3TFhTMTVIMEhCOFFTZFNmbzByWWJQakdtU2ZETC02anpTcXRXNWpnaG9uMnNyUEJWclNJMzhhUFFJTERiTVplRi1OYmY?oc=5"
+   ],
+   [
+    "2026-10-22 10:13 UTC",
+    "english.nv.ua",
+    "Russian grain exports collapse fourfold as Black Sea ports stall",
+    "https://news.google.com/rss/articles/CBMilwFBVV95cUxPNWRuXzBiYThJcV8xOG9lc1RYSXNHMnBaVGNxLUJHaEoyT1dLemdUSGVuSXJPSWs2N2VsWGRLUFliSS16Qk5XN05pbXFYU2EyQ2lUeURWQUFxN0VlcmFsZmFMSzA0NTRmVEp6Wnk1X0tYYnpPVkFmeTRzTk5CeGJNR2lGUVdyTzBBOWxfQ1p5WnQ0a3NIdWcw0gGQAUFVX3lxTE82Mk9pVVFkTXM0Y2tYVm5lbDFCWnByb2lmTFd2V29XZmczazBsTWdHTEE0amc5bUROUGZNV2dlQ2szNTZUcmhRb3dRQUZZUXQ0OGIyeUtFNWIyYjh4MUM4Si1oY01uMGZHczJodWgyUVNPSWZnYjltanJDMDVYbGo3ZnZ2bjBNRHJDWlg2VDJrNg?oc=5"
    ]
   ],
   "soybeans": [
@@ -7178,16 +7242,28 @@
     "https://news.google.com/rss/articles/CBMivgFBVV95cUxNN19iMXk3YnYxZ3JwWFBlSFVrdEE3TmlLNmhoYVlxallOZWtFVU5oSGlhS1lUM2Rva21EN0dDcUZ0dkRoaUk3NTRKMHA2MFJvREQ4VDY4ZU5kVkR3YWJKYUR2SDMyYy1FRC1ZV19hVjBQcGoxY3JLWFJEV3ktbFVaQ0s0dFhYR1dVMGo2U0xjSm5SUHgxdll5c3p1Sk5TbEtwR2drMTN5Q1ZmTmM4MGZZbS1QU3o1ZmR1QmlZRGNn?oc=5"
    ],
    [
-    "2026-10-22 18:52 UTC",
-    "www.bernama.com",
-    "CPO Futures End Higher On Firmer Soybean Oil Futures, Export Outlook",
-    "https://news.google.com/rss/articles/CBMiY0FVX3lxTFBmTUlUNGVQOC1OV29EMjMzZlpBWjdQNEgwblYwYXJVVE1UbXdyVVZEMHlFOGF0YUJnc0RNdnZKaF9HU3pBR1hLMUY1TWI0S3FTZGVuNncwR2FaOGQ4LXdPQjJRMA?oc=5"
-   ],
-   [
     "2026-10-22 18:49 UTC",
     "www.country-guide.ca",
     "U.S. Grain/Oilseed Review: Soybeans rebound, little movement for corn, wheat",
     "https://news.google.com/rss/articles/CBMitwFBVV95cUxNajRvMmR5NnlLRjFnWUdlVUl2dTI5ekkza3lWQUIwMmEwc2NHYWswVDVjMjJUQU5jUjhtVFBOZmNJT3BwTmFtRjUtQnhIRXpiV2FVR3NibVFmOVMtYWx0VktKODlLandlblF5SEdWV2JLNDhJY1ZmQUI0UXdZMk9rZ2JHRmVTYS05U1VNLWVyZk5QS19QNXl2VHpsbzRMZ2U5Z3dRdkpvV0pRSXRjbW1aZWFwaElvcEE?oc=5"
+   ],
+   [
+    "2026-10-22 18:35 UTC",
+    "kchanews.com",
+    "China Trade Uncertainty Adds Pressure to U.S. Soybean Markets",
+    "https://news.google.com/rss/articles/CBMimAFBVV95cUxQMWlhNWhwcDdlek81bkVOR0g4U1Y2OFJ1UDhkSnlNTnJlTEJvZ3pHUko2cUhIdjQ5U09taGxYaTd0MFd3bGVrX2pqWU5YNUR3VmJ6RlNEUkRSZlY2VlZUSE81dDRuVEl0ZzNZTHROYVBQREdBVTNzdTN2WmQ1aUZ4RlJuUXJVR3VNUnVzcm5CaFhuQkpnRVdFWA?oc=5"
+   ],
+   [
+    "2026-10-22 16:40 UTC",
+    "www.indexbox.io",
+    "USDA Export Sales: Soybeans and Corn Outpace Wheat - News and Statistics",
+    "https://news.google.com/rss/articles/CBMijAFBVV95cUxNeUlVbnM1ME1JR2lucDN1YUs4dXkwN1FnOXBRQ2FIYjJDZXQ0ZjlISHJGQ0pOd05SeldFOG5UdkMtQ3FuWF9EekhkdVZ6ZkhqZXdyNHViR1JYZV9DWWlVZXl5bGdSdE8xd1NVc2Q3MEFCUGVaZXhEV3kzZ1ppVDd2Z2RKM1NVVl82bHZxbg?oc=5"
+   ],
+   [
+    "2026-10-22 14:50 UTC",
+    "www.stuttgartdailyleader.com",
+    "Arkansas soybean harvest close to finish, Mississippi River at Memphis shrinks again",
+    "https://news.google.com/rss/articles/CBMivgFBVV95cUxOdXF0OFI2ZGNEVUd1MElILUFVMW1mNWY5akVYeHdNRE5PU3J6VUhEWE82cWVjcS1yQk5hYUN4WWtDV01GWjl0aHBpSVl3em5nOEVrVTd4RVIteEREekI5LUxyYlZ5R3Q4bW5HekJpU0c0cW9LaGdvM1ZlMHhXb3ZTUjBjQ1RzTWEza2NiVFItdUVybGJRb3FCZHcySjB4ZDd0Sy1HNFBraGd3RjBXSm9IUU42OG4tcFIyUDZPaG9B?oc=5"
    ],
    [
     "2026-10-22 13:59 UTC",
@@ -7202,22 +7278,10 @@
     "https://news.google.com/rss/articles/CBMikgFBVV95cUxPQ2JYdFpxaEZwU0t1UExtZzVvQXluZmJGcGRQOUUxdEpicXItN2JyZ3JFVXhfTEY5d1dxSHZmbE5qZms3THltc3BsSmVDeXIyNXVvYUNVMTBXZGJUSU1MS3dHdmNxX0QzSE5sV1N2VEo1WFF4QjU3U1JxOFo1MlhzYnRjX0pTeXQ4emtjdUJTcWZJdw?oc=5"
    ],
    [
-    "2026-10-22 07:49 UTC",
-    "leadership.ng",
-    "India Threatens 45% Tariff On Soybean Cargoes Linked To Nigeria",
-    "https://news.google.com/rss/articles/CBMijgFBVV95cUxPQ2ZsMU5EVFF3NEdMQVBMdkJ6U1otMFJSaXNMX2JjTE91d0xZYUNlTGRpMXJDZUNGeW1BU1g4RUFGQnlaRUI1WVpScDNSQ3lZSWV2M1NjWm4teVFWUzUtQzhrem5Db3c0YjZjTWhpNkZkWHB5SkFxWU5WblhuZlJ6M29PY1V2RUIzemJ2OHVR?oc=5"
-   ],
-   [
-    "2026-10-22 06:55 UTC",
-    "commodity-board.com",
-    "Soybean Market Overview: Record US Crop Meets Strong Export Demand — CMB News",
-    "https://news.google.com/rss/articles/CBMijwFBVV95cUxPejdsNTdfeDdkQnRZeVplNWFrWXpfdUdERUcxRmZTb3k4SGRDQV9YTTR2eUZVUHVIaGxrNkNMMjdQeHljTXNZcHNoaWRyc1hXQTJkU1BXdHRSVlpxdmNSbmN6UEo0Y0R6X0Jzc3hRbEE4YTE0MmhKMWhTcDBERmRjbUw4SmdPYzRROWxoOExFYw?oc=5"
-   ],
-   [
-    "2026-10-21 20:41 UTC",
-    "www.indexbox.io",
-    "Brazil Soybean Planting Hits 30.1% for 2026/27, Prices Ease - News and Statistics",
-    "https://news.google.com/rss/articles/CBMiiAFBVV95cUxQUmR5YWxrLTdTTjFNV2trYV9jcFVpeGRKOG1JcDQ4cm5TWkIxejU4cFBJVm5uMUVzNlBnTklNQ3ZtNTBtYVdIYWtQOHVyWXpubDc3SldIVkUwczBYZUFjdEtRV1lWZ0cyUzZGbXhNWUZKNEVmeHhfUHU0emNReXkwOG5rUWtlTUw5?oc=5"
+    "2026-10-22 09:10 UTC",
+    "ukragroconsult.com",
+    "Wheat and soybeans decline, while corn rises in Chicago on Wednesday",
+    "https://news.google.com/rss/articles/CBMipgFBVV95cUxONUJOcDk0cUk5anVaQ1c5VTA1QkRobVVUWllURU9nU3ZnTWppNVlaR3dGTVhycmVlQjlJQWxhcmcxbkt0VkVuQXNYM3VBMTdjaEJmWUx4endjSEZXbFpTSDN6cG16UkdkTjE2YTc4Q0RFOVdHTzNZdi1wVFpDSk1MYWg4WmU1TDVLc3NZSkZGUW9tSDRZSTNuWllteDZpQi03Z2dDa1BR?oc=5"
    ]
   ],
   "fx": [
