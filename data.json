@@ -4191,9 +4191,9 @@
    "fxcross": {
     "dxy": 101.624,
     "dxy_chg": -0.153,
-    "eurusd": 1.1221,
-    "usdjpy": 156.76,
-    "usdcad_ref": 1.4004
+    "eurusd": 1.122,
+    "usdjpy": 156.81,
+    "usdcad_ref": 1.4006
    },
    "closes": [
     [
@@ -4761,10 +4761,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.40076,
+    "mid": 1.40057,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-22T18:00:00-04:00",
+    "ts": "2026-10-22T18:02:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -5862,16 +5862,16 @@
     ],
     [
      "2026-10-22T22:00+00:00",
-     1.40076
+     1.40057
     ]
    ]
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-22T18:00:42-04:00",
+   "updated_at": "2026-10-22T18:02:31-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-22T18:00:00-04:00",
+    "fx_spot": "2026-10-22T18:02:00-04:00",
     "fx_closes": "2026-10-22T16:30:00-04:00",
     "yields": "2026-10-21T17:00:00-04:00",
     "policy": "2026-10-21T07:35:00-04:00",
@@ -5883,11 +5883,11 @@
     "grains_settle": "2026-10-22T14:20:00-04:00",
     "grains_quote": "2026-10-22T14:15:00-04:00",
     "options": "2026-10-22T17:30:00-04:00",
-    "news": "2026-10-22T18:00:42-04:00",
+    "news": "2026-10-22T18:02:31-04:00",
     "calendar": "2026-10-21T07:05:00-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-22T16:59:48-04:00",
-    "exports": "2026-10-22T08:30:00-04:00"
+    "exports": "2026-10-22T18:02:31-04:00"
    },
    "sources": {
     "news": "Google News RSS search, refreshed every 15 min",
@@ -5906,18 +5906,15 @@
      "news",
      "releases",
      "macro",
-     "settles"
-    ],
-    "failed": [
+     "settles",
      "exports"
     ],
-    "at": "2026-10-22T18:00:42-04:00"
+    "failed": [],
+    "at": "2026-10-22T18:02:31-04:00"
    },
    "releases_checked": "2026-10-22T16:45:04-04:00",
    "macro_checked": "2026-10-22T16:59:48-04:00",
-   "last_errors": {
-    "exports": "HTTPError: 500 Server Error: Internal Server Error for url: https://apps.fas.usda.gov/OpenData/api/esr/commodities"
-   }
+   "exports_checked": "2026-10-22T18:02:31-04:00"
   },
   "macro": [
    {
@@ -7030,43 +7027,22 @@
   "exports": {
    "corn": {
     "trend": [
-     -11172.5,
-     1155724.8,
-     1055172.2
+     -38647.57142857143,
+     1222908.142857143,
+     991022.7142857143
     ],
     "weeks": [
      [
-      "2026-08-13",
-      "2026-08-20",
-      1049000,
-      null,
-      null
-     ],
-     [
-      "2026-08-20",
-      "2026-08-27",
-      1100000,
-      800000,
-      1600000
-     ],
-     [
-      "2026-08-27",
       "2026-09-03",
-      1156800,
-      null,
-      null
-     ],
-     [
-      "2026-09-03",
-      "2026-09-11",
-      1928700,
+      "2026-09-10",
+      1928704,
       700000,
       1700000
      ],
      [
       "2026-09-10",
       "2026-09-17",
-      1026700,
+      1026705,
       1000000,
       2000000
      ],
@@ -7093,60 +7069,39 @@
      ],
      [
       "2026-10-08",
-      "2026-10-16",
-      1122400,
+      "2026-10-15",
+      1122442,
       500000,
       1200000
      ],
      [
       "2026-10-15",
       "2026-10-22",
-      1527100,
+      1527122,
       700000,
       1500000
      ]
     ],
-    "source": "USDA FAS weekly export sales · desk drop-in"
+    "source": "USDA FAS ESR · Corn · MY 2026/27"
    },
    "soybeans": {
     "trend": [
-     -102921.2,
-     2076438.7,
-     1150147.7
+     -59017.28571428572,
+     1592647.714285714,
+     1238543.9999999998
     ],
     "weeks": [
      [
-      "2026-08-13",
-      "2026-08-20",
-      1808000,
-      null,
-      null
-     ],
-     [
-      "2026-08-20",
-      "2026-08-27",
-      2550000,
-      1100000,
-      3100000
-     ],
-     [
-      "2026-08-27",
       "2026-09-03",
-      1854200,
-      null,
-      null
-     ],
-     [
-      "2026-09-03",
-      "2026-09-11",
-      2637300,
+      "2026-09-10",
+      2637302,
       null,
       null
      ],
      [
       "2026-09-10",
       "2026-09-17",
-      1702000,
+      1690438,
       900000,
       2400000
      ],
@@ -7173,7 +7128,7 @@
      ],
      [
       "2026-10-08",
-      "2026-10-16",
+      "2026-10-15",
       574878,
       489879,
       1197482
@@ -7181,52 +7136,52 @@
      [
       "2026-10-15",
       "2026-10-22",
-      2841200,
+      2841199,
       1800000,
       3000000
      ]
     ],
-    "source": "USDA FAS weekly export sales · desk drop-in"
+    "source": "USDA FAS ESR · Soybeans · MY 2026/27"
    },
    "wheat": {
     "trend": [
-     -6351.3,
-     348348.1,
-     291185.9
+     -6287.927272727273,
+     347867.67272727273,
+     291276.32727272727
     ],
     "weeks": [
      [
       "2026-08-13",
       "2026-08-20",
-      393700,
+      393655,
       null,
       null
      ],
      [
       "2026-08-20",
       "2026-08-27",
-      402500,
+      402531,
       200000,
       550000
      ],
      [
       "2026-08-27",
       "2026-09-03",
-      313500,
+      311468,
       null,
       null
      ],
      [
       "2026-09-03",
-      "2026-09-11",
-      194200,
+      "2026-09-10",
+      194233,
       null,
       null
      ],
      [
       "2026-09-10",
       "2026-09-17",
-      325900,
+      325935,
       200000,
       500000
      ],
@@ -7253,31 +7208,25 @@
      ],
      [
       "2026-10-08",
-      "2026-10-16",
-      319900,
+      "2026-10-15",
+      319901,
       300000,
       600000
      ],
      [
       "2026-10-15",
       "2026-10-22",
-      239600,
+      239627,
       250000,
       550000
      ]
     ],
-    "source": "USDA FAS weekly export sales · desk drop-in"
+    "source": "USDA FAS ESR · All Wheat · MY 2026/27"
    }
   }
  },
  "NEWS": {
   "corn": [
-   [
-    "2026-10-22 20:21 UTC",
-    "stjosephpost.com",
-    "Commodity markets daily recap",
-    "https://news.google.com/rss/articles/CBMidkFVX3lxTE5PbV9xWjlMalhQMGVWZnVrck54Mnc1THBkUE1ES09FNDJ5VUQzVUI4NnYtR0hNeGI0RkVIWGU1SEtEQVBFRjZtUUhaVUhWZEFKRXJyTTA0R3c1dHZtUENiYzV2c2o0QlZ4MF9Qb1ZtTjdVZGlnMHc?oc=5"
-   ],
    [
     "2026-10-22 19:09 UTC",
     "www.marketscreener.com",
@@ -7319,6 +7268,12 @@
     "graintrade.com.ua",
     "Increased supply of new crop collapses quotes and increases pressure on corn prices in Ukraine",
     "https://news.google.com/rss/articles/CBMizAFBVV95cUxQSml5SktqdHhVT2F2dERmSENfV3gxRi02aFY4ZExvYTJrd2w4N1VNTVkzeHVaNjd1S2FMMUZfcDdlcnl1LXA3MlhwMVh5eElzQVVyY1dGRmhRTTRaTEp0akdXdVcxcWlSdDVXamUxTUFfLWd0NnJhZzZIa1NlTXNrbS1tdEhaTU13RWN1WWFSMkJrY3NzQTktUE9yQmNYM0hQUnBZT3l3enB4bkdhaVZ4TzBFa0VlclVDY2tmM0RoeV9YSXBUMF9PM3M3UHk?oc=5"
+   ],
+   [
+    "2026-10-21 21:52 UTC",
+    "www.agrolatam.com",
+    "Chicago Grain Futures Close Mixed as Wheat Plunges 15 Cents and Corn Rebounds",
+    "https://news.google.com/rss/articles/CBMiswFBVV95cUxQTXkwRTNLQVJ4T05mbmJrdWhIY2xtMURVcDZjSnlucms0OXpiLXNreHpSRmFZS1cxbGQ1TWJjWE9jQURDdEFwTW5OdngyTW5BYW1PVTIwcGdyWGp6UHlmQjFDWk4tdG1iZVdoeGlvRUwyeHBfVG43RHF5cGllWE5ONHBjVWxFWHhKOHRYck1QR0ZyWnRBZWR6bW5SNXotRXdYM1dNSlh1VGVuamQzNTA2VTVvUQ?oc=5"
    ]
   ],
   "wheat": [
@@ -7409,16 +7364,16 @@
     "https://news.google.com/rss/articles/CBMijAFBVV95cUxNeUlVbnM1ME1JR2lucDN1YUs4dXkwN1FnOXBRQ2FIYjJDZXQ0ZjlISHJGQ0pOd05SeldFOG5UdkMtQ3FuWF9EekhkdVZ6ZkhqZXdyNHViR1JYZV9DWWlVZXl5bGdSdE8xd1NVc2Q3MEFCUGVaZXhEV3kzZ1ppVDd2Z2RKM1NVVl82bHZxbg?oc=5"
    ],
    [
+    "2026-10-22 14:50 UTC",
+    "www.stuttgartdailyleader.com",
+    "Arkansas soybean harvest close to finish, Mississippi River at Memphis shrinks again",
+    "https://news.google.com/rss/articles/CBMivgFBVV95cUxOdXF0OFI2ZGNEVUd1MElILUFVMW1mNWY5akVYeHdNRE5PU3J6VUhEWE82cWVjcS1yQk5hYUN4WWtDV01GWjl0aHBpSVl3em5nOEVrVTd4RVIteEREekI5LUxyYlZ5R3Q4bW5HekJpU0c0cW9LaGdvM1ZlMHhXb3ZTUjBjQ1RzTWEza2NiVFItdUVybGJRb3FCZHcySjB4ZDd0Sy1HNFBraGd3RjBXSm9IUU42OG4tcFIyUDZPaG9B?oc=5"
+   ],
+   [
     "2026-10-22 13:59 UTC",
     "ukragroconsult.com",
     "Palm oil prices rise amid strong Malaysian exports and higher soybean oil prices",
     "https://news.google.com/rss/articles/CBMitwFBVV95cUxPS3EwY0c1NGwwRi1aNkJsZXRmZEV1TGxLUVFIaUtuaG5FaWxPNGliQU5iQmxwUHl4dXBWTHZUMDhTZGRwb05ZQkJ3X3FZTy1tbFRpczJWZ0dxMkt2ZGc4WDc5R2I2cVFSRENYWmp1ajVERmRicU80Um9jTUVxTERQM0lBMmtKbi1qcTM0TVNpZEgzMm8xVzZtLUFPcmVZaW15T3pmcWxicHJyV01tSFotc3RCbUpta1E?oc=5"
-   ],
-   [
-    "2026-10-22 09:22 UTC",
-    "commodity-board.com",
-    "Indian record soybean oil imports and impact on global soybeans — CMB News",
-    "https://news.google.com/rss/articles/CBMikgFBVV95cUxPQ2JYdFpxaEZwU0t1UExtZzVvQXluZmJGcGRQOUUxdEpicXItN2JyZ3JFVXhfTEY5d1dxSHZmbE5qZms3THltc3BsSmVDeXIyNXVvYUNVMTBXZGJUSU1MS3dHdmNxX0QzSE5sV1N2VEo1WFF4QjU3U1JxOFo1MlhzYnRjX0pTeXQ4emtjdUJTcWZJdw?oc=5"
    ]
   ],
   "fx": [
@@ -7459,16 +7414,16 @@
     "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9lU2RnSmdHNVMzb2pqbVVrMlpYZFRGdEtpV1hiMXVzZzJfaWVOMi1wRURJcTJmcWlnbEtTTEJXRVR4cXo5eW5jaGl2WkNoODNqU0xN?oc=5"
    ],
    [
+    "2026-10-22 13:18 UTC",
+    "energynow.ca",
+    "Canada Economy Tracking 3.4% Growth as Energy Sector Booms",
+    "https://news.google.com/rss/articles/CBMikAFBVV95cUxNSTUwNXZMQzM0VTMxTGQtQ0NIbmhwN0Y1NC1jZjhmS2tLTXhDMGowd1BBMUVnVERnMm4wSFpfR3ItR3laaW5PZDgwbjN1ZVFIV3RnWWxMYUVVZW43ZlVDSXI1Njg3WnhJSVU5X0JDNlowMXVIMHNqLTJkUXhkckJZQ1RlY3BEdlY3ZjFGV3c2ekU?oc=5"
+   ],
+   [
     "2026-10-22 12:33 UTC",
     "investinglive.com",
     "Canada September PPI +2.0% m/m vs +1.3% prior",
     "https://news.google.com/rss/articles/CBMifkFVX3lxTE1keHB4bHRwQWplbFVuTEtPc3Q1MEQ3bXJGOFBHY3d1ZEFZelczN01PQ29RU1NRWUZkN18ydVc4bkVzR3dBU2Nyc25DMXhqMXVpbFY0cUpRNGdHdmV2WkZZU2kwNnNJZDcwVm5FT1lhQjJuVEZmU3QtQ2U2UnE3UQ?oc=5"
-   ],
-   [
-    "2026-10-22 12:23 UTC",
-    "canadiancoinnews.com",
-    "Gold, silver fluctuate as loonie rises",
-    "https://news.google.com/rss/articles/CBMinwFBVV95cUxPSHllYjdIRHBoaEpfQ0liRGtfYzhycF9sTDczV0Q3R1MwaVdkYkZBU0E1T0lHajF6SS1OcldHYmJlTXdrcWxIQ2phR1hVdUNSZzNMRWNPb21XT2NZTU42aVB5M004LXFKckZlVndYZ3dUa1dTcWlVNWZWdTZEbFlyRGFMRWVBUDI1NDBqUVJ2OW5WQ2tPS09Ea1dkV3Ixekk?oc=5"
    ]
   ]
  }
