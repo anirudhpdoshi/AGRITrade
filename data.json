@@ -5314,7 +5314,8 @@
     "wow": -8487,
     "label": "Extreme Crowded Short (High short-squeeze risk)",
     "p1y": 13.5,
-    "p3y": 10.3
+    "p3y": 10.3,
+    "series": []
    },
    "sent": {
     "status": "ok",
@@ -5709,7 +5710,63 @@
     "ask": null,
     "ts": "2026-10-22T16:33:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
-   }
+   },
+   "releases": [
+    {
+     "key": "ca_cpi",
+     "ccy": "CAD",
+     "name": "Canada CPI",
+     "measure": "y/y",
+     "unit": "%",
+     "dec": 1,
+     "period": "Sep 2026",
+     "released": "2026-10-19T08:30:00-04:00",
+     "actual": 3.1,
+     "consensus": 3.0,
+     "target": 2.0,
+     "target_label": "BoC 2% target",
+     "history": [
+      [
+       "Aug 2026",
+       3.0
+      ],
+      [
+       "Sep 2026",
+       3.1
+      ]
+     ],
+     "source": "Statistics Canada via Bank of Canada Valet"
+    },
+    {
+     "key": "us_nfp",
+     "ccy": "USD",
+     "name": "US nonfarm payrolls",
+     "measure": "m/m change",
+     "unit": "K",
+     "dec": 0,
+     "period": "Sep 2026",
+     "released": "2026-10-02T08:30:00-04:00",
+     "actual": 29,
+     "consensus": 90,
+     "history": [
+      [
+       "Sep 2026",
+       29
+      ]
+     ],
+     "sub": {
+      "name": "Unemployment rate",
+      "unit": "%",
+      "history": [
+       [
+        "Sep 2026",
+        4.2
+       ]
+      ]
+     },
+     "source": "BLS Employment Situation"
+    }
+   ]
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
@@ -5729,7 +5786,8 @@
     "grains_quote": "2026-10-22T14:15:00-04:00",
     "options": "2026-10-22T08:00:00-04:00",
     "news": "2026-10-22T16:33:12-04:00",
-    "calendar": "2026-10-21T07:05:00-04:00"
+    "calendar": "2026-10-21T07:05:00-04:00",
+    "releases": "2026-10-19T08:30:00-04:00"
    },
    "sources": {
     "news": "Google News RSS search, refreshed every 15 min",

@@ -22,7 +22,7 @@
   var CADENCE = {
     fx_spot: 15, grains_quote: 30, energy: 120, news: 240,
     crosses: 1440, fx_closes: 1440, yields: 1440, policy: 1440, sentiment: 1440,
-    options: 1440, grains_settle: 1440, calendar: 10080, cftc_fx: 10080, cftc_grains: 10080
+    options: 1440, grains_settle: 1440, calendar: 10080, releases: 46080, cftc_fx: 10080, cftc_grains: 10080
   };
 
   /* ------------------------------------------------------------------ utils */
@@ -203,6 +203,9 @@
       big.classList.add(p > last ? "flash-up" : "flash-dn");
     }
     var chg = (p / fx.spot.ref - 1) * 100, c = $("fx-spot-chg");
+    var ks = $("kpi-spot"), kc = $("kpi-spot-chg");
+    if (ks) { ks.textContent = fmtN(p, 5); if (flash && last !== null && p !== last) { ks.classList.remove("flash-up", "flash-dn"); void ks.offsetWidth; ks.classList.add(p > last ? "flash-up" : "flash-dn"); } }
+    if (kc) { kc.textContent = (chg > 0 ? "+" : chg < 0 ? "\u2212" : "") + fmtN(Math.abs(chg), 2) + "%"; kc.className = chg > 0 ? "up" : chg < 0 ? "dn" : "neu"; }
     if (c) { c.textContent = (chg > 0 ? "+" : chg < 0 ? "−" : "") + fmtN(Math.abs(chg), 3) + "%"; c.className = chg > 0 ? "up" : chg < 0 ? "dn" : "neu"; }
     var fresh = Date.now() - liveTickAt < 90000, chip = $("fx-spot-chip");
     if (chip) { chip.textContent = fresh ? "LIVE" : "LAST TICK"; chip.className = fresh ? "chip live" : "chip frozen"; }
@@ -216,7 +219,6 @@
     var st = $("fx-spot-stamp");
     if (st) st.textContent = "Streaming mid · " + feedName + " · last tick " + etClock(new Date(liveTickAt || Date.now())) +
       " ET · " + ticks.length + " ticks this session · bid/ask shown only from the dealable feed value";
-    var gap = $("fx-demo-gap"); if (gap) gap.textContent = fmtN(Math.abs(p - fx.spot.mid) * 10000, 1) + " pips";
     if (Date.now() - lastFwdPaint > 2000 && typeof window.fxForwardsHTML === "function") {
       lastFwdPaint = Date.now();
       var fw = $("fx-fwd"); if (fw) fw.innerHTML = window.fxForwardsHTML(p);

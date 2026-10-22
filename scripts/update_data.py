@@ -23,7 +23,7 @@ FX options, forecast/scenarios/bias, trade template, calendar.
 
 Usage:  python scripts/update_data.py [--only fx_spot,news] [--dry-run]
 """
-import argparse, csv, io, json, statistics, sys, traceback
+import argparse, csv, io, json, re, statistics, sys, traceback
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
@@ -94,7 +94,7 @@ def fx_spot(D, N):
 
 def fx_closes(D, N):
     j = valet("observations/FXUSDCAD/json?recent=60")
-    obs = [(o["d"], float(o["FXUSDCAD"]["v"])) for o in j["observations"] if o.get("FXUSDCAD", {}).get("v")]
+    obs = sorted((o["d"], float(o["FXUSDCAD"]["v"])) for o in j["observations"] if o.get("FXUSDCAD", {}).get("v"))
     if len(obs) < 25:
         raise RuntimeError("too few BoC observations")
     fx = D["fx"]
@@ -143,10 +143,17 @@ def ca_curve():
     j = valet("observations/group/bond_yields_benchmark/json?recent=40")
     code_for = {}
     for code, det in j.get("seriesDetail", {}).items():
-        lab = (det.get("label", "") + " " + det.get("description", "")).lower()
+        m = re.search(r"\.(\d+)YR\.", code.upper())
+        if m and m.group(1) + "Y" in CA_LABEL:
+            code_for[m.group(1) + "Y"] = code
+        elif "LONG" in code.upper():
+            code_for["30Y"] = code
+    for code, det in j.get("seriesDetail", {}).items():  # label fallback for anything unmapped
+        lab = (det.get("label", "") + " " + det.get("description", "")).lower().replace("-", " ")
         for tenor, key in CA_LABEL.items():
             if key in lab and tenor not in code_for:
                 code_for[tenor] = code
+    print("  Canada series:", code_for)
     out = {}
     for o in j["observations"]:
         row = {t: float(o[c]["v"]) for t, c in code_for.items() if o.get(c, {}).get("v")}
@@ -177,9 +184,7 @@ def yields(D, N):
                    wow=round(sp[-1] - sp[-6], 1) if len(sp) > 5 else None,
                    pct=pctile(sp[-20:], sp[-1]), asof=d0)
         changed.append(t)
-    live = [r for r in fx["rates"] if r.get("asof") == d0]
-    if live:
-        fx["widest"] = max(live, key=lambda r: r["sp"])["t"]
+    fx["widest"] = max(fx["rates"], key=lambda r: r["sp"])["t"]
     D["meta"]["asof"]["yields"] = d0 + "T17:00:00-04:00"
     print("  tenors refreshed:", changed, "as of", d0)
     try:
@@ -209,8 +214,11 @@ def cftc_fx(D, N):
     pct = round(100.0 * net / oi, 1)
     label = ("Extreme Crowded Short (High short-squeeze risk)" if pct <= -20 else "Crowded Short" if pct <= -10
              else "Extreme Crowded Long" if pct >= 20 else "Crowded Long" if pct >= 10 else "Balanced")
+    series = [{"date": x["report_date_as_yyyy_mm_dd"][:10],
+               "long": int(float(x["lev_money_positions_long"])), "short": int(float(x["lev_money_positions_short"])),
+               "net": int(float(x["lev_money_positions_long"])) - int(float(x["lev_money_positions_short"]))} for x in rows[-10:]]
     D["fx"]["pos"].update(net=net, long=lo, short=sh, oi=oi, pct_oi=pct, wow=net - nets[-2], label=label,
-                          p1y=pctile(nets[-52:], net), p3y=pctile(nets[-156:], net))
+                          p1y=pctile(nets[-52:], net), p3y=pctile(nets[-156:], net), series=series)
     d = r["report_date_as_yyyy_mm_dd"][:10]
     D["meta"]["asof"]["cftc_fx"] = d + "T15:30:00-04:00"
     return True
@@ -321,9 +329,62 @@ def news(D, N):
     return True
 
 
+MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
+def _set_release(D, key, hist, sub=None):
+    """Update one release: last 8 readings; a new period means a fresh print today (consensus unknown)."""
+    rel = next(r for r in D["fx"]["releases"] if r["key"] == key)
+    period, actual = hist[-1]
+    if period != rel["period"]:
+        rel.update(period=period, consensus=None,
+                   released=datetime.now(TOR).replace(hour=8, minute=30, second=0, microsecond=0).isoformat(timespec="seconds"))
+    rel.update(actual=actual, history=[[p, v] for p, v in hist[-8:]])
+    if sub is not None:
+        rel["sub"]["history"] = [[p, v] for p, v in sub[-8:]]
+    return rel
+
+
+def releases(D, N):
+    meta = D["meta"]
+    last = meta.get("releases_checked")
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=3):
+        print("  checked <3h ago — skipping (BLS keyless limit)")
+        return False
+    # Canada CPI, all-items, NSA index -> y/y %
+    j = valet("observations/V41690973/json?recent=24")
+    idx = sorted((o["d"], float(o["V41690973"]["v"])) for o in j["observations"] if o.get("V41690973", {}).get("v"))
+    byd = dict(idx)
+    cpi = []
+    for d, v in idx:
+        y, m = int(d[:4]), int(d[5:7])
+        base = byd.get(f"{y-1}-{m:02d}-01")
+        if base:
+            cpi.append((f"{MONTHS[m-1]} {y}", round((v / base - 1) * 100, 1)))
+    if len(cpi) < 3:
+        raise RuntimeError("too few CPI points")
+    _set_release(D, "ca_cpi", cpi)
+    # US payrolls (level, thousands) -> m/m change; unemployment rate
+    r = requests.post("https://api.bls.gov/publicAPI/v1/timeseries/data/", headers={**UA, "Content-Type": "application/json"},
+                      data=json.dumps({"seriesid": ["CES0000000001", "LNS14000000"]}), timeout=25)
+    r.raise_for_status()
+    out = {}
+    for ser in r.json()["Results"]["series"]:
+        pts = sorted((int(x["year"]), int(x["period"][1:]), float(x["value"])) for x in ser["data"] if x["period"].startswith("M") and x["period"] != "M13")
+        out[ser["seriesID"]] = pts
+    lv, ur = out["CES0000000001"], out["LNS14000000"]
+    nfp = [(f"{MONTHS[m-1]} {y}", int(round(v - lv[i-1][2]))) for i, (y, m, v) in enumerate(lv) if i > 0]
+    urh = [(f"{MONTHS[m-1]} {y}", v) for y, m, v in ur]
+    _set_release(D, "us_nfp", nfp, urh)
+    meta["releases_checked"] = iso(NOW)
+    newest = max(D["fx"]["releases"], key=lambda x: x["released"])["released"]
+    meta["asof"]["releases"] = newest
+    return True
+
+
 BLOCKS = [("fx_spot", fx_spot), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("energy", energy),
-          ("crosses", crosses), ("news", news)]
+          ("crosses", crosses), ("news", news), ("releases", releases)]
 
 
 def main():
