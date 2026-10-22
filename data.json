@@ -5197,10 +5197,10 @@
     "30Y": 5.42
    },
    "fxcross": {
-    "dxy": 101.654,
-    "dxy_chg": -0.124,
-    "eurusd": 1.1217,
-    "usdjpy": 156.79,
+    "dxy": 101.653,
+    "dxy_chg": -0.125,
+    "eurusd": 1.1216,
+    "usdjpy": 156.82,
     "usdcad_ref": 1.4015
    },
    "closes": [
@@ -5280,16 +5280,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 99.08,
-     "chg": 1.93,
-     "pct": 1.99,
+     "last": 99.05,
+     "chg": 1.9,
+     "pct": 1.96,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 112.79,
-     "chg": 3.97,
-     "pct": 3.65,
+     "last": 112.78,
+     "chg": 3.96,
+     "pct": 3.64,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -5301,9 +5301,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 13.61,
+    "value": 13.58,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-22T20:30:00+00:00",
+    "obs_ts": "2026-10-22T20:35:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -5769,10 +5769,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.40146,
+    "mid": 1.40149,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-22T16:43:00-04:00",
+    "ts": "2026-10-22T16:45:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -5790,6 +5790,30 @@
      "target": 2.0,
      "target_label": "BoC 2% target",
      "history": [
+      [
+       "Feb 2026",
+       1.8
+      ],
+      [
+       "Mar 2026",
+       2.4
+      ],
+      [
+       "Apr 2026",
+       2.8
+      ],
+      [
+       "May 2026",
+       3.2
+      ],
+      [
+       "Jun 2026",
+       2.8
+      ],
+      [
+       "Jul 2026",
+       3.0
+      ],
       [
        "Aug 2026",
        3.0
@@ -5814,6 +5838,34 @@
      "consensus": 90,
      "history": [
       [
+       "Feb 2026",
+       -156
+      ],
+      [
+       "Mar 2026",
+       214
+      ],
+      [
+       "Apr 2026",
+       148
+      ],
+      [
+       "May 2026",
+       63
+      ],
+      [
+       "Jun 2026",
+       31
+      ],
+      [
+       "Jul 2026",
+       -10
+      ],
+      [
+       "Aug 2026",
+       133
+      ],
+      [
        "Sep 2026",
        29
       ]
@@ -5822,6 +5874,34 @@
       "name": "Unemployment rate",
       "unit": "%",
       "history": [
+       [
+        "Feb 2026",
+        4.4
+       ],
+       [
+        "Mar 2026",
+        4.3
+       ],
+       [
+        "Apr 2026",
+        4.3
+       ],
+       [
+        "May 2026",
+        4.3
+       ],
+       [
+        "Jun 2026",
+        4.2
+       ],
+       [
+        "Jul 2026",
+        4.1
+       ],
+       [
+        "Aug 2026",
+        4.1
+       ],
        [
         "Sep 2026",
         4.2
@@ -5834,22 +5914,22 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-22T16:43:08-04:00",
+   "updated_at": "2026-10-22T16:45:04-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-22T16:43:00-04:00",
+    "fx_spot": "2026-10-22T16:45:00-04:00",
     "fx_closes": "2026-10-22T16:30:00-04:00",
     "yields": "2026-10-21T17:00:00-04:00",
     "policy": "2026-10-21T07:35:00-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-13T15:30:00-04:00",
     "cftc_grains": "2026-10-13T15:30:00-04:00",
-    "energy": "2026-10-22T16:30:00-04:00",
-    "crosses": "2026-10-22T16:30:00-04:00",
+    "energy": "2026-10-22T16:35:00-04:00",
+    "crosses": "2026-10-22T16:35:00-04:00",
     "grains_settle": "2026-10-20T14:20:00-04:00",
     "grains_quote": "2026-10-22T14:15:00-04:00",
     "options": "2026-10-22T08:00:00-04:00",
-    "news": "2026-10-22T16:43:08-04:00",
+    "news": "2026-10-22T16:45:04-04:00",
     "calendar": "2026-10-21T07:05:00-04:00",
     "releases": "2026-10-19T08:30:00-04:00"
    },
@@ -5867,16 +5947,13 @@
      "grains_quote",
      "energy",
      "crosses",
-     "news"
-    ],
-    "failed": [
+     "news",
      "releases"
     ],
-    "at": "2026-10-22T16:43:08-04:00"
+    "failed": [],
+    "at": "2026-10-22T16:45:04-04:00"
    },
-   "last_errors": {
-    "releases": "ValueError: could not convert string to float: '-'"
-   }
+   "releases_checked": "2026-10-22T16:45:04-04:00"
   }
  },
  "NEWS": {
@@ -5988,12 +6065,6 @@
     "https://news.google.com/rss/articles/CBMivgFBVV95cUxNN19iMXk3YnYxZ3JwWFBlSFVrdEE3TmlLNmhoYVlxallOZWtFVU5oSGlhS1lUM2Rva21EN0dDcUZ0dkRoaUk3NTRKMHA2MFJvREQ4VDY4ZU5kVkR3YWJKYUR2SDMyYy1FRC1ZV19hVjBQcGoxY3JLWFJEV3ktbFVaQ0s0dFhYR1dVMGo2U0xjSm5SUHgxdll5c3p1Sk5TbEtwR2drMTN5Q1ZmTmM4MGZZbS1QU3o1ZmR1QmlZRGNn?oc=5"
    ],
    [
-    "2026-10-22 18:52 UTC",
-    "www.bernama.com",
-    "CPO Futures End Higher On Firmer Soybean Oil Futures, Export Outlook",
-    "https://news.google.com/rss/articles/CBMiY0FVX3lxTFBmTUlUNGVQOC1OV29EMjMzZlpBWjdQNEgwblYwYXJVVE1UbXdyVVZEMHlFOGF0YUJnc0RNdnZKaF9HU3pBR1hLMUY1TWI0S3FTZGVuNncwR2FaOGQ4LXdPQjJRMA?oc=5"
-   ],
-   [
     "2026-10-22 18:49 UTC",
     "www.country-guide.ca",
     "U.S. Grain/Oilseed Review: Soybeans rebound, little movement for corn, wheat",
@@ -6010,6 +6081,12 @@
     "www.indexbox.io",
     "USDA Export Sales: Soybeans and Corn Outpace Wheat - News and Statistics",
     "https://news.google.com/rss/articles/CBMijAFBVV95cUxNeUlVbnM1ME1JR2lucDN1YUs4dXkwN1FnOXBRQ2FIYjJDZXQ0ZjlISHJGQ0pOd05SeldFOG5UdkMtQ3FuWF9EekhkdVZ6ZkhqZXdyNHViR1JYZV9DWWlVZXl5bGdSdE8xd1NVc2Q3MEFCUGVaZXhEV3kzZ1ppVDd2Z2RKM1NVVl82bHZxbg?oc=5"
+   ],
+   [
+    "2026-10-22 14:50 UTC",
+    "www.stuttgartdailyleader.com",
+    "Arkansas soybean harvest close to finish, Mississippi River at Memphis shrinks again",
+    "https://news.google.com/rss/articles/CBMivgFBVV95cUxOdXF0OFI2ZGNEVUd1MElILUFVMW1mNWY5akVYeHdNRE5PU3J6VUhEWE82cWVjcS1yQk5hYUN4WWtDV01GWjl0aHBpSVl3em5nOEVrVTd4RVIteEREekI5LUxyYlZ5R3Q4bW5HekJpU0c0cW9LaGdvM1ZlMHhXb3ZTUjBjQ1RzTWEza2NiVFItdUVybGJRb3FCZHcySjB4ZDd0Sy1HNFBraGd3RjBXSm9IUU42OG4tcFIyUDZPaG9B?oc=5"
    ],
    [
     "2026-10-22 13:59 UTC",
@@ -6068,16 +6145,16 @@
     "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9lU2RnSmdHNVMzb2pqbVVrMlpYZFRGdEtpV1hiMXVzZzJfaWVOMi1wRURJcTJmcWlnbEtTTEJXRVR4cXo5eW5jaGl2WkNoODNqU0xN?oc=5"
    ],
    [
-    "2026-10-22 13:18 UTC",
-    "energynow.ca",
-    "Canada Economy Tracking 3.4% Growth as Energy Sector Booms",
-    "https://news.google.com/rss/articles/CBMikAFBVV95cUxNSTUwNXZMQzM0VTMxTGQtQ0NIbmhwN0Y1NC1jZjhmS2tLTXhDMGowd1BBMUVnVERnMm4wSFpfR3ItR3laaW5PZDgwbjN1ZVFIV3RnWWxMYUVVZW43ZlVDSXI1Njg3WnhJSVU5X0JDNlowMXVIMHNqLTJkUXhkckJZQ1RlY3BEdlY3ZjFGV3c2ekU?oc=5"
-   ],
-   [
     "2026-10-22 12:43 UTC",
     "ca.investing.com",
     "Canadian dollar strengthens as oil prices, BoC rate hike bets support loonie",
     "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPcjRlUUtrNU1VcXZUWHpnbG1XcUVrUG5aRlhYWmJqSzZXWFloVk96b1V1NGd3em4xcEtOemlZMGpLX2RXdG5QWXlzYm1oMmdLUUo3NGFsRFVOamZDSzFSbm11Q2VFeEhTVlhpa19lM0FQTjVOVl9qRXdZTERmdXB3cHY4d1E5ckRudmYxZ1FJT3lPc2VlY0JPT3JySE9uNUpHclN2TzVmV094T0I3NXRmNWZHbWxsY1loc0VmaW03dHVEZw?oc=5"
+   ],
+   [
+    "2026-10-22 12:33 UTC",
+    "investinglive.com",
+    "Canada September PPI +2.0% m/m vs +1.3% prior",
+    "https://news.google.com/rss/articles/CBMifkFVX3lxTE1keHB4bHRwQWplbFVuTEtPc3Q1MEQ3bXJGOFBHY3d1ZEFZelczN01PQ29RU1NRWUZkN18ydVc4bkVzR3dBU2Nyc25DMXhqMXVpbFY0cUpRNGdHdmV2WkZZU2kwNnNJZDcwVm5FT1lhQjJuVEZmU3QtQ2U2UnE3UQ?oc=5"
    ]
   ]
  }
