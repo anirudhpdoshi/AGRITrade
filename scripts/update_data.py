@@ -23,7 +23,7 @@ FX options, forecast/scenarios/bias, trade template, calendar.
 
 Usage:  python scripts/update_data.py [--only fx_spot,news] [--dry-run]
 """
-import argparse, csv, io, json, re, sys, traceback
+import argparse, csv, io, json, re, statistics, sys, traceback
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
@@ -89,6 +89,13 @@ def fx_spot(D, N):
     D["fx"]["feed"] = {"mid": round(mid, 5), "bid": None, "ask": None, "ts": iso(ts),
                        "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"}
     D["meta"]["asof"]["fx_spot"] = iso(ts)
+    try:  # intraday path for the spot chart: 5-minute closes over the last ~20h
+        h = yf().Ticker("CAD=X").history(period="2d", interval="5m")
+        cut = NOW - timedelta(hours=20)
+        D["fx"]["intraday"] = [[i.to_pydatetime().astimezone(timezone.utc).isoformat(timespec="minutes"), round(float(c), 5)]
+                               for i, c in h["Close"].items() if i.to_pydatetime() >= cut and 1.2 < float(c) < 1.6]
+    except Exception as e:
+        print("  intraday skipped:", e)
     return f["mid"] != D["fx"]["feed"]["mid"]
 
 
@@ -524,9 +531,150 @@ def macro(D, N):
     return True
 
 
+# ------------------------------------------------------------------ settles -> sigma fan + curve
+def _yahoo_settles(sym, period="9mo"):
+    """Daily settles for one contract (Yahoo 'ZCZ26.CBT'); today's bar only once the day session has settled."""
+    h = yf().Ticker(f"{sym}.CBT").history(period=period, interval="1d")
+    if h.empty:
+        raise RuntimeError(f"no daily bars for {sym}.CBT")
+    now = datetime.now(TOR)
+    out = []
+    for idx, row in h.iterrows():
+        d = idx.date()
+        if d > now.date() or (d == now.date() and now.hour < 15):
+            continue  # today's bar is still trading — settle not final
+        out.append((d.isoformat(), round(float(row["Close"]) / 100.0, 4)))  # cents -> $/bu
+    return out
+
+
+def _fan_from(settles):
+    t = [v for _, v in settles]
+    diffs = [t[i] - t[i-1] for i in range(1, len(t))]
+    sig = statistics.stdev(diffs[-30:])
+    a = t[-1]
+    ma = lambda n, i=None: sum(t[:i][-n:] if i else t[-n:]) / n
+    ma20, ma50 = ma(20), ma(50)
+    ma100 = ma(100) if len(t) >= 100 else None
+    z = (a - ma20) / statistics.stdev(t[-20:])
+    w5, w10 = sig * 5 ** .5, sig * 10 ** .5
+    hist = []
+    for j in range(len(t) - 25, len(t)):
+        hist.append({"d": settles[j][0] + "T00:00:00", "s": t[j],
+                     "ma20": round(sum(t[j-19:j+1]) / 20, 4), "ma50": round(sum(t[j-49:j+1]) / 50, 4)})
+    return {"anchor": a, "sig": sig, "settle_date": settles[-1][0],
+            "r5": [round(a - 1.96*w5, 2), round(a + 1.96*w5, 2)], "r10": [round(a - 1.96*w10, 2), round(a + 1.96*w10, 2)],
+            "r10_99": [round(a - 2.576*w10, 2), round(a + 2.576*w10, 2)],
+            "z": f"{z:.2f}", "ma20": f"{ma20:.2f}", "ma50": f"{ma50:.2f}", "ma100": (f"{ma100:.2f}" if ma100 else None)}, hist, t[-50:]
+
+
+def settles(D, N):
+    done = []
+    for k, g in D["grains"].items():
+        front = g["roll"][0]["contract"]
+        st_ = _yahoo_settles(front)
+        if len(st_) < 76:
+            raise RuntimeError(f"{front}: only {len(st_)} settles")
+        # verify the source against the desk's verified settles before trusting it
+        mine = {h["d"][:10]: h["s"] for h in g["history"]}
+        both = [(mine[d], v) for d, v in st_ if d in mine]
+        if len(both) < 5:
+            raise RuntimeError(f"{front}: only {len(both)} dates overlap the verified history")
+        worst = max(abs(a - b) for a, b in both)
+        if worst > 0.0101:
+            raise RuntimeError(f"{front}: source differs from verified settles by up to {worst:.4f} — not used")
+        if st_[-1][0] <= g["fan"]["settle_date"] and g["fan"].get("ma50"):
+            continue  # nothing new
+        fan, hist, tail = _fan_from(st_)
+        g["fan"].update(fan)
+        g["history"], g["tail50"] = hist, tail
+        # curve: front + next two contracts
+        for leg in g["roll"]:
+            try:
+                ls = _yahoo_settles(leg["contract"], "1mo")
+                if ls:
+                    leg["prev"] = ls[-2][1] if len(ls) > 1 else leg.get("settle")
+                    leg["settle"], leg["settle_date"] = round(ls[-1][1], 4), ls[-1][0]
+            except Exception as e:
+                print(f"  curve leg {leg['contract']} skipped: {e}")
+        done.append(f"{k} {fan['settle_date']} {fan['anchor']}")
+    if not done:
+        return False
+    last_settle = max(g["fan"]["settle_date"] for g in D["grains"].values())
+    D["meta"]["asof"]["grains_settle"] = datetime.fromisoformat(last_settle + "T14:20:00").replace(tzinfo=TOR).isoformat()
+    print("  settles:", done)
+    return True
+
+
+# ------------------------------------------------------------------ USDA export sales (needs FAS_API_KEY)
+FAS = "https://apps.fas.usda.gov/OpenData/api/esr"
+ESR_MATCH = {"corn": ["corn"], "soybeans": ["soybeans"], "wheat": ["all wheat", "wheat - all", "wheat"]}
+
+
+def exports(D, N):
+    import os
+    key = os.environ.get("FAS_API_KEY", "").strip()
+    if not key:
+        print("  FAS_API_KEY not set — export sales stay manual")
+        return False
+    meta = D["meta"]
+    last = meta.get("exports_checked")
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=6):
+        print("  checked <6h ago — skipping")
+        return False
+    H = {**UA, "API_KEY": key}
+    comms = get(f"{FAS}/commodities", headers=H).json()
+    E = D.setdefault("exports", {})
+    changed = []
+    for k, names in ESR_MATCH.items():
+        ex = E.get(k)
+        if not ex:
+            continue
+        cand = [c for n in names for c in comms if n == c.get("commodityName", "").strip().lower()] or \
+               [c for n in names for c in comms if n in c.get("commodityName", "").strip().lower()]
+        if not cand:
+            raise RuntimeError(f"no ESR commodity matches {names}")
+        stored = {w[0]: w[2] for w in ex["weeks"]}
+        best = None
+        for c in cand[:3]:
+            for my in (NOW.year + 1, NOW.year):
+                try:
+                    rows = get(f"{FAS}/exports/commodityCode/{c['commodityCode']}/allCountries/marketYear/{my}", headers=H).json()
+                except Exception:
+                    continue
+                wk = {}
+                for r_ in rows:
+                    d = r_["weekEndingDate"][:10]
+                    wk[d] = wk.get(d, 0) + (r_.get("currentMYNetSales") or 0)
+                if not wk:
+                    continue
+                overlap = [(stored[d], v) for d, v in wk.items() if d in stored and stored[d]]
+                err = max((abs(v - s_) / abs(s_) for s_, v in overlap), default=9)
+                if best is None or err < best[0]:
+                    best = (err, c["commodityName"], my, wk)
+        if not best or best[0] > 0.02:
+            raise RuntimeError(f"{k}: USDA figures don't match the stored weeks (best error {best[0] if best else 'n/a'}) — not used")
+        _, cname, my, wk = best
+        cons = {w[0]: (w[3], w[4]) for w in ex["weeks"]}
+        weeks = sorted(wk.items())[-10:]
+        ex["weeks"] = [[d, (datetime.fromisoformat(d) + timedelta(days=7)).date().isoformat(), round(v),
+                        *cons.get(d, (None, None))] for d, v in weeks]
+        ys = [w[2] for w in ex["weeks"]]
+        n = len(ys); xm = (n - 1) / 2; ym = sum(ys) / n
+        b = sum((i - xm) * (y - ym) for i, y in enumerate(ys)) / sum((i - xm) ** 2 for i in range(n))
+        a0 = ym - b * xm
+        ex["trend"] = [b, a0, a0 + b * (n - 1)]
+        ex["source"] = f"USDA FAS ESR · {cname} · MY {my - 1}/{str(my)[2:]}"
+        changed.append(k)
+    meta["exports_checked"] = iso(NOW)
+    if changed:
+        meta["asof"]["exports"] = iso(NOW)
+    print("  exports refreshed:", changed)
+    return bool(changed)
+
+
 BLOCKS = [("fx_spot", fx_spot), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro)]
+          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports)]
 
 
 def main():

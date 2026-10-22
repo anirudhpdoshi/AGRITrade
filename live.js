@@ -131,6 +131,17 @@
 
   /* ------------------------------------------------------ status strip */
   var feedName = "";
+  function paintCountdowns() {
+    var now = Date.now();
+    document.querySelectorAll(".countdown[data-t]").forEach(function (el) {
+      var ms = +el.getAttribute("data-t") - now;
+      el.textContent = typeof window.cdText === "function" ? window.cdText(ms) : dur(ms);
+    });
+  }
+  function syncStripHeight() {
+    var el = $("status-strip");
+    if (el) document.documentElement.style.setProperty("--strip-h", el.offsetHeight + "px");
+  }
   function paintStrip() {
     var el = $("status-strip"); if (!el || !window.DATA) return;
     var now = new Date(), fx = fxSession(now), gr = grainSession(now), meta = DATA.meta || {};
@@ -212,11 +223,13 @@
     if (c) { c.textContent = (chg > 0 ? "+" : chg < 0 ? "−" : "") + fmtN(Math.abs(chg), 3) + "%"; c.className = chg > 0 ? "up" : chg < 0 ? "dn" : "neu"; }
     var fresh = Date.now() - liveTickAt < 90000, chip = $("fx-spot-chip");
     if (chip) { chip.textContent = fresh ? "LIVE" : "LAST TICK"; chip.className = fresh ? "chip live" : "chip frozen"; }
-    if (ticks.length) {
-      var ys = ticks.map(function (t) { return t[1]; }), hl = $("fx-spot-hl");
+    var series = (typeof window.fxIntradayPoints === "function") ? window.fxIntradayPoints(ticks) : ticks;
+    if (series.length) {
+      var ys = series.map(function (t) { return t[1]; }), hl = $("fx-spot-hl");
       if (hl) hl.textContent = fmtN(Math.max.apply(null, ys), 5) + " / " + fmtN(Math.min.apply(null, ys), 5);
     }
-    var sk = $("fx-spark"); if (sk) sk.innerHTML = sparkSVG();
+    var sk = $("fx-spark");
+    if (sk) sk.innerHTML = (typeof window.fxIntradaySVG === "function") ? window.fxIntradaySVG(window.fxIntradayPoints(ticks)) : sparkSVG();
     var st = $("fx-spot-stamp");
     if (st) st.textContent = "Streaming mid · " + feedName + " · last tick " + etClock(new Date(liveTickAt || Date.now())) +
       " ET · " + ticks.length + " ticks this session";
@@ -314,11 +327,12 @@
   function boot() {
     if (!window.DATA) return;
     if (ticks.length) { feedName = "earlier this session"; liveTickAt = ticks[ticks.length - 1][0]; paintSpot(last, false); }
-    paintPills(); paintStrip();
+    paintPills(); paintStrip(); syncStripHeight();
     pollData();
     connectStream();
     pollRef();
-    setInterval(paintStrip, 1000);
+    setInterval(function () { paintStrip(); paintCountdowns(); syncStripHeight(); }, 1000);
+    window.addEventListener("resize", syncStripHeight);
     setInterval(paintPills, 30000);
     setInterval(pollData, (CFG.dataPollSec || 300) * 1000);
     setInterval(pollRef, (CFG.refPollSec || 30) * 1000);

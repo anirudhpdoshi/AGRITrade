@@ -34,6 +34,8 @@ jobs:
 
       - name: Update data.json
         run: python scripts/update_data.py
+        env:
+          FAS_API_KEY: ${{ secrets.FAS_API_KEY }}
 
       - name: Commit if changed
         run: |
