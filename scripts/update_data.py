@@ -416,7 +416,7 @@ MACRO = [
     ("ca_emp",      "Employment change",   "ca", "statcan", 2062811,        "diff",  "K",  1, "up",   (15000, 25000)),
     ("ca_ur",       "Unemployment rate",   "ca", "statcan", 2062815,        "level", "%",  1, "down", (2, 20)),
     ("ca_gdp",      "Real GDP",            "ca", "statcan", 65201210,       "pct",   "%",  1, "up",   (1500000, 3500000)),
-    ("ca_retail",   "Retail sales",        "ca", "statcan", 52367097,       "pct",   "%",  1, "up",   (40000, 120000)),
+    ("ca_retail",   "Retail sales",        "ca", "statcan", 52367097,       "pct",   "%",  1, "up",   (40e6, 120e6)),  # $ thousands
 ]
 
 
