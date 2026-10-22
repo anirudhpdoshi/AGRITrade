@@ -1,0 +1,36 @@
+name: Live feed (fast lane)
+
+on:
+  schedule:
+    # Every 30 min, 12:00–22:30 UTC on weekdays ≈ 8am–6:30pm Toronto (EDT).
+    # Each run loops ~33 min refreshing every 60 s; the next run takes over.
+    - cron: "0,30 12-22 * * 1-5"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: live-feed
+  cancel-in-progress: true   # a newer run replaces the old loop — no double publishing
+
+jobs:
+  loop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+
+      - name: Install
+        run: pip install -r scripts/requirements.txt
+
+      - name: Publish live.json every 60 s
+        run: python scripts/live_loop.py --minutes 33 --every 60

@@ -1587,7 +1587,7 @@ renderAll();
 /* Live layer config. finnhubKey: free key from finnhub.io enables the streaming
    USD/CAD tick (it is visible in page source — use a free-tier key only).
    Leave blank to use the keyless ~30s reference-rate poll. */
-window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30 };
+window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePollSec: 60, liveRepo: "anirudhpdoshi/usd-cad-desk-live" };
 </script>
 <script src="live.js" defer></script>
 </body>

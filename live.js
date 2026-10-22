@@ -145,11 +145,14 @@
   function paintStrip() {
     var el = $("status-strip"); if (!el || !window.DATA) return;
     var now = new Date(), fx = fxSession(now), gr = grainSession(now), meta = DATA.meta || {};
-    var upd = meta.updated_at ? now - new Date(meta.updated_at) : Infinity;
+    var newest = [meta.updated_at, meta.live_at].filter(Boolean).sort().pop();
+    var upd = newest ? now - new Date(newest) : Infinity;
     var streaming = liveTickAt && now - liveTickAt < 90000;
     var mode = streaming ? "live" : upd < 45 * 60000 ? "live" : upd < 26 * 3600000 ? "stale" : "";
     el.className = "snapshot-banner" + (mode ? " " + mode : "");
-    var head = streaming ? "<b>LIVE</b> · USD/CAD streaming (" + feedName + ")"
+    var liveAge = meta.live_at ? now - new Date(meta.live_at) : Infinity;
+    var head = streaming ? "<b>LIVE</b> · USD/CAD streaming (" + feedName + ")" + (liveAge < 180000 ? " · prices " + dur(liveAge) + " old" : "")
+      : liveAge < 180000 ? "<b>LIVE FEED</b> · prices " + dur(liveAge) + " old"
       : mode === "live" ? "<b>AUTO-REFRESH</b> · data " + dur(upd) + " old"
       : "<b>SNAPSHOT</b> · data " + (isFinite(upd) ? dur(upd) + " old" : "frozen at build");
     var nx = nextEvent(now.getTime());
@@ -298,19 +301,65 @@
         if (!j || !j.DATA || !j.DATA.meta) return;
         var cur = (DATA.meta && DATA.meta.updated_at) || "";
         if (new Date(j.DATA.meta.updated_at) <= new Date(cur)) return;
-        var before = Object.assign({}, DATA.meta.asof), rails = openRailState();
+        var before = Object.assign({}, DATA.meta.asof);
         DATA = window.DATA = j.DATA;
         if (j.NEWS) NEWS = window.NEWS = j.NEWS;
-        window.renderAll();
-        document.querySelectorAll("details.rail-card").forEach(function (d, i) { if (rails[i]) d.open = true; });
-        document.querySelectorAll("[data-src]").forEach(function (t) {
-          var k = t.getAttribute("data-src");
-          if (before[k] !== DATA.meta.asof[k]) { t.classList.add("just-updated"); setTimeout(function () { t.classList.remove("just-updated"); }, 2600); }
-        });
-        if (last !== null && liveTickAt && liveTickAt > new Date(DATA.meta.asof.fx_spot).getTime()) { lastFwdPaint = 0; paintSpot(last, false); }
-        paintPills(); paintStrip();
+        if (lastLive) mergeLive(lastLive);   // never step back behind the fast lane
+        rerender(before);
       })
       .catch(function () {});
+  }
+
+  /* ------------------------------------------------------ fast lane: live.json every 60 s */
+  var lastLive = null, liveEtag = "";
+  var LIVE_API = "https://api.github.com/repos/" + (CFG.liveRepo || "anirudhpdoshi/usd-cad-desk-live") + "/contents/live.json?ref=live";
+  var LIVE_RAW = "https://raw.githubusercontent.com/" + (CFG.liveRepo || "anirudhpdoshi/usd-cad-desk-live") + "/live/live.json";
+  function newer(a, b) { return a && (!b || new Date(a) > new Date(b)); }
+  function mergeLive(L) {
+    var A = DATA.meta.asof, changed = false;
+    if (newer(L.asof.fx_spot, A.fx_spot)) { DATA.fx.feed = L.fx.feed; DATA.fx.intraday = L.fx.intraday; A.fx_spot = L.asof.fx_spot; changed = true; }
+    if (newer(L.asof.grains_quote, A.grains_quote)) {
+      Object.keys(L.grains).forEach(function (k) { if (DATA.grains[k]) { DATA.grains[k].fan.intraday = L.grains[k].intraday; DATA.grains[k].fan.intraday_ts = L.grains[k].intraday_ts; } });
+      A.grains_quote = L.asof.grains_quote; changed = true;
+    }
+    if (newer(L.asof.energy, A.energy)) { DATA.fx.energy = L.fx.energy; DATA.fx.wcs_diff = L.fx.wcs_diff; A.energy = L.asof.energy; changed = true; }
+    if (newer(L.asof.crosses, A.crosses)) { DATA.fx.fxcross = L.fx.fxcross; A.crosses = L.asof.crosses; changed = true; }
+    DATA.meta.live_at = L.updated_at;
+    return changed;
+  }
+  function rerender(before) {
+    var rails = openRailState();
+    window.renderAll();
+    document.querySelectorAll("details.rail-card").forEach(function (d, i) { if (rails[i]) d.open = true; });
+    document.querySelectorAll("[data-src]").forEach(function (t) {
+      var k = t.getAttribute("data-src");
+      if (before[k] !== DATA.meta.asof[k]) { t.classList.add("just-updated"); setTimeout(function () { t.classList.remove("just-updated"); }, 2600); }
+    });
+    if (last !== null && liveTickAt && liveTickAt > new Date(DATA.meta.asof.fx_spot).getTime()) { lastFwdPaint = 0; paintSpot(last, false); }
+    paintPills(); paintStrip();
+  }
+  function applyLive(L) {
+    if (!L || !L.updated_at || !L.asof) return;
+    if (lastLive && new Date(L.updated_at) <= new Date(lastLive.updated_at)) return;
+    lastLive = L;
+    var before = Object.assign({}, DATA.meta.asof);
+    if (mergeLive(L)) rerender(before); else paintStrip();
+  }
+  function pollLive() {
+    if (document.hidden) return;
+    var h = { Accept: "application/vnd.github.raw+json" };
+    if (liveEtag) h["If-None-Match"] = liveEtag;
+    fetch(LIVE_API, { headers: h, cache: "no-store" })
+      .then(function (r) {
+        if (r.status === 304) return null;              // unchanged: does not count against GitHub's rate limit
+        if (!r.ok) throw r.status;
+        liveEtag = r.headers.get("ETag") || "";
+        return r.json();
+      })
+      .then(function (j) { if (j) applyLive(j); })
+      .catch(function () {                              // API rate-limited or down: raw CDN (can be ~5 min stale)
+        fetch(LIVE_RAW + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j) applyLive(j); }).catch(function () {});
+      });
   }
 
   /* ------------------------------------------------------ boot */
@@ -335,10 +384,12 @@
     window.addEventListener("resize", syncStripHeight);
     setInterval(paintPills, 30000);
     setInterval(pollData, (CFG.dataPollSec || 300) * 1000);
+    pollLive();
+    setInterval(pollLive, (CFG.livePollSec || 60) * 1000);
     setInterval(pollRef, (CFG.refPollSec || 30) * 1000);
-    document.addEventListener("visibilitychange", function () { if (!document.hidden) { pollData(); pollRef(); } });
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) { pollData(); pollRef(); pollLive(); } });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 
-  window.DESK_LIVE = { onTick: onTick, pollData: pollData }; // handy for testing in the console
+  window.DESK_LIVE = { onTick: onTick, pollData: pollData, applyLive: applyLive }; // handy for testing in the console
 })();
