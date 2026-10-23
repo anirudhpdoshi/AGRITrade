@@ -264,6 +264,8 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .btip{cursor:pointer;outline:none}
 .flowpanel{grid-column:1/-1}.flowwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 @media (max-width:760px){.flowwrap .flowchart{min-width:700px}}.fcol:hover .colbg{fill:rgba(56,182,201,.08)}.fcol.act .colbg{fill:rgba(232,185,61,.16);stroke:#e8b93d;stroke-width:1}
+.pop-x{position:absolute;top:4px;right:6px;background:transparent;border:0;color:#c9d6e6;font-size:20px;line-height:1;cursor:pointer;padding:2px 6px}
+#btpop .bt-h{padding-right:22px}
 .bt-math{white-space:normal;word-break:break-word;margin-top:6px;padding:5px 8px;background:#0d1626;border-radius:6px;font-family:"IBM Plex Mono",monospace;font-size:12px;color:#e8b93d}.btip:hover .bbar,.btip.act .bbar{filter:brightness(1.35);stroke:#e8b93d;stroke-width:1.2}
 #btpop{position:absolute;z-index:9500;display:none;background:#13213a;border:1px solid #38b6c9;border-radius:10px;padding:11px 13px;box-shadow:0 12px 34px rgba(0,0,0,.55);font-size:12.5px;color:#c9d6e6}
 #btpop.on{display:block}.bt-h{font-weight:800;color:#fff;margin-bottom:6px}
@@ -2223,7 +2225,7 @@ function extTip(key, ym, prevYm, ccy){
   else if(key==='ca_fiscal_series'){ var F=DATA.ext.ca_fiscal||{}, c=(F.components||{})[ym];
     b=c?tipRow('Revenues',c.rev,ccy)+tipRow('− Program expenses',c.prog,ccy)+tipRow('− Public debt charges',c.debt,ccy)+(c.act!=null?tipRow('− Net actuarial losses',c.act,ccy):''):'<div class="bt-sub">revenue / expense split not available for this month</div>';
     b+=tipRow('= Budgetary balance',extAt('ca_fiscal_series',ym),ccy,true);
-    if(c&&c.rev!=null) b+='<div class="bt-math">'+fmt(c.rev,2)+' \u2212 '+fmt(c.prog||0,2)+' \u2212 '+fmt(c.debt||0,2)+(c.act?' \u2212 '+fmt(c.act,2):'')+' = <b>'+(c.bal<0?'\u2212':'')+fmt(Math.abs(c.bal),2)+'</b> C$B</div>';
+    if(c&&c.rev!=null&&Math.abs(c.rev-(c.prog||0)-(c.debt||0)-(c.act||0)-c.bal)<0.05) b+='<div class="bt-math">'+fmt(c.rev,2)+' \u2212 '+fmt(c.prog||0,2)+' \u2212 '+fmt(c.debt||0,2)+(c.act?' \u2212 '+fmt(c.act,2):'')+' = <b>'+(c.bal<0?'\u2212':'')+fmt(Math.abs(c.bal),2)+'</b> C$B</div>';
     if(F.notes&&F.notes_ref===ym) b+='<div class="bt-note">'+F.notes.map(esc).join('<br>')+'</div>'; }
   var cur=extAt(key,ym), pv=prevYm?extAt(key,prevYm):null;
   if(cur!=null&&pv!=null) b+='<div class="bt-chg">vs prior month: <b class="'+cls(cur-pv)+'">'+sgn(cur-pv,1,'B')+'</b></div>';
@@ -2440,7 +2442,7 @@ document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMacr
 var BTT=null, BTPIN=null;
 function btShow(g, pin){
   var p=document.getElementById('btpop'); if(!p){ p=document.createElement('div'); p.id='btpop'; document.body.appendChild(p); }
-  var tips=BTIPS[g.getAttribute('data-tid')]||[]; p.innerHTML=tips[+g.getAttribute('data-i')]||''; p.classList.add('on'); p.classList.toggle('pinned',!!pin);
+  var tips=BTIPS[g.getAttribute('data-tid')]||[]; p.innerHTML=(pin?'<button class="pop-x" aria-label="Close">\u00d7</button>':'')+(tips[+g.getAttribute('data-i')]||''); p.classList.add('on'); p.classList.toggle('pinned',!!pin);
   var r=g.getBoundingClientRect(), w=Math.min(290, window.innerWidth-24); p.style.width=w+'px';
   var left=r.right+8+w<=window.innerWidth-8?r.right+8:(r.left-8-w>=8?r.left-8-w:Math.max(8,window.innerWidth-w-8));
   p.style.left=(left+window.scrollX)+'px'; p.style.top=(Math.max(8,r.top)+window.scrollY)+'px';
@@ -2453,7 +2455,8 @@ document.addEventListener('mouseout', function(ev){ var t=ev.target.closest?ev.t
   if(from && !(to && (from.contains(to) || (to.closest&&(to.closest('#btpop')||to.closest('.btip')===from))))){ clearTimeout(BTT); BTT=setTimeout(btHideNow,300); } });
 document.addEventListener('click', function(ev){ var g=ev.target.closest&&ev.target.closest('.btip');
   if(g){ BTPIN=(BTPIN===g)?null:g; if(BTPIN) btShow(g,true); else btHideNow(); return; }
-  if(BTPIN && !(ev.target.closest&&ev.target.closest('#btpop'))){ BTPIN=null; btHideNow(); } });
+  if(BTPIN && (!(ev.target.closest&&ev.target.closest('#btpop')) || ev.target.closest('.pop-x'))){ BTPIN=null; btHideNow(); } });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ if(BTPIN){ BTPIN=null; btHideNow(); } if(typeof EVPIN!=='undefined'&&EVPIN){ EVPIN=null; evHideNow(); } } });
 window.addEventListener('scroll', function(){ if(!BTPIN) btHideNow(); }, {passive:true});
 
 /* ---------- event marker popover (input-cost charts) ---------- */
