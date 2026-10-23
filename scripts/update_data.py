@@ -1105,7 +1105,8 @@ def sd_hist(D, N):
 
 
 # ------------------------------------------------------------------ trade & fiscal balances (US vs Canada)
-EXT_FRED = [("us_trade_bal", "BOPGSTB"), ("us_exports", "BOPTEXP"), ("us_imports", "BOPTIMP"), ("us_deficit", "MTSDS133FMS")]
+EXT_FRED = [("us_trade_bal", "BOPGSTB"), ("us_exports", "BOPTEXP"), ("us_imports", "BOPTIMP"), ("us_deficit", "MTSDS133FMS"),
+            ("us_goods_bal", "BOPGTB"), ("us_serv_bal", "BOPSTB"), ("us_receipts", "MTSR133FMS"), ("us_outlays", "MTSO133FMS")]
 MONTHS_FULL = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
 
@@ -1118,10 +1119,12 @@ def _ca_trade():
         tr, ba, sa = row.get("Trade", ""), row.get("Basis", ""), row.get("Seasonal adjustment", "")
         pa = row.get("Principal trading partners", "")
         dims["trade"].add(tr); dims["basis"].add(ba); dims["sa"].add(sa); dims["partner"].add(pa)
-        if "balance of payments" not in ba.lower() or not sa.lower().startswith("seasonally adjusted") or pa.lower() != "all countries":
+        if "balance of payments" not in ba.lower() or not sa.lower().startswith("seasonally adjusted") or pa.lower() not in ("all countries", "united states"):
             continue
         t = tr.lower()
         key = "bal" if "balance" in t else "imp" if t.startswith("import") else "exp" if ("total export" in t or t == "export") else None
+        if key and pa.lower() == "united states":
+            key = key + "_us"
         v = _num(row.get("VALUE"))
         if key and v is not None:
             acc.setdefault(key, {})[row["REF_DATE"][:7]] = v
@@ -1129,7 +1132,7 @@ def _ca_trade():
         raise RuntimeError(f"Canada trade: no export/import lines; dims {{k: sorted(v)[:12] for k, v in dims.items()}}"[:600])
     if not acc.get("bal"):
         acc["bal"] = {m: acc["exp"][m] - acc["imp"][m] for m in acc["exp"] if m in acc["imp"]}
-    return {k: sorted(v.items())[-30:] for k, v in acc.items()}
+    return {k: sorted(v.items())[-30:] for k, v in acc.items() if v}
 
 
 def _ca_fiscal(old):
@@ -1161,6 +1164,15 @@ def _ca_fiscal(old):
                 if overwrite or k2 not in mon:
                     mon[k2] = round((1 if sign_word == "surplus" else -1) * float(amt.replace(",", "")) * (1 if unit == "billion" else 0.001), 3)
                     found += 1
+        comp = _fm_components(r_.text)
+        if comp:
+            cm = (old or {}).get("components") or {}
+            cm.update(comp)
+            old = dict(old or {}); old["components"] = cm
+        if back <= 3:
+            notes = [x.strip() for x in re.findall(r"((?:Revenues|Program expenses|Public debt charges)[^.]{10,260}\.)", txt)][:3]
+            if notes and not (old or {}).get("notes_ref", "") > key:
+                old = dict(old or {}); old["notes"] = notes; old["notes_ref"] = key
         mt = re.search(r"posted a budgetary (surplus|deficit) of \$([\d.,]+) (billion|million) for the (April to \w+) period of the (\d{4}-\d{2}) fiscal year", txt)
         if mt and (not ytd or key >= ytd.get("ref", "")):
             v = float(mt.group(2).replace(",", "")) * (1 if mt.group(3) == "billion" else 0.001)
@@ -1169,7 +1181,45 @@ def _ca_fiscal(old):
             ytd = {"ref": key, "period": mt.group(4) + " " + mt.group(5), "value": round((1 if mt.group(1) == "surplus" else -1) * v, 3), "prior": pv}
     if not mon:
         raise RuntimeError("no Fiscal Monitor pages parsed")
-    return {"monthly": sorted(mon.items())[-30:], "ytd": ytd, "parsed": found}
+    return {"monthly": sorted(mon.items())[-30:], "ytd": ytd, "parsed": found,
+            "components": dict(sorted(((old or {}).get("components") or {}).items())[-30:]),
+            "notes": (old or {}).get("notes"), "notes_ref": (old or {}).get("notes_ref")}
+
+
+def _fm_components(html):
+    """Monthly revenues / program expenses / public debt charges (C$ billions) from the Fiscal Monitor summary table:
+    columns are [label, month prior year, month current year, YTD prior, YTD current]; the header names the month."""
+    import html as _h
+    out = {}
+    for tb in re.findall(r"(?is)<table.*?</table>", html):
+        cap = _strip_html(tb[:600])
+        mm_ = re.findall(r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})", cap)
+        m = None
+        if mm_:
+            best = max(mm_, key=lambda t: (int(t[1]), MONTHS_FULL.index(t[0])))
+            m = re.search(best[0] + r"\s+" + best[1], cap)
+        rows = []
+        for tr in re.findall(r"(?is)<tr.*?</tr>", tb):
+            cells = [_h.unescape(re.sub(r"<[^>]+>", " ", c)).strip() for c in re.findall(r"(?is)<t[hd][^>]*>(.*?)</t[hd]>", tr)]
+            if cells:
+                rows.append(cells)
+        if not m or not any(c and c[0].lower().startswith("budgetary balance") for c in rows):
+            continue
+        key = f"{m.group(2)}-{MONTHS_FULL.index(m.group(1)) + 1:02d}"
+        rec = {}
+        for c in rows:
+            lab = re.sub(r"\s+", " ", c[0]).lower()
+            nums = [_num(x.replace(",", "").replace("\u2212", "-").replace("–", "-")) for x in c[1:]]
+            if len(nums) < 2 or nums[1] is None:
+                continue
+            k = "rev" if lab.startswith("revenues") else "prog" if lab.startswith("program expenses") else \
+                "debt" if lab.startswith("public debt charges") else "act" if "actuarial" in lab else "bal" if lab.startswith("budgetary balance") else None
+            if k and k not in rec:
+                rec[k] = round(nums[1] / 1000, 3)
+        if "rev" in rec and "bal" in rec:
+            out[key] = rec
+            break
+    return out
 
 
 def external(D, N):
@@ -1189,7 +1239,9 @@ def external(D, N):
             errs[key] = f"{type(e).__name__}: {e}"[:200]
     try:
         ct = _ca_trade()
-        for k, nm in (("bal", "ca_trade_bal"), ("exp", "ca_exports"), ("imp", "ca_imports")):
+        for k, nm in (("bal", "ca_trade_bal"), ("exp", "ca_exports"), ("imp", "ca_imports"), ("exp_us", "ca_exports_us"), ("imp_us", "ca_imports_us"), ("bal_us", "ca_trade_bal_us")):
+            if k not in ct:
+                continue
             X[nm] = {"src": "Statistics Canada 12-10-0011-01 (BOP basis, SA)", "pts": [[d, round(v / 1000, 3)] for d, v in ct[k]]}
     except Exception as e:
         errs["ca_trade"] = f"{type(e).__name__}: {e}"[:600]
