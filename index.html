@@ -262,6 +262,11 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .tile-head{flex-wrap:wrap;row-gap:6px}
 .sub{display:contents}.sub:not(.on){display:none}
 .btip{cursor:pointer;outline:none}
+.trk{opacity:0;transition:opacity .2s}.trk.on{opacity:1}
+.flowchart *{pointer-events:none}.flowchart .fcol,.flowchart .fcol .colbg{pointer-events:all}
+.trk-line,.trk-ball{transition:transform .28s cubic-bezier(.25,.8,.25,1),opacity .2s}
+.trk-ball circle:first-child{animation:trkpulse 1.6s ease-in-out infinite}
+@keyframes trkpulse{0%,100%{r:8;opacity:.18}50%{r:11;opacity:.32}}
 .flowpanel{grid-column:1/-1}.flowwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 @media (max-width:760px){.flowwrap .flowchart{min-width:700px}}.fcol:hover .colbg{fill:rgba(56,182,201,.08)}.fcol.act .colbg{fill:rgba(232,185,61,.16);stroke:#e8b93d;stroke-width:1}
 .pop-x{position:absolute;top:4px;right:6px;background:transparent;border:0;color:#c9d6e6;font-size:20px;line-height:1;cursor:pointer;padding:2px 6px}
@@ -1228,7 +1233,7 @@ function rollSVG2(R){
     if(b) h+='<div class="bt-sub">what traders did</div><div class="bt-note" style="margin-top:0;border:0;padding-top:0"><b>'+esc(R.front)+':</b> '+esc(b[1])+'<br><b>'+esc(R.def)+':</b> '+esc(b[2])+'</div>';
     return h;
   });
-  rows.forEach(function(r,i){ s+='<g class="btip fcol" data-tid="'+tid+'" data-i="'+i+'" tabindex="0"><rect class="colbg" x="'+(PL+gw*i).toFixed(1)+'" y="'+(PT-6)+'" width="'+gw.toFixed(1)+'" height="'+(ph+30)+'" rx="3" fill="transparent"/></g>'; });
+  rows.forEach(function(r,i){ s+='<g class="btip fcol" data-tid="'+tid+'" data-i="'+i+'" data-trk="'+X(i).toFixed(1)+','+YS(r[4]).toFixed(1)+','+Y(r[1]).toFixed(1)+','+Y(r[2]).toFixed(1)+'" tabindex="0"><rect class="colbg" x="'+(PL+gw*i).toFixed(1)+'" y="'+(PT-6)+'" width="'+gw.toFixed(1)+'" height="'+(ph+30)+'" rx="3" fill="transparent"/></g>'; });
   for(i=0;i<=4;i++){ var gy=PT+ph*i/4, gv=yMax*(1-i/4), gs=spLo*(i/4);
     s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
     s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+Math.round(gv/1000)+'k</text>';
@@ -1255,6 +1260,7 @@ function rollSVG2(R){
     if(i%3!==0 && i!==n-1) return;
     s+='<text x="'+X(i).toFixed(1)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">'+MN[r[0].slice(0,2)]+' '+r[0].slice(3)+'</text>';
   });
+  s+=trkSVG(['#f5c542','#4f8fe0','#3fbf7f'], PT, PT+ph);
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Open interest migration front versus deferred with calendar spread, roll percent labels vertical, spread line labeled first and latest">'+s+'</svg>';
 }
 
@@ -2275,7 +2281,8 @@ function flowComboSVG(o){
   var bv=o.bal.filter(function(v){ return v!=null; }), blo=Math.min(0,Math.min.apply(null,bv)), bhi=Math.max(0,Math.max.apply(null,bv)), bp=(bhi-blo)*0.12||1; blo-=bp; bhi+=bp;
   function YB(v){ return T2+H2*(1-(v-blo)/(bhi-blo)); }
   /* hit/highlight columns first so they sit behind everything */
-  M.forEach(function(m,i){ s+='<g class="btip fcol" data-tid="'+tid+'" data-i="'+i+'" tabindex="0"><rect class="colbg" x="'+(PL+bw*i).toFixed(1)+'" y="'+(T1-6)+'" width="'+bw.toFixed(1)+'" height="'+(H-T1-2)+'" rx="3" fill="transparent"/></g>'; });
+  M.forEach(function(m,i){ var a_=o.inflow.vals[i], b_=o.outflow.vals[i], c_=o.bal[i];
+    s+='<g class="btip fcol" data-tid="'+tid+'" data-i="'+i+'" data-trk="'+X(i).toFixed(1)+','+(a_==null?'':YL(a_).toFixed(1))+','+(b_==null?'':YL(b_).toFixed(1))+','+(c_==null?'':YB(c_).toFixed(1))+'" tabindex="0"><rect class="colbg" x="'+(PL+bw*i).toFixed(1)+'" y="'+(T1-6)+'" width="'+bw.toFixed(1)+'" height="'+(H-T1-2)+'" rx="3" fill="transparent"/></g>'; });
   /* panel titles + grids */
   s+='<text x="'+PL+'" y="'+(T1-10)+'" fill="#c9d6e6" font-size="11" font-weight="700" font-family="IBM Plex Mono">'+esc(o.inLab||'EXPORTS vs IMPORTS')+' ('+o.ccy+' B)</text>';
   s+='<text x="'+PL+'" y="'+(T2-8)+'" fill="#c9d6e6" font-size="11" font-weight="700" font-family="IBM Plex Mono">'+esc(o.balLab||'BALANCE')+' ('+o.ccy+' B)</text>';
@@ -2305,6 +2312,7 @@ function flowComboSVG(o){
     s+='<text x="'+cx+'" y="'+(vy+27)+'" fill="#8494ab" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle" pointer-events="none">'+MN[mo-1]+'</text>';
     if(mo===1||i===0) s+='<text x="'+(PL+bw*i+2).toFixed(1)+'" y="'+(vy+41)+'" fill="#c9d6e6" font-size="10.5" font-weight="700" font-family="IBM Plex Mono" pointer-events="none">'+m.slice(0,4)+'</text>'+(i>0?'<line x1="'+(PL+bw*i).toFixed(1)+'" x2="'+(PL+bw*i).toFixed(1)+'" y1="'+T1+'" y2="'+(vy+43)+'" stroke="#2b3e5c" stroke-dasharray="2 3" pointer-events="none"/>':'');
   });
+  s+=trkSVG([o.inflow.color,o.outflow.color,'#e8eef4'], T1, Y0);
   return '<svg viewBox="0 0 '+W+' '+H+'" class="chart-svg flowchart" role="img" aria-label="'+esc(o.aria||'exports, imports and balance')+'">'+s+'</svg>';
 }
 function flowPanel(kind){
@@ -2456,6 +2464,20 @@ document.addEventListener('click', function(ev){
 });
 document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMacroDetail(); });
 
+/* ---------- rolling ball tracker: dots glide to the hovered session's data points ---------- */
+function trkSVG(colors, y0, y1){
+  return '<g class="trk" pointer-events="none"><line class="trk-line" x1="0" x2="0" y1="'+y0+'" y2="'+y1+'" stroke="#e8b93d" stroke-width="1" stroke-dasharray="3 3"/>'+
+    colors.map(function(c){ return '<g class="trk-ball"><circle r="9" fill="'+c+'" opacity=".22"/><circle r="5" fill="'+c+'" stroke="#0b1220" stroke-width="2"/></g>'; }).join('')+'</g>';
+}
+function trkMove(g){
+  var svg=g.closest('svg'), t=svg&&svg.querySelector('.trk'), d=(g.getAttribute('data-trk')||'').split(','); if(!t||d.length<2) return;
+  var x=+d[0], balls=t.querySelectorAll('.trk-ball');
+  t.querySelector('.trk-line').style.transform='translate('+x+'px,0)';
+  balls.forEach(function(bn,k){ var y=d[k+1]; if(y===''||y==null){ bn.style.opacity=0; return; } bn.style.opacity=1; bn.style.transform='translate('+x+'px,'+(+y)+'px)'; });
+  t.classList.add('on');
+}
+function trkHide(){ document.querySelectorAll('.trk.on').forEach(function(t){ t.classList.remove('on'); }); }
+
 /* ---------- bar breakdown tooltip ---------- */
 var BTT=null, BTPIN=null;
 function btShow(g, pin){
@@ -2465,8 +2487,10 @@ function btShow(g, pin){
   var left=r.right+8+w<=window.innerWidth-8?r.right+8:(r.left-8-w>=8?r.left-8-w:Math.max(8,window.innerWidth-w-8));
   p.style.left=(left+window.scrollX)+'px'; p.style.top=(Math.max(8,r.top)+window.scrollY)+'px';
   document.querySelectorAll('.btip.act').forEach(function(x){ x.classList.remove('act'); }); g.classList.add('act');
+  trkHide(); if(g.hasAttribute('data-trk')) trkMove(g);
+  BTY=window.scrollY;
 }
-function btHideNow(){ if(BTPIN) return; var p=document.getElementById('btpop'); if(p) p.classList.remove('on'); document.querySelectorAll('.btip.act').forEach(function(x){ x.classList.remove('act'); }); }
+function btHideNow(){ if(BTPIN) return; trkHide(); var p=document.getElementById('btpop'); if(p) p.classList.remove('on'); document.querySelectorAll('.btip.act').forEach(function(x){ x.classList.remove('act'); }); }
 document.addEventListener('mouseover', function(ev){ var t=ev.target.closest?ev.target:null; if(!t) return; if(t.closest('#btpop')){ clearTimeout(BTT); return; }
   var g=t.closest('.btip'); if(g&&!BTPIN){ clearTimeout(BTT); btShow(g,false); } });
 document.addEventListener('mouseout', function(ev){ var t=ev.target.closest?ev.target:null; if(!t) return; var from=t.closest('.btip')||t.closest('#btpop'), to=ev.relatedTarget;
@@ -2475,7 +2499,8 @@ document.addEventListener('click', function(ev){ var g=ev.target.closest&&ev.tar
   if(g){ BTPIN=(BTPIN===g)?null:g; if(BTPIN) btShow(g,true); else btHideNow(); return; }
   if(BTPIN && (!(ev.target.closest&&ev.target.closest('#btpop')) || ev.target.closest('.pop-x'))){ BTPIN=null; btHideNow(); } });
 document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ if(BTPIN){ BTPIN=null; btHideNow(); } if(typeof EVPIN!=='undefined'&&EVPIN){ EVPIN=null; evHideNow(); } } });
-window.addEventListener('scroll', function(){ if(!BTPIN) btHideNow(); }, {passive:true});
+var BTY=0;
+window.addEventListener('scroll', function(){ if(!BTPIN && Math.abs(window.scrollY-BTY)>40) btHideNow(); }, {passive:true});
 
 /* ---------- event marker popover (input-cost charts) ---------- */
 var EVPIN=null;
