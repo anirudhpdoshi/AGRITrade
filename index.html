@@ -2262,7 +2262,7 @@ function evPopHTML(n, sk){
   if(S){ var at=evValueAt(S,e.date,0), idx=S.pts.indexOf(at), step=S.pts.length>60?4:1, later=at?S.pts[Math.min(S.pts.length-1, idx+step)]:null, L=S.pts[S.pts.length-1];
     function pc(a,b){ return (b/a-1)*100; }
     if(at){ lines='<div class="evp-row"><span>'+esc(S.label)+' at event</span><b>'+inFmt(S,at[1])+'</b><small>'+esc(at[0])+'</small></div>';
-      if(later&&later!==at) lines+='<div class="evp-row"><span>'+(step>1?'~4 weeks':'next month')+' later</span><b>'+inFmt(S,later[1])+'</b><small class="'+cls(-pc(at[1],later[1]))+'">'+sgn(pc(at[1],later[1]),1,'%')+'</small></div>';
+      if(later&&later!==at) lines+='<div class="evp-row"><span>'+(step>1?'~4 weeks':'1 month')+' later</span><b>'+inFmt(S,later[1])+'</b><small class="'+cls(-pc(at[1],later[1]))+'">'+sgn(pc(at[1],later[1]),1,'%')+'</small></div>';
       lines+='<div class="evp-row"><span>Now</span><b>'+inFmt(S,L[1])+'</b><small class="'+cls(-pc(at[1],L[1]))+'">'+sgn(pc(at[1],L[1]),1,'%')+' since event</small></div>'; } }
   var also=(DATA.inputs.events[n-1].tags.indexOf('*')>=0?'all inputs':DATA.inputs.events[n-1].tags.map(function(t){ return DATA.inputs.series[t]?DATA.inputs.series[t].label.replace(/ \(.*\)/,''):t; }).join(', '));
   return '<div class="evp-h"><span class="ev-n">'+n+'</span> '+esc(new Date(e.date+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))+'</div><div class="evp-t">'+esc(e.label)+'</div>'+lines+
