@@ -261,6 +261,32 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .dash-card .kpi-spark{display:block;width:100%;height:26px;margin-top:8px}
 .tile-head{flex-wrap:wrap;row-gap:6px}
 .sub{display:contents}.sub:not(.on){display:none}
+.oi-ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.pk{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;min-width:0}.pk.crit{border-color:#e0655f;background:rgba(224,101,95,.08)}
+.pk-k{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.pk-v{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;margin:4px 0}.pk-v small{font-size:12px;color:var(--muted)}.pk-v.hot{color:#ff9d97}
+.pk-s{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);line-height:1.5}.pk-s b{color:#e8eef4}
+.gauge{margin:6px 0 4px}.g-track{position:relative;height:8px;border-radius:4px;background:linear-gradient(90deg,#e0655f 0%,#3a4a61 20%,#3a4a61 80%,#3fb97f 100%)}
+.g-mark{position:absolute;top:-2px;width:1px;height:12px;background:#c9d6e6;opacity:.6}
+.g-dot{position:absolute;top:-4px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:#fff;border:2px solid #0b1220;box-shadow:0 0 0 3px rgba(255,255,255,.15)}.g-dot.hot{background:#e8b93d}
+.g-lab{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--faint);margin-top:3px}
+.pk-alerts{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.pk-al{font-size:11.5px;padding:3px 9px;border-radius:12px;border:1px solid}
+.pk-al.ok{color:#5fd598;border-color:#2b6b4c}.pk-al.warn{color:#e8a33d;border-color:#7a5a24}.pk-al.hot{color:#ff9d97;border-color:#7a3a36}.pk-al.crit{color:#fff;background:#b8443f;border-color:#e0655f;font-weight:700}
+.ck-list{display:grid;gap:8px}.ck{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;padding:8px 10px;border-radius:8px;background:var(--panel2);border:1px solid var(--line)}
+.ck-i{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+.ck.pass .ck-i{background:rgba(63,185,127,.2);color:#5fd598}.ck.flag .ck-i{background:rgba(232,163,61,.2);color:#e8a33d}.ck.info .ck-i{background:#1a2a42;color:#c9d6e6}
+.ck-d{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.5}.ck-d b{color:#e8eef4}
+@media (max-width:1020px){.pk-grid{grid-template-columns:1fr 1fr}}@media (max-width:760px){.pk-grid{grid-template-columns:1fr}}
+.awaiting{position:relative;overflow:hidden}
+.awaiting>*{visibility:hidden}
+.awaiting::before{content:"";position:absolute;inset:14px;border-radius:8px;z-index:2;
+  background:linear-gradient(#22324a,#22324a) 0 0/45% 14px no-repeat,linear-gradient(#1b2a40,#1b2a40) 0 30px/80% 34px no-repeat,linear-gradient(#1b2a40,#1b2a40) 0 80px/100% 60%  no-repeat,
+  linear-gradient(100deg,transparent 30%,rgba(255,255,255,.07) 50%,transparent 70%) 0 0/200% 100% no-repeat;animation:skel 1.4s linear infinite}
+.awaiting::after{content:attr(data-await);position:absolute;left:14px;right:14px;bottom:14px;z-index:3;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:#e8b93d;text-align:center}
+.awaiting.aw-sm::before{inset:10px;background:linear-gradient(#22324a,#22324a) 0 0/60% 10px no-repeat,linear-gradient(#1b2a40,#1b2a40) 0 20px/50% 22px no-repeat,linear-gradient(#1b2a40,#1b2a40) 0 52px/100% 30px no-repeat,linear-gradient(100deg,transparent 30%,rgba(255,255,255,.07) 50%,transparent 70%) 0 0/200% 100% no-repeat;animation:skel 1.4s linear infinite}
+.awaiting.aw-sm::after{font-size:10px;bottom:8px}
+@keyframes skel{0%{background-position:0 0,0 30px,0 80px,150% 0}100%{background-position:0 0,0 30px,0 80px,-50% 0}}
 .btip{cursor:pointer;outline:none}
 .trk{opacity:0;transition:opacity .2s}.trk.on{opacity:1}
 .flowchart *{pointer-events:none}.flowchart .fcol,.flowchart .fcol .colbg{pointer-events:all}
@@ -997,9 +1023,10 @@ function fanSVG(g, meta){
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Settlement history and 10-day sigma fan for '+meta.name+'">'+s+'</svg>';
 }
 
-function oiSVG(rows, ds){
+function oiSVG(rows, ds, cp){
+  cp=cp||'both'; var shC=cp!=='put', shP=cp!=='call';
   var W=760,H=280,PL=46,PR=14,PT=22,PB=34, pw=W-PL-PR, ph=H-PT-PB;
-  var max=0; rows.forEach(function(r){ max=Math.max(max,r[1],r[2]); });
+  var max=0; rows.forEach(function(r){ max=Math.max(max,shC?r[1]:0,shP?r[2]:0); }); max=max||1;
   max*=1.12;
   var n=rows.length, bw=pw/n;
   function Y(v){ return PT+ph*(1-v/max); }
@@ -1008,10 +1035,10 @@ function oiSVG(rows, ds){
     s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
     s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+Math.round(gv/1000)+'k</text>'; }
   rows.forEach(function(r,idx){
-    var x=PL+idx*bw, cw=Math.max(1,bw*0.38);
+    var x=PL+idx*bw, cw=Math.max(1,bw*(cp==='both'?0.38:0.7));
     var isCW = Math.abs(r[0]-ds.call_wall[0])<0.001, isPW = Math.abs(r[0]-ds.put_wall[0])<0.001;
-    if(r[1]>0) s+='<rect x="'+x.toFixed(1)+'" y="'+Y(r[1]).toFixed(1)+'" width="'+cw.toFixed(1)+'" height="'+(PT+ph-Y(r[1])).toFixed(1)+'" fill="'+(isCW?'#ffd27a':'#3fb97f')+'"/>';
-    if(r[2]>0) s+='<rect x="'+(x+cw+1).toFixed(1)+'" y="'+Y(r[2]).toFixed(1)+'" width="'+cw.toFixed(1)+'" height="'+(PT+ph-Y(r[2])).toFixed(1)+'" fill="'+(isPW?'#ff9d97':'#b34a44')+'"/>';
+    if(shC&&r[1]>0) s+='<rect x="'+x.toFixed(1)+'" y="'+Y(r[1]).toFixed(1)+'" width="'+cw.toFixed(1)+'" height="'+(PT+ph-Y(r[1])).toFixed(1)+'" fill="'+(isCW?'#ffd27a':'#3fb97f')+'"/>';
+    if(shP&&r[2]>0) s+='<rect x="'+(cp==='both'?x+cw+1:x).toFixed(1)+'" y="'+Y(r[2]).toFixed(1)+'" width="'+cw.toFixed(1)+'" height="'+(PT+ph-Y(r[2])).toFixed(1)+'" fill="'+(isPW?'#ff9d97':'#b34a44')+'"/>';
   });
   /* wall markers + strike labels (every nth) */
   var step = n>110 ? 16 : n>70 ? 10 : 6;
@@ -1030,9 +1057,9 @@ function oiSVG(rows, ds){
     return '<line x1="'+x+'" y1="'+(PT-4)+'" x2="'+x+'" y2="'+(PT+ph)+'" stroke="'+color+'" stroke-width="1.4" stroke-dasharray="4 3"/>'+
       '<text x="'+tx+'" y="'+(PT-10)+'" fill="'+color+'" font-size="11" font-weight="600" font-family="IBM Plex Mono" text-anchor="'+anchor+'">'+label+' '+wall.toFixed(2)+' · '+fmt(oi)+'</text>';
   }
-  var sameStrike = Math.abs(ds.call_wall[0]-ds.put_wall[0])<0.001;
+  var sameStrike = cp==='both' && Math.abs(ds.call_wall[0]-ds.put_wall[0])<0.001;
   var cMode = sameStrike?'left':'', pMode = sameStrike?'right':'';
-  if(!sameStrike){
+  if(!sameStrike && cp==='both'){
     /* distinct strikes whose centered labels would collide: swing each label outward */
     function wallX(wall){ var ii=-1; rows.forEach(function(r,i2){ if(Math.abs(r[0]-wall)<0.001) ii=i2; }); return ii<0?null:PL+ii*bw+bw/2; }
     var xc=wallX(ds.call_wall[0]), xp=wallX(ds.put_wall[0]);
@@ -1040,8 +1067,8 @@ function oiSVG(rows, ds){
                ('PUT WALL '+ds.put_wall[0].toFixed(2)+' \u00b7 '+fmt(ds.put_wall[1])).length)*3.3+4;
     if(xc!=null && xp!=null && Math.abs(xc-xp)<needW){ if(xc<xp){ cMode='left'; pMode='right'; } else { cMode='right'; pMode='left'; } }
   }
-  s+=wallMark(ds.call_wall[0], ds.call_wall[1], 'CALL WALL', '#ffd27a', cMode);
-  s+=wallMark(ds.put_wall[0], ds.put_wall[1], 'PUT WALL', '#ff9d97', pMode);
+  if(shC) s+=wallMark(ds.call_wall[0], ds.call_wall[1], 'CALL WALL', '#ffd27a', cMode);
+  if(shP) s+=wallMark(ds.put_wall[0], ds.put_wall[1], 'PUT WALL', '#ff9d97', pMode);
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Open interest by strike">'+s+'</svg>';
 }
 
@@ -1402,12 +1429,29 @@ function positioningHTML(key){
     (isNear ? '' : '<div class="stamp" style="border:0;margin-top:10px;padding-top:0">FAR MONTH — chain pull Oct 22, 2026 · OI as of Oct 21 close, frozen. Range the market is defining: '+money2(ds.put_wall[0])+' – '+money2(ds.call_wall[0])+'.</div>');
 }
 
+var OIV={}; try{ OIV=JSON.parse(localStorage.getItem('desk.oiv')||'{}')||{}; }catch(e){}
+function daysToFnd(key){
+  var st=(typeof ROLLS!=='undefined'&&ROLLS[key]&&ROLLS[key].stats)||{}, t=st.fnd?new Date(st.fnd.replace(/^[A-Za-z]+ /,'')+' 12:00'):null;
+  return t&&!isNaN(t)?Math.ceil((t-Date.now())/86400000):null;
+}
 function oiTileHTML(key){
-  var g=DATA.grains[key], meta=GMETA[key], side=grainState[key], ds=g[side];
-  var isNear = side==="near";
-  return '<div class="tile-head"><h2>Open interest by strike — <span class="h2note">'+(isNear?meta.chainNear:meta.chainFar)+' · '+'Oct 22, 2026 chain pull'+'</span></h2></div>'+
-    oiSVG(ds.rows, ds)+
-    '<div class="legend"><span><span class="sw" style="background:var(--call)"></span>Call OI</span><span><span class="sw" style="background:var(--put)"></span>Put OI</span><span><span class="sw" style="background:#ffd27a"></span>Call wall strike</span><span><span class="sw" style="background:#ff9d97"></span>Put wall strike</span></div>';
+  var g=DATA.grains[key], meta=GMETA[key], side=grainState[key], st=OIV[key]||(OIV[key]={cp:'both',mon:'cur'});
+  var dF=daysToFnd(key), nextOn=dF!=null&&dF<=15&&side==='near'&&g.far&&g.far.rows&&g.far.rows.length;
+  var mon=(nextOn&&st.mon==='next')?'far':side, ds=g[mon], cp=st.cp||'both';
+  var monLab=mon==='near'?meta.chainNear:meta.chainFar;
+  function btn(attr,val,on,lab){ return '<button data-oiv="'+attr+'" data-v="'+val+'" data-k="'+key+'" aria-pressed="'+on+'">'+lab+'</button>'; }
+  var cpT='<span class="toggle" role="group" aria-label="Calls or puts">'+btn('cp','call',cp==='call','CALLS')+btn('cp','put',cp==='put','PUTS')+btn('cp','both',cp==='both','BOTH')+'</span>';
+  var mT=side!=='near'?'':nextOn
+    ? '<span class="toggle" role="group" aria-label="Option month">'+btn('mon','cur',mon==='near',meta.chainNear.toUpperCase())+btn('mon','next',mon==='far','NEXT · '+meta.chainFar.toUpperCase())+'</span>'
+    : '<span class="badge dim" title="The next option month switch appears 15 days before first notice day">Next month ('+meta.chainFar+') unlocks at FND−15</span>';
+  if(!nextOn&&side==='near'&&dF!=null) mT='<span class="badge dim" title="The next option month switch appears 15 days before first notice day">Next month '+meta.chainFar+' unlocks in '+(dF-15)+' days (FND−15)</span>';
+  var tot=cp==='call'?'Call OI '+fmt(ds.calls)+' · wall '+fmt(ds.call_wall[0],2):cp==='put'?'Put OI '+fmt(ds.puts)+' · wall '+fmt(ds.put_wall[0],2):'P/C '+fmt(ds.pcr,2);
+  var leg=(cp!=='put'?'<span><span class="sw" style="background:var(--call)"></span>Call OI</span><span><span class="sw" style="background:#ffd27a"></span>Call wall strike</span>':'')+
+          (cp!=='call'?'<span><span class="sw" style="background:var(--put)"></span>Put OI</span><span><span class="sw" style="background:#ff9d97"></span>Put wall strike</span>':'');
+  return '<div class="tile-head"><h2>Open interest by strike — <span class="h2note">'+monLab+(mon==='far'&&side==='near'?' (next month)':'')+' · Oct 22, 2026 chain pull · '+tot+'</span></h2>'+
+    '<div class="oi-ctl">'+cpT+mT+'</div></div>'+
+    (nextOn?'<p class="note" style="margin:4px 0 0">'+dF+' day'+(dF===1?'':'s')+' to first notice — next option month strikes available for roll planning.</p>':'')+
+    oiSVG(ds.rows, ds, cp)+'<div class="legend">'+leg+'</div>';
 }
 
 /* ---------------- grain dashboard pieces ---------------- */
@@ -2582,6 +2626,114 @@ function flag(cc, h){
 function flagCcy(ccy, h){ return ccy==='USD'||ccy==='us'?flag('us',h):ccy==='CAD'||ccy==='ca'?flag('ca',h):''; }
 function cflag(cc){ return '<span class="cflag">'+flag(cc,16)+'</span>'; }
 
+/* ================= POSITIONING KPIs (z-score, COT index, flow, OI, commercial spread) ================= */
+function posK(key){ return key==='fx'?(DATA.fx.pos&&DATA.fx.pos.kpi):(DATA.grains[key].cftc_stats&&DATA.grains[key].cftc_stats.kpi); }
+function gaugeHTML(v, lo, hi, marks, fmtv){
+  var pct=Math.max(0,Math.min(100,(v-lo)/(hi-lo)*100));
+  return '<div class="gauge"><div class="g-track">'+marks.map(function(m){ return '<span class="g-mark" style="left:'+((m-lo)/(hi-lo)*100)+'%"></span>'; }).join('')+
+    '<span class="g-dot '+(pct>=80||pct<=20?'hot':'')+'" style="left:'+pct+'%"></span></div><div class="g-lab"><span>'+fmtv(lo)+'</span><span>'+fmtv(hi)+'</span></div></div>';
+}
+function posState(K){
+  var z=K.z52, c=K.cot3, f=[];
+  var zs=z>=2?'extreme crowded long':z<=-2?'extreme crowded short':z>=1?'leaning long':z<=-1?'leaning short':'neutral';
+  var cs=c>80?'extreme long (3-yr)':c<20?'extreme short (3-yr)':'mid-range';
+  var dbl=(z>=2&&c>80)?'long':(z<=-2&&c<20)?'short':null;
+  return {zs:zs, cs:cs, dbl:dbl};
+}
+function flowRead(K){
+  if(K.doi_pct==null) return '';
+  var up=K.doi_pct>0, nb=K.d1>0;
+  return up&&nb?'fresh fund buying — new money entering long':up&&!nb?'fresh shorting — new money entering short':!up&&nb?'short covering — exhaustible, not new buying':'long liquidation — positions unwinding';
+}
+function positioningKpiHTML(key){
+  var K=posK(key), isFx=key==='fx';
+  var title=isFx?'Leveraged Funds — CAD futures (TFF report)':'Managed Money — '+GMETA[key].name+' (Disaggregated report)';
+  if(!K) return '<div class="tile wide poskpi" data-src="'+(isFx?'cftc_fx':'cftc_grains')+'"><h2>'+(isFx?flag('ca',15):flag('us',15))+' Positioning KPIs <span class="h2note">— '+title+'</span></h2><p class="note">Positioning KPIs load on the next CFTC refresh.</p></div>';
+  var S=posState(K), alerts=[];
+  if(Math.abs(K.z52)>=2) alerts.push(['hot','52-wk z-score '+sgn(K.z52,2,'σ')+' — '+S.zs]);
+  if(K.cot3>80||K.cot3<20) alerts.push(['hot','3-yr COT Index '+fmt(K.cot3,0)+' — '+S.cs]);
+  if(S.dbl) alerts.push(['crit','DOUBLE EXTREME '+S.dbl.toUpperCase()+' — high '+(S.dbl==='short'?'short-squeeze':'long-liquidation')+' / mean-reversion risk']);
+  if(K.vel_pct_oi!=null&&Math.abs(K.vel_pct_oi)>=2) alerts.push(['warn','Flow velocity '+sgn(K.vel_pct_oi,1,'%')+' of OI in one week']);
+  if(Math.abs(K.streak)>=4) alerts.push(['warn',Math.abs(K.streak)+' straight weeks of net '+(K.streak>0?'buying':'selling')]);
+  if(K.doi_pct!=null&&Math.abs(K.doi_pct)>=2) alerts.push(['warn','Open interest '+(K.doi_pct>0?'expanding':'contracting')+' '+sgn(K.doi_pct,1,'%')+' w/w']);
+  if(K.spread_idx!=null&&(K.spread_idx>=90||K.spread_idx<=10)) alerts.push(['hot','Commercial vs spec spread at a 3-yr extreme ('+fmt(K.spread_idx,0)+')']);
+  var sg=function(v){ return (v>0?'+':v<0?'−':'')+fmt(Math.abs(v)); };
+  var commLab=isFx?'Dealers (sell-side)':'Producers / merchants';
+  var cards=[
+    '<div class="pk"><div class="pk-k">52-wk z-score</div><div class="pk-v '+(Math.abs(K.z52)>=2?'hot':'')+'">'+sgn(K.z52,2,'σ')+'</div>'+gaugeHTML(K.z52,-3,3,[-2,0,2],function(v){ return (v>0?'+':'')+v+'σ'; })+'<div class="pk-s">'+S.zs+'</div>'+(K.z_hist&&K.z_hist.length>3?sparkPath(K.z_hist.map(function(x){ return x[1]; }),140,22):'')+'</div>',
+    '<div class="pk"><div class="pk-k">3-yr COT Index</div><div class="pk-v '+(K.cot3>80||K.cot3<20?'hot':'')+'">'+fmt(K.cot3,0)+'<small>/100</small></div>'+gaugeHTML(K.cot3,0,100,[20,50,80],function(v){ return v; })+'<div class="pk-s">'+S.cs+'</div>'+(K.cot_hist&&K.cot_hist.length>3?sparkPath(K.cot_hist.map(function(x){ return x[1]; }),140,22):'')+'</div>',
+    '<div class="pk '+(S.dbl?'crit':'')+'"><div class="pk-k">Double-extreme flag</div><div class="pk-v">'+(S.dbl?'⚠ '+S.dbl.toUpperCase():'none')+'</div><div class="pk-s">'+(S.dbl?'z-score and COT Index both at extremes — mean reversion / '+(S.dbl==='short'?'short squeeze':'liquidation')+' odds rise':'needs |z| ≥ 2 and COT > 80 or < 20 together')+'</div></div>',
+    '<div class="pk"><div class="pk-k">Flow velocity &amp; streak</div><div class="pk-v '+cls(K.d1)+'">'+sg(K.d1)+'<small> w/w</small></div><div class="pk-s">'+(K.vel_pct_oi!=null?sgn(K.vel_pct_oi,2,'%')+' of open interest':'')+'<br>'+(K.streak?Math.abs(K.streak)+' week'+(Math.abs(K.streak)>1?'s':'')+' of net '+(K.streak>0?'buying':'selling'):'flat')+'</div></div>',
+    '<div class="pk"><div class="pk-k">Open interest Δ w/w</div><div class="pk-v '+cls(K.doi_pct||0)+'">'+(K.doi_pct!=null?sgn(K.doi_pct,2,'%'):'—')+'</div><div class="pk-s">'+fmt(K.oi)+' contracts<br><b>'+flowRead(K)+'</b></div>'+(K.oi_hist&&K.oi_hist.length>3?sparkPath(K.oi_hist.map(function(x){ return x[1]; }),140,22):'')+'</div>',
+    (K.spread_idx!=null?'<div class="pk"><div class="pk-k">Commercial vs spec spread</div><div class="pk-v">'+fmt(K.spread_idx,0)+'<small>/100 (3-yr)</small></div>'+gaugeHTML(K.spread_idx,0,100,[10,50,90],function(v){ return v; })+'<div class="pk-s">Funds '+sg(K.net)+' vs '+commLab.toLowerCase()+' '+sg(K.comm_net)+' (Δ '+sg(K.comm_d1)+')<br>'+(K.spread_idx>=90||K.spread_idx<=10?'<b>extreme divergence — hedgers fully opposite the funds</b>':'within the normal range')+'</div></div>':
+      '<div class="pk"><div class="pk-k">Commercial vs spec spread</div><div class="pk-v">—</div><div class="pk-s">'+commLab+' columns load on the next CFTC refresh</div></div>')
+  ];
+  return '<div class="tile wide poskpi has-flag" data-src="'+(isFx?'cftc_fx':'cftc_grains')+'">'+cflag(isFx?'ca':'us')+'<h2>Positioning KPIs <span class="h2note">— '+title+' · positions as of '+esc(fmtDate(K.date))+'</span></h2>'+
+    (alerts.length?'<div class="pk-alerts">'+alerts.map(function(a){ return '<span class="pk-al '+a[0]+'">'+a[1]+'</span>'; }).join('')+'</div>':'<div class="pk-alerts"><span class="pk-al ok">No positioning alerts this week</span></div>')+
+    '<div class="pk-grid">'+cards.join('')+'</div>'+
+    '<div class="stamp">z-score = (net − 52-wk mean) ÷ 52-wk st.dev (alert ±2σ) · COT Index = 100 × (net − 3-yr min) ÷ (3-yr max − min) (alert >80 / <20) · flow velocity = weekly net change ÷ open interest (alert ±2%) · streak alert ≥ 4 weeks · OI Δ alert ±2% · CFTC positions are as of Tuesday, released Friday 3:30 pm ET</div></div>';
+}
+
+/* ================= CROSS-ASSET CHECK + WEEKLY REVIEW CHECKLIST ================= */
+function crossAsset(){
+  var g=['corn','soybeans','wheat'].map(function(k){ return posK(k); }).filter(Boolean), c=posK('fx');
+  if(!g.length||!c) return null;
+  var bz=g.reduce(function(a,K){ return a+K.z52; },0)/g.length, cz=c.z52;
+  var dis=(bz>=1&&cz<=-1)?'Funds lean long grains while short CAD — terms of trade improving for Canada but USD/CAD has not adjusted (CAD may be undervalued vs ag)':
+          (bz<=-1&&cz>=1)?'Funds lean short grains while long CAD — CAD strength not backed by ag terms of trade':null;
+  return {bz:bz, cz:cz, dis:dis};
+}
+function checklistHTML(key){
+  var K=posK(key); if(!K) return '';
+  var isFx=key==='fx', S=posState(K), X=crossAsset(), items=[];
+  function it(ok, t, d){ items.push('<div class="ck '+(ok===true?'pass':ok===false?'flag':'info')+'"><span class="ck-i">'+(ok===true?'✓':ok===false?'!':'•')+'</span><div><b>'+t+'</b><div class="ck-d">'+d+'</div></div></div>'); }
+  it(true,'1 · Data format', isFx?'Leveraged Funds from the Traders in Financial Futures report (CAD futures, CME)':'Managed Money from the Disaggregated report — excludes passive swap/index money');
+  var ext=Math.abs(K.z52)>=2||K.cot3>80||K.cot3<20;
+  it(!ext,'2 · Z-score & COT Index', 'z '+sgn(K.z52,2,'σ')+' ('+S.zs+') · COT '+fmt(K.cot3,0)+' ('+S.cs+')'+(S.dbl?' · <b>double extreme</b>':''));
+  var flowAlert=(K.doi_pct!=null&&Math.abs(K.doi_pct)>=2)||(K.vel_pct_oi!=null&&Math.abs(K.vel_pct_oi)>=2)||Math.abs(K.streak)>=4;
+  it(!flowAlert,'3 · Open interest & flow', 'OI '+(K.doi_pct!=null?sgn(K.doi_pct,1,'%'):'—')+' w/w · net '+(K.d1>0?'+':'−')+fmt(Math.abs(K.d1))+' ('+(K.vel_pct_oi!=null?sgn(K.vel_pct_oi,1,'%')+' of OI':'')+') · '+flowRead(K));
+  if(X) it(!X.dis,'4 · Cross-asset (grains vs CAD)', 'grain basket z '+sgn(X.bz,2,'σ')+' vs CAD funds z '+sgn(X.cz,2,'σ')+(X.dis?' — <b>'+X.dis+'</b>':' — no disconnect'));
+  var tech, agree;
+  if(isFx){ var fx=DATA.fx, sp=+fx.feed.mid, L=fx.levels; tech='USD/CAD '+fmt(sp,4)+' vs 20-day range '+fmt(L.s20,4)+'–'+fmt(L.r20,4)+' · pivot '+fmt(L.pivot,4);
+    agree=(K.net<0&&sp>L.pivot)||(K.net>0&&sp<L.pivot); }
+  else { var f=DATA.grains[key].fan, px=+f.intraday[0], m20=+f.ma20, m50=+f.ma50; tech='price '+fmt(px,4)+' vs MA20 '+fmt(m20,2)+' / MA50 '+fmt(m50,2)+' · settle z '+f.z;
+    agree=(K.net>0&&px>m50)||(K.net<0&&px<m50); }
+  it(agree,'5 · Technical confirmation', tech+' — '+(agree?'price trend agrees with fund positioning':'price trend <b>against</b> fund positioning — wait for a technical trigger before acting'));
+  var nflag=items.filter(function(x){ return /ck flag/.test(x); }).length;
+  return '<div class="tile wide ckwrap"><h2>Weekly positioning review <span class="h2note">— '+(nflag?nflag+' item'+(nflag>1?'s':'')+' flagged':'all clear')+' · CFTC data is 3 days old on release; use price for timing</span></h2><div class="ck-list">'+items.join('')+'</div></div>';
+}
+
+/* ================= AWAITING-RELEASE SKELETON (event cards only) ================= */
+function lastWeekday(wd, h, m, maxBackDays){
+  var now=Date.now();
+  for(var i=0;i<=(maxBackDays||8);i++){ var x=new Date(now-i*86400000), p={};
+    new Intl.DateTimeFormat('en-US',{timeZone:'America/Toronto',year:'numeric',month:'numeric',day:'numeric',weekday:'short'}).formatToParts(x).forEach(function(q){ p[q.type]=q.value; });
+    if(p.weekday===wd){ var t=zonedMs(+p.year,+p.month,+p.day,h,m,'America/Toronto'); if(t<=now) return {t:t, y:+p.year, m:+p.month, d:+p.day}; } }
+  return null;
+}
+function isoAdd(y,m,d,days){ var x=new Date(Date.UTC(y,m-1,d)+days*86400000); return x.toISOString().slice(0,10); }
+function awaitingList(){
+  var now=Date.now(), out=[], DAY=86400000;
+  var cf=lastWeekday('Fri',15,30,7);
+  if(cf&&now-cf.t<DAY){ var exp=isoAdd(cf.y,cf.m,cf.d,-3), last=(DATA.grains.corn.cftc||[]).slice(-1)[0];
+    if(last&&last.date<exp) out.push({sel:'[data-src="cftc_grains"],[data-src="cftc_fx"],.poskpi,.ckwrap', label:'Awaiting CFTC Commitments of Traders — positions as of '+exp}); }
+  var es=lastWeekday('Thu',8,30,7);
+  if(es&&now-es.t<DAY){ var exp2=isoAdd(es.y,es.m,es.d,-7), E=(DATA.exports&&DATA.exports.corn)||{}, lw=(E.weeks||[]).slice(-1)[0];
+    if(lw&&lw[0]<exp2) out.push({sel:'[data-src="exports"]', label:'Awaiting USDA weekly export sales'}); }
+  (typeof USDA_WASDE!=='undefined'?USDA_WASDE:[]).forEach(function(dt){ var p=dt.split('-'), t=zonedMs(+p[0],+p[1],+p[2],12,0,'America/Toronto');
+    var lab=new Date(Date.UTC(+p[0],+p[1]-1,15)).toLocaleString('en-US',{month:'short',year:'numeric',timeZone:'UTC'});
+    if(now>=t&&now-t<DAY&&DATA.wasde&&DATA.wasde.corn&&DATA.wasde.corn.report!==lab) out.push({sel:'[data-src="wasde"]', label:'Awaiting USDA WASDE '+lab}); });
+  macroAll().forEach(function(m){ var C=DATA.release_cal&&DATA.release_cal[m.key]; if(!C||!C.dates) return;
+    C.dates.forEach(function(s){ var a=s.split('T'), d=a[0].split('-'), h=a[1].split(':'), t=zonedMs(+d[0],+d[1],+d[2],+h[0],+h[1],'America/Toronto');
+      if(now>=t&&now-t<DAY&&(!m.seen_at||new Date(m.seen_at).getTime()<t)) out.push({sel:'.mcard[data-mkey="'+m.key+'"]', label:'Awaiting '+m.name+' release', small:true}); }); });
+  return out;
+}
+function paintAwaiting(){
+  document.querySelectorAll('.awaiting').forEach(function(el){ el.classList.remove('awaiting'); el.removeAttribute('data-await'); });
+  awaitingList().forEach(function(a){ document.querySelectorAll(a.sel).forEach(function(el){ el.classList.add('awaiting'); if(a.small) el.classList.add('aw-sm'); el.setAttribute('data-await', a.label+' · refreshing automatically'); }); });
+}
+setInterval(paintAwaiting, 10000);
+
 /* ================= USD/CAD LIVE FEED MONITOR ================= */
 var MON_TAB='next';
 function agriEvents(fromMs, days){
@@ -2657,7 +2809,7 @@ function renderGrain(key){
   FU+=wasdeTableHTML(key)+exportTileHTML(key)+destTileHTML(key);
   /* insight + curve (both computed from the data) */
   OV+='<div class="tile wide"><h2>Insight</h2><p class="read">'+grainInsight(key)+'</p><div class="stamp">Generated from the current settles, options and CFTC data</div></div>';
-  DV+=cockpitHTML(key)+volTermHTML(key)+grainSpreadsHTML(key).replace('class="tile"','class="tile wide"');
+  DV+=positioningKpiHTML(key)+checklistHTML(key)+cockpitHTML(key)+volTermHTML(key)+grainSpreadsHTML(key).replace('class="tile"','class="tile wide"');
   /* positioning (toggle target) */
   DV+='<div class="tile wide" id="pos-'+key+'">'+positioningHTML(key)+'</div>';
   /* OI chart (toggle target) */
@@ -3101,7 +3253,7 @@ function renderFX(){
     '<div class="stamp">F = spot \u00d7 (1 + CAD rate \u00d7 T) \u00f7 (1 + US rate \u00d7 T) \u00b7 sub-1Y: US 3M bill vs BoC overnight \u00b7 1Y\u20135Y: benchmark yields ('+asOf('yields')+') \u00b7 <span id="fx-fwd-spot">spot '+fmt(fx.feed.mid,5)+'</span></div></div>';
   html+=fxSubnavHTML()+
     subWrap('fx','overview', fxKpiHTML()+T.spot+T.closes+T.model+askTileHTML('fx'))+
-    subWrap('fx','deriv', T.forwards+T.cftc+T.sentiment.replace('class="tile"','class="tile wide"'))+
+    subWrap('fx','deriv', positioningKpiHTML('fx')+checklistHTML('fx')+T.forwards+T.cftc+T.sentiment.replace('class="tile"','class="tile wide"'))+
     subWrap('fx','macro', liveFxHTML()+macroDashHTML()+tradeFiscalHTML()+fxMacroHTML()+T.releases)+
     subWrap('fx','rates', T.yields+T.energy.replace('class="tile wide"','class="tile"')+T.policy);
   html+='</div><aside class="rail">'+liveMonitorHTML()+fxAlertsHTML()+'</aside></div>';
@@ -3116,6 +3268,9 @@ document.querySelectorAll('.tab-btn').forEach(function(btn){
   });
 });
 document.querySelector('main').addEventListener('click', function(ev){
+  var o = ev.target.closest ? ev.target.closest('[data-oiv]') : null;
+  if(o){ var k=o.getAttribute('data-k'); OIV[k]=OIV[k]||{cp:'both',mon:'cur'}; OIV[k][o.getAttribute('data-oiv')]=o.getAttribute('data-v');
+    try{ localStorage.setItem('desk.oiv',JSON.stringify(OIV)); }catch(e){} document.getElementById('oi-'+k).innerHTML=oiTileHTML(k); return; }
   var b = ev.target.closest ? ev.target.closest('.toggle button') : null;
   if(!b || !b.hasAttribute('data-side')) return;   /* dashboard toggles have their own handler */
   var key=b.getAttribute('data-grain'); grainState[key]=b.getAttribute('data-side');
@@ -3123,7 +3278,7 @@ document.querySelector('main').addEventListener('click', function(ev){
   document.getElementById('oi-'+key).innerHTML=oiTileHTML(key);
 });
 
-function renderAll(){ renderGrain('corn'); renderGrain('wheat'); renderGrain('soybeans'); renderFX(); drawDestMaps(); }
+function renderAll(){ renderGrain('corn'); renderGrain('wheat'); renderGrain('soybeans'); renderFX(); drawDestMaps(); if(typeof paintAwaiting==='function') paintAwaiting(); }
 renderAll();
 </script>
 <script>
