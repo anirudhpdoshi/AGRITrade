@@ -193,8 +193,11 @@ details.rail-card[open ] .hint-closed{display:none}
 @media (max-width:1020px){.kpi-strip{grid-template-columns:repeat(3,minmax(0,1fr))}.kpi:nth-child(3n){border-right:0}.kpi:nth-child(-n+3){border-bottom:1px solid var(--line)}}
 @media (max-width:760px){.kpi:last-child:nth-child(odd){grid-column:1/-1}.kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi{border-right:1px solid var(--line)!important;border-bottom:1px solid var(--line)}.kpi:nth-child(2n){border-right:0!important}.kpi-v{font-size:18px}.rel-grid{grid-template-columns:1fr}}
 
-.fwd-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:8px 26px;align-items:start}
-@media (max-width:760px){.fwd-grid{grid-template-columns:1fr}}
+.fwd-grid{display:grid;grid-template-columns:1fr;gap:8px;align-items:start}
+.fwd-t{width:100%;border-collapse:collapse;font-size:13px}.fwd-t th{text-align:right;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:700;padding:6px 8px;border-bottom:1px solid var(--line)}
+.fwd-t td{text-align:right;padding:6px 8px;border-bottom:1px solid #1a2638;font-family:"IBM Plex Mono",monospace;white-space:nowrap}.fwd-t th:first-child,.fwd-t td:first-child{text-align:left;font-family:inherit}
+.fwd-t td.ft{color:var(--faint)}.ft-in{display:none;color:var(--faint);font-family:"IBM Plex Mono",monospace}.fwd-t td.neg{color:#ff9d97}.fwd-t tr:hover td{background:#14213a}
+@media (max-width:760px){table.fwd-t{display:table!important;font-size:11.5px}table.fwd-t thead{display:table-header-group!important}table.fwd-t tbody{display:table-row-group!important}table.fwd-t tr{display:table-row!important;padding:0}table.fwd-t th,table.fwd-t td{display:table-cell!important;padding:5px 3px;text-align:right}table.fwd-t td::before{content:none!important}table.fwd-t .ft,table.fwd-t th:nth-child(2){display:none!important}.ft-in{display:inline}table.fwd-t th:first-child,table.fwd-t td:first-child{text-align:left!important}}
 
 .es-tblh{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:16px 0 4px;font-weight:700}
 table.es-tbl{font-size:12.5px} table.es-tbl tr.hl-row td{color:var(--amber)}
@@ -3104,6 +3107,18 @@ function fxIntradayPoints(extra){
   var all=base.concat(extra||[]).filter(function(p){ return p[1]>0; }).sort(function(a,b){ return a[0]-b[0]; });
   var cut=Date.now()-20*3600e3; return all.filter(function(p){ return p[0]>=cut; });
 }
+function fxValueDate(tenor){
+  /* USD/CAD spot settles T+1; tenor added to the spot date, weekends rolled to Monday (holidays not adjusted) */
+  var p={}; new Intl.DateTimeFormat('en-US',{timeZone:'America/Toronto',year:'numeric',month:'numeric',day:'numeric'}).formatToParts(new Date()).forEach(function(q){ p[q.type]=q.value; });
+  var d=new Date(Date.UTC(+p.year,+p.month-1,+p.day));
+  function roll(x){ while(x.getUTCDay()===0||x.getUTCDay()===6) x.setUTCDate(x.getUTCDate()+1); return x; }
+  d.setUTCDate(d.getUTCDate()+1); roll(d);
+  var m=/^(\d+)([WMY])$/.exec(tenor), n=+m[1];
+  if(m[2]==='W') d.setUTCDate(d.getUTCDate()+7*n); else if(m[2]==='M') d.setUTCMonth(d.getUTCMonth()+n); else d.setUTCFullYear(d.getUTCFullYear()+n);
+  return roll(d);
+}
+function vdLab(d, short){ var M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()];
+  return short?M+' \u2019'+String(d.getUTCFullYear()).slice(2):M+' '+d.getUTCDate()+', '+d.getUTCFullYear(); }
 function fxForwardLegs(spot){
   var fx=DATA.fx, us3=fx.treasury["3M"], ca0=fx.policy.corra_now, R={};
   fx.rates.forEach(function(r){ R[r.t]=r; });
@@ -3111,11 +3126,12 @@ function fxForwardLegs(spot){
   [["1Y",365],["2Y",730],["5Y",1825]].forEach(function(l){ if(R[l[0]]) legs.push([l[0],l[1],R[l[0]].us,R[l[0]].ca]); });
   return legs.map(function(c){
     var T=c[1]/365, F=spot*(1+c[3]/100*T)/(1+c[2]/100*T);
-    return {t:c[0], days:c[1], F:F, pts:(F-spot)*10000, ann:(F/spot-1)/T*100};
+    var vd=fxValueDate(c[0]);
+    return {t:c[0], days:c[1], F:F, pts:(F-spot)*10000, ann:(F/spot-1)/T*100, vd:vd};
   });
 }
 function fxForwardSVG(spot, L){
-  var W=560, H=250, PL=58, PR=16, PT=22, PB=38, pw=W-PL-PR, ph=H-PT-PB;
+  var W=760, H=290, PL=58, PR=20, PT=24, PB=50, pw=W-PL-PR, ph=H-PT-PB;
   var xs=L.map(function(l){ return Math.sqrt(l.days); }), x0=0, x1=Math.max.apply(null,xs);
   var ys=L.map(function(l){ return l.F; }).concat([spot]), mn=Math.min.apply(null,ys), mx=Math.max.apply(null,ys), rg=(mx-mn)||0.001;
   mn-=rg*0.08; mx+=rg*0.12;
@@ -3133,26 +3149,32 @@ function fxForwardSVG(spot, L){
   L.forEach(function(l){ line+='L'+X(l.days).toFixed(1)+' '+Y(l.F).toFixed(1); });
   s+='<path d="'+line+'L'+X(L[L.length-1].days).toFixed(1)+' '+Y(spot).toFixed(1)+'Z" fill="rgba(224,101,95,.12)"/>';
   s+='<path d="'+line+'" fill="none" stroke="#e8a33d" stroke-width="2.2"/>';
-  var show={"1M":1,"3M":1,"6M":1,"1Y":1,"2Y":1,"5Y":1};
-  L.forEach(function(l){
-    var x=X(l.days), y=Y(l.F);
-    s+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(show[l.t]?3.6:2.4)+'" fill="#e8a33d"/>';
+  var show={"1M":1,"3M":1,"6M":1,"1Y":1,"2Y":1,"5Y":1}, tid='b'+(++BTN);
+  BTIPS[tid]=L.map(function(l){ return '<div class="bt-h">'+vdLab(l.vd)+' <span style="color:#8494ab;font-weight:400">\u00b7 '+l.t+' forward</span></div>'+
+    '<div class="bt-row"><span>Outright USD/CAD</span><b>'+fmt(l.F,5)+'</b></div><div class="bt-row"><span>Spot</span><b>'+fmt(spot,5)+'</b></div>'+
+    '<div class="bt-row"><span>Forward points</span><b>'+sgn(l.pts,1)+'</b></div><div class="bt-row"><span>Annualised</span><b>'+sgn(l.ann,2,'%')+'</b></div>'+
+    '<div class="bt-math">'+fmt(spot,5)+' '+(l.pts<0?'\u2212':'+')+' '+fmt(Math.abs(l.pts),1)+' pts = '+fmt(l.F,5)+'</div>'; });
+  L.forEach(function(l,i){
+    var x=X(l.days), y=Y(l.F), anc=l.t==="5Y"?"end":"middle";
     if(show[l.t]){
-      s+='<text x="'+x.toFixed(1)+'" y="'+(y+16).toFixed(1)+'" fill="#ff9d97" font-size="10" font-weight="600" font-family="IBM Plex Mono" text-anchor="'+(l.t==="5Y"?"end":"middle")+'">'+sgn(l.pts,0)+'</text>';
+      s+='<text x="'+x.toFixed(1)+'" y="'+(y-9).toFixed(1)+'" fill="#e8eef4" font-size="10.5" font-weight="700" font-family="IBM Plex Mono" text-anchor="'+anc+'" paint-order="stroke" stroke="#0f1825" stroke-width="3">'+fmt(l.F,4)+'</text>';
+      s+='<text x="'+x.toFixed(1)+'" y="'+(y+17).toFixed(1)+'" fill="#ff9d97" font-size="9.5" font-weight="600" font-family="IBM Plex Mono" text-anchor="'+anc+'" paint-order="stroke" stroke="#0f1825" stroke-width="3">'+sgn(l.pts,0)+'</text>';
+      s+='<text x="'+x.toFixed(1)+'" y="'+(H-PB+15)+'" fill="#8494ab" font-size="10" font-family="IBM Plex Mono" text-anchor="'+anc+'">'+vdLab(l.vd,true)+'</text>';
+      s+='<text x="'+x.toFixed(1)+'" y="'+(H-PB+27)+'" fill="#5b6b82" font-size="9" font-family="IBM Plex Mono" text-anchor="'+anc+'">'+l.t+'</text>';
     }
-    s+='<text x="'+x.toFixed(1)+'" y="'+(H-PB+16)+'" fill="#8494ab" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+(show[l.t]||l.t==="1W"?l.t:'')+'</text>';
+    s+='<g class="btip" data-tid="'+tid+'" data-i="'+i+'"><circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="11" fill="transparent"/><circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(show[l.t]?3.8:2.6)+'" fill="#e8a33d" stroke="#0f1825" stroke-width="1"/></g>';
   });
-  s+='<text x="'+PL+'" y="'+(H-6)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">TENOR (√days scale) · LABELS = FORWARD POINTS · SHADED = DISCOUNT TO SPOT</text>';
+  s+='<text x="'+PL+'" y="'+(H-4)+'" fill="#5b6b82" font-size="9.5" font-family="IBM Plex Mono">VALUE DATE (\u221adays scale) \u00b7 WHITE = OUTRIGHT \u00b7 RED = FWD POINTS \u00b7 HOVER ANY DOT</text>';
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="CIP forward curve: outright forward by tenor against spot">'+s+'</svg>';
 }
 function fxForwardsHTML(spot){
   var L=fxForwardLegs(spot);
-  var rows=L.map(function(l){
-    return '<div class="kv"><span class="kk">'+l.t+'</span><span class="vv">'+fmt(l.F,5)+' <span class="neu" style="font-weight:400">('+sgn(l.pts,1,' pts')+' · '+sgn(l.ann,2,'%')+')</span></span></div>';
-  }).join("");
+  var rows='<table class="fwd-t"><thead><tr><th>Value date</th><th>Tenor</th><th>Outright</th><th>Fwd pts</th><th>Annualised</th></tr></thead><tbody>'+L.map(function(l){
+    return '<tr><td>'+vdLab(l.vd)+' <small class="ft-in">'+l.t+'</small></td><td class="ft">'+l.t+'</td><td><b>'+fmt(l.F,5)+'</b></td><td class="neg">'+sgn(l.pts,1)+'</td><td>'+sgn(l.ann,2,'%')+'</td></tr>';
+  }).join("")+'</tbody></table>';
   var y1=L.filter(function(l){ return l.t==="1Y"; })[0];
   var read=y1?'<p class="read" style="font-size:13px">USD/CAD trades at a <b>forward discount</b> all the way out: the 1Y outright sits '+fmt(Math.abs(y1.pts),0)+' pts below spot ('+sgn(y1.ann,2,'%')+' annualised) because US rates run above Canadian rates. The curve flattens past 1Y as the yield gap narrows ('+sgn(L[L.length-1].ann,2,'%')+' at 5Y).</p>':'';
-  return '<div class="fwd-grid"><div>'+fxForwardSVG(spot,L)+read+'</div><div>'+rows+'</div></div>';
+  return '<div class="fwd-grid"><div>'+fxForwardSVG(spot,L)+'</div><div class="fwd-rows">'+rows+'</div>'+read+'</div>';
 }
 function fxLevelCheck(spot){
   var L=DATA.fx.levels, where=[];
@@ -3274,7 +3296,7 @@ function renderFX(){
   T.forwards='<div class="tile wide" data-src="fx_spot"><h2>Forward curve <span class="h2note">— CIP-theoretical</span></h2>'+
     '<p class="note" style="margin:0 0 6px;font-size:12.5px;color:#b9c7da">CIP-theoretical \u2014 computed from spot + rate differentials, not traded quotes</p>'+
     '<div id="fx-fwd">'+fxForwardsHTML(fx.feed.mid)+'</div>'+
-    '<div class="stamp">F = spot \u00d7 (1 + CAD rate \u00d7 T) \u00f7 (1 + US rate \u00d7 T) \u00b7 sub-1Y: US 3M bill vs BoC overnight \u00b7 1Y\u20135Y: benchmark yields ('+asOf('yields')+') \u00b7 <span id="fx-fwd-spot">spot '+fmt(fx.feed.mid,5)+'</span></div></div>';
+    '<div class="stamp">Value dates = spot date (T+1) + tenor, weekends rolled forward (bank holidays not adjusted) \u00b7 F = spot \u00d7 (1 + CAD rate \u00d7 T) \u00f7 (1 + US rate \u00d7 T) \u00b7 sub-1Y: US 3M bill vs BoC overnight \u00b7 1Y\u20135Y: benchmark yields ('+asOf('yields')+') \u00b7 <span id="fx-fwd-spot">spot '+fmt(fx.feed.mid,5)+'</span></div></div>';
   html+=fxSubnavHTML()+
     subWrap('fx','overview', fxKpiHTML()+T.spot+T.closes+T.model+askTileHTML('fx'))+
     subWrap('fx','deriv', positioningKpiHTML('fx')+checklistHTML('fx')+T.forwards+T.cftc+T.sentiment.replace('class="tile"','class="tile wide"'))+
