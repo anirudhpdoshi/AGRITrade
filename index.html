@@ -261,6 +261,12 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .dash-card .kpi-spark{display:block;width:100%;height:26px;margin-top:8px}
 .tile-head{flex-wrap:wrap;row-gap:6px}
 .sub{display:contents}.sub:not(.on){display:none}
+.evm{cursor:pointer;outline:none}.evm:hover .evc,.evm.act .evc,.evm:focus .evc{fill:#e8b93d;stroke:#e8b93d}.evm.act line,.evm:hover line{stroke:#e8b93d;stroke-dasharray:none}
+#evpop{position:absolute;z-index:9500;display:none;background:#13213a;border:1px solid #e8b93d;border-radius:10px;padding:12px 14px;box-shadow:0 12px 34px rgba(0,0,0,.55);font-size:13px;color:#c9d6e6}
+#evpop.on{display:block}#evpop:not(.pinned){pointer-events:none}#evpop.pinned{box-shadow:0 0 0 2px rgba(232,185,61,.35),0 12px 34px rgba(0,0,0,.55)}
+.evp-h{font-family:"IBM Plex Mono",monospace;font-size:12px;color:#e8b93d;font-weight:700}.evp-t{color:#fff;font-weight:600;margin:6px 0 8px;line-height:1.4}
+.evp-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:baseline;font-family:"IBM Plex Mono",monospace;font-size:12px;padding:3px 0;border-top:1px dashed #263a58}.evp-row b{color:#fff}
+.evp-f{margin-top:8px;font-size:11.5px;color:#8494ab}.evp-f a{color:#38b6c9}
 .mk-click{cursor:pointer}.mk-click:hover{color:#fff}
 .mcard{cursor:pointer;transition:border-color .15s,transform .15s}.mcard:hover{border-color:#38b6c9;transform:translateY(-1px)}
 #mdc-overlay{position:fixed;inset:0;background:rgba(4,8,14,.72);z-index:9000;display:none;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto}
@@ -1772,7 +1778,8 @@ function lineChartSVG(o){
   var placed=[];
   (o.events||[]).forEach(function(e){ var i=-1; for(var k=0;k<n;k++){ if(xs[k]>=e.date){ i=k; break; } } if(i<0) return;
     var exn=X(i), lvl=0; placed.forEach(function(p){ if(Math.abs(p[0]-exn)<15) lvl=Math.max(lvl,p[1]+1); }); placed.push([exn,lvl]);
-    var ex=exn.toFixed(1), cy=PT+2+lvl*15; s+='<line x1="'+ex+'" x2="'+ex+'" y1="'+cy+'" y2="'+(PT+ph)+'" stroke="#8494ab" stroke-width="1" stroke-dasharray="2 3"/><circle cx="'+ex+'" cy="'+cy+'" r="7" fill="#1a2a42" stroke="#8494ab"/><text x="'+ex+'" y="'+(cy+3.5)+'" fill="#e8eef4" font-size="9" font-weight="700" font-family="IBM Plex Mono" text-anchor="middle">'+e.n+'</text>'; });
+    var ex=exn.toFixed(1), cy=PT+2+lvl*15;
+    s+='<g class="evm" tabindex="0" data-evn="'+e.n+'" data-evsk="'+esc(e.sk||'')+'"><rect x="'+(exn-8).toFixed(1)+'" y="'+(cy-8)+'" width="16" height="'+(PT+ph-cy+8)+'" fill="transparent"/><line x1="'+ex+'" x2="'+ex+'" y1="'+cy+'" y2="'+(PT+ph)+'" stroke="#8494ab" stroke-width="1" stroke-dasharray="2 3"/><circle class="evc" cx="'+ex+'" cy="'+cy+'" r="7" fill="#1a2a42" stroke="#8494ab"/><text x="'+ex+'" y="'+(cy+3.5)+'" fill="#e8eef4" font-size="9" font-weight="700" font-family="IBM Plex Mono" text-anchor="middle" pointer-events="none">'+e.n+'</text></g>'; });
   (o.refs||[]).forEach(function(r){ if(r.v==null) return; s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(r.v).toFixed(1)+'" y2="'+Y(r.v).toFixed(1)+'" stroke="'+r.color+'" stroke-width="1.3" stroke-dasharray="'+(r.dash||'5 4')+'"/>'; labs.push({y:Y(r.v), t:r.label+' '+fmt(r.v,dec), c:r.color}); });
   o.series.forEach(function(sr){ var d='', started=false;
     sr.pts.forEach(function(p){ if(p[1]==null){ started=false; return; } var i=idx[p[0]]; d+=(started?'L':'M')+X(i).toFixed(1)+' '+Y(p[1]).toFixed(1); started=true; });
@@ -2074,15 +2081,11 @@ function inputsHTML(key){
     '<div class="stamp">Red = input dearer (bad for margins), green = cheaper · FRED (EIA energy spot prices; BLS producer price indexes) · World Bank Pink Sheet (urea, DAP, potash, $/mt, monthly) · checked '+esc(asOf('inputs',true))+' · seed and retail chemical prices have no free daily feed — the BLS pesticide index stands in for glyphosate/atrazine</div></div>';
   /* charts: one per input, with numbered event markers */
   var charts=list.map(function(x){ var s=S[x[0]], pts=inPts(s,2), L=pts[pts.length-1], c24=chgOver(s,730);
-    var ev=inputEvents(x[0]).filter(function(e){ return e.date>=pts[0][0]; });
+    var ev=inputEvents(x[0]).filter(function(e){ return e.date>=pts[0][0]; }).map(function(e){ return Object.assign({sk:x[0]},e); });
     return '<div class="mpanel"><h3 class="mp-h">'+esc(s.label)+': <b>'+inFmt(s,L[1])+'</b>'+(c24!=null?', <span class="'+cls(-c24)+'">'+sgn(c24,1,'%')+'</span> in 2 yrs':'')+'</h3>'+
       lineChartSVG({series:[{pts:pts,color:s.kind==='energy'?'#e8a33d':s.kind==='chem'?'#c084fc':'#5fd598',label:'Last'}],yLabel:s.unit,dec:s.unit==='index'?1:s.unit==='$/mt'?0:2,H:200,events:ev,aria:s.label+' over two years'})+
-      '<div class="stamp">'+esc(s.src)+' · '+esc(s.unit)+(ev.length?' · markers = events '+ev.map(function(e){ return e.n; }).join(', '):'')+'</div></div>'; }).join('');
-  html+='<div class="tile wide" data-src="inputs"><h2>Two-year price paths with key events <span class="h2note">— numbered markers match the event list below</span></h2><div class="mpanels">'+charts+'</div></div>';
-  var E=(DATA.inputs.events||[]);
-  html+='<div class="tile wide"><h2>Key events — geopolitics &amp; policy <span class="h2note">— what moved input prices</span></h2>'+
-    E.map(function(e,i){ return '<div class="kv"><span class="kk"><span class="ev-n">'+(i+1)+'</span> '+esc(e.date)+' · '+esc(e.label)+'</span><span class="vv"><a href="'+safeUrl(e.src)+'" target="_blank" rel="noopener">source</a></span></div>'; }).join('')+
-    '<div class="stamp">Each event is taken from the linked report · markers appear only on the inputs the event affected</div></div>';
+      '<div class="stamp">'+esc(s.src)+' · '+esc(s.unit)+(ev.length?' · '+ev.length+' event marker'+(ev.length>1?'s':''):'')+'</div></div>'; }).join('');
+  html+='<div class="tile wide" data-src="inputs"><h2>Two-year price paths with key events <span class="h2note">— hover or tap a numbered marker to see the event and its price impact · click to pin</span></h2><div class="mpanels">'+charts+'</div></div>';
   return html;
 }
 
@@ -2249,6 +2252,42 @@ document.addEventListener('click', function(ev){
   var k=t.closest('[data-mkey]'); if(k){ openMacroDetail(k.getAttribute('data-mkey')); }
 });
 document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMacroDetail(); });
+
+/* ---------- event marker popover (input-cost charts) ---------- */
+var EVPIN=null;
+function evValueAt(S, date, after){ var P=S.pts; for(var i=0;i<P.length;i++){ if(P[i][0]>=date) return P[Math.min(P.length-1,i+(after||0))]; } return null; }
+function evPopHTML(n, sk){
+  var e=(DATA.inputs.events||[])[n-1], S=DATA.inputs.series[sk]; if(!e) return '';
+  var lines='';
+  if(S){ var at=evValueAt(S,e.date,0), idx=S.pts.indexOf(at), step=S.pts.length>60?4:1, later=at?S.pts[Math.min(S.pts.length-1, idx+step)]:null, L=S.pts[S.pts.length-1];
+    function pc(a,b){ return (b/a-1)*100; }
+    if(at){ lines='<div class="evp-row"><span>'+esc(S.label)+' at event</span><b>'+inFmt(S,at[1])+'</b><small>'+esc(at[0])+'</small></div>';
+      if(later&&later!==at) lines+='<div class="evp-row"><span>'+(step>1?'~4 weeks':'next month')+' later</span><b>'+inFmt(S,later[1])+'</b><small class="'+cls(-pc(at[1],later[1]))+'">'+sgn(pc(at[1],later[1]),1,'%')+'</small></div>';
+      lines+='<div class="evp-row"><span>Now</span><b>'+inFmt(S,L[1])+'</b><small class="'+cls(-pc(at[1],L[1]))+'">'+sgn(pc(at[1],L[1]),1,'%')+' since event</small></div>'; } }
+  var also=(DATA.inputs.events[n-1].tags.indexOf('*')>=0?'all inputs':DATA.inputs.events[n-1].tags.map(function(t){ return DATA.inputs.series[t]?DATA.inputs.series[t].label.replace(/ \(.*\)/,''):t; }).join(', '));
+  return '<div class="evp-h"><span class="ev-n">'+n+'</span> '+esc(new Date(e.date+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))+'</div><div class="evp-t">'+esc(e.label)+'</div>'+lines+
+    '<div class="evp-f">Affected: '+esc(also)+' · <a href="'+safeUrl(e.src)+'" target="_blank" rel="noopener">source</a>'+(EVPIN?'':' · click marker to pin')+'</div>';
+}
+function evShow(g, pin){
+  var p=document.getElementById('evpop'); if(!p){ p=document.createElement('div'); p.id='evpop'; document.body.appendChild(p); }
+  p.innerHTML=evPopHTML(+g.getAttribute('data-evn'), g.getAttribute('data-evsk')); p.classList.add('on'); p.classList.toggle('pinned',!!pin);
+  var r=g.querySelector('.evc').getBoundingClientRect(), w=Math.min(300, window.innerWidth-24);
+  p.style.width=w+'px';
+  var right=r.right+10, left=(right+w<=window.innerWidth-8)?right:(r.left-10-w>=8?r.left-10-w:Math.max(8,Math.min(window.innerWidth-w-8,r.left+r.width/2-w/2)));
+  var top=(left===right||left===r.left-10-w)?r.top-6:r.bottom+40;
+  p.style.left=(left+window.scrollX)+'px'; p.style.top=(Math.max(8,top)+window.scrollY)+'px';
+  document.querySelectorAll('.evm.act').forEach(function(x){ x.classList.remove('act'); }); g.classList.add('act');
+}
+function evHide(){ if(EVPIN) return; var p=document.getElementById('evpop'); if(p) p.classList.remove('on'); document.querySelectorAll('.evm.act').forEach(function(x){ x.classList.remove('act'); }); }
+document.addEventListener('mouseover', function(ev){ var g=ev.target.closest&&ev.target.closest('.evm'); if(g&&!EVPIN) evShow(g,false); });
+document.addEventListener('mouseout', function(ev){ var g=ev.target.closest&&ev.target.closest('.evm'); if(g&&!(ev.relatedTarget&&g.contains(ev.relatedTarget))) evHide(); });
+document.addEventListener('focusin', function(ev){ var g=ev.target.closest&&ev.target.closest('.evm'); if(g) evShow(g,false); });
+document.addEventListener('click', function(ev){
+  var g=ev.target.closest&&ev.target.closest('.evm');
+  if(g){ var same=EVPIN===g; EVPIN=same?null:g; if(same){ evHide(); } else evShow(g,true); return; }
+  if(EVPIN && !(ev.target.closest&&ev.target.closest('#evpop'))){ EVPIN=null; evHide(); }
+});
+window.addEventListener('scroll', function(){ if(!EVPIN) evHide(); }, {passive:true});
 
 /* ================= USD/CAD LIVE FEED MONITOR ================= */
 var MON_TAB='next';
