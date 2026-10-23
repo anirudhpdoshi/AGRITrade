@@ -31,14 +31,14 @@
      ],
      "near_expiry": "Dec-26",
      "intraday": [
-      4.61,
-      "9:45pm ET"
+      4.6075,
+      "9:50pm ET"
      ],
      "iv_10d_rel": 0.03558,
      "iv_chain_iv": 17.86,
      "iv_as_of": "2026-10-22",
      "iv_note": null,
-     "intraday_ts": "2026-10-22T21:45:00-04:00",
+     "intraday_ts": "2026-10-22T21:50:00-04:00",
      "ma50": "5.11",
      "ma100": "4.84"
     },
@@ -1375,14 +1375,14 @@
      ],
      "near_expiry": "Jan-27",
      "intraday": [
-      12.5525,
-      "9:45pm ET"
+      12.5575,
+      "9:50pm ET"
      ],
      "iv_10d_rel": 0.02749,
      "iv_chain_iv": 13.8,
      "iv_as_of": "2026-10-22",
      "iv_note": "Jan options (Nov expire Oct 23); IV and skew from IB midpoint, Oct 22 5:30pm ET",
-     "intraday_ts": "2026-10-22T21:45:00-04:00",
+     "intraday_ts": "2026-10-22T21:50:00-04:00",
      "ma50": "12.81",
      "ma100": "12.28"
     },
@@ -2432,14 +2432,14 @@
      ],
      "near_expiry": "Dec-26",
      "intraday": [
-      6.3025,
-      "9:45pm ET"
+      6.3,
+      "9:50pm ET"
      ],
      "iv_10d_rel": 0.04928,
      "iv_chain_iv": 24.74,
      "iv_as_of": "2026-10-22",
      "iv_note": null,
-     "intraday_ts": "2026-10-22T21:45:00-04:00",
+     "intraday_ts": "2026-10-22T21:50:00-04:00",
      "ma50": "7.04",
      "ma100": "6.75"
     },
@@ -4189,10 +4189,10 @@
     "30Y": 5.42
    },
    "fxcross": {
-    "dxy": 101.602,
-    "dxy_chg": -0.175,
-    "eurusd": 1.1215,
-    "usdjpy": 156.82,
+    "dxy": 101.623,
+    "dxy_chg": -0.154,
+    "eurusd": 1.1213,
+    "usdjpy": 156.88,
     "usdcad_ref": 1.4007
    },
    "closes": [
@@ -4272,16 +4272,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 100.04,
-     "chg": 2.89,
-     "pct": 2.97,
+     "last": 100.16,
+     "chg": 3.01,
+     "pct": 3.1,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 113.88,
-     "chg": 5.06,
-     "pct": 4.65,
+     "last": 113.92,
+     "chg": 5.1,
+     "pct": 4.69,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -4293,9 +4293,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 14.57,
+    "value": 14.69,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-23T01:45:00+00:00",
+    "obs_ts": "2026-10-23T01:50:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -4761,10 +4761,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.40066,
+    "mid": 1.40067,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-22T21:59:00-04:00",
+    "ts": "2026-10-22T22:01:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -4904,10 +4904,6 @@
     }
    ],
    "intraday": [
-    [
-     "2026-10-22T06:00+00:00",
-     1.40252
-    ],
     [
      "2026-10-22T06:05+00:00",
      1.40274
@@ -5862,34 +5858,38 @@
     ],
     [
      "2026-10-23T01:55+00:00",
-     1.40068
+     1.4003
+    ],
+    [
+     "2026-10-23T02:00+00:00",
+     1.4007
     ]
    ]
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-22T21:59:14-04:00",
+   "updated_at": "2026-10-22T22:01:06-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-22T21:59:00-04:00",
+    "fx_spot": "2026-10-22T22:01:00-04:00",
     "fx_closes": "2026-10-22T16:30:00-04:00",
     "yields": "2026-10-21T17:00:00-04:00",
     "policy": "2026-10-21T07:35:00-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-13T15:30:00-04:00",
     "cftc_grains": "2026-10-13T15:30:00-04:00",
-    "energy": "2026-10-22T21:45:00-04:00",
-    "crosses": "2026-10-22T21:45:00-04:00",
+    "energy": "2026-10-22T21:50:00-04:00",
+    "crosses": "2026-10-22T21:50:00-04:00",
     "grains_settle": "2026-10-22T14:20:00-04:00",
-    "grains_quote": "2026-10-22T21:45:00-04:00",
+    "grains_quote": "2026-10-22T21:50:00-04:00",
     "options": "2026-10-22T17:30:00-04:00",
-    "news": "2026-10-22T21:59:14-04:00",
+    "news": "2026-10-22T22:01:06-04:00",
     "calendar": "2026-10-21T07:05:00-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-22T21:52:06-04:00",
     "exports": "2026-10-22T21:27:37-04:00",
     "wasde": "2026-10-22T21:31:57-04:00",
-    "canada": "2026-10-22T21:59:14-04:00"
+    "canada": "2026-10-22T22:01:06-04:00"
    },
    "sources": {
     "news": "Google News RSS search, refreshed every 15 min",
@@ -5914,7 +5914,7 @@
      "canada"
     ],
     "failed": [],
-    "at": "2026-10-22T21:59:14-04:00"
+    "at": "2026-10-22T22:01:06-04:00"
    },
    "releases_checked": "2026-10-22T21:27:37-04:00",
    "macro_checked": "2026-10-22T21:52:06-04:00",
@@ -5949,7 +5949,8 @@
      "Ontario wheat including payments",
      "Soybeans [1151211]"
     ]
-   }
+   },
+   "canada_checked": "2026-10-22T22:01:06-04:00"
   },
   "macro": [
    {
@@ -9529,6 +9530,157 @@
        }
       ]
      ]
+    },
+    "prices": {
+     "Ontario": {
+      "product": "Ontario wheat excluding payments",
+      "series": [
+       [
+        "2023-09",
+        284.09
+       ],
+       [
+        "2023-10",
+        270.62
+       ],
+       [
+        "2023-11",
+        264.21
+       ],
+       [
+        "2023-12",
+        276.29
+       ],
+       [
+        "2024-01",
+        284.18
+       ],
+       [
+        "2024-02",
+        287.57
+       ],
+       [
+        "2024-03",
+        285.4
+       ],
+       [
+        "2024-04",
+        280.34
+       ],
+       [
+        "2024-05",
+        293.52
+       ],
+       [
+        "2024-06",
+        292.95
+       ],
+       [
+        "2024-07",
+        272.08
+       ],
+       [
+        "2024-08",
+        259.96
+       ],
+       [
+        "2024-09",
+        258.17
+       ],
+       [
+        "2024-10",
+        268.68
+       ],
+       [
+        "2024-11",
+        262.29
+       ],
+       [
+        "2024-12",
+        258.79
+       ],
+       [
+        "2025-01",
+        272.29
+       ],
+       [
+        "2025-02",
+        277.36
+       ],
+       [
+        "2025-03",
+        294.01
+       ],
+       [
+        "2025-04",
+        281.02
+       ],
+       [
+        "2025-05",
+        266.43
+       ],
+       [
+        "2025-06",
+        259.37
+       ],
+       [
+        "2025-07",
+        253.75
+       ],
+       [
+        "2025-08",
+        243.61
+       ],
+       [
+        "2025-09",
+        244.92
+       ],
+       [
+        "2025-10",
+        244.25
+       ],
+       [
+        "2025-11",
+        253.31
+       ],
+       [
+        "2025-12",
+        263.78
+       ],
+       [
+        "2026-01",
+        257.93
+       ],
+       [
+        "2026-02",
+        269.45
+       ],
+       [
+        "2026-03",
+        282.97
+       ],
+       [
+        "2026-04",
+        289.42
+       ],
+       [
+        "2026-05",
+        294.67
+       ],
+       [
+        "2026-06",
+        293.44
+       ],
+       [
+        "2026-07",
+        293.68
+       ],
+       [
+        "2026-08",
+        299.21
+       ]
+      ]
+     }
     }
    },
    "soybeans": {
@@ -10303,6 +10455,12 @@
     "https://news.google.com/rss/articles/CBMijAFBVV95cUxNeUlVbnM1ME1JR2lucDN1YUs4dXkwN1FnOXBRQ2FIYjJDZXQ0ZjlISHJGQ0pOd05SeldFOG5UdkMtQ3FuWF9EekhkdVZ6ZkhqZXdyNHViR1JYZV9DWWlVZXl5bGdSdE8xd1NVc2Q3MEFCUGVaZXhEV3kzZ1ppVDd2Z2RKM1NVVl82bHZxbg?oc=5"
    ],
    [
+    "2026-10-22 16:05 UTC",
+    "www.vietnam.vn",
+    "Natural gas prices fell for the fourth consecutive session to $2.79/MMBtu.",
+    "https://news.google.com/rss/articles/CBMilAFBVV95cUxPd2huQXdXcFQwNDR0RkppSnB2ZmZvcDA5RW5aelBYa1NmNWlPVlZRZ3kwdDlZLWdaMFNMbzZ4MW02U1V5NHlnSFBzcVFmWEU0ZllFZ2twS3RVRWF1Z0JfcThfYTk5czZXOWt1QXJrX2RkcS05X01qSXhkRW9QVklQT2E1YXNTMjEzM1RKSDdEczBFYlA5?oc=5"
+   ],
+   [
     "2026-10-22 15:24 UTC",
     "www.agweb.com",
     "Corn and Wheat Look for Lows, Soybeans Bounce on Exports: Cattle Correct",
@@ -10313,12 +10471,6 @@
     "ukragroconsult.com",
     "Ukrainian wheat prices could rise to $200–210/t this winter amid reduced planting areas",
     "https://news.google.com/rss/articles/CBMivwFBVV95cUxNQzFpU2hsT0hiVS1uT21od3dnTThfNnRPZzZCUUhWQ2hENm14RGNfRW1FdEM4N21jeTZhaEduRGRnRGlDWmZ0M1hmSFgxalFrNGRURUtaaG14RVl3QW9MdkxwbHo5SXpyWHFlRXZ4NDhRQXYxZHBNMHgySnlQVkZuRXEwSFB4OUJwY3R6clB3RjlNU0pOYXUyMEp5LTltWlhmSWtIdFYzOXlnQWNwaF9RWVBJbWhVdUNOcEQ3X3A5OA?oc=5"
-   ],
-   [
-    "2026-10-22 13:08 UTC",
-    "commodity-board.com",
-    "Wheat Market Update: MATIF Firms, CBOT Softens, Black Sea Basis Mixed — CMB News",
-    "https://news.google.com/rss/articles/CBMipAFBVV95cUxPUkRZY3BhVWF4NEpBakdOSmRQMU12UE8wYVVJdDgtbXYwTDNHanBHVFEzcWk5al9ZVnF3X1g0RlpHdGFLbmRmWGRMN0tGTDkwLVFETDhTUVRHSXNRZnpqSl9SdEpJMjFDbFBGUlNVMFc5b0RVdFY5cjlZN0F6MWVrcGlkeks5Tkp1ZW1jWkpNM010NkRUcDhnTmI4NHpoU2tiZi0zTA?oc=5"
    ]
   ],
   "soybeans": [
@@ -10379,10 +10531,16 @@
     "https://news.google.com/rss/articles/CBMiywFBVV95cUxON3F1SUc0NjJJdXBYYTFLMTZabkhMN3ZtNnZJaFk5d0N0YWxkWEVWWXlzYWhabGp5YVp0MkNyZ3U4ZUZpdW1zY0JDUW02My1yR1VFcWljY2l0eVZ5ekVkd1k4eWNwS19xM3JobDA5T0FvaFBiUENwR3N6eVpRU1ZmVDVRV3FEQk5EY3ZCSE5Ea0xRR2RkcUdIYWpTZjFjVElFWE1CSUNnMU40Zi1qWXdsaGlVUktEY0lUb3VEX3NfS0xDcUt6ei0tSGhkRQ?oc=5"
    ],
    [
-    "2026-10-22 21:31 UTC",
-    "www.wsj.com",
-    "Bank of Canada Survey Records Notable Rise in Inflation Expectations",
-    "https://news.google.com/rss/articles/CBMivgFBVV95cUxNMDBwUUhTck9tQ3ZiSUlQVXVGRWxMMWExUlJaWDVRTENTVHU0anA4NDZmdWR1NEVjMmQ2ZURVcDZkV0VUeXhBUEhBb1JwemM5czY3X0loRFRSQkFQNHkzZDVpbHcwNHJ6OGFiUE1VZzJlcy1rX0I2WU9Dc2pUWElnUWh2V01GNVJOR3VQSEhYTF9OUVhtcWE5QmdhdGpmMVV0bkJJNFZLN2gwWjRjaGdGSENnX1ZCanMxdGV6dTNn?oc=5"
+    "2026-10-22 21:34 UTC",
+    "www.nerdwallet.com",
+    "Best Credit Cards in Canada",
+    "https://news.google.com/rss/articles/CBMigwFBVV95cUxPOUdIbDA3SjdJTjEweW8zZWJTbnMwSUpuVGR4OVF4SHB0YjJScHRCLVlMdzRvcGpOMl8tdXo1YXdEQU43SlJCSzNSdDNoRHhSaWdoQjBReWtIRTZOOGZRdDlnQ3NnUE1LYTdkbjI1NXhWYldvRGJHRlpZcnVEa3lqRUJLTQ?oc=5"
+   ],
+   [
+    "2026-10-22 19:47 UTC",
+    "www.mpamag.com",
+    "Could inflation fears push the Bank of Canada toward its first hike since 2023?",
+    "https://news.google.com/rss/articles/CBMi3gFBVV95cUxPYzhqTFZuMzY0ZVI5YTlXSEtybk85MFNzanE4TUp0czVSMnlMSkU2UEs0TGZYUU1EaS1iU1I1SXR3UUR2b1NCelhpRHV1eUhWZTJaM0k4NDBfYTFFalJMNFVCSHdqb2s1b3R5ZEZFMGFxOU9Bbm9DNlVNTGRUYURzeDNtY0tjTDE2cmxwaE9tRGhTcVpEbjl1X0MwbWRnaTc5cXNKeDB2bnVRZkc3M1NTc2N4eEhlTWY0QXhCb0JMbFU0ZTBkVlFZTTA2YzhITW5DUGNQY3NKMkpHMFk1S3c?oc=5"
    ],
    [
     "2026-10-22 18:56 UTC",
@@ -10395,12 +10553,6 @@
     "www.marketscreener.com",
     "CANADA FX DEBT-Canadian dollar extends daily winning streak as interest rate spreads narrow",
     "https://news.google.com/rss/articles/CBMi3AFBVV95cUxPcVR2WFdoVnFRREdNYy1oM1d1YkdKNGhtM3NFUlBhQlpoY1J5R1hpWENFNEg1T2MzMVA5cjdzV0NTMFV1TXd6TXoxVUdWb29MM3h6N2dKV3o1OXpjWjRtdFYtaE9tRGg2RzZ0MFRIVnYxeUM4WVdOSEpuM1oxZ25HdUs0U1NsR3NUSVo5d2tSc3B3c3g3cWlQZTVFcTVJOHZyZEwtc1VndzNZUm5oTFlOeEIyclc2VWZmaVZoQk4xdllpQlBnNWFuaFhZM09kalJtd21jUWtLX2pkOHNF?oc=5"
-   ],
-   [
-    "2026-10-22 18:38 UTC",
-    "www.mpamag.com",
-    "Inflation fears push Bank of Canada toward first hike since 2022",
-    "https://news.google.com/rss/articles/CBMiywFBVV95cUxPWFdoeE0yV0NuSE1JcG95dGlMVkoyZ0V3ZlVkaVM5d3FqVUxRYmdqRTNMRnhoRHFDSHpBLW5YXzJVS3NjSXJfUUVQbkUxb3AzSjAxaWJDZkRVQ3VkMlY3aUFIdVFqZmIwWWx5U2VQMERUeWhuODVJU24yc1dCV3hXRW01TW1GNjE2WXl6VW5RaE9mQ3JpMXVWWUFlWWpDVlBEWDNqT0NKLVo4Nm83M1Q4ZVFwaFJSR0VBbEczQWM2cGxKeHJjSTFsU3J0OA?oc=5"
    ],
    [
     "2026-10-22 18:02 UTC",
