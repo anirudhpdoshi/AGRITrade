@@ -3,6 +3,7 @@ import sys, os, requests
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import update_data as U
 O = {"Origin": "https://anirudhpdoshi.github.io", "User-Agent": "Mozilla/5.0"}
+DONE = {"cftc_dis","umich","dol_ar539","treasury","census_ftd","census_marts","bls_v1","fredapi","valet","cftc_tff"}
 URLS = {
  "valet": "https://www.bankofcanada.ca/valet/observations/CPI_TRIM,V39079/json?recent=2",
  "fredgraph": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL&cosd=2026-01-01",
@@ -21,8 +22,9 @@ URLS = {
  "statcan_cube": "https://www150.statcan.gc.ca/t1/wds/rest/getAllCubesListLite",
 }
 for k, u in URLS.items():
+    if k in DONE: continue
     try:
-        r = requests.get(u, headers=O, timeout=30)
+        r = requests.get(u, headers=O, timeout=60)
         print(f"::notice title=cors {k}::HTTP {r.status_code} ACAO={r.headers.get('Access-Control-Allow-Origin')} type={r.headers.get('Content-Type','')[:40]} len={len(r.content)} head={r.text[:140]!r}")
     except Exception as e:
         print(f"::notice title=cors {k}::ERR {e}"[:300])
@@ -45,4 +47,6 @@ for row in U._sc_table(20100056):
     n = nai.lower()
     if (sales.lower().startswith("total retail") and (n.startswith("retail trade [44-45]") or "[441]" in n or "[457]" in n)) or (sales.lower().startswith("retail e-commerce") and n.startswith("retail trade [44-45]")):
         vec[f"retail|{sales}|{nai}"] = row.get("VECTOR")
-print("::notice title=vectors::" + " ;; ".join(f"{k}={v}" for k, v in sorted(vec.items()))[:3900])
+items = sorted(vec.items())
+for i in range(0, len(items), 8):
+    print(f"::notice title=vectors {i}::" + " ;; ".join(f"{k}={v}" for k, v in items[i:i+8])[:3900])
