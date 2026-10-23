@@ -610,6 +610,43 @@ FAS = "https://api.fas.usda.gov/api/esr"   # key goes in the X-Api-Key header
 ESR_MATCH = {"corn": ["corn"], "soybeans": ["soybeans"], "wheat": ["all wheat", "wheat - all", "wheat"]}
 
 
+_ESR_COUNTRIES = {}
+
+
+def _destinations(rows, H):
+    """Latest week by destination: net sales, prior week, MY commitments and shipments (metric tons)."""
+    if not _ESR_COUNTRIES:
+        for c in get(f"{FAS}/countries", headers=H).json():
+            nm = (c.get("countryDescription") or c.get("countryName") or "").strip()
+            _ESR_COUNTRIES[str(c.get("countryCode"))] = nm.title() if nm.isupper() else nm
+    weeks = sorted({r_["weekEndingDate"][:10] for r_ in rows})
+    if not weeks:
+        return None
+    cur, prev = weeks[-1], (weeks[-2] if len(weeks) > 1 else None)
+    by = {}
+    for r_ in rows:
+        d = r_["weekEndingDate"][:10]
+        if d not in (cur, prev):
+            continue
+        name = _ESR_COUNTRIES.get(str(r_.get("countryCode")), str(r_.get("countryCode")))
+        x = by.setdefault(name, {"country": name, "net": 0, "prev": 0, "commit": 0, "shipped": 0, "outstanding": 0, "ship_wk": 0})
+        if d == cur:
+            x["net"] += r_.get("currentMYNetSales") or 0
+            x["commit"] += r_.get("currentMYTotalCommitment") or 0
+            x["shipped"] += r_.get("accumulatedExports") or 0
+            x["outstanding"] += r_.get("outstandingSales") or 0
+            x["ship_wk"] += r_.get("weeklyExports") or 0
+        else:
+            x["prev"] += r_.get("currentMYNetSales") or 0
+    allc = list(by.values())
+    tot = {k: sum(x[k] for x in allc) for k in ("net", "prev", "commit", "shipped", "outstanding", "ship_wk")}
+    top_week = sorted([x for x in allc if x["net"] > 0], key=lambda x: -x["net"])[:10]
+    top_my = sorted(allc, key=lambda x: -x["commit"])[:10]
+    rnd = lambda x: {k: (round(v) if isinstance(v, (int, float)) else v) for k, v in x.items()}
+    return {"week": cur, "prev_week": prev, "total": rnd(tot),
+            "top_week": [rnd(x) for x in top_week], "top_my": [rnd(x) for x in top_my]}
+
+
 def exports(D, N):
     import os
     key = os.environ.get("FAS_API_KEY", "").strip()
@@ -655,10 +692,14 @@ def exports(D, N):
                 overlap = [(stored[d], v) for d, v in wk.items() if d in stored and stored[d]]
                 err = max((abs(v - s_) / abs(s_) for s_, v in overlap), default=9)
                 if best is None or err < best[0]:
-                    best = (err, c["commodityName"], my, wk)
+                    best = (err, c["commodityName"], my, wk, rows)
         if not best or best[0] > 0.02:
             raise RuntimeError(f"{k}: USDA figures don't match the stored weeks (best error {best[0] if best else 'n/a'}) — not used")
-        _, cname, my, wk = best
+        _, cname, my, wk, rows = best
+        try:
+            ex["dest"] = _destinations(rows, H)
+        except Exception as e:
+            print(f"  {k} destinations skipped: {e}")
         cons = {w[0]: (w[3], w[4]) for w in ex["weeks"]}
         weeks = sorted(wk.items())[-10:]
         ex["weeks"] = [[d, (datetime.fromisoformat(d) + timedelta(days=7)).date().isoformat(), round(v),
@@ -677,9 +718,142 @@ def exports(D, N):
     return bool(changed)
 
 
+# ------------------------------------------------------------------ WASDE U.S. S&D (USDA PSD API)
+PSD = "https://api.fas.usda.gov/api/psd"
+PSD_CODE = {"corn": "0440000", "soybeans": "2222000", "wheat": "0410000"}
+BU_PER_MT = {"corn": 39.3679, "soybeans": 36.7437, "wheat": 36.7437}
+HA_TO_AC = 2.47105
+WASDE_DATES = ["2026-01-12", "2026-02-10", "2026-03-10", "2026-04-09", "2026-05-12", "2026-06-11", "2026-07-10",
+               "2026-08-12", "2026-09-11", "2026-10-09", "2026-11-10", "2026-12-10"]
+# dashboard rows -> how to read them from PSD attribute names (lower-case)
+SD_ROWS = {
+    "corn": [("Area Planted", "area planted"), ("Area Harvested", "area harvested"), ("Yield per Acre", "yield"),
+             ("Beginning Stocks", "beginning stocks"), ("Production", "production"), ("Imports", "imports"),
+             ("Total Supply", "total supply"), ("Feed & Residual", "feed dom. consumption"),
+             ("Food, Seed & Industrial", "fsi consumption"), ("Domestic Total", "domestic consumption"),
+             ("Exports", "exports"), ("Total Use", "=dom+exp"), ("Ending Stocks", "ending stocks"), ("Avg Farm Price", None)],
+    "soybeans": [("Area Planted", "area planted"), ("Area Harvested", "area harvested"), ("Yield per Acre", "yield"),
+                 ("Beginning Stocks", "beginning stocks"), ("Production", "production"), ("Imports", "imports"),
+                 ("Total Supply", "total supply"), ("Crushings", "crush"), ("Exports", "exports"),
+                 ("Seed & Residual", "=dom-crush"), ("Total Use", "=dom+exp"), ("Ending Stocks", "ending stocks"), ("Avg Farm Price", None)],
+    "wheat": [("Area Planted", "area planted"), ("Area Harvested", "area harvested"), ("Yield per Acre", "yield"),
+              ("Beginning Stocks", "beginning stocks"), ("Production", "production"), ("Imports", "imports"),
+              ("Total Supply", "total supply"), ("Food, Seed & Industrial", "fsi consumption"),
+              ("Feed & Residual", "feed dom. consumption"), ("Domestic Total", "domestic consumption"),
+              ("Exports", "exports"), ("Total Use", "=dom+exp"), ("Ending Stocks", "ending stocks"), ("Avg Farm Price", None)],
+}
+
+
+def _psd_us(code, year, H, k):
+    rows = get(f"{PSD}/commodity/{code}/country/US/year/{year}", headers=H).json()
+    if not rows:
+        raise RuntimeError(f"PSD {code} {year}: no rows")
+    if not _PSD_REF:
+        _PSD_REF["attr"] = {str(a["attributeId"]): (a.get("attributeName") or "").strip().lower() for a in get(f"{PSD}/commodityAttributes", headers=H).json()}
+        _PSD_REF["unit"] = {str(u["unitId"]): (u.get("unitDescription") or "").strip().lower() for u in get(f"{PSD}/unitsOfMeasure", headers=H).json()}
+    latest_month = max((int(r_.get("month") or 0) for r_ in rows), default=0)
+    v = {}
+    for r_ in rows:
+        if latest_month and int(r_.get("month") or 0) != latest_month:
+            continue
+        name = _PSD_REF["attr"].get(str(r_.get("attributeId")), "")
+        unit = _PSD_REF["unit"].get(str(r_.get("unitId")), "")
+        val = float(r_.get("value") or 0)
+        if "mt/ha" in unit:
+            val = val * BU_PER_MT[k] / HA_TO_AC               # MT/HA -> bu/acre (check before HA)
+        elif "ha)" in unit or unit.endswith("ha"):
+            val = val * HA_TO_AC / 1000                       # 1000 HA -> million acres
+        elif "1000 mt" in unit or "(1000 mt)" in unit:
+            val = val * BU_PER_MT[k] / 1000                   # 1000 MT -> million bushels
+        if name.startswith("my ") or name.startswith("ty "):  # PSD prefixes: MY/TY Imports, MY/TY Exports
+            if name.startswith("ty "):
+                continue
+            name = name[3:]
+        v[name] = val
+    return v
+
+
+_PSD_REF = {}
+
+
+def _sd_values(k, raw):
+    out = {}
+    def find(key):
+        for n, val in raw.items():
+            if n == key:
+                return val
+        for n, val in raw.items():
+            if n.startswith(key) or key in n:
+                return val
+        return None
+    dom, crush, exp = find("domestic consumption"), find("crush"), find("exports")
+    for label, src in SD_ROWS[k]:
+        if src is None:
+            out[label] = None
+        elif src == "=dom+exp":
+            out[label] = (dom + exp) if dom is not None and exp is not None else None
+        elif src == "=dom-crush":
+            out[label] = (dom - crush) if dom is not None and crush is not None else None
+        else:
+            out[label] = find(src)
+    rnd = lambda lab, x: None if x is None else (round(x, 1) if lab.startswith(("Area", "Yield")) else round(x))
+    return {lab: rnd(lab, x) for lab, x in out.items()}
+
+
+def wasde(D, N):
+    import os
+    key = os.environ.get("FAS_API_KEY", "").strip()
+    if not key:
+        return False
+    meta = D["meta"]
+    last = meta.get("wasde_checked")
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=6):
+        print("  checked <6h ago — skipping")
+        return False
+    H = {"X-Api-Key": key}
+    today = datetime.now(TOR).date().isoformat()
+    latest = max(d for d in WASDE_DATES if d <= today)
+    label = datetime.fromisoformat(latest).strftime("%b %Y")
+    W = D.get("wasde") or {}
+    changed = []
+    for k, code in PSD_CODE.items():
+        w = W.get(k)
+        if not w:
+            continue
+        new_my = int(w["new"]["my"][:4]); old_my = new_my - 1
+        cur = {}
+        for crop, yr in (("new", new_my), ("old", old_my)):
+            vals = _sd_values(k, _psd_us(code, yr, H, k))
+            stored = {row[0]: row[2] for row in w[crop]["rows"]}
+            for lab in ("Production", "Area Planted"):          # sanity: same crop year, same units
+                a, b = vals.get(lab), stored.get(lab)
+                if a is None or not b or abs(a / b - 1) > (0.08 if lab == "Production" else 0.05):
+                    raise RuntimeError(f"{k} {crop}: PSD {lab} {a} vs stored {b} — mismatch, not used")
+            cur[crop] = vals
+        same_month = (w.get("report") == label)
+        for crop in ("new", "old"):
+            rows = []
+            for lab, prior, current, *_ in w[crop]["rows"]:
+                nv = cur[crop].get(lab)
+                if same_month:                     # revision of the current report
+                    rows.append([lab, prior, nv if nv is not None else current])
+                else:                              # new report: current becomes prior
+                    rows.append([lab, current, nv])
+            w[crop]["rows"] = rows
+        if not same_month:
+            w["prior_report"], w["report"] = w["report"], label
+        w["source"] = "USDA PSD (FAS Open Data) · converted from metric to U.S. units"
+        changed.append(k)
+    meta["wasde_checked"] = iso(NOW)
+    if changed:
+        meta["asof"]["wasde"] = iso(NOW)
+    print("  wasde:", changed, label)
+    return bool(changed)
+
+
 BLOCKS = [("fx_spot", fx_spot), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports)]
+          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde)]
 
 
 def main():

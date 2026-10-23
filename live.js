@@ -135,7 +135,8 @@
     var now = Date.now();
     document.querySelectorAll(".countdown[data-t]").forEach(function (el) {
       var ms = +el.getAttribute("data-t") - now;
-      el.textContent = typeof window.cdText === "function" ? window.cdText(ms) : dur(ms);
+      el.textContent = el.getAttribute("data-fmt") === "hms" && typeof window.hmsText === "function" ? window.hmsText(ms)
+        : typeof window.cdText === "function" ? window.cdText(ms) : dur(ms);
     });
   }
   function syncStripHeight() {
