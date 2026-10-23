@@ -32,13 +32,13 @@
      "near_expiry": "Dec-26",
      "intraday": [
       4.6025,
-      "11:20pm ET"
+      "12:55am ET"
      ],
      "iv_10d_rel": 0.03558,
      "iv_chain_iv": 17.86,
      "iv_as_of": "2026-10-22",
      "iv_note": null,
-     "intraday_ts": "2026-10-22T23:20:00-04:00",
+     "intraday_ts": "2026-10-23T00:55:00-04:00",
      "ma50": "5.11",
      "ma100": "4.84"
     },
@@ -1487,13 +1487,13 @@
      "near_expiry": "Jan-27",
      "intraday": [
       12.57,
-      "11:25pm ET"
+      "12:55am ET"
      ],
      "iv_10d_rel": 0.02749,
      "iv_chain_iv": 13.8,
      "iv_as_of": "2026-10-22",
      "iv_note": "Jan options (Nov expire Oct 23); IV and skew from IB midpoint, Oct 22 5:30pm ET",
-     "intraday_ts": "2026-10-22T23:25:00-04:00",
+     "intraday_ts": "2026-10-23T00:55:00-04:00",
      "ma50": "12.81",
      "ma100": "12.28"
     },
@@ -2654,14 +2654,14 @@
      ],
      "near_expiry": "Dec-26",
      "intraday": [
-      6.2925,
-      "11:25pm ET"
+      6.285,
+      "12:55am ET"
      ],
      "iv_10d_rel": 0.04928,
      "iv_chain_iv": 24.74,
      "iv_as_of": "2026-10-22",
      "iv_note": null,
-     "intraday_ts": "2026-10-22T23:25:00-04:00",
+     "intraday_ts": "2026-10-23T00:55:00-04:00",
      "ma50": "7.04",
      "ma100": "6.75"
     },
@@ -4522,11 +4522,11 @@
     "30Y": 5.42
    },
    "fxcross": {
-    "dxy": 101.654,
-    "dxy_chg": -0.124,
-    "eurusd": 1.1217,
-    "usdjpy": 156.92,
-    "usdcad_ref": 1.4005
+    "dxy": 101.693,
+    "dxy_chg": 0.082,
+    "eurusd": 1.1212,
+    "usdjpy": 157.0,
+    "usdcad_ref": 1.4012
    },
    "closes": [
     [
@@ -4605,16 +4605,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 100.01,
-     "chg": 2.86,
-     "pct": 2.94,
+     "last": 100.32,
+     "chg": 0.85,
+     "pct": 0.85,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 113.85,
-     "chg": 5.03,
-     "pct": 4.62,
+     "last": 113.91,
+     "chg": 0.74,
+     "pct": 0.65,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -4626,9 +4626,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 14.54,
+    "value": 14.85,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-23T03:25:00+00:00",
+    "obs_ts": "2026-10-23T04:55:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -4968,10 +4968,10 @@
     "s50": 1.376,
     "r50": 1.4271,
     "aad": 0.00236,
-    "pivot": 1.40613,
-    "pivot_h": 1.40808,
-    "pivot_l": 1.4037,
-    "pivot_c": 1.40662
+    "pivot": 1.40343,
+    "pivot_h": 1.40479,
+    "pivot_l": 1.4013,
+    "pivot_c": 1.4042
    },
    "trade": {
     "dir": "Buy USD/CAD on pullback (support-derived template)",
@@ -5160,10 +5160,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.4002,
+    "mid": 1.4009,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-22T23:37:00-04:00",
+    "ts": "2026-10-23T01:06:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -5303,78 +5303,6 @@
     }
    ],
    "intraday": [
-    [
-     "2026-10-22T07:40+00:00",
-     1.4017
-    ],
-    [
-     "2026-10-22T07:45+00:00",
-     1.4015
-    ],
-    [
-     "2026-10-22T07:50+00:00",
-     1.40166
-    ],
-    [
-     "2026-10-22T07:55+00:00",
-     1.4015
-    ],
-    [
-     "2026-10-22T08:00+00:00",
-     1.40204
-    ],
-    [
-     "2026-10-22T08:05+00:00",
-     1.40283
-    ],
-    [
-     "2026-10-22T08:10+00:00",
-     1.40262
-    ],
-    [
-     "2026-10-22T08:15+00:00",
-     1.40227
-    ],
-    [
-     "2026-10-22T08:20+00:00",
-     1.40183
-    ],
-    [
-     "2026-10-22T08:25+00:00",
-     1.4017
-    ],
-    [
-     "2026-10-22T08:30+00:00",
-     1.40203
-    ],
-    [
-     "2026-10-22T08:35+00:00",
-     1.40181
-    ],
-    [
-     "2026-10-22T08:40+00:00",
-     1.40172
-    ],
-    [
-     "2026-10-22T08:45+00:00",
-     1.40176
-    ],
-    [
-     "2026-10-22T08:50+00:00",
-     1.40183
-    ],
-    [
-     "2026-10-22T08:55+00:00",
-     1.40174
-    ],
-    [
-     "2026-10-22T09:00+00:00",
-     1.40169
-    ],
-    [
-     "2026-10-22T09:05+00:00",
-     1.4016
-    ],
     [
      "2026-10-22T09:10+00:00",
      1.40199
@@ -6262,30 +6190,102 @@
     [
      "2026-10-23T03:35+00:00",
      1.4002
+    ],
+    [
+     "2026-10-23T03:40+00:00",
+     1.40057
+    ],
+    [
+     "2026-10-23T03:45+00:00",
+     1.40052
+    ],
+    [
+     "2026-10-23T03:50+00:00",
+     1.4002
+    ],
+    [
+     "2026-10-23T03:55+00:00",
+     1.40055
+    ],
+    [
+     "2026-10-23T04:00+00:00",
+     1.40076
+    ],
+    [
+     "2026-10-23T04:05+00:00",
+     1.40075
+    ],
+    [
+     "2026-10-23T04:10+00:00",
+     1.40071
+    ],
+    [
+     "2026-10-23T04:15+00:00",
+     1.4005
+    ],
+    [
+     "2026-10-23T04:20+00:00",
+     1.4005
+    ],
+    [
+     "2026-10-23T04:25+00:00",
+     1.4004
+    ],
+    [
+     "2026-10-23T04:30+00:00",
+     1.40074
+    ],
+    [
+     "2026-10-23T04:35+00:00",
+     1.40079
+    ],
+    [
+     "2026-10-23T04:40+00:00",
+     1.40095
+    ],
+    [
+     "2026-10-23T04:45+00:00",
+     1.40091
+    ],
+    [
+     "2026-10-23T04:50+00:00",
+     1.40102
+    ],
+    [
+     "2026-10-23T04:55+00:00",
+     1.40122
+    ],
+    [
+     "2026-10-23T05:00+00:00",
+     1.40126
+    ],
+    [
+     "2026-10-23T05:05+00:00",
+     1.40122
     ]
    ]
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-22T23:37:01-04:00",
+   "updated_at": "2026-10-23T01:06:29-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-22T23:37:00-04:00",
+    "fx_spot": "2026-10-23T01:06:00-04:00",
     "fx_closes": "2026-10-22T16:30:00-04:00",
     "yields": "2026-10-21T17:00:00-04:00",
     "policy": "2026-10-21T07:35:00-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-13T15:30:00-04:00",
     "cftc_grains": "2026-10-13T15:30:00-04:00",
-    "energy": "2026-10-22T23:20:00-04:00",
-    "crosses": "2026-10-22T23:25:00-04:00",
+    "energy": "2026-10-23T00:55:00-04:00",
+    "crosses": "2026-10-23T00:55:00-04:00",
     "grains_settle": "2026-10-22T14:20:00-04:00",
-    "grains_quote": "2026-10-22T23:25:00-04:00",
+    "grains_quote": "2026-10-23T00:55:00-04:00",
     "options": "2026-10-22T17:30:00-04:00",
-    "news": "2026-10-22T23:37:01-04:00",
+    "news": "2026-10-23T01:06:29-04:00",
     "calendar": "2026-10-21T07:05:00-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
-    "macro": "2026-10-22T22:15:05-04:00",
+    "macro": "2026-10-23T01:06:29-04:00",
     "exports": "2026-10-22T21:27:37-04:00",
     "wasde": "2026-10-22T21:31:57-04:00",
     "canada": "2026-10-22T22:29:24-04:00",
@@ -6321,9 +6321,9 @@
      "ext"
     ],
     "failed": [],
-    "at": "2026-10-22T23:37:01-04:00"
+    "at": "2026-10-23T01:06:29-04:00"
    },
-   "releases_checked": "2026-10-22T21:27:37-04:00",
+   "releases_checked": "2026-10-23T01:06:29-04:00",
    "exports_checked": "2026-10-22T21:27:37-04:00",
    "wasde_checked": "2026-10-22T21:31:57-04:00",
    "canada_dims": {
@@ -6357,15 +6357,9 @@
     ]
    },
    "canada_checked": "2026-10-22T22:29:24-04:00",
-   "macro_checked": "2026-10-22T22:15:05-04:00",
-   "macro_errors": {
-    "ca_emp": "ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
-    "ca_ur": "ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
-    "ca_gdp": "ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
-    "ca_gdpq": "ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))"
-   },
+   "macro_checked": "2026-10-23T01:06:29-04:00",
    "ca_calendar_checked": "2026-10-22T22:15:05-04:00",
-   "canada_watch": "2026-10-22T23:37:01-04:00",
+   "canada_watch": "2026-10-23T01:06:29-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -8696,7 +8690,297 @@
       6.5
      ]
     ],
-    "src": "Statistics Canada 2062815"
+    "src": "Statistics Canada 2062815",
+    "long": [
+     [
+      "2020-10-01",
+      9.0
+     ],
+     [
+      "2020-11-01",
+      8.6
+     ],
+     [
+      "2020-12-01",
+      8.9
+     ],
+     [
+      "2021-01-01",
+      9.2
+     ],
+     [
+      "2021-02-01",
+      8.5
+     ],
+     [
+      "2021-03-01",
+      7.7
+     ],
+     [
+      "2021-04-01",
+      8.2
+     ],
+     [
+      "2021-05-01",
+      8.3
+     ],
+     [
+      "2021-06-01",
+      7.9
+     ],
+     [
+      "2021-07-01",
+      7.4
+     ],
+     [
+      "2021-08-01",
+      7.1
+     ],
+     [
+      "2021-09-01",
+      7.0
+     ],
+     [
+      "2021-10-01",
+      6.5
+     ],
+     [
+      "2021-11-01",
+      6.1
+     ],
+     [
+      "2021-12-01",
+      5.9
+     ],
+     [
+      "2022-01-01",
+      6.4
+     ],
+     [
+      "2022-02-01",
+      5.5
+     ],
+     [
+      "2022-03-01",
+      5.4
+     ],
+     [
+      "2022-04-01",
+      5.4
+     ],
+     [
+      "2022-05-01",
+      5.2
+     ],
+     [
+      "2022-06-01",
+      4.9
+     ],
+     [
+      "2022-07-01",
+      4.8
+     ],
+     [
+      "2022-08-01",
+      5.2
+     ],
+     [
+      "2022-09-01",
+      5.1
+     ],
+     [
+      "2022-10-01",
+      5.1
+     ],
+     [
+      "2022-11-01",
+      5.0
+     ],
+     [
+      "2022-12-01",
+      5.0
+     ],
+     [
+      "2023-01-01",
+      5.1
+     ],
+     [
+      "2023-02-01",
+      5.2
+     ],
+     [
+      "2023-03-01",
+      5.1
+     ],
+     [
+      "2023-04-01",
+      5.1
+     ],
+     [
+      "2023-05-01",
+      5.2
+     ],
+     [
+      "2023-06-01",
+      5.4
+     ],
+     [
+      "2023-07-01",
+      5.4
+     ],
+     [
+      "2023-08-01",
+      5.4
+     ],
+     [
+      "2023-09-01",
+      5.5
+     ],
+     [
+      "2023-10-01",
+      5.7
+     ],
+     [
+      "2023-11-01",
+      5.8
+     ],
+     [
+      "2023-12-01",
+      5.8
+     ],
+     [
+      "2024-01-01",
+      5.7
+     ],
+     [
+      "2024-02-01",
+      5.9
+     ],
+     [
+      "2024-03-01",
+      6.1
+     ],
+     [
+      "2024-04-01",
+      6.2
+     ],
+     [
+      "2024-05-01",
+      6.3
+     ],
+     [
+      "2024-06-01",
+      6.4
+     ],
+     [
+      "2024-07-01",
+      6.4
+     ],
+     [
+      "2024-08-01",
+      6.6
+     ],
+     [
+      "2024-09-01",
+      6.5
+     ],
+     [
+      "2024-10-01",
+      6.6
+     ],
+     [
+      "2024-11-01",
+      7.0
+     ],
+     [
+      "2024-12-01",
+      6.7
+     ],
+     [
+      "2025-01-01",
+      6.7
+     ],
+     [
+      "2025-02-01",
+      6.6
+     ],
+     [
+      "2025-03-01",
+      6.8
+     ],
+     [
+      "2025-04-01",
+      6.9
+     ],
+     [
+      "2025-05-01",
+      7.0
+     ],
+     [
+      "2025-06-01",
+      6.9
+     ],
+     [
+      "2025-07-01",
+      6.9
+     ],
+     [
+      "2025-08-01",
+      7.1
+     ],
+     [
+      "2025-09-01",
+      7.1
+     ],
+     [
+      "2025-10-01",
+      6.9
+     ],
+     [
+      "2025-11-01",
+      6.6
+     ],
+     [
+      "2025-12-01",
+      6.8
+     ],
+     [
+      "2026-01-01",
+      6.5
+     ],
+     [
+      "2026-02-01",
+      6.7
+     ],
+     [
+      "2026-03-01",
+      6.7
+     ],
+     [
+      "2026-04-01",
+      6.9
+     ],
+     [
+      "2026-05-01",
+      6.6
+     ],
+     [
+      "2026-06-01",
+      6.5
+     ],
+     [
+      "2026-07-01",
+      6.4
+     ],
+     [
+      "2026-08-01",
+      6.4
+     ],
+     [
+      "2026-09-01",
+      6.5
+     ]
+    ]
    },
    {
     "key": "ca_gdp",
@@ -8763,6 +9047,171 @@
      ]
     ],
     "src": "Statistics Canada 65201210"
+   },
+   {
+    "key": "ca_gdpq",
+    "name": "Real GDP (q/q ann.)",
+    "group": "ca",
+    "unit": "%",
+    "dec": 1,
+    "good": "up",
+    "freq": "Q",
+    "measure": "",
+    "period": "Q2 '26",
+    "obs_date": "2026-04-01",
+    "value": 3.32,
+    "prior": 0.33,
+    "chg": 2.99,
+    "history": [
+     [
+      "Q3 '23",
+      0.2
+     ],
+     [
+      "Q4 '23",
+      0.21
+     ],
+     [
+      "Q1 '24",
+      2.95
+     ],
+     [
+      "Q2 '24",
+      3.3
+     ],
+     [
+      "Q3 '24",
+      3.32
+     ],
+     [
+      "Q4 '24",
+      2.84
+     ],
+     [
+      "Q1 '25",
+      2.89
+     ],
+     [
+      "Q2 '25",
+      -0.97
+     ],
+     [
+      "Q3 '25",
+      1.9
+     ],
+     [
+      "Q4 '25",
+      -0.98
+     ],
+     [
+      "Q1 '26",
+      0.33
+     ],
+     [
+      "Q2 '26",
+      3.32
+     ]
+    ],
+    "src": "Statistics Canada 62305752",
+    "long": [
+     [
+      "2020-07-01",
+      41.59
+     ],
+     [
+      "2020-10-01",
+      7.73
+     ],
+     [
+      "2021-01-01",
+      6.99
+     ],
+     [
+      "2021-04-01",
+      -0.47
+     ],
+     [
+      "2021-07-01",
+      8.3
+     ],
+     [
+      "2021-10-01",
+      7.36
+     ],
+     [
+      "2022-01-01",
+      4.21
+     ],
+     [
+      "2022-04-01",
+      4.63
+     ],
+     [
+      "2022-07-01",
+      3.27
+     ],
+     [
+      "2022-10-01",
+      0.25
+     ],
+     [
+      "2023-01-01",
+      4.28
+     ],
+     [
+      "2023-04-01",
+      0.64
+     ],
+     [
+      "2023-07-01",
+      0.2
+     ],
+     [
+      "2023-10-01",
+      0.21
+     ],
+     [
+      "2024-01-01",
+      2.95
+     ],
+     [
+      "2024-04-01",
+      3.3
+     ],
+     [
+      "2024-07-01",
+      3.32
+     ],
+     [
+      "2024-10-01",
+      2.84
+     ],
+     [
+      "2025-01-01",
+      2.89
+     ],
+     [
+      "2025-04-01",
+      -0.97
+     ],
+     [
+      "2025-07-01",
+      1.9
+     ],
+     [
+      "2025-10-01",
+      -0.98
+     ],
+     [
+      "2026-01-01",
+      0.33
+     ],
+     [
+      "2026-04-01",
+      3.32
+     ]
+    ],
+    "chart_only": true
    },
    {
     "key": "us_policy",
@@ -17638,22 +18087,34 @@
   ],
   "soybeans": [
    [
+    "2026-10-23 03:08 UTC",
+    "brownfieldagnews.com",
+    "Corn could offer clues to China’s $17 billion ag purchase pledge",
+    "https://news.google.com/rss/articles/CBMingFBVV95cUxQRzRQMU0tclFaSTBvNG9aVThWOTctRFFRM0VTZjUydmFUdlFTSkRzZFlXNG9YUkpVd0NWRm5Nd25URjlJMFBjeFpYU1BNR3laZnd6aFZBQ0FaZkF5dW1jTlM5azlhcEFMUHZwSHlCT2IyWHM0bGtzOHFZcFdXVjVKcHlkVFFCTDBidXEtSmkyRzJ5ZE44TnUzbHQ5bThCQQ?oc=5"
+   ],
+   [
+    "2026-10-23 01:23 UTC",
+    "www.chinadaily.com.cn",
+    "Falling exports to China take toll on US businesses, jobs",
+    "https://news.google.com/rss/articles/CBMifkFVX3lxTE5QU2FCT3gwd0RqbHNVR1dCNTlnQm1peUxzb0tXLW5TeUdMOVFCT214NFdsWVEtM3I1RFN3VHR4a19TaHZ3akZrQjFMNjl2Q1RXbzEwdDJiMFhFeDZ6amFGUGtZYkJXNHJiYy1ydzdYeDUxSGY3Yjl4dnk4cWVGdw?oc=5"
+   ],
+   [
     "2026-10-22 22:10 UTC",
     "www.agrolatam.com",
     "Chicago Grain Futures Close Mixed as Soybeans Rally on China Demand, Corn and Wheat Fall",
     "https://news.google.com/rss/articles/CBMiwAFBVV95cUxQUlVoNmowb3daeXVsTHhFRXhGbnk4Q3gzS1NMSDdOWjJoR18xY0NrTGRadktSYldvR1FlWVVMM3Yxd2N5bFhfWUlTekhaU2Q5dHVwbXNTQUowSGM0T3FhVWNORW9GdGpDMmZYVXQtcXd5cXJZSHFGdDBERFpHdGM5NDcyTl9hU3FhekQ3Z3lreW5YbXZLLWpTY3QxXzg2U2FJSG93M1BnSlFHdlg1MExsYVQ1WDR1dGdoUlhwZlk2WlE?oc=5"
    ],
    [
-    "2026-10-22 21:44 UTC",
-    "www.barchart.com",
-    "Soybeans Close Thursday Mostly Higher, as Export Business Continues",
-    "https://news.google.com/rss/articles/CBMirwFBVV95cUxQTkZvcHI5VlR3Tk0zMXEyaXdKSmd2QWg4V1lvSkcyeUdIb3RRTm1WUERGT050RWdwMXNZNWFLMWdfYVptQ1JsTEhMR0NxY0x3SjVGemJuWXpyRFhsbkdmclVXLXR3QWY1VEM2a3NqdzVwLUowZmN0ZlNYaWx5ci1DeUh6R0JmblFNNENxUmtCOC1wVkVIVWViOUhld1Y5UW5vWmVBRXhzaHZLc25pbHVJ?oc=5"
+    "2026-10-22 20:21 UTC",
+    "stjosephpost.com",
+    "Commodity markets daily recap",
+    "https://news.google.com/rss/articles/CBMidkFVX3lxTE5PbV9xWjlMalhQMGVWZnVrck54Mnc1THBkUE1ES09FNDJ5VUQzVUI4NnYtR0hNeGI0RkVIWGU1SEtEQVBFRjZtUUhaVUhWZEFKRXJyTTA0R3c1dHZtUENiYzV2c2o0QlZ4MF9Qb1ZtTjdVZGlnMHc?oc=5"
    ],
    [
     "2026-10-22 19:12 UTC",
-    "www.producer.com",
+    "www.country-guide.ca",
     "U.S. Grain/Oilseed Review: Soybeans rebound, little movement for corn, wheat",
-    "https://news.google.com/rss/articles/CBMisgFBVV95cUxQRWFyYW1lWHpTSGJyT2FSNUFQS3Vtd1NmY1Q0Rjk3RG1NTGU1S3o0Y1Y4QUx6SnBMV1RlUE1ZbWZMRkVab1VINTFnUGFjVF9kTUs3azNST25MU0VlNmI5WVRaNERERUdBSWNObDRHcHZsRXFQekRnOV93NG1qN01sNXdJdC1nd1NtMEJsUVpyYy1VVVZVeHRZOW8wMldkNFJSZFpsVXlXd3Zpem95RmEzQU53?oc=5"
+    "https://news.google.com/rss/articles/CBMitwFBVV95cUxNajRvMmR5NnlLRjFnWUdlVUl2dTI5ekkza3lWQUIwMmEwc2NHYWswVDVjMjJUQU5jUjhtVFBOZmNJT3BwTmFtRjUtQnhIRXpiV2FVR3NibVFmOVMtYWx0VktKODlLandlblF5SEdWV2JLNDhJY1ZmQUI0UXdZMk9rZ2JHRmVTYS05U1VNLWVyZk5QS19QNXl2VHpsbzRMZ2U5Z3dRdkpvV0pRSXRjbW1aZWFwaElvcEE?oc=5"
    ],
    [
     "2026-10-22 19:09 UTC",
@@ -17672,18 +18133,6 @@
     "kchanews.com",
     "China Trade Uncertainty Adds Pressure to U.S. Soybean Markets",
     "https://news.google.com/rss/articles/CBMimAFBVV95cUxQMWlhNWhwcDdlek81bkVOR0g4U1Y2OFJ1UDhkSnlNTnJlTEJvZ3pHUko2cUhIdjQ5U09taGxYaTd0MFd3bGVrX2pqWU5YNUR3VmJ6RlNEUkRSZlY2VlZUSE81dDRuVEl0ZzNZTHROYVBQREdBVTNzdTN2WmQ1aUZ4RlJuUXJVR3VNUnVzcm5CaFhuQkpnRVdFWA?oc=5"
-   ],
-   [
-    "2026-10-22 17:12 UTC",
-    "www.inkl.com",
-    "Soybeans Popping Higher on Thursday",
-    "https://news.google.com/rss/articles/CBMiekFVX3lxTE5wX2pGX2tlMklCd3lUZlFjX0RyRk5mMlV0RVdybHJLMmoyVndpbG9fSGp0aVdjdmh6akRrVVNjZXVHZDBJMXZVT3YzQzVKSTlxa0RwY3ZxdVE2ZDA4dHlsaURrSzRjY1FoemdLeVoycktuRmlsWEpsell3?oc=5"
-   ],
-   [
-    "2026-10-22 16:40 UTC",
-    "www.indexbox.io",
-    "USDA Export Sales: Soybeans and Corn Outpace Wheat - News and Statistics",
-    "https://news.google.com/rss/articles/CBMijAFBVV95cUxNeUlVbnM1ME1JR2lucDN1YUs4dXkwN1FnOXBRQ2FIYjJDZXQ0ZjlISHJGQ0pOd05SeldFOG5UdkMtQ3FuWF9EekhkdVZ6ZkhqZXdyNHViR1JYZV9DWWlVZXl5bGdSdE8xd1NVc2Q3MEFCUGVaZXhEV3kzZ1ppVDd2Z2RKM1NVVl82bHZxbg?oc=5"
    ]
   ],
   "fx": [
@@ -17730,10 +18179,10 @@
     "https://news.google.com/rss/articles/CBMisgFBVV95cUxNeWw2a1ZLREFwN1d5VTBheU9XUzdmZ1ZVYVEzVEVTV0F1R3l3WkMzbjUzdmFVRTlGTlNCeGFTNUg1cXRaaEdEd3JsXzNrZmVITHZwS2FpZkJKUlJEYU1aQ2I2MWIxWV9DbHctcFV5V0JWRjN2ajFKNzVPTS1mOHNocGxjVTR5LVhvWGxhZ0gxLU55UXNjdDkwYlhaLTY2MnpNTDUwZ2xwWUl6bE5nbENUbkJ3?oc=5"
    ],
    [
-    "2026-10-22 16:24 UTC",
-    "www.rbc.com",
-    "The Bank of Canada at an inflection point: Inflation fears live on",
-    "https://news.google.com/rss/articles/CBMitwFBVV95cUxQa1g0WWYybmp1ZVMxODFBMXNQenZmVXJITWM4Rk5uNnRwbnUwTlhqSkJ5NGpUZG9oYmF1bExxSTJHMGgzeFoxci0tRUEzVE1DT0pldHFiWmF4eElNQ0M5ZWtjOUxJU3V3d055eVdhT1J0a1k2WnFFRXFNQks3bldzWFhKMER3N1VpbVhVQUg1M2dkdlRTZ2VHTjkxREEtSG1aM291TXJXRzBQMzZvU3FzMzdwemljZXM?oc=5"
+    "2026-10-22 16:28 UTC",
+    "www.marketscreener.com",
+    "Canada's Two-Year Government Bond Auction Draws 2.7 Times The Amount Offered, Yield Averages 3.31%",
+    "https://news.google.com/rss/articles/CBMi4wFBVV95cUxORjRuQnNlUEFjSGQ3c3BSSk11ZlliOTJkQVZUQ0FDTU1lS09pX1RmZFY0U2gybjlTQ3pWSnJ4bUVmZGVQaVE1M3dvQWQ2ck51THk2ay04QzN4TF94MV9jUXNTUk5tUXVDaVBRZ2tjRDJ0QnlDMWJlVTZnZEl4WkUtZG9FanJEY1RoUXVuQlJMdVB3XzViaWVXTWNTNjFSWHJmSk5IcDFfc0hFZG9NeEh3eGhpZDRtQXI3bVhKZU51c3FnOEUyN01yUXhjQk1qMW11NmNnTUdkX3hGTnZKajZKdUkzVQ?oc=5"
    ]
   ]
  }
