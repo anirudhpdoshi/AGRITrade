@@ -423,7 +423,12 @@ MACRO = [
     ("ca_emp",      "Employment change",   "ca", "statcan", 2062811,        "diff",  "K",  1, "up",   (15000, 25000)),
     ("ca_ur",       "Unemployment rate",   "ca", "statcan", 2062815,        "level", "%",  1, "down", (2, 20)),
     ("ca_gdp",      "Real GDP",            "ca", "statcan", 65201210,       "pct",   "%",  1, "up",   (1500000, 3500000)),
+    # chart-only series for the Macro sub-tab (quarterly GDP bars, policy-rate panels)
+    ("ca_gdpq",     "Real GDP (q/q ann.)", "ca", "statcan", 62305752,       "qann",  "%",  1, "up",   (1500000, 3800000)),
+    ("us_policy",   "Fed funds target (upper)", "us", "fred", "DFEDTARU",   "level", "%",  2, "heat", (0, 10)),
+    ("ca_policy",   "BoC overnight target", "ca", "valet", "V39079",        "level", "%",  2, "heat", (0, 10)),
 ]
+MACRO_LONG = {"us_cpi", "ca_cpi", "us_core_cpi", "us_ur", "ca_ur", "us_gdp", "ca_gdpq", "us_policy", "ca_policy"}
 
 
 def _fred(sid, start):
@@ -432,8 +437,8 @@ def _fred(sid, start):
     return [(r[0], float(r[1])) for r in rows[1:] if len(r) > 1 and _num(r[1]) is not None]
 
 
-def _valet_series(sid, n):
-    j = valet(f"observations/{sid}/json?recent={n}")
+def _valet_series(sid, n, start=None):
+    j = valet(f"observations/{sid}/json?" + (f"start_date={start}" if start else f"recent={n}"))
     return sorted((o["d"], _num(o.get(sid, {}).get("v"))) for o in j["observations"] if _num(o.get(sid, {}).get("v")) is not None)
 
 
@@ -474,6 +479,8 @@ def _transform(points, how):
         elif how in ("diff", "pct") and i > 0:
             pv = points[i-1][1]
             out.append((d, (v - pv) if how == "diff" else (v / pv - 1) * 100))
+        elif how == "qann" and i > 0:
+            out.append((d, ((v / points[i-1][1]) ** 4 - 1) * 100))
         elif how == "yoy":
             base = byd.get(f"{int(d[:4]) - 1}{d[4:]}")
             if base:
@@ -488,11 +495,11 @@ def macro(D, N):
         print("  checked <2h ago — skipping")
         return False
     old = {m["key"]: m for m in D.get("macro", [])}
-    start = (NOW - timedelta(days=800)).date().isoformat()
+    start = (NOW - timedelta(days=2650)).date().isoformat()   # ~7 years: 5-yr averages of y/y series
     out, errs = [], {}
     for key, name, group, src, sid, how, unit, dec, good, (lo, hi) in MACRO:
         try:
-            raw = (_fred(sid, start) if src == "fred" else _valet_series(sid, 30) if src == "valet" else _statcan(sid, 30))
+            raw = (_fred(sid, start) if src == "fred" else _valet_series(sid, 0, start) if src == "valet" else _statcan(sid, 90))
             if len(raw) < 3:
                 raise RuntimeError("too few points")
             if not all(lo <= v <= hi for _, v in raw[-6:]):
@@ -504,16 +511,29 @@ def macro(D, N):
             pts = _transform(raw, how)
             if how == "diff" or (unit == "K" and how == "level"):
                 pts = [(d, v / 1000 if (how == "level" and src == "fred") else v) for d, v in pts]  # FRED claims are persons -> K
+            longp = None
+            if key in MACRO_LONG:
+                lp = pts
+                if fq == "D":   # daily policy rates -> month-end readings
+                    me = {}
+                    for d, v in lp:
+                        me[d[:7]] = (d, v)
+                    lp = [me[m] for m in sorted(me)]
+                longp = [[d[:10], round(v, dec + 1)] for d, v in lp[-(24 if fq == "Q" else 72):]]
             pts = pts[-12:]
             if len(pts) < 2:
                 raise RuntimeError("too few transformed points")
             val, prv = pts[-1][1], pts[-2][1]
             out.append({"key": key, "name": name, "group": group, "unit": unit, "dec": dec, "good": good,
-                        "freq": fq, "measure": {"yoy": "y/y", "diff": "m/m", "pct": "m/m", "level": ""}[how],
+                        "freq": fq, "measure": {"yoy": "y/y", "diff": "m/m", "pct": "m/m", "level": "", "qann": ""}[how],
                         "period": _label(pts[-1][0], fq), "obs_date": pts[-1][0],
                         "value": round(val, dec + 1), "prior": round(prv, dec + 1), "chg": round(val - prv, dec + 1),
                         "history": [[_label(d, fq), round(v, dec + 1)] for d, v in pts],
                         "src": {"fred": "FRED", "valet": "Bank of Canada Valet", "statcan": "Statistics Canada"}[src] + f" {sid}"})
+            if longp:
+                out[-1]["long"] = longp
+            if key in ("ca_gdpq", "us_policy", "ca_policy"):
+                out[-1]["chart_only"] = True
         except Exception as e:
             errs[key] = f"{type(e).__name__}: {e}"[:200]
             if key in old:
@@ -878,6 +898,87 @@ def _sc_table(pid):
         yield from csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
 
 
+def _sc_release_times():
+    """Latest release timestamp of each StatCan table we track (cheap metadata call) — a change means new data."""
+    out = {}
+    try:
+        r_ = requests.post("https://www150.statcan.gc.ca/t1/wds/rest/getCubeMetadata", headers={**UA, "Content-Type": "application/json"},
+                           data=json.dumps([{"productId": p} for p in (32100359, 32100077, 32100007)]), timeout=25)
+        r_.raise_for_status()
+        for o in r_.json():
+            ob = o.get("object") or {}
+            if o.get("status") == "SUCCESS" and ob.get("productId"):
+                out[str(ob["productId"])] = ob.get("releaseTime")
+    except Exception as e:
+        print("  StatCan metadata check failed:", e)
+    return out
+
+
+AAFC_INDEX = "https://agriculture.canada.ca/en/sector/crops/reports-statistics"
+_MDY = r"((?:January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2}, 20\d\d)"
+
+
+def _strip_html(h):
+    import html as _h
+    return re.sub(r"\s+", " ", _h.unescape(re.sub(r"<[^>]+>", " ", re.sub(r"(?is)<(script|style).*?</\1>", " ", h))))
+
+
+def ca_calendar(D, N):
+    """Canada/Ontario agri calendar from AAFC's latest 'Outlook for Principal Field Crops': its next release date,
+    the Statistics Canada releases it announces, and the Chatham (Ontario) corn/soybean price forecasts."""
+    meta = D["meta"]
+    last = meta.get("ca_calendar_checked")
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=6):
+        print("  checked <6h ago — skipping")
+        return False
+    idx = get(AAFC_INDEX).text
+    links = sorted(set(re.findall(r'href="([^"]*canada-outlook-principal-field-crops-(20\d\d-\d\d-\d\d))"', idx)), key=lambda x: x[1])
+    if not links:
+        raise RuntimeError("no Outlook links on the AAFC index page")
+    href, rdate = links[-1]
+    url = href if href.startswith("http") else "https://agriculture.canada.ca" + href
+    txt = _strip_html(get(url).text)
+    ev = []
+    m = re.search(r"next AAFC Outlook for Principal Field Crops is scheduled for release on " + _MDY, txt)
+    if m:
+        ev.append({"date": datetime.strptime(m.group(1), "%B %d, %Y").date().isoformat(), "time": None, "src": "AAFC",
+                   "label": "AAFC Outlook for Principal Field Crops", "tables": [], "quote": m.group(0)[:200]})
+    for s_ in re.split(r"(?<=[.!?])\s+", txt):
+        if not re.search(r"\bSTC\b|Statistics Canada", s_) or not re.search(_MDY, s_):
+            continue
+        for dm in re.findall(_MDY, s_):
+            d = datetime.strptime(dm, "%B %d, %Y").date()
+            if d < (NOW - timedelta(days=1)).date():
+                continue
+            low = s_.lower()
+            lab = ("StatCan model-based crop estimates" if "model" in low else
+                   "StatCan field crop production (survey)" if "production" in low else
+                   "StatCan stocks of principal field crops" if "stock" in low else
+                   "StatCan field crop areas" if "area" in low or "seeding" in low else "Statistics Canada field-crop release")
+            tables = ["32100359"] if re.search(r"production|model|area", low) else ["32100007"] if "stock" in low else []
+            ev.append({"date": d.isoformat(), "time": "08:30", "src": "Statistics Canada", "label": lab, "tables": tables, "quote": s_.strip()[:240]})
+    prices = {}
+    mc = re.search(r"Chatham average corn price is projected at \$(\d+)\s*/\s*t", txt)
+    if mc:
+        prices["corn"] = int(mc.group(1))
+    ms = re.findall(r"soybean price forecast, track Chatham, (?:is|was)[a-z ]*? (?:to|at) \$(\d+)\s*/\s*t", txt)
+    if ms:
+        prices["soybeans"] = int(ms[-1])
+    seen, uniq = set(), []
+    for e in sorted(ev, key=lambda e: e["date"]):
+        k = (e["date"], e["label"])
+        if k not in seen:
+            seen.add(k); uniq.append(e)
+    old = D.get("ca_calendar") or {}
+    keep = [e for e in old.get("events", []) if e.get("date", "") >= (NOW - timedelta(days=1)).date().isoformat() and (e["date"], e["label"]) not in seen]
+    D["ca_calendar"] = {"events": sorted(uniq + keep, key=lambda e: e["date"]), "report": rdate, "report_url": url,
+                        "chatham": prices or old.get("chatham", {}), "chatham_report": rdate if prices else old.get("chatham_report")}
+    meta["ca_calendar_checked"] = iso(NOW)
+    meta["asof"]["ca_calendar"] = iso(NOW)
+    print(f"  ca_calendar: report {rdate}, {len(uniq)} new dates, chatham {prices}")
+    return True
+
+
 def _num0(x):
     v = _num(x)
     return v
@@ -886,9 +987,17 @@ def _num0(x):
 def canada(D, N):
     meta = D["meta"]
     last = meta.get("canada_checked")
-    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=20):
-        print("  checked <20h ago — skipping")
+    rel_old = meta.get("canada_release", {})
+    rel_new = _sc_release_times()
+    changed = [k for k, v in rel_new.items() if v and v != rel_old.get(k)]
+    if rel_new:
+        meta["canada_watch"] = iso(NOW)
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=20) and not changed:
+        print("  no new StatCan release since", last, "— skipping")
         return False
+    if changed:
+        print("  new StatCan release detected:", changed)
+        meta["canada_new_release"] = {"tables": changed, "at": iso(NOW)}
     C = D.setdefault("canada", {})
     seen = {"crops": set(), "disp": set(), "prices": set(), "stocks": set(), "stock_kinds": set()}
     errs = []
@@ -980,13 +1089,15 @@ def canada(D, N):
         raise RuntimeError("; ".join(errs)[:1100])
     meta["canada_checked"] = iso(NOW)
     meta["asof"]["canada"] = iso(NOW)
+    if rel_new:
+        meta["canada_release"] = {**rel_old, **{k: v for k, v in rel_new.items() if v}}
     print("  canada:", {k: list(v) for k, v in C.items()}, "errors:", len(errs))
     return True
 
 
 BLOCKS = [("fx_spot", fx_spot), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada)]
+          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar)]
 
 
 def main():

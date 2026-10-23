@@ -260,6 +260,30 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .tbl-scroll{overflow-x:auto}
 .dash-card .kpi-spark{display:block;width:100%;height:26px;margin-top:8px}
 .tile-head{flex-wrap:wrap;row-gap:6px}
+.sub{display:contents}.sub:not(.on){display:none}
+.subnav-tile{padding:10px 12px}
+.subnav-live{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.7}
+.subnav-live b{color:var(--ink,#e8eef4)}.sl-k{color:var(--faint)}.sl-pill{font-size:10px;font-weight:700;letter-spacing:.1em;border:1px solid #2b6b4c;color:#5fd598;border-radius:5px;padding:1px 6px}
+.subnav{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.subbtn{appearance:none;text-align:left;cursor:pointer;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 12px;color:var(--muted);display:flex;flex-direction:column;gap:2px;min-width:0;font:inherit}
+.subbtn:hover{border-color:var(--line2)}
+.subbtn[aria-selected="true"]{background:#13233a;border-color:#38b6c9;color:#fff;box-shadow:inset 0 -2px 0 #38b6c9}
+.sb-name{font-weight:700;font-size:13.5px}
+.sb-ev{font-size:11.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.subbtn[aria-selected="true"] .sb-ev{color:#b9c7da}
+.sb-cd{font-family:"IBM Plex Mono",monospace;font-size:12px;color:#e8a33d}
+.chart-svg{width:100%;height:auto;display:block}
+.mpanels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.mpanels.one{grid-template-columns:1fr}
+.mpanel{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;min-width:0}
+.mp-h{font-size:13.5px;font-weight:500;margin:0 0 6px;color:#c9d6e6}.mp-h b{color:#fff}
+.dash-grid.four{grid-template-columns:repeat(4,1fr)}
+td.read-cell{font-size:12px;color:#b9c7da;white-space:normal}
+.divbars{margin:4px 0 10px}.db-row{display:grid;grid-template-columns:120px 1fr 70px;gap:8px;align-items:center;font-family:"IBM Plex Mono",monospace;font-size:12px;margin:3px 0}
+.db-l{color:var(--muted)}.db-track{position:relative;height:12px;background:rgba(255,255,255,.03);border-radius:3px}
+.db-track:before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;border-left:1px solid #3a4a61}
+.db-bar{position:absolute;top:1px;height:10px;border-radius:2px}.db-bar.pos{background:#3fb97f}.db-bar.neg{background:#e0655f}.db-v{text-align:right}
+@media (max-width:1020px){.dash-grid.four{grid-template-columns:1fr 1fr}.mpanels{grid-template-columns:1fr}}
+@media (max-width:760px){.subnav{grid-template-columns:1fr 1fr;gap:6px}.subbtn{padding:7px 9px}.sb-name{font-size:12.5px}.sb-ev{font-size:10.5px}.sb-date{display:none}.db-row{grid-template-columns:96px 1fr 58px}}
 table.dest-tbl{font-size:13px}
 .dest-map{margin-top:8px}
 .map-wrap{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:10px;align-items:center}
@@ -1201,17 +1225,17 @@ function usdaEvents(key, fromMs, days){
   return out.sort(function(a,b){ return a.t-b.t; });
 }
 function grainCalendarHTML(key){
-  var now=Date.now(), ev=usdaEvents(key, now, 45);
+  var now=Date.now(), ev=usdaEvents(key, now, 45).concat(caEvents(now, 45)).sort(function(a,b){ return a.t-b.t; });
   var nx=ev.filter(function(e){ return e.t>now; });
   var big=nx.filter(function(e){ return e.kind==="wasde"||e.kind==="contract"; })[0];
   var soon=now+10*86400000;
-  var rows=ev.filter(function(e){ return e.kind==="wasde"||e.kind==="contract"||e.t<=soon; }).slice(0,16).map(function(e){
-    var past=e.t<now, chip=e.kind==="wasde"?' <span class="chip miss">HIGH</span>':e.kind==="contract"?' <span class="chip demo">CONTRACT</span>':'';
+  var rows=ev.filter(function(e){ return e.kind==="wasde"||e.kind==="contract"||e.kind==="ca"||e.t<=soon; }).slice(0,16).map(function(e){
+    var past=e.t<now, chip=e.kind==="ca"?' <span class="chip demo">CANADA</span>':e.kind==="wasde"?' <span class="chip miss">HIGH</span>':e.kind==="contract"?' <span class="chip demo">CONTRACT</span>':'';
     return '<div class="kv'+(past?' ev-past':'')+'"><span class="kk">'+etLabel(e.t,true)+' · '+esc(e.label)+chip+(past?' <span class="chip inline">OUT</span>':'')+'</span><span class="vv">'+(past?'':'<span class="countdown" data-t="'+e.t+'">'+cdText(e.t-now)+'</span>')+'</span></div>';
   }).join("");
   var latest=big?'Next key date: <b>'+esc(big.label)+'</b> · '+etLabel(big.t,true)+' ET · <span class="countdown" data-t="'+big.t+'">'+cdText(big.t-now)+'</span>':'';
-  return railCard('USDA &amp; contract calendar', latest, rows+
-    '<div class="stamp">Times in Toronto (ET) · weekly USDA reports by rule (holiday weeks can shift) · WASDE dates per the 2026 USDA schedule · contract dates from CBOT calendars</div>');
+  return railCard('USDA, Canada &amp; contract calendar', latest, rows+
+    '<div class="stamp">Times in Toronto (ET) · weekly USDA reports by rule (holiday weeks can shift) · WASDE dates per the 2026 USDA schedule · contract dates from CBOT calendars · Canada dates from AAFC’s latest Outlook</div>');
 }
 function cdText(ms){ if(ms<=0) return 'now'; var m=Math.floor(ms/60000), d=Math.floor(m/1440), h=Math.floor(m%1440/60); return d?d+'d '+h+'h':h?h+'h '+(m%60)+'m':(m%60)+'m'; }
 function grainKpiHTML(key){
@@ -1319,6 +1343,7 @@ function wasdeTableHTML(key){
     return '<tr'+(bold?' class="sd-key"':'')+'><td class="lbl" data-l="">'+esc(r[0])+'</td><td data-l="'+esc(w.prior_report)+'">'+fmtSD(r[0],r[1])+'</td><td data-l="'+esc(w.report)+'"><b>'+fmtSD(r[0],r[2])+'</b></td><td data-l="Change">'+chgSD(r[0],r[1],r[2])+'</td></tr>'; }).join('');
   return '<div class="tile wide" data-src="wasde"><div class="tile-head"><h2>US '+GMETA[key].name+' supply &amp; demand <span class="h2note">— USDA WASDE '+esc(w.report)+' (vs '+esc(w.prior_report)+')</span></h2>'+
     '<span class="toggle" role="group"><button data-dash="'+key+'" data-k="crop" data-v="new" aria-pressed="'+(st.crop==='new')+'">NEW CROP '+esc(w.new.my)+'</button><button data-dash="'+key+'" data-k="crop" data-v="old" aria-pressed="'+(st.crop==='old')+'">OLD CROP '+esc(w.old.my)+'</button></span></div>'+
+    '<div class="dk" style="margin:4px 0 2px">Change vs '+esc(w.prior_report)+' · mil bu</div>'+divBarsHTML(c.rows.filter(function(r){ return /^(Production|Total Supply|Exports|Total Use|Ending Stocks)$/.test(r[0]) && r[1]!=null && r[2]!=null; }).map(function(r){ return [r[0], r[2]-r[1]]; }),0)+
     '<table class="sd-tbl"><thead><tr><th>Line item</th><th>'+esc(w.prior_report)+'</th><th>'+esc(w.report)+'</th><th>Change</th></tr></thead><tbody>'+rows+'</tbody></table>'+
     '<div class="stamp">'+esc(w.unit_note)+' · '+esc(w.source)+(/PSD/.test(w.source)?' \u00b7 USDA PSD has no planted-area or farm-price line: those show \u2014 for the new month':'')+'</div></div>';
 }
@@ -1448,7 +1473,7 @@ function askClaude(scope){
 function grainDashboardHTML(key){
   return '<div class="tile wide dash-head"><h2>'+GMETA[key].name+' KPI dashboard <span class="h2note">— countdown, balance sheet, export pace</span></h2>'+
     '<div class="dash-grid">'+grainHeroHTML(key)+grainBalanceHTML(key)+grainPaceHTML(key)+'</div></div>'+
-    wasdeTableHTML(key)+destTileHTML(key)+canadaTileHTML(key);
+    '';
 }
 
 /* ================= CANADA · ONTARIO (Statistics Canada) ================= */
@@ -1534,12 +1559,12 @@ function canadaTableHTML(key){
   }
   return html;
 }
-function canadaTileHTML(key){
+function canadaTileHTML(key, embedded){
   var C=DATA.canada&&DATA.canada[key]; if(!C||!C.annual) return '';
   var st=caState(key), b=function(k,v,lab){ return '<button data-dash="'+key+'" data-k="'+k+'" data-v="'+v+'" aria-pressed="'+(st[k]===v)+'">'+lab+'</button>'; };
   var y=new Date().getFullYear(), A=C.annual[st.ca_geo], latest=A&&A.years[A.years.length-1];
   return '<div class="tile wide" data-src="canada"><div class="tile-head"><h2>'+(st.ca_geo==='Canada'?'Canada':'Canada · Ontario')+' '+GMETA[key].name.toLowerCase()+' <span class="h2note">— Statistics Canada official estimates'+(st.ca_view==='years'?' · last 10 crop years':'')+'</span></h2>'+
-    '<span class="toggle" role="group">'+b('ca_geo','Ontario','ONTARIO')+b('ca_geo','Canada','CANADA')+'</span>'+
+    (embedded?'':'<span class="toggle" role="group">'+b('ca_geo','Ontario','ONTARIO')+b('ca_geo','Canada','CANADA')+'</span>')+
     '<span class="toggle" role="group">'+b('ca_view','avg','HISTORICAL AVERAGES')+b('ca_view','years','YEAR BY YEAR')+'</span>'+
     '<span class="toggle" role="group">'+b('ca_unit','imp','BU · AC')+b('ca_unit','met','T · HA')+'</span></div>'+
     '<div class="dash-grid">'+canadaCardsHTML(key)+'</div>'+
@@ -1559,6 +1584,179 @@ function canadaContext(key){
   return L.join('\n');
 }
 
+/* ================= SUB-TABS + COUNTDOWN STRIP ================= */
+var SUB=(function(){ var d={corn:'overview',wheat:'overview',soybeans:'overview',fx:'overview'}; try{ var s=JSON.parse(localStorage.getItem('desk.sub')||'{}'); Object.keys(d).forEach(function(k){ if(s[k]) d[k]=s[k]; }); }catch(e){} return d; })();
+var MGEO='both';
+function saveSub(){ try{ localStorage.setItem('desk.sub', JSON.stringify(SUB)); }catch(e){} }
+function subWrap(panel, id, html){ return '<div class="sub'+(SUB[panel]===id?' on':'')+'" data-subpanel="'+id+'">'+html+'</div>'; }
+function nextOf(list, test){ var now=Date.now(); return list.filter(function(e){ return e.t>now && (!test||test(e)); }).sort(function(a,b){ return a.t-b.t; })[0]||null; }
+function subnavHTML(panel, tabs, liveHTML){
+  var now=Date.now();
+  return '<div class="tile wide subnav-tile"><div class="subnav-live">'+liveHTML+'</div><div class="subnav" role="tablist">'+tabs.map(function(t){
+    var e=t.ev;
+    return '<button class="subbtn" role="tab" data-sub="'+t.id+'" data-subp="'+panel+'" aria-selected="'+(SUB[panel]===t.id)+'">'+
+      '<span class="sb-name">'+t.label+'</span>'+
+      (e?'<span class="sb-ev">'+esc(e.label)+'</span><span class="sb-cd"><span class="countdown" data-t="'+e.t+'" data-fmt="hms">'+hmsText(e.t-now)+'</span><span class="sb-date"> · '+etLabel(e.t,true)+'</span></span>':'<span class="sb-ev">No scheduled event</span><span class="sb-cd">&nbsp;</span>')+
+    '</button>'; }).join('')+'</div></div>';
+}
+function setSub(panel, id){
+  SUB[panel]=id; saveSub();
+  var P=document.getElementById('panel-'+panel); if(!P) return;
+  P.querySelectorAll('[data-subpanel]').forEach(function(s){ s.classList.toggle('on', s.getAttribute('data-subpanel')===id); });
+  P.querySelectorAll('[data-sub]').forEach(function(b){ b.setAttribute('aria-selected', b.getAttribute('data-sub')===id?'true':'false'); });
+  if(panel!=='fx') drawDestMaps();
+}
+document.addEventListener('click', function(ev){
+  var t=ev.target.closest?ev.target:null; if(!t) return;
+  var b=t.closest('[data-sub]'); if(b){ setSub(b.getAttribute('data-subp'), b.getAttribute('data-sub')); return; }
+  var g=t.closest('[data-mgeo]'); if(g){ MGEO=g.getAttribute('data-mgeo'); renderFX(); }
+});
+
+/* ---------- Canada / Ontario agri calendar (AAFC + StatCan, from data.json) ---------- */
+function caEvents(fromMs, days){
+  var C=DATA.ca_calendar; if(!C||!C.events) return [];
+  return C.events.map(function(e){ var p=e.date.split('-'), hm=(e.time||'12:00').split(':');
+      return {t:zonedMs(+p[0],+p[1],+p[2],+hm[0],+hm[1],'America/Toronto'), label:e.label+(e.time?'':' (time TBA)'), kind:'ca', src:'ca', quote:e.quote, tables:e.tables}; })
+    .filter(function(e){ return e.t>=fromMs-6*3600000 && e.t<=fromMs+days*86400000; }).sort(function(a,b){ return a.t-b.t; });
+}
+function caCalendarHTML(){
+  var C=DATA.ca_calendar||{}, now=Date.now(), ev=caEvents(now-20*86400000, 150), m=DATA.meta||{};
+  var rows=ev.map(function(e){ var past=e.t<now;
+    return '<div class="kv'+(past?' ev-past':'')+'" title="'+esc(e.quote||'')+'"><span class="kk">'+etLabel(e.t,true)+' · '+esc(e.label)+' <span class="chip inline">'+(e.src==='ca'&&/StatCan/.test(e.label)?'STATCAN':'AAFC')+'</span>'+(past?' <span class="chip inline">'+(/AAFC/.test(e.label)&&C.report&&C.report<new Date(e.t).toISOString().slice(0,10)?'AWAITING POST':'OUT')+'</span>':'')+'</span>'+
+      '<span class="vv">'+(past?'':'<span class="countdown" data-t="'+e.t+'">'+cdText(e.t-now)+'</span>')+'</span></div>'; }).join('')||'<div class="checkline">No dated Canadian releases announced yet.</div>';
+  var nr=m.canada_new_release;
+  return '<div class="tile wide" data-src="ca_calendar"><h2>Canada &amp; Ontario agri calendar <span class="h2note">— dates taken from AAFC’s latest Outlook ('+esc(C.report||'n/a')+') · StatCan tables watched for new releases</span></h2>'+rows+
+    '<div class="mini-kv" style="margin-top:8px"><span>Release watch</span><b>'+(m.canada_watch?'checked '+esc(asOf('canada',true)):'starts on the next refresh')+'</b>'+(nr?' · last new StatCan data '+esc(new Date(nr.at).toLocaleString('en-US',{timeZone:'America/Toronto',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+' ET ('+esc(nr.tables.join(', '))+')':'')+'</div>'+
+    '<div class="stamp">The updater checks Statistics Canada’s table metadata on every 15-minute run (8:30 ET release days included) and re-pulls tables 32-10-0359 / 0077 / 0007 the moment their release time changes · AAFC dates parsed from <a href="'+safeUrl(C.report_url||'https://agriculture.canada.ca/en/sector/crops/reports-statistics')+'" target="_blank" rel="noopener">the Outlook report</a>; hover a row for the source sentence</div></div>';
+}
+
+/* ---------- generic charts ---------- */
+function niceTicks(lo, hi, n){ var span=hi-lo||1, step=Math.pow(10,Math.floor(Math.log10(span/n))), err=span/n/step; step*=err>=7.5?10:err>=3.5?5:err>=1.5?2:1;
+  var out=[]; for(var v=Math.ceil(lo/step)*step; v<=hi+1e-9; v+=step) out.push(+v.toFixed(10)); return out; }
+function mLabel(iso){ var M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return M[+iso.slice(5,7)-1]+" '"+iso.slice(2,4); }
+/* line chart: o={series:[{pts:[[iso,v]],color,label,width}], refs:[{v,label,color,dash}], yLabel, dec, W, H, aria} — direct labels at the right edge */
+function lineChartSVG(o){
+  var W=o.W||480, H=o.H||220, PL=44, PR=112, PT=14, PB=30, pw=W-PL-PR, ph=H-PT-PB, dec=o.dec==null?1:o.dec;
+  var xs=o.series[0].pts.map(function(p){ return p[0]; }), n=xs.length; if(n<2) return '<p class="note">Not enough history yet.</p>';
+  var vals=[]; o.series.forEach(function(s){ s.pts.forEach(function(p){ if(p[1]!=null) vals.push(p[1]); }); }); (o.refs||[]).forEach(function(r){ if(r.v!=null) vals.push(r.v); });
+  var lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals), pad=(hi-lo)*0.08||0.5; lo-=pad; hi+=pad; if(o.zero&&lo>0) lo=0;
+  var idx={}; xs.forEach(function(x,i){ idx[x]=i; });
+  function X(i){ return PL+pw*i/(n-1); } function Y(v){ return PT+ph*(1-(v-lo)/(hi-lo)); }
+  var s='', labs=[];
+  niceTicks(lo,hi,4).forEach(function(v){ s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="#1e2a3a"/><text x="'+(PL-6)+'" y="'+(Y(v)+3.5).toFixed(1)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end">'+fmt(v,Math.abs(hi-lo)<4?1:0)+'</text>'; });
+  if(lo<0&&hi>0) s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(0)+'" y2="'+Y(0)+'" stroke="#3a4a61"/>';
+  var every=Math.max(1,Math.ceil(n/7));
+  xs.forEach(function(x,i){ if((n-1-i)%every===0) s+='<text x="'+X(i).toFixed(1)+'" y="'+(H-10)+'" fill="#5b6b82" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+(x.length>=7?mLabel(x):esc(x))+'</text>'; });
+  (o.refs||[]).forEach(function(r){ if(r.v==null) return; s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(r.v).toFixed(1)+'" y2="'+Y(r.v).toFixed(1)+'" stroke="'+r.color+'" stroke-width="1.3" stroke-dasharray="'+(r.dash||'5 4')+'"/>'; labs.push({y:Y(r.v), t:r.label+' '+fmt(r.v,dec), c:r.color}); });
+  o.series.forEach(function(sr){ var d='', started=false;
+    sr.pts.forEach(function(p){ if(p[1]==null){ started=false; return; } var i=idx[p[0]]; d+=(started?'L':'M')+X(i).toFixed(1)+' '+Y(p[1]).toFixed(1); started=true; });
+    s+='<path d="'+d+'" fill="none" stroke="'+sr.color+'" stroke-width="'+(sr.width||2)+'" stroke-linejoin="round"/>';
+    var lp=sr.pts.filter(function(p){ return p[1]!=null; }).pop(); if(lp){ s+='<circle cx="'+X(idx[lp[0]]).toFixed(1)+'" cy="'+Y(lp[1]).toFixed(1)+'" r="3.2" fill="'+sr.color+'"/>'; labs.push({y:Y(lp[1]), t:sr.label+' '+fmt(lp[1],dec), c:sr.color, b:1}); } });
+  labs.sort(function(a,b){ return a.y-b.y; }); for(var i=1;i<labs.length;i++) if(labs[i].y-labs[i-1].y<12) labs[i].y=labs[i-1].y+12;
+  var over=labs.length?labs[labs.length-1].y-(PT+ph):0; if(over>0) labs.forEach(function(l){ l.y-=over; });
+  labs.forEach(function(l){ s+='<text x="'+(PL+pw+6)+'" y="'+(l.y+3.5).toFixed(1)+'" fill="'+l.c+'" font-size="10.5" font-weight="'+(l.b?700:500)+'" font-family="IBM Plex Mono">'+esc(l.t)+'</text>'; });
+  if(o.yLabel) s+='<text x="10" y="'+(PT+ph/2)+'" transform="rotate(-90 10 '+(PT+ph/2)+')" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+esc(o.yLabel)+'</text>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" class="chart-svg" role="img" aria-label="'+esc(o.aria||o.yLabel||'chart')+'">'+s+'</svg>';
+}
+/* vertical bars: o={bars:[[label,v,hl]], line:[[label,v]] (optional dashed), lineLabel, yLabel, dec, W,H} */
+function barChartSVG(o){
+  var W=o.W||480, H=o.H||210, PL=44, PR=o.lineLabel?84:12, PT=18, PB=28, pw=W-PL-PR, ph=H-PT-PB, dec=o.dec==null?1:o.dec, n=o.bars.length; if(!n) return '';
+  var vals=o.bars.map(function(b){ return b[1]; }).concat((o.line||[]).map(function(l){ return l[1]; })).filter(function(v){ return v!=null; });
+  var lo=Math.min(0,Math.min.apply(null,vals)), hi=Math.max(0,Math.max.apply(null,vals)); if(o.floor!=null) lo=o.floor; var pad=(hi-lo)*0.12||1; hi+=pad; if(lo<0) lo-=pad*0.6;
+  function Y(v){ return PT+ph*(1-(v-lo)/(hi-lo)); } var bw=pw/n, s='';
+  niceTicks(lo,hi,4).forEach(function(v){ s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="#1e2a3a"/><text x="'+(PL-6)+'" y="'+(Y(v)+3.5).toFixed(1)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end">'+fmt(v,Math.abs(hi-lo)<6?1:0)+'</text>'; });
+  var base=Y(Math.max(lo,0));
+  o.bars.forEach(function(b,i){ if(b[1]==null) return; var x=PL+i*bw+bw*0.16, w=bw*0.68, y=Y(b[1]), top=Math.min(y,base), h=Math.max(1,Math.abs(base-y));
+    var col=b[1]<0?'#e0655f':(b[2]?'#38b6c9':'#2c6f8a');
+    s+='<rect x="'+x.toFixed(1)+'" y="'+top.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="'+col+'"/>';
+    if(n<=14) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(b[1]<0?top+h+11:top-4).toFixed(1)+'" fill="#c9d6e6" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+fmt(b[1],dec)+'</text>';
+    if(n<=14||i%2===(n-1)%2) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(H-9)+'" fill="#5b6b82" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+esc(b[0])+'</text>'; });
+  if(lo<0) s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(0)+'" y2="'+Y(0)+'" stroke="#3a4a61"/>';
+  if(o.line&&o.line.length){ var d='', st=false; o.line.forEach(function(l,i){ if(l[1]==null){ st=false; return; } d+=(st?'L':'M')+(PL+i*bw+bw/2).toFixed(1)+' '+Y(l[1]).toFixed(1); st=true; });
+    s+='<path d="'+d+'" fill="none" stroke="#e8a33d" stroke-width="1.6" stroke-dasharray="5 4"/>';
+    var ll=o.line.filter(function(l){ return l[1]!=null; }).pop(); if(ll) s+='<text x="'+(PL+pw+6)+'" y="'+(Y(ll[1])+3.5).toFixed(1)+'" fill="#e8a33d" font-size="10.5" font-family="IBM Plex Mono">'+esc(o.lineLabel)+' '+fmt(ll[1],dec)+'</text>'; }
+  if(o.yLabel) s+='<text x="10" y="'+(PT+ph/2)+'" transform="rotate(-90 10 '+(PT+ph/2)+')" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+esc(o.yLabel)+'</text>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" class="chart-svg" role="img" aria-label="'+esc(o.aria||o.yLabel||'bar chart')+'">'+s+'</svg>';
+}
+/* horizontal diverging change bars (HTML) */
+function divBarsHTML(rows, dec, unit){
+  var mx=Math.max.apply(null,rows.map(function(r){ return Math.abs(r[1]||0); }))||1;
+  return '<div class="divbars">'+rows.map(function(r){ var v=r[1]; if(v==null) return '';
+    var w=Math.abs(v)/mx*50; return '<div class="db-row"><span class="db-l">'+esc(r[0])+'</span><span class="db-track"><span class="db-bar '+(v>=0?'pos':'neg')+'" style="'+(v>=0?'left:50%':'right:50%')+';width:'+w.toFixed(1)+'%"></span></span><span class="db-v '+cls(v)+'">'+sgn(v,dec)+(unit||'')+'</span></div>'; }).join('')+'</div>';
+}
+
+/* ---------- MACRO dashboard (US vs Canada) ---------- */
+function mget(k){ return (DATA.macro||[]).filter(function(m){ return m.key===k; })[0]; }
+function trailAvg(pts, n){ if(!pts||pts.length<n) return null; var v=pts.slice(-n).map(function(p){ return p[1]; }); return v.reduce(function(a,b){ return a+b; },0)/v.length; }
+function macroLinePanel(m, opt){
+  if(!m||!m.long) return '<div class="mpanel"><h3 class="mp-h">'+esc(opt.country+' '+opt.what)+'</h3><p class="note">Five-year history loads on the next macro refresh.</p></div>';
+  var pts=m.long, last=pts[pts.length-1][1], refs=[];
+  if(opt.target!=null) refs.push({v:opt.target,label:'Target',color:'#8494ab',dash:'2 3'});
+  [[24,'2Y avg','#e8a33d'],[36,'3Y avg','#c084fc'],[60,'5Y avg','#5fd598']].forEach(function(a){ var v=trailAvg(pts,a[0]); if(v!=null) refs.push({v:+v.toFixed(2),label:a[1],color:a[2]}); });
+  var head=opt.headline(last, m);
+  return '<div class="mpanel"><h3 class="mp-h">'+head+'</h3>'+
+    lineChartSVG({series:[{pts:pts.slice(-60),color:opt.color,label:'Actual',width:2.2}], refs:refs, yLabel:opt.yLabel, dec:1, aria:head.replace(/<[^>]+>/g,'')})+
+    '<div class="stamp">'+esc(m.src)+' · latest '+esc(m.period)+' · dashed = trailing 2/3/5-yr averages'+(opt.target!=null?' · dotted = 2% target':'')+'</div></div>';
+}
+function macroKpiCard(title, us, ca, dec, unit){
+  function row(flag, m){ if(!m) return ''; var ch=m.chg; return '<div class="mini-kv"><span>'+flag+' '+esc(m.period)+'</span><b>'+fmt(m.value,dec)+unit+'</b> <span class="'+(Math.abs(ch)<Math.pow(10,-dec)/2?'neu':cls(ch))+'">'+sgn(ch,dec,unit==='%'?' pp':'')+'</span></div>'; }
+  return '<div class="dash-card"><div class="dk">'+title+'</div>'+(MGEO!=='ca'?row('US',us):'')+(MGEO!=='us'?row('CA',ca):'')+'</div>';
+}
+function macroCompareHTML(){
+  var R=[['CPI inflation (y/y)','us_cpi','ca_cpi',1,'%',function(g){ return g>0?'US inflation hotter → Fed has less room to ease; USD-supportive':'Canada inflation hotter → BoC under more pressure; CAD-supportive'; }],
+    ['Unemployment rate','us_ur','ca_ur',1,'%',function(g){ return g<0?'US labour market tighter → USD-supportive':'Canada labour market tighter → CAD-supportive'; }],
+    ['Policy rate','us_policy','ca_policy',2,'%',function(g){ return g>0?'Rate gap favours USD carry ('+fmt(g*100,0)+' bps)':'Rate gap favours CAD carry'; }],
+    ['Real GDP (q/q ann.)','us_gdp','ca_gdpq',1,'%',function(g){ return g>0?'US growth outpacing Canada → USD-supportive':'Canada growth outpacing → CAD-supportive'; }]];
+  var rows=R.map(function(r){ var u=mget(r[1]), c=mget(r[2]); if(!u||!c) return '';
+    var g=u.value-c.value; return '<tr><td class="lbl" data-l="">'+r[0]+'</td><td data-l="US latest"><b>'+fmt(u.value,r[3])+r[4]+'</b> <small class="h2note">'+esc(u.period)+'</small></td><td data-l="US prior">'+fmt(u.prior,r[3])+r[4]+'</td>'+
+      '<td data-l="Canada latest"><b>'+fmt(c.value,r[3])+r[4]+'</b> <small class="h2note">'+esc(c.period)+'</small></td><td data-l="Canada prior">'+fmt(c.prior,r[3])+r[4]+'</td><td data-l="Gap US−CA"><b>'+sgn(g,r[3],' pp')+'</b></td><td data-l="Read" class="read-cell">'+r[5](g)+'</td></tr>'; }).join('');
+  return '<table class="sd-tbl"><thead><tr><th>Indicator</th><th>US latest</th><th>US prior</th><th>Canada latest</th><th>Canada prior</th><th>Gap</th><th>Interpretation</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+function macroDashHTML(){
+  var b=function(v,l){ return '<button data-mgeo="'+v+'" aria-pressed="'+(MGEO===v)+'">'+l+'</button>'; };
+  var uc=mget('us_cpi'), cc=mget('ca_cpi'), uu=mget('us_ur'), cu=mget('ca_ur'), up=mget('us_policy'), cp=mget('ca_policy'), ug=mget('us_gdp'), cg=mget('ca_gdpq')||mget('ca_gdp');
+  function cpiHead(country){ return function(v){ return esc(country)+' CPI inflation: <b>'+fmt(v,1)+'%</b>, '+(v>2.05?'above':v<1.95?'below':'at')+' the 2% target'; }; }
+  function urHead(country){ return function(v,m){ var a=trailAvg(m.long,36); return esc(country)+' unemployment: <b>'+fmt(v,1)+'%</b>'+(a!=null?', '+(v>a+0.05?'above':v<a-0.05?'below':'in line with')+' its 3-yr average':''); }; }
+  var showUS=MGEO!=='ca', showCA=MGEO!=='us';
+  var cpi=(showUS?macroLinePanel(uc,{country:'U.S.',what:'CPI',color:'#38b6c9',target:2,yLabel:'Inflation rate (%)',headline:cpiHead('U.S.')}):'')+(showCA?macroLinePanel(cc,{country:'Canada',what:'CPI',color:'#e0655f',target:2,yLabel:'Inflation rate (%)',headline:cpiHead('Canada')}):'');
+  var ur=(showUS?macroLinePanel(uu,{country:'U.S.',what:'unemployment',color:'#38b6c9',yLabel:'Unemployment rate (%)',headline:urHead('U.S.')}):'')+(showCA?macroLinePanel(cu,{country:'Canada',what:'unemployment',color:'#e0655f',yLabel:'Unemployment rate (%)',headline:urHead('Canada')}):'');
+  function pol(m,country,color){ if(!m||!m.long) return '<div class="mpanel"><h3 class="mp-h">'+country+' policy rate</h3><p class="note">Policy-rate history loads on the next macro refresh.</p></div>';
+    var p=m.long, l=p[p.length-1][1], y1=p.length>12?p[p.length-13][1]:null;
+    return '<div class="mpanel"><h3 class="mp-h">'+country+' policy rate: <b>'+fmt(l,2)+'%</b>'+(y1!=null?', '+(l<y1?'down '+fmt((y1-l)*100,0)+' bps':l>y1?'up '+fmt((l-y1)*100,0)+' bps':'unchanged')+' in 12 months':'')+'</h3>'+
+      lineChartSVG({series:[{pts:p.slice(-60),color:color,label:'Rate'}],yLabel:'Policy rate (%)',dec:2,H:200})+'<div class="stamp">'+esc(m.src)+' · month-end readings</div></div>'; }
+  var polH=(showUS?pol(up,'Fed funds (upper)','#38b6c9'):'')+(showCA?pol(cp,'BoC overnight','#e0655f'):'');
+  function gdp(m,country){ if(!m) return ''; var src=m.long||m.history.map(function(h){ return [h[0],h[1]]; });
+    var bars=src.slice(-12).map(function(p,i,a){ var q=p[0].length>=7?('Q'+(Math.floor((+p[0].slice(5,7)-1)/3)+1)+" '"+p[0].slice(2,4)):p[0]; return [q,p[1],i===a.length-1]; });
+    var l=bars[bars.length-1][1];
+    return '<div class="mpanel"><h3 class="mp-h">'+country+' real GDP: <b>'+fmt(l,1)+'%</b> '+(m.key==='ca_gdp'?'m/m':'q/q annualized')+'</h3>'+barChartSVG({bars:bars,yLabel:'Growth (%)',dec:1,H:200})+'<div class="stamp">'+esc(m.src)+' · '+esc(m.period)+'</div></div>'; }
+  var gdpH=(showUS?gdp(ug,'U.S.'):'')+(showCA?gdp(cg,'Canada'):'');
+  return '<div class="tile wide" data-src="macro"><div class="tile-head"><h2>US vs Canada macro dashboard <span class="h2note">— latest prints, 5-year context, what it means for USD/CAD</span></h2>'+
+    '<span class="toggle" role="group">'+b('both','US + CANADA')+b('us','US')+b('ca','CANADA')+'</span></div>'+
+    '<div class="dash-grid four">'+macroKpiCard('CPI inflation (y/y)',uc,cc,1,'%')+macroKpiCard('Unemployment rate',uu,cu,1,'%')+macroKpiCard('Policy rate',up,cp,2,'%')+macroKpiCard('Real GDP',ug,cg,1,'%')+'</div>'+
+    '<div class="mpanels'+(MGEO==='both'?'':' one')+'">'+cpi+ur+polH+gdpH+'</div>'+
+    (MGEO==='both'?'<h3 class="m-h">Country comparison</h3>'+macroCompareHTML():'')+
+    '<div class="stamp">Source: BLS / BEA / Federal Reserve via FRED · Statistics Canada · Bank of Canada Valet · data checked '+asOf('macro',true)+'</div></div>';
+}
+
+/* ---------- Canada charts (fundamentals sub-tab) ---------- */
+function canadaChartsHTML(key){
+  var C=DATA.canada&&DATA.canada[key], st=caState(key), A=C&&C.annual&&C.annual[st.ca_geo]; if(!A) return '';
+  var M=caMeasures(key, st.ca_unit), prod=M[3].v(A), yrs=A.years, i=caLatestIdx(prod), s0=Math.max(0,i-9);
+  var bars=[], line=[]; for(var j=s0;j<=i;j++){ bars.push(["'"+yrs[j].slice(2), prod[j], j===i]); line.push([yrs[j], caAvg(prod,j-5,j)]); }
+  var html='<div class="tile" data-src="canada"><h2>'+esc(st.ca_geo)+' production by crop year <span class="h2note">— '+M[3].u+' · dashed = trailing 5-yr average</span></h2>'+
+    barChartSVG({bars:bars,line:line,lineLabel:'5-yr',yLabel:'Production ('+M[3].u+')',dec:M[3].d,floor:0})+'<div class="stamp">'+scLink('annual')+(+yrs[i]>=new Date().getFullYear()?' · '+yrs[i]+' is an in-season estimate':'')+'</div></div>';
+  var P=caPriceSeries(C, st.ca_geo), bpm=BU_PER_MT[key], imp=st.ca_unit==='imp', f=imp?1/bpm:1, uu=imp?'C$/bu':'C$/t';
+  if(P){ var g=DATA.grains[key], fut=g&&g.fan&&+g.fan.intraday[0], fx=DATA.fx&&DATA.fx.feed&&+DATA.fx.feed.mid, refs=[];
+    if(fut&&fx) refs.push({v:+(fut*bpm*fx*f).toFixed(2),label:'CBOT C$',color:'#38b6c9'});
+    var ch=DATA.ca_calendar&&DATA.ca_calendar.chatham&&DATA.ca_calendar.chatham[key];
+    if(ch&&st.ca_geo==='Ontario') refs.push({v:+(ch*f).toFixed(2),label:'AAFC Chatham fcst',color:'#e8a33d'});
+    html+='<div class="tile" data-src="canada"><h2>'+esc(st.ca_geo==='Ontario'||P===(C.prices||{})[st.ca_geo]?st.ca_geo:'Canada')+' monthly farm price vs CBOT <span class="h2note">— '+uu+'</span></h2>'+
+      lineChartSVG({series:[{pts:P.series.slice(-30).map(function(x){ return [x[0], +(x[1]*f).toFixed(2)]; }),color:'#5fd598',label:'Farm'}],refs:refs,yLabel:'Price ('+uu+')',dec:2})+
+      '<div class="stamp">'+scLink('prices')+' ('+esc(P.product)+') · CBOT '+esc(GMETA[key].contract)+' converted at live USD/CAD'+(ch&&st.ca_geo==='Ontario'?' · AAFC 2026-27 Chatham average forecast from the '+esc(DATA.ca_calendar.chatham_report)+' Outlook':'')+'</div></div>';
+  }
+  return html;
+}
+
 /* ================= USD/CAD LIVE FEED MONITOR ================= */
 var MON_TAB='next';
 function agriEvents(fromMs, days){
@@ -1566,12 +1764,13 @@ function agriEvents(fromMs, days){
   ['corn','wheat','soybeans'].forEach(function(k){ usdaEvents(k, fromMs, days).forEach(function(e){
     var lab=e.kind==='contract'?GMETA[k].name+': '+e.label:e.label, id=lab+'|'+e.t;
     if(!seen[id]){ seen[id]=1; out.push({t:e.t,label:lab,kind:e.kind,src:'agri'}); } }); });
+  caEvents(fromMs, days).forEach(function(e){ out.push({t:e.t,label:'Canada: '+e.label,kind:'ca',src:'agri'}); });
   return out.sort(function(a,b){ return a.t-b.t; });
 }
 function macroHighEvents(){ return DATA.fx.events.filter(function(e){ return e.impact==='High'; }).map(function(e){ return {t:evEpoch(e),label:e.ccy+' '+e.event,kind:'macro',src:'macro',prev:e.prev,fc:e.fc}; }).sort(function(a,b){ return a.t-b.t; }); }
 function monRows(list, now){
   if(!list.length) return '<div class="checkline">Nothing scheduled in this window.</div>';
-  return list.map(function(e){ var past=e.t<now, tag=e.src==='macro'?'<span class="chip miss">MACRO</span>':e.kind==='wasde'?'<span class="chip miss">WASDE</span>':e.kind==='contract'?'<span class="chip demo">CONTRACT</span>':'<span class="chip inline">USDA</span>';
+  return list.map(function(e){ var past=e.t<now, tag=e.src==='macro'?'<span class="chip miss">MACRO</span>':e.kind==='ca'?'<span class="chip demo">CANADA</span>':e.kind==='wasde'?'<span class="chip miss">WASDE</span>':e.kind==='contract'?'<span class="chip demo">CONTRACT</span>':'<span class="chip inline">USDA</span>';
     return '<div class="kv'+(past?' ev-past':'')+'"><span class="kk">'+etLabel(e.t,true)+' · '+esc(e.label)+' '+tag+(e.prev?' <span class="neu">prev '+esc(e.prev)+'</span>':'')+'</span><span class="vv">'+(past?'<span class="chip inline">OUT</span>':'<span class="countdown" data-t="'+e.t+'">'+cdText(e.t-now)+'</span>')+'</span></div>'; }).join('');
 }
 function monitorNews(){
@@ -1588,7 +1787,7 @@ function liveMonitorHTML(){
   return '<div class="rail-card mon-card"><div class="mon-head"><div class="rail-title"><span>Live feed monitor</span></div>'+
     (up?'<div class="mon-next">Next: <b>'+esc(up.label)+'</b><div class="hero-cd countdown" data-t="'+up.t+'" data-fmt="hms">'+hmsText(up.t-now)+'</div><div class="dsub">'+etLabel(up.t,true)+' ET</div></div>':'')+
     '<div class="mon-tabs" role="tablist">'+tabs.map(function(t){ return '<button role="tab" data-mon="'+t[0]+'" aria-selected="'+(MON_TAB===t[0])+'">'+t[1]+'</button>'; }).join('')+'</div></div>'+
-    '<div class="rail-body mon-body">'+body+'<div class="stamp">Toronto time · agri = USDA weekly reports, WASDE and CBOT contract dates for corn, wheat, soybeans · macro = high-impact only · news = all four desks</div></div></div>';
+    '<div class="rail-body mon-body">'+body+'<div class="stamp">Toronto time · agri = USDA weekly reports, WASDE, CBOT contract dates and Canada (AAFC/StatCan) releases · macro = high-impact only · news = all four desks</div></div></div>';
 }
 document.addEventListener('click', function(ev){
   var t=ev.target.closest?ev.target:null; if(!t) return;
@@ -1598,14 +1797,25 @@ document.addEventListener('click', function(ev){
   var go=t.closest('[data-ask-go]'); if(go){ askClaude(go.getAttribute('data-ask-go')); }
 });
 
+function grainSubnavHTML(key){
+  var now=Date.now(), us=usdaEvents(key, now, 120), ca=caEvents(now, 180), all=us.concat(ca).sort(function(a,b){ return a.t-b.t; });
+  var geo=dstate(key).fgeo||'us', g=DATA.grains[key], f=g.fan, meta=GMETA[key], L=+f.intraday[0], A=+f.anchor, ch=L-A, fx=+DATA.fx.feed.mid;
+  var live='<span class="sl-pill">'+(isAuto('grains_quote')?'LIVE · DELAYED':'SNAPSHOT')+'</span> <span class="sl-k">'+esc(meta.contract)+'</span> <b>$'+fmt(L,4)+'</b> <span class="'+cls(ch)+'">'+sgn(ch*100,2,'¢')+'</span> vs settle '+fmt(A,4)+
+    ' · <span class="sl-k">C$/t</span> <b>'+fmt(L*BU_PER_MT[key]*fx,2)+'</b> · <span class="sl-k">USD/CAD</span> <b data-live="usdcad">'+fmt(fx,5)+'</b> · <span class="sl-k">quote</span> '+esc(f.intraday[1]||'');
+  return subnavHTML(key, [
+    {id:'overview', label:'Overview', ev:nextOf(all, function(e){ return e.kind==='wasde'||e.kind==='contract'||e.kind==='ca'; })||nextOf(all)},
+    {id:'deriv', label:'Derivatives', ev:nextOf(us, function(e){ return e.kind==='contract'||e.kind==='cftc'; })},
+    {id:'fund', label:'Fundamentals · '+(geo==='us'?'USDA':geo==='on'?'Ontario':'Canada'), ev:geo==='us'?nextOf(us, function(e){ return e.kind==='usda'||e.kind==='wasde'; }):nextOf(ca)}
+  ], live);
+}
 function renderGrain(key){
   var g=DATA.grains[key], meta=GMETA[key], f=g.fan, last=g.cftc[g.cftc.length-1], prev=g.cftc[g.cftc.length-2];
   var MA50=f.ma50||{corn:"5.10", soybeans:"12.75", wheat:"7.05"}[key];
   var wow = last.net - prev.net;
-  var html='<div class="layout"><div class="grid">'+grainKpiHTML(key)+grainDashboardHTML(key);
+  var html='<div class="layout"><div class="grid">'+grainSubnavHTML(key), OV=grainKpiHTML(key)+grainDashboardHTML(key), DV='', FU='';
   /* fan tile */
   var FL=fanLevels(g, meta);
-  html+='<div class="tile wide" data-src="grains_quote" data-grain="'+key+'"><h2>'+meta.name+' '+meta.contract+' — 10-day σ fan <span class="h2note">settle fan anchored '+fmtDate(f.settle_date)+' · live fan re-anchored on the latest delayed quote</span></h2>'+
+  OV+='<div class="tile wide" data-src="grains_quote" data-grain="'+key+'"><h2>'+meta.name+' '+meta.contract+' — 10-day σ fan <span class="h2note">settle fan anchored '+fmtDate(f.settle_date)+' · live fan re-anchored on the latest delayed quote</span></h2>'+
     '<div class="stat-row" style="margin:6px 0 10px">'+
     stat("Daily σ", "$"+fmt(f.sig,4)) +
     stat("Chain IV", fmt(f.iv_chain_iv,2)+"%") +
@@ -1617,22 +1827,22 @@ function renderGrain(key){
     '<div class="legend"><span><span class="sw" style="background:#dbe4f0"></span>Verified settlements (25)</span><span><span class="sw" style="background:'+meta.accent+'"></span>Settle-anchored fan (LATEST VERIFIED)</span><span><span class="sw" style="background:#38b6c9"></span>Live-anchored fan (delayed quote, frozen)</span><span><span class="sw" style="background:#f0c169"></span>MA20</span><span><span class="sw" style="background:#b18cff"></span>MA50 / options walls</span><span><span class="sw" style="background:#ff6b6b"></span>Market (delayed)</span><span>Right-edge labels: every live-fan level at day 10, spaced apart with leader lines to each level\u2019s true price — no label overlaps another · exp MA20 / exp MA50 are flat zero-drift extensions of the last trailing values, labeled \u201cexp\u201d — never predictions · IV band uses chain IV '+fmt(f.iv_chain_iv,2)+'% × √(10/252)</span></div>'+
     '<div class="stamp">Settle fan from '+g.history.length+' daily settles through '+fmtDate(f.settle_date)+' (σ = st.dev of the last 30 daily changes) · live fan re-anchored on the delayed quote '+esc(f.intraday[1])+'</div></div>';
   /* export sales — 10-week trend */
-  html+=exportTileHTML(key);
+  FU+=wasdeTableHTML(key)+exportTileHTML(key)+destTileHTML(key);
   /* insight + curve (both computed from the data) */
-  html+='<div class="tile"><h2>Insight</h2><p class="read">'+grainInsight(key)+'</p><div class="stamp">Generated from the current settles, options and CFTC data</div></div>';
-  html+=grainSpreadsHTML(key);
+  OV+='<div class="tile wide"><h2>Insight</h2><p class="read">'+grainInsight(key)+'</p><div class="stamp">Generated from the current settles, options and CFTC data</div></div>';
+  DV+=grainSpreadsHTML(key).replace('class="tile"','class="tile wide"');
   /* positioning (toggle target) */
-  html+='<div class="tile wide" id="pos-'+key+'">'+positioningHTML(key)+'</div>';
+  DV+='<div class="tile wide" id="pos-'+key+'">'+positioningHTML(key)+'</div>';
   /* OI chart (toggle target) */
-  html+='<div class="tile wide" data-src="options" id="oi-'+key+'">'+oiTileHTML(key)+'</div>';
+  DV+='<div class="tile wide" data-src="options" id="oi-'+key+'">'+oiTileHTML(key)+'</div>';
   /* rollover — full card replication */
-  html+=rollTileHTML(key);
+  DV+=rollTileHTML(key);
   /* skew */
-  html+='<div class="tile wide"><h2>IV skew <span class="h2note">— liquid side · ±2σ window</span></h2>'+ skewSVG(g, meta)+
+  DV+='<div class="tile wide"><h2>IV skew <span class="h2note">— liquid side · ±2σ window</span></h2>'+ skewSVG(g, meta)+
     '<div class="legend"><span><span class="sw" style="background:var(--put)"></span>Puts below futures</span><span><span class="sw" style="background:var(--call)"></span>Calls at/above futures</span></div>'+
     '<div class="stamp">'+(f.iv_note?esc(f.iv_note):'Per-strike theoretical IV, end-of-day Oct 21, 2026 vintage (read Oct 22)')+' · window = futures ± 2× the 10-day σ · market-implied, not a prediction</div></div>';
   /* CFTC */
-  html+='<div class="tile wide" data-src="cftc_grains"><h2>CFTC managed money <span class="h2note">— weekly, latest verified · every bar labeled, trend line across the weekly nets</span></h2>'+
+  DV+='<div class="tile wide" data-src="cftc_grains"><h2>CFTC managed money <span class="h2note">— weekly, latest verified · every bar labeled, trend line across the weekly nets</span></h2>'+
     '<div class="big" style="color:'+(last.net>=0?'var(--green)':'var(--red)')+'">'+(last.net>=0?'+':'−')+fmt(Math.abs(last.net))+' <span style="font-size:14px;color:var(--muted)">net contracts</span></div>'+
     '<div class="stat-row">'+stat("Long", fmt(last.long)) + stat("Short", fmt(last.short)) +
     stat("Week over week", '<span class="'+cls(wow)+'">'+sgn(wow,0)+'</span>')+
@@ -1641,7 +1851,13 @@ function renderGrain(key){
     '<p class="read">'+cftcRead(g.cftc)+'</p>'+
     '<div class="legend"><span><span class="sw" style="background:#3fb97f"></span>Net long week</span><span><span class="sw" style="background:#e0655f"></span>Net short week</span><span><span class="sw" style="background:#e8eef4"></span>Trend line (weekly nets)</span><span>Value label on every bar, on a dark backing plate so the trend line never overprints it</span></div>'+
     '<div class="stamp">Managed-money net, trailing '+g.cftc.length+' weekly reports \u00b7 CFTC disaggregated futures-only \u00b7 auto-refreshed</div></div>';
-  html+=askTileHTML(key);
+  OV+=askTileHTML(key);
+  var st=dstate(key), geo=st.fgeo||'us';
+  if(geo!=='us'){ caState(key).ca_geo=(geo==='on'?'Ontario':'Canada'); }
+  var gb=function(v,l){ return '<button data-dash="'+key+'" data-k="fgeo" data-v="'+v+'" aria-pressed="'+(geo===v)+'">'+l+'</button>'; };
+  var FH='<div class="tile wide geo-head"><div class="tile-head"><h2>'+meta.name+' fundamentals <span class="h2note">— pick a geography</span></h2><span class="toggle" role="group">'+gb('us','US · USDA / WASDE')+gb('ca','CANADA · STATCAN')+gb('on','ONTARIO')+'</span></div></div>';
+  FU=FH+(geo==='us'?FU:canadaTileHTML(key,true)+canadaChartsHTML(key)+caCalendarHTML());
+  html+=subWrap(key,'overview',OV)+subWrap(key,'deriv',DV)+subWrap(key,'fund',FU);
   html+='</div><aside class="rail">'+grainAlertsLiveHTML(key)+grainCalendarHTML(key)+newsRailHTML(NEWS[key])+'</aside></div>';
   document.getElementById('panel-'+key).innerHTML=html;
 }
@@ -1739,13 +1955,14 @@ function macroDiffs(){
 function fxMacroHTML(){
   var all=DATA.macro||[];
   if(!all.length) return '<div class="tile wide" data-src="macro"><h2>Macro monitor</h2><p class="note">US and Canada indicators load on the next data refresh.</p></div>';
+  all=all.filter(function(m){ return !m.chart_only; });
   function grp(g){ return all.filter(function(m){ return m.group===g; }).map(macroCard).join(''); }
   var errs=DATA.meta.macro_errors?Object.keys(DATA.meta.macro_errors).length:0;
-  return '<div class="tile wide" data-src="macro"><h2>Macro monitor <span class="h2note">— latest print, change vs prior, last 12 readings · hover a card for the values</span></h2>'+
+  return '<div class="tile wide" data-src="macro"><h2>All macro indicators <span class="h2note">— latest print, change vs prior, last 12 readings · hover a card for the values</span></h2>'+
     '<div class="m-legend"><span class="up">▲ stronger</span><span class="dn">▼ weaker</span><span class="heat">▲ inflation hotter</span><span class="cool">▼ inflation cooler</span></div>'+
-    '<h3 class="m-h">United States <span class="chip inline">USD</span></h3><div class="m-grid">'+grp('us')+'</div>'+
-    '<h3 class="m-h">Canada <span class="chip inline">CAD</span></h3><div class="m-grid">'+grp('ca')+'</div>'+
-    '<h3 class="m-h">US − Canada differentials <span class="h2note">— what moves USD/CAD</span></h3><div class="m-grid">'+macroDiffs()+'</div>'+
+    (MGEO!=='ca'?'<h3 class="m-h">United States <span class="chip inline">USD</span></h3><div class="m-grid">'+grp('us')+'</div>':'')+
+    (MGEO!=='us'?'<h3 class="m-h">Canada <span class="chip inline">CAD</span></h3><div class="m-grid">'+grp('ca')+'</div>':'')+
+    (MGEO==='both'?'<h3 class="m-h">US − Canada differentials <span class="h2note">— what moves USD/CAD</span></h3><div class="m-grid">'+macroDiffs()+'</div>':'')+
     '<div class="stamp">FRED (BLS, BEA, DOL, Census, UMich) · Bank of Canada Valet · Statistics Canada · checked '+asOf('macro',true)+' · refreshed every 2h'+(errs?' · '+errs+' series kept at their last good reading':'')+'</div></div>';
 }
 function fxKpiHTML(){
@@ -1940,6 +2157,20 @@ function fxLevelCheck(spot){
     .map(function(x){ return [x[0],x[1],Math.abs(spot-x[1])*10000]; }).sort(function(a,b){ return a[2]-b[2]; })[0];
   return '<b>Price level check:</b> USD/CAD '+fmt(spot,5)+' sits '+where.join(', ')+' \u00b7 nearest level: '+near[0]+' '+fmt(near[1],5)+' ('+fmt(near[2],1)+' pips away).';
 }
+function fxEvList(){ return (DATA.fx.events||[]).map(function(e){ return {t:evEpoch(e), label:e.ccy+' '+e.event, impact:e.impact, ccy:e.ccy}; }); }
+function fxSubnavHTML(){
+  var ev=fxEvList(), cb=/Overnight Rate|Federal Funds Rate/;
+  var cftc=usdaEvents('corn', Date.now(), 10).filter(function(e){ return e.kind==='cftc'; }).map(function(e){ return {t:e.t,label:'CFTC COT · CAD positioning'}; });
+  var fx=DATA.fx, chg=(fx.feed.mid/fx.spot.ref-1)*100, w=fx.energy[0], R={}; fx.rates.forEach(function(r){ R[r.t]=r; });
+  var live='<span class="sl-pill">'+(isAuto('fx_spot')?'LIVE':'SNAPSHOT')+'</span> <span class="sl-k">USD/CAD</span> <b data-live="usdcad">'+fmt(fx.feed.mid,5)+'</b> <span class="'+cls(chg)+'">'+sgn(chg,2,'%')+'</span>'+
+    ' · <span class="sl-k">10Y US–CA</span> <b>'+fmt(R['10Y'].sp,1)+'</b> bps · <span class="sl-k">WTI</span> <b>$'+fmt(w.last,2)+'</b> <span class="'+cls(w.pct)+'">'+sgn(w.pct,2,'%')+'</span> · <span class="sl-k">DXY</span> <b>'+fmt(fx.fxcross.dxy,2)+'</b>';
+  return subnavHTML('fx', [
+    {id:'overview', label:'Overview', ev:nextOf(ev, function(e){ return e.impact==='High'; })},
+    {id:'deriv', label:'Derivatives & positioning', ev:nextOf(ev.filter(function(e){ return cb.test(e.label); }).concat(cftc))},
+    {id:'macro', label:'Macro · '+(MGEO==='both'?'US + Canada':MGEO==='us'?'US':'Canada'), ev:nextOf(ev, function(e){ return e.impact==='High' && !cb.test(e.label) && (MGEO==='both'||e.ccy===(MGEO==='us'?'USD':'CAD')); })},
+    {id:'rates', label:'Rates, policy & energy', ev:nextOf(ev, function(e){ return cb.test(e.label)||/Crude|Oil|Treasury|Bond|Auction/i.test(e.label); })}
+  ], live);
+}
 function renderFX(){
   var fx=DATA.fx, T={}, html='<div class="layout"><div class="grid">';
   /* spot — feed value from data.json; live.js streams over it */
@@ -1978,6 +2209,7 @@ function renderFX(){
     '<td data-l="20D %ile">'+(r.pct==null?'n/a':fmt(r.pct,0)+'th')+'</td></tr>';
   }).join("");
   T.yields='<div class="tile wide" data-src="yields"><h2>US–Canada yield spreads <span class="h2note">— official closes, '+asOf('yields')+' · spreads in bps</span></h2>'+
+    barChartSVG({bars:fx.rates.map(function(r){ return [r.t, r.sp, r.t===fx.widest]; }), yLabel:'US−CA spread (bps)', dec:0, H:180, aria:'US minus Canada yield spread by tenor'})+
     '<table><thead><tr><th>Tenor</th><th>US</th><th>Canada</th><th>Spread</th><th>Δ 1D</th><th>Δ Week</th><th>20D %ile</th></tr></thead><tbody>'+rrows+'</tbody></table>'+
     '<div class="read">Spreads run '+fmt(Math.min.apply(null,fx.rates.map(function(r){return r.sp;})),0)+'–'+fmt(Math.max.apply(null,fx.rates.map(function(r){return r.sp;})),0)+' bps across tenors, widest at the '+fx.widest+'. '+(function(){ var w=fx.rates.filter(function(r){return r.wow!=null;}), nar=w.filter(function(r){return r.wow<0;}).length; return nar===w.length?'Every tenor narrowed on the week.':nar===0?'Every tenor widened on the week.':nar+' of '+w.length+' tenors narrowed on the week.'; })()+' US par curve ('+asOf('yields')+'): 3M '+fmt(fx.treasury['3M'],2)+'% · 2Y '+fmt(fx.treasury['2Y'],2)+'% · 10Y '+fmt(fx.treasury['10Y'],2)+'% · 30Y '+fmt(fx.treasury['30Y'],2)+'%.</div>'+
     '<div class="stamp">Yields = official daily closes ('+asOf('yields')+') · spread Δ vs prior official close · Canada 20Y has no official benchmark series — the 20Y spread uses the desk\u2019s stored series (see desk notes)</div></div>';
@@ -2005,7 +2237,10 @@ function renderFX(){
   var corRows=fx.policy.corra.map(function(c){
     return '<div class="kv"><span class="kk">CORRA · '+c.month+'</span><span class="vv">Implied '+fmt(c.implied_rate_pct,2)+'%</span></div>';
   }).join("");
-  T.policy='<div class="tile" data-src="policy"><h2>Policy expectations <span class="h2note">— futures-implied</span></h2>'+fedRows+
+  var upol=mget('us_policy'), cpol=mget('ca_policy'), polChart='';
+  if(upol&&upol.long&&cpol&&cpol.long){ var cmap={}; cpol.long.forEach(function(x){ cmap[x[0].slice(0,7)]=x[1]; });
+    var up24=upol.long.slice(-24); polChart=lineChartSVG({series:[{pts:up24,color:'#38b6c9',label:'Fed'},{pts:up24.map(function(x){ var v=cmap[x[0].slice(0,7)]; return [x[0], v==null?null:v]; }),color:'#e0655f',label:'BoC'}],yLabel:'Policy rate (%)',dec:2,H:190,aria:'Fed and BoC policy rates, last 24 months'}); }
+  T.policy='<div class="tile" data-src="policy"><h2>Policy expectations <span class="h2note">— futures-implied</span></h2>'+polChart+fedRows+
     '<div class="kv"><span class="kk">Fed funds target</span><span class="vv">'+(function(){ var f=/(\d{3})-(\d{3})/.exec(fx.policy.fed_range||''); return f?fmt(f[1]/100,2)+'\u2013'+fmt(f[2]/100,2)+'%':esc(fx.policy.fed_range); })()+'</span></div>'+corRows+
     '<div class="kv"><span class="kk">BoC overnight (current)</span><span class="vv">'+fmt(fx.policy.corra_now,2)+'%</span></div>'+
     '<div class="stamp">Fed probabilities pulled Oct 21, 06:20 CT · CORRA implied rates pulled Oct 21, 07:35 ET · futures-implied, not forecasts</div></div>';
@@ -2023,7 +2258,8 @@ function renderFX(){
   var enRows=fx.energy.map(function(e){
     return '<div class="kv"><span class="kk">'+e.name+' <span style="color:var(--faint)">('+e.delay+')</span></span><span class="vv">$'+fmt(e.last,2)+' <span class="'+cls(e.pct)+'">'+sgn(e.pct,2,'%')+'</span></span></div>';
   }).join("");
-  T.energy='<div class="tile wide" data-src="energy"><h2>Energy <span class="h2note">— delayed reads · '+asOf('energy',true)+'</span></h2>'+enRows+
+  T.energy='<div class="tile wide" data-src="energy"><h2>Energy <span class="h2note">— delayed reads · '+asOf('energy',true)+'</span></h2>'+
+    divBarsHTML(fx.energy.map(function(e){ return [e.name.replace(/Western Canadian Select/,'WCS').replace(/ Crude| \(.*\)/g,''), e.pct]; }).concat([['DXY', fx.fxcross.dxy_chg]]),2,'%')+enRows+
     '<div class="kv"><span class="kk">WTI – WCS differential</span><span class="vv">$'+fmt(fx.wcs_diff.value,2)+'/bbl</span></div>'+
     '<div class="kv"><span class="kk">DXY ('+asOf('crosses')+')</span><span class="vv">'+fmt(fx.fxcross.dxy,3)+' <span class="'+cls(fx.fxcross.dxy_chg)+'">'+sgn(fx.fxcross.dxy_chg,2,'%')+'</span></span></div>'+
     '<div class="kv"><span class="kk">EUR/USD \u00b7 USD/JPY</span><span class="vv">'+fmt(fx.fxcross.eurusd,4)+' \u00b7 '+fmt(fx.fxcross.usdjpy,2)+'</span></div>'+
@@ -2033,8 +2269,11 @@ function renderFX(){
     '<p class="note" style="margin:0 0 6px;font-size:12.5px;color:#b9c7da">CIP-theoretical \u2014 computed from spot + rate differentials, not traded quotes</p>'+
     '<div id="fx-fwd">'+fxForwardsHTML(fx.feed.mid)+'</div>'+
     '<div class="stamp">F = spot \u00d7 (1 + CAD rate \u00d7 T) \u00f7 (1 + US rate \u00d7 T) \u00b7 sub-1Y: US 3M bill vs BoC overnight \u00b7 1Y\u20135Y: benchmark yields ('+asOf('yields')+') \u00b7 <span id="fx-fwd-spot">spot '+fmt(fx.feed.mid,5)+'</span></div></div>';
-  html+=fxKpiHTML()+fxMacroHTML()+T.spot+T.closes+T.releases+T.cftc+T.yields+T.forwards+T.model+T.policy+T.sentiment+T.energy;
-  html+=askTileHTML('fx');
+  html+=fxSubnavHTML()+
+    subWrap('fx','overview', fxKpiHTML()+T.spot+T.closes+T.model+askTileHTML('fx'))+
+    subWrap('fx','deriv', T.forwards+T.cftc+T.sentiment.replace('class="tile"','class="tile wide"'))+
+    subWrap('fx','macro', macroDashHTML()+fxMacroHTML()+T.releases)+
+    subWrap('fx','rates', T.yields+T.energy.replace('class="tile wide"','class="tile"')+T.policy);
   html+='</div><aside class="rail">'+liveMonitorHTML()+fxAlertsHTML()+'</aside></div>';
   document.getElementById('panel-fx').innerHTML=html;
 }

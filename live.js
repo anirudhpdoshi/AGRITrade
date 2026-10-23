@@ -22,7 +22,7 @@
   var CADENCE = {
     fx_spot: 15, grains_quote: 30, energy: 120, news: 240,
     crosses: 1440, fx_closes: 1440, yields: 1440, policy: 1440, sentiment: 1440,
-    options: 1440, grains_settle: 1440, calendar: 10080, releases: 46080, macro: 240, cftc_fx: 10080, cftc_grains: 10080, canada: 2880
+    options: 1440, grains_settle: 1440, calendar: 10080, releases: 46080, macro: 240, cftc_fx: 10080, cftc_grains: 10080, canada: 2880, ca_calendar: 2880
   };
 
   /* ------------------------------------------------------------------ utils */
@@ -225,6 +225,7 @@
     if (ks) { ks.textContent = fmtN(p, 5); if (flash && last !== null && p !== last) { ks.classList.remove("flash-up", "flash-dn"); void ks.offsetWidth; ks.classList.add(p > last ? "flash-up" : "flash-dn"); } }
     if (kc) { kc.textContent = (chg > 0 ? "+" : chg < 0 ? "\u2212" : "") + fmtN(Math.abs(chg), 2) + "%"; kc.className = chg > 0 ? "up" : chg < 0 ? "dn" : "neu"; }
     if (c) { c.textContent = (chg > 0 ? "+" : chg < 0 ? "−" : "") + fmtN(Math.abs(chg), 3) + "%"; c.className = chg > 0 ? "up" : chg < 0 ? "dn" : "neu"; }
+    document.querySelectorAll('[data-live="usdcad"]').forEach(function (el) { el.textContent = fmtN(p, 5); });
     var fresh = Date.now() - liveTickAt < 90000, chip = $("fx-spot-chip");
     if (chip) { chip.textContent = fresh ? "LIVE" : "LAST TICK"; chip.className = fresh ? "chip live" : "chip frozen"; }
     var series = (typeof window.fxIntradayPoints === "function") ? window.fxIntradayPoints(ticks) : ticks;
