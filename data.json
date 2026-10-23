@@ -1731,19 +1731,6 @@
     ],
     "cftc": [
      {
-      "date": "2026-08-11",
-      "long": 312829,
-      "short": 186954,
-      "net": 125875,
-      "oi": 1684065,
-      "px": 4.3675,
-      "px_date": "2026-08-11",
-      "px_chg": null,
-      "px_mean": 4.3795,
-      "px_n": 5,
-      "px_mean_chg": null
-     },
-     {
       "date": "2026-08-18",
       "long": 321475,
       "short": 139783,
@@ -1751,10 +1738,10 @@
       "oi": 1728003,
       "px": 4.6325,
       "px_date": "2026-08-18",
-      "px_chg": 0.265,
+      "px_chg": null,
       "px_mean": 4.5845,
       "px_n": 5,
-      "px_mean_chg": 0.205
+      "px_mean_chg": null
      },
      {
       "date": "2026-08-25",
@@ -1859,6 +1846,19 @@
       "px_mean": 4.8955,
       "px_n": 5,
       "px_mean_chg": -0.1165
+     },
+     {
+      "date": "2026-10-20",
+      "long": 297797,
+      "short": 133374,
+      "net": 164423,
+      "oi": 1835658,
+      "px": 4.62,
+      "px_date": "2026-10-20",
+      "px_chg": -0.2075,
+      "px_mean": 4.724,
+      "px_n": 5,
+      "px_mean_chg": -0.1715
      }
     ],
     "roll": [
@@ -1924,33 +1924,29 @@
      ]
     ],
     "cftc_stats": {
-     "p1y": 75.0,
-     "p3y": 87.5,
+     "p1y": 61.5,
+     "p3y": 80.0,
      "weeks_hist": 160,
-     "pct_oi": 13.4,
+     "pct_oi": 9.0,
      "max3y": 414460,
      "min3y": -356415,
      "basis": {
       "avg_entry": 4.78537,
-      "net": 246425,
+      "net": 164423,
       "weeks": 160,
-      "since": "2023-09-26"
+      "since": "2023-10-03"
      },
      "kpi": {
-      "date": "2026-10-13",
-      "net": 246425.0,
-      "oi": 1845260.0,
-      "z52": 0.84,
-      "cot3": 78.2,
-      "d1": -83414.0,
-      "vel_pct_oi": -4.52,
-      "streak": -4,
-      "doi_pct": -0.79,
+      "date": "2026-10-20",
+      "net": 164423.0,
+      "oi": 1835658.0,
+      "z52": 0.31,
+      "cot3": 67.6,
+      "d1": -82002.0,
+      "vel_pct_oi": -4.47,
+      "streak": -5,
+      "doi_pct": -0.52,
       "z_hist": [
-       [
-        "2026-04-21",
-        1.84
-       ],
        [
         "2026-04-28",
         2.38
@@ -2050,13 +2046,13 @@
        [
         "2026-10-13",
         0.84
+       ],
+       [
+        "2026-10-20",
+        0.31
        ]
       ],
       "cot_hist": [
-       [
-        "2026-04-21",
-        75.0
-       ],
        [
         "2026-04-28",
         86.6
@@ -2156,13 +2152,13 @@
        [
         "2026-10-13",
         78.2
+       ],
+       [
+        "2026-10-20",
+        67.6
        ]
       ],
       "net_hist": [
-       [
-        "2025-10-21",
-        -159272.0
-       ],
        [
         "2025-10-28",
         -82925.0
@@ -2366,13 +2362,13 @@
        [
         "2026-10-13",
         246425.0
+       ],
+       [
+        "2026-10-20",
+        164423.0
        ]
       ],
       "oi_hist": [
-       [
-        "2026-04-21",
-        1831968.0
-       ],
        [
         "2026-04-28",
         1802419.0
@@ -2472,22 +2468,22 @@
        [
         "2026-10-13",
         1845260.0
+       ],
+       [
+        "2026-10-20",
+        1835658.0
        ]
       ],
       "fields": {
        "comm_long": "prod_merc_positions_long",
        "comm_short": "prod_merc_positions_short"
       },
-      "comm_net": -600489,
-      "comm_d1": 87888,
-      "spread": 846914.0,
-      "spread_idx": 77.6,
-      "spread_z": 0.83,
+      "comm_net": -528744,
+      "comm_d1": 71745,
+      "spread": 693167.0,
+      "spread_idx": 67.9,
+      "spread_z": 0.37,
       "comm_hist": [
-       [
-        "2025-10-21",
-        -121632
-       ],
        [
         "2025-10-28",
         -194301
@@ -2691,9 +2687,13 @@
        [
         "2026-10-13",
         -600489
+       ],
+       [
+        "2026-10-20",
+        -528744
        ]
       ],
-      "px_chg_pct": -2.32
+      "px_chg_pct": -3.5
      }
     }
    },
@@ -4140,19 +4140,6 @@
     ],
     "cftc": [
      {
-      "date": "2026-08-11",
-      "long": 169712,
-      "short": 60603,
-      "net": 109109,
-      "oi": 982903,
-      "px": 11.475,
-      "px_date": "2026-08-11",
-      "px_chg": null,
-      "px_mean": 11.541,
-      "px_n": 5,
-      "px_mean_chg": null
-     },
-     {
       "date": "2026-08-18",
       "long": 197446,
       "short": 45664,
@@ -4160,10 +4147,10 @@
       "oi": 989729,
       "px": 12.0075,
       "px_date": "2026-08-18",
-      "px_chg": 0.5325,
+      "px_chg": null,
       "px_mean": 11.817,
       "px_n": 5,
-      "px_mean_chg": 0.276
+      "px_mean_chg": null
      },
      {
       "date": "2026-08-25",
@@ -4268,6 +4255,19 @@
       "px_mean": 12.897,
       "px_n": 5,
       "px_mean_chg": 0.019
+     },
+     {
+      "date": "2026-10-20",
+      "long": 259970,
+      "short": 38645,
+      "net": 221325,
+      "oi": 1093612,
+      "px": 12.4825,
+      "px_date": "2026-10-20",
+      "px_chg": -0.355,
+      "px_mean": 12.6065,
+      "px_n": 5,
+      "px_mean_chg": -0.2905
      }
     ],
     "roll": [
@@ -4333,33 +4333,29 @@
      ]
     ],
     "cftc_stats": {
-     "p1y": 94.2,
-     "p3y": 98.1,
+     "p1y": 80.8,
+     "p3y": 93.8,
      "weeks_hist": 160,
-     "pct_oi": 23.3,
+     "pct_oi": 20.2,
      "max3y": 265159,
      "min3y": -183145,
      "basis": {
       "avg_entry": 12.26097,
-      "net": 249807,
+      "net": 221325,
       "weeks": 160,
-      "since": "2023-09-26"
+      "since": "2023-10-03"
      },
      "kpi": {
-      "date": "2026-10-13",
-      "net": 249807.0,
-      "oi": 1072235.0,
-      "z52": 1.32,
-      "cot3": 96.6,
-      "d1": -8259.0,
-      "vel_pct_oi": -0.77,
-      "streak": -1,
-      "doi_pct": -4.38,
+      "date": "2026-10-20",
+      "net": 221325.0,
+      "oi": 1093612.0,
+      "z52": 0.89,
+      "cot3": 90.2,
+      "d1": -28482.0,
+      "vel_pct_oi": -2.6,
+      "streak": -2,
+      "doi_pct": 1.99,
       "z_hist": [
-       [
-        "2026-04-21",
-        1.24
-       ],
        [
         "2026-04-28",
         1.08
@@ -4459,13 +4455,13 @@
        [
         "2026-10-13",
         1.32
+       ],
+       [
+        "2026-10-20",
+        0.89
        ]
       ],
       "cot_hist": [
-       [
-        "2026-04-21",
-        89.0
-       ],
        [
         "2026-04-28",
         86.4
@@ -4565,13 +4561,13 @@
        [
         "2026-10-13",
         96.6
+       ],
+       [
+        "2026-10-20",
+        90.2
        ]
       ],
       "net_hist": [
-       [
-        "2025-10-21",
-        37493.0
-       ],
        [
         "2025-10-28",
         120019.0
@@ -4775,13 +4771,13 @@
        [
         "2026-10-13",
         249807.0
+       ],
+       [
+        "2026-10-20",
+        221325.0
        ]
       ],
       "oi_hist": [
-       [
-        "2026-04-21",
-        1000958.0
-       ],
        [
         "2026-04-28",
         907541.0
@@ -4881,22 +4877,22 @@
        [
         "2026-10-13",
         1072235.0
+       ],
+       [
+        "2026-10-20",
+        1093612.0
        ]
       ],
       "fields": {
        "comm_long": "prod_merc_positions_long",
        "comm_short": "prod_merc_positions_short"
       },
-      "comm_net": -302978,
-      "comm_d1": 8789,
-      "spread": 552785.0,
-      "spread_idx": 94.4,
-      "spread_z": 1.04,
+      "comm_net": -287435,
+      "comm_d1": 15543,
+      "spread": 508760.0,
+      "spread_idx": 89.2,
+      "spread_z": 0.65,
       "comm_hist": [
-       [
-        "2025-10-21",
-        -172894
-       ],
        [
         "2025-10-28",
         -253026
@@ -5100,9 +5096,13 @@
        [
         "2026-10-13",
         -302978
+       ],
+       [
+        "2026-10-20",
+        -287435
        ]
       ],
-      "px_chg_pct": 0.15
+      "px_chg_pct": -2.25
      }
     }
    },
@@ -7381,19 +7381,6 @@
     ],
     "cftc": [
      {
-      "date": "2026-08-11",
-      "long": 78009,
-      "short": 111409,
-      "net": -33400,
-      "oi": 475566,
-      "px": 6.3025,
-      "px_date": "2026-08-11",
-      "px_chg": null,
-      "px_mean": 6.368,
-      "px_n": 5,
-      "px_mean_chg": null
-     },
-     {
       "date": "2026-08-18",
       "long": 78911,
       "short": 104239,
@@ -7401,10 +7388,10 @@
       "oi": 457148,
       "px": 6.645,
       "px_date": "2026-08-18",
-      "px_chg": 0.3425,
+      "px_chg": null,
       "px_mean": 6.639,
       "px_n": 5,
-      "px_mean_chg": 0.271
+      "px_mean_chg": null
      },
      {
       "date": "2026-08-25",
@@ -7509,6 +7496,19 @@
       "px_mean": 6.7645,
       "px_n": 5,
       "px_mean_chg": -0.1115
+     },
+     {
+      "date": "2026-10-20",
+      "long": 88258,
+      "short": 140263,
+      "net": -52005,
+      "oi": 516379,
+      "px": 6.4325,
+      "px_date": "2026-10-20",
+      "px_chg": -0.26,
+      "px_mean": 6.6045,
+      "px_n": 5,
+      "px_mean_chg": -0.16
      }
     ],
     "roll": [
@@ -7574,33 +7574,29 @@
      ]
     ],
     "cftc_stats": {
-     "p1y": 51.9,
-     "p3y": 78.8,
+     "p1y": 40.4,
+     "p3y": 68.8,
      "weeks_hist": 160,
-     "pct_oi": -6.4,
+     "pct_oi": -10.1,
      "max3y": 14904,
      "min3y": -124067,
      "basis": {
-      "avg_entry": 7.02444,
-      "net": -32555,
+      "avg_entry": 6.86738,
+      "net": -52005,
       "weeks": 160,
-      "since": "2023-09-26"
+      "since": "2023-10-03"
      },
      "kpi": {
-      "date": "2026-10-13",
-      "net": -32555.0,
-      "oi": 506774.0,
-      "z52": 0.27,
-      "cot3": 65.8,
-      "d1": -3725.0,
-      "vel_pct_oi": -0.74,
-      "streak": -6,
-      "doi_pct": 1.93,
+      "date": "2026-10-20",
+      "net": -52005.0,
+      "oi": 516379.0,
+      "z52": -0.31,
+      "cot3": 51.9,
+      "d1": -19450.0,
+      "vel_pct_oi": -3.77,
+      "streak": -7,
+      "doi_pct": 1.9,
       "z_hist": [
-       [
-        "2026-04-21",
-        1.86
-       ],
        [
         "2026-04-28",
         2.29
@@ -7700,13 +7696,13 @@
        [
         "2026-10-13",
         0.27
+       ],
+       [
+        "2026-10-20",
+        -0.31
        ]
       ],
       "cot_hist": [
-       [
-        "2026-04-21",
-        87.7
-       ],
        [
         "2026-04-28",
         100.0
@@ -7806,13 +7802,13 @@
        [
         "2026-10-13",
         65.8
+       ],
+       [
+        "2026-10-20",
+        51.9
        ]
       ],
       "net_hist": [
-       [
-        "2025-10-21",
-        -107377.0
-       ],
        [
         "2025-10-28",
         -73331.0
@@ -8016,13 +8012,13 @@
        [
         "2026-10-13",
         -32555.0
+       ],
+       [
+        "2026-10-20",
+        -52005.0
        ]
       ],
       "oi_hist": [
-       [
-        "2026-04-21",
-        452052.0
-       ],
        [
         "2026-04-28",
         423571.0
@@ -8122,22 +8118,22 @@
        [
         "2026-10-13",
         506774.0
+       ],
+       [
+        "2026-10-20",
+        516379.0
        ]
       ],
       "fields": {
        "comm_long": "prod_merc_positions_long",
        "comm_short": "prod_merc_positions_short"
       },
-      "comm_net": -55025,
-      "comm_d1": 1744,
-      "spread": 22470.0,
-      "spread_idx": 66.7,
-      "spread_z": 0.43,
+      "comm_net": -40646,
+      "comm_d1": 14379,
+      "spread": -11359.0,
+      "spread_idx": 54.8,
+      "spread_z": -0.11,
       "comm_hist": [
-       [
-        "2025-10-21",
-        19437
-       ],
        [
         "2025-10-28",
         1573
@@ -8341,9 +8337,13 @@
        [
         "2026-10-13",
         -55025
+       ],
+       [
+        "2026-10-20",
+        -40646
        ]
       ],
-      "px_chg_pct": -1.62
+      "px_chg_pct": -2.37
      }
     }
    }
@@ -8430,11 +8430,11 @@
     "30Y": 5.29
    },
    "fxcross": {
-    "dxy": 101.8,
-    "dxy_chg": 0.187,
-    "eurusd": 1.1197,
+    "dxy": 101.804,
+    "dxy_chg": 0.191,
+    "eurusd": 1.1198,
     "usdjpy": 156.86,
-    "usdcad_ref": 1.3998
+    "usdcad_ref": 1.4
    },
    "closes": [
     [
@@ -8513,16 +8513,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 103.57,
-     "chg": 4.1,
-     "pct": 4.12,
+     "last": 103.5,
+     "chg": 4.03,
+     "pct": 4.05,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 111.87,
-     "chg": -1.3,
-     "pct": -1.15,
+     "last": 111.84,
+     "chg": -1.33,
+     "pct": -1.18,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -8534,36 +8534,24 @@
     }
    ],
    "wcs_diff": {
-    "value": 18.1,
+    "value": 18.03,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-23T19:15:00+00:00",
+    "obs_ts": "2026-10-23T19:20:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
    },
    "pos": {
-    "net": -88112,
-    "long": 23811,
-    "short": 111923,
-    "oi": 378204,
-    "pct_oi": -23.3,
-    "wow": -8487,
+    "net": -91113,
+    "long": 28341,
+    "short": 119454,
+    "oi": 383635,
+    "pct_oi": -23.7,
+    "wow": -3001,
     "label": "Extreme Crowded Short (High short-squeeze risk)",
-    "p1y": 13.5,
-    "p3y": 10.3,
+    "p1y": 11.5,
+    "p3y": 7.1,
     "series": [
-     {
-      "date": "2026-08-11",
-      "long": 26511,
-      "short": 118516,
-      "net": -92005,
-      "px": 1.39336,
-      "px_date": "2026-08-11",
-      "px_chg": null,
-      "px_mean": 1.39948,
-      "px_n": 5,
-      "px_mean_chg": null
-     },
      {
       "date": "2026-08-18",
       "long": 26172,
@@ -8571,10 +8559,10 @@
       "net": -88897,
       "px": 1.38697,
       "px_date": "2026-08-18",
-      "px_chg": -0.00639,
+      "px_chg": null,
       "px_mean": 1.39057,
       "px_n": 5,
-      "px_mean_chg": -0.00891
+      "px_mean_chg": null
      },
      {
       "date": "2026-08-25",
@@ -8671,29 +8659,37 @@
       "px_mean": 1.42466,
       "px_n": 5,
       "px_mean_chg": 0.00136
+     },
+     {
+      "date": "2026-10-20",
+      "long": 28341,
+      "short": 119454,
+      "net": -91113,
+      "px": 1.41053,
+      "px_date": "2026-10-20",
+      "px_chg": -0.0175,
+      "px_mean": 1.41695,
+      "px_n": 5,
+      "px_mean_chg": -0.00771
      }
     ],
     "basis": {
-     "avg_entry": 1.40653,
-     "net": -88112,
+     "avg_entry": 1.40687,
+     "net": -91113,
      "weeks": 160,
-     "since": "2023-09-26"
+     "since": "2023-10-03"
     },
     "kpi": {
-     "date": "2026-10-13",
-     "net": -88112.0,
-     "oi": 378204.0,
-     "z52": -1.34,
-     "cot3": 16.6,
-     "d1": -8487.0,
-     "vel_pct_oi": -2.24,
-     "streak": -4,
-     "doi_pct": 1.93,
+     "date": "2026-10-20",
+     "net": -91113.0,
+     "oi": 383635.0,
+     "z52": -1.43,
+     "cot3": 13.3,
+     "d1": -3001.0,
+     "vel_pct_oi": -0.78,
+     "streak": -5,
+     "doi_pct": 1.44,
      "z_hist": [
-      [
-       "2026-04-21",
-       -1.19
-      ],
       [
        "2026-04-28",
        -0.43
@@ -8793,13 +8789,13 @@
       [
        "2026-10-13",
        -1.34
+      ],
+      [
+       "2026-10-20",
+       -1.43
       ]
      ],
      "cot_hist": [
-      [
-       "2026-04-21",
-       42.9
-      ],
       [
        "2026-04-28",
        54.4
@@ -8899,13 +8895,13 @@
       [
        "2026-10-13",
        16.6
+      ],
+      [
+       "2026-10-20",
+       13.3
       ]
      ],
      "net_hist": [
-      [
-       "2025-10-21",
-       -54845.0
-      ],
       [
        "2025-10-28",
        -59008.0
@@ -9109,13 +9105,13 @@
       [
        "2026-10-13",
        -88112.0
+      ],
+      [
+       "2026-10-20",
+       -91113.0
       ]
      ],
      "oi_hist": [
-      [
-       "2026-04-21",
-       255128.0
-      ],
       [
        "2026-04-28",
        252679.0
@@ -9215,22 +9211,22 @@
       [
        "2026-10-13",
        378204.0
+      ],
+      [
+       "2026-10-20",
+       383635.0
       ]
      ],
      "fields": {
       "comm_long": "dealer_positions_long_all",
       "comm_short": "dealer_positions_short_all"
      },
-     "comm_net": 120981,
-     "comm_d1": 1024,
-     "spread": -209093.0,
-     "spread_idx": 38.1,
-     "spread_z": -0.62,
+     "comm_net": 100798,
+     "comm_d1": -20183,
+     "spread": -191911.0,
+     "spread_idx": 42.8,
+     "spread_z": -0.45,
      "comm_hist": [
-      [
-       "2025-10-21",
-       158565
-      ],
       [
        "2025-10-28",
        165884
@@ -9434,6 +9430,10 @@
       [
        "2026-10-13",
        120981
+      ],
+      [
+       "2026-10-20",
+       100798
       ]
      ]
     }
@@ -9826,10 +9826,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.39993,
+    "mid": 1.40011,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-23T15:25:00-04:00",
+    "ts": "2026-10-23T15:33:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -9969,10 +9969,6 @@
     }
    ],
    "intraday": [
-    [
-     "2026-10-22T23:30+00:00",
-     1.40023
-    ],
     [
      "2026-10-22T23:35+00:00",
      1.40024
@@ -10927,28 +10923,32 @@
     ],
     [
      "2026-10-23T19:25+00:00",
-     1.39995
+     1.40007
+    ],
+    [
+     "2026-10-23T19:30+00:00",
+     1.40014
     ]
    ]
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-23T15:25:06-04:00",
+   "updated_at": "2026-10-23T15:33:06-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-23T15:25:00-04:00",
+    "fx_spot": "2026-10-23T15:33:00-04:00",
     "fx_closes": "2026-10-22T16:30:00-04:00",
     "yields": "2026-10-22T17:00:00-04:00",
     "policy": "2026-10-21T07:35:00-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
-    "cftc_fx": "2026-10-13T15:30:00-04:00",
-    "cftc_grains": "2026-10-13T15:30:00-04:00",
-    "energy": "2026-10-23T15:15:00-04:00",
-    "crosses": "2026-10-23T15:15:00-04:00",
+    "cftc_fx": "2026-10-20T15:30:00-04:00",
+    "cftc_grains": "2026-10-20T15:30:00-04:00",
+    "energy": "2026-10-23T15:20:00-04:00",
+    "crosses": "2026-10-23T15:20:00-04:00",
     "grains_settle": "2026-10-23T14:20:00-04:00",
     "grains_quote": "2026-10-23T14:15:00-04:00",
     "options": "2026-10-23T11:03:00-04:00",
-    "news": "2026-10-23T15:25:06-04:00",
+    "news": "2026-10-23T15:33:06-04:00",
     "calendar": "2026-10-21T07:05:00-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-23T15:25:06-04:00",
@@ -10989,7 +10989,7 @@
      "ca_retail"
     ],
     "failed": [],
-    "at": "2026-10-23T15:25:06-04:00"
+    "at": "2026-10-23T15:33:06-04:00"
    },
    "releases_checked": "2026-10-23T15:25:06-04:00",
    "exports_checked": "2026-10-23T15:25:06-04:00",
@@ -11026,7 +11026,7 @@
    },
    "canada_checked": "2026-10-22T22:29:24-04:00",
    "ca_calendar_checked": "2026-10-23T15:25:06-04:00",
-   "canada_watch": "2026-10-23T15:25:06-04:00",
+   "canada_watch": "2026-10-23T15:33:06-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -26274,6 +26274,12 @@
     "https://news.google.com/rss/articles/CBMinwFBVV95cUxNRlk2b2VMaF8taldZVy1YTlkwZVFMRVZnRlBvbFRMMk5PVkJ6ejhRYXN5bkxHQkN3Ul9NSVh4Zy1XQmVuel9ZMFUwTV9HTjQ5QnUwMmVfZHVocVNUZE1YWEEtOEJqdE9qTElKaDFsdHBiLTYxSXRSOFh5NWpQYXpGNm0xZndKS2hCbUxrZGlGU0l6SElyOWpuMlNmTVZYU0E?oc=5"
    ],
    [
+    "2026-10-23 18:35 UTC",
+    "www.profarmer.com",
+    "Market Snapshot | Live cattle pause in anticipation of Cattle on Feed data",
+    "https://news.google.com/rss/articles/CBMivAFBVV95cUxOX2VuNXlKaV9TNHVzdlk3VXVpVmhtUkJVeHFJR24xWGp3a0lFU0VjdXBvaXRURlJYLTRjQzFXeXdNWHRaMF93TzZqTUk2TnRLN3ZBbW5ITHdwdzZDelU1djJ6QWJpLXpvLTd3dUtOVndXTV80bDZUVkJIWVlCMEF6ZlZoRnVvZUFWZ2lFaU1oNkdxSHZrMllVdjBXNVJfelRkUjZ6bXdsb3ptUHdERm5SNTRSVUNPeUhVRU1fQw?oc=5"
+   ],
+   [
     "2026-10-23 17:18 UTC",
     "www.barchart.com",
     "Corn Facing Friday Weakness",
@@ -26308,12 +26314,6 @@
     "commodity-board.com",
     "Corn market steady as EU maize tightens and Black Sea risks persist — CMB News",
     "https://news.google.com/rss/articles/CBMipAFBVV95cUxPcmRWWEVrTDdTeEdVU2JmYUh6Wi1IV2JuSkw4T2lKdlhTcE1Zam0zVkdhX1RoUHNfRlh6X2duM1BTV25MMHpLX0tJMUZYV2R3cjRFVm5LZHE3dG92WUt4UlN6ZjY4Y1VaUC1SajFfTGdyN2U1aktaYV9pQXc0elBtYlZQRGRlUDZkam9GRDNWbGpoTWl1bW1DV08wSGhsNk92OGhrNA?oc=5"
-   ],
-   [
-    "2026-10-23 06:24 UTC",
-    "www.brecorder.com",
-    "Soybeans rise on strong export sales, but harvest keeps weekly loss in view",
-    "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1sMTFNMnhnZ1MzbGlWeWJQTFAzTllJRno5UlplY3VHV0xRR094bnJucmxyLTJCd1J5Tk84QUJ0cFctSXZsNThMRUZISE1jLTU5T1hVMGJ30gFWQVVfeXFMTWwxMU0yeGdnUzNsaVZ5YlBMUDNOWUlGejlSWmVjdUdXTFFHT3hucm5ybHItMkJ3UnlOTzhBQnRwVy1Jdmw1OExFRkhITWMtNTlPWFUwYnc?oc=5"
    ]
   ],
   "wheat": [
@@ -26328,6 +26328,12 @@
     "logos-pres.md",
     "Bloomberg: Russian traders plan to export grain via the port of Abkhazia",
     "https://news.google.com/rss/articles/CBMipAFBVV95cUxNMHkwVHNERUtKRjVFZ082aW93MzVjdHgwS3hPRmFmeExlV05BUGE4Qll0b01ueVhNd2tJRGVCblFWekg1WGNTeFFYa1k2eEQyQklNVFpua3dzaU4wWDZhUHdBTUQwcHBKUEdNbU1LZ0JiOU14bHJ3N3BtbkhZUzA4OTRnNHMwdmlwZFBBMVVnLWJoSEd5QVpaeTdUTnl3c2ZuTVBsTQ?oc=5"
+   ],
+   [
+    "2026-10-23 13:09 UTC",
+    "logos-pres.md",
+    "Wheat Futures Face Longest Losing Streak Since 1997 on CBOT",
+    "https://news.google.com/rss/articles/CBMimAFBVV95cUxOelV5bnVvMEMzR2ozcFdzQ0ZJa0p2YkR5dG8zS1B3aWN2YTFQRnhFUE1zSkxIVXZ5ZWRfOXhtZkJmOGt0Y2VjUXVuemZuX0pWdy1KYmhLYldzQ1VoRHl1Qzh0ODFPb1hBUEs2TFZRdkJ0RThJOXJEcWV0Skd3ZDI0Q09tTmY4MGcxTXFWNDBBaGI2SnpFWTBQVw?oc=5"
    ],
    [
     "2026-10-23 12:08 UTC",
@@ -26358,12 +26364,6 @@
     "ukragroconsult.com",
     "Wheat futures fall for eighth consecutive week for first time since 1997",
     "https://news.google.com/rss/articles/CBMirAFBVV95cUxNUXBnY1R2bjNsckp2NWNyQmVWSUtfSVpkZHJGR2E2TGhqMm5JcGkzUDZuODRHYWY0REZxQ19ZaEg2NDB0eGlHanU1TW96S3BPWk1TT1J5NU9CSm1saXk5djlvLTNZeUdkUGVxbFV6aHhMWjhKVjdMc0pUZ09CZHZyQ09UbUpCTWhuRjhYaHNtM004WE9hc0pRaFhBN01VSUlwcU5TWEtVMDdnQ1JI?oc=5"
-   ],
-   [
-    "2026-10-23 09:19 UTC",
-    "ukragroconsult.com",
-    "Wheat and corn prices fall, while soybeans rise in Chicago on Thursday",
-    "https://news.google.com/rss/articles/CBMiqAFBVV95cUxNUWZCZ0pHLXduclFZaXhSWE5JNFUyVnZ3RG9yaEwtQ2h2U3JTMFRYZlozVUthd2ZsVFhHZEFyNE9fcGNGbi1KUENDUHhTdVB0YUJTZXZoSkVKS1NpUGR1ZGZhTEN5WjJUMTdwM19COGpkTVBTV3I4dTNlaXJhZ1lpUVowSnhUU0hBQkN4Y2dlVmREa3p5R3Z3aUFTek8ta3pkRlBVSE9BU0s?oc=5"
    ]
   ],
   "soybeans": [
@@ -26418,10 +26418,10 @@
   ],
   "fx": [
    [
-    "2026-10-23 19:17 UTC",
-    "www.reuters.com",
+    "2026-10-23 19:29 UTC",
+    "www.theglobeandmail.com",
     "Canadian dollar hits five-week high as data supports rate hike bets",
-    "https://news.google.com/rss/articles/CBMirgFBVV95cUxNRHNLSXpMVmtYQ3JMZDE5UW81bFo4cG5VT04zWFBSUm1XeWhnWURVZlpMdmZ2b0F3RWo4RUxZekt2ZUFMbkwwN1E5R1M3TXhaeU5SdXltUlJEYk5oY21TU1lUMWota1BFZ19yVVNFSWt6WUxsa00zVXpmTDB1Sm83X2E3VkhOVFVnY1ZDRVZhTU9jY3EtbzR0MG5RZTNBZmtrVWdmamluektNOGFFdlE?oc=5"
+    "https://news.google.com/rss/articles/CBMiugFBVV95cUxPRGtOcWJaMWdPdHNEYjJkX1k5ckhxNUtwc2NiN2hRSGpFVkJaUXNKb2hFOFVNQjhObzFkemJqdlZnMVdha0U4Q1dMNUFBby1UcmNxYjFMVkJCd252QzJnR0hSVUFlalhWSG9ESEJyQWlMZW1NNWlvMFg1Rkk1SEZ6eGZtRVFEQmxRSl9ramdtekdMS1VBOWFjZGQxSUNGOWt4cVV2dmRNZFF6T1lMNUtvaTRyRmFHakJvZkE?oc=5"
    ],
    [
     "2026-10-23 19:09 UTC",
@@ -26442,16 +26442,10 @@
     "https://news.google.com/rss/articles/CBMijwFBVV95cUxQOTBuWHdiZENzc0NVb0stcnFTR24tWXpXdWJHemtyS255SEFDOHh4Vk9qR1Zvd1gzdGNjTElpdU9PbkxmWWVSV2ptd1FSWG0wTGJXXy01ejB2eU9kVkpKM1pHYndjeFVyT0RadDVDVEpaaVBrMUcxYTRucEVQdW1DTlp1VmREbUFUV0llcERwYw?oc=5"
    ],
    [
-    "2026-10-23 18:00 UTC",
-    "www.junonews.com",
-    "Canada’s food bank crisis explodes to record 2.35 million visits",
-    "https://news.google.com/rss/articles/CBMibEFVX3lxTE0wTEpJeE1fS1JzZXJIRGFaWUdhM2VLRDNGM0F1UjVSOUo1eXNQTGp3YnBjazl3LTlKZ1gtYXRvWUhNaTFYbzN2dllTLUEzdGY5MWVnc2p3VVdGb0w3OXB4NjFKMlZTdDhWY3FFSg?oc=5"
-   ],
-   [
-    "2026-10-23 16:10 UTC",
-    "www.marketscreener.com",
-    "Bank of Canada to raise rates to 2.50% on October 28 and once again by end-March",
-    "https://news.google.com/rss/articles/CBMizAFBVV95cUxNQ1J5WndJSWZOM3QxeTFjaUpwRS1rcEs1RWNVc1RQV21YVHJRNjg3SWsxaTRxTXZvU0s2S1QwUEFRYU5VVWdsbFo5dm5XSWVKejhnbTVyWS1PRWtJTUtVMWRVd1lfeVozTXNGbXhjSFIwc0xac1JiU2s5RHpRaF9OUTJ1aUU1b2N5M1ZfOHVVVlFBUnhOYURRdjBVU20wa1hMSm5vWDFNVmlNWXNkZ1VPUXZMaU9GVUg5cFJlUElDVXJrenRGbFBMdS1mbFI?oc=5"
+    "2026-10-23 18:54 UTC",
+    "www.reuters.com",
+    "POLL Bank of Canada to raise rates to 2.50% on October 28 and once again by end-March",
+    "https://news.google.com/rss/articles/CBMiswFBVV95cUxNcXBVcldURXc1c3hRcmpNWXdhcWRVR1hibkVqNF9YM1V4NzIzdmlDUzlGZHpjaVJWQlp3M1N2ckpRMzlSdlZZRTRJcVloUTNnR0l4UE1fSXlhTXpZWFlqVGdYWEljWG9DdWpXRGQyaUlvVkdyNUlhZjF0TS1iRWNLYTZjZjNZZXc0Zi1fUzdvWm0xYWk4VmNiaU9WdHhVUno5WTBxMGhkNWpkZWVJUXA4bVdtYw?oc=5"
    ],
    [
     "2026-10-23 15:57 UTC",
@@ -26464,6 +26458,12 @@
     "www.tmgm.com",
     "Bank of Canada: Preemptive tightening focus – RBC",
     "https://news.google.com/rss/articles/CBMisgFBVV95cUxNeW1CS0kzUm54bG02TUtYSkJYWkF5ejE1Wlh4dE5DdVMxZkRVNXdSSVlEMExwb0tfMlVmVDBETUc3a0VRVV9YT2FKa0lnXzBZWGRZdFNWajh3M1o4TTJpTjY4NkFHUnlqLVc3NXBycE5vX2ZvWVRldjRYN181N0pJckc2UzZ6UHE0TjJ5UTR0T09QYmRTZksxT2NkanlOSWRFVUlHS1VtWUExSldTYTZNeTdn?oc=5"
+   ],
+   [
+    "2026-10-23 15:03 UTC",
+    "uk.finance.yahoo.com",
+    "UK Retail Sales Slip in September Amid Gloomy Consumer Sentiment",
+    "https://news.google.com/rss/articles/CBMiiAFBVV95cUxNQjlZWHE1enNONTcxcDEyWF9ZbWE0YmZFREFwSG9aTXNTM0xEUmJ5N1k0OWNaTnFleTZUUWx2Sm1nM2Y4UFF6c0IwcnZ3c3VEc21ET2dxNkdsb1hhcndfaFA2UEVpQ0thRDlMOXpNalE4aUZfYkN5VkpPNUYzdmhsUnp1RFlXTC1k?oc=5"
    ]
   ]
  }
