@@ -311,7 +311,7 @@
         if (lastLive) mergeLive(lastLive);   // never step back behind the fast lane
         rerender(before);
       })
-      .catch(function () {});
+      .catch(function () { return "err"; });
   }
 
   /* ------------------------------------------------------ fast lane: live.json every 60 s */
@@ -368,7 +368,7 @@
       })
       .then(function (j) { if (j) applyLive(j); })
       .catch(function () {                              // API rate-limited or down: raw CDN (can be ~5 min stale)
-        return fetch(LIVE_RAW + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j) applyLive(j); }).catch(function () {});
+        return fetch(LIVE_RAW + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j) applyLive(j); }).catch(function () { return "err"; });
       });
   }
 

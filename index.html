@@ -309,6 +309,8 @@ li.n-desk b{color:#ffd0cc;font-size:12.5px}
 .ck.pass .ck-i{background:rgba(63,185,127,.2);color:#5fd598}.ck.flag .ck-i{background:rgba(232,163,61,.2);color:#e8a33d}.ck.info .ck-i{background:#1a2a42;color:#c9d6e6}
 .ck-d{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.5}.ck-d b{color:#e8eef4}
 @media (max-width:760px){.pk-grid{grid-template-columns:1fr}}
+.aw-errbox .aw-t{font-weight:700;color:#ff9d97;margin-bottom:3px}.aw-errbox a{color:#7fd3e0}.aw-retry{margin-top:5px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:#c9a3a0}
+.aw-errbox.sm{margin:0 0 6px;padding:5px 8px;font-size:11px}.aw-errbox.sm b{display:block}
 .aw-errbox{margin:0 0 10px;padding:9px 12px;border-radius:8px;background:rgba(224,101,95,.1);border:1px solid #7a3a36;color:#ffc9c4;font-size:12.5px;line-height:1.5}.aw-errbox b{color:#ff9d97}
 .await-err{box-shadow:inset 0 0 0 1px #7a3a36}.has-flag .aw-errbox{margin-right:38px}
 .awaiting{position:relative;overflow:hidden}
@@ -2551,6 +2553,8 @@ function streakText(m){
 }
 function macroDetailHTML(key){
   var m=mfind(key); if(!m) return '<p class="note">No data for this indicator yet.</p>';
+  var pend=(typeof awaitingList==='function'?awaitingList():[]).filter(function(x){ return x.sel==='.mcard[data-mkey="'+key+'"]'; })[0], pendHTML='';
+  if(pend){ var PM=awaitMsg(pend); pendHTML='<div class="aw-errbox"><div class="aw-t">\u26a0 '+PM.title+'</div><div>'+PM.body+'</div>'+(AW.tries?'<div class="aw-retry">'+AW.tries+' checks so far \u00b7 last check '+(AW.last?hhmmss(AW.last):'\u2014')+'</div>':'')+'</div>'; }
   var info=MACRO_INFO[key]||['',''], H=m.hist24||m.history, vals=H.map(function(x){ return x[1]; }), n=vals.length;
   var avg=function(k){ var a=vals.slice(-k); return a.reduce(function(s,v){ return s+v; },0)/a.length; };
   var C=consensusFor(m), chip='';
@@ -2573,7 +2577,7 @@ function macroDetailHTML(key){
   if(m.rev) extra.push('Revision: '+esc(m.rev.period)+' '+mval(m,m.rev.from)+' → '+mval(m,m.rev.to));
   if(/cpi|pce|trim|median/.test(key)) extra.push((m.value>2.05?'Above':m.value<1.95?'Below':'At')+' the 2% '+(m.group==='us'?'Fed':'BoC')+' target by '+fmt(Math.abs(m.value-2),1)+' pp');
   var nx=nextRelease(key);
-  return '<div class="mdc">'+
+  return pendHTML+'<div class="mdc">'+
     '<div class="mdc-top"><span class="mdc-flag">'+flag(m.group,30)+'</span><div class="mdc-ttl">'+esc(ctry.toUpperCase()+' '+m.name.toUpperCase())+'</div><div class="mdc-sub">'+esc(m.period)+(m.measure?' · '+m.measure:'')+' — '+rel+'</div><div class="mdc-hl">'+headline+'</div></div>'+
     '<div class="mdc-main"><div class="mdc-k">'+esc(m.name)+' — '+esc(m.period)+chip+'</div><div class="mdc-v">'+mval(m,m.value)+(m.measure?' <small>'+m.measure+'</small>':'')+'</div>'+
       '<div class="mdc-l">'+(C&&C.consensus!=null?'Consensus: '+mval(m,C.consensus)+' (desk survey) | ':'Consensus: not captured for this print | ')+'Prior ('+esc(H[n-2]?H[n-2][0]:'')+'): '+mval(m,m.prior)+(m.rev?', rev. from '+mval(m,m.rev.from):'')+'</div></div>'+
@@ -2805,23 +2809,53 @@ function awaitingList(){
   var now=Date.now(), out=[], DAY=86400000;
   var cf=lastWeekday('Fri',15,30,7);
   if(cf&&now-cf.t<DAY){ var exp=isoAdd(cf.y,cf.m,cf.d,-3), last=(DATA.grains.corn.cftc||[]).slice(-1)[0];
-    if(last&&last.date<exp) out.push({sel:'[data-src="cftc_grains"],[data-src="cftc_fx"],.poskpi', label:'Awaiting CFTC Commitments of Traders — positions as of '+exp}); }
+    if(last&&last.date<exp) out.push({sel:'[data-src="cftc_grains"],[data-src="cftc_fx"],.poskpi', label:'Awaiting CFTC Commitments of Traders \u2014 positions as of '+exp,
+      info:{what:'CFTC Commitments of Traders (positions as of Tue '+fmtDate(exp)+')', short:'CFTC Commitments of Traders', who:'the CFTC', t:cf.t, lag:'The CFTC posts the report at 3:30 PM ET; its public data API usually catches up within 5\u201330 minutes, occasionally longer on busy weeks or after a holiday.',
+        prev:'positions as of '+fmtDate(last.date), url:'https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm', urlLab:'CFTC COT reports'}}); }
   var es=lastWeekday('Thu',8,30,7);
   if(es&&now-es.t<DAY){ var exp2=isoAdd(es.y,es.m,es.d,-7), E=(DATA.exports&&DATA.exports.corn)||{}, lw=(E.weeks||[]).slice(-1)[0];
-    if(lw&&lw[1]<exp2) out.push({sel:'[data-src="exports"]', label:'Awaiting USDA weekly export sales'}); }
+    if(lw&&lw[1]<exp2) out.push({sel:'[data-src="exports"]', label:'Awaiting USDA weekly export sales',
+      info:{what:'USDA weekly export sales (week ending '+fmtDate(exp2)+')', short:'USDA weekly export sales', who:'USDA FAS', t:es.t, lag:'USDA posts at 8:30 AM ET Thursdays (Friday in holiday weeks); the FAS data API often lags the PDF by 30\u201390 minutes.',
+        prev:'week ending '+fmtDate(lw[1]), url:'https://apps.fas.usda.gov/export-sales/esrd1.html', urlLab:'USDA export sales highlights'}}); }
   (typeof USDA_WASDE!=='undefined'?USDA_WASDE:[]).forEach(function(dt){ var p=dt.split('-'), t=zonedMs(+p[0],+p[1],+p[2],12,0,'America/Toronto');
     var lab=new Date(Date.UTC(+p[0],+p[1]-1,15)).toLocaleString('en-US',{month:'short',year:'numeric',timeZone:'UTC'});
-    if(now>=t&&now-t<DAY&&DATA.wasde&&DATA.wasde.corn&&DATA.wasde.corn.report!==lab) out.push({sel:'[data-src="wasde"]', label:'Awaiting USDA WASDE '+lab}); });
+    if(now>=t&&now-t<DAY&&DATA.wasde&&DATA.wasde.corn&&DATA.wasde.corn.report!==lab) out.push({sel:'[data-src="wasde"]', label:'Awaiting USDA WASDE '+lab,
+      info:{what:'USDA WASDE \u2014 '+lab+' report', short:'USDA WASDE '+lab, who:'USDA', t:t, lag:'WASDE is released at 12:00 PM ET; the FAS PSD database that feeds these tables typically updates within 1\u20133 hours.',
+        prev:'the '+DATA.wasde.corn.report+' report', url:'https://www.usda.gov/oce/commodity/wasde', urlLab:'USDA WASDE'}}); });
   macroAll().forEach(function(m){ var C=DATA.release_cal&&DATA.release_cal[m.key]; if(!C) return;
     var ds=(C.dates||[]).slice(); if(C.rule==='thu0830'){ var th=lastWeekday('Thu',8,30,7); if(th) ds.push(th.y+'-'+('0'+th.m).slice(-2)+'-'+('0'+th.d).slice(-2)+'T08:30'); }
     ds.forEach(function(s){ var a=s.split('T'), d=a[0].split('-'), h=a[1].split(':'), t=zonedMs(+d[0],+d[1],+d[2],+h[0],+h[1],'America/Toronto');
-      if(now>=t&&now-t<DAY&&(!m.seen_at||new Date(m.seen_at).getTime()<t)) out.push({sel:'.mcard[data-mkey="'+m.key+'"]', label:'Awaiting '+m.name+' release', small:true}); }); });
+      if(now>=t&&now-t<DAY&&(!m.seen_at||new Date(m.seen_at).getTime()<t)){ var A=macroAgency(m), ctry=m.group==='us'?'US':'Canada';
+        out.push({sel:'.mcard[data-mkey="'+m.key+'"]', label:'Awaiting '+ctry+' '+m.name+' release', small:true,
+          info:{what:ctry+' '+m.name+(m.measure?' ('+m.measure+')':''), short:ctry+' '+m.name, who:A.who, t:t, lag:A.lag, flag:m.group,
+            prev:mval(m,m.value)+' for '+m.period, url:A.url||C.src, urlLab:A.who}}); } }); });
   return out;
 }
 /* Release watch: while a released number has not reached the page, re-check every 30 s;
    after 5 misses wait 1 min and try once more; still missing -> show an error under the card
    (previous data stays visible) and keep retrying every 5 min until it lands. */
-var AW={tries:0, next:0, last:0, err:false, busy:false, prev:{}};
+function macroAgency(m){
+  var k=m.key, F=' It reaches this desk through FRED, which usually posts within 5\u201360 minutes of the official release.';
+  if(/^us_(cpi|core_cpi|nfp|ur|ahe)$/.test(k)) return {who:'the BLS (Bureau of Labor Statistics)', url:'https://www.bls.gov/bls/newsrels.htm', lag:'BLS publishes at 8:30 AM ET.'+F};
+  if(/^us_c?claims$/.test(k)) return {who:'the US Department of Labor', url:'https://www.dol.gov/ui/data.pdf', lag:'Weekly claims are published Thursdays at 8:30 AM ET.'+F};
+  if(/^us_(gdp|core_pce)$/.test(k)) return {who:'the BEA (Bureau of Economic Analysis)', url:'https://www.bea.gov/news/schedule', lag:'BEA publishes at 8:30 AM ET.'+F};
+  if(/^us_(retail|trade)$/.test(k)) return {who:'the US Census Bureau', url:'https://www.census.gov/economic-indicators/', lag:'Census publishes at 8:30 AM ET.'+F};
+  if(k==='us_umich') return {who:'the University of Michigan', url:'https://www.sca.isr.umich.edu/', lag:'Sentiment is published at 10:00 AM ET.'+F};
+  if(k==='us_policy') return {who:'the Federal Reserve', url:'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm', lag:'The FOMC statement is at 2:00 PM ET.'+F};
+  if(k==='us_deficit') return {who:'the US Treasury (Monthly Treasury Statement)', url:'https://fiscaldata.treasury.gov/datasets/monthly-treasury-statement/', lag:'The MTS is published at 2:00 PM ET.'+F};
+  if(k==='ca_policy') return {who:'the Bank of Canada', url:'https://www.bankofcanada.ca/core-functions/monetary-policy/key-interest-rate/', lag:'The rate decision is at 9:45 AM ET; the Valet data API usually updates within minutes.'};
+  if(/^ca_(trim|median)$/.test(k)) return {who:'the Bank of Canada (from Statistics Canada CPI)', url:'https://www.bankofcanada.ca/rates/price-indexes/cpi/', lag:'CPI is out at 8:30 AM ET; the Bank posts its core measures on Valet shortly after, sometimes up to an hour later.'};
+  return {who:'Statistics Canada', url:'https://www150.statcan.gc.ca/n1/dai-quo/index-eng.htm', lag:'The Daily publishes at 8:30 AM ET; the StatCan data API (WDS) normally updates at the same time but can lag by up to an hour.'};
+}
+function awaitMsg(a){
+  var I=a.info||{}, when=I.t?etLabel(I.t,true):'today';
+  var why=AW.netErr?'This desk could not reach its data server on the last check (network or GitHub error) \u2014 check your connection; it will keep retrying.':
+    I.who?I.who.charAt(0).toUpperCase()+I.who.slice(1)+' released it at '+when+' ET, but the new numbers have not reached the desk yet. '+(I.lag||''):'The source has not published the new numbers yet.';
+  return {title:(I.flag?flag(I.flag,12)+' ':'')+esc(I.what||a.label.replace(/^Awaiting /,''))+' \u2014 new data cannot be displayed yet',
+    body:why+(I.prev?' <b>Showing the previous reading: '+I.prev+'.</b>':' Showing the previous data.')+(I.url?' <a href="'+safeUrl(I.url)+'" target="_blank" rel="noopener">Check '+esc(I.urlLab||'the source')+' \u2197</a>':''),
+    short:(I.short||I.what||'')+': not updated yet \u2014 showing '+(I.prev||'previous data')};
+}
+var AW={tries:0, next:0, last:0, err:false, busy:false, prev:{}, netErr:false};
 function hhmmss(t){ return new Date(t).toLocaleTimeString('en-US',{timeZone:'America/Toronto',hour:'numeric',minute:'2-digit',second:'2-digit'}); }
 function paintAwaiting(list){
   list=list||awaitingList();
@@ -2831,18 +2865,21 @@ function paintAwaiting(list){
   var stage=AW.busy?'checking now…':AW.tries<5?'check '+(AW.tries+1)+' of 5 in '+wait+' s':'final check in '+wait+' s';
   list.forEach(function(a){ document.querySelectorAll(a.sel).forEach(function(el){
     if(AW.err){ el.classList.add('await-err');
-      var b=document.createElement('div'); b.className='aw-errbox';
-      b.innerHTML='<b>⚠ New data cannot be displayed</b> — '+esc(a.label.replace(/^Awaiting /,''))+' has not reached the desk after '+AW.tries+' checks (source still publishing or the fetch failed). Showing the previous data below. Retrying every 5 min · last check '+(AW.last?hhmmss(AW.last):'—')+' · next in '+Math.floor(wait/60)+':'+('0'+wait%60).slice(-2);
+      var b=document.createElement('div'), M=awaitMsg(a), retry='<div class="aw-retry">'+AW.tries+' checks so far \u00b7 retrying every 5 min \u00b7 last check '+(AW.last?hhmmss(AW.last):'\u2014')+' \u00b7 next in '+Math.floor(wait/60)+':'+('0'+wait%60).slice(-2)+'</div>';
+      if(a.small){ var I2=a.info||{}; b.className='aw-errbox sm'; b.title=M.short+' \u2014 click the card for details';
+        b.innerHTML='<b>\u26a0 '+esc(I2.short||'')+' not updated</b><div>'+esc((I2.who||'').replace(/^the /,'').replace(/ \(.*\)/,''))+' released '+(I2.t?etLabel(I2.t,true).replace(/^.*?, /,''):'')+' \u00b7 showing '+esc(I2.prev||'previous')+'</div>'; }
+      else { b.className='aw-errbox'; b.innerHTML='<div class="aw-t">\u26a0 '+M.title+'</div><div>'+M.body+'</div>'+retry; }
       el.insertBefore(b, el.firstChild);
-    } else { el.classList.add('awaiting'); if(a.small) el.classList.add('aw-sm'); el.setAttribute('data-await', a.label+' · data released, fetching · '+stage+(AW.last?' · last check '+hhmmss(AW.last):'')); }
+    } else { var I=a.info||{}; el.classList.add('awaiting'); if(a.small) el.classList.add('aw-sm');
+      el.setAttribute('data-await', a.small?(I.short||a.label)+' released \u00b7 fetching \u00b7 '+stage:(I.what||a.label)+(I.who?' \u2014 released by '+I.who+' at '+etLabel(I.t,true)+' ET':'')+' \u00b7 fetching \u00b7 '+stage+(AW.last?' \u00b7 last check '+hhmmss(AW.last):'')); }
   }); });
 }
 function awaitCheck(){
   var L=window.DESK_LIVE; if(!L||AW.busy) return;
   AW.busy=true; AW.last=Date.now(); paintAwaiting();
   var pr=[L.pollLive?L.pollLive(true):null, L.pollData?L.pollData(true):null].filter(Boolean);
-  Promise.all(pr).catch(function(){}).then(function(){
-    AW.busy=false;
+  Promise.all(pr).catch(function(){ return ['err']; }).then(function(res){
+    AW.busy=false; AW.netErr=(res||[]).length>0 && (res||[]).every(function(x){ return x==='err'; });
     if(!awaitingList().length) return;
     AW.tries++;
     if(AW.tries<5) AW.next=Date.now()+30000;
