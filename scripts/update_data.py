@@ -212,6 +212,29 @@ def socrata(dataset, code, n):
     return list(reversed(rows))
 
 
+def _daily_closes(sym, scale=1.0):
+    """{YYYY-MM-DD: close} for a Yahoo symbol over ~6 months (CFTC report-date price tags)."""
+    h = yf().Ticker(sym).history(period="6mo", interval="1d")
+    return {idx.date().isoformat(): round(float(row["Close"]) * scale, 5) for idx, row in h.iterrows() if row["Close"] == row["Close"]}
+
+
+def _tag_prices(series, closes, label):
+    """Attach the close on each report date (or the last trading day before it) as 'px' and the week change as 'px_chg'."""
+    if not closes:
+        return
+    days = sorted(closes)
+    prev = None
+    for x in series:
+        d = next((dd for dd in reversed(days) if dd <= x["date"]), None)
+        if d is None or (datetime.fromisoformat(x["date"]) - datetime.fromisoformat(d)).days > 5:
+            x.pop("px", None); x.pop("px_chg", None); prev = None
+            continue
+        x["px"] = closes[d]; x["px_date"] = d
+        x["px_chg"] = round(x["px"] - prev, 5) if prev is not None else None
+        prev = x["px"]
+    print(f"  {label}: tagged {sum(1 for x in series if 'px' in x)}/{len(series)} report weeks with prices")
+
+
 def cftc_fx(D, N):
     rows = socrata("gpe5-46if", "090741", 160)  # CAD, CME — Traders in Financial Futures
     nets = [int(float(r["lev_money_positions_long"])) - int(float(r["lev_money_positions_short"])) for r in rows]
@@ -224,6 +247,10 @@ def cftc_fx(D, N):
     series = [{"date": x["report_date_as_yyyy_mm_dd"][:10],
                "long": int(float(x["lev_money_positions_long"])), "short": int(float(x["lev_money_positions_short"])),
                "net": int(float(x["lev_money_positions_long"])) - int(float(x["lev_money_positions_short"]))} for x in rows[-10:]]
+    try:
+        _tag_prices(series, _daily_closes("CAD=X"), "USD/CAD")
+    except Exception as e:
+        print("  USD/CAD price tags failed:", e)
     D["fx"]["pos"].update(net=net, long=lo, short=sh, oi=oi, pct_oi=pct, wow=net - nets[-2], label=label,
                           p1y=pctile(nets[-52:], net), p3y=pctile(nets[-156:], net), series=series)
     d = r["report_date_as_yyyy_mm_dd"][:10]
@@ -242,6 +269,10 @@ def cftc_grains(D, N):
         for r in rows:
             lo, sh = int(float(r["m_money_positions_long_all"])), int(float(r["m_money_positions_short_all"]))
             ser.append({"date": r["report_date_as_yyyy_mm_dd"][:10], "long": lo, "short": sh, "net": lo - sh})
+        try:
+            _tag_prices(ser, _daily_closes(GRAIN_YF[k], 0.01), k)   # Yahoo grains are cents/bu
+        except Exception as e:
+            print(f"  {k} price tags failed:", e)
         D["grains"][k]["cftc"] = ser
         last = ser[-1]["date"]
     D["meta"]["asof"]["cftc_grains"] = last + "T15:30:00-04:00"

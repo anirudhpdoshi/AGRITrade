@@ -982,8 +982,9 @@ function skewSVG(g, meta){
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Implied volatility skew for '+meta.name+'">'+s+'</svg>';
 }
 
-function cftcSVG(series){
-  var W=760,H=280,PL=58,PR=16,PT=38,PB=42, pw=W-PL-PR, ph=H-PT-PB;
+function cftcSVG(series, opt){
+  opt=opt||{}; var hasPx=series.some(function(r){ return r.px!=null; });
+  var W=760,H=hasPx?310:280,PL=58,PR=hasPx?64:16,PT=38,PB=hasPx?62:42, pw=W-PL-PR, ph=H-PT-PB;
   var vals=series.map(function(r){return r.net;});
   var rawMx=Math.max.apply(null,vals.concat([0])), rawMn=Math.min.apply(null,vals.concat([0]));
   var rng=(rawMx-rawMn)||1, mx=rawMx+rng*0.16, mn=rawMn-rng*0.16;
@@ -1013,14 +1014,33 @@ function cftcSVG(series){
     s+='<text x="'+CX(i).toFixed(1)+'" y="'+ly.toFixed(1)+'" fill="'+(r.net>=0?'#5fd598':'#ff9d97')+'" font-size="9.5" font-weight="600" font-family="IBM Plex Mono" text-anchor="middle">'+txt+'</text>';
   });
   /* every bar labeled with its week date */
+  var dateY=PT+ph+17;
+  if(hasPx){
+    /* price on each report date: own scale on the right, amber line, labeled value + week change under every bar */
+    var pf=opt.pfmt||function(v){ return '$'+v.toFixed(2); }, cf=opt.cfmt||centsFmt;
+    var pv=series.filter(function(r){ return r.px!=null; }).map(function(r){ return r.px; }), pmx=Math.max.apply(null,pv), pmn=Math.min.apply(null,pv), pr=(pmx-pmn)||pmx*0.01;
+    var plo=pmn-pr*0.25, phi=pmx+pr*0.25;
+    function PY(v){ return PT+ph*(1-(v-plo)/(phi-plo)); }
+    for(var pi=0;pi<=4;pi++){ var pyv=phi-(phi-plo)*pi/4; s+='<text x="'+(PL+pw+6)+'" y="'+(PT+ph*pi/4+4).toFixed(1)+'" fill="#c99a4a" font-size="10" font-family="IBM Plex Mono">'+pf(pyv)+'</text>'; }
+    var pp='', st=false; series.forEach(function(r,i){ if(r.px==null){ st=false; return; } pp+=(st?'L':'M')+CX(i).toFixed(1)+' '+PY(r.px).toFixed(1); st=true; });
+    s+='<path d="'+pp+'" fill="none" stroke="#e8a33d" stroke-width="2" stroke-dasharray="6 3"/>';
+    series.forEach(function(r,i){ if(r.px==null) return; s+='<rect x="'+(CX(i)-3.5).toFixed(1)+'" y="'+(PY(r.px)-3.5).toFixed(1)+'" width="7" height="7" transform="rotate(45 '+CX(i).toFixed(1)+' '+PY(r.px).toFixed(1)+')" fill="#e8a33d"/>'; });
+    series.forEach(function(r,i){ if(r.px==null) return;
+      var c=r.px_chg, col=c==null?'#c9d6e6':c>0?'#5fd598':c<0?'#ff9d97':'#8494ab', arr=c==null?'':c>0?'\u25b2':c<0?'\u25bc':'\u25b8';
+      s+='<text x="'+CX(i).toFixed(1)+'" y="'+(PT+ph+15)+'" fill="#e8a33d" font-size="9.5" font-weight="600" font-family="IBM Plex Mono" text-anchor="middle">'+pf(r.px)+'</text>';
+      s+='<text x="'+CX(i).toFixed(1)+'" y="'+(PT+ph+27)+'" fill="'+col+'" font-size="9" font-family="IBM Plex Mono" text-anchor="middle">'+(c==null?'\u2014':arr+cf(c))+'</text>'; });
+    dateY=PT+ph+41;
+  }
   series.forEach(function(r,i){
-    s+='<text x="'+CX(i).toFixed(1)+'" y="'+(PT+ph+17)+'" fill="#8494ab" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+fmtShortDate(r.date)+'</text>';
+    s+='<text x="'+CX(i).toFixed(1)+'" y="'+dateY+'" fill="#8494ab" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+fmtShortDate(r.date)+'</text>';
   });
-  s+='<text x="'+PL+'" y="'+(PT+ph+34)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">WEEKLY REPORT DATES \u00b7 WHITE LINE = TREND ACROSS THE '+series.length+' WEEKLY NETS</text>';
+  s+='<text x="'+PL+'" y="'+(dateY+17)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">'+(hasPx?'REPORT DATES \u00b7 WHITE = NET TREND':'WEEKLY REPORT DATES \u00b7 WHITE LINE = TREND ACROSS THE '+series.length+' WEEKLY NETS')+(hasPx?' \u00b7 AMBER = '+(opt.pname||'PRICE')+' (RIGHT SCALE)':'')+'</text>';
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Managed money net position by week, every bar labeled with its net value and report date, with a trend line connecting the weekly nets">'+s+'</svg>';
 }
 
-function cftcRead(series){
+function centsFmt(c){ var v=Math.round(Math.abs(c)*400)/4; return (c>0?'+':c<0?'\u2212':'')+(v%1?v.toFixed(2):v.toFixed(0))+'\u00a2'; }
+var FXPX={inverse:true, pname:'USD/CAD CLOSE', pfmt:function(v){ return v.toFixed(4); }, cfmt:function(c){ return (c>0?'+':c<0?'\u2212':'')+Math.abs(c*1e4).toFixed(0)+' pips'; }};
+function cftcRead(series, opt){
   var last=series[series.length-1], prev=series[series.length-2], ref4=series[series.length-5];
   var wow=last.net-prev.net, four=last.net-ref4.net;
   var vals=series.map(function(r){return r.net;});
@@ -1028,7 +1048,19 @@ function cftcRead(series){
   var pctR=(mx>mn)?Math.round((last.net-mn)/(mx-mn)*100):50;
   var zone = pctR>=80 ? 'near the top of the range' : pctR<=20 ? 'near the bottom of the range' : 'mid-range';
   return 'Net exposure trend: week over week <b>'+sgn(wow,0)+'</b> \u00b7 4-week direction '+(four>0?'<b>rising</b>':four<0?'<b>falling</b>':'<b>flat</b>')+
-    ' ('+sgn(four,0)+' vs '+fmtDate(ref4.date)+') \u00b7 latest net sits at <b>'+pctR+'%</b> of its 10-week range ('+sgn(mn,0)+' to '+sgn(mx,0)+') \u2014 '+zone+'.';
+    ' ('+sgn(four,0)+' vs '+fmtDate(ref4.date)+') \u00b7 latest net sits at <b>'+pctR+'%</b> of its 10-week range ('+sgn(mn,0)+' to '+sgn(mx,0)+') \u2014 '+zone+'.'+cftcPriceRead(series, opt);
+}
+function cftcPriceRead(series, opt){
+  opt=opt||{}; var last=series[series.length-1], ref=series[series.length-5];
+  if(!last||!ref||last.px==null||ref.px==null) return '';
+  var pf=opt.pfmt||function(v){ return '$'+v.toFixed(2); }, dp=last.px-ref.px, dn=last.net-ref.net;
+  if(opt.inverse){ /* CAD futures: a falling net = funds selling CAD, which shows up as USD/CAD rising */
+    var rel2=(dp>0&&dn<0)?'funds sold CAD as USD/CAD rose \u2014 positioning <b>confirms</b> the CAD weakness':(dp<0&&dn>0)?'funds bought CAD as USD/CAD fell \u2014 positioning <b>confirms</b> the CAD strength':
+      (dp>0&&dn>0)?'USD/CAD rose even as funds bought CAD \u2014 a <b>divergence</b>':(dp<0&&dn<0)?'USD/CAD fell even as funds sold CAD \u2014 a <b>divergence</b> (short-squeeze risk if CAD keeps firming)':'price and positioning roughly flat';
+    return ' USD/CAD over the same 4 weeks: '+pf(ref.px)+' \u2192 <b>'+pf(last.px)+'</b> ('+opt.cfmt(dp)+'): '+rel2+'.'; }
+  var rel=(dp>0&&dn>0)?'funds added length as price rose \u2014 positioning <b>confirms</b> the up-move':(dp<0&&dn<0)?'funds cut exposure as price fell \u2014 positioning <b>confirms</b> the down-move':
+    (dp>0&&dn<0)?'price rose while funds cut exposure \u2014 a <b>divergence</b> (short-covering or commercial buying)':(dp<0&&dn>0)?'price fell while funds added length \u2014 a <b>divergence</b> (funds buying the dip)':'price and positioning roughly flat';
+  return ' Price over the same 4 weeks: '+pf(ref.px)+' \u2192 <b>'+pf(last.px)+'</b> ('+(opt.cfmt||centsFmt)(dp)+'): '+rel+'.';
 }
 
 /* ---------------- rollover (same drop-in series as the per-commodity rollover cards) ---------------- */
@@ -1847,7 +1879,7 @@ function renderGrain(key){
     '<div class="stat-row">'+stat("Long", fmt(last.long)) + stat("Short", fmt(last.short)) +
     stat("Week over week", '<span class="'+cls(wow)+'">'+sgn(wow,0)+'</span>')+
     stat("Report date", fmtDate(last.date))+'</div>'+
-    cftcSVG(g.cftc)+
+    cftcSVG(g.cftc, {pname:'FRONT-MONTH SETTLE'})+
     '<p class="read">'+cftcRead(g.cftc)+'</p>'+
     '<div class="legend"><span><span class="sw" style="background:#3fb97f"></span>Net long week</span><span><span class="sw" style="background:#e0655f"></span>Net short week</span><span><span class="sw" style="background:#e8eef4"></span>Trend line (weekly nets)</span><span>Value label on every bar, on a dark backing plate so the trend line never overprints it</span></div>'+
     '<div class="stamp">Managed-money net, trailing '+g.cftc.length+' weekly reports \u00b7 CFTC disaggregated futures-only \u00b7 auto-refreshed</div></div>';
@@ -2058,7 +2090,7 @@ function fxReleasesHTML(){
 }
 function fxCftcHTML(){
   var fx=DATA.fx, p=fx.pos, S=p.series||[];
-  var chart = S.length>=5 ? cftcSVG(S).replace('MANAGED MONEY','LEVERAGED FUNDS').replace(/Managed money/,'Leveraged funds')+'<p class="read">'+cftcRead(S)+'</p>'
+  var chart = S.length>=5 ? cftcSVG(S, FXPX).replace('MANAGED MONEY','LEVERAGED FUNDS').replace(/Managed money/,'Leveraged funds')+'<p class="read">'+cftcRead(S, FXPX)+'</p>'
                           : '<p class="note">Weekly history fills in on the next data refresh (CFTC Traders in Financial Futures).</p>';
   return '<div class="tile wide" data-src="cftc_fx"><h2>CFTC CAD — leveraged funds <span class="h2note">— weekly, every bar labeled, trend line across the weekly nets</span></h2>'+
     '<div class="big" style="color:'+(p.net>=0?'var(--green)':'var(--red)')+'">'+(p.net>=0?'+':'−')+fmt(Math.abs(p.net))+' <span style="font-size:14px;color:var(--muted)">net contracts</span></div>'+
