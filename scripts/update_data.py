@@ -541,8 +541,8 @@ def _yahoo_settles(sym, period="9mo"):
     out = []
     for idx, row in h.iterrows():
         d = idx.date()
-        if d > now.date() or (d == now.date() and now.hour < 15):
-            continue  # today's bar is still trading — settle not final
+        if d > now.date() or (d == now.date() and not (15 <= now.hour < 20)):
+            continue  # today's bar: settle final only 3pm-8pm ET; after 8pm it is the overnight session
         out.append((d.isoformat(), round(float(row["Close"]) / 100.0, 4)))  # cents -> $/bu
     return out
 
@@ -752,6 +752,8 @@ def _psd_us(code, year, H, k):
         _PSD_REF["attr"] = {str(a["attributeId"]): (a.get("attributeName") or "").strip().lower() for a in get(f"{PSD}/commodityAttributes", headers=H).json()}
         _PSD_REF["unit"] = {str(u["unitId"]): (u.get("unitDescription") or "").strip().lower() for u in get(f"{PSD}/unitsOfMeasure", headers=H).json()}
     latest_month = max((int(r_.get("month") or 0) for r_ in rows), default=0)
+    _LAST_PSD["names"] = sorted({_PSD_REF["attr"].get(str(r_.get("attributeId")), str(r_.get("attributeId"))) + "|" + _PSD_REF["unit"].get(str(r_.get("unitId")), str(r_.get("unitId"))) for r_ in rows})
+    _LAST_PSD["sample"] = rows[:2]
     v = {}
     for r_ in rows:
         if latest_month and int(r_.get("month") or 0) != latest_month:
@@ -774,6 +776,7 @@ def _psd_us(code, year, H, k):
 
 
 _PSD_REF = {}
+_LAST_PSD = {}
 
 
 def _sd_values(k, raw):
@@ -828,7 +831,8 @@ def wasde(D, N):
             for lab in ("Production", "Area Planted"):          # sanity: same crop year, same units
                 a, b = vals.get(lab), stored.get(lab)
                 if a is None or not b or abs(a / b - 1) > (0.08 if lab == "Production" else 0.05):
-                    raise RuntimeError(f"{k} {crop}: PSD {lab} {a} vs stored {b} — mismatch, not used")
+                    names = sorted(_LAST_PSD.get("names", []))
+                    raise RuntimeError(f"{k} {crop} {yr}: PSD {lab} {a} vs stored {b} — not used; PSD lines: {names}"[:900])
             cur[crop] = vals
         same_month = (w.get("report") == label)
         for crop in ("new", "old"):
@@ -878,7 +882,7 @@ def main():
             restored = json.loads(snapshot)
             D.clear(); D.update(restored["D"]); N.clear(); N.update(restored["N"])
             failed.append(name)
-            errors[name] = f"{type(e).__name__}: {e}"[:300]
+            errors[name] = f"{type(e).__name__}: {e}"[:1200]
             print(f"  FAILED: {e}")
             traceback.print_exc(limit=1, file=sys.stdout)
     if errors:

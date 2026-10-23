@@ -1468,7 +1468,7 @@ function liveMonitorHTML(){
   var now=Date.now(), agri=agriEvents(now,21), macro=macroHighEvents(), all=agri.concat(macro).sort(function(a,b){ return a.t-b.t; });
   var horizon=now+36*3600000, next=all.filter(function(e){ return e.t>now-2*3600000 && e.t<=horizon; });
   var up=all.filter(function(e){ return e.t>now; })[0];
-  var tabs=[['next','Next 36h'],['agri','Agri calendar'],['macro','Macro · High'],['news','News']];
+  var tabs=[['next','Next 36h'],['agri','Agri'],['macro','Macro High'],['news','News']];
   var body={next:monRows(next,now), agri:monRows(agri.filter(function(e){ return e.t>now-6*3600000; }).slice(0,24),now), macro:monRows(macro,now), news:monitorNews()}[MON_TAB];
   return '<div class="rail-card mon-card"><div class="mon-head"><div class="rail-title"><span>Live feed monitor</span></div>'+
     (up?'<div class="mon-next">Next: <b>'+esc(up.label)+'</b><div class="hero-cd countdown" data-t="'+up.t+'" data-fmt="hms">'+hmsText(up.t-now)+'</div><div class="dsub">'+etLabel(up.t,true)+' ET</div></div>':'')+
