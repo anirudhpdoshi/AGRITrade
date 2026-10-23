@@ -273,12 +273,27 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .sn-b:hover{background:#14213a;color:#e8eef4}.sn-b[aria-pressed="true"]{border-left-color:#38b6c9;background:#14263d;color:#fff;font-weight:600}
 .sec-off{display:none!important}
 .pk.btip:hover{border-color:#38b6c9}
+.nchips{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
+.nchip{font:inherit;font-size:11.5px;padding:3px 9px;border-radius:12px;border:1px solid var(--line);background:#101a2b;color:var(--muted);cursor:pointer}
+.nchip small{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--faint)}.nchip[aria-pressed="true"]{background:#14263d;border-color:#38b6c9;color:#fff}.nchip:disabled{opacity:.4;cursor:default}
+.nchip.hot{border-color:#7a3a36;color:#ff9d97}.nchip.hot[aria-pressed="true"]{background:#3a1a1a;border-color:#e0655f;color:#fff}
+.ncat{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:0 5px;border-radius:4px;margin-right:5px;border:1px solid}
+.ncat.fx{color:#7fd3e0;border-color:#2a5d66}.ncat.agri{color:#e8c069;border-color:#6e5a2a}.ncat.geo{color:#c9a3ff;border-color:#4e3a72}.ncat.macro{color:#8fb6ff;border-color:#2f4a7a}.ncat.other{color:#9aa8bb;border-color:#34445a}.ncat.alert{color:#ff9d97;border-color:#7a3a36}
+li.n-desk b{color:#ffd0cc;font-size:12.5px}
+.ck-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;padding:8px 10px;background:var(--panel2);border:1px solid var(--line);border-radius:9px}
+.ck-lab{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-right:4px}
+.ck-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 10px 3px 4px;border-radius:14px;border:1px solid}
+.ck-chip b{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+.ck-chip.ok{color:#9fe0bd;border-color:#2b6b4c}.ck-chip.ok b{background:rgba(63,185,127,.22);color:#5fd598}
+.ck-chip.fl{color:#f0c27a;border-color:#7a5a24}.ck-chip.fl b{background:rgba(232,163,61,.22);color:#e8a33d}
+.ck-chip:hover,.ck-chip.act{filter:brightness(1.25)}
+.pk-f{display:block;margin-top:6px;padding:4px 7px;background:#0d1626;border-radius:6px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:#e8b93d}
 .pk-tip-k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#38b6c9;font-weight:700;margin-top:7px}
 @media (max-width:1240px){.layout.has-secnav{grid-template-columns:minmax(0,1fr) 332px}.secnav{grid-column:1/-1;position:sticky;top:calc(var(--strip-h,40px) + 56px);z-index:30;box-shadow:0 6px 14px rgba(0,0,0,.35);flex-direction:row;overflow-x:auto;max-height:none;padding:6px;border-radius:10px}
   .sn-h{display:none}.sn-b{flex:0 0 auto;border-left:0;border-bottom:3px solid transparent;border-radius:7px;white-space:nowrap}.sn-b[aria-pressed="true"]{border-bottom-color:#38b6c9}}
 @media (max-width:1020px){.layout.has-secnav{grid-template-columns:1fr}}
 .oi-ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.pk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.pk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:10px}
 .pk{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;min-width:0}.pk.crit{border-color:#e0655f;background:rgba(224,101,95,.08)}
 .pk-k{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
 .pk-v{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:700;margin:4px 0}.pk-v small{font-size:12px;color:var(--muted)}.pk-v.hot{color:#ff9d97}
@@ -293,7 +308,7 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .ck-i{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
 .ck.pass .ck-i{background:rgba(63,185,127,.2);color:#5fd598}.ck.flag .ck-i{background:rgba(232,163,61,.2);color:#e8a33d}.ck.info .ck-i{background:#1a2a42;color:#c9d6e6}
 .ck-d{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.5}.ck-d b{color:#e8eef4}
-@media (max-width:1020px){.pk-grid{grid-template-columns:1fr 1fr}}@media (max-width:760px){.pk-grid{grid-template-columns:1fr}}
+@media (max-width:760px){.pk-grid{grid-template-columns:1fr}}
 .awaiting{position:relative;overflow:hidden}
 .awaiting>*{visibility:hidden}
 .awaiting::before{content:"";position:absolute;inset:14px;border-radius:8px;z-index:2;
@@ -635,17 +650,60 @@ function railCard(title, latestHTML, bodyHTML, open){
     (latestHTML?'<div class="rail-latest">'+latestHTML+'</div>':'')+'</summary><div class="rail-body">'+bodyHTML+'</div></details>';
 }
 
-function newsRailHTML(items){
-  var lis = items.map(function(n){
-    return '<li><div class="news-meta">'+n[0]+' · '+esc(n[1])+'</div><a href="'+safeUrl(n[3])+'" target="_blank" rel="noopener">'+esc(n[2])+'</a></li>';
-  }).join("");
+/* ---------- categorized news rail: FX · Agri · Geopolitics · Macro · Alerts · Others ---------- */
+var NEWSCAT=[
+  ['geo','Geopolitics',/tariff|sanction|\bwar\b|russia|ukraine|black sea|embargo|\bban\b|geopolit|conflict|middle east|israel|iran|election|ceasefire|trade (war|deal|talks|dispute)|retaliat|export (ban|curb|restriction)|border|nato|opec|houthi|red sea/i],
+  ['macro','Macro',/inflation|\bcpi\b|\bgdp\b|jobs|payroll|employment|unemployment|\bfed\b|federal reserve|rate (cut|hike)|interest rate|bank of canada|\bboc\b|recession|retail sales|treasur|bond yield|yields|central bank|economy|economic|deficit|housing starts|consumer/i],
+  ['fx','FX',/dollar|loonie|usd\/cad|currenc|forex|\bfx\b|\bcad\b|greenback|exchange rate/i],
+  ['agri','Agri',/corn|wheat|soy|grain|crop|harvest|usda|wasde|farm|cattle|oilseed|canola|planting|fertili|cbot|bushel|ethanol|livestock|hog|barley|oats|feed/i]
+];
+var NEWSALERT=/surge|plunge|soar|tumble|record|halt|emergency|limit (up|down)|crash|spike|week high|week low|lowest|highest|jump|slump|sink|rall(y|ies)|breaking|warns?|shock|default|downgrade/i;
+var NSEL={}; try{ NSEL=JSON.parse(localStorage.getItem('desk.news')||'{}')||{}; }catch(e){}
+function newsPool(key){
+  var seen={}, out=[], order=[key].concat(['fx','corn','wheat','soybeans','geo','macro'].filter(function(k){ return k!==key; }));
+  order.forEach(function(k){ (NEWS[k]||[]).forEach(function(n){ var t=n[2].toLowerCase(); if(seen[t]) return; seen[t]=1; out.push({n:n, own:k===key, q:k}); }); });
+  out.forEach(function(o){ var c=null; for(var i=0;i<NEWSCAT.length;i++){ if(NEWSCAT[i][2].test(o.n[2])){ c=NEWSCAT[i][0]; break; } }
+    if(!c) c=o.q==='geo'?'geo':o.q==='macro'?'macro':o.q==='fx'?'fx':(o.q==='corn'||o.q==='wheat'||o.q==='soybeans')?'agri':'other';
+    o.cat=c; o.alert=NEWSALERT.test(o.n[2]); });
+  return out.sort(function(a,b){ return a.n[0]<b.n[0]?1:a.n[0]>b.n[0]?-1:0; });
+}
+function deskAlerts(key){
+  var out=[], K=posK(key), nm=key==='fx'?'CAD funds':GMETA[key].name;
+  if(K){ var S=posState(K);
+    if(Math.abs(K.z52)>=2) out.push(nm+' positioning z-score '+sgn(K.z52,2,'σ')+' — '+S.zs);
+    if(K.cot3>80||K.cot3<20) out.push(nm+' 3-yr COT Index '+fmt(K.cot3,0)+' — '+S.cs);
+    if(S.dbl) out.push(nm+' DOUBLE EXTREME '+S.dbl);
+    if(Math.abs(K.streak)>=4) out.push(nm+': '+Math.abs(K.streak)+' straight weeks of fund '+(K.streak>0?'buying':'selling'));
+    if(K.doi_pct!=null&&Math.abs(K.doi_pct)>=2) out.push(nm+' open interest '+sgn(K.doi_pct,1,'%')+' w/w — '+flowRead(K)); }
+  if(key==='fx') (DATA.fx.rates||[]).forEach(function(r){ if(r.dod!=null&&Math.abs(r.dod)>=5) out.push(r.t+' US–Canada spread '+sgn(r.dod,1)+' bps on the day'); });
+  return out;
+}
+function newsBodyHTML(key){
+  var P=newsPool(key), A=deskAlerts(key), sel=NSEL[key]||'all';
+  var cats=[['all','All'],['fx','FX'],['agri','Agri'],['geo','Geopolitics'],['macro','Macro'],['alert','Alerts'],['other','Others']];
+  var cnt={all:P.length, alert:A.length+P.filter(function(o){ return o.alert; }).length};
+  P.forEach(function(o){ cnt[o.cat]=(cnt[o.cat]||0)+1; });
+  var chips='<div class="nchips">'+cats.map(function(c){ var n=cnt[c[0]]||0; return '<button class="nchip'+(c[0]==='alert'&&n?' hot':'')+'" data-nk="'+key+'" data-nc="'+c[0]+'" aria-pressed="'+(sel===c[0])+'"'+(n?'':' disabled')+'>'+c[1]+' <small>'+n+'</small></button>'; }).join('')+'</div>';
+  var lab={fx:'FX',agri:'Agri',geo:'Geo',macro:'Macro',other:'Other'};
+  var items=P.filter(function(o){ return sel==='all'||(sel==='alert'?o.alert:o.cat===sel); });
+  var lis=(sel==='alert'||sel==='all'?A.map(function(a){ return '<li class="n-desk"><div class="news-meta"><span class="ncat alert">Desk alert</span> computed from the latest CFTC / rates data</div><b>'+esc(a)+'</b></li>'; }):[]).join('')+
+    items.slice(0,sel==='all'?14:20).map(function(o){ var n=o.n;
+      return '<li><div class="news-meta"><span class="ncat '+o.cat+'">'+lab[o.cat]+'</span>'+(o.alert?'<span class="ncat alert">Alert</span>':'')+n[0].slice(5,16)+' UTC · '+esc(n[1].replace(/^www\./,''))+'</div><a href="'+safeUrl(n[3])+'" target="_blank" rel="noopener">'+esc(n[2])+'</a></li>'; }).join('');
+  return chips+'<ul class="news-list">'+(lis||'<li class="news-meta">No headlines in this category right now.</li>')+'</ul>'+
+    '<div class="stamp">Headlines pulled '+asOf('news',true)+' · pooled across all desks, de-duplicated and tagged by keyword · publish times UTC · titles link out to the publisher</div>';
+}
+function newsRailHTML(items, key){
+  key=key||'fx';
   var latest = items[0];
   var latestHTML = 'Latest: <b>'+esc(latest[2])+'</b><br><span class="news-meta">'+latest[0]+' · '+esc(latest[1])+'</span>';
   var auto=isAuto('news');
-  return railCard(auto?'News — auto-refreshed':'News — frozen at build', latestHTML,
-    '<ul class="news-list">'+lis+'</ul>'+
-    '<div class="stamp">Headlines pulled '+asOf('news',true)+' · '+esc(DATA.meta.sources.news)+' · publish times UTC · titles link out to the publisher</div>');
+  return railCard(auto?'News — auto-refreshed':'News — frozen at build', latestHTML, '<div id="newsb-'+key+'">'+newsBodyHTML(key)+'</div>');
 }
+document.addEventListener('click', function(ev){
+  var b=ev.target.closest&&ev.target.closest('[data-nc]'); if(!b) return; ev.preventDefault();
+  var k=b.getAttribute('data-nk'); NSEL[k]=b.getAttribute('data-nc'); try{ localStorage.setItem('desk.news', JSON.stringify(NSEL)); }catch(e){}
+  var el=document.getElementById('newsb-'+k); if(el) el.innerHTML=newsBodyHTML(k);
+});
 
 function grainAlertsHTML(key){
   var g=DATA.grains[key], meta=GMETA[key], FL=fanLevels(g, meta), L=g.fan.intraday[0];
@@ -2682,23 +2740,27 @@ function positioningKpiHTML(key){
     '<div class="pk"><div class="pk-k">Flow velocity &amp; streak</div><div class="pk-v '+cls(K.d1)+'">'+sg(K.d1)+'<small> w/w</small></div><div class="pk-s">'+(K.vel_pct_oi!=null?sgn(K.vel_pct_oi,2,'%')+' of open interest':'')+'<br>'+(K.streak?Math.abs(K.streak)+' week'+(Math.abs(K.streak)>1?'s':'')+' of net '+(K.streak>0?'buying':'selling'):'flat')+'</div></div>',
     '<div class="pk"><div class="pk-k">Open interest Δ w/w</div><div class="pk-v '+cls(K.doi_pct||0)+'">'+(K.doi_pct!=null?sgn(K.doi_pct,2,'%'):'—')+'</div><div class="pk-s">'+fmt(K.oi)+' contracts<br><b>'+flowRead(K)+'</b></div>'+(K.oi_hist&&K.oi_hist.length>3?sparkPath(K.oi_hist.map(function(x){ return x[1]; }),140,22):'')+'</div>',
     (K.spread_idx!=null?'<div class="pk"><div class="pk-k">Commercial vs spec spread</div><div class="pk-v">'+fmt(K.spread_idx,0)+'<small>/100 (3-yr)</small></div>'+gaugeHTML(K.spread_idx,0,100,[10,50,90],function(v){ return v; })+'<div class="pk-s">Funds '+sg(K.net)+' vs '+commLab.toLowerCase()+' '+sg(K.comm_net)+' (Δ '+sg(K.comm_d1)+')<br>'+(K.spread_idx>=90||K.spread_idx<=10?'<b>extreme divergence — hedgers fully opposite the funds</b>':'within the normal range')+'</div></div>':
-      '<div class="pk"><div class="pk-k">Commercial vs spec spread</div><div class="pk-v">—</div><div class="pk-s">'+commLab+' columns load on the next CFTC refresh</div></div>')
+      '')
   ];
   var who=isFx?'leveraged funds (hedge funds & CTAs) in CAD futures':'managed money (hedge funds & CTAs) in '+GMETA[key].name.toLowerCase(), bias=isFx?'CAD':GMETA[key].name.toLowerCase();
   function tip(h, what, read, now, why){ return '<div class="bt-h">'+h+'</div><div>'+what+'</div><div class="pk-tip-k">How to read</div><div>'+read+'</div><div class="pk-tip-k">This week</div><div>'+now+'</div><div class="pk-tip-k">Why it matters</div><div>'+why+'</div>'; }
   var tid='b'+(++BTN); BTIPS[tid]=[
-    tip('52-week z-score','How far the net position of '+who+' sits from its own 1-year average, in standard deviations.','0 = normal · ±1σ = leaning · beyond ±2σ = statistically extreme crowding (happens ~5% of weeks).','Net '+sg(K.net)+' contracts = '+sgn(K.z52,2,'σ')+' → '+S.zs+'.','Short-term radar for crowding. Extreme longs leave fewer buyers left; extreme shorts are fuel for a squeeze.'),
-    tip('3-year COT Index','Where this week’s net position sits inside its 3-year (156-week) range, on a 0–100 scale.','0 = most short in 3 years · 100 = most long · above 80 = extreme long · below 20 = extreme short.','Index '+fmt(K.cot3,0)+' → '+S.cs+'.','Puts the weekly number in multi-year context so a big-looking position is judged against the cycle, not one year.'),
+    tip('52-week z-score','How far the net position of '+who+' sits from its own 1-year average, in standard deviations. <span class="pk-f">z = (net \u2212 52-wk mean) \u00f7 52-wk st.dev</span>','0 = normal · ±1σ = leaning · beyond ±2σ = statistically extreme crowding (happens ~5% of weeks).','Net '+sg(K.net)+' contracts = '+sgn(K.z52,2,'σ')+' → '+S.zs+'.','Short-term radar for crowding. Extreme longs leave fewer buyers left; extreme shorts are fuel for a squeeze.'),
+    tip('3-year COT Index','Where this week’s net position sits inside its 3-year (156-week) range, on a 0–100 scale. <span class="pk-f">100 × (net − 3-yr min) ÷ (3-yr max − min)</span>','0 = most short in 3 years · 100 = most long · above 80 = extreme long · below 20 = extreme short.','Index '+fmt(K.cot3,0)+' → '+S.cs+'.','Puts the weekly number in multi-year context so a big-looking position is judged against the cycle, not one year.'),
     tip('Double-extreme flag','Fires only when the z-score and the COT Index are both extreme on the same side.','Needs z ≥ +2 and COT > 80 (long) or z ≤ −2 and COT < 20 (short).',S.dbl?'<b>Active — '+S.dbl+'</b>.':'Not active — z '+sgn(K.z52,2,'σ')+', COT '+fmt(K.cot3,0)+'.','When short-term and multi-year gauges agree, the odds of mean reversion (or a short squeeze) rise sharply.'),
     tip('Flow velocity & streak','Week-over-week change in the net position, expressed as a % of total open interest, plus how many weeks in a row funds have bought or sold.','A move larger than ±2% of open interest in one week is fast money · 4+ weeks in the same direction = a persistent trend.','Net change '+sg(K.d1)+' ('+(K.vel_pct_oi!=null?sgn(K.vel_pct_oi,2,'%'):'—')+' of OI) · '+Math.abs(K.streak)+' week(s) of net '+(K.streak>0?'buying':'selling')+'.','Shows whether fund money is actively pushing the '+bias+' trend or the move is running out of sponsors.'),
     tip('Open interest change','Weekly % change in the total number of open contracts, read together with the direction of fund flow.','OI up + funds buying = fresh longs · OI up + funds selling = fresh shorts · OI down + funds buying = short covering · OI down + funds selling = long liquidation.','OI '+(K.doi_pct!=null?sgn(K.doi_pct,2,'%'):'—')+' → '+flowRead(K)+'.','Tells you if a move is backed by new money (sustainable) or only by positions closing (can exhaust quickly).'),
     tip('Commercial vs spec spread','The gap between funds’ net position and the '+(isFx?'dealers’ (sell-side banks)':'producers/merchants’ (physical hedgers)')+' net position, ranked in its 3-year range (0–100).','Near 100 = funds most long vs hedgers most short in 3 years · near 0 = the reverse · above 90 or below 10 = extreme.',K.spread_idx!=null?'Spread index '+fmt(K.spread_idx,0)+' · funds '+sg(K.net)+' vs '+(isFx?'dealers':'commercials')+' '+sg(K.comm_net)+'.':'Not loaded yet.','Hedgers trade the physical market. When they take the exact opposite side of the funds at an extreme, tension between fundamentals and momentum is high.')
   ];
-  cards=cards.map(function(c,i){ return c.replace('<div class="pk','<div tabindex="0" data-tid="'+tid+'" data-i="'+i+'" class="btip pk'); });
+  cards=cards.map(function(c,i){ return c?c.replace('<div class="pk','<div tabindex="0" data-tid="'+tid+'" data-i="'+i+'" class="btip pk'):''; });
+  if(K.doi_pct==null) cards[4]=''; if(!S.dbl) cards[2]='';
+  var CI=checklistItems(key), tid2='b'+(++BTN), nfl=CI.filter(function(c){ return !c.ok; }).length;
+  BTIPS[tid2]=CI.map(function(c,i){ return '<div class="bt-h">'+(i+1)+' \u00b7 '+c.t+' <span style="color:'+(c.ok?'#5fd598':'#e8a33d')+';font-weight:700">'+(c.ok?'\u2713 pass':'! flag')+'</span></div><div>'+c.d+'</div><div class="pk-tip-k">What this step checks</div><div>'+c.why+'</div>'; });
+  var ckRow='<div class="ck-row"><span class="ck-lab">Weekly review \u00b7 '+(nfl?nfl+' flagged':'all clear')+'</span>'+CI.map(function(c,i){ return '<span tabindex="0" class="btip ck-chip '+(c.ok?'ok':'fl')+'" data-tid="'+tid2+'" data-i="'+i+'"><b>'+(c.ok?'\u2713':'!')+'</b>'+(i+1)+' \u00b7 '+c.t+'</span>'; }).join('')+'</div>';
   return '<div class="tile wide poskpi has-flag" data-src="'+(isFx?'cftc_fx':'cftc_grains')+'">'+cflag(isFx?'ca':'us')+'<h2>Positioning KPIs <span class="h2note">— '+title+' · positions as of '+esc(fmtDate(K.date))+'</span></h2>'+
     (alerts.length?'<div class="pk-alerts">'+alerts.map(function(a){ return '<span class="pk-al '+a[0]+'">'+a[1]+'</span>'; }).join('')+'</div>':'<div class="pk-alerts"><span class="pk-al ok">No positioning alerts this week</span></div>')+
-    '<div class="pk-grid">'+cards.join('')+'</div><div class="stamp" style="border:0;padding-top:6px;margin-top:6px">Hover or tap any card for what it measures, how to read it and why it matters.</div>'+
-    '<div class="stamp">z-score = (net − 52-wk mean) ÷ 52-wk st.dev (alert ±2σ) · COT Index = 100 × (net − 3-yr min) ÷ (3-yr max − min) (alert >80 / <20) · flow velocity = weekly net change ÷ open interest (alert ±2%) · streak alert ≥ 4 weeks · OI Δ alert ±2% · CFTC positions are as of Tuesday, released Friday 3:30 pm ET</div></div>';
+    ckRow+'<div class="pk-grid">'+cards.join('')+'</div>'+
+    '<div class="stamp">Hover or tap any card or review chip for the formula, how to read it and why it matters \u00b7 CFTC positions as of Tuesday, released Friday 3:30 pm ET</div></div>';
 }
 
 /* ================= CROSS-ASSET CHECK + WEEKLY REVIEW CHECKLIST ================= */
@@ -2710,26 +2772,24 @@ function crossAsset(){
           (bz<=-1&&cz>=1)?'Funds lean short grains while long CAD — CAD strength not backed by ag terms of trade':null;
   return {bz:bz, cz:cz, dis:dis};
 }
-function checklistHTML(key){
-  var K=posK(key); if(!K) return '';
+function checklistItems(key){
+  var K=posK(key); if(!K) return [];
   var isFx=key==='fx', S=posState(K), X=crossAsset(), items=[];
-  function it(ok, t, d){ items.push('<div class="ck '+(ok===true?'pass':ok===false?'flag':'info')+'"><span class="ck-i">'+(ok===true?'✓':ok===false?'!':'•')+'</span><div><b>'+t+'</b><div class="ck-d">'+d+'</div></div></div>'); }
-  it(true,'1 · Data format', isFx?'Leveraged Funds from the Traders in Financial Futures report (CAD futures, CME)':'Managed Money from the Disaggregated report — excludes passive swap/index money');
+  function it(ok, t, d, why){ items.push({ok:ok,t:t,d:d,why:why}); }
+  it(true,'Data format', isFx?'Leveraged Funds from the Traders in Financial Futures (TFF) report, CAD futures on CME.':'Managed Money from the Disaggregated report \u2014 excludes passive swap/index money.','Using the right trader group stops passive index or swap flows being read as directional fund bets.');
   var ext=Math.abs(K.z52)>=2||K.cot3>80||K.cot3<20;
-  it(!ext,'2 · Z-score & COT Index', 'z '+sgn(K.z52,2,'σ')+' ('+S.zs+') · COT '+fmt(K.cot3,0)+' ('+S.cs+')'+(S.dbl?' · <b>double extreme</b>':''));
-  var flowAlert=(K.doi_pct!=null&&Math.abs(K.doi_pct)>=2)||(K.vel_pct_oi!=null&&Math.abs(K.vel_pct_oi)>=2)||Math.abs(K.streak)>=4;
-  it(!flowAlert,'3 · Open interest & flow', 'OI '+(K.doi_pct!=null?sgn(K.doi_pct,1,'%'):'—')+' w/w · net '+(K.d1>0?'+':'−')+fmt(Math.abs(K.d1))+' ('+(K.vel_pct_oi!=null?sgn(K.vel_pct_oi,1,'%')+' of OI':'')+') · '+flowRead(K));
-  if(X) it(!X.dis,'4 · Cross-asset (grains vs CAD)', 'grain basket z '+sgn(X.bz,2,'σ')+' vs CAD funds z '+sgn(X.cz,2,'σ')+(X.dis?' — <b>'+X.dis+'</b>':' — no disconnect'));
+  it(!ext,'Z-score & COT', 'z '+sgn(K.z52,2,'\u03c3')+' ('+S.zs+') \u00b7 COT '+fmt(K.cot3,0)+' ('+S.cs+')'+(S.dbl?' \u00b7 <b>double extreme</b>':'')+'.','Flags when |z| \u2265 2 or the COT Index is above 80 / below 20 \u2014 crowded positioning that can reverse.');
+  if(K.doi_pct!=null){ var flowAlert=Math.abs(K.doi_pct)>=2||(K.vel_pct_oi!=null&&Math.abs(K.vel_pct_oi)>=2)||Math.abs(K.streak)>=4;
+    it(!flowAlert,'OI & flow', 'OI '+sgn(K.doi_pct,1,'%')+' w/w \u00b7 net '+(K.d1>0?'+':'\u2212')+fmt(Math.abs(K.d1))+(K.vel_pct_oi!=null?' ('+sgn(K.vel_pct_oi,1,'%')+' of OI)':'')+' \u00b7 '+Math.abs(K.streak)+'-week '+(K.streak>0?'buying':'selling')+' streak \u00b7 '+flowRead(K)+'.','Flags OI moves beyond \u00b12%, flow beyond \u00b12% of OI, or a 4+ week streak \u2014 shows whether new money is driving the move.'); }
+  if(X) it(!X.dis,'Cross-asset', 'Grain basket z '+sgn(X.bz,2,'\u03c3')+' vs CAD funds z '+sgn(X.cz,2,'\u03c3')+(X.dis?' \u2014 <b>'+X.dis+'</b>':' \u2014 no disconnect')+'.','Canada is a big grain exporter: strong grain positioning with weak CAD positioning (or the reverse) can signal a terms-of-trade mispricing.');
   var tech, agree;
-  if(isFx){ var fx=DATA.fx, sp=+fx.feed.mid, L=fx.levels; tech='USD/CAD '+fmt(sp,4)+' vs 20-day range '+fmt(L.s20,4)+'–'+fmt(L.r20,4)+' · pivot '+fmt(L.pivot,4);
+  if(isFx){ var fx=DATA.fx, sp=+fx.feed.mid, L=fx.levels; tech='USD/CAD '+fmt(sp,4)+' vs 20-day range '+fmt(L.s20,4)+'\u2013'+fmt(L.r20,4)+', pivot '+fmt(L.pivot,4);
     agree=(K.net<0&&sp>L.pivot)||(K.net>0&&sp<L.pivot); }
-  else { var f=DATA.grains[key].fan, px=+f.intraday[0], m20=+f.ma20, m50=+f.ma50; tech='price '+fmt(px,4)+' vs MA20 '+fmt(m20,2)+' / MA50 '+fmt(m50,2)+' · settle z '+f.z;
+  else { var f=DATA.grains[key].fan, px=+f.intraday[0], m20=+f.ma20, m50=+f.ma50; tech='Price '+fmt(px,4)+' vs MA20 '+fmt(m20,2)+' / MA50 '+fmt(m50,2);
     agree=(K.net>0&&px>m50)||(K.net<0&&px<m50); }
-  it(agree,'5 · Technical confirmation', tech+' — '+(agree?'price trend agrees with fund positioning':'price trend <b>against</b> fund positioning — wait for a technical trigger before acting'));
-  var nflag=items.filter(function(x){ return /ck flag/.test(x); }).length;
-  return '<div class="tile wide ckwrap"><h2>Weekly positioning review <span class="h2note">— '+(nflag?nflag+' item'+(nflag>1?'s':'')+' flagged':'all clear')+' · CFTC data is 3 days old on release; use price for timing</span></h2><div class="ck-list">'+items.join('')+'</div></div>';
+  it(agree,'Technicals', tech+' \u2014 '+(agree?'price trend agrees with fund positioning.':'price trend is <b>against</b> fund positioning; wait for a technical trigger.'),'CFTC data is 3 days old on release. Positioning shows structural risk; price levels give the timing.');
+  return items;
 }
-
 /* ================= AWAITING-RELEASE SKELETON (event cards only) ================= */
 function lastWeekday(wd, h, m, maxBackDays){
   var now=Date.now();
@@ -2743,7 +2803,7 @@ function awaitingList(){
   var now=Date.now(), out=[], DAY=86400000;
   var cf=lastWeekday('Fri',15,30,7);
   if(cf&&now-cf.t<DAY){ var exp=isoAdd(cf.y,cf.m,cf.d,-3), last=(DATA.grains.corn.cftc||[]).slice(-1)[0];
-    if(last&&last.date<exp) out.push({sel:'[data-src="cftc_grains"],[data-src="cftc_fx"],.poskpi,.ckwrap', label:'Awaiting CFTC Commitments of Traders — positions as of '+exp}); }
+    if(last&&last.date<exp) out.push({sel:'[data-src="cftc_grains"],[data-src="cftc_fx"],.poskpi', label:'Awaiting CFTC Commitments of Traders — positions as of '+exp}); }
   var es=lastWeekday('Thu',8,30,7);
   if(es&&now-es.t<DAY){ var exp2=isoAdd(es.y,es.m,es.d,-7), E=(DATA.exports&&DATA.exports.corn)||{}, lw=(E.weeks||[]).slice(-1)[0];
     if(lw&&lw[0]<exp2) out.push({sel:'[data-src="exports"]', label:'Awaiting USDA weekly export sales'}); }
@@ -2778,11 +2838,7 @@ function monRows(list, now){
     var fl=e.src==='macro'?flagCcy(e.ccy,12):e.kind==='ca'?flag('ca',12):flag('us',12);
     return '<div class="kv'+(past?' ev-past':'')+'"><span class="kk">'+fl+' '+etLabel(e.t,true)+' · '+esc(e.label)+' '+tag+(e.prev?' <span class="neu">prev '+esc(e.prev)+'</span>':'')+'</span><span class="vv">'+(past?'<span class="chip inline">OUT</span>':'<span class="countdown" data-t="'+e.t+'">'+cdText(e.t-now)+'</span>')+'</span></div>'; }).join('');
 }
-function monitorNews(){
-  var all=[]; [['fx','USD/CAD'],['corn','Corn'],['wheat','Wheat'],['soybeans','Soybeans']].forEach(function(p){ (NEWS[p[0]]||[]).forEach(function(n){ all.push([n,p[1]]); }); });
-  all.sort(function(a,b){ return a[0][0]<b[0][0]?1:-1; });
-  return '<ul class="news-list">'+all.slice(0,14).map(function(x){ var n=x[0]; return '<li><div class="news-meta">'+n[0]+' · '+esc(n[1])+' · <b>'+x[1]+'</b></div><a href="'+safeUrl(n[3])+'" target="_blank" rel="noopener">'+esc(n[2])+'</a></li>'; }).join('')+'</ul>';
-}
+function monitorNews(){ return '<div id="newsb-fx">'+newsBodyHTML('fx')+'</div>'; }
 function liveMonitorHTML(){
   var now=Date.now(), agri=agriEvents(now,21), macro=macroHighEvents(), all=agri.concat(macro).sort(function(a,b){ return a.t-b.t; });
   var horizon=now+36*3600000, next=all.filter(function(e){ return e.t>now-2*3600000 && e.t<=horizon; });
@@ -2836,7 +2892,7 @@ function renderGrain(key){
   FU+=wasdeTableHTML(key)+exportTileHTML(key)+destTileHTML(key);
   /* insight + curve (both computed from the data) */
   OV+='<div class="tile wide"><h2>Insight</h2><p class="read">'+grainInsight(key)+'</p><div class="stamp">Generated from the current settles, options and CFTC data</div></div>';
-  DV+=positioningKpiHTML(key)+checklistHTML(key)+cockpitHTML(key)+volTermHTML(key)+grainSpreadsHTML(key).replace('class="tile"','class="tile wide"');
+  DV+=positioningKpiHTML(key)+cockpitHTML(key)+volTermHTML(key)+grainSpreadsHTML(key).replace('class="tile"','class="tile wide"');
   /* positioning (toggle target) */
   DV+='<div class="tile wide" id="pos-'+key+'">'+positioningHTML(key)+'</div>';
   /* OI chart (toggle target) */
@@ -2864,7 +2920,7 @@ function renderGrain(key){
   var FH='<div class="tile wide geo-head"><div class="tile-head"><h2>'+meta.name+' fundamentals <span class="h2note">— pick a geography</span></h2><span class="toggle" role="group">'+gb('us',flag('us',11)+' US · USDA / WASDE')+gb('ca',flag('ca',11)+' CANADA · STATCAN')+gb('on',flag('ca',11)+' ONTARIO')+'</span></div></div>';
   FU=FH+cropCompareHTML(key)+(geo==='us'?FU:canadaTileHTML(key,true)+canadaChartsHTML(key)+caCalendarHTML());
   html+=subWrap(key,'overview',OV)+subWrap(key,'deriv',DV)+subWrap(key,'fund',FU)+subWrap(key,'inputs',inputsHTML(key));
-  html+='</div><aside class="rail">'+grainAlertsLiveHTML(key)+grainCalendarHTML(key)+newsRailHTML(NEWS[key])+'</aside></div>';
+  html+='</div><aside class="rail">'+grainAlertsLiveHTML(key)+grainCalendarHTML(key)+newsRailHTML(NEWS[key], key)+'</aside></div>';
   document.getElementById('panel-'+key).innerHTML=html;
 }
 
@@ -3299,7 +3355,7 @@ function renderFX(){
     '<div class="stamp">Value dates = spot date (T+1) + tenor, weekends rolled forward (bank holidays not adjusted) \u00b7 F = spot \u00d7 (1 + CAD rate \u00d7 T) \u00f7 (1 + US rate \u00d7 T) \u00b7 sub-1Y: US 3M bill vs BoC overnight \u00b7 1Y\u20135Y: benchmark yields ('+asOf('yields')+') \u00b7 <span id="fx-fwd-spot">spot '+fmt(fx.feed.mid,5)+'</span></div></div>';
   html+=fxSubnavHTML()+
     subWrap('fx','overview', fxKpiHTML()+T.spot+T.closes+T.model+askTileHTML('fx'))+
-    subWrap('fx','deriv', positioningKpiHTML('fx')+checklistHTML('fx')+T.forwards+T.cftc+T.sentiment.replace('class="tile"','class="tile wide"'))+
+    subWrap('fx','deriv', positioningKpiHTML('fx')+T.forwards+T.cftc+T.sentiment.replace('class="tile"','class="tile wide"'))+
     subWrap('fx','macro', liveFxHTML()+macroDashHTML()+tradeFiscalHTML()+fxMacroHTML()+T.releases)+
     subWrap('fx','rates', T.yields+T.energy.replace('class="tile wide"','class="tile"')+T.policy);
   html+='</div><aside class="rail">'+liveMonitorHTML()+fxAlertsHTML()+'</aside></div>';

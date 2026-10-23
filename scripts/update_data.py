@@ -461,6 +461,8 @@ NEWS_Q = {
     "wheat": "wheat futures OR wheat prices OR wheat exports",
     "soybeans": "soybean futures OR soybeans China OR soybean exports",
     "fx": "Canadian dollar OR loonie OR USD/CAD OR Bank of Canada",
+    "geo": "(tariffs OR sanctions OR Black Sea OR export ban OR trade war) (grain OR wheat OR soybeans OR Canada)",
+    "macro": "Federal Reserve OR Bank of Canada OR inflation OR jobs report OR GDP Canada OR US economy",
 }
 
 
