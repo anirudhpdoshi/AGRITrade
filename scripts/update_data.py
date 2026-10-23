@@ -1016,6 +1016,111 @@ def sd_hist(D, N):
     return True
 
 
+# ------------------------------------------------------------------ trade & fiscal balances (US vs Canada)
+EXT_FRED = [("us_trade_bal", "BOPGSTB"), ("us_exports", "BOPTEXP"), ("us_imports", "BOPTIMP"), ("us_deficit", "MTSDS133FMS")]
+MONTHS_FULL = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+
+
+def _ca_trade():
+    """Canada merchandise trade, balance-of-payments basis, seasonally adjusted, all countries (StatCan 12-10-0011-01), C$ millions."""
+    acc, dims = {}, {"trade": set(), "basis": set(), "sa": set(), "partner": set()}
+    for row in _sc_table(12100011):
+        if row.get("GEO") != "Canada":
+            continue
+        tr, ba, sa = row.get("Trade", ""), row.get("Basis", ""), row.get("Seasonal adjustment", "")
+        pa = row.get("Principal trading partners", "")
+        dims["trade"].add(tr); dims["basis"].add(ba); dims["sa"].add(sa); dims["partner"].add(pa)
+        if "balance of payments" not in ba.lower() or not sa.lower().startswith("seasonally adjusted") or pa.lower() != "all countries":
+            continue
+        t = tr.lower()
+        key = "bal" if "balance" in t else "imp" if t.startswith("import") else "exp" if ("total export" in t or t == "export") else None
+        v = _num(row.get("VALUE"))
+        if key and v is not None:
+            acc.setdefault(key, {})[row["REF_DATE"][:7]] = v
+    if not acc.get("exp") or not acc.get("imp"):
+        raise RuntimeError(f"Canada trade: no export/import lines; dims {{k: sorted(v)[:12] for k, v in dims.items()}}"[:600])
+    if not acc.get("bal"):
+        acc["bal"] = {m: acc["exp"][m] - acc["imp"][m] for m in acc["exp"] if m in acc["imp"]}
+    return {k: sorted(v.items())[-30:] for k, v in acc.items()}
+
+
+def _ca_fiscal(old):
+    """Federal budgetary balance by month from Finance Canada's Fiscal Monitor pages (C$ billions; + surplus, - deficit)."""
+    mon = dict((old or {}).get("monthly") or [])
+    ytd = (old or {}).get("ytd")
+    found = 0
+    for back in range(1, 27):
+        y, m = NOW.year, NOW.month - back
+        while m <= 0:
+            m += 12; y -= 1
+        key = f"{y}-{m:02d}"
+        if key in mon and back > 4:
+            continue
+        try:
+            r_ = requests.get(f"https://www.canada.ca/en/department-finance/services/publications/fiscal-monitor/{y}/{m:02d}.html", headers=UA, timeout=25)
+            if r_.status_code != 200:
+                continue
+            txt = _strip_html(r_.text)
+        except Exception:
+            continue
+        pats = [(r"budgetary (surplus|deficit) of \$([\d.,]+) (billion|million) in (\w+) (\d{4})", True),
+                (r"compared to a (surplus|deficit) of \$([\d.,]+) (billion|million) in (\w+) (\d{4})", False)]
+        for pat, overwrite in pats:
+            for sign_word, amt, unit, mname, yy in re.findall(pat, txt):
+                if mname not in MONTHS_FULL:
+                    continue
+                k2 = f"{yy}-{MONTHS_FULL.index(mname) + 1:02d}"
+                if overwrite or k2 not in mon:
+                    mon[k2] = round((1 if sign_word == "surplus" else -1) * float(amt.replace(",", "")) * (1 if unit == "billion" else 0.001), 3)
+                    found += 1
+        mt = re.search(r"posted a budgetary (surplus|deficit) of \$([\d.,]+) (billion|million) for the (April to \w+) period of the (\d{4}-\d{2}) fiscal year", txt)
+        if mt and (not ytd or key >= ytd.get("ref", "")):
+            v = float(mt.group(2).replace(",", "")) * (1 if mt.group(3) == "billion" else 0.001)
+            pr = re.search(r"compared to a (surplus|deficit) of \$([\d.,]+) (billion|million) (?:reported )?for the same period", txt)
+            pv = (float(pr.group(2).replace(",", "")) * (1 if pr.group(3) == "billion" else 0.001) * (1 if pr.group(1) == "surplus" else -1)) if pr else None
+            ytd = {"ref": key, "period": mt.group(4) + " " + mt.group(5), "value": round((1 if mt.group(1) == "surplus" else -1) * v, 3), "prior": pv}
+    if not mon:
+        raise RuntimeError("no Fiscal Monitor pages parsed")
+    return {"monthly": sorted(mon.items())[-30:], "ytd": ytd, "parsed": found}
+
+
+def external(D, N):
+    meta = D["meta"]
+    last = meta.get("ext_checked")
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=6) and D.get("ext"):
+        print("  checked <6h ago — skipping")
+        return False
+    old = D.get("ext") or {}
+    X, errs = {}, {}
+    start = (NOW - timedelta(days=31 * 30)).date().isoformat()
+    for key, sid in EXT_FRED:
+        try:
+            pts = _fred(sid, start)
+            X[key] = {"src": f"FRED {sid}", "pts": [[d[:7], round(v / 1000, 3)] for d, v in pts][-30:]}   # $ millions -> $ billions
+        except Exception as e:
+            errs[key] = f"{type(e).__name__}: {e}"[:200]
+    try:
+        ct = _ca_trade()
+        for k, nm in (("bal", "ca_trade_bal"), ("exp", "ca_exports"), ("imp", "ca_imports")):
+            X[nm] = {"src": "Statistics Canada 12-10-0011-01 (BOP basis, SA)", "pts": [[d, round(v / 1000, 3)] for d, v in ct[k]]}
+    except Exception as e:
+        errs["ca_trade"] = f"{type(e).__name__}: {e}"[:600]
+    try:
+        cf = _ca_fiscal(old.get("ca_fiscal"))
+        X["ca_fiscal"] = cf
+    except Exception as e:
+        errs["ca_fiscal"] = f"{type(e).__name__}: {e}"[:200]
+    for k, v in old.items():
+        if k not in X and k not in ("errors",):
+            X[k] = v
+    X["errors"] = errs
+    D["ext"] = X
+    meta["ext_checked"] = iso(NOW - timedelta(hours=5, minutes=45)) if errs else iso(NOW)
+    meta["asof"]["ext"] = iso(NOW)
+    print("  ext:", sorted(k for k in X if k != "errors"), "errors", errs)
+    return True
+
+
 # ------------------------------------------------------------------ farm input costs (fertilizer, chemicals, energy)
 INPUT_FRED = [
     # key, label, FRED id, unit, kind
@@ -1333,7 +1438,7 @@ def canada(D, N):
 
 BLOCKS = [("fx_spot", fx_spot), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs)]
+          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external)]
 
 
 def main():
