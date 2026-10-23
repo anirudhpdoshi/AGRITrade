@@ -32,13 +32,13 @@
      "near_expiry": "Dec-26",
      "intraday": [
       4.6025,
-      "11:15pm ET"
+      "11:20pm ET"
      ],
      "iv_10d_rel": 0.03558,
      "iv_chain_iv": 17.86,
      "iv_as_of": "2026-10-22",
      "iv_note": null,
-     "intraday_ts": "2026-10-22T23:15:00-04:00",
+     "intraday_ts": "2026-10-22T23:20:00-04:00",
      "ma50": "5.11",
      "ma100": "4.84"
     },
@@ -1487,13 +1487,13 @@
      "near_expiry": "Jan-27",
      "intraday": [
       12.57,
-      "11:15pm ET"
+      "11:25pm ET"
      ],
      "iv_10d_rel": 0.02749,
      "iv_chain_iv": 13.8,
      "iv_as_of": "2026-10-22",
      "iv_note": "Jan options (Nov expire Oct 23); IV and skew from IB midpoint, Oct 22 5:30pm ET",
-     "intraday_ts": "2026-10-22T23:15:00-04:00",
+     "intraday_ts": "2026-10-22T23:25:00-04:00",
      "ma50": "12.81",
      "ma100": "12.28"
     },
@@ -2655,13 +2655,13 @@
      "near_expiry": "Dec-26",
      "intraday": [
       6.2925,
-      "11:15pm ET"
+      "11:25pm ET"
      ],
      "iv_10d_rel": 0.04928,
      "iv_chain_iv": 24.74,
      "iv_as_of": "2026-10-22",
      "iv_note": null,
-     "intraday_ts": "2026-10-22T23:15:00-04:00",
+     "intraday_ts": "2026-10-22T23:25:00-04:00",
      "ma50": "7.04",
      "ma100": "6.75"
     },
@@ -4522,10 +4522,10 @@
     "30Y": 5.42
    },
    "fxcross": {
-    "dxy": 101.656,
-    "dxy_chg": -0.122,
+    "dxy": 101.654,
+    "dxy_chg": -0.124,
     "eurusd": 1.1217,
-    "usdjpy": 156.94,
+    "usdjpy": 156.92,
     "usdcad_ref": 1.4005
    },
    "closes": [
@@ -4605,16 +4605,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 100.02,
-     "chg": 2.87,
-     "pct": 2.95,
+     "last": 100.01,
+     "chg": 2.86,
+     "pct": 2.94,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 113.65,
-     "chg": 4.83,
-     "pct": 4.44,
+     "last": 113.85,
+     "chg": 5.03,
+     "pct": 4.62,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -4626,9 +4626,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 14.55,
+    "value": 14.54,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-23T03:15:00+00:00",
+    "obs_ts": "2026-10-23T03:25:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -5163,7 +5163,7 @@
     "mid": 1.4002,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-22T23:25:00-04:00",
+    "ts": "2026-10-22T23:37:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -5304,14 +5304,6 @@
    ],
    "intraday": [
     [
-     "2026-10-22T07:30+00:00",
-     1.4013
-    ],
-    [
-     "2026-10-22T07:35+00:00",
-     1.40172
-    ],
-    [
      "2026-10-22T07:40+00:00",
      1.4017
     ],
@@ -5429,7 +5421,7 @@
     ],
     [
      "2026-10-22T10:05+00:00",
-     1.40251
+     1.40252
     ],
     [
      "2026-10-22T10:10+00:00",
@@ -5517,7 +5509,7 @@
     ],
     [
      "2026-10-22T11:55+00:00",
-     1.40348
+     1.40353
     ],
     [
      "2026-10-22T12:00+00:00",
@@ -5817,7 +5809,7 @@
     ],
     [
      "2026-10-22T18:10+00:00",
-     1.40057
+     1.4004
     ],
     [
      "2026-10-22T18:15+00:00",
@@ -5969,7 +5961,7 @@
     ],
     [
      "2026-10-22T21:20+00:00",
-     1.40049
+     1.40058
     ],
     [
      "2026-10-22T21:25+00:00",
@@ -5981,7 +5973,7 @@
     ],
     [
      "2026-10-22T21:35+00:00",
-     1.4006
+     1.40057
     ],
     [
      "2026-10-22T21:40+00:00",
@@ -6097,7 +6089,7 @@
     ],
     [
      "2026-10-23T00:00+00:00",
-     1.40016
+     1.4002
     ],
     [
      "2026-10-23T00:05+00:00",
@@ -6258,27 +6250,39 @@
     [
      "2026-10-23T03:20+00:00",
      1.40056
+    ],
+    [
+     "2026-10-23T03:25+00:00",
+     1.40054
+    ],
+    [
+     "2026-10-23T03:30+00:00",
+     1.40052
+    ],
+    [
+     "2026-10-23T03:35+00:00",
+     1.4002
     ]
    ]
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-22T23:25:40-04:00",
+   "updated_at": "2026-10-22T23:37:01-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-22T23:25:00-04:00",
+    "fx_spot": "2026-10-22T23:37:00-04:00",
     "fx_closes": "2026-10-22T16:30:00-04:00",
     "yields": "2026-10-21T17:00:00-04:00",
     "policy": "2026-10-21T07:35:00-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-13T15:30:00-04:00",
     "cftc_grains": "2026-10-13T15:30:00-04:00",
-    "energy": "2026-10-22T23:15:00-04:00",
-    "crosses": "2026-10-22T23:15:00-04:00",
+    "energy": "2026-10-22T23:20:00-04:00",
+    "crosses": "2026-10-22T23:25:00-04:00",
     "grains_settle": "2026-10-22T14:20:00-04:00",
-    "grains_quote": "2026-10-22T23:15:00-04:00",
+    "grains_quote": "2026-10-22T23:25:00-04:00",
     "options": "2026-10-22T17:30:00-04:00",
-    "news": "2026-10-22T23:25:40-04:00",
+    "news": "2026-10-22T23:37:01-04:00",
     "calendar": "2026-10-21T07:05:00-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-22T22:15:05-04:00",
@@ -6287,7 +6291,8 @@
     "canada": "2026-10-22T22:29:24-04:00",
     "ca_calendar": "2026-10-22T22:15:05-04:00",
     "sd_hist": "2026-10-22T23:06:37-04:00",
-    "inputs": "2026-10-22T23:25:40-04:00"
+    "inputs": "2026-10-22T23:25:40-04:00",
+    "ext": "2026-10-22T23:37:01-04:00"
    },
    "sources": {
     "news": "Google News RSS search, refreshed every 15 min",
@@ -6312,10 +6317,11 @@
      "canada",
      "ca_calendar",
      "sd_hist",
-     "inputs"
+     "inputs",
+     "ext"
     ],
     "failed": [],
-    "at": "2026-10-22T23:25:40-04:00"
+    "at": "2026-10-22T23:37:01-04:00"
    },
    "releases_checked": "2026-10-22T21:27:37-04:00",
    "exports_checked": "2026-10-22T21:27:37-04:00",
@@ -6359,7 +6365,7 @@
     "ca_gdpq": "ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))"
    },
    "ca_calendar_checked": "2026-10-22T22:15:05-04:00",
-   "canada_watch": "2026-10-22T23:25:40-04:00",
+   "canada_watch": "2026-10-22T23:37:01-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -6374,7 +6380,8 @@
     "32100007": "2026-10-09T08:30"
    },
    "sd_hist_checked": "2026-10-22T23:06:37-04:00",
-   "inputs_checked": "2026-10-22T23:25:40-04:00"
+   "inputs_checked": "2026-10-22T23:25:40-04:00",
+   "ext_checked": "2026-10-22T23:37:01-04:00"
   },
   "macro": [
    {
@@ -16565,6 +16572,967 @@
     "src": "https://www.canada.ca/en/department-finance/services/publications/fiscal-monitor.html",
     "note": "not pre-announced; usually ~2 months after the reference month"
    }
+  },
+  "ext": {
+   "us_trade_bal": {
+    "src": "FRED BOPGSTB",
+    "pts": [
+     [
+      "2024-04",
+      -70.87
+     ],
+     [
+      "2024-05",
+      -70.299
+     ],
+     [
+      "2024-06",
+      -71.344
+     ],
+     [
+      "2024-07",
+      -77.0
+     ],
+     [
+      "2024-08",
+      -71.161
+     ],
+     [
+      "2024-09",
+      -83.301
+     ],
+     [
+      "2024-10",
+      -75.788
+     ],
+     [
+      "2024-11",
+      -79.756
+     ],
+     [
+      "2024-12",
+      -96.849
+     ],
+     [
+      "2025-01",
+      -124.704
+     ],
+     [
+      "2025-02",
+      -117.069
+     ],
+     [
+      "2025-03",
+      -132.983
+     ],
+     [
+      "2025-04",
+      -60.341
+     ],
+     [
+      "2025-05",
+      -66.748
+     ],
+     [
+      "2025-06",
+      -58.697
+     ],
+     [
+      "2025-07",
+      -75.062
+     ],
+     [
+      "2025-08",
+      -59.642
+     ],
+     [
+      "2025-09",
+      -59.392
+     ],
+     [
+      "2025-10",
+      -37.376
+     ],
+     [
+      "2025-11",
+      -63.868
+     ],
+     [
+      "2025-12",
+      -76.078
+     ],
+     [
+      "2026-01",
+      -52.67
+     ],
+     [
+      "2026-02",
+      -52.5
+     ],
+     [
+      "2026-03",
+      -53.657
+     ],
+     [
+      "2026-04",
+      -52.883
+     ],
+     [
+      "2026-05",
+      -75.752
+     ],
+     [
+      "2026-06",
+      -71.182
+     ],
+     [
+      "2026-07",
+      -92.826
+     ],
+     [
+      "2026-08",
+      -105.572
+     ]
+    ]
+   },
+   "us_exports": {
+    "src": "FRED BOPTEXP",
+    "pts": [
+     [
+      "2024-04",
+      267.602
+     ],
+     [
+      "2024-05",
+      266.462
+     ],
+     [
+      "2024-06",
+      269.277
+     ],
+     [
+      "2024-07",
+      271.296
+     ],
+     [
+      "2024-08",
+      275.804
+     ],
+     [
+      "2024-09",
+      273.291
+     ],
+     [
+      "2024-10",
+      269.813
+     ],
+     [
+      "2024-11",
+      276.655
+     ],
+     [
+      "2024-12",
+      270.627
+     ],
+     [
+      "2025-01",
+      274.827
+     ],
+     [
+      "2025-02",
+      280.533
+     ],
+     [
+      "2025-03",
+      283.369
+     ],
+     [
+      "2025-04",
+      290.598
+     ],
+     [
+      "2025-05",
+      282.229
+     ],
+     [
+      "2025-06",
+      281.048
+     ],
+     [
+      "2025-07",
+      284.172
+     ],
+     [
+      "2025-08",
+      284.741
+     ],
+     [
+      "2025-09",
+      292.352
+     ],
+     [
+      "2025-10",
+      301.158
+     ],
+     [
+      "2025-11",
+      289.504
+     ],
+     [
+      "2025-12",
+      285.282
+     ],
+     [
+      "2026-01",
+      301.271
+     ],
+     [
+      "2026-02",
+      313.628
+     ],
+     [
+      "2026-03",
+      321.163
+     ],
+     [
+      "2026-04",
+      329.893
+     ],
+     [
+      "2026-05",
+      319.979
+     ],
+     [
+      "2026-06",
+      317.335
+     ],
+     [
+      "2026-07",
+      310.723
+     ],
+     [
+      "2026-08",
+      315.182
+     ]
+    ]
+   },
+   "us_imports": {
+    "src": "FRED BOPTIMP",
+    "pts": [
+     [
+      "2024-04",
+      338.472
+     ],
+     [
+      "2024-05",
+      336.761
+     ],
+     [
+      "2024-06",
+      340.621
+     ],
+     [
+      "2024-07",
+      348.297
+     ],
+     [
+      "2024-08",
+      346.965
+     ],
+     [
+      "2024-09",
+      356.592
+     ],
+     [
+      "2024-10",
+      345.601
+     ],
+     [
+      "2024-11",
+      356.41
+     ],
+     [
+      "2024-12",
+      367.476
+     ],
+     [
+      "2025-01",
+      399.532
+     ],
+     [
+      "2025-02",
+      397.602
+     ],
+     [
+      "2025-03",
+      416.352
+     ],
+     [
+      "2025-04",
+      350.939
+     ],
+     [
+      "2025-05",
+      348.977
+     ],
+     [
+      "2025-06",
+      339.745
+     ],
+     [
+      "2025-07",
+      359.235
+     ],
+     [
+      "2025-08",
+      344.383
+     ],
+     [
+      "2025-09",
+      351.743
+     ],
+     [
+      "2025-10",
+      338.534
+     ],
+     [
+      "2025-11",
+      353.372
+     ],
+     [
+      "2025-12",
+      361.36
+     ],
+     [
+      "2026-01",
+      353.941
+     ],
+     [
+      "2026-02",
+      366.127
+     ],
+     [
+      "2026-03",
+      374.82
+     ],
+     [
+      "2026-04",
+      382.776
+     ],
+     [
+      "2026-05",
+      395.731
+     ],
+     [
+      "2026-06",
+      388.517
+     ],
+     [
+      "2026-07",
+      403.55
+     ],
+     [
+      "2026-08",
+      420.754
+     ]
+    ]
+   },
+   "us_deficit": {
+    "src": "FRED MTSDS133FMS",
+    "pts": [
+     [
+      "2024-04",
+      209.529
+     ],
+     [
+      "2024-05",
+      -347.131
+     ],
+     [
+      "2024-06",
+      -65.965
+     ],
+     [
+      "2024-07",
+      -243.741
+     ],
+     [
+      "2024-08",
+      -380.08
+     ],
+     [
+      "2024-09",
+      64.263
+     ],
+     [
+      "2024-10",
+      -257.45
+     ],
+     [
+      "2024-11",
+      -366.763
+     ],
+     [
+      "2024-12",
+      -86.732
+     ],
+     [
+      "2025-01",
+      -128.64
+     ],
+     [
+      "2025-02",
+      -307.017
+     ],
+     [
+      "2025-03",
+      -160.53
+     ],
+     [
+      "2025-04",
+      258.4
+     ],
+     [
+      "2025-05",
+      -316.004
+     ],
+     [
+      "2025-06",
+      27.01
+     ],
+     [
+      "2025-07",
+      -291.143
+     ],
+     [
+      "2025-08",
+      -344.792
+     ],
+     [
+      "2025-09",
+      197.95
+     ],
+     [
+      "2025-10",
+      -284.35
+     ],
+     [
+      "2025-11",
+      -173.277
+     ],
+     [
+      "2025-12",
+      -144.749
+     ],
+     [
+      "2026-01",
+      -94.615
+     ],
+     [
+      "2026-02",
+      -307.501
+     ],
+     [
+      "2026-03",
+      -164.1
+     ],
+     [
+      "2026-04",
+      215.024
+     ],
+     [
+      "2026-05",
+      -292.648
+     ],
+     [
+      "2026-06",
+      -120.305
+     ],
+     [
+      "2026-07",
+      -432.308
+     ],
+     [
+      "2026-08",
+      -166.797
+     ],
+     [
+      "2026-09",
+      -26.9
+     ]
+    ]
+   },
+   "ca_trade_bal": {
+    "src": "Statistics Canada 12-10-0011-01 (BOP basis, SA)",
+    "pts": [
+     [
+      "2024-03",
+      -0.81
+     ],
+     [
+      "2024-04",
+      -0.765
+     ],
+     [
+      "2024-05",
+      -1.453
+     ],
+     [
+      "2024-06",
+      -0.863
+     ],
+     [
+      "2024-07",
+      -0.353
+     ],
+     [
+      "2024-08",
+      -1.768
+     ],
+     [
+      "2024-09",
+      -1.35
+     ],
+     [
+      "2024-10",
+      -0.617
+     ],
+     [
+      "2024-11",
+      -0.611
+     ],
+     [
+      "2024-12",
+      1.757
+     ],
+     [
+      "2025-01",
+      3.646
+     ],
+     [
+      "2025-02",
+      -1.199
+     ],
+     [
+      "2025-03",
+      -1.912
+     ],
+     [
+      "2025-04",
+      -7.169
+     ],
+     [
+      "2025-05",
+      -5.747
+     ],
+     [
+      "2025-06",
+      -5.411
+     ],
+     [
+      "2025-07",
+      -3.914
+     ],
+     [
+      "2025-08",
+      -6.054
+     ],
+     [
+      "2025-09",
+      0.566
+     ],
+     [
+      "2025-10",
+      -0.873
+     ],
+     [
+      "2025-11",
+      -2.473
+     ],
+     [
+      "2025-12",
+      -1.063
+     ],
+     [
+      "2026-01",
+      -3.023
+     ],
+     [
+      "2026-02",
+      -5.426
+     ],
+     [
+      "2026-03",
+      1.258
+     ],
+     [
+      "2026-04",
+      3.244
+     ],
+     [
+      "2026-05",
+      3.511
+     ],
+     [
+      "2026-06",
+      3.946
+     ],
+     [
+      "2026-07",
+      0.787
+     ],
+     [
+      "2026-08",
+      4.199
+     ]
+    ]
+   },
+   "ca_exports": {
+    "src": "Statistics Canada 12-10-0011-01 (BOP basis, SA)",
+    "pts": [
+     [
+      "2024-03",
+      63.144
+     ],
+     [
+      "2024-04",
+      65.302
+     ],
+     [
+      "2024-05",
+      63.47
+     ],
+     [
+      "2024-06",
+      65.849
+     ],
+     [
+      "2024-07",
+      65.096
+     ],
+     [
+      "2024-08",
+      64.124
+     ],
+     [
+      "2024-09",
+      63.893
+     ],
+     [
+      "2024-10",
+      64.99
+     ],
+     [
+      "2024-11",
+      66.006
+     ],
+     [
+      "2024-12",
+      69.585
+     ],
+     [
+      "2025-01",
+      73.521
+     ],
+     [
+      "2025-02",
+      68.371
+     ],
+     [
+      "2025-03",
+      67.151
+     ],
+     [
+      "2025-04",
+      60.286
+     ],
+     [
+      "2025-05",
+      61.186
+     ],
+     [
+      "2025-06",
+      61.908
+     ],
+     [
+      "2025-07",
+      62.532
+     ],
+     [
+      "2025-08",
+      60.679
+     ],
+     [
+      "2025-09",
+      64.571
+     ],
+     [
+      "2025-10",
+      65.482
+     ],
+     [
+      "2025-11",
+      64.136
+     ],
+     [
+      "2025-12",
+      65.961
+     ],
+     [
+      "2026-01",
+      63.133
+     ],
+     [
+      "2026-02",
+      67.333
+     ],
+     [
+      "2026-03",
+      74.28
+     ],
+     [
+      "2026-04",
+      76.719
+     ],
+     [
+      "2026-05",
+      77.381
+     ],
+     [
+      "2026-06",
+      78.054
+     ],
+     [
+      "2026-07",
+      76.025
+     ],
+     [
+      "2026-08",
+      77.909
+     ]
+    ]
+   },
+   "ca_imports": {
+    "src": "Statistics Canada 12-10-0011-01 (BOP basis, SA)",
+    "pts": [
+     [
+      "2024-03",
+      63.955
+     ],
+     [
+      "2024-04",
+      66.067
+     ],
+     [
+      "2024-05",
+      64.923
+     ],
+     [
+      "2024-06",
+      66.712
+     ],
+     [
+      "2024-07",
+      65.449
+     ],
+     [
+      "2024-08",
+      65.893
+     ],
+     [
+      "2024-09",
+      65.244
+     ],
+     [
+      "2024-10",
+      65.606
+     ],
+     [
+      "2024-11",
+      66.617
+     ],
+     [
+      "2024-12",
+      67.828
+     ],
+     [
+      "2025-01",
+      69.876
+     ],
+     [
+      "2025-02",
+      69.57
+     ],
+     [
+      "2025-03",
+      69.064
+     ],
+     [
+      "2025-04",
+      67.455
+     ],
+     [
+      "2025-05",
+      66.933
+     ],
+     [
+      "2025-06",
+      67.32
+     ],
+     [
+      "2025-07",
+      66.446
+     ],
+     [
+      "2025-08",
+      66.733
+     ],
+     [
+      "2025-09",
+      64.005
+     ],
+     [
+      "2025-10",
+      66.355
+     ],
+     [
+      "2025-11",
+      66.609
+     ],
+     [
+      "2025-12",
+      67.024
+     ],
+     [
+      "2026-01",
+      66.156
+     ],
+     [
+      "2026-02",
+      72.759
+     ],
+     [
+      "2026-03",
+      73.023
+     ],
+     [
+      "2026-04",
+      73.475
+     ],
+     [
+      "2026-05",
+      73.87
+     ],
+     [
+      "2026-06",
+      74.109
+     ],
+     [
+      "2026-07",
+      75.239
+     ],
+     [
+      "2026-08",
+      73.71
+     ]
+    ]
+   },
+   "ca_fiscal": {
+    "monthly": [
+     [
+      "2024-01",
+      -2.1
+     ],
+     [
+      "2024-08",
+      -2.5
+     ],
+     [
+      "2024-09",
+      -3.2
+     ],
+     [
+      "2024-10",
+      -1.5
+     ],
+     [
+      "2024-11",
+      -8.2
+     ],
+     [
+      "2024-12",
+      1.0
+     ],
+     [
+      "2025-01",
+      -5.1
+     ],
+     [
+      "2025-02",
+      7.6
+     ],
+     [
+      "2025-03",
+      -23.9
+     ],
+     [
+      "2025-06",
+      3.6
+     ],
+     [
+      "2025-07",
+      -1.5
+     ],
+     [
+      "2025-08",
+      -3.3
+     ],
+     [
+      "2025-09",
+      -5.0
+     ],
+     [
+      "2025-10",
+      -2.3
+     ],
+     [
+      "2025-11",
+      -8.0
+     ],
+     [
+      "2025-12",
+      0.2
+     ],
+     [
+      "2026-01",
+      -5.1
+     ],
+     [
+      "2026-02",
+      5.7
+     ],
+     [
+      "2026-03",
+      -29.7
+     ],
+     [
+      "2026-06",
+      1.0
+     ],
+     [
+      "2026-07",
+      -4.8
+     ]
+    ],
+    "ytd": {
+     "ref": "2026-07",
+     "period": "April to July 2026-27",
+     "value": -5.1,
+     "prior": -7.8
+    },
+    "parsed": 21
+   },
+   "errors": {}
   }
  },
  "NEWS": {
@@ -16620,6 +17588,12 @@
   ],
   "wheat": [
    [
+    "2026-10-23 02:00 UTC",
+    "commodity-board.com",
+    "Ukrainian Wheat Prices Stable as Euronext Futures Slide — CMB News",
+    "https://news.google.com/rss/articles/CBMijAFBVV95cUxPRkMwUjZBWkN5VmJ1YXBqZ0Y3SjFlZUFyQnhOaElLMnltRVdkeHlKYzMzNGVwaWJmR0ZsVk9aU3JvMnpINUFlM0JTNFpZTVdROWh4Zm4tRE5ueUNQSUpVNzVWUk5fWDdBQmpIWTVrdk95MGRtMEh4VDkweWxNMDJRd05jTTFXc2FqYlZsNw?oc=5"
+   ],
+   [
     "2026-10-23 01:27 UTC",
     "mecardo.com.au",
     "Wheat Needs More Than Headlines",
@@ -16650,12 +17624,6 @@
     "https://news.google.com/rss/articles/CBMijAFBVV95cUxNeUlVbnM1ME1JR2lucDN1YUs4dXkwN1FnOXBRQ2FIYjJDZXQ0ZjlISHJGQ0pOd05SeldFOG5UdkMtQ3FuWF9EekhkdVZ6ZkhqZXdyNHViR1JYZV9DWWlVZXl5bGdSdE8xd1NVc2Q3MEFCUGVaZXhEV3kzZ1ppVDd2Z2RKM1NVVl82bHZxbg?oc=5"
    ],
    [
-    "2026-10-22 16:05 UTC",
-    "www.vietnam.vn",
-    "Natural gas prices fell for the fourth consecutive session to $2.79/MMBtu.",
-    "https://news.google.com/rss/articles/CBMilAFBVV95cUxPd2huQXdXcFQwNDR0RkppSnB2ZmZvcDA5RW5aelBYa1NmNWlPVlZRZ3kwdDlZLWdaMFNMbzZ4MW02U1V5NHlnSFBzcVFmWEU0ZllFZ2twS3RVRWF1Z0JfcThfYTk5czZXOWt1QXJrX2RkcS05X01qSXhkRW9QVklQT2E1YXNTMjEzM1RKSDdEczBFYlA5?oc=5"
-   ],
-   [
     "2026-10-22 15:24 UTC",
     "www.agweb.com",
     "Corn and Wheat Look for Lows, Soybeans Bounce on Exports: Cattle Correct",
@@ -16676,10 +17644,16 @@
     "https://news.google.com/rss/articles/CBMiwAFBVV95cUxQUlVoNmowb3daeXVsTHhFRXhGbnk4Q3gzS1NMSDdOWjJoR18xY0NrTGRadktSYldvR1FlWVVMM3Yxd2N5bFhfWUlTekhaU2Q5dHVwbXNTQUowSGM0T3FhVWNORW9GdGpDMmZYVXQtcXd5cXJZSHFGdDBERFpHdGM5NDcyTl9hU3FhekQ3Z3lreW5YbXZLLWpTY3QxXzg2U2FJSG93M1BnSlFHdlg1MExsYVQ1WDR1dGdoUlhwZlk2WlE?oc=5"
    ],
    [
+    "2026-10-22 21:44 UTC",
+    "www.barchart.com",
+    "Soybeans Close Thursday Mostly Higher, as Export Business Continues",
+    "https://news.google.com/rss/articles/CBMirwFBVV95cUxQTkZvcHI5VlR3Tk0zMXEyaXdKSmd2QWg4V1lvSkcyeUdIb3RRTm1WUERGT050RWdwMXNZNWFLMWdfYVptQ1JsTEhMR0NxY0x3SjVGemJuWXpyRFhsbkdmclVXLXR3QWY1VEM2a3NqdzVwLUowZmN0ZlNYaWx5ci1DeUh6R0JmblFNNENxUmtCOC1wVkVIVWViOUhld1Y5UW5vWmVBRXhzaHZLc25pbHVJ?oc=5"
+   ],
+   [
     "2026-10-22 19:12 UTC",
-    "www.country-guide.ca",
+    "www.producer.com",
     "U.S. Grain/Oilseed Review: Soybeans rebound, little movement for corn, wheat",
-    "https://news.google.com/rss/articles/CBMitwFBVV95cUxNajRvMmR5NnlLRjFnWUdlVUl2dTI5ekkza3lWQUIwMmEwc2NHYWswVDVjMjJUQU5jUjhtVFBOZmNJT3BwTmFtRjUtQnhIRXpiV2FVR3NibVFmOVMtYWx0VktKODlLandlblF5SEdWV2JLNDhJY1ZmQUI0UXdZMk9rZ2JHRmVTYS05U1VNLWVyZk5QS19QNXl2VHpsbzRMZ2U5Z3dRdkpvV0pRSXRjbW1aZWFwaElvcEE?oc=5"
+    "https://news.google.com/rss/articles/CBMisgFBVV95cUxQRWFyYW1lWHpTSGJyT2FSNUFQS3Vtd1NmY1Q0Rjk3RG1NTGU1S3o0Y1Y4QUx6SnBMV1RlUE1ZbWZMRkVab1VINTFnUGFjVF9kTUs3azNST25MU0VlNmI5WVRaNERERUdBSWNObDRHcHZsRXFQekRnOV93NG1qN01sNXdJdC1nd1NtMEJsUVpyYy1VVVZVeHRZOW8wMldkNFJSZFpsVXlXd3Zpem95RmEzQU53?oc=5"
    ],
    [
     "2026-10-22 19:09 UTC",
@@ -16694,28 +17668,22 @@
     "https://news.google.com/rss/articles/CBMiY0FVX3lxTFBmTUlUNGVQOC1OV29EMjMzZlpBWjdQNEgwblYwYXJVVE1UbXdyVVZEMHlFOGF0YUJnc0RNdnZKaF9HU3pBR1hLMUY1TWI0S3FTZGVuNncwR2FaOGQ4LXdPQjJRMA?oc=5"
    ],
    [
-    "2026-10-22 13:59 UTC",
-    "ukragroconsult.com",
-    "Palm oil prices rise amid strong Malaysian exports and higher soybean oil prices",
-    "https://news.google.com/rss/articles/CBMitwFBVV95cUxPS3EwY0c1NGwwRi1aNkJsZXRmZEV1TGxLUVFIaUtuaG5FaWxPNGliQU5iQmxwUHl4dXBWTHZUMDhTZGRwb05ZQkJ3X3FZTy1tbFRpczJWZ0dxMkt2ZGc4WDc5R2I2cVFSRENYWmp1ajVERmRicU80Um9jTUVxTERQM0lBMmtKbi1qcTM0TVNpZEgzMm8xVzZtLUFPcmVZaW15T3pmcWxicHJyV01tSFotc3RCbUpta1E?oc=5"
+    "2026-10-22 18:35 UTC",
+    "kchanews.com",
+    "China Trade Uncertainty Adds Pressure to U.S. Soybean Markets",
+    "https://news.google.com/rss/articles/CBMimAFBVV95cUxQMWlhNWhwcDdlek81bkVOR0g4U1Y2OFJ1UDhkSnlNTnJlTEJvZ3pHUko2cUhIdjQ5U09taGxYaTd0MFd3bGVrX2pqWU5YNUR3VmJ6RlNEUkRSZlY2VlZUSE81dDRuVEl0ZzNZTHROYVBQREdBVTNzdTN2WmQ1aUZ4RlJuUXJVR3VNUnVzcm5CaFhuQkpnRVdFWA?oc=5"
    ],
    [
-    "2026-10-22 09:22 UTC",
-    "commodity-board.com",
-    "Indian record soybean oil imports and impact on global soybeans — CMB News",
-    "https://news.google.com/rss/articles/CBMikgFBVV95cUxPQ2JYdFpxaEZwU0t1UExtZzVvQXluZmJGcGRQOUUxdEpicXItN2JyZ3JFVXhfTEY5d1dxSHZmbE5qZms3THltc3BsSmVDeXIyNXVvYUNVMTBXZGJUSU1MS3dHdmNxX0QzSE5sV1N2VEo1WFF4QjU3U1JxOFo1MlhzYnRjX0pTeXQ4emtjdUJTcWZJdw?oc=5"
+    "2026-10-22 17:12 UTC",
+    "www.inkl.com",
+    "Soybeans Popping Higher on Thursday",
+    "https://news.google.com/rss/articles/CBMiekFVX3lxTE5wX2pGX2tlMklCd3lUZlFjX0RyRk5mMlV0RVdybHJLMmoyVndpbG9fSGp0aVdjdmh6akRrVVNjZXVHZDBJMXZVT3YzQzVKSTlxa0RwY3ZxdVE2ZDA4dHlsaURrSzRjY1FoemdLeVoycktuRmlsWEpsell3?oc=5"
    ],
    [
-    "2026-10-22 07:49 UTC",
-    "leadership.ng",
-    "India Threatens 45% Tariff On Soybean Cargoes Linked To Nigeria",
-    "https://news.google.com/rss/articles/CBMijgFBVV95cUxPQ2ZsMU5EVFF3NEdMQVBMdkJ6U1otMFJSaXNMX2JjTE91d0xZYUNlTGRpMXJDZUNGeW1BU1g4RUFGQnlaRUI1WVpScDNSQ3lZSWV2M1NjWm4teVFWUzUtQzhrem5Db3c0YjZjTWhpNkZkWHB5SkFxWU5WblhuZlJ6M29PY1V2RUIzemJ2OHVR?oc=5"
-   ],
-   [
-    "2026-10-22 06:55 UTC",
-    "commodity-board.com",
-    "Soybean Market Overview: Record US Crop Meets Strong Export Demand — CMB News",
-    "https://news.google.com/rss/articles/CBMijwFBVV95cUxPejdsNTdfeDdkQnRZeVplNWFrWXpfdUdERUcxRmZTb3k4SGRDQV9YTTR2eUZVUHVIaGxrNkNMMjdQeHljTXNZcHNoaWRyc1hXQTJkU1BXdHRSVlpxdmNSbmN6UEo0Y0R6X0Jzc3hRbEE4YTE0MmhKMWhTcDBERmRjbUw4SmdPYzRROWxoOExFYw?oc=5"
+    "2026-10-22 16:40 UTC",
+    "www.indexbox.io",
+    "USDA Export Sales: Soybeans and Corn Outpace Wheat - News and Statistics",
+    "https://news.google.com/rss/articles/CBMijAFBVV95cUxNeUlVbnM1ME1JR2lucDN1YUs4dXkwN1FnOXBRQ2FIYjJDZXQ0ZjlISHJGQ0pOd05SeldFOG5UdkMtQ3FuWF9EekhkdVZ6ZkhqZXdyNHViR1JYZV9DWWlVZXl5bGdSdE8xd1NVc2Q3MEFCUGVaZXhEV3kzZ1ppVDd2Z2RKM1NVVl82bHZxbg?oc=5"
    ]
   ],
   "fx": [
@@ -16726,16 +17694,10 @@
     "https://news.google.com/rss/articles/CBMiywFBVV95cUxON3F1SUc0NjJJdXBYYTFLMTZabkhMN3ZtNnZJaFk5d0N0YWxkWEVWWXlzYWhabGp5YVp0MkNyZ3U4ZUZpdW1zY0JDUW02My1yR1VFcWljY2l0eVZ5ekVkd1k4eWNwS19xM3JobDA5T0FvaFBiUENwR3N6eVpRU1ZmVDVRV3FEQk5EY3ZCSE5Ea0xRR2RkcUdIYWpTZjFjVElFWE1CSUNnMU40Zi1qWXdsaGlVUktEY0lUb3VEX3NfS0xDcUt6ei0tSGhkRQ?oc=5"
    ],
    [
-    "2026-10-22 21:34 UTC",
-    "www.nerdwallet.com",
-    "Best Credit Cards in Canada",
-    "https://news.google.com/rss/articles/CBMigwFBVV95cUxPOUdIbDA3SjdJTjEweW8zZWJTbnMwSUpuVGR4OVF4SHB0YjJScHRCLVlMdzRvcGpOMl8tdXo1YXdEQU43SlJCSzNSdDNoRHhSaWdoQjBReWtIRTZOOGZRdDlnQ3NnUE1LYTdkbjI1NXhWYldvRGJHRlpZcnVEa3lqRUJLTQ?oc=5"
-   ],
-   [
-    "2026-10-22 19:47 UTC",
-    "www.mpamag.com",
-    "Could inflation fears push the Bank of Canada toward its first hike since 2023?",
-    "https://news.google.com/rss/articles/CBMi3gFBVV95cUxPYzhqTFZuMzY0ZVI5YTlXSEtybk85MFNzanE4TUp0czVSMnlMSkU2UEs0TGZYUU1EaS1iU1I1SXR3UUR2b1NCelhpRHV1eUhWZTJaM0k4NDBfYTFFalJMNFVCSHdqb2s1b3R5ZEZFMGFxOU9Bbm9DNlVNTGRUYURzeDNtY0tjTDE2cmxwaE9tRGhTcVpEbjl1X0MwbWRnaTc5cXNKeDB2bnVRZkc3M1NTc2N4eEhlTWY0QXhCb0JMbFU0ZTBkVlFZTTA2YzhITW5DUGNQY3NKMkpHMFk1S3c?oc=5"
+    "2026-10-22 21:31 UTC",
+    "www.wsj.com",
+    "Bank of Canada Survey Records Notable Rise in Inflation Expectations",
+    "https://news.google.com/rss/articles/CBMivgFBVV95cUxNMDBwUUhTck9tQ3ZiSUlQVXVGRWxMMWExUlJaWDVRTENTVHU0anA4NDZmdWR1NEVjMmQ2ZURVcDZkV0VUeXhBUEhBb1JwemM5czY3X0loRFRSQkFQNHkzZDVpbHcwNHJ6OGFiUE1VZzJlcy1rX0I2WU9Dc2pUWElnUWh2V01GNVJOR3VQSEhYTF9OUVhtcWE5QmdhdGpmMVV0bkJJNFZLN2gwWjRjaGdGSENnX1ZCanMxdGV6dTNn?oc=5"
    ],
    [
     "2026-10-22 18:56 UTC",
@@ -16748,6 +17710,12 @@
     "www.marketscreener.com",
     "CANADA FX DEBT-Canadian dollar extends daily winning streak as interest rate spreads narrow",
     "https://news.google.com/rss/articles/CBMi3AFBVV95cUxPcVR2WFdoVnFRREdNYy1oM1d1YkdKNGhtM3NFUlBhQlpoY1J5R1hpWENFNEg1T2MzMVA5cjdzV0NTMFV1TXd6TXoxVUdWb29MM3h6N2dKV3o1OXpjWjRtdFYtaE9tRGg2RzZ0MFRIVnYxeUM4WVdOSEpuM1oxZ25HdUs0U1NsR3NUSVo5d2tSc3B3c3g3cWlQZTVFcTVJOHZyZEwtc1VndzNZUm5oTFlOeEIyclc2VWZmaVZoQk4xdllpQlBnNWFuaFhZM09kalJtd21jUWtLX2pkOHNF?oc=5"
+   ],
+   [
+    "2026-10-22 18:38 UTC",
+    "www.mpamag.com",
+    "Inflation fears push Bank of Canada toward first hike since 2022",
+    "https://news.google.com/rss/articles/CBMiywFBVV95cUxPWFdoeE0yV0NuSE1JcG95dGlMVkoyZ0V3ZlVkaVM5d3FqVUxRYmdqRTNMRnhoRHFDSHpBLW5YXzJVS3NjSXJfUUVQbkUxb3AzSjAxaWJDZkRVQ3VkMlY3aUFIdVFqZmIwWWx5U2VQMERUeWhuODVJU24yc1dCV3hXRW01TW1GNjE2WXl6VW5RaE9mQ3JpMXVWWUFlWWpDVlBEWDNqT0NKLVo4Nm83M1Q4ZVFwaFJSR0VBbEczQWM2cGxKeHJjSTFsU3J0OA?oc=5"
    ],
    [
     "2026-10-22 18:02 UTC",
