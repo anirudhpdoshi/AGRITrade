@@ -6,7 +6,11 @@ jobs:
     steps:
       - run: |
           U=https://www150.statcan.gc.ca/t1/wds/rest
-          echo "== preflight"; curl -s -i -X OPTIONS "$U/getDataFromVectorsAndLatestNPeriods" -H "Origin: https://anirudhpdoshi.github.io" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type" | head -25
-          echo "== POST"; curl -s -i -X POST "$U/getDataFromVectorsAndLatestNPeriods" -H "Origin: https://anirudhpdoshi.github.io" -H "Content-Type: application/json" -d '[{"vectorId":2062815,"latestN":2}]' | head -40
-          echo "== GET changed"; curl -s -i "$U/getChangedSeriesList" -H "Origin: https://anirudhpdoshi.github.io" | head -20
-          echo "== GET seriesinfo"; curl -s -i "$U/getSeriesInfoFromVector" -X POST -H "Content-Type: application/json" -H "Origin: https://anirudhpdoshi.github.io" -d '[{"vectorId":2062815}]' | head -15
+          O="Origin: https://anirudhpdoshi.github.io"
+          a=$(curl -s -i -X OPTIONS "$U/getDataFromVectorsAndLatestNPeriods" -H "$O" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type" | tr -d '\r' | grep -iE "^HTTP|^access-control" | tr '\n' ' ')
+          echo "::notice title=preflight::$a"
+          b=$(curl -s -i -X POST "$U/getDataFromVectorsAndLatestNPeriods" -H "$O" -H "Content-Type: application/json" -d '[{"vectorId":2062815,"latestN":2}]' | tr -d '\r')
+          echo "::notice title=post-headers::$(echo "$b" | grep -iE '^HTTP|^access-control|^content-type' | tr '\n' ' ')"
+          echo "::notice title=post-body::$(echo "$b" | tail -1 | cut -c1-600)"
+          c=$(curl -s -i "$U/getChangedSeriesList" -H "$O" | tr -d '\r' | grep -iE "^HTTP|^access-control" | tr '\n' ' ')
+          echo "::notice title=get::$c"
