@@ -261,6 +261,12 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .dash-card .kpi-spark{display:block;width:100%;height:26px;margin-top:8px}
 .tile-head{flex-wrap:wrap;row-gap:6px}
 .sub{display:contents}.sub:not(.on){display:none}
+.mnext{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted);margin-top:4px}.mnext b{color:#e8eef4;font-weight:600}.mnext .countdown{color:#e8a33d}
+.live-fx-row{display:grid;grid-template-columns:210px 1fr;gap:14px;align-items:center}
+.live-px{font-family:"IBM Plex Mono",monospace;font-size:28px;font-weight:700}.live-chg{font-size:15px;padding:2px 8px;border-radius:6px;display:inline-block;margin-top:4px}
+.live-px .dsub{font-size:12px;font-weight:400}.ext-tbl td.lbl{min-width:150px}.ext-tbl td:last-child,.ext-tbl th:last-child{white-space:normal!important;text-align:left!important;min-width:170px;max-width:220px}.ext-tbl .mnext{margin-top:0}
+.live-chg.up{background:rgba(63,185,127,.18);color:#5fd598}.live-chg.dn{background:rgba(224,101,95,.18);color:#ff9d97}
+@media (max-width:760px){.live-fx-row{grid-template-columns:1fr}}
 .ev-n{display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:9px;background:#1a2a42;border:1px solid #8494ab;text-align:center;font-size:10px;font-weight:700;margin-right:4px}
 .cmp-ctrl{display:flex;flex-wrap:wrap;gap:8px 22px;margin:4px 0 10px;font-size:12.5px}
 .cmp-g{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}.cmp-g b{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
@@ -1792,10 +1798,10 @@ function macroLinePanel(m, opt){
   var head=opt.headline(last, m);
   return '<div class="mpanel"><h3 class="mp-h">'+head+'</h3>'+
     lineChartSVG({series:[{pts:pts.slice(-60),color:opt.color,label:'Actual',width:2.2}], refs:refs, yLabel:opt.yLabel, dec:1, aria:head.replace(/<[^>]+>/g,'')})+
-    '<div class="stamp">'+esc(m.src)+' · latest '+esc(m.period)+' · dashed = trailing 2/3/5-yr averages'+(opt.target!=null?' · dotted = 2% target':'')+'</div></div>';
+    nextReleaseHTML(m.key)+'<div class="stamp">'+esc(m.src)+' · latest '+esc(m.period)+' · dashed = trailing 2/3/5-yr averages'+(opt.target!=null?' · dotted = 2% target':'')+'</div></div>';
 }
 function macroKpiCard(title, us, ca, dec, unit){
-  function row(flag, m){ if(!m) return ''; var ch=m.chg; return '<div class="mini-kv"><span>'+flag+' '+esc(m.period)+'</span><b>'+fmt(m.value,dec)+unit+'</b> <span class="'+(Math.abs(ch)<Math.pow(10,-dec)/2?'neu':cls(ch))+'">'+(Math.abs(ch)<Math.pow(10,-dec)/2?'unch.':sgn(ch,dec,unit==='%'?' pp':''))+'</span></div>'; }
+  function row(flag, m){ if(!m) return ''; var ch=m.chg; return '<div class="mini-kv"><span>'+flag+' '+esc(m.period)+'</span><b>'+fmt(m.value,dec)+unit+'</b> <span class="'+(Math.abs(ch)<Math.pow(10,-dec)/2?'neu':cls(ch))+'">'+(Math.abs(ch)<Math.pow(10,-dec)/2?'unch.':sgn(ch,dec,unit==='%'?' pp':''))+'</span></div>'+nextReleaseHTML(m.key,true); }
   return '<div class="dash-card"><div class="dk">'+title+'</div>'+(MGEO!=='ca'?row('US',us):'')+(MGEO!=='us'?row('CA',ca):'')+'</div>';
 }
 function macroCompareHTML(){
@@ -2056,6 +2062,73 @@ function inputsHTML(key){
   return html;
 }
 
+/* ================= NEXT RELEASE DATES (official calendars in DATA.release_cal) ================= */
+function nextRelease(key){
+  var C=DATA.release_cal&&DATA.release_cal[key]; if(!C) return null;
+  var now=Date.now(), list=[];
+  (C.dates||[]).forEach(function(s){ var p=s.split('T'), d=p[0].split('-'), h=p[1].split(':'); list.push(zonedMs(+d[0],+d[1],+d[2],+h[0],+h[1],'America/Toronto')); });
+  if(C.rule==='thu0830'){ for(var i=0;i<14;i++){ var x=new Date(now+i*86400000), q={};
+      new Intl.DateTimeFormat('en-US',{timeZone:'America/Toronto',year:'numeric',month:'numeric',day:'numeric',weekday:'short'}).formatToParts(x).forEach(function(z){ q[z.type]=z.value; });
+      var thanks=(+q.month===11&&q.weekday==='Thu'&&+q.day>=22&&+q.day<=28), thanksWed=(+q.month===11&&q.weekday==='Wed'&&+q.day>=21&&+q.day<=27);
+      if((q.weekday==='Thu'&&!thanks)||thanksWed) list.push(zonedMs(+q.year,+q.month,+q.day,8,30,'America/Toronto')); } }
+  var t=list.filter(function(v){ return v>now; }).sort(function(a,b){ return a-b; })[0];
+  return {t:t||null, note:C.note||'', src:C.src, rule:C.rule};
+}
+function nextReleaseHTML(key, compact){
+  var n=nextRelease(key); if(!n) return '';
+  if(!n.t) return '<div class="mnext">Next: <span class="neu">'+esc(n.note||'date not published')+'</span></div>';
+  var now=Date.now(), est=/estimated/.test(n.note);
+  return '<div class="mnext" title="'+esc((n.note?n.note+' · ':'')+'source: '+n.src)+'">Next'+(est?' (est.)':'')+': <b>'+etLabel(n.t,true)+'</b>'+(compact?'':' ET')+' · <span class="countdown" data-t="'+n.t+'">'+cdText(n.t-now)+'</span></div>';
+}
+
+/* ================= TRADE & FISCAL BALANCES ================= */
+function money(ccy,v){ return (v<0?'\u2212':'')+ccy+fmt(Math.abs(v),1)+'B'; }
+function extSeries(k){ var X=DATA.ext||{}; return X[k]||null; }
+function extRow(label, key, unit, ccy, calKey, goodUp){
+  var S=extSeries(key); if(!S||!S.pts||S.pts.length<2) return '<tr><td class="lbl">'+esc(label)+'</td><td colspan="6" class="cmp-na">loads on the next refresh</td></tr>';
+  var P=S.pts, L=P[P.length-1], pv=P[P.length-2], y1=P.length>12?P[P.length-13]:null, ch=L[1]-pv[1];
+  var good=goodUp?ch:-ch;
+  return '<tr><td class="lbl" data-l="" title="'+esc(S.src)+'"><b>'+esc(label)+'</b></td>'+
+    '<td data-l="Latest"><b>'+money(ccy,L[1])+'</b><br><small class="h2note">'+esc(mLabel(L[0]+'-01'))+'</small></td>'+
+    '<td data-l="Prior">'+money(ccy,pv[1])+'</td><td data-l="Net change" class="'+cls(good)+'">'+sgn(ch,1,'B')+'</td>'+
+    '<td data-l="1 yr ago">'+(y1?money(ccy,y1[1]):'—')+'</td>'+
+    '<td data-l="2-yr trend">'+sparkPath(P.slice(-24).map(function(p){ return p[1]; }),110,26)+'</td>'+
+    '<td data-l="Next release">'+nextReleaseHTML(calKey,true)+'</td></tr>';
+}
+function extBars(key, title, ccy){
+  var S=extSeries(key); if(!S||!S.pts||S.pts.length<3) return '';
+  var P=S.pts.slice(-24), L=P[P.length-1];
+  var bars=P.map(function(p,i){ return [mLabel(p[0]+'-01').replace(" '","’"), p[1], i===P.length-1]; });
+  return '<div class="mpanel"><h3 class="mp-h">'+title+': <b>'+money(ccy,L[1])+'</b> ('+esc(mLabel(L[0]+'-01'))+')</h3>'+barChartSVG({bars:bars,yLabel:ccy+' billions',dec:1,H:200})+'<div class="stamp">'+esc(S.src)+' · last 24 months</div></div>';
+}
+function tradeFiscalHTML(){
+  var X=DATA.ext; if(!X) return '<div class="tile wide"><h2>Trade &amp; fiscal balances</h2><p class="note">US and Canada trade and deficit data load on the next refresh.</p></div>';
+  var cf=X.ca_fiscal, showUS=MGEO!=='ca', showCA=MGEO!=='us';
+  if(cf&&cf.monthly&&!X.ca_fiscal_series) X.ca_fiscal_series={src:'Finance Canada, Fiscal Monitor', pts:cf.monthly};
+  var usDef=X.us_deficit, us12=usDef&&usDef.pts.length>=12?usDef.pts.slice(-12).reduce(function(a,p){ return a+p[1]; },0):null;
+  var head='<tr><th>Series</th><th>Latest</th><th>Prior</th><th>Net change</th><th>1 yr ago</th><th>2-yr trend</th><th>Next release</th></tr>';
+  var us=showUS?'<h3 class="m-h">United States <span class="chip inline">USD</span></h3><div class="tbl-scroll"><table class="sd-tbl cmp-tbl ext-tbl">'+head+
+      extRow('Trade balance (goods & services)','us_trade_bal','B','$','us_trade',true)+extRow('Exports','us_exports','B','$','us_trade',true)+extRow('Imports','us_imports','B','$','us_trade',false)+
+      extRow('Federal budget balance (monthly)','us_deficit','B','$','us_deficit',true)+'</table></div>'+(us12!=null?'<div class="mini-kv"><span>Rolling 12-month federal balance</span><b class="'+cls(us12)+'">'+money('$',us12)+'</b></div>':''):'';
+  var ca=showCA?'<h3 class="m-h">Canada <span class="chip inline">CAD</span></h3><div class="tbl-scroll"><table class="sd-tbl cmp-tbl ext-tbl">'+head+
+      extRow('Merchandise trade balance','ca_trade_bal','B','C$','ca_trade',true)+extRow('Exports','ca_exports','B','C$','ca_trade',true)+extRow('Imports','ca_imports','B','C$','ca_trade',false)+
+      extRow('Federal budgetary balance (monthly)','ca_fiscal_series','B','C$','ca_fiscal',true)+'</table></div>'+
+      (cf&&cf.ytd?'<div class="mini-kv"><span>Fiscal year to date</span><b class="'+cls(cf.ytd.value)+'">'+money('C$',cf.ytd.value)+'</b> '+esc(cf.ytd.period)+(cf.ytd.prior!=null?' vs '+money('C$',cf.ytd.prior)+' a year earlier':'')+'</div>':''):'';
+  var charts=(showUS?extBars('us_trade_bal','US trade balance','$')+extBars('us_deficit','US federal budget balance','$'):'')+(showCA?extBars('ca_trade_bal','Canada trade balance','C$')+extBars('ca_fiscal_series','Canada federal budgetary balance','C$'):'');
+  var errs=X.errors&&Object.keys(X.errors).length?' · waiting on: '+Object.keys(X.errors).join(', '):'';
+  return '<div class="tile wide" data-src="ext"><div class="tile-head"><h2>Trade &amp; fiscal balances <span class="h2note">— exports, imports, deficits · 2-year trend · next release</span></h2></div>'+us+ca+
+    '<div class="mpanels'+(MGEO==='both'?'':' one')+'">'+charts+'</div>'+
+    '<div class="stamp">Negative = deficit · net change = latest minus prior month (green = balance improved / exports up, red = worse) · US: Census/BEA via FRED, Treasury Monthly Treasury Statement via FRED · Canada: Statistics Canada 12-10-0011-01, Finance Canada Fiscal Monitor · checked '+esc(asOf('ext',true))+errs+'</div></div>';
+}
+
+/* ================= LIVE USD/CAD (macro view copy) ================= */
+function liveFxHTML(){
+  var fx=DATA.fx, p=+fx.feed.mid, chg=(p/fx.spot.ref-1)*100, up=chg>=0;
+  return '<div class="tile wide live-fx" data-src="fx_spot"><div class="tile-head"><h2>USD/CAD live <span class="h2note">— moves with every tick · colour = vs prior close (green above, red below) · arrow on the price tag = direction of the last tick</span></h2></div>'+
+    '<div class="live-fx-row"><div class="live-px"><span data-live="usdcad">'+fmt(p,5)+'</span> <span class="live-chg '+(up?'up':'dn')+'" data-live-chg>'+(up?'▲ ':'▼ ')+sgn(chg,2,'%')+'</span><div class="dsub">vs prior close '+fmt(fx.spot.ref,4)+'</div></div>'+
+    '<div class="live-chart" data-live-chart>'+fxIntradaySVG(fxIntradayPoints())+'</div></div></div>';
+}
+
 /* ================= USD/CAD LIVE FEED MONITOR ================= */
 var MON_TAB='next';
 function agriEvents(fromMs, days){
@@ -2240,7 +2313,7 @@ function macroCard(m){
     '<div class="mv">'+val+'</div>'+
     '<div class="mc '+tone+'">'+arrow+' '+(flat?'unch.':sgn(ch,m.dec,chU))+' <span>vs '+esc(m.history.length>1?m.history[m.history.length-2][0]:'prior')+'</span></div>'+
     macroSpark(m.history,col)+
-    '<div class="mp">'+esc(m.period)+' · '+({D:'daily',W:'weekly',M:'monthly',Q:'quarterly'}[m.freq]||'')+'</div></div>';
+    '<div class="mp">'+esc(m.period)+' · '+({D:'daily',W:'weekly',M:'monthly',Q:'quarterly'}[m.freq]||'')+'</div>'+nextReleaseHTML(m.key,true)+'</div>';
 }
 function macroDiffs(){
   var M={}; (DATA.macro||[]).forEach(function(m){ M[m.key]=m; });
@@ -2371,7 +2444,7 @@ function fxCftcHTML(){
 function fxIntradaySVG(pts){
   var fx=DATA.fx;
   if(!pts||pts.length<2) return '<div class="note" style="margin:6px 0">Intraday chart builds as quotes arrive.</div>';
-  var W=560,H=190,PL=54,PR=60,PT=14,PB=24, pw=W-PL-PR, ph=H-PT-PB;
+  var W=560,H=190,PL=54,PR=78,PT=14,PB=24, pw=W-PL-PR, ph=H-PT-PB;
   var t0=pts[0][0], t1=pts[pts.length-1][0], ys=pts.map(function(p){return p[1];}), ref=fx.spot.ref;
   var lo=Math.min.apply(null,ys.concat([ref])), hi=Math.max.apply(null,ys.concat([ref])), L=fx.levels;
   [L.pivot,L.pivot_h,L.pivot_l].forEach(function(v){ if(v&&v>lo-0.0025&&v<hi+0.0025){ lo=Math.min(lo,v); hi=Math.max(hi,v);} });
@@ -2385,7 +2458,10 @@ function fxIntradaySVG(pts){
   var up=ys[ys.length-1]>=ref, col=up?'#3fb97f':'#e0655f';
   s+='<path d="'+d+'L'+X(t1).toFixed(1)+' '+(PT+ph)+'L'+X(t0).toFixed(1)+' '+(PT+ph)+'Z" fill="'+(up?'rgba(63,185,127,.10)':'rgba(224,101,95,.10)')+'"/>';
   s+='<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="1.8" stroke-linejoin="round"/>';
-  var lp=pts[pts.length-1]; s+='<circle cx="'+X(lp[0]).toFixed(1)+'" cy="'+Y(lp[1]).toFixed(1)+'" r="3.5" fill="'+col+'"/>';
+  var lp=pts[pts.length-1], pp=pts[pts.length-2], tick=lp[1]>pp[1]?'\u25b2':lp[1]<pp[1]?'\u25bc':'\u25b8', tcol=lp[1]>=ref?'#1f8a57':'#b8443f';
+  s+='<circle cx="'+X(lp[0]).toFixed(1)+'" cy="'+Y(lp[1]).toFixed(1)+'" r="4" fill="'+col+'" stroke="#fff" stroke-width="1"/>';
+  var ty=Math.max(PT+8,Math.min(PT+ph-8,Y(lp[1])));
+  s+='<rect x="'+(W-PR+2)+'" y="'+(ty-9).toFixed(1)+'" width="'+(PR-4)+'" height="18" rx="3" fill="'+tcol+'"/><text x="'+(W-PR/2)+'" y="'+(ty+4).toFixed(1)+'" fill="#fff" font-size="10.5" font-weight="700" font-family="IBM Plex Mono" text-anchor="middle">'+tick+' '+lp[1].toFixed(4)+'</text>';
   var hiP=pts.reduce(function(a,b){return b[1]>a[1]?b:a;}), loP=pts.reduce(function(a,b){return b[1]<a[1]?b:a;});
   s+='<text x="'+X(hiP[0]).toFixed(1)+'" y="'+(Y(hiP[1])-5).toFixed(1)+'" fill="#5fd598" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">H '+hiP[1].toFixed(5)+'</text>';
   s+='<text x="'+X(loP[0]).toFixed(1)+'" y="'+(Y(loP[1])+12).toFixed(1)+'" fill="#ff9d97" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">L '+loP[1].toFixed(5)+'</text>';
@@ -2572,7 +2648,7 @@ function renderFX(){
   html+=fxSubnavHTML()+
     subWrap('fx','overview', fxKpiHTML()+T.spot+T.closes+T.model+askTileHTML('fx'))+
     subWrap('fx','deriv', T.forwards+T.cftc+T.sentiment.replace('class="tile"','class="tile wide"'))+
-    subWrap('fx','macro', macroDashHTML()+fxMacroHTML()+T.releases)+
+    subWrap('fx','macro', liveFxHTML()+macroDashHTML()+tradeFiscalHTML()+fxMacroHTML()+T.releases)+
     subWrap('fx','rates', T.yields+T.energy.replace('class="tile wide"','class="tile"')+T.policy);
   html+='</div><aside class="rail">'+liveMonitorHTML()+fxAlertsHTML()+'</aside></div>';
   document.getElementById('panel-fx').innerHTML=html;
