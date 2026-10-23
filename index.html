@@ -1086,6 +1086,26 @@ function cftcSVG(series, opt){
   function Y(v){ return PT+ph*(1-(v-mn)/(mx-mn)); }
   function CX(i){ return PL+slot*i+slot/2; }
   var s='';
+  /* hover / tap columns + rolling-ball tracker data (net position and weekly price) */
+  var pf0=opt.pfmt||function(v){ return '$'+v.toFixed(2); }, cf0=opt.cfmt||centsFmt;
+  var pv0=series.filter(function(r){ return r.px!=null; }).map(function(r){ return r.px; }).concat(opt.basis&&opt.basis.avg_entry?[opt.basis.avg_entry]:[]);
+  var pmx0=pv0.length?Math.max.apply(null,pv0):0, pmn0=pv0.length?Math.min.apply(null,pv0):0, pr0=(pmx0-pmn0)||pmx0*0.01||1, plo0=pmn0-pr0*0.25, phi0=pmx0+pr0*0.25;
+  function PY0(v){ return PT+ph*(1-(v-plo0)/(phi0-plo0)); }
+  var tid='b'+(++BTN);
+  BTIPS[tid]=series.map(function(r,i){
+    var p=i?series[i-1]:null, sg=function(v){ return (v>0?'+':v<0?'\u2212':'')+fmt(Math.abs(v)); };
+    var h='<div class="bt-h">Week to '+esc(fmtDate(r.date))+'</div>'+
+      (r.long!=null?'<div class="bt-row"><span>Long</span><b>'+fmt(r.long)+'</b>'+(p&&p.long!=null?'<small class="'+cls(r.long-p.long)+'">'+sg(r.long-p.long)+' w/w</small>':'')+'</div>'+
+        '<div class="bt-row"><span>Short</span><b>'+fmt(r.short)+'</b>'+(p&&p.short!=null?'<small class="'+cls(p.short-r.short)+'">'+sg(r.short-p.short)+' w/w</small>':'')+'</div>':'')+
+      '<div class="bt-row bt-strong"><span>Net position</span><b class="'+cls(r.net)+'">'+sg(r.net)+'</b>'+(p?'<small class="'+cls(r.net-p.net)+'">'+sg(r.net-p.net)+' w/w</small>':'')+'</div>'+
+      (r.long!=null?'<div class="bt-math">'+fmt(r.long)+' \u2212 '+fmt(r.short)+' = <b>'+sg(r.long-r.short)+'</b> contracts</div>':'');
+    if(r.px!=null){ h+='<div class="bt-sub">'+(useMean?'report-week average price':'price on report date')+'</div><div class="bt-row"><span>'+(useMean?'Week avg':'Close')+(r.px_n?' ('+r.px_n+' sessions)':'')+'</span><b>'+pf0(r.px)+'</b>'+(r.px_chg!=null?'<small class="'+cls(r.px_chg)+'">'+cf0(r.px_chg)+' w/w</small>':'')+'</div>';
+      var orig=(opt.series0||[])[i]; if(useMean&&orig&&orig.px!=null&&orig.px!==r.px) h+='<div class="bt-row"><span>Close on '+esc(fmtShortDate(orig.px_date||r.date))+'</span><b>'+pf0(orig.px)+'</b></div>';
+      if(p&&p.px!=null){ var dn=r.net-p.net, dp=r.px-p.px; if(opt.inverse) h+='<div class="bt-note">Funds '+(dn<0?'sold CAD':'bought CAD')+' as USD/CAD '+(dp>0?'rose':dp<0?'fell':'was flat')+' \u2014 '+((dn<0)===(dp>0)?'positioning confirms the move':'positioning diverges from the move')+'.</div>';
+      else h+='<div class="bt-note">'+(dn>0?'Funds added length':'Funds cut length / added shorts')+' as price '+(dp>0?'rose':dp<0?'fell':'was flat')+' \u2014 '+((dn>0)===(dp>0)?'positioning confirms the move':'positioning diverges from the move')+'.</div>'; } }
+    return h;
+  });
+  series.forEach(function(r,i){ s+='<g class="btip fcol" data-tid="'+tid+'" data-i="'+i+'" data-trk="'+CX(i).toFixed(1)+','+Y(r.net).toFixed(1)+','+(r.px!=null&&hasPx?PY0(r.px).toFixed(1):'')+'" tabindex="0"><rect class="colbg" x="'+(PL+slot*i).toFixed(1)+'" y="'+(PT-8)+'" width="'+slot.toFixed(1)+'" height="'+(ph+(hasPx?44:22))+'" rx="3" fill="transparent"/></g>'; });
   for(var gi=0;gi<=4;gi++){ var gy=PT+ph*gi/4, gv=mx-(mx-mn)*gi/4;
     s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
     s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+(gv>=0?'+':'\u2212')+fmt(Math.round(Math.abs(gv)/1000))+'k</text>'; }
@@ -1132,7 +1152,8 @@ function cftcSVG(series, opt){
     s+='<text x="'+CX(i).toFixed(1)+'" y="'+dateY+'" fill="#8494ab" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+fmtShortDate(r.date)+'</text>';
   });
   s+='<text x="'+PL+'" y="'+(dateY+17)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">'+(hasPx?'REPORT DATES \u00b7 WHITE = NET TREND':'WEEKLY REPORT DATES \u00b7 WHITE LINE = TREND ACROSS THE '+series.length+' WEEKLY NETS')+(hasPx?' \u00b7 AMBER = '+(useMean?'REPORT-WEEK AVG':'PRICE')+' (RIGHT)':'')+(hasPx&&opt.basis&&opt.basis.avg_entry?' \u00b7 PURPLE = FUNDS EST. AVG ENTRY '+(opt.pfmt||function(v){ return '$'+v.toFixed(2); })(opt.basis.avg_entry):'')+'</text>';
-  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Managed money net position by week, every bar labeled with its net value and report date, with a trend line connecting the weekly nets">'+s+'</svg>';
+  s+=trkSVG(['#e8eef4','#e8a33d'], PT, PT+ph);
+  return '<svg viewBox="0 0 '+W+' '+H+'" class="flowchart" role="img" aria-label="Managed money net position by week, every bar labeled with its net value and report date, with a trend line connecting the weekly nets">'+s+'</svg>';
 }
 
 function centsFmt(c){ var v=Math.round(Math.abs(c)*400)/4; return (c>0?'+':c<0?'\u2212':'')+(v%1?v.toFixed(2):v.toFixed(0))+'\u00a2'; }
@@ -2653,7 +2674,7 @@ function renderGrain(key){
     '<div class="stat-row">'+stat("Long", fmt(last.long)) + stat("Short", fmt(last.short)) +
     stat("Week over week", '<span class="'+cls(wow)+'">'+sgn(wow,0)+'</span>')+
     stat("Report date", fmtDate(last.date))+'</div>'+
-    cftcSVG(g.cftc, {basis:g.cftc_stats&&g.cftc_stats.basis})+
+    cftcSVG(g.cftc, {basis:g.cftc_stats&&g.cftc_stats.basis, series0:g.cftc})+
     '<p class="read">'+cftcRead(g.cftc, {basis:g.cftc_stats&&g.cftc_stats.basis, F:+f.intraday[0]})+'</p>'+
     '<div class="legend"><span><span class="sw" style="background:#3fb97f"></span>Net long week</span><span><span class="sw" style="background:#e0655f"></span>Net short week</span><span><span class="sw" style="background:#e8eef4"></span>Trend line (weekly nets)</span><span>Value label on every bar, on a dark backing plate so the trend line never overprints it</span></div>'+
     '<div class="stamp">Managed-money net, trailing '+g.cftc.length+' weekly reports \u00b7 CFTC disaggregated futures-only \u00b7 auto-refreshed</div></div>';
@@ -2864,7 +2885,7 @@ function fxReleasesHTML(){
 }
 function fxCftcHTML(){
   var fx=DATA.fx, p=fx.pos, S=p.series||[];
-  var chart = S.length>=5 ? cftcSVG(S, Object.assign({},FXPX,{basis:p.basis})).replace('MANAGED MONEY','LEVERAGED FUNDS').replace(/Managed money/,'Leveraged funds')+'<p class="read">'+cftcRead(S, Object.assign({},FXPX,{basis:p.basis,F:+fx.feed.mid}))+'</p>'
+  var chart = S.length>=5 ? cftcSVG(S, Object.assign({},FXPX,{basis:p.basis, series0:S})).replace('MANAGED MONEY','LEVERAGED FUNDS').replace(/Managed money/,'Leveraged funds')+'<p class="read">'+cftcRead(S, Object.assign({},FXPX,{basis:p.basis,F:+fx.feed.mid}))+'</p>'
                           : '<p class="note">Weekly history fills in on the next data refresh (CFTC Traders in Financial Futures).</p>';
   return '<div class="tile wide" data-src="cftc_fx"><h2>CFTC CAD — leveraged funds <span class="h2note">— weekly, every bar labeled, trend line across the weekly nets</span></h2>'+
     '<div class="big" style="color:'+(p.net>=0?'var(--green)':'var(--red)')+'">'+(p.net>=0?'+':'−')+fmt(Math.abs(p.net))+' <span style="font-size:14px;color:var(--muted)">net contracts</span></div>'+
