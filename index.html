@@ -1306,7 +1306,7 @@ function grainPaceHTML(key){
     body+='<div class="dv">'+fmt(Math.round(last[2]/1000))+'<small>k MT net sales</small></div>';
   }
   body+='<div class="mini-kv"><span>This week</span><b>'+fmt(Math.round(last[2]/1000))+'k MT</b> <span class="'+cls(last[2]-prev[2])+'">'+sgn(Math.round((last[2]-prev[2])/1000),0)+'k</span></div>';
-  if(ds&&ds.top_week&&ds.top_week[0]) body+='<div class="mini-kv"><span>Top buyer</span><b>'+esc(ds.top_week[0].country)+'</b> '+fmt(Math.round(ds.top_week[0].net/1000))+'k MT</div>';
+  if(ds&&ds.top_week&&ds.top_week[0]) body+='<div class="mini-kv"><span>Top buyer</span><b>'+esc(niceCountry(ds.top_week[0].country))+'</b> '+fmt(Math.round(ds.top_week[0].net/1000))+'k MT</div>';
   return body+'</div>';
 }
 function wasdeTableHTML(key){
@@ -1317,10 +1317,10 @@ function wasdeTableHTML(key){
   return '<div class="tile wide" data-src="wasde"><div class="tile-head"><h2>US '+GMETA[key].name+' supply &amp; demand <span class="h2note">— USDA WASDE '+esc(w.report)+' (vs '+esc(w.prior_report)+')</span></h2>'+
     '<span class="toggle" role="group"><button data-dash="'+key+'" data-k="crop" data-v="new" aria-pressed="'+(st.crop==='new')+'">NEW CROP '+esc(w.new.my)+'</button><button data-dash="'+key+'" data-k="crop" data-v="old" aria-pressed="'+(st.crop==='old')+'">OLD CROP '+esc(w.old.my)+'</button></span></div>'+
     '<table class="sd-tbl"><thead><tr><th>Line item</th><th>'+esc(w.prior_report)+'</th><th>'+esc(w.report)+'</th><th>Change</th></tr></thead><tbody>'+rows+'</tbody></table>'+
-    '<div class="stamp">'+esc(w.unit_note)+' · '+esc(w.source)+(/PSD/.test(w.source)?' · PSD has no farm-price line: price shows the prior report until a drop-in':'')+'</div></div>';
+    '<div class="stamp">'+esc(w.unit_note)+' · '+esc(w.source)+(/PSD/.test(w.source)?' \u00b7 USDA PSD has no planted-area or farm-price line: those show \u2014 for the new month':'')+'</div></div>';
 }
 var GEO={ /* lon, lat of the main grain port/centroid per destination */
- "mexico":[-102,23],"japan":[138,36],"china":[104,35],"colombia":[-74,4.6],"korea, south":[127.8,36],"south korea":[127.8,36],"taiwan":[121,23.7],
+ "mexico":[-102,23],"japan":[138,36],"china":[104,35],"colombia":[-74,4.6],"korea, south":[127.8,36],"south korea":[127.8,36],"united kingdom":[-2,54],"singapore":[103.8,1.35],"taiwan":[121,23.7],
  "philippines":[122,12],"vietnam":[106,16],"indonesia":[113,-1],"thailand":[101,15],"malaysia":[102,4],"bangladesh":[90,24],"pakistan":[69,30],
  "egypt":[30,27],"morocco":[-6,32],"algeria":[3,28],"tunisia":[9,34],"nigeria":[8,9.5],"saudi arabia":[45,24],"yemen":[48,15.5],"iraq":[44,33],
  "israel":[35,31.5],"turkey":[35,39],"spain":[-3.7,40.4],"portugal":[-8,39.5],"italy":[12.5,42.5],"netherlands":[5.3,52.1],"germany":[10.4,51],
@@ -1333,7 +1333,10 @@ var GEO={ /* lon, lat of the main grain port/centroid per destination */
  "india":[78,21],"myanmar":[96,21],"singapore":[103.8,1.35],"hong kong":[114.2,22.3],"australia":[134,-25],"new zealand":[174,-41],"russia":[90,60]
 };
 var US_ORIGIN={corn:[-90.1,29.9],soybeans:[-90.1,29.9],wheat:[-123,46]};  /* Gulf for corn/soy, PNW for wheat */
-function geoFor(name){ var n=(name||'').toLowerCase().replace(/\(.*?\)/g,'').replace(/\s+/g,' ').trim(); if(GEO[n]) return GEO[n];
+function niceCountry(n){ var m={"china, peoples republic of":"China","korea, republic of":"South Korea","korea, south":"South Korea","unknown":"Unknown destinations",
+  "eu-27":"European Union","viet nam":"Vietnam","russian federation":"Russia","egypt, arab republic of":"Egypt","iran, islamic republic of":"Iran"};
+  var k=(n||'').toLowerCase().trim(); return m[k]||n||''; }
+function geoFor(name){ name=niceCountry(name); var n=(name||'').toLowerCase().replace(/\(.*?\)/g,'').replace(/\s+/g,' ').trim(); if(GEO[n]) return GEO[n];
   for(var k in GEO){ if(n.indexOf(k)===0||k.indexOf(n)===0) return GEO[k]; } return null; }
 function destRows(key){ var E=(DATA.exports&&DATA.exports[key])||EXPORT[key], ds=E.dest; if(!ds) return null;
   var st=dstate(key); return {ds:ds, rows:(st.basis==='week'?ds.top_week:ds.top_my)||[]}; }
@@ -1342,7 +1345,7 @@ function destTableHTML(key){
   var st=dstate(key), tot=st.basis==='week'?d.ds.total.net:d.ds.total.commit;
   return '<table class="dest-tbl"><thead><tr><th>#</th><th>Destination</th><th>This week</th><th>Prior week</th><th>Δ w/w</th><th>MY commitments</th><th>Shipped</th><th>Share</th></tr></thead><tbody>'+
     d.rows.map(function(r,i){ var dlt=r.net-r.prev, sh=r.commit?r.shipped/r.commit*100:null, share=tot?(st.basis==='week'?r.net:r.commit)/tot*100:null;
-      return '<tr><td data-l="#">'+(i+1)+'</td><td class="lbl" data-l="">'+esc(r.country)+'</td><td data-l="This week"><b>'+fmt(Math.round(r.net))+'</b></td><td data-l="Prior week">'+fmt(Math.round(r.prev))+'</td>'+
+      return '<tr><td data-l="#">'+(i+1)+'</td><td class="lbl" data-l="">'+esc(niceCountry(r.country))+'</td><td data-l="This week"><b>'+fmt(Math.round(r.net))+'</b></td><td data-l="Prior week">'+fmt(Math.round(r.prev))+'</td>'+
         '<td data-l="Δ w/w"><span class="'+cls(dlt)+'">'+sgn(Math.round(dlt),0)+'</span></td><td data-l="MY commitments">'+fmt(Math.round(r.commit))+'</td><td data-l="Shipped">'+(sh!=null?fmt(sh,0)+'%':'—')+'</td><td data-l="Share">'+(share!=null?fmt(share,1)+'%':'—')+'</td></tr>'; }).join('')+
     '</tbody></table>';
 }
@@ -1386,11 +1389,11 @@ function drawDestMaps(){
         var wdt=1.2+5*Math.sqrt(val(r)/mx), col=key==='corn'?'#e8a33d':key==='wheat'?'#d97b4f':'#3fb97f';
         svg+='<path class="flow" d="'+path(line)+'" fill="none" stroke="'+col+'" stroke-width="'+wdt.toFixed(1)+'" stroke-linecap="round" style="animation-delay:'+(i*0.18).toFixed(2)+'s"/>';
         var p=proj(g); if(p){ svg+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="'+(2+wdt/2).toFixed(1)+'" fill="'+col+'" class="dest-dot" style="animation-delay:'+(i*0.18+1.1).toFixed(2)+'s"/>';
-          if(i<8){ var txt=r.country+' '+fmt(Math.round(val(r)/1000))+'k', tw=txt.length*6.6, box=placeLabel(placed,p[0]+7,p[1]-4,tw,W);
+          if(i<8){ var txt=niceCountry(r.country)+' '+fmt(Math.round(val(r)/1000))+'k', tw=txt.length*6.6, box=placeLabel(placed,p[0]+7,p[1]-4,tw,W);
             if(box) svg+='<rect x="'+(box[0]-3).toFixed(1)+'" y="'+(box[1]-11).toFixed(1)+'" width="'+(tw+6).toFixed(1)+'" height="15" rx="3" fill="#0a0f16" opacity=".75" class="dest-lbl" style="animation-delay:'+(i*0.18+1.1).toFixed(2)+'s"/><text x="'+box[0].toFixed(1)+'" y="'+box[1].toFixed(1)+'" fill="#e8eef4" font-size="11" font-family="IBM Plex Mono" class="dest-lbl" style="animation-delay:'+(i*0.18+1.1).toFixed(2)+'s">'+esc(txt)+'</text>'; } } });
       var o=proj(org); if(o){ svg+='<circle cx="'+o[0].toFixed(1)+'" cy="'+o[1].toFixed(1)+'" r="5" fill="#fff"/>'; var ob=placeLabel(placed,o[0]-60,o[1]-10,54,W); if(ob) svg+='<text x="'+ob[0].toFixed(1)+'" y="'+ob[1].toFixed(1)+'" fill="#fff" font-size="11" font-weight="700" font-family="IBM Plex Mono">US '+(key==='wheat'?'PNW':'Gulf')+'</text>'; }
       svg+='</svg>';
-      var side='<div class="map-side">'+d.rows.slice(0,8).map(function(r){ return '<div><span>'+esc(r.country)+'</span><b>'+fmt(Math.round(val(r)/1000))+'k</b></div>'; }).join('')+'</div>';
+      var side='<div class="map-side">'+d.rows.slice(0,8).map(function(r){ return '<div><span>'+esc(niceCountry(r.country))+'</span><b>'+fmt(Math.round(val(r)/1000))+'k</b></div>'; }).join('')+'</div>';
       el.innerHTML='<div class="map-wrap">'+svg+side+'</div>';
     }).catch(function(){ el.innerHTML='<p class="note">Map library could not load — showing the table.</p>'+destTableHTML(key); });
   });

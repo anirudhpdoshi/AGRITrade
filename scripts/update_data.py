@@ -727,16 +727,16 @@ WASDE_DATES = ["2026-01-12", "2026-02-10", "2026-03-10", "2026-04-09", "2026-05-
                "2026-08-12", "2026-09-11", "2026-10-09", "2026-11-10", "2026-12-10"]
 # dashboard rows -> how to read them from PSD attribute names (lower-case)
 SD_ROWS = {
-    "corn": [("Area Planted", "area planted"), ("Area Harvested", "area harvested"), ("Yield per Acre", "yield"),
+    "corn": [("Area Planted", None), ("Area Harvested", "area harvested"), ("Yield per Acre", "yield"),
              ("Beginning Stocks", "beginning stocks"), ("Production", "production"), ("Imports", "imports"),
              ("Total Supply", "total supply"), ("Feed & Residual", "feed dom. consumption"),
              ("Food, Seed & Industrial", "fsi consumption"), ("Domestic Total", "domestic consumption"),
              ("Exports", "exports"), ("Total Use", "=dom+exp"), ("Ending Stocks", "ending stocks"), ("Avg Farm Price", None)],
-    "soybeans": [("Area Planted", "area planted"), ("Area Harvested", "area harvested"), ("Yield per Acre", "yield"),
+    "soybeans": [("Area Planted", None), ("Area Harvested", "area harvested"), ("Yield per Acre", "yield"),
                  ("Beginning Stocks", "beginning stocks"), ("Production", "production"), ("Imports", "imports"),
                  ("Total Supply", "total supply"), ("Crushings", "crush"), ("Exports", "exports"),
                  ("Seed & Residual", "=dom-crush"), ("Total Use", "=dom+exp"), ("Ending Stocks", "ending stocks"), ("Avg Farm Price", None)],
-    "wheat": [("Area Planted", "area planted"), ("Area Harvested", "area harvested"), ("Yield per Acre", "yield"),
+    "wheat": [("Area Planted", None), ("Area Harvested", "area harvested"), ("Yield per Acre", "yield"),
               ("Beginning Stocks", "beginning stocks"), ("Production", "production"), ("Imports", "imports"),
               ("Total Supply", "total supply"), ("Food, Seed & Industrial", "fsi consumption"),
               ("Feed & Residual", "feed dom. consumption"), ("Domestic Total", "domestic consumption"),
@@ -828,7 +828,7 @@ def wasde(D, N):
         for crop, yr in (("new", new_my), ("old", old_my)):
             vals = _sd_values(k, _psd_us(code, yr, H, k))
             stored = {row[0]: row[2] for row in w[crop]["rows"]}
-            for lab in ("Production", "Area Planted"):          # sanity: same crop year, same units
+            for lab in ("Production", "Area Harvested"):        # sanity: same crop year, same units
                 a, b = vals.get(lab), stored.get(lab)
                 if a is None or not b or abs(a / b - 1) > (0.08 if lab == "Production" else 0.05):
                     names = sorted(_LAST_PSD.get("names", []))
@@ -839,6 +839,8 @@ def wasde(D, N):
             rows = []
             for lab, prior, current, *_ in w[crop]["rows"]:
                 nv = cur[crop].get(lab)
+                if nv is None and lab in ("Area Planted", "Avg Farm Price"):
+                    nv = None  # not in PSD: shown as "—" for the new month until a WASDE drop-in
                 if same_month:                     # revision of the current report
                     rows.append([lab, prior, nv if nv is not None else current])
                 else:                              # new report: current becomes prior
