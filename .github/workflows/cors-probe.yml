@@ -1,0 +1,12 @@
+name: StatCan CORS probe (temporary)
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          U=https://www150.statcan.gc.ca/t1/wds/rest
+          echo "== preflight"; curl -s -i -X OPTIONS "$U/getDataFromVectorsAndLatestNPeriods" -H "Origin: https://anirudhpdoshi.github.io" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type" | head -25
+          echo "== POST"; curl -s -i -X POST "$U/getDataFromVectorsAndLatestNPeriods" -H "Origin: https://anirudhpdoshi.github.io" -H "Content-Type: application/json" -d '[{"vectorId":2062815,"latestN":2}]' | head -40
+          echo "== GET changed"; curl -s -i "$U/getChangedSeriesList" -H "Origin: https://anirudhpdoshi.github.io" | head -20
+          echo "== GET seriesinfo"; curl -s -i "$U/getSeriesInfoFromVector" -X POST -H "Content-Type: application/json" -H "Origin: https://anirudhpdoshi.github.io" -d '[{"vectorId":2062815}]' | head -15
