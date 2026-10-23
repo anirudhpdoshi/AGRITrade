@@ -1338,7 +1338,7 @@ function positioningHTML(key){
   var g=DATA.grains[key], meta=GMETA[key], side=grainState[key], ds=g[side];
   var isNear = side==="near";
   var head = isNear
-    ? meta.chainNear+' options · chain pull Oct 22, 2026 · OI as of Oct 21 close'
+    ? meta.chainNear+' options · '+(ds.oi_label||'chain pull Oct 22, 2026 · OI as of Oct 21 close')
     : meta.chainFar+' options · chain pull Oct 22, 2026 · OI as of Oct 21 close';
   var extra = isNear
     ? stat("Chain IV", fmt(ds.iv,2)+"%") + stat("Options expire", meta.optExp)
