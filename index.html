@@ -1211,19 +1211,37 @@ function rollSVG2(R){
   function YS(v){ return PT+ph*(1-(v-spLo)/(0-spLo)); }
   function X(i){ return PL+gw*i+gw/2; }
   var s='';
+  /* hover / tap columns: one per session, with the full day's numbers */
+  var tid='b'+(++BTN), beh={}; (R.beh||[]).forEach(function(b){ beh[String(b[0]).replace(/[^\w ]/g,'').trim()]=b; });
+  BTIPS[tid]=rows.map(function(r,i){
+    var p=i?rows[i-1]:null, lab=MON3[r[0].slice(0,2)]+' '+r[0].slice(3), src=(R.src||{})[r[0]]||'', tot=r[1]+r[2];
+    function d(v,suf,dec){ return v==null?'':'<small class="'+cls(v)+'">'+(v>0?'+':v<0?'\u2212':'')+fmt(Math.abs(v),dec||0)+(suf||'')+' vs prior day</small>'; }
+    var h='<div class="bt-h">'+lab+(/^P/.test(src)?' <span class="chip inline">PRELIM</span>':'')+'</div>'+
+      '<div class="bt-row"><span>Front OI ('+esc(R.front)+')</span><b>'+fmt(r[1])+'</b>'+(p?d(r[1]-p[1]):'')+'</div>'+
+      '<div class="bt-row"><span>Deferred OI ('+esc(R.def)+')</span><b>'+fmt(r[2])+'</b>'+(p?d(r[2]-p[2]):'')+'</div>'+
+      '<div class="bt-row bt-strong"><span>Combined OI</span><b>'+fmt(tot)+'</b>'+(p?d(tot-p[1]-p[2]):'')+'</div>'+
+      '<div class="bt-row"><span>Roll progress</span><b>'+r[3].toFixed(1)+'%</b>'+(p?d(r[3]-p[3],' pp',1):'')+'</div>'+
+      '<div class="bt-math">'+fmt(r[2])+' \u00f7 ('+fmt(r[1])+' + '+fmt(r[2])+') = <b>'+(r[2]/tot*100).toFixed(1)+'%</b></div>'+
+      '<div class="bt-row"><span>Calendar spread</span><b>'+(r[4]<0?'\u2212':'')+Math.abs(r[4]).toFixed(2)+'\u00a2</b>'+(p?d(r[4]-p[4],'\u00a2',2):'')+'</div>'+
+      (r[5]!=null&&r[6]!=null?'<div class="bt-math">'+r[5].toFixed(4)+' \u2212 '+r[6].toFixed(4)+' = <b>'+((r[5]-r[6])<0?'\u2212':'')+Math.abs((r[5]-r[6])*100).toFixed(2)+'\u00a2</b> '+(r[4]<0?'(contango)':'(backwardation)')+'</div>':'');
+    var b=beh[lab];
+    if(b) h+='<div class="bt-sub">what traders did</div><div class="bt-note" style="margin-top:0;border:0;padding-top:0"><b>'+esc(R.front)+':</b> '+esc(b[1])+'<br><b>'+esc(R.def)+':</b> '+esc(b[2])+'</div>';
+    return h;
+  });
+  rows.forEach(function(r,i){ s+='<g class="btip fcol" data-tid="'+tid+'" data-i="'+i+'" tabindex="0"><rect class="colbg" x="'+(PL+gw*i).toFixed(1)+'" y="'+(PT-6)+'" width="'+gw.toFixed(1)+'" height="'+(ph+30)+'" rx="3" fill="transparent"/></g>'; });
   for(i=0;i<=4;i++){ var gy=PT+ph*i/4, gv=yMax*(1-i/4), gs=spLo*(i/4);
     s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
     s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+Math.round(gv/1000)+'k</text>';
     s+='<text x="'+(PL+pw+6)+'" y="'+(gy+4)+'" fill="#a8894a" font-size="10.5" font-family="IBM Plex Mono">'+gs.toFixed(0)+'¢</text>'; }
   rows.forEach(function(r,i){
     var cx=X(i);
-    s+='<rect x="'+(cx-bw-1).toFixed(1)+'" y="'+Y(r[1]).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(PT+ph-Y(r[1])).toFixed(1)+'" fill="#2f6db3"/>';
-    s+='<rect x="'+(cx+1).toFixed(1)+'" y="'+Y(r[2]).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(PT+ph-Y(r[2])).toFixed(1)+'" fill="#2b8f61"/>';
+    s+='<rect x="'+(cx-bw-1).toFixed(1)+'" y="'+Y(r[1]).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(PT+ph-Y(r[1])).toFixed(1)+'" fill="#2f6db3" pointer-events="none"/>';
+    s+='<rect x="'+(cx+1).toFixed(1)+'" y="'+Y(r[2]).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(PT+ph-Y(r[2])).toFixed(1)+'" fill="#2b8f61" pointer-events="none"/>';
   });
   s+='<line x1="'+PL+'" y1="'+YS(0)+'" x2="'+(PL+pw)+'" y2="'+YS(0)+'" stroke="#28374e"/>';
   var lp=''; rows.forEach(function(r,i){ lp+=(lp?'L':'M')+X(i).toFixed(1)+' '+YS(r[4]).toFixed(1); });
-  s+='<path d="'+lp+'" fill="none" stroke="#f5c542" stroke-width="1.8"/>';
-  rows.forEach(function(r,i){ s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+YS(r[4]).toFixed(1)+'" r="2.6" fill="#f5c542"/>'; });
+  s+='<path d="'+lp+'" fill="none" stroke="#f5c542" stroke-width="1.8" pointer-events="none"/>';
+  rows.forEach(function(r,i){ s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+YS(r[4]).toFixed(1)+'" r="2.6" fill="#f5c542" pointer-events="none"/>'; });
   /* spread line labeled with its first and latest values, on the line */
   s+='<text x="'+X(0).toFixed(1)+'" y="'+(YS(rows[0][4])-8).toFixed(1)+'" fill="#f5c542" font-size="10" font-weight="600" font-family="IBM Plex Mono" text-anchor="middle">'+rows[0][4].toFixed(1)+'¢</text>';
   s+='<text x="'+X(n-1).toFixed(1)+'" y="'+(YS(rows[n-1][4])-8).toFixed(1)+'" fill="#f5c542" font-size="10" font-weight="600" font-family="IBM Plex Mono" text-anchor="middle">'+rows[n-1][4].toFixed(1)+'¢</text>';
@@ -1276,7 +1294,7 @@ function rollBadges(R){
   var fnd=st.fnd.replace(/^[A-Za-z]+ /,''), hard=st.hard.replace(/^[A-Za-z]+ /,'');
   return '<div class="badges"><span class="badge">FND '+fnd+(m?' · '+m[1]+' days':'')+'</span>'+
     '<span class="badge">Hard exit '+hard+' (FND−1)</span>'+
-    '<span class="badge dim">Chart axis shows the data window only — not stretched to FND</span></div>';
+    '<span class="badge dim">Chart axis shows the data window only — not stretched to FND</span><span class="badge dim">Hover or tap a day for its numbers · click to highlight</span></div>';
 }
 
 function rollSpreadLine(R){
@@ -1318,7 +1336,7 @@ function rollTileHTML(key){
     stat('Deferred OI · '+R.lastLabel, lastT[2]) + stat('Calendar spread', st.sp) +
     stat('Roll pace', st.pace) + stat('Delivery window', st.state) +
     '</div>'+
-    rollSVG2(R)+
+    '<div class="flowwrap">'+rollSVG2(R).replace('<svg ','<svg class="flowchart" ')+'</div>'+
     rollBadges(R)+
     rollSpreadLine(R)+
     '<div class="legend"><span><span class="sw" style="background:#2f6db3"></span>Front OI ('+R.front+')</span><span><span class="sw" style="background:#2b8f61"></span>Deferred OI ('+R.def+')</span><span><span class="sw" style="background:#f5c542"></span>Calendar spread ¢/bu (right axis)</span><span>Bar labels: roll % = deferred OI ÷ (front + deferred OI)</span></div>'+
