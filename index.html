@@ -2036,7 +2036,7 @@ function macroLinePanel(m, opt){
   var head=opt.headline(last, m);
   return '<div class="mpanel has-flag">'+cflag(m.group)+'<h3 class="mp-h mk-click" data-mkey="'+m.key+'" title="Click for the full breakdown">'+head+' <span class="h2note">\u24d8</span></h3>'+
     lineChartSVG({series:[{pts:pts.slice(-60),color:opt.color,label:'Actual',width:2.2}], refs:refs, yLabel:opt.yLabel, dec:1, aria:head.replace(/<[^>]+>/g,'')})+
-    nextReleaseHTML(m.key)+'<div class="stamp">'+esc(m.src)+' · latest '+esc(m.period)+' · dashed = trailing 2/3/5-yr averages'+(opt.target!=null?' · dotted = 2% target':'')+'</div></div>';
+    nextReleaseHTML(m.key)+'<div class="stamp">'+esc(m.direct||m.src)+' · latest '+esc(m.period)+' · dashed = trailing 2/3/5-yr averages'+(opt.target!=null?' · dotted = 2% target':'')+'</div></div>';
 }
 function macroKpiCard(title, us, ca, dec, unit){
   function row(flag, m){ if(!m) return ''; var ch=m.chg; return '<div class="mini-kv mk-click" data-mkey="'+m.key+'" title="Click for the full breakdown"><span>'+flagCcy(m.group,12)+' '+flag+' '+esc(m.period)+'</span><b>'+fmt(m.value,dec)+unit+'</b> <span class="'+(Math.abs(ch)<Math.pow(10,-dec)/2?'neu':cls(ch))+'">'+(Math.abs(ch)<Math.pow(10,-dec)/2?'unch.':sgn(ch,dec,unit==='%'?' pp':''))+'</span></div>'+nextReleaseHTML(m.key,true); }
@@ -2589,7 +2589,7 @@ function macroDetailHTML(key){
     (chart2?'<h4 class="mdc-h">Change vs prior reading</h4><div class="mdc-chart">'+chart2+'</div>':'')+
     '<p class="mdc-read">Read: '+st.concat([m.value>a3?'latest above its 3-reading average':'latest below its 3-reading average']).join('; ')+'.</p>'+
     (rel3?'<h4 class="mdc-h">Related indicators <span class="h2note">(tap to open)</span></h4><div class="mdc-rels">'+rel3+'</div>':'')+
-    '<div class="mdc-foot">'+(nx&&nx.t?'Next release: <b>'+etLabel(nx.t,true)+' ET</b> · <span class="countdown" data-t="'+nx.t+'">'+cdText(nx.t-Date.now())+'</span>':'Next release: '+esc(nx&&nx.note||'not scheduled'))+' · data: '+esc(m.src)+' · '+ccy+(nx&&nx.src?' · <a href="'+safeUrl(nx.src)+'" target="_blank" rel="noopener">official release calendar \u2197</a>':'')+'</div>'+
+    '<div class="mdc-foot">'+(nx&&nx.t?'Next release: <b>'+etLabel(nx.t,true)+' ET</b> · <span class="countdown" data-t="'+nx.t+'">'+cdText(nx.t-Date.now())+'</span>':'Next release: '+esc(nx&&nx.note||'not scheduled'))+' · data: '+esc(m.direct||m.src)+' · '+ccy+(nx&&nx.src?' · <a href="'+safeUrl(nx.src)+'" target="_blank" rel="noopener">official release calendar \u2197</a>':'')+'</div>'+
     '<button class="mdc-ask" data-mask="'+key+'">Ask Claude about this print</button>'+
   '</div>';
 }
@@ -2856,6 +2856,41 @@ function awaitMsg(a){
     short:(I.short||I.what||'')+': not updated yet \u2014 showing '+(I.prev||'previous data')};
 }
 var AW={tries:0, next:0, last:0, err:false, busy:false, prev:{}, netErr:false};
+/* Statistics Canada Web Data Service allows browser calls (Access-Control-Allow-Origin: *), so during a
+   Canadian release window the page asks StatCan directly and shows the new number the moment it is out.
+   Same vectors and maths as the server (scripts/update_data.py MACRO); the server confirms on its next run. */
+var SC_DIRECT={ca_emp:[2062811,'diff'], ca_ur:[2062815,'level'], ca_gdp:[65201210,'pct'], ca_gdpq:[62305752,'qann'], ca_cpi:[41690973,'yoy']};
+var MON3L=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function scLabel(d,fq){ var y=d.slice(2,4), m=+d.slice(5,7), dd=+d.slice(8,10); return fq==='Q'?'Q'+(Math.floor((m-1)/3)+1)+" '"+y:(fq==='W'||fq==='D')?MON3L[m-1]+' '+dd:MON3L[m-1]+" '"+y; }
+function scTransform(P, how){
+  var by={}, out=[]; P.forEach(function(p){ by[p[0]]=p[1]; });
+  P.forEach(function(p,i){ var d=p[0], v=p[1];
+    if(how==='level') out.push([d,v]);
+    else if((how==='diff'||how==='pct')&&i>0){ var pv=P[i-1][1]; out.push([d, how==='diff'?v-pv:(v/pv-1)*100]); }
+    else if(how==='qann'&&i>0) out.push([d, (Math.pow(v/P[i-1][1],4)-1)*100]);
+    else if(how==='yoy'){ var b=by[(+d.slice(0,4)-1)+d.slice(4)]; if(b) out.push([d,(v/b-1)*100]); } });
+  return out;
+}
+function scDirect(keys){
+  keys=keys.filter(function(k){ return SC_DIRECT[k]&&mfind(k); }); if(!keys.length) return Promise.resolve(null);
+  var body=keys.map(function(k){ return {vectorId:SC_DIRECT[k][0], latestN:SC_DIRECT[k][1]==='yoy'?14:4}; });
+  return fetch('https://www150.statcan.gc.ca/t1/wds/rest/getDataFromVectorsAndLatestNPeriods',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw r.status; return r.json(); })
+    .then(function(arr){ var got=[];
+      (arr||[]).forEach(function(o,i){ if(!o||o.status!=='SUCCESS') return; var k=keys[i], how=SC_DIRECT[k][1], m=mfind(k);
+        var P=(o.object.vectorDataPoint||[]).filter(function(p){ return p.value!=null; }).map(function(p){ return [p.refPer.slice(0,10), +p.value]; }).sort(function(a,b){ return a[0]<b[0]?-1:1; });
+        var T=scTransform(P,how); if(T.length<1) return; var L=T[T.length-1];
+        if(!(L[0]>m.obs_date)) return;                     /* nothing newer than what the desk shows */
+        var r=function(v){ var f=Math.pow(10,m.dec+1); return Math.round(v*f)/f; }, lab=scLabel(L[0],m.freq);
+        m.prior=m.value; m.value=r(L[1]); m.chg=r(m.value-m.prior); m.period=lab; m.obs_date=L[0];
+        if(m.history){ m.history.push([lab,m.value]); if(m.history.length>12) m.history.shift(); }
+        if(m.hist24){ m.hist24.push([lab,m.value]); if(m.hist24.length>24) m.hist24.shift(); }
+        m.seen_at=new Date(Date.now()).toISOString(); m.direct='Statistics Canada WDS v'+SC_DIRECT[k][0]+' · fetched in your browser '+hhmmss(Date.now())+' ET';
+        got.push(k); });
+      if(got.length){ window.renderAll(); if(window.DESK_LIVE&&DESK_LIVE.toast) DESK_LIVE.toast('<b>✓ Statistics Canada</b> — '+got.map(function(k){ var m=mfind(k); return 'Canada '+esc(m.name)+' '+mval(m,m.value)+' ('+esc(m.period)+')'; }).join(' · ')+' — fetched directly from StatCan'); }
+      return got; })
+    .catch(function(){ return 'err'; });
+}
 function hhmmss(t){ return new Date(t).toLocaleTimeString('en-US',{timeZone:'America/Toronto',hour:'numeric',minute:'2-digit',second:'2-digit'}); }
 function paintAwaiting(list){
   list=list||awaitingList();
@@ -2877,7 +2912,8 @@ function paintAwaiting(list){
 function awaitCheck(){
   var L=window.DESK_LIVE; if(!L||AW.busy) return;
   AW.busy=true; AW.last=Date.now(); paintAwaiting();
-  var pr=[L.pollLive?L.pollLive(true):null, L.pollData?L.pollData(true):null].filter(Boolean);
+  var scKeys=awaitingList().map(function(x){ var mm=/data-mkey="([^"]+)"/.exec(x.sel); return mm&&mm[1]; }).filter(function(k){ return k&&SC_DIRECT[k]; });
+  var pr=[L.pollLive?L.pollLive(true):null, L.pollData?L.pollData(true):null, scKeys.length?scDirect(scKeys):null].filter(Boolean);
   Promise.all(pr).catch(function(){ return ['err']; }).then(function(res){
     AW.busy=false; AW.netErr=(res||[]).length>0 && (res||[]).every(function(x){ return x==='err'; });
     if(!awaitingList().length) return;
@@ -2892,7 +2928,8 @@ function awaitTick(){
   if(window.DESK_LOCKED) return;
   var list=awaitingList(), cur={};
   list.forEach(function(a){ cur[a.label]=1; });
-  Object.keys(AW.prev).forEach(function(l){ if(!cur[l]&&window.DESK_LIVE&&DESK_LIVE.toast) DESK_LIVE.toast('<b>✓ Updated</b> — '+esc(l.replace(/^Awaiting /,''))+' is now on the desk'); });
+  Object.keys(AW.prev).forEach(function(l){ var dm=macroAll().filter(function(m){ return m.direct&&l.indexOf(m.name+' release')>-1&&l.indexOf(m.group==='us'?'US':'Canada')>-1; })[0];
+    if(!cur[l]&&!dm&&window.DESK_LIVE&&DESK_LIVE.toast) DESK_LIVE.toast('<b>✓ Updated</b> — '+esc(l.replace(/^Awaiting /,''))+' is now on the desk'); });
   var fresh=list.some(function(a){ return !AW.prev[a.label]; });
   AW.prev=cur;
   if(!list.length){ if(AW.tries||AW.err){ AW.tries=0; AW.err=false; AW.next=0; } paintAwaiting(list); return; }
