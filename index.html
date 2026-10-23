@@ -261,6 +261,13 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .dash-card .kpi-spark{display:block;width:100%;height:26px;margin-top:8px}
 .tile-head{flex-wrap:wrap;row-gap:6px}
 .sub{display:contents}.sub:not(.on){display:none}
+.cockpit{grid-template-columns:repeat(6,1fr)!important}.cockpit-h{grid-column:1/-1;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);padding:2px 4px 6px}
+.cockpit .kpi-s{line-height:1.55}
+.vol-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.oi-row{display:grid;grid-template-columns:64px 1fr 1fr;gap:8px;align-items:center;font-family:"IBM Plex Mono",monospace;font-size:11.5px;margin:2px 0}
+.oi-cell{position:relative;height:16px;background:rgba(255,255,255,.03);border-radius:3px}.oi-bar{position:absolute;left:0;top:2px;height:12px;border-radius:2px}.oi-bar.pos{background:#3fb97f}.oi-bar.neg{background:#e0655f}.oi-v{position:absolute;left:6px;top:0;line-height:16px;color:#e8eef4}
+@media (max-width:1020px){.cockpit{grid-template-columns:repeat(3,1fr)!important}.vol-grid{grid-template-columns:1fr}}
+@media (max-width:760px){.cockpit{grid-template-columns:1fr 1fr!important}}
 .subnav-tile{padding:10px 12px}
 .subnav-live{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.7}
 .subnav-live b{color:var(--ink,#e8eef4)}.sl-k{color:var(--faint)}.sl-pill{font-size:10px;font-weight:700;letter-spacing:.1em;border:1px solid #2b6b4c;color:#5fd598;border-radius:5px;padding:1px 6px}
@@ -983,7 +990,10 @@ function skewSVG(g, meta){
 }
 
 function cftcSVG(series, opt){
-  opt=opt||{}; var hasPx=series.some(function(r){ return r.px!=null; });
+  opt=opt||{};
+  var useMean=series.some(function(r){ return r.px_mean!=null; });
+  series=series.map(function(r){ var o=Object.assign({},r); if(useMean){ o.px=r.px_mean; o.px_chg=r.px_mean_chg; } return o; });
+  var hasPx=series.some(function(r){ return r.px!=null; });
   var W=760,H=hasPx?310:280,PL=58,PR=hasPx?64:16,PT=38,PB=hasPx?62:42, pw=W-PL-PR, ph=H-PT-PB;
   var vals=series.map(function(r){return r.net;});
   var rawMx=Math.max.apply(null,vals.concat([0])), rawMn=Math.min.apply(null,vals.concat([0]));
@@ -1018,12 +1028,15 @@ function cftcSVG(series, opt){
   if(hasPx){
     /* price on each report date: own scale on the right, amber line, labeled value + week change under every bar */
     var pf=opt.pfmt||function(v){ return '$'+v.toFixed(2); }, cf=opt.cfmt||centsFmt;
-    var pv=series.filter(function(r){ return r.px!=null; }).map(function(r){ return r.px; }), pmx=Math.max.apply(null,pv), pmn=Math.min.apply(null,pv), pr=(pmx-pmn)||pmx*0.01;
+    var pv=series.filter(function(r){ return r.px!=null; }).map(function(r){ return r.px; }).concat(opt.basis&&opt.basis.avg_entry?[opt.basis.avg_entry]:[]), pmx=Math.max.apply(null,pv), pmn=Math.min.apply(null,pv), pr=(pmx-pmn)||pmx*0.01;
     var plo=pmn-pr*0.25, phi=pmx+pr*0.25;
     function PY(v){ return PT+ph*(1-(v-plo)/(phi-plo)); }
     for(var pi=0;pi<=4;pi++){ var pyv=phi-(phi-plo)*pi/4; s+='<text x="'+(PL+pw+6)+'" y="'+(PT+ph*pi/4+4).toFixed(1)+'" fill="#c99a4a" font-size="10" font-family="IBM Plex Mono">'+pf(pyv)+'</text>'; }
     var pp='', st=false; series.forEach(function(r,i){ if(r.px==null){ st=false; return; } pp+=(st?'L':'M')+CX(i).toFixed(1)+' '+PY(r.px).toFixed(1); st=true; });
     s+='<path d="'+pp+'" fill="none" stroke="#e8a33d" stroke-width="2" stroke-dasharray="6 3"/>';
+    if(opt.basis&&opt.basis.avg_entry){ var by=PY(opt.basis.avg_entry).toFixed(1);
+      s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+by+'" y2="'+by+'" stroke="#c084fc" stroke-width="1.4" stroke-dasharray="3 3"/>';
+      s+='<rect x="'+(PL+4)+'" y="'+(by-13)+'" width="172" height="13" rx="2" fill="#0d141f" opacity="0.9"/><text x="'+(PL+8)+'" y="'+(by-3)+'" fill="#d8b4fe" font-size="9.5" font-weight="600" font-family="IBM Plex Mono">FUNDS EST. AVG ENTRY '+pf(opt.basis.avg_entry)+'</text>'; }
     series.forEach(function(r,i){ if(r.px==null) return; s+='<rect x="'+(CX(i)-3.5).toFixed(1)+'" y="'+(PY(r.px)-3.5).toFixed(1)+'" width="7" height="7" transform="rotate(45 '+CX(i).toFixed(1)+' '+PY(r.px).toFixed(1)+')" fill="#e8a33d"/>'; });
     series.forEach(function(r,i){ if(r.px==null) return;
       var c=r.px_chg, col=c==null?'#c9d6e6':c>0?'#5fd598':c<0?'#ff9d97':'#8494ab', arr=c==null?'':c>0?'\u25b2':c<0?'\u25bc':'\u25b8';
@@ -1034,7 +1047,7 @@ function cftcSVG(series, opt){
   series.forEach(function(r,i){
     s+='<text x="'+CX(i).toFixed(1)+'" y="'+dateY+'" fill="#8494ab" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+fmtShortDate(r.date)+'</text>';
   });
-  s+='<text x="'+PL+'" y="'+(dateY+17)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">'+(hasPx?'REPORT DATES \u00b7 WHITE = NET TREND':'WEEKLY REPORT DATES \u00b7 WHITE LINE = TREND ACROSS THE '+series.length+' WEEKLY NETS')+(hasPx?' \u00b7 AMBER = '+(opt.pname||'PRICE')+' (RIGHT SCALE)':'')+'</text>';
+  s+='<text x="'+PL+'" y="'+(dateY+17)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">'+(hasPx?'REPORT DATES \u00b7 WHITE = NET TREND':'WEEKLY REPORT DATES \u00b7 WHITE LINE = TREND ACROSS THE '+series.length+' WEEKLY NETS')+(hasPx?' \u00b7 AMBER = '+(useMean?'REPORT-WEEK AVG':'PRICE')+' (RIGHT)':'')+'</text>';
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Managed money net position by week, every bar labeled with its net value and report date, with a trend line connecting the weekly nets">'+s+'</svg>';
 }
 
@@ -1051,16 +1064,21 @@ function cftcRead(series, opt){
     ' ('+sgn(four,0)+' vs '+fmtDate(ref4.date)+') \u00b7 latest net sits at <b>'+pctR+'%</b> of its 10-week range ('+sgn(mn,0)+' to '+sgn(mx,0)+') \u2014 '+zone+'.'+cftcPriceRead(series, opt);
 }
 function cftcPriceRead(series, opt){
-  opt=opt||{}; var last=series[series.length-1], ref=series[series.length-5];
+  opt=opt||{};
+  if(series.some(function(r){ return r.px_mean!=null; })) series=series.map(function(r){ var o=Object.assign({},r); o.px=r.px_mean; return o; });
+  var last=series[series.length-1], ref=series[series.length-5];
   if(!last||!ref||last.px==null||ref.px==null) return '';
+  var B=opt.basis, extra='';
+  if(B&&B.avg_entry&&opt.F){ var per=opt.inverse?(1/opt.F-1/B.avg_entry)*100000*(B.net>0?1:-1):(opt.F-B.avg_entry)*(B.net>0?1:-1)*5000;
+    extra=' <b>Where funds sit:</b> pricing each week\u2019s net change at that report week\u2019s average gives an estimated average entry of <b>'+(opt.pfmt||function(v){ return '$'+v.toFixed(2); })(B.avg_entry)+'</b> for the current net '+(B.net>0?'long':'short')+' ('+B.weeks+' weeks since '+esc(B.since)+'). At today\u2019s '+(opt.pfmt||function(v){ return '$'+v.toFixed(2); })(opt.F)+' that is <b class="'+cls(per)+'">'+(per>=0?'in profit':'underwater')+' ~$'+fmt(Math.abs(per),0)+'/contract (~$'+fmt(Math.abs(per*B.net)/1e6,0)+'M)</b> \u2014 '+(per<0?'pressure to cut if price keeps moving against them':'room to hold; profit-taking risk on reversals')+'.'; }
   var pf=opt.pfmt||function(v){ return '$'+v.toFixed(2); }, dp=last.px-ref.px, dn=last.net-ref.net;
   if(opt.inverse){ /* CAD futures: a falling net = funds selling CAD, which shows up as USD/CAD rising */
     var rel2=(dp>0&&dn<0)?'funds sold CAD as USD/CAD rose \u2014 positioning <b>confirms</b> the CAD weakness':(dp<0&&dn>0)?'funds bought CAD as USD/CAD fell \u2014 positioning <b>confirms</b> the CAD strength':
       (dp>0&&dn>0)?'USD/CAD rose even as funds bought CAD \u2014 a <b>divergence</b>':(dp<0&&dn<0)?'USD/CAD fell even as funds sold CAD \u2014 a <b>divergence</b> (short-squeeze risk if CAD keeps firming)':'price and positioning roughly flat';
-    return ' USD/CAD over the same 4 weeks: '+pf(ref.px)+' \u2192 <b>'+pf(last.px)+'</b> ('+opt.cfmt(dp)+'): '+rel2+'.'; }
+    return ' Report-week average USD/CAD over 4 weeks: '+pf(ref.px)+' \u2192 <b>'+pf(last.px)+'</b> ('+opt.cfmt(dp)+'): '+rel2+'.'+extra; }
   var rel=(dp>0&&dn>0)?'funds added length as price rose \u2014 positioning <b>confirms</b> the up-move':(dp<0&&dn<0)?'funds cut exposure as price fell \u2014 positioning <b>confirms</b> the down-move':
     (dp>0&&dn<0)?'price rose while funds cut exposure \u2014 a <b>divergence</b> (short-covering or commercial buying)':(dp<0&&dn>0)?'price fell while funds added length \u2014 a <b>divergence</b> (funds buying the dip)':'price and positioning roughly flat';
-  return ' Price over the same 4 weeks: '+pf(ref.px)+' \u2192 <b>'+pf(last.px)+'</b> ('+(opt.cfmt||centsFmt)(dp)+'): '+rel+'.';
+  return ' Report-week average price over 4 weeks: '+pf(ref.px)+' \u2192 <b>'+pf(last.px)+'</b> ('+(opt.cfmt||centsFmt)(dp)+'): '+rel+'.'+extra;
 }
 
 /* ---------------- rollover (same drop-in series as the per-commodity rollover cards) ---------------- */
@@ -1820,6 +1838,83 @@ function canadaChartsHTML(key){
   return html;
 }
 
+/* ================= DERIVATIVES COCKPIT ================= */
+var CARRY={storage:0.00165, days:{corn:90, wheat:90, soybeans:61}, fin_add:2.0};  /* $/bu/day (16.5/100 ¢), first-delivery-day gap, financing = US 3M bill + 200 bp */
+var BU_CONTRACT=5000;
+function tradingDaysTo(t){ var n=0, d=new Date(); d.setHours(12,0,0,0); var end=new Date(t); while(d<end){ d.setDate(d.getDate()+1); var w=d.getDay(); if(w!==0&&w!==6&&d<=end) n++; } return Math.max(n,1); }
+function optUnderlying(key){
+  var g=DATA.grains[key], f=g.fan, R=rollData(key), L=R.dailyN[R.dailyN.length-1];
+  if(g.near.contract && g.near.contract!==R.front && g.near.contract===R.def) return {F:+f.intraday[0]-L[4]/100, c:R.def, how:'front quote − latest spread'};
+  return {F:+f.intraday[0], c:R.front, how:'delayed front quote'};
+}
+function ivAt(skew, K){
+  var s=skew.slice().sort(function(a,b){ return a[0]-b[0]; }); if(!s.length) return null;
+  if(K<=s[0][0]) return {iv:s[0][1], clamp:true}; if(K>=s[s.length-1][0]) return {iv:s[s.length-1][1], clamp:true};
+  for(var i=1;i<s.length;i++) if(K<=s[i][0]){ var a=s[i-1], b=s[i], w=(K-a[0])/(b[0]-a[0]); return {iv:a[1]+(b[1]-a[1])*w, clamp:false}; }
+  return null;
+}
+function skewMetrics(key){
+  var g=DATA.grains[key], U=optUnderlying(key), atm=(g.vol&&g.vol.near&&g.vol.near.iv)||g.near.iv;
+  var T=Math.max(1,(new Date(g.near.expires+'T13:20:00')-Date.now())/86400000)/365, m=atm/100*Math.sqrt(T);
+  var c=ivAt(g.skew, U.F*(1+m)), p=ivAt(g.skew, U.F*(1-m)); if(!c||!p) return null;
+  return {rr:c.iv-p.iv, bf:(c.iv+p.iv)/2-atm, call:c.iv, put:p.iv, kc:U.F*(1+m), kp:U.F*(1-m), clamp:c.clamp||p.clamp, atm:atm};
+}
+function fullCarry(key){
+  var R=rollData(key), L=R.dailyN[R.dailyN.length-1], F=L[5]!=null?L[5]:+DATA.grains[key].fan.anchor, r=(+DATA.fx.treasury['3M']||4)+CARRY.fin_add, days=CARRY.days[key];
+  var fc=days*(r/100/360*F+CARRY.storage)*100;   /* cents/bu */
+  return {fc:fc, sp:L[4], pct:-L[4]/fc*100, r:r, days:days, front:R.front, def:R.def};
+}
+function fundPnl(key){
+  var g=DATA.grains[key], st=g.cftc_stats, b=st&&st.basis; if(!b) return null;
+  var F=+g.fan.intraday[0], per=(F-b.avg_entry)*(b.net>0?1:-1)*BU_CONTRACT;
+  return {entry:b.avg_entry, net:b.net, per:per, tot:per*Math.abs(b.net), weeks:b.weeks, F:F};
+}
+function cockpitHTML(key){
+  var g=DATA.grains[key], f=g.fan, U=optUnderlying(key), V=g.vol||{}, iv=(V.near&&V.near.iv)||g.near.iv, hv=V.near&&V.near.hv;
+  var now=Date.now(), wev=usdaEvents(key, now, 60).filter(function(e){ return e.t>now && e.kind==='wasde'; })[0];
+  var cards=[];
+  cards.push(kpi('ATM IV · '+esc(g.near.chain||g.near.contract), fmt(iv,1)+'<small>%</small>',
+    (hv!=null?'HV30 '+fmt(hv,1)+'% · IV−HV <span class="'+cls(iv-hv)+'">'+sgn(iv-hv,1,' pts')+'</span>':'')+(V.pct?'<br>IV pctile 52w <b>'+fmt(V.pct['52w'],0)+'</b> · 13w '+fmt(V.pct['13w'],0):'')));
+  if(wev){ var td=tradingDaysTo(wev.t), mv=U.F*iv/100*Math.sqrt(td/252), d1=U.F*iv/100/Math.sqrt(252);
+    cards.push(kpi('Implied move to WASDE', '±'+fmt(mv*100,1)+'<small>¢</small>', '±'+fmt(mv/U.F*100,1)+'% over '+td+' sessions · '+fmt(U.F-mv,2)+'–'+fmt(U.F+mv,2)+'<br>1-day ±'+fmt(d1*100,1)+'¢ · <span class="countdown" data-t="'+wev.t+'">'+cdText(wev.t-now)+'</span>')); }
+  var cw=g.near.call_wall, pw=g.near.put_wall, sd=U.F*iv/100/Math.sqrt(252)*Math.sqrt(10);
+  cards.push(kpi('Put/call · walls', fmt(+g.near.pcr,2), 'Call wall <b>'+fmt(cw[0],2)+'</b> ('+sgn((cw[0]-U.F)*100,0,'¢')+', '+fmt(Math.abs(cw[0]-U.F)/sd,1)+'σ₁₀)<br>Put wall <b>'+fmt(pw[0],2)+'</b> ('+sgn((pw[0]-U.F)*100,0,'¢')+', '+fmt(Math.abs(pw[0]-U.F)/sd,1)+'σ₁₀)'));
+  var R=rollData(key), L=R.dailyN[R.dailyN.length-1];
+  cards.push(kpi('Roll '+R.front+'→'+R.def, fmt(L[3],1)+'<small>%</small>', esc(R.stats.state.replace(/^[A-Z \-]+\(/,'').replace(/\)$/,''))+' · pace '+esc(R.stats.pace.replace(' / last 5 sessions','/5d'))));
+  var C=fullCarry(key);
+  cards.push(kpi('Spread vs full carry', fmt(C.pct,0)+'<small>%</small>', fmt(C.sp,1)+'¢ vs full carry −'+fmt(C.fc,1)+'¢<br>'+(C.pct>=80?'near full carry — market pays to store':C.pct>=50?'moderate carry':'weak carry — nearby demand / tight stocks')));
+  var st=g.cftc_stats, P=fundPnl(key), last=g.cftc[g.cftc.length-1];
+  cards.push(kpi('Managed money', sgn(Math.round(last.net/1000),0)+'<small>k</small>',
+    (st&&st.p3y!=null?'3-yr pctile <b>'+fmt(st.p3y,0)+'</b>':'')+(st&&st.pct_oi!=null?' · '+fmt(st.pct_oi,1)+'% OI':'')+
+    (P?'<br>est. avg entry <b>$'+fmt(P.entry,4)+'</b> · <span class="'+cls(P.per)+'">'+(P.per>=0?'in profit':'underwater')+' '+sgn(P.tot/1e6,0,'M')+'</span>':'')));
+  return '<div class="tile wide kpi-strip cockpit" data-src="options"><div class="cockpit-h">Derivatives cockpit · '+GMETA[key].name+' <span class="h2note">options on '+esc(U.c)+' @ '+fmt(U.F,4)+' ('+U.how+')</span></div>'+cards.join('')+
+    '<div class="stamp" style="grid-column:1/-1">IV/HV/IV-percentile: '+esc(V.src||'chain data')+' · implied move = F × IV × √(sessions/252) · σ₁₀ = 10-session 1σ · full carry = days × (financing/360 × F + storage), storage 16.5/100¢/bu/day (CBOT corn rate; wheat VSR floor), financing = US 3M bill + 2% · fund entry = weekly net changes priced at that report week’s average settle</div></div>';
+}
+function volTermHTML(key){
+  var g=DATA.grains[key], V=g.vol, H=g.vol_hist||[], S=skewMetrics(key);
+  if(!V) return '';
+  var bars=barChartSVG({bars:[[V.near.contract+' IV',V.near.iv,true],[V.far.contract+' IV',V.far.iv,false],[V.near.contract+' HV30',V.near.hv,false],[V.far.contract+' HV30',V.far.hv,false]],yLabel:'Volatility (%)',dec:1,H:190,floor:0});
+  var hist=H.length>=5?lineChartSVG({series:[{pts:H.map(function(x){ return [x[0],x[1]]; }),color:'#38b6c9',label:'Near IV'},{pts:H.map(function(x){ return [x[0],x[2]]; }),color:'#c084fc',label:'Far IV'},{pts:H.map(function(x){ return [x[0],x[3]]; }),color:'#e8a33d',label:'HV30'}],yLabel:'Vol (%)',dec:1,H:190}):
+    '<p class="note">Daily IV history starts '+esc(H.length?H[0][0]:'today')+' and builds with each 10:52 ET options run ('+H.length+' of 5 sessions needed for the line chart).</p>';
+  var term=V.far.iv-V.near.iv;
+  var sk=S?'<div class="mini-kv"><span>Risk reversal</span><b class="'+cls(S.rr)+'">'+sgn(S.rr,2,' pts')+'</b> '+(S.rr>0?'calls richer — upside priced':'puts richer — downside protection bid')+'</div>'+
+    '<div class="mini-kv"><span>Butterfly</span><b>'+sgn(S.bf,2,' pts')+'</b> '+(S.bf>1?'wings rich — big moves priced':'wings modest')+'</div>'+
+    '<div class="dsub">±1σ strikes to expiry: put '+fmt(S.kp,2)+' @ '+fmt(S.put,1)+'% · call '+fmt(S.kc,2)+' @ '+fmt(S.call,1)+'% vs ATM '+fmt(S.atm,1)+'%'+(S.clamp?' (edge of pulled strikes)':'')+'</div>':'';
+  return '<div class="tile wide" data-src="options"><h2>Volatility — term structure, realized vs implied, skew <span class="h2note">— '+esc(V.src)+'</span></h2>'+
+    '<div class="vol-grid"><div>'+bars+'<div class="mini-kv"><span>Term structure</span><b class="'+cls(term)+'">'+sgn(term,1,' pts')+'</b> far vs near '+(term<0?'(inverted — near-term event risk priced)':'(normal upward)')+'</div>'+
+    '<div class="mini-kv"><span>IV − HV</span><b class="'+cls(V.near.iv-V.near.hv)+'">'+sgn(V.near.iv-V.near.hv,1,' pts')+'</b> '+(V.near.iv<V.near.hv?'options cheap vs realized':'options rich vs realized')+'</div>'+sk+'</div><div>'+hist+'</div></div></div>';
+}
+function oiChangeHTML(key){
+  var n=DATA.grains[key].near, prev=n.rows_prev;
+  if(!prev||!prev.rows) return '<div class="tile wide" data-src="options"><h2>Open-interest change by strike <span class="h2note">— '+esc(n.chain||'')+'</span></h2><p class="note">Day-over-day change needs two option pulls; the first comparison appears after the next 10:52 ET run stores today’s strikes as the baseline. The rollover card already shows daily futures OI change.</p></div>';
+  var P={}; prev.rows.forEach(function(r){ P[r[0]]=r; });
+  var rows=n.rows.filter(function(r){ return P[r[0]]; }).map(function(r){ return [r[0], r[1]-P[r[0]][1], r[2]-P[r[0]][2]]; }).filter(function(r){ return r[1]||r[2]; });
+  var mx=Math.max.apply(null,rows.map(function(r){ return Math.max(Math.abs(r[1]),Math.abs(r[2])); }))||1;
+  var body=rows.map(function(r){ var wc=Math.abs(r[1])/mx*50, wp=Math.abs(r[2])/mx*50;
+    return '<div class="oi-row"><span class="db-l">'+fmt(r[0],2)+'</span><span class="oi-cell"><span class="oi-bar '+(r[1]>=0?'pos':'neg')+'" style="width:'+wc.toFixed(1)+'%"></span><span class="oi-v">C '+sgn(r[1],0)+'</span></span><span class="oi-cell"><span class="oi-bar put '+(r[2]>=0?'pos':'neg')+'" style="width:'+wp.toFixed(1)+'%"></span><span class="oi-v">P '+sgn(r[2],0)+'</span></span></div>'; }).join('');
+  return '<div class="tile wide" data-src="options"><h2>Open-interest change by strike <span class="h2note">— '+esc(n.chain||'')+' · '+esc(prev.date)+' → latest</span></h2>'+body+'<div class="stamp">Green = contracts added, red = closed · new OI near a wall reinforces it</div></div>';
+}
+
 /* ================= USD/CAD LIVE FEED MONITOR ================= */
 var MON_TAB='next';
 function agriEvents(fromMs, days){
@@ -1893,13 +1988,13 @@ function renderGrain(key){
   FU+=wasdeTableHTML(key)+exportTileHTML(key)+destTileHTML(key);
   /* insight + curve (both computed from the data) */
   OV+='<div class="tile wide"><h2>Insight</h2><p class="read">'+grainInsight(key)+'</p><div class="stamp">Generated from the current settles, options and CFTC data</div></div>';
-  DV+=grainSpreadsHTML(key).replace('class="tile"','class="tile wide"');
+  DV+=cockpitHTML(key)+volTermHTML(key)+grainSpreadsHTML(key).replace('class="tile"','class="tile wide"');
   /* positioning (toggle target) */
   DV+='<div class="tile wide" id="pos-'+key+'">'+positioningHTML(key)+'</div>';
   /* OI chart (toggle target) */
   DV+='<div class="tile wide" data-src="options" id="oi-'+key+'">'+oiTileHTML(key)+'</div>';
   /* rollover — full card replication */
-  DV+=rollTileHTML(key);
+  DV+=oiChangeHTML(key)+rollTileHTML(key);
   /* skew */
   DV+='<div class="tile wide"><h2>IV skew <span class="h2note">— liquid side · ±2σ window</span></h2>'+ skewSVG(g, meta)+
     '<div class="legend"><span><span class="sw" style="background:var(--put)"></span>Puts below futures</span><span><span class="sw" style="background:var(--call)"></span>Calls at/above futures</span></div>'+
@@ -1910,8 +2005,8 @@ function renderGrain(key){
     '<div class="stat-row">'+stat("Long", fmt(last.long)) + stat("Short", fmt(last.short)) +
     stat("Week over week", '<span class="'+cls(wow)+'">'+sgn(wow,0)+'</span>')+
     stat("Report date", fmtDate(last.date))+'</div>'+
-    cftcSVG(g.cftc, {pname:'FRONT-MONTH SETTLE'})+
-    '<p class="read">'+cftcRead(g.cftc)+'</p>'+
+    cftcSVG(g.cftc, {basis:g.cftc_stats&&g.cftc_stats.basis})+
+    '<p class="read">'+cftcRead(g.cftc, {basis:g.cftc_stats&&g.cftc_stats.basis, F:+f.intraday[0]})+'</p>'+
     '<div class="legend"><span><span class="sw" style="background:#3fb97f"></span>Net long week</span><span><span class="sw" style="background:#e0655f"></span>Net short week</span><span><span class="sw" style="background:#e8eef4"></span>Trend line (weekly nets)</span><span>Value label on every bar, on a dark backing plate so the trend line never overprints it</span></div>'+
     '<div class="stamp">Managed-money net, trailing '+g.cftc.length+' weekly reports \u00b7 CFTC disaggregated futures-only \u00b7 auto-refreshed</div></div>';
   OV+=askTileHTML(key);
@@ -2121,7 +2216,7 @@ function fxReleasesHTML(){
 }
 function fxCftcHTML(){
   var fx=DATA.fx, p=fx.pos, S=p.series||[];
-  var chart = S.length>=5 ? cftcSVG(S, FXPX).replace('MANAGED MONEY','LEVERAGED FUNDS').replace(/Managed money/,'Leveraged funds')+'<p class="read">'+cftcRead(S, FXPX)+'</p>'
+  var chart = S.length>=5 ? cftcSVG(S, Object.assign({},FXPX,{basis:p.basis})).replace('MANAGED MONEY','LEVERAGED FUNDS').replace(/Managed money/,'Leveraged funds')+'<p class="read">'+cftcRead(S, Object.assign({},FXPX,{basis:p.basis,F:+fx.feed.mid}))+'</p>'
                           : '<p class="note">Weekly history fills in on the next data refresh (CFTC Traders in Financial Futures).</p>';
   return '<div class="tile wide" data-src="cftc_fx"><h2>CFTC CAD — leveraged funds <span class="h2note">— weekly, every bar labeled, trend line across the weekly nets</span></h2>'+
     '<div class="big" style="color:'+(p.net>=0?'var(--green)':'var(--red)')+'">'+(p.net>=0?'+':'−')+fmt(Math.abs(p.net))+' <span style="font-size:14px;color:var(--muted)">net contracts</span></div>'+

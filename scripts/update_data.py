@@ -212,10 +212,46 @@ def socrata(dataset, code, n):
     return list(reversed(rows))
 
 
-def _daily_closes(sym, scale=1.0):
-    """{YYYY-MM-DD: close} for a Yahoo symbol over ~6 months (CFTC report-date price tags)."""
-    h = yf().Ticker(sym).history(period="6mo", interval="1d")
+def _daily_closes(sym, scale=1.0, period="6mo"):
+    """{YYYY-MM-DD: close} for a Yahoo symbol (CFTC report-date price tags / weekly means)."""
+    h = yf().Ticker(sym).history(period=period, interval="1d")
     return {idx.date().isoformat(): round(float(row["Close"]) * scale, 5) for idx, row in h.iterrows() if row["Close"] == row["Close"]}
+
+
+def _week_means(dates, closes):
+    """Mean close of the sessions in each CFTC report week: (previous report date, this report date]."""
+    days = sorted(closes)
+    out = {}
+    for i, d in enumerate(dates):
+        lo = dates[i - 1] if i else (datetime.fromisoformat(d) - timedelta(days=7)).date().isoformat()
+        w = [closes[x] for x in days if lo < x <= d]
+        if w:
+            out[d] = (round(sum(w) / len(w), 5), len(w))
+    return out
+
+
+def _fund_basis(rows, means, invert=False):
+    """Estimated average entry of the current net position: weekly net additions are priced at that week's mean
+    (CFTC is a lagging Tuesday snapshot, so the week's average is the best estimate of where the change was done).
+    Adding in the same direction re-weights the average; cutting keeps it; flipping sides restarts at that week's mean."""
+    N = B = None
+    used = 0
+    for x in rows:
+        m = means.get(x["date"])
+        if not m:
+            continue
+        P = 1.0 / m[0] if invert else m[0]
+        n = x["net"]
+        if N is None or N == 0 or (N > 0) != (n > 0):
+            B = P
+        elif abs(n) > abs(N):
+            B = (abs(N) * B + (abs(n) - abs(N)) * P) / abs(n)
+        N = n
+        used += 1
+    if B is None:
+        return None
+    return {"avg_entry": round(1.0 / B if invert else B, 5), "net": N, "weeks": used,
+            "since": next((x["date"] for x in rows if x["date"] in means), None)}
 
 
 def _tag_prices(series, closes, label):
@@ -232,6 +268,14 @@ def _tag_prices(series, closes, label):
         x["px"] = closes[d]; x["px_date"] = d
         x["px_chg"] = round(x["px"] - prev, 5) if prev is not None else None
         prev = x["px"]
+    wm = _week_means([x["date"] for x in series], closes)
+    pm = None
+    for x in series:
+        m = wm.get(x["date"])
+        if m:
+            x["px_mean"], x["px_n"] = m
+            x["px_mean_chg"] = round(m[0] - pm, 5) if pm is not None else None
+            pm = m[0]
     print(f"  {label}: tagged {sum(1 for x in series if 'px' in x)}/{len(series)} report weeks with prices")
 
 
@@ -248,7 +292,10 @@ def cftc_fx(D, N):
                "long": int(float(x["lev_money_positions_long"])), "short": int(float(x["lev_money_positions_short"])),
                "net": int(float(x["lev_money_positions_long"])) - int(float(x["lev_money_positions_short"]))} for x in rows[-10:]]
     try:
-        _tag_prices(series, _daily_closes("CAD=X"), "USD/CAD")
+        cl = _daily_closes("CAD=X", period="4y")
+        _tag_prices(series, cl, "USD/CAD")
+        allrows = [{"date": x["report_date_as_yyyy_mm_dd"][:10], "net": int(float(x["lev_money_positions_long"])) - int(float(x["lev_money_positions_short"]))} for x in rows]
+        D["fx"]["pos"]["basis"] = _fund_basis(allrows, _week_means([x["date"] for x in allrows], cl), invert=True)
     except Exception as e:
         print("  USD/CAD price tags failed:", e)
     D["fx"]["pos"].update(net=net, long=lo, short=sh, oi=oi, pct_oi=pct, wow=net - nets[-2], label=label,
@@ -264,15 +311,24 @@ GRAIN_CFTC = {"corn": "002602", "wheat": "001602", "soybeans": "005602"}
 def cftc_grains(D, N):
     last = None
     for k, code in GRAIN_CFTC.items():
-        rows = socrata("72hh-3qpy", code, 10)  # Disaggregated futures-only
-        ser = []
+        rows = socrata("72hh-3qpy", code, 160)  # Disaggregated futures-only, ~3 years
+        full = []
         for r in rows:
             lo, sh = int(float(r["m_money_positions_long_all"])), int(float(r["m_money_positions_short_all"]))
-            ser.append({"date": r["report_date_as_yyyy_mm_dd"][:10], "long": lo, "short": sh, "net": lo - sh})
+            full.append({"date": r["report_date_as_yyyy_mm_dd"][:10], "long": lo, "short": sh, "net": lo - sh,
+                         "oi": int(float(r.get("open_interest_all") or 0))})
+        ser = [dict(x) for x in full[-10:]]
+        nets = [x["net"] for x in full]
+        st = {"p1y": pctile(nets[-52:], nets[-1]), "p3y": pctile(nets, nets[-1]), "weeks_hist": len(nets),
+              "pct_oi": round(100.0 * full[-1]["net"] / full[-1]["oi"], 1) if full[-1]["oi"] else None,
+              "max3y": max(nets), "min3y": min(nets)}
         try:
-            _tag_prices(ser, _daily_closes(GRAIN_YF[k], 0.01), k)   # Yahoo grains are cents/bu
+            cl = _daily_closes(GRAIN_YF[k], 0.01, period="4y")   # Yahoo grains are cents/bu
+            _tag_prices(ser, cl, k)
+            st["basis"] = _fund_basis(full, _week_means([x["date"] for x in full], cl))
         except Exception as e:
             print(f"  {k} price tags failed:", e)
+        D["grains"][k]["cftc_stats"] = st
         D["grains"][k]["cftc"] = ser
         last = ser[-1]["date"]
     D["meta"]["asof"]["cftc_grains"] = last + "T15:30:00-04:00"
