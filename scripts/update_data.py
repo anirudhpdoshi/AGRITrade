@@ -585,6 +585,76 @@ def _transform(points, how):
     return out
 
 
+def _track(m, prev, pts_all):
+    """Keep 24 readings, note revisions to the prior period and when a new period first appeared (≈ release time)."""
+    m["hist24"] = [[_label(d, m["freq"]), round(v, m["dec"] + 1)] for d, v in pts_all]
+    if prev and prev.get("period") == m["period"]:
+        m["seen_at"] = prev.get("seen_at")
+        if prev.get("rev"):
+            m["rev"] = prev["rev"]
+    else:
+        m["seen_at"] = iso(NOW) if prev else None
+        if prev:
+            ph = dict((h[0], h[1]) for h in prev.get("hist24") or prev.get("history") or [])
+            lab = m["history"][-2][0] if len(m["history"]) > 1 else None
+            if lab in ph and abs(ph[lab] - m["prior"]) >= 10 ** (-m["dec"]) / 2:
+                m["rev"] = {"period": lab, "from": ph[lab], "to": m["prior"]}
+
+
+def ca_retail(D, N):
+    """Canada retail trade (StatCan 20-10-0056-01, seasonally adjusted): total and ex motor vehicle & parts dealers."""
+    meta = D["meta"]
+    last = meta.get("ca_retail_checked")
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=6):
+        print("  checked <6h ago — skipping")
+        return False
+    acc, dims = {}, {"naics": set(), "adj": set()}
+    for row in _sc_table(20100056):
+        if row.get("GEO") != "Canada":
+            continue
+        nai = next((row[c] for c in row if c.startswith("North American Industry")), "")
+        adj = row.get("Adjustments", "")
+        dims["naics"].add(nai); dims["adj"].add(adj)
+        if adj.lower() != "seasonally adjusted":
+            continue
+        n = nai.lower()
+        key = "ex" if n.startswith("retail trade") and "excluding motor vehicle" in n and "gasoline" not in n else \
+              "core" if n.startswith("retail trade") and "excluding" in n and "gasoline" in n and "motor vehicle" in n else \
+              "tot" if re.match(r"^retail trade \[44-45\]$", n) else None
+        v = _num(row.get("VALUE"))
+        if key and v is not None:
+            acc.setdefault(key, {})[row["REF_DATE"][:10] if len(row["REF_DATE"]) > 7 else row["REF_DATE"] + "-01"] = v
+    if not acc.get("tot"):
+        raise RuntimeError(f"no total retail line; NAICS seen: {sorted(dims['naics'])[:15]} adj: {sorted(dims['adj'])}"[:700])
+    old = {m["key"]: m for m in D.get("macro_extra", [])}
+    out = []
+    for key, name, k in (("ca_retail", "Retail sales", "tot"), ("ca_retail_ex", "Retail sales ex-autos", "ex"), ("ca_retail_core", "Retail ex gas & autos", "core")):
+        if k not in acc:
+            continue
+        raw = sorted(acc[k].items())
+        pts = _transform(raw, "pct")
+        pts_all = pts[-24:]
+        h = pts[-12:]
+        lvl = raw[-1][1] / 1e6     # thousands of dollars -> C$ billions
+        yoy = None
+        byd = dict(raw)
+        d0 = raw[-1][0]
+        base = byd.get(f"{int(d0[:4]) - 1}{d0[4:]}")
+        if base:
+            yoy = round((raw[-1][1] / base - 1) * 100, 2)
+        m = {"key": key, "name": name, "group": "ca", "unit": "%", "dec": 1, "good": "up", "freq": "M", "measure": "m/m",
+             "period": _label(h[-1][0], "M"), "obs_date": h[-1][0], "value": round(h[-1][1], 2), "prior": round(h[-2][1], 2),
+             "chg": round(h[-1][1] - h[-2][1], 2), "history": [[_label(d, "M"), round(v, 2)] for d, v in h],
+             "level_b": round(lvl, 2), "yoy": yoy, "src": "Statistics Canada 20-10-0056-01"}
+        _track(m, old.get(key), pts_all)
+        out.append(m)
+    D["macro_extra"] = out
+    meta["ca_retail_checked"] = iso(NOW)
+    meta["asof"]["ca_retail"] = iso(NOW)
+    print("  ca_retail:", [(m["key"], m["period"], m["value"]) for m in out])
+    return True
+
+
 def macro(D, N):
     meta = D["meta"]
     last = meta.get("macro_checked")
@@ -617,6 +687,7 @@ def macro(D, N):
                         me[d[:7]] = (d, v)
                     lp = [me[m] for m in sorted(me)]
                 longp = [[d[:10], round(v, dec + 1)] for d, v in lp[-(24 if fq == "Q" else 72):]]
+            pts_all = pts[-24:]
             pts = pts[-12:]
             if len(pts) < 2:
                 raise RuntimeError("too few transformed points")
@@ -629,6 +700,7 @@ def macro(D, N):
                         "src": {"fred": "FRED", "valet": "Bank of Canada Valet", "statcan": "Statistics Canada"}[src] + f" {sid}"})
             if longp:
                 out[-1]["long"] = longp
+            _track(out[-1], old.get(key), pts_all)
             if key in ("ca_gdpq", "us_policy", "ca_policy"):
                 out[-1]["chart_only"] = True
         except Exception as e:
@@ -1438,7 +1510,7 @@ def canada(D, N):
 
 BLOCKS = [("fx_spot", fx_spot), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external)]
+          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail)]
 
 
 def main():
