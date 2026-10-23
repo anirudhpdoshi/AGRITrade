@@ -261,12 +261,12 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .dash-card .kpi-spark{display:block;width:100%;height:26px;margin-top:8px}
 .tile-head{flex-wrap:wrap;row-gap:6px}
 .sub{display:contents}.sub:not(.on){display:none}
-.cockpit{grid-template-columns:repeat(6,1fr)!important}.cockpit-h{grid-column:1/-1;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);padding:2px 4px 6px}
+.cockpit{grid-template-columns:repeat(3,1fr)!important}.cockpit .kpi-s,.cockpit .kpi-k{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}.cockpit .kpi{border-bottom:1px solid var(--line)}.cockpit-h{grid-column:1/-1;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);padding:2px 4px 6px}
 .cockpit .kpi-s{line-height:1.55}
-.vol-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.vol-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.vol-grid .mini-kv span:first-child{min-width:112px}
 .oi-row{display:grid;grid-template-columns:64px 1fr 1fr;gap:8px;align-items:center;font-family:"IBM Plex Mono",monospace;font-size:11.5px;margin:2px 0}
 .oi-cell{position:relative;height:16px;background:rgba(255,255,255,.03);border-radius:3px}.oi-bar{position:absolute;left:0;top:2px;height:12px;border-radius:2px}.oi-bar.pos{background:#3fb97f}.oi-bar.neg{background:#e0655f}.oi-v{position:absolute;left:6px;top:0;line-height:16px;color:#e8eef4}
-@media (max-width:1020px){.cockpit{grid-template-columns:repeat(3,1fr)!important}.vol-grid{grid-template-columns:1fr}}
+@media (max-width:1020px){.cockpit{grid-template-columns:repeat(2,1fr)!important}.vol-grid{grid-template-columns:1fr}}
 @media (max-width:760px){.cockpit{grid-template-columns:1fr 1fr!important}}
 .subnav-tile{padding:10px 12px}
 .subnav-live{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.7}
@@ -1036,7 +1036,7 @@ function cftcSVG(series, opt){
     s+='<path d="'+pp+'" fill="none" stroke="#e8a33d" stroke-width="2" stroke-dasharray="6 3"/>';
     if(opt.basis&&opt.basis.avg_entry){ var by=PY(opt.basis.avg_entry).toFixed(1);
       s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+by+'" y2="'+by+'" stroke="#c084fc" stroke-width="1.4" stroke-dasharray="3 3"/>';
-      s+='<rect x="'+(PL+4)+'" y="'+(by-13)+'" width="172" height="13" rx="2" fill="#0d141f" opacity="0.9"/><text x="'+(PL+8)+'" y="'+(by-3)+'" fill="#d8b4fe" font-size="9.5" font-weight="600" font-family="IBM Plex Mono">FUNDS EST. AVG ENTRY '+pf(opt.basis.avg_entry)+'</text>'; }
+    }
     series.forEach(function(r,i){ if(r.px==null) return; s+='<rect x="'+(CX(i)-3.5).toFixed(1)+'" y="'+(PY(r.px)-3.5).toFixed(1)+'" width="7" height="7" transform="rotate(45 '+CX(i).toFixed(1)+' '+PY(r.px).toFixed(1)+')" fill="#e8a33d"/>'; });
     series.forEach(function(r,i){ if(r.px==null) return;
       var c=r.px_chg, col=c==null?'#c9d6e6':c>0?'#5fd598':c<0?'#ff9d97':'#8494ab', arr=c==null?'':c>0?'\u25b2':c<0?'\u25bc':'\u25b8';
@@ -1047,7 +1047,7 @@ function cftcSVG(series, opt){
   series.forEach(function(r,i){
     s+='<text x="'+CX(i).toFixed(1)+'" y="'+dateY+'" fill="#8494ab" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+fmtShortDate(r.date)+'</text>';
   });
-  s+='<text x="'+PL+'" y="'+(dateY+17)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">'+(hasPx?'REPORT DATES \u00b7 WHITE = NET TREND':'WEEKLY REPORT DATES \u00b7 WHITE LINE = TREND ACROSS THE '+series.length+' WEEKLY NETS')+(hasPx?' \u00b7 AMBER = '+(useMean?'REPORT-WEEK AVG':'PRICE')+' (RIGHT)':'')+'</text>';
+  s+='<text x="'+PL+'" y="'+(dateY+17)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">'+(hasPx?'REPORT DATES \u00b7 WHITE = NET TREND':'WEEKLY REPORT DATES \u00b7 WHITE LINE = TREND ACROSS THE '+series.length+' WEEKLY NETS')+(hasPx?' \u00b7 AMBER = '+(useMean?'REPORT-WEEK AVG':'PRICE')+' (RIGHT)':'')+(hasPx&&opt.basis&&opt.basis.avg_entry?' \u00b7 PURPLE = FUNDS EST. AVG ENTRY '+(opt.pfmt||function(v){ return '$'+v.toFixed(2); })(opt.basis.avg_entry):'')+'</text>';
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Managed money net position by week, every bar labeled with its net value and report date, with a trend line connecting the weekly nets">'+s+'</svg>';
 }
 
@@ -1897,7 +1897,8 @@ function volTermHTML(key){
   var hist=H.length>=5?lineChartSVG({series:[{pts:H.map(function(x){ return [x[0],x[1]]; }),color:'#38b6c9',label:'Near IV'},{pts:H.map(function(x){ return [x[0],x[2]]; }),color:'#c084fc',label:'Far IV'},{pts:H.map(function(x){ return [x[0],x[3]]; }),color:'#e8a33d',label:'HV30'}],yLabel:'Vol (%)',dec:1,H:190}):
     '<p class="note">Daily IV history starts '+esc(H.length?H[0][0]:'today')+' and builds with each 10:52 ET options run ('+H.length+' of 5 sessions needed for the line chart).</p>';
   var term=V.far.iv-V.near.iv;
-  var sk=S?'<div class="mini-kv"><span>Risk reversal</span><b class="'+cls(S.rr)+'">'+sgn(S.rr,2,' pts')+'</b> '+(S.rr>0?'calls richer — upside priced':'puts richer — downside protection bid')+'</div>'+
+  var rrz=S&&Math.abs(S.rr)<0.05;
+  var sk=S?'<div class="mini-kv"><span>Risk reversal</span><b class="'+(rrz?'neu':cls(S.rr))+'">'+(rrz?'0.0 pts':sgn(S.rr,2,' pts'))+'</b> '+(rrz?'balanced \u2014 puts and calls priced alike':S.rr>0?'calls richer \u2014 upside priced':'puts richer \u2014 downside protection bid')+'</div>'+
     '<div class="mini-kv"><span>Butterfly</span><b>'+sgn(S.bf,2,' pts')+'</b> '+(S.bf>1?'wings rich — big moves priced':'wings modest')+'</div>'+
     '<div class="dsub">±1σ strikes to expiry: put '+fmt(S.kp,2)+' @ '+fmt(S.put,1)+'% · call '+fmt(S.kc,2)+' @ '+fmt(S.call,1)+'% vs ATM '+fmt(S.atm,1)+'%'+(S.clamp?' (edge of pulled strikes)':'')+'</div>':'';
   return '<div class="tile wide" data-src="options"><h2>Volatility — term structure, realized vs implied, skew <span class="h2note">— '+esc(V.src)+'</span></h2>'+
