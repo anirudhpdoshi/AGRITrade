@@ -1016,6 +1016,103 @@ def sd_hist(D, N):
     return True
 
 
+# ------------------------------------------------------------------ farm input costs (fertilizer, chemicals, energy)
+INPUT_FRED = [
+    # key, label, FRED id, unit, kind
+    ("ulsd", "Diesel (ULSD, NY Harbor)", "DDFUELNYH", "$/gal", "energy"),
+    ("natgas", "Natural gas (Henry Hub)", "DHHNGSP", "$/MMBtu", "energy"),
+    ("propane", "Propane (Mont Belvieu)", "DPROPANEMBTX", "$/gal", "energy"),
+    ("wti", "Crude oil (WTI)", "DCOILWTICO", "$/bbl", "energy"),
+    ("ppi_n", "Nitrogen fertilizer PPI (nitrogenates)", "WPU065201", "index", "fert"),
+    ("ppi_p", "Phosphate fertilizer PPI", "WPU065202", "index", "fert"),
+    ("ppi_fert", "All fertilizer materials PPI", "WPS0652", "index", "fert"),
+    ("ppi_chem", "Pesticide & ag-chemical PPI (herbicides, fungicides)", "PCU325320325320", "index", "chem"),
+]
+WB_COLS = {"urea": ("Urea", r"^urea"), "dap": ("DAP", r"^dap"), "potash": ("Potash (potassium chloride)", r"^potassium chloride"),
+           "tsp": ("TSP (triple superphosphate)", r"^tsp")}
+
+
+def _weekly(points):
+    """Daily -> last observation of each ISO week (keeps 2+ years small)."""
+    wk = {}
+    for d, v in points:
+        y, w, _ = datetime.fromisoformat(d).isocalendar()
+        wk[(y, w)] = (d, v)
+    return [wk[k] for k in sorted(wk)]
+
+
+def _worldbank_monthly():
+    """World Bank 'Pink Sheet' monthly prices workbook (urea, DAP, potash, TSP in $/mt); the file URL changes monthly, so discover it."""
+    import openpyxl
+    page = get("https://www.worldbank.org/en/research/commodity-markets").text
+    m = re.search(r'href="([^"]+CMO-Historical-Data-Monthly\.xlsx)"', page)
+    if not m:
+        raise RuntimeError("monthly workbook link not found on the World Bank page")
+    url = m.group(1) if m.group(1).startswith("http") else "https://www.worldbank.org" + m.group(1)
+    wb = openpyxl.load_workbook(io.BytesIO(requests.get(url, headers=UA, timeout=90).content), read_only=True, data_only=True)
+    ws = wb["Monthly Prices"]
+    rows = list(ws.iter_rows(values_only=True))
+    hdr_i = next(i for i, r_ in enumerate(rows[:12]) if r_ and any(isinstance(c, str) and c.strip().lower().startswith("urea") for c in r_))
+    hdr = [str(c or "").strip() for c in rows[hdr_i]]
+    cols = {}
+    for key, (_, pat) in WB_COLS.items():
+        ci = next((i for i, h in enumerate(hdr) if re.search(pat, h.lower())), None)
+        if ci is not None:
+            cols[key] = ci
+    out = {k: [] for k in cols}
+    for r_ in rows[hdr_i + 1:]:
+        lab = str(r_[0] or "")
+        mm = re.match(r"^(\d{4})M(\d{2})$", lab)
+        if not mm:
+            continue
+        d = f"{mm.group(1)}-{mm.group(2)}-01"
+        for k, ci in cols.items():
+            v = _num(r_[ci]) if ci < len(r_) else None
+            if v is not None:
+                out[k].append((d, v))
+    return out, url
+
+
+def inputs(D, N):
+    meta = D["meta"]
+    last = meta.get("inputs_checked")
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=12) and D.get("inputs"):
+        print("  checked <12h ago — skipping")
+        return False
+    start = (NOW - timedelta(days=31 * 30)).date().isoformat()     # ~2.5 years
+    I = {"series": {}, "errors": {}}
+    for key, label, sid, unit, kind in INPUT_FRED:
+        try:
+            pts = _fred(sid, start)
+            if len(pts) < 10:
+                raise RuntimeError("too few points")
+            if (datetime.fromisoformat(pts[1][0]) - datetime.fromisoformat(pts[0][0])).days < 7:
+                pts = _weekly(pts)
+            I["series"][key] = {"label": label, "unit": unit, "kind": kind, "src": f"FRED {sid}", "pts": [[d[:10], round(v, 4)] for d, v in pts]}
+        except Exception as e:
+            I["errors"][key] = f"{type(e).__name__}: {e}"[:200]
+    try:
+        wbm, url = _worldbank_monthly()
+        for key, pts in wbm.items():
+            pts = [p for p in pts if p[0] >= start]
+            if len(pts) >= 6:
+                I["series"][key] = {"label": WB_COLS[key][0], "unit": "$/mt", "kind": "fert", "src": "World Bank Pink Sheet", "pts": [[d, round(v, 2)] for d, v in pts]}
+        I["wb_url"] = url
+    except Exception as e:
+        I["errors"]["worldbank"] = f"{type(e).__name__}: {e}"[:300]
+    if not I["series"]:
+        raise RuntimeError(f"no input series: {I['errors']}")
+    old = D.get("inputs") or {}
+    for k, v in (old.get("series") or {}).items():       # keep last good copy of anything that failed today
+        I["series"].setdefault(k, v)
+    I["events"] = old.get("events", [])                    # curated, sourced event labels (edited by hand)
+    D["inputs"] = I
+    meta["inputs_checked"] = iso(NOW)
+    meta["asof"]["inputs"] = iso(NOW)
+    print("  inputs:", sorted(I["series"]), "errors:", I["errors"])
+    return True
+
+
 # ------------------------------------------------------------------ Canada / Ontario (Statistics Canada)
 SC_CROP = {"corn": r"^corn for grain", "soybeans": r"^soybeans?$|^soybeans? \[", "wheat": r"^wheat, all"}
 SC_PRICE = {"corn": r"^corn", "soybeans": r"^soybean", "wheat": r"^(ontario )?(winter )?wheat(?!.*including payments)"}
@@ -1236,7 +1333,7 @@ def canada(D, N):
 
 BLOCKS = [("fx_spot", fx_spot), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist)]
+          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs)]
 
 
 def main():
