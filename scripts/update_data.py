@@ -1145,7 +1145,7 @@ def _ca_fiscal(old):
         while m <= 0:
             m += 12; y -= 1
         key = f"{y}-{m:02d}"
-        if key in mon and back > 4:
+        if key in mon and back > 4 and key in ((old or {}).get("components") or {}):
             continue
         try:
             r_ = requests.get(f"https://www.canada.ca/en/department-finance/services/publications/fiscal-monitor/{y}/{m:02d}.html", headers=UA, timeout=25)
@@ -1187,35 +1187,43 @@ def _ca_fiscal(old):
 
 
 def _fm_components(html):
-    """Monthly revenues / program expenses / public debt charges (C$ billions) from the Fiscal Monitor summary table:
-    columns are [label, month prior year, month current year, YTD prior, YTD current]; the header names the month."""
+    """Monthly revenues / program expenses / public debt charges / actuarial losses (C$ billions, expenses positive) from the
+    Fiscal Monitor 'Summary statement of transactions'. Header is split in two rows: month name (e.g. 'June') above the years
+    ('2025' | '2026' | '2025-26' | '2026-27'); data columns = [month prior yr, month current yr, YTD prior, YTD current]."""
     import html as _h
     out = {}
     for tb in re.findall(r"(?is)<table.*?</table>", html):
-        cap = _strip_html(tb[:600])
-        mm_ = re.findall(r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})", cap)
-        best = max(mm_, key=lambda t: (int(t[1]), MONTHS_FULL.index(t[0]))) if mm_ else None
         rows = []
         for tr in re.findall(r"(?is)<tr.*?</tr>", tb):
-            cells = [_h.unescape(re.sub(r"<[^>]+>", " ", c)).strip() for c in re.findall(r"(?is)<t[hd][^>]*>(.*?)</t[hd]>", tr)]
+            cells = [re.sub(r"\s+", " ", _h.unescape(re.sub(r"<[^>]+>", " ", c))).strip() for c in re.findall(r"(?is)<t[hd][^>]*>(.*?)</t[hd]>", tr)]
             if cells:
                 rows.append(cells)
-        if not best or not any(c and c[0].lower().startswith("budgetary balance") for c in rows):
+        if not any(c and c[0].lower().startswith("budgetary balance (deficit") for c in rows):
             continue
-        key = f"{best[1]}-{MONTHS_FULL.index(best[0]) + 1:02d}"
-        rec = {}
+        head = " ".join(" ".join(c) for c in rows[:3]) + " " + _strip_html(tb[:500])
+        mname = next((m_ for m_ in re.findall(r"(January|February|March|April|May|June|July|August|September|October|November|December)", head)), None)
+        years = [int(y) for y in re.findall(r"\b(20\d\d)\b(?!-)", head)]
+        if not mname or not years:
+            continue
+        cur_y = max(years)
+        rec_c, rec_p = {}, {}
         for c in rows:
-            lab = re.sub(r"\s+", " ", c[0]).lower()
-            nums = [_num(x.replace(",", "").replace("\u2212", "-").replace("–", "-")) for x in c[1:]]
-            if len(nums) < 2 or nums[1] is None:
+            lab = c[0].lower()
+            nums = [_num(x.replace(",", "").replace("\u2212", "-").replace("\u2013", "-")) for x in c[1:]]
+            k = ("rev" if lab.startswith("revenues") else "prog" if lab.startswith("program expenses") else
+                 "debt" if lab.startswith("public debt charges") else "act" if lab.startswith("net actuarial") else
+                 "bal" if lab.startswith("budgetary balance (deficit") else None)
+            if not k or len(nums) < 2:
                 continue
-            k = "rev" if lab.startswith("revenues") else "prog" if lab.startswith("program expenses") else \
-                "debt" if lab.startswith("public debt charges") else "act" if "actuarial" in lab else "bal" if lab.startswith("budgetary balance") else None
-            if k and k not in rec:
-                rec[k] = round(nums[1] / 1000, 3)
-        if "rev" in rec and "bal" in rec:
-            out[key] = rec
-            break
+            for rec, v in ((rec_p, nums[0]), (rec_c, nums[1])):
+                if v is not None and k not in rec:
+                    rec[k] = round((abs(v) if k in ("prog", "debt", "act") else v) / 1000, 3)
+        mi = MONTHS_FULL.index(mname) + 1
+        if "rev" in rec_c and "bal" in rec_c:
+            out[f"{cur_y}-{mi:02d}"] = rec_c
+        if "rev" in rec_p and "bal" in rec_p:
+            out[f"{cur_y - 1}-{mi:02d}"] = rec_p
+        break
     return out
 
 

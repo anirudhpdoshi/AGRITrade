@@ -2223,6 +2223,7 @@ function extTip(key, ym, prevYm, ccy){
   else if(key==='ca_fiscal_series'){ var F=DATA.ext.ca_fiscal||{}, c=(F.components||{})[ym];
     b=c?tipRow('Revenues',c.rev,ccy)+tipRow('− Program expenses',c.prog,ccy)+tipRow('− Public debt charges',c.debt,ccy)+(c.act!=null?tipRow('− Net actuarial losses',c.act,ccy):''):'<div class="bt-sub">revenue / expense split not available for this month</div>';
     b+=tipRow('= Budgetary balance',extAt('ca_fiscal_series',ym),ccy,true);
+    if(c&&c.rev!=null) b+='<div class="bt-math">'+fmt(c.rev,2)+' \u2212 '+fmt(c.prog||0,2)+' \u2212 '+fmt(c.debt||0,2)+(c.act?' \u2212 '+fmt(c.act,2):'')+' = <b>'+(c.bal<0?'\u2212':'')+fmt(Math.abs(c.bal),2)+'</b> C$B</div>';
     if(F.notes&&F.notes_ref===ym) b+='<div class="bt-note">'+F.notes.map(esc).join('<br>')+'</div>'; }
   var cur=extAt(key,ym), pv=prevYm?extAt(key,prevYm):null;
   if(cur!=null&&pv!=null) b+='<div class="bt-chg">vs prior month: <b class="'+cls(cur-pv)+'">'+sgn(cur-pv,1,'B')+'</b></div>';
@@ -2289,9 +2290,12 @@ function flowComboSVG(o){
 function flowPanel(kind){
   var cfg={us_trade:{bal:'us_trade_bal',inK:'us_exports',outK:'us_imports',ccy:'$',title:'US trade: exports vs imports',inL:'Exports',outL:'Imports',inS:'EXP',outS:'IMP',top:'EXPORTS vs IMPORTS',bot:'TRADE BALANCE = EXPORTS − IMPORTS'},
            ca_trade:{bal:'ca_trade_bal',inK:'ca_exports',outK:'ca_imports',ccy:'C$',title:'Canada trade: exports vs imports',inL:'Exports',outL:'Imports',inS:'EXP',outS:'IMP',top:'EXPORTS vs IMPORTS',bot:'TRADE BALANCE = EXPORTS − IMPORTS'},
+           ca_fiscal:{bal:'ca_fiscal_series',inK:'ca_rev_series',outK:'ca_exp_series',ccy:'C$',title:'Canada federal budget: revenues vs expenses',inL:'Revenues',outL:'Expenses',inS:'REV',outS:'EXP',top:'REVENUES vs TOTAL EXPENSES',bot:'BUDGETARY BALANCE = REVENUES \u2212 EXPENSES'},
            us_fiscal:{bal:'us_deficit',inK:'us_receipts',outK:'us_outlays',ccy:'$',title:'US federal budget: receipts vs outlays',inL:'Receipts',outL:'Outlays',inS:'REC',outS:'OUT',top:'RECEIPTS vs OUTLAYS',bot:'BUDGET BALANCE = RECEIPTS − OUTLAYS'}}[kind];
   var B=extSeries(cfg.bal), I=extSeries(cfg.inK), O=extSeries(cfg.outK); if(!B||!I||!O) return '';
-  var months=B.pts.slice(-24).map(function(p){ return p[0]; });
+  var first=B.pts[0][0], lastm=B.pts[B.pts.length-1][0], months=[], yy=+first.slice(0,4), mm=+first.slice(5,7);
+  while(true){ var ym=yy+'-'+String(mm).padStart(2,'0'); months.push(ym); if(ym>=lastm) break; mm++; if(mm>12){ mm=1; yy++; } }
+  months=months.slice(-24);
   var iv=months.map(function(m){ return extAt(cfg.inK,m); }), ov=months.map(function(m){ return extAt(cfg.outK,m); }), bv=months.map(function(m){ return extAt(cfg.bal,m); });
   var tips=months.map(function(m,i){ return extTip(cfg.bal, m, i?months[i-1]:null, cfg.ccy); });
   var L=months.length-1, fi=olsFit(iv), fo=olsFit(ov);
@@ -2307,6 +2311,9 @@ function tradeFiscalHTML(){
   var X=DATA.ext; if(!X) return '<div class="tile wide"><h2>Trade &amp; fiscal balances</h2><p class="note">US and Canada trade and deficit data load on the next refresh.</p></div>';
   var cf=X.ca_fiscal, showUS=MGEO!=='ca', showCA=MGEO!=='us';
   if(cf&&cf.monthly&&!X.ca_fiscal_series) X.ca_fiscal_series={src:'Finance Canada, Fiscal Monitor', pts:cf.monthly};
+  if(cf&&cf.components&&Object.keys(cf.components).length>=3&&!X.ca_rev_series){ var ck=Object.keys(cf.components).sort();
+    X.ca_rev_series={src:'Finance Canada, Fiscal Monitor', pts:ck.map(function(k){ return [k, cf.components[k].rev]; })};
+    X.ca_exp_series={src:'Finance Canada, Fiscal Monitor', pts:ck.map(function(k){ var c=cf.components[k]; return [k, +((c.prog||0)+(c.debt||0)+(c.act||0)).toFixed(3)]; })}; }
   var usDef=X.us_deficit, us12=usDef&&usDef.pts.length>=12?usDef.pts.slice(-12).reduce(function(a,p){ return a+p[1]; },0):null;
   var head='<tr><th>Series</th><th>Latest</th><th>Prior</th><th>Net change</th><th>1 yr ago</th><th>2-yr trend</th><th>Next release</th></tr>';
   var us=showUS?'<h3 class="m-h">United States <span class="chip inline">USD</span> '+flag('us',15)+'</h3><div class="tbl-scroll"><table class="sd-tbl cmp-tbl ext-tbl">'+head+
@@ -2317,7 +2324,7 @@ function tradeFiscalHTML(){
       extRow('Federal budgetary balance (monthly)','ca_fiscal_series','B','C$','ca_fiscal',true)+'</table></div>'+
       (cf&&cf.ytd?'<div class="mini-kv"><span>Fiscal year to date</span><b class="'+cls(cf.ytd.value)+'">'+money('C$',cf.ytd.value)+'</b> '+esc(cf.ytd.period)+(cf.ytd.prior!=null?' vs '+money('C$',cf.ytd.prior)+' a year earlier':'')+'</div>':''):'';
   var charts=(showUS?(flowPanel('us_trade')||extBars('us_trade_bal','US trade balance','$'))+(flowPanel('us_fiscal')||extBars('us_deficit','US federal budget balance','$')):'')+
-    (showCA?(flowPanel('ca_trade')||extBars('ca_trade_bal','Canada trade balance','C$'))+extBars('ca_fiscal_series','Canada federal budgetary balance','C$'):'');
+    (showCA?(flowPanel('ca_trade')||extBars('ca_trade_bal','Canada trade balance','C$'))+(flowPanel('ca_fiscal')||extBars('ca_fiscal_series','Canada federal budgetary balance','C$')):'');
   var errs=X.errors&&Object.keys(X.errors).length?' · waiting on: '+Object.keys(X.errors).join(', '):'';
   return '<div class="tile wide" data-src="ext"><div class="tile-head"><h2>Trade &amp; fiscal balances <span class="h2note">— exports, imports, deficits · 2-year trend · next release</span></h2></div>'+us+ca+
     '<div class="mpanels'+(MGEO==='both'?'':' one')+'">'+charts+'</div>'+
