@@ -261,6 +261,11 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .dash-card .kpi-spark{display:block;width:100%;height:26px;margin-top:8px}
 .tile-head{flex-wrap:wrap;row-gap:6px}
 .sub{display:contents}.sub:not(.on){display:none}
+.flag{display:inline-block;vertical-align:-2px;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.18);flex:none}
+.has-flag{position:relative}.cflag{position:absolute;top:10px;right:12px;line-height:0}
+.mcard.has-flag .mk{padding-right:36px}.mpanel.has-flag .mp-h{padding-right:40px}
+.mdc-top{position:relative}.mdc-flag{position:absolute;right:34px;top:0;line-height:0}.mdc-ttl{padding-right:110px!important}
+.toggle button .flag{vertical-align:-1px}
 .evm{cursor:pointer;outline:none}.evm:hover .evc,.evm.act .evc,.evm:focus .evc{fill:#e8b93d;stroke:#e8b93d}.evm.act line,.evm:hover line{stroke:#e8b93d;stroke-dasharray:none}
 #evpop{position:absolute;z-index:9500;display:none;background:#13213a;border:1px solid #e8b93d;border-radius:10px;padding:12px 14px;box-shadow:0 12px 34px rgba(0,0,0,.55);font-size:13px;color:#c9d6e6}
 #evpop.on{display:block}#evpop.pinned{box-shadow:0 0 0 2px rgba(232,185,61,.35),0 12px 34px rgba(0,0,0,.55)}
@@ -865,7 +870,7 @@ function exportTileHTML(key){
       '<div class="kv"><span class="kk">Spread — actual minus consensus midpoint</span><span class="vv"><span class="'+cls(cspread)+'">'+sgn(cspread,0)+' MT ('+sgn(cspct,1,'%')+')</span></span></div>'+
       '<div class="kv"><span class="kk">Verdict vs the range</span><span class="vv"><span class="chip '+chipCls+'">'+verdict+'</span></span></div></div>'
     : '';
-  return '<div class="tile wide"><h2>Export Sales — 10-week trend <span class="h2note">USDA FAS · weekly net sales · current marketing year</span></h2>'+
+  return '<div class="tile wide"><h2>'+flag('us',15)+' Export Sales — 10-week trend <span class="h2note">USDA FAS · weekly net sales · current marketing year</span></h2>'+
     '<div class="es-head"><div class="k">Latest release · week ending '+fmtDate(latest[0])+' · released '+fmtDate(latest[1])+'</div>'+
     '<div class="es-big">Latest actual (w/e '+fmtShortDate(latest[0])+'): '+fmtFullMT(latest[2])+' <span class="chip '+chipCls+'">'+verdict+'</span></div>'+
     '<p class="read" style="margin-top:4px">'+vline+'</p></div>'+ consBlock +
@@ -1469,7 +1474,7 @@ function wasdeTableHTML(key){
   var st=dstate(key), c=w[st.crop];
   var rows=c.rows.map(function(r){ var bold=/^(Production|Total Supply|Total Use|Ending Stocks)$/.test(r[0]);
     return '<tr'+(bold?' class="sd-key"':'')+'><td class="lbl" data-l="">'+esc(r[0])+'</td><td data-l="'+esc(w.prior_report)+'">'+fmtSD(r[0],r[1])+'</td><td data-l="'+esc(w.report)+'"><b>'+fmtSD(r[0],r[2])+'</b></td><td data-l="Change">'+chgSD(r[0],r[1],r[2])+'</td></tr>'; }).join('');
-  return '<div class="tile wide" data-src="wasde"><div class="tile-head"><h2>US '+GMETA[key].name+' supply &amp; demand <span class="h2note">— USDA WASDE '+esc(w.report)+' (vs '+esc(w.prior_report)+')</span></h2>'+
+  return '<div class="tile wide" data-src="wasde"><div class="tile-head"><h2>'+flag('us',15)+' US '+GMETA[key].name+' supply &amp; demand <span class="h2note">— USDA WASDE '+esc(w.report)+' (vs '+esc(w.prior_report)+')</span></h2>'+
     '<span class="toggle" role="group"><button data-dash="'+key+'" data-k="crop" data-v="new" aria-pressed="'+(st.crop==='new')+'">NEW CROP '+esc(w.new.my)+'</button><button data-dash="'+key+'" data-k="crop" data-v="old" aria-pressed="'+(st.crop==='old')+'">OLD CROP '+esc(w.old.my)+'</button></span></div>'+
     '<div class="dk" style="margin:4px 0 2px">Change vs '+esc(w.prior_report)+' · mil bu</div>'+divBarsHTML(c.rows.filter(function(r){ return /^(Production|Total Supply|Exports|Total Use|Ending Stocks)$/.test(r[0]) && r[1]!=null && r[2]!=null; }).map(function(r){ return [r[0], r[2]-r[1]]; }),0)+
     '<table class="sd-tbl"><thead><tr><th>Line item</th><th>'+esc(w.prior_report)+'</th><th>'+esc(w.report)+'</th><th>Change</th></tr></thead><tbody>'+rows+'</tbody></table>'+
@@ -1509,7 +1514,7 @@ function destTileHTML(key){
   var st=dstate(key), d=destRows(key), E=(DATA.exports&&DATA.exports[key])||EXPORT[key];
   var wk=d?fmtDate(d.ds.week):fmtDate(E.weeks[E.weeks.length-1][0]);
   var tot=d?(st.basis==='week'?d.ds.total.net:d.ds.total.commit):null;
-  return '<div class="tile wide" data-src="exports"><div class="tile-head"><h2>Export destinations <span class="h2note">— USDA export sales, week ending '+wk+(tot!=null?' · '+(st.basis==='week'?'net sales ':'MY commitments ')+fmt(Math.round(tot/1000))+'k MT':'')+'</span></h2>'+
+  return '<div class="tile wide" data-src="exports"><div class="tile-head"><h2>'+flag('us',15)+' Export destinations <span class="h2note">— USDA export sales, week ending '+wk+(tot!=null?' · '+(st.basis==='week'?'net sales ':'MY commitments ')+fmt(Math.round(tot/1000))+'k MT':'')+'</span></h2>'+
     '<span class="toggle" role="group"><button data-dash="'+key+'" data-k="basis" data-v="week" aria-pressed="'+(st.basis==='week')+'">THIS WEEK</button><button data-dash="'+key+'" data-k="basis" data-v="my" aria-pressed="'+(st.basis==='my')+'">MARKETING YEAR</button></span>'+
     '<span class="toggle" role="group"><button data-dash="'+key+'" data-k="view" data-v="map" aria-pressed="'+(st.view==='map')+'">MAP</button><button data-dash="'+key+'" data-k="view" data-v="table" aria-pressed="'+(st.view==='table')+'">TABLE</button></span></div>'+
     (st.view==='map'?'<div class="dest-map" id="destmap-'+key+'" data-grain="'+key+'"><div class="note">Loading map…</div></div>':destTableHTML(key))+
@@ -1691,7 +1696,7 @@ function canadaTileHTML(key, embedded){
   var C=DATA.canada&&DATA.canada[key]; if(!C||!C.annual) return '';
   var st=caState(key), b=function(k,v,lab){ return '<button data-dash="'+key+'" data-k="'+k+'" data-v="'+v+'" aria-pressed="'+(st[k]===v)+'">'+lab+'</button>'; };
   var y=new Date().getFullYear(), A=C.annual[st.ca_geo], latest=A&&A.years[A.years.length-1];
-  return '<div class="tile wide" data-src="canada"><div class="tile-head"><h2>'+(st.ca_geo==='Canada'?'Canada':'Canada · Ontario')+' '+GMETA[key].name.toLowerCase()+' <span class="h2note">— Statistics Canada official estimates'+(st.ca_view==='years'?' · last 10 crop years':'')+'</span></h2>'+
+  return '<div class="tile wide" data-src="canada"><div class="tile-head"><h2>'+flag('ca',15)+' '+(st.ca_geo==='Canada'?'Canada':'Canada · Ontario')+' '+GMETA[key].name.toLowerCase()+' <span class="h2note">— Statistics Canada official estimates'+(st.ca_view==='years'?' · last 10 crop years':'')+'</span></h2>'+
     (embedded?'':'<span class="toggle" role="group">'+b('ca_geo','Ontario','ONTARIO')+b('ca_geo','Canada','CANADA')+'</span>')+
     '<span class="toggle" role="group">'+b('ca_view','avg','HISTORICAL AVERAGES')+b('ca_view','years','YEAR BY YEAR')+'</span>'+
     '<span class="toggle" role="group">'+b('ca_unit','imp','BU · AC')+b('ca_unit','met','T · HA')+'</span></div>'+
@@ -1753,7 +1758,7 @@ function caCalendarHTML(){
     return '<div class="kv'+(past?' ev-past':'')+'" title="'+esc(e.quote||'')+'"><span class="kk">'+etLabel(e.t,true)+' · '+esc(e.label)+' <span class="chip inline">'+(e.src==='ca'&&/StatCan/.test(e.label)?'STATCAN':'AAFC')+'</span>'+(past?' <span class="chip inline">'+(/AAFC/.test(e.label)&&C.report&&C.report<new Date(e.t).toISOString().slice(0,10)?'AWAITING POST':'OUT')+'</span>':'')+'</span>'+
       '<span class="vv">'+(past?'':'<span class="countdown" data-t="'+e.t+'">'+cdText(e.t-now)+'</span>')+'</span></div>'; }).join('')||'<div class="checkline">No dated Canadian releases announced yet.</div>';
   var nr=m.canada_new_release;
-  return '<div class="tile wide" data-src="ca_calendar"><h2>Canada &amp; Ontario agri calendar <span class="h2note">— dates taken from AAFC’s latest Outlook ('+esc(C.report||'n/a')+') · StatCan tables watched for new releases</span></h2>'+rows+
+  return '<div class="tile wide" data-src="ca_calendar"><h2>'+flag('ca',15)+' Canada &amp; Ontario agri calendar <span class="h2note">— dates taken from AAFC’s latest Outlook ('+esc(C.report||'n/a')+') · StatCan tables watched for new releases</span></h2>'+rows+
     '<div class="mini-kv" style="margin-top:8px"><span>Release watch</span><b>'+(m.canada_watch?'checked '+esc(asOf('canada',true)):'starts on the next refresh')+'</b>'+(nr?' · last new StatCan data '+esc(new Date(nr.at).toLocaleString('en-US',{timeZone:'America/Toronto',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+' ET ('+esc(nr.tables.join(', '))+')':'')+'</div>'+
     '<div class="stamp">The updater checks Statistics Canada’s table metadata on every 15-minute run (8:30 ET release days included) and re-pulls tables 32-10-0359 / 0077 / 0007 the moment their release time changes · AAFC dates parsed from <a href="'+safeUrl(C.report_url||'https://agriculture.canada.ca/en/sector/crops/reports-statistics')+'" target="_blank" rel="noopener">the Outlook report</a>; hover a row for the source sentence</div></div>';
 }
@@ -1827,12 +1832,12 @@ function macroLinePanel(m, opt){
   if(opt.target!=null) refs.push({v:opt.target,label:'Target',color:'#8494ab',dash:'2 3'});
   [[24,'2Y avg','#e8a33d'],[36,'3Y avg','#c084fc'],[60,'5Y avg','#5fd598']].forEach(function(a){ var v=trailAvg(pts,a[0]); if(v!=null) refs.push({v:+v.toFixed(2),label:a[1],color:a[2]}); });
   var head=opt.headline(last, m);
-  return '<div class="mpanel"><h3 class="mp-h mk-click" data-mkey="'+m.key+'" title="Click for the full breakdown">'+head+' <span class="h2note">\u24d8</span></h3>'+
+  return '<div class="mpanel has-flag">'+cflag(m.group)+'<h3 class="mp-h mk-click" data-mkey="'+m.key+'" title="Click for the full breakdown">'+head+' <span class="h2note">\u24d8</span></h3>'+
     lineChartSVG({series:[{pts:pts.slice(-60),color:opt.color,label:'Actual',width:2.2}], refs:refs, yLabel:opt.yLabel, dec:1, aria:head.replace(/<[^>]+>/g,'')})+
     nextReleaseHTML(m.key)+'<div class="stamp">'+esc(m.src)+' · latest '+esc(m.period)+' · dashed = trailing 2/3/5-yr averages'+(opt.target!=null?' · dotted = 2% target':'')+'</div></div>';
 }
 function macroKpiCard(title, us, ca, dec, unit){
-  function row(flag, m){ if(!m) return ''; var ch=m.chg; return '<div class="mini-kv mk-click" data-mkey="'+m.key+'" title="Click for the full breakdown"><span>'+flag+' '+esc(m.period)+'</span><b>'+fmt(m.value,dec)+unit+'</b> <span class="'+(Math.abs(ch)<Math.pow(10,-dec)/2?'neu':cls(ch))+'">'+(Math.abs(ch)<Math.pow(10,-dec)/2?'unch.':sgn(ch,dec,unit==='%'?' pp':''))+'</span></div>'+nextReleaseHTML(m.key,true); }
+  function row(flag, m){ if(!m) return ''; var ch=m.chg; return '<div class="mini-kv mk-click" data-mkey="'+m.key+'" title="Click for the full breakdown"><span>'+flagCcy(m.group,12)+' '+flag+' '+esc(m.period)+'</span><b>'+fmt(m.value,dec)+unit+'</b> <span class="'+(Math.abs(ch)<Math.pow(10,-dec)/2?'neu':cls(ch))+'">'+(Math.abs(ch)<Math.pow(10,-dec)/2?'unch.':sgn(ch,dec,unit==='%'?' pp':''))+'</span></div>'+nextReleaseHTML(m.key,true); }
   return '<div class="dash-card"><div class="dk">'+title+'</div>'+(MGEO!=='ca'?row('US',us):'')+(MGEO!=='us'?row('CA',ca):'')+'</div>';
 }
 function macroCompareHTML(){
@@ -1855,16 +1860,16 @@ function macroDashHTML(){
   var ur=(showUS?macroLinePanel(uu,{country:'U.S.',what:'unemployment',color:'#38b6c9',yLabel:'Unemployment rate (%)',headline:urHead('U.S.')}):'')+(showCA?macroLinePanel(cu,{country:'Canada',what:'unemployment',color:'#e0655f',yLabel:'Unemployment rate (%)',headline:urHead('Canada')}):'');
   function pol(m,country,color){ if(!m||!m.long) return '<div class="mpanel"><h3 class="mp-h">'+country+' policy rate</h3><p class="note">Policy-rate history loads on the next macro refresh.</p></div>';
     var p=m.long, l=p[p.length-1][1], y1=p.length>12?p[p.length-13][1]:null;
-    return '<div class="mpanel"><h3 class="mp-h">'+country+' policy rate: <b>'+fmt(l,2)+'%</b>'+(y1!=null?', '+(l<y1?'down '+fmt((y1-l)*100,0)+' bps':l>y1?'up '+fmt((l-y1)*100,0)+' bps':'unchanged')+' in 12 months':'')+'</h3>'+
+    return '<div class="mpanel has-flag">'+cflag(m.group)+'<h3 class="mp-h">'+country+' policy rate: <b>'+fmt(l,2)+'%</b>'+(y1!=null?', '+(l<y1?'down '+fmt((y1-l)*100,0)+' bps':l>y1?'up '+fmt((l-y1)*100,0)+' bps':'unchanged')+' in 12 months':'')+'</h3>'+
       lineChartSVG({series:[{pts:p.slice(-60),color:color,label:'Rate'}],yLabel:'Policy rate (%)',dec:2,H:200})+'<div class="stamp">'+esc(m.src)+' · month-end readings</div></div>'; }
   var polH=(showUS?pol(up,'Fed funds (upper)','#38b6c9'):'')+(showCA?pol(cp,'BoC overnight','#e0655f'):'');
   function gdp(m,country){ if(!m) return ''; var src=m.long||m.history.map(function(h){ return [h[0],h[1]]; });
     var bars=src.slice(-12).map(function(p,i,a){ var q=p[0].length>=7?('Q'+(Math.floor((+p[0].slice(5,7)-1)/3)+1)+" '"+p[0].slice(2,4)):p[0]; return [q,p[1],i===a.length-1]; });
     var l=bars[bars.length-1][1];
-    return '<div class="mpanel"><h3 class="mp-h">'+country+' real GDP: <b>'+fmt(l,1)+'%</b> '+(m.key==='ca_gdp'?'m/m':'q/q annualized')+'</h3>'+barChartSVG({bars:bars,yLabel:'Growth (%)',dec:1,H:200})+'<div class="stamp">'+esc(m.src)+' · '+esc(m.period)+'</div></div>'; }
+    return '<div class="mpanel has-flag">'+cflag(m.group)+'<h3 class="mp-h">'+country+' real GDP: <b>'+fmt(l,1)+'%</b> '+(m.key==='ca_gdp'?'m/m':'q/q annualized')+'</h3>'+barChartSVG({bars:bars,yLabel:'Growth (%)',dec:1,H:200})+'<div class="stamp">'+esc(m.src)+' · '+esc(m.period)+'</div></div>'; }
   var gdpH=(showUS?gdp(ug,'U.S.'):'')+(showCA?gdp(cg,'Canada'):'');
   return '<div class="tile wide" data-src="macro"><div class="tile-head"><h2>US vs Canada macro dashboard <span class="h2note">— latest prints, 5-year context, what it means for USD/CAD</span></h2>'+
-    '<span class="toggle" role="group">'+b('both','US + CANADA')+b('us','US')+b('ca','CANADA')+'</span></div>'+
+    '<span class="toggle" role="group">'+b('both',flag('us',11)+' + '+flag('ca',11))+b('us',flag('us',11)+' US')+b('ca',flag('ca',11)+' CANADA')+'</span></div>'+
     '<div class="dash-grid four">'+macroKpiCard('CPI inflation (y/y)',uc,cc,1,'%')+macroKpiCard('Unemployment rate',uu,cu,1,'%')+macroKpiCard('Policy rate',up,cp,2,'%')+macroKpiCard('Real GDP',ug,cg,1,'%')+'</div>'+
     '<div class="mpanels'+(MGEO==='both'?'':' one')+'">'+cpi+ur+polH+gdpH+'</div>'+
     (MGEO==='both'?'<h3 class="m-h">Country comparison</h3>'+macroCompareHTML():'')+
@@ -1876,14 +1881,14 @@ function canadaChartsHTML(key){
   var C=DATA.canada&&DATA.canada[key], st=caState(key), A=C&&C.annual&&C.annual[st.ca_geo]; if(!A) return '';
   var M=caMeasures(key, st.ca_unit), prod=M[3].v(A), yrs=A.years, i=caLatestIdx(prod), s0=Math.max(0,i-9);
   var bars=[], line=[]; for(var j=s0;j<=i;j++){ bars.push(["'"+yrs[j].slice(2), prod[j], j===i]); line.push([yrs[j], caAvg(prod,j-5,j)]); }
-  var html='<div class="tile" data-src="canada"><h2>'+esc(st.ca_geo)+' production by crop year <span class="h2note">— '+M[3].u+' · dashed = trailing 5-yr average</span></h2>'+
+  var html='<div class="tile" data-src="canada"><h2>'+flag('ca',15)+' '+esc(st.ca_geo)+' production by crop year <span class="h2note">— '+M[3].u+' · dashed = trailing 5-yr average</span></h2>'+
     barChartSVG({bars:bars,line:line,lineLabel:'5-yr',yLabel:'Production ('+M[3].u+')',dec:M[3].d,floor:0})+'<div class="stamp">'+scLink('annual')+(+yrs[i]>=new Date().getFullYear()?' · '+yrs[i]+' is an in-season estimate':'')+'</div></div>';
   var P=caPriceSeries(C, st.ca_geo), bpm=BU_PER_MT[key], imp=st.ca_unit==='imp', f=imp?1/bpm:1, uu=imp?'C$/bu':'C$/t';
   if(P){ var g=DATA.grains[key], fut=g&&g.fan&&+g.fan.intraday[0], fx=DATA.fx&&DATA.fx.feed&&+DATA.fx.feed.mid, refs=[];
     if(fut&&fx) refs.push({v:+(fut*bpm*fx*f).toFixed(2),label:'CBOT C$',color:'#38b6c9'});
     var ch=DATA.ca_calendar&&DATA.ca_calendar.chatham&&DATA.ca_calendar.chatham[key];
     if(ch&&st.ca_geo==='Ontario') refs.push({v:+(ch*f).toFixed(2),label:'AAFC Chatham fcst',color:'#e8a33d'});
-    html+='<div class="tile" data-src="canada"><h2>'+esc(st.ca_geo==='Ontario'||P===(C.prices||{})[st.ca_geo]?st.ca_geo:'Canada')+' monthly farm price vs CBOT <span class="h2note">— '+uu+'</span></h2>'+
+    html+='<div class="tile" data-src="canada"><h2>'+flag('ca',15)+' '+esc(st.ca_geo==='Ontario'||P===(C.prices||{})[st.ca_geo]?st.ca_geo:'Canada')+' monthly farm price vs CBOT <span class="h2note">— '+uu+'</span></h2>'+
       lineChartSVG({series:[{pts:P.series.slice(-30).map(function(x){ return [x[0], +(x[1]*f).toFixed(2)]; }),color:'#5fd598',label:'Farm'}],refs:refs,yLabel:'Price ('+uu+')',dec:2})+
       '<div class="stamp">'+scLink('prices')+' ('+esc(P.product)+') · CBOT '+esc(GMETA[key].contract)+' converted at live USD/CAD'+(ch&&st.ca_geo==='Ontario'?' · AAFC 2026-27 Chatham average forecast from the '+esc(DATA.ca_calendar.chatham_report)+' Outlook':'')+'</div></div>';
   }
@@ -1988,14 +1993,14 @@ function cmpTable(title, sub, years, rows, labelFn, src){
   return '<details class="cmp-sec" open><summary>'+title+' <span class="h2note">'+sub+'</span></summary><div class="tbl-scroll"><table class="sd-tbl cmp-tbl"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div><div class="stamp">'+src+'</div></details>';
 }
 function cmpUS(key, years){
-  var H=DATA.sd_hist&&DATA.sd_hist[key]; if(!H) return '<details class="cmp-sec" open><summary>United States · USDA</summary><p class="note">USDA marketing-year history loads on the next data refresh.</p></details>';
+  var H=DATA.sd_hist&&DATA.sd_hist[key]; if(!H) return '<details class="cmp-sec" open><summary>'+flag('us',14)+' United States · USDA</summary><p class="note">USDA marketing-year history loads on the next data refresh.</p></details>';
   var Y=H.years, labs=Object.keys((Y[Object.keys(Y)[0]])||{});
   function g(lab){ return function(y){ var v=Y[y]&&Y[y][lab]; return v==null?null:v; }; }
   var pick=['Area Harvested','Yield per Acre','Beginning Stocks','Production','Imports','Total Supply','Feed & Residual','Food, Seed & Industrial','Crushings','Seed & Residual','Domestic Total','Exports','Total Use','Ending Stocks'];
   var rows=pick.filter(function(l){ return labs.indexOf(l)>=0; }).map(function(l){ return {l:l, u:l==='Area Harvested'?'mil ac':l==='Yield per Acre'?'bu/ac':'mil bu', d:/^(Area|Yield)/.test(l)?1:0, key:/^(Production|Total Supply|Total Use|Ending Stocks)$/.test(l), get:g(l)}; });
   rows.push({l:'Stocks-to-use', u:'%', d:1, key:true, pp:true, get:function(y){ var e=Y[y]&&Y[y]['Ending Stocks'], t=Y[y]&&Y[y]['Total Use']; return (e!=null&&t)?e/t*100:null; }});
   rows.push({l:'Exports share of use', u:'%', d:1, pp:true, get:function(y){ var e=Y[y]&&Y[y]['Exports'], t=Y[y]&&Y[y]['Total Use']; return (e!=null&&t)?e/t*100:null; }});
-  return cmpTable('United States · USDA', '— marketing year '+(key==='wheat'?'Jun–May':'Sep–Aug'), years, rows, function(y){ return y+'/'+String(+y+1).slice(2)+(Y[y]?'':' <small>n/a</small>')+(y==='2026'?' <small>proj.</small>':''); },
+  return cmpTable(flag('us',14)+' United States · USDA', '— marketing year '+(key==='wheat'?'Jun–May':'Sep–Aug'), years, rows, function(y){ return y+'/'+String(+y+1).slice(2)+(Y[y]?'':' <small>n/a</small>')+(y==='2026'?' <small>proj.</small>':''); },
     esc(H.source)+' · latest USDA estimate for each year (older years are final or near-final) · USDA area planted and farm price are not in PSD');
 }
 function cmpCA(key, geo, years){
@@ -2012,7 +2017,7 @@ function cmpCA(key, geo, years){
     rows.push({l:'Stocks Dec 31 ('+lab+')', u:imp?'mil bu':'Mt', d:imp?1:2, get:function(y){ return conv(tot(byd[y+'-12'])); }});
     rows.push({l:'Ending stocks Jul 31 ('+lab+')', u:imp?'mil bu':'Mt', d:imp?1:2, key:true, get:function(y){ return conv(tot(byd[(+y+1)+'-07'])); }}); }
   var isEst=function(y){ return +y>=new Date().getFullYear(); };
-  return cmpTable((geo==='Ontario'?'Ontario':'Canada')+' · Statistics Canada', '— crop year (harvest year; stocks run Aug–Jul)', years, rows, function(y){ return y+(idx[y]==null?' <small>n/a</small>':isEst(y)?' <small>est.</small>':''); },
+  return cmpTable(flag('ca',14)+' '+(geo==='Ontario'?'Ontario':'Canada')+' · Statistics Canada', '— crop year (harvest year; stocks run Aug–Jul)', years, rows, function(y){ return y+(idx[y]==null?' <small>n/a</small>':isEst(y)?' <small>est.</small>':''); },
     scLink('annual')+' · '+scLink('prices')+' · '+scLink('stocks')+' · units follow the BU·AC / T·HA toggle on the Canada view'+(P?'':' · no monthly farm price published for this geography'));
 }
 function cropCompareHTML(key){
@@ -2126,7 +2131,7 @@ function extBars(key, title, ccy){
   var S=extSeries(key); if(!S||!S.pts||S.pts.length<3) return '';
   var P=S.pts.slice(-24), L=P[P.length-1];
   var bars=P.map(function(p,i){ return [mLabel(p[0]+'-01').replace(" '","’"), p[1], i===P.length-1]; });
-  return '<div class="mpanel"><h3 class="mp-h">'+title+': <b>'+money(ccy,L[1])+'</b> ('+esc(mLabel(L[0]+'-01'))+')</h3>'+barChartSVG({bars:bars,yLabel:ccy+' billions',dec:1,H:200})+'<div class="stamp">'+esc(S.src)+' · last 24 months</div></div>';
+  return '<div class="mpanel has-flag">'+cflag(key.slice(0,2))+'<h3 class="mp-h">'+title+': <b>'+money(ccy,L[1])+'</b> ('+esc(mLabel(L[0]+'-01'))+')</h3>'+barChartSVG({bars:bars,yLabel:ccy+' billions',dec:1,H:200})+'<div class="stamp">'+esc(S.src)+' · last 24 months</div></div>';
 }
 function tradeFiscalHTML(){
   var X=DATA.ext; if(!X) return '<div class="tile wide"><h2>Trade &amp; fiscal balances</h2><p class="note">US and Canada trade and deficit data load on the next refresh.</p></div>';
@@ -2134,10 +2139,10 @@ function tradeFiscalHTML(){
   if(cf&&cf.monthly&&!X.ca_fiscal_series) X.ca_fiscal_series={src:'Finance Canada, Fiscal Monitor', pts:cf.monthly};
   var usDef=X.us_deficit, us12=usDef&&usDef.pts.length>=12?usDef.pts.slice(-12).reduce(function(a,p){ return a+p[1]; },0):null;
   var head='<tr><th>Series</th><th>Latest</th><th>Prior</th><th>Net change</th><th>1 yr ago</th><th>2-yr trend</th><th>Next release</th></tr>';
-  var us=showUS?'<h3 class="m-h">United States <span class="chip inline">USD</span></h3><div class="tbl-scroll"><table class="sd-tbl cmp-tbl ext-tbl">'+head+
+  var us=showUS?'<h3 class="m-h">United States <span class="chip inline">USD</span> '+flag('us',15)+'</h3><div class="tbl-scroll"><table class="sd-tbl cmp-tbl ext-tbl">'+head+
       extRow('Trade balance (goods & services)','us_trade_bal','B','$','us_trade',true)+extRow('Exports','us_exports','B','$','us_trade',true)+extRow('Imports','us_imports','B','$','us_trade',false)+
       extRow('Federal budget balance (monthly)','us_deficit','B','$','us_deficit',true)+'</table></div>'+(us12!=null?'<div class="mini-kv"><span>Rolling 12-month federal balance</span><b class="'+cls(us12)+'">'+money('$',us12)+'</b></div>':''):'';
-  var ca=showCA?'<h3 class="m-h">Canada <span class="chip inline">CAD</span></h3><div class="tbl-scroll"><table class="sd-tbl cmp-tbl ext-tbl">'+head+
+  var ca=showCA?'<h3 class="m-h">Canada <span class="chip inline">CAD</span> '+flag('ca',15)+'</h3><div class="tbl-scroll"><table class="sd-tbl cmp-tbl ext-tbl">'+head+
       extRow('Merchandise trade balance','ca_trade_bal','B','C$','ca_trade',true)+extRow('Exports','ca_exports','B','C$','ca_trade',true)+extRow('Imports','ca_imports','B','C$','ca_trade',false)+
       extRow('Federal budgetary balance (monthly)','ca_fiscal_series','B','C$','ca_fiscal',true)+'</table></div>'+
       (cf&&cf.ytd?'<div class="mini-kv"><span>Fiscal year to date</span><b class="'+cls(cf.ytd.value)+'">'+money('C$',cf.ytd.value)+'</b> '+esc(cf.ytd.period)+(cf.ytd.prior!=null?' vs '+money('C$',cf.ytd.prior)+' a year earlier':'')+'</div>':''):'';
@@ -2204,7 +2209,7 @@ function macroDetailHTML(key){
   var C=consensusFor(m), chip='';
   if(C&&C.consensus!=null){ var diff=+(m.value-C.consensus).toFixed(m.dec), inl=Math.abs(diff)<Math.pow(10,-m.dec)/2;
     var better=m.good==='down'?diff<0:diff>0; chip='<span class="mdc-chip '+(inl?'inl':better?'beat':'miss')+'">'+(inl?'INLINE':better?'BEAT':'MISS')+(inl?'':' '+sgn(diff,m.dec))+'</span>'; }
-  var flag=m.group==='us'?'United States':'Canada', ccy=m.group==='us'?'USD':'CAD';
+  var ctry=m.group==='us'?'United States':'Canada', ccy=m.group==='us'?'USD':'CAD';
   var rel=m.seen_at?'first seen '+new Date(m.seen_at).toLocaleString('en-US',{timeZone:'America/Toronto',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET':(C&&C.released?'released '+new Date(C.released).toLocaleString('en-US',{timeZone:'America/Toronto',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET':'latest period '+m.period);
   var st=streakText(m), a3=avg(Math.min(3,n)), a12=avg(Math.min(12,n)), hi=Math.max.apply(null,vals.slice(-12)), lo=Math.min.apply(null,vals.slice(-12));
   var headline=(m.chg>0?'Up':m.chg<0?'Down':'Unchanged')+' from '+mval(m,m.prior)+' · '+(m.value>a12?'above':'below')+' its 12-reading average ('+mval(m,+a12.toFixed(m.dec+1))+')'+(st.length?' · '+st[0]:'');
@@ -2222,7 +2227,7 @@ function macroDetailHTML(key){
   if(/cpi|pce|trim|median/.test(key)) extra.push((m.value>2.05?'Above':m.value<1.95?'Below':'At')+' the 2% '+(m.group==='us'?'Fed':'BoC')+' target by '+fmt(Math.abs(m.value-2),1)+' pp');
   var nx=nextRelease(key);
   return '<div class="mdc">'+
-    '<div class="mdc-top"><div class="mdc-ttl">'+esc(flag.toUpperCase()+' '+m.name.toUpperCase())+'</div><div class="mdc-sub">'+esc(m.period)+(m.measure?' · '+m.measure:'')+' — '+rel+'</div><div class="mdc-hl">'+headline+'</div></div>'+
+    '<div class="mdc-top"><span class="mdc-flag">'+flag(m.group,30)+'</span><div class="mdc-ttl">'+esc(ctry.toUpperCase()+' '+m.name.toUpperCase())+'</div><div class="mdc-sub">'+esc(m.period)+(m.measure?' · '+m.measure:'')+' — '+rel+'</div><div class="mdc-hl">'+headline+'</div></div>'+
     '<div class="mdc-main"><div class="mdc-k">'+esc(m.name)+' — '+esc(m.period)+chip+'</div><div class="mdc-v">'+mval(m,m.value)+(m.measure?' <small>'+m.measure+'</small>':'')+'</div>'+
       '<div class="mdc-l">'+(C&&C.consensus!=null?'Consensus: '+mval(m,C.consensus)+' (desk survey) | ':'Consensus: not captured for this print | ')+'Prior ('+esc(H[n-2]?H[n-2][0]:'')+'): '+mval(m,m.prior)+(m.rev?', rev. from '+mval(m,m.rev.from):'')+'</div></div>'+
     '<div class="mdc-grid"><div class="mdc-box"><div class="mdc-k">3-reading average</div><div class="mdc-v2">'+mval(m,+a3.toFixed(m.dec+1))+'</div><div class="mdc-l">12-reading avg '+mval(m,+a12.toFixed(m.dec+1))+'</div></div>'+
@@ -2299,6 +2304,19 @@ document.addEventListener('click', function(ev){
 });
 window.addEventListener('scroll', function(){ if(!EVPIN) evHide(); }, {passive:true});
 
+/* ================= COUNTRY FLAGS (inline SVG — renders the same on every OS) ================= */
+var MAPLE='50,5 56,22 65,17 62,40 76,28 79,36 93,33 87,48 95,52 72,68 75,77 53,74 53,95 47,95 47,74 25,77 28,68 5,52 13,48 7,33 21,36 24,28 38,40 35,17 44,22';
+function flag(cc, h){
+  h=h||14;
+  if(cc==='us'){ var w=Math.round(h*1.9), st=''; for(var i=0;i<13;i++) st+='<rect y="'+(i*10/13).toFixed(3)+'" width="19" height="'+(10/13+0.01).toFixed(3)+'" fill="'+(i%2?'#fff':'#B22234')+'"/>';
+    var dots=''; for(var yy=0;yy<4;yy++) for(var xx=0;xx<5;xx++) dots+='<circle cx="'+(0.8+xx*1.5+(yy%2?0.75:0)).toFixed(2)+'" cy="'+(0.75+yy*1.35).toFixed(2)+'" r="0.32" fill="#fff"/>';
+    return '<svg class="flag" width="'+w+'" height="'+h+'" viewBox="0 0 19 10" role="img" aria-label="United States"><title>United States</title>'+st+'<rect width="7.6" height="'+(70/13).toFixed(3)+'" fill="#3C3B6E"/>'+dots+'</svg>'; }
+  var w2=h*2;
+  return '<svg class="flag" width="'+w2+'" height="'+h+'" viewBox="0 0 200 100" role="img" aria-label="Canada"><title>Canada</title><rect width="200" height="100" fill="#fff"/><rect width="50" height="100" fill="#D52B1E"/><rect x="150" width="50" height="100" fill="#D52B1E"/><g transform="translate(62,12) scale(0.76)"><polygon points="'+MAPLE+'" fill="#D52B1E"/></g></svg>';
+}
+function flagCcy(ccy, h){ return ccy==='USD'||ccy==='us'?flag('us',h):ccy==='CAD'||ccy==='ca'?flag('ca',h):''; }
+function cflag(cc){ return '<span class="cflag">'+flag(cc,16)+'</span>'; }
+
 /* ================= USD/CAD LIVE FEED MONITOR ================= */
 var MON_TAB='next';
 function agriEvents(fromMs, days){
@@ -2309,11 +2327,12 @@ function agriEvents(fromMs, days){
   caEvents(fromMs, days).forEach(function(e){ out.push({t:e.t,label:'Canada: '+e.label,kind:'ca',src:'agri'}); });
   return out.sort(function(a,b){ return a.t-b.t; });
 }
-function macroHighEvents(){ return DATA.fx.events.filter(function(e){ return e.impact==='High'; }).map(function(e){ return {t:evEpoch(e),label:e.ccy+' '+e.event,kind:'macro',src:'macro',prev:e.prev,fc:e.fc}; }).sort(function(a,b){ return a.t-b.t; }); }
+function macroHighEvents(){ return DATA.fx.events.filter(function(e){ return e.impact==='High'; }).map(function(e){ return {t:evEpoch(e),label:e.ccy+' '+e.event,ccy:e.ccy,kind:'macro',src:'macro',prev:e.prev,fc:e.fc}; }).sort(function(a,b){ return a.t-b.t; }); }
 function monRows(list, now){
   if(!list.length) return '<div class="checkline">Nothing scheduled in this window.</div>';
   return list.map(function(e){ var past=e.t<now, tag=e.src==='macro'?'<span class="chip miss">MACRO</span>':e.kind==='ca'?'<span class="chip demo">CANADA</span>':e.kind==='wasde'?'<span class="chip miss">WASDE</span>':e.kind==='contract'?'<span class="chip demo">CONTRACT</span>':'<span class="chip inline">USDA</span>';
-    return '<div class="kv'+(past?' ev-past':'')+'"><span class="kk">'+etLabel(e.t,true)+' · '+esc(e.label)+' '+tag+(e.prev?' <span class="neu">prev '+esc(e.prev)+'</span>':'')+'</span><span class="vv">'+(past?'<span class="chip inline">OUT</span>':'<span class="countdown" data-t="'+e.t+'">'+cdText(e.t-now)+'</span>')+'</span></div>'; }).join('');
+    var fl=e.src==='macro'?flagCcy(e.ccy,12):e.kind==='ca'?flag('ca',12):flag('us',12);
+    return '<div class="kv'+(past?' ev-past':'')+'"><span class="kk">'+fl+' '+etLabel(e.t,true)+' · '+esc(e.label)+' '+tag+(e.prev?' <span class="neu">prev '+esc(e.prev)+'</span>':'')+'</span><span class="vv">'+(past?'<span class="chip inline">OUT</span>':'<span class="countdown" data-t="'+e.t+'">'+cdText(e.t-now)+'</span>')+'</span></div>'; }).join('');
 }
 function monitorNews(){
   var all=[]; [['fx','USD/CAD'],['corn','Corn'],['wheat','Wheat'],['soybeans','Soybeans']].forEach(function(p){ (NEWS[p[0]]||[]).forEach(function(n){ all.push([n,p[1]]); }); });
@@ -2398,7 +2417,7 @@ function renderGrain(key){
   var st=dstate(key), geo=st.fgeo||'us';
   if(geo!=='us'){ caState(key).ca_geo=(geo==='on'?'Ontario':'Canada'); }
   var gb=function(v,l){ return '<button data-dash="'+key+'" data-k="fgeo" data-v="'+v+'" aria-pressed="'+(geo===v)+'">'+l+'</button>'; };
-  var FH='<div class="tile wide geo-head"><div class="tile-head"><h2>'+meta.name+' fundamentals <span class="h2note">— pick a geography</span></h2><span class="toggle" role="group">'+gb('us','US · USDA / WASDE')+gb('ca','CANADA · STATCAN')+gb('on','ONTARIO')+'</span></div></div>';
+  var FH='<div class="tile wide geo-head"><div class="tile-head"><h2>'+meta.name+' fundamentals <span class="h2note">— pick a geography</span></h2><span class="toggle" role="group">'+gb('us',flag('us',11)+' US · USDA / WASDE')+gb('ca',flag('ca',11)+' CANADA · STATCAN')+gb('on',flag('ca',11)+' ONTARIO')+'</span></div></div>';
   FU=FH+cropCompareHTML(key)+(geo==='us'?FU:canadaTileHTML(key,true)+canadaChartsHTML(key)+caCalendarHTML());
   html+=subWrap(key,'overview',OV)+subWrap(key,'deriv',DV)+subWrap(key,'fund',FU)+subWrap(key,'inputs',inputsHTML(key));
   html+='</div><aside class="rail">'+grainAlertsLiveHTML(key)+grainCalendarHTML(key)+newsRailHTML(NEWS[key])+'</aside></div>';
@@ -2478,8 +2497,8 @@ function macroCard(m){
   var mv=Math.abs(m.value)<Math.pow(10,-m.dec)/2?0:m.value;   /* no "-0.0" */
   var val=(m.measure==='m/m'&&mv>0?'+':'')+fmt(mv,m.dec)+u;
   var hist=m.history.map(function(h){ return h[0]+': '+fmt(h[1],m.dec)+u; }).join(' · ');
-  return '<div class="mcard" role="button" tabindex="0" data-mkey="'+m.key+'" title="'+esc('Click for the full breakdown · '+m.name+' — last '+m.history.length+' readings: '+hist)+'">'+
-    '<div class="mk">'+esc(m.name)+(m.measure?' <span>'+m.measure+'</span>':'')+'</div>'+
+  return '<div class="mcard has-flag" role="button" tabindex="0" data-mkey="'+m.key+'" title="'+esc('Click for the full breakdown · '+m.name+' — last '+m.history.length+' readings: '+hist)+'">'+
+    cflag(m.group)+'<div class="mk">'+esc(m.name)+(m.measure?' <span>'+m.measure+'</span>':'')+'</div>'+
     '<div class="mv">'+val+'</div>'+
     '<div class="mc '+tone+'">'+arrow+' '+(flat?'unch.':sgn(ch,m.dec,chU))+' <span>vs '+esc(m.history.length>1?m.history[m.history.length-2][0]:'prior')+'</span></div>'+
     macroSpark(m.history,col)+
@@ -2503,8 +2522,8 @@ function fxMacroHTML(){
   var errs=DATA.meta.macro_errors?Object.keys(DATA.meta.macro_errors).length:0;
   return '<div class="tile wide" data-src="macro"><h2>All macro indicators <span class="h2note">— click any card for the full breakdown · latest print, change vs prior, last 12 readings</span></h2>'+
     '<div class="m-legend"><span class="up">▲ stronger</span><span class="dn">▼ weaker</span><span class="heat">▲ inflation hotter</span><span class="cool">▼ inflation cooler</span></div>'+
-    (MGEO!=='ca'?'<h3 class="m-h">United States <span class="chip inline">USD</span></h3><div class="m-grid">'+grp('us')+'</div>':'')+
-    (MGEO!=='us'?'<h3 class="m-h">Canada <span class="chip inline">CAD</span></h3><div class="m-grid">'+grp('ca')+'</div>':'')+
+    (MGEO!=='ca'?'<h3 class="m-h">United States <span class="chip inline">USD</span> '+flag('us',15)+'</h3><div class="m-grid">'+grp('us')+'</div>':'')+
+    (MGEO!=='us'?'<h3 class="m-h">Canada <span class="chip inline">CAD</span> '+flag('ca',15)+'</h3><div class="m-grid">'+grp('ca')+'</div>':'')+
     (MGEO==='both'?'<h3 class="m-h">US − Canada differentials <span class="h2note">— what moves USD/CAD</span></h3><div class="m-grid">'+macroDiffs()+'</div>':'')+
     '<div class="stamp">FRED (BLS, BEA, DOL, Census, UMich) · Bank of Canada Valet · Statistics Canada · checked '+asOf('macro',true)+' · refreshed every 2h'+(errs?' · '+errs+' series kept at their last good reading':'')+'</div></div>';
 }
@@ -2588,7 +2607,7 @@ function fxReleasesHTML(){
         return '<span class="'+(i===arr.length-1?'hl':'')+'">'+h[0].slice(0,3)+' '+fmt(h[1],1)+r.sub.unit+'</span>'; }).join(' ')+'</div>';
     }
     return '<div class="rel">'+
-      '<div class="rel-when"><span class="rel-date">'+when+'</span><span class="rel-ago">'+(days<=0?'today':days===1?'yesterday':days+' days ago')+'</span><span class="chip inline">'+r.ccy+'</span></div>'+
+      '<div class="rel-when"><span class="rel-date">'+when+'</span><span class="rel-ago">'+(days<=0?'today':days===1?'yesterday':days+' days ago')+'</span><span class="chip inline">'+r.ccy+'</span> '+flagCcy(r.ccy,14)+'</div>'+
       '<div class="med">'+esc(r.name)+' ('+r.period.slice(0,3)+') — '+(r.unit==='K'&&r.actual>0?'+':'')+fmt(r.actual,r.dec)+u+(r.measure==='y/y'?' y/y':'')+score+'</div>'+
       '<div class="read" style="margin-top:4px">'+(r.consensus!=null?'Consensus '+fmt(r.consensus,r.dec)+u+' · ':'')+(r.history.length>1?'prior '+fmt(r.history[r.history.length-2][1],r.dec)+u:'')+'</div>'+
       releaseSVG(r)+'<p class="read" style="font-size:13px">'+releaseRead(r)+'</p>'+sub+
