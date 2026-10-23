@@ -2809,43 +2809,57 @@ function awaitingList(){
   var now=Date.now(), out=[], DAY=86400000;
   var cf=lastWeekday('Fri',15,30,7);
   if(cf&&now-cf.t<DAY){ var exp=isoAdd(cf.y,cf.m,cf.d,-3), last=(DATA.grains.corn.cftc||[]).slice(-1)[0];
-    if(last&&last.date<exp) out.push({sel:'[data-src="cftc_grains"],[data-src="cftc_fx"],.poskpi', label:'Awaiting CFTC Commitments of Traders \u2014 positions as of '+exp,
-      info:{what:'CFTC Commitments of Traders (positions as of Tue '+fmtDate(exp)+')', short:'CFTC Commitments of Traders', who:'the CFTC', t:cf.t, lag:'The CFTC posts the report at 3:30 PM ET; its public data API usually catches up within 5\u201330 minutes, occasionally longer on busy weeks or after a holiday.',
+    if(last&&last.date<exp) out.push({key:'cftc', sel:'[data-src="cftc_grains"],[data-src="cftc_fx"],.poskpi', label:'Awaiting CFTC Commitments of Traders \u2014 positions as of '+exp,
+      info:{what:'CFTC Commitments of Traders (positions as of Tue '+fmtDate(exp)+')', short:'CFTC Commitments of Traders', who:'the CFTC', t:cf.t, lag:'The CFTC posts the report at 3:30 PM ET; the desk reads the CFTC data API directly from your browser every 30 s \u2014 it usually catches up within 5\u201330 minutes, occasionally longer after a holiday.',
         prev:'positions as of '+fmtDate(last.date), url:'https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm', urlLab:'CFTC COT reports'}}); }
   var es=lastWeekday('Thu',8,30,7);
   if(es&&now-es.t<DAY){ var exp2=isoAdd(es.y,es.m,es.d,-7), E=(DATA.exports&&DATA.exports.corn)||{}, lw=(E.weeks||[]).slice(-1)[0];
-    if(lw&&lw[1]<exp2) out.push({sel:'[data-src="exports"]', label:'Awaiting USDA weekly export sales',
-      info:{what:'USDA weekly export sales (week ending '+fmtDate(exp2)+')', short:'USDA weekly export sales', who:'USDA FAS', t:es.t, lag:'USDA posts at 8:30 AM ET Thursdays (Friday in holiday weeks); the FAS data API often lags the PDF by 30\u201390 minutes.',
+    if(lw&&lw[1]<exp2) out.push({key:'exports', sel:'[data-src="exports"]', label:'Awaiting USDA weekly export sales',
+      info:{what:'USDA weekly export sales (week ending '+fmtDate(exp2)+')', short:'USDA weekly export sales', who:'USDA FAS', t:es.t, lag:'USDA posts at 8:30 AM ET Thursdays (Friday in holiday weeks); the FAS data API needs the desk\u2019s private key, so it is fetched by the server fast lane (every minute) and often lags the PDF by 30\u201390 minutes.',
         prev:'week ending '+fmtDate(lw[1]), url:'https://apps.fas.usda.gov/export-sales/esrd1.html', urlLab:'USDA export sales highlights'}}); }
   (typeof USDA_WASDE!=='undefined'?USDA_WASDE:[]).forEach(function(dt){ var p=dt.split('-'), t=zonedMs(+p[0],+p[1],+p[2],12,0,'America/Toronto');
     var lab=new Date(Date.UTC(+p[0],+p[1]-1,15)).toLocaleString('en-US',{month:'short',year:'numeric',timeZone:'UTC'});
-    if(now>=t&&now-t<DAY&&DATA.wasde&&DATA.wasde.corn&&DATA.wasde.corn.report!==lab) out.push({sel:'[data-src="wasde"]', label:'Awaiting USDA WASDE '+lab,
-      info:{what:'USDA WASDE \u2014 '+lab+' report', short:'USDA WASDE '+lab, who:'USDA', t:t, lag:'WASDE is released at 12:00 PM ET; the FAS PSD database that feeds these tables typically updates within 1\u20133 hours.',
+    if(now>=t&&now-t<DAY&&DATA.wasde&&DATA.wasde.corn&&DATA.wasde.corn.report!==lab) out.push({key:'wasde', sel:'[data-src="wasde"]', label:'Awaiting USDA WASDE '+lab,
+      info:{what:'USDA WASDE \u2014 '+lab+' report', short:'USDA WASDE '+lab, who:'USDA', t:t, lag:'WASDE is released at 12:00 PM ET; the FAS PSD database (private key, so fetched by the server fast lane) typically updates within 1\u20133 hours.',
         prev:'the '+DATA.wasde.corn.report+' report', url:'https://www.usda.gov/oce/commodity/wasde', urlLab:'USDA WASDE'}}); });
   macroAll().forEach(function(m){ var C=DATA.release_cal&&DATA.release_cal[m.key]; if(!C) return;
     var ds=(C.dates||[]).slice(); if(C.rule==='thu0830'){ var th=lastWeekday('Thu',8,30,7); if(th) ds.push(th.y+'-'+('0'+th.m).slice(-2)+'-'+('0'+th.d).slice(-2)+'T08:30'); }
     ds.forEach(function(s){ var a=s.split('T'), d=a[0].split('-'), h=a[1].split(':'), t=zonedMs(+d[0],+d[1],+d[2],+h[0],+h[1],'America/Toronto');
       if(now>=t&&now-t<DAY&&(!m.seen_at||new Date(m.seen_at).getTime()<t)){ var A=macroAgency(m), ctry=m.group==='us'?'US':'Canada';
-        out.push({sel:'.mcard[data-mkey="'+m.key+'"]', label:'Awaiting '+ctry+' '+m.name+' release', small:true,
+        out.push({key:m.key, sel:'.mcard[data-mkey="'+m.key+'"]', label:'Awaiting '+ctry+' '+m.name+' release', small:true,
           info:{what:ctry+' '+m.name+(m.measure?' ('+m.measure+')':''), short:ctry+' '+m.name, who:A.who, t:t, lag:A.lag, flag:m.group,
             prev:mval(m,m.value)+' for '+m.period, url:A.url||C.src, urlLab:A.who}}); } }); });
+  /* trade & fiscal (DATA.ext): the release carries month M-2 (trade) or M-1 (Treasury statement) */
+  [['us_trade','us_trade_bal',2,'US international trade','the US Census Bureau / BEA','https://www.census.gov/foreign-trade/','Census and BEA publish at 8:30 AM ET. This series reaches the desk through FRED via the server (the Census API needs a key, so it cannot be read from the browser).'],
+   ['ca_trade','ca_trade_bal',2,'Canada merchandise trade','Statistics Canada','https://www150.statcan.gc.ca/n1/dai-quo/index-eng.htm','StatCan publishes at 8:30 AM ET; the desk also reads it directly from StatCan in your browser.'],
+   ['us_deficit','us_deficit',1,'US federal budget (Monthly Treasury Statement)','the US Treasury','https://fiscaldata.treasury.gov/datasets/monthly-treasury-statement/','Treasury publishes the MTS at 2:00 PM ET; the desk also reads it directly from Treasury FiscalData in your browser.']].forEach(function(x){
+    var C=DATA.release_cal&&DATA.release_cal[x[0]], S=DATA.ext&&DATA.ext[x[1]]; if(!C||!S||!S.pts||!S.pts.length) return;
+    (C.dates||[]).forEach(function(s){ var a=s.split('T'), d=a[0].split('-'), h=a[1].split(':'), t=zonedMs(+d[0],+d[1],+d[2],+h[0],+h[1],'America/Toronto');
+      if(!(now>=t&&now-t<DAY)) return;
+      var e=new Date(Date.UTC(+d[0],+d[1]-1-x[2],1)), exp=e.toISOString().slice(0,7), have=S.pts[S.pts.length-1][0];
+      if(have<exp) out.push({key:x[0], sel:'[data-src="ext"]', label:'Awaiting '+x[3],
+        info:{what:x[3]+' ('+MON3L[e.getUTCMonth()]+' '+e.getUTCFullYear()+')', short:x[3], who:x[4], t:t, lag:x[6], flag:x[0].slice(0,2),
+          prev:MON3L[+have.slice(5,7)-1]+' '+have.slice(0,4)+' data', url:x[5], urlLab:x[4].replace(/^the /,'')}}); }); });
   return out;
 }
+var MON3L=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 /* Release watch: while a released number has not reached the page, re-check every 30 s;
    after 5 misses wait 1 min and try once more; still missing -> show an error under the card
    (previous data stays visible) and keep retrying every 5 min until it lands. */
 function macroAgency(m){
-  var k=m.key, F=' It reaches this desk through FRED, which usually posts within 5\u201360 minutes of the official release.';
+  var k=m.key, F=' It reaches this desk through FRED via the server, which usually posts within 5\u201360 minutes of the official release (this source cannot be read from the browser).',
+      B=' The desk reads the BLS API directly from your browser (no key: about 24 checks a day per browser, so it checks once a minute) and FRED via the server.';
+  if(/^us_(cpi|core_cpi|nfp|ur|ahe)$/.test(k)) return {who:'the BLS (Bureau of Labor Statistics)', url:'https://www.bls.gov/bls/newsrels.htm', lag:'BLS publishes at 8:30 AM ET.'+B};
   if(/^us_(cpi|core_cpi|nfp|ur|ahe)$/.test(k)) return {who:'the BLS (Bureau of Labor Statistics)', url:'https://www.bls.gov/bls/newsrels.htm', lag:'BLS publishes at 8:30 AM ET.'+F};
   if(/^us_c?claims$/.test(k)) return {who:'the US Department of Labor', url:'https://www.dol.gov/ui/data.pdf', lag:'Weekly claims are published Thursdays at 8:30 AM ET.'+F};
   if(/^us_(gdp|core_pce)$/.test(k)) return {who:'the BEA (Bureau of Economic Analysis)', url:'https://www.bea.gov/news/schedule', lag:'BEA publishes at 8:30 AM ET.'+F};
   if(/^us_(retail|trade)$/.test(k)) return {who:'the US Census Bureau', url:'https://www.census.gov/economic-indicators/', lag:'Census publishes at 8:30 AM ET.'+F};
   if(k==='us_umich') return {who:'the University of Michigan', url:'https://www.sca.isr.umich.edu/', lag:'Sentiment is published at 10:00 AM ET.'+F};
-  if(k==='us_policy') return {who:'the Federal Reserve', url:'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm', lag:'The FOMC statement is at 2:00 PM ET.'+F};
+  if(k==='us_policy') return {who:'the Federal Reserve', url:'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm', lag:'The FOMC statement is at 2:00 PM ET. The new target range reaches FRED (server) the same afternoon and the NY Fed rates API (read directly in your browser) the next morning.'};
   if(k==='us_deficit') return {who:'the US Treasury (Monthly Treasury Statement)', url:'https://fiscaldata.treasury.gov/datasets/monthly-treasury-statement/', lag:'The MTS is published at 2:00 PM ET.'+F};
-  if(k==='ca_policy') return {who:'the Bank of Canada', url:'https://www.bankofcanada.ca/core-functions/monetary-policy/key-interest-rate/', lag:'The rate decision is at 9:45 AM ET; the Valet data API usually updates within minutes.'};
-  if(/^ca_(trim|median)$/.test(k)) return {who:'the Bank of Canada (from Statistics Canada CPI)', url:'https://www.bankofcanada.ca/rates/price-indexes/cpi/', lag:'CPI is out at 8:30 AM ET; the Bank posts its core measures on Valet shortly after, sometimes up to an hour later.'};
-  return {who:'Statistics Canada', url:'https://www150.statcan.gc.ca/n1/dai-quo/index-eng.htm', lag:'The Daily publishes at 8:30 AM ET; the StatCan data API (WDS) normally updates at the same time but can lag by up to an hour.'};
+  if(k==='ca_policy') return {who:'the Bank of Canada', url:'https://www.bankofcanada.ca/core-functions/monetary-policy/key-interest-rate/', lag:'The rate decision is at 9:45 AM ET; the desk reads the Bank\u2019s Valet API directly from your browser, which usually updates within minutes.'};
+  if(/^ca_(trim|median)$/.test(k)) return {who:'the Bank of Canada (from Statistics Canada CPI)', url:'https://www.bankofcanada.ca/rates/price-indexes/cpi/', lag:'CPI is out at 8:30 AM ET; the Bank posts its core measures on Valet (read directly in your browser) shortly after, sometimes up to an hour later.'};
+  return {who:'Statistics Canada', url:'https://www150.statcan.gc.ca/n1/dai-quo/index-eng.htm', lag:'The Daily publishes at 8:30 AM ET; the desk reads StatCan\u2019s data API (WDS) directly from your browser every 30 s \u2014 it normally updates at 8:30 but can lag by up to an hour.'};
 }
 function awaitMsg(a){
   var I=a.info||{}, when=I.t?etLabel(I.t,true):'today';
@@ -2856,41 +2870,7 @@ function awaitMsg(a){
     short:(I.short||I.what||'')+': not updated yet \u2014 showing '+(I.prev||'previous data')};
 }
 var AW={tries:0, next:0, last:0, err:false, busy:false, prev:{}, netErr:false};
-/* Statistics Canada Web Data Service allows browser calls (Access-Control-Allow-Origin: *), so during a
-   Canadian release window the page asks StatCan directly and shows the new number the moment it is out.
-   Same vectors and maths as the server (scripts/update_data.py MACRO); the server confirms on its next run. */
-var SC_DIRECT={ca_emp:[2062811,'diff'], ca_ur:[2062815,'level'], ca_gdp:[65201210,'pct'], ca_gdpq:[62305752,'qann'], ca_cpi:[41690973,'yoy']};
-var MON3L=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function scLabel(d,fq){ var y=d.slice(2,4), m=+d.slice(5,7), dd=+d.slice(8,10); return fq==='Q'?'Q'+(Math.floor((m-1)/3)+1)+" '"+y:(fq==='W'||fq==='D')?MON3L[m-1]+' '+dd:MON3L[m-1]+" '"+y; }
-function scTransform(P, how){
-  var by={}, out=[]; P.forEach(function(p){ by[p[0]]=p[1]; });
-  P.forEach(function(p,i){ var d=p[0], v=p[1];
-    if(how==='level') out.push([d,v]);
-    else if((how==='diff'||how==='pct')&&i>0){ var pv=P[i-1][1]; out.push([d, how==='diff'?v-pv:(v/pv-1)*100]); }
-    else if(how==='qann'&&i>0) out.push([d, (Math.pow(v/P[i-1][1],4)-1)*100]);
-    else if(how==='yoy'){ var b=by[(+d.slice(0,4)-1)+d.slice(4)]; if(b) out.push([d,(v/b-1)*100]); } });
-  return out;
-}
-function scDirect(keys){
-  keys=keys.filter(function(k){ return SC_DIRECT[k]&&mfind(k); }); if(!keys.length) return Promise.resolve(null);
-  var body=keys.map(function(k){ return {vectorId:SC_DIRECT[k][0], latestN:SC_DIRECT[k][1]==='yoy'?14:4}; });
-  return fetch('https://www150.statcan.gc.ca/t1/wds/rest/getDataFromVectorsAndLatestNPeriods',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),cache:'no-store'})
-    .then(function(r){ if(!r.ok) throw r.status; return r.json(); })
-    .then(function(arr){ var got=[];
-      (arr||[]).forEach(function(o,i){ if(!o||o.status!=='SUCCESS') return; var k=keys[i], how=SC_DIRECT[k][1], m=mfind(k);
-        var P=(o.object.vectorDataPoint||[]).filter(function(p){ return p.value!=null; }).map(function(p){ return [p.refPer.slice(0,10), +p.value]; }).sort(function(a,b){ return a[0]<b[0]?-1:1; });
-        var T=scTransform(P,how); if(T.length<1) return; var L=T[T.length-1];
-        if(!(L[0]>m.obs_date)) return;                     /* nothing newer than what the desk shows */
-        var r=function(v){ var f=Math.pow(10,m.dec+1); return Math.round(v*f)/f; }, lab=scLabel(L[0],m.freq);
-        m.prior=m.value; m.value=r(L[1]); m.chg=r(m.value-m.prior); m.period=lab; m.obs_date=L[0];
-        if(m.history){ m.history.push([lab,m.value]); if(m.history.length>12) m.history.shift(); }
-        if(m.hist24){ m.hist24.push([lab,m.value]); if(m.hist24.length>24) m.hist24.shift(); }
-        m.seen_at=new Date(Date.now()).toISOString(); m.direct='Statistics Canada WDS v'+SC_DIRECT[k][0]+' · fetched in your browser '+hhmmss(Date.now())+' ET';
-        got.push(k); });
-      if(got.length){ window.renderAll(); if(window.DESK_LIVE&&DESK_LIVE.toast) DESK_LIVE.toast('<b>✓ Statistics Canada</b> — '+got.map(function(k){ var m=mfind(k); return 'Canada '+esc(m.name)+' '+mval(m,m.value)+' ('+esc(m.period)+')'; }).join(' · ')+' — fetched directly from StatCan'); }
-      return got; })
-    .catch(function(){ return 'err'; });
-}
+
 function hhmmss(t){ return new Date(t).toLocaleTimeString('en-US',{timeZone:'America/Toronto',hour:'numeric',minute:'2-digit',second:'2-digit'}); }
 function paintAwaiting(list){
   list=list||awaitingList();
@@ -2912,8 +2892,8 @@ function paintAwaiting(list){
 function awaitCheck(){
   var L=window.DESK_LIVE; if(!L||AW.busy) return;
   AW.busy=true; AW.last=Date.now(); paintAwaiting();
-  var scKeys=awaitingList().map(function(x){ var mm=/data-mkey="([^"]+)"/.exec(x.sel); return mm&&mm[1]; }).filter(function(k){ return k&&SC_DIRECT[k]; });
-  var pr=[L.pollLive?L.pollLive(true):null, L.pollData?L.pollData(true):null, scKeys.length?scDirect(scKeys):null].filter(Boolean);
+  var dk=awaitingList().map(function(x){ return x.key; }).filter(Boolean);
+  var pr=[L.pollLive?L.pollLive(true):null, L.pollData?L.pollData(true):null, (window.DIRECT&&dk.length)?DIRECT.check(dk):null].filter(Boolean);
   Promise.all(pr).catch(function(){ return ['err']; }).then(function(res){
     AW.busy=false; AW.netErr=(res||[]).length>0 && (res||[]).every(function(x){ return x==='err'; });
     if(!awaitingList().length) return;
@@ -2929,7 +2909,7 @@ function awaitTick(){
   var list=awaitingList(), cur={};
   list.forEach(function(a){ cur[a.label]=1; });
   Object.keys(AW.prev).forEach(function(l){ var dm=macroAll().filter(function(m){ return m.direct&&l.indexOf(m.name+' release')>-1&&l.indexOf(m.group==='us'?'US':'Canada')>-1; })[0];
-    if(!cur[l]&&!dm&&window.DESK_LIVE&&DESK_LIVE.toast) DESK_LIVE.toast('<b>✓ Updated</b> — '+esc(l.replace(/^Awaiting /,''))+' is now on the desk'); });
+    if(!cur[l]&&!dm&&!(window.DIRECT_LAST&&Date.now()-DIRECT_LAST<20000)&&window.DESK_LIVE&&DESK_LIVE.toast) DESK_LIVE.toast('<b>✓ Updated</b> — '+esc(l.replace(/^Awaiting /,''))+' is now on the desk'); });
   var fresh=list.some(function(a){ return !AW.prev[a.label]; });
   AW.prev=cur;
   if(!list.length){ if(AW.tries||AW.err){ AW.tries=0; AW.err=false; AW.next=0; } paintAwaiting(list); return; }
@@ -3029,7 +3009,7 @@ function renderGrain(key){
     cftcSVG(g.cftc, {basis:g.cftc_stats&&g.cftc_stats.basis, series0:g.cftc})+
     '<p class="read">'+cftcRead(g.cftc, {basis:g.cftc_stats&&g.cftc_stats.basis, F:+f.intraday[0]})+'</p>'+
     '<div class="legend"><span><span class="sw" style="background:#3fb97f"></span>Net long week</span><span><span class="sw" style="background:#e0655f"></span>Net short week</span><span><span class="sw" style="background:#e8eef4"></span>Trend line (weekly nets)</span><span>Value label on every bar, on a dark backing plate so the trend line never overprints it</span></div>'+
-    '<div class="stamp">Managed-money net, trailing '+g.cftc.length+' weekly reports \u00b7 CFTC disaggregated futures-only \u00b7 auto-refreshed</div></div>';
+    '<div class="stamp">Managed-money net, trailing '+g.cftc.length+' weekly reports \u00b7 CFTC disaggregated futures-only \u00b7 '+(DATA.meta.cftc_direct?esc(DATA.meta.cftc_direct):'auto-refreshed')+'</div></div>';
   OV+=askTileHTML(key);
   var st=dstate(key), geo=st.fgeo||'us';
   if(geo!=='us'){ caState(key).ca_geo=(geo==='on'?'Ontario':'Canada'); }
@@ -3574,6 +3554,7 @@ renderAll();
    Leave blank to use the keyless ~30s reference-rate poll. */
 window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePollSec: 60, liveRepo: "anirudhpdoshi/usd-cad-desk-live" };
 </script>
+<script>(function(){var d=document.createElement("script");d.src="direct.js?v="+Date.now();document.body.appendChild(d);})();</script>
 <script>(function(){var s=document.createElement("script");s.src="live.js?v="+Date.now();document.body.appendChild(s);})();</script>
 </body>
 </html>
