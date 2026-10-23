@@ -261,6 +261,12 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .dash-card .kpi-spark{display:block;width:100%;height:26px;margin-top:8px}
 .tile-head{flex-wrap:wrap;row-gap:6px}
 .sub{display:contents}.sub:not(.on){display:none}
+.btip{cursor:pointer;outline:none}.btip:hover .bbar,.btip.act .bbar{filter:brightness(1.35);stroke:#e8b93d;stroke-width:1.2}
+#btpop{position:absolute;z-index:9500;display:none;background:#13213a;border:1px solid #38b6c9;border-radius:10px;padding:11px 13px;box-shadow:0 12px 34px rgba(0,0,0,.55);font-size:12.5px;color:#c9d6e6}
+#btpop.on{display:block}.bt-h{font-weight:800;color:#fff;margin-bottom:6px}
+.bt-row{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-family:"IBM Plex Mono",monospace;font-size:12px;padding:2px 0}.bt-row b{color:#fff}.bt-row small{grid-column:1/-1;color:#8494ab;font-size:10.5px;margin-top:-2px}
+.bt-strong{border-top:1px solid #2b3e5c;margin-top:2px;padding-top:4px}.bt-sub{color:#e8b93d;font-size:11px;margin:7px 0 2px;text-transform:uppercase;letter-spacing:.06em}
+.bt-chg{margin-top:6px;font-family:"IBM Plex Mono",monospace;font-size:11.5px}.bt-note{margin-top:7px;color:#b9c7da;font-size:11.5px;line-height:1.45;border-top:1px dashed #2b3e5c;padding-top:6px}
 .flag{display:inline-block;vertical-align:-2px;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.18);flex:none}
 .has-flag{position:relative}.cflag{position:absolute;top:10px;right:12px;line-height:0}
 .mcard.has-flag .mk{padding-right:36px}.mpanel.has-flag .mp-h{padding-right:40px}
@@ -1797,18 +1803,26 @@ function lineChartSVG(o){
   return '<svg viewBox="0 0 '+W+' '+H+'" class="chart-svg" role="img" aria-label="'+esc(o.aria||o.yLabel||'chart')+'">'+s+'</svg>';
 }
 /* vertical bars: o={bars:[[label,v,hl]], line:[[label,v]] (optional dashed), lineLabel, yLabel, dec, W,H} */
+var BTIPS={}, BTN=0;
 function barChartSVG(o){
-  var W=o.W||480, H=o.H||210, PL=44, PR=o.lineLabel?84:12, PT=18, PB=28, pw=W-PL-PR, ph=H-PT-PB, dec=o.dec==null?1:o.dec, n=o.bars.length; if(!n) return '';
+  var tid=o.tips?('b'+(++BTN)):null; if(tid) BTIPS[tid]=o.tips;
+  var W=o.W||480, H=o.H||210, PL=44, PR=o.lineLabel?84:12, PT=18, PB=o.months?40:28, pw=W-PL-PR, ph=H-PT-PB, dec=o.dec==null?1:o.dec, n=o.bars.length; if(!n) return '';
   var vals=o.bars.map(function(b){ return b[1]; }).concat((o.line||[]).map(function(l){ return l[1]; })).filter(function(v){ return v!=null; });
   var lo=Math.min(0,Math.min.apply(null,vals)), hi=Math.max(0,Math.max.apply(null,vals)); if(o.floor!=null) lo=o.floor; var pad=(hi-lo)*0.12||1; hi+=pad; if(lo<0) lo-=pad*0.6;
   function Y(v){ return PT+ph*(1-(v-lo)/(hi-lo)); } var bw=pw/n, s='';
   niceTicks(lo,hi,4).forEach(function(v){ s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="#1e2a3a"/><text x="'+(PL-6)+'" y="'+(Y(v)+3.5).toFixed(1)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end">'+fmt(v,Math.abs(hi-lo)<6?1:0)+'</text>'; });
   var base=Y(Math.max(lo,0));
+  var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], step=o.months?(n>18?3:n>12?2:1):1;
   o.bars.forEach(function(b,i){ if(b[1]==null) return; var x=PL+i*bw+bw*0.16, w=bw*0.68, y=Y(b[1]), top=Math.min(y,base), h=Math.max(1,Math.abs(base-y));
     var col=b[1]<0?'#e0655f':(b[2]?'#38b6c9':'#2c6f8a');
-    s+='<rect x="'+x.toFixed(1)+'" y="'+top.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="'+col+'"/>';
+    if(tid) s+='<g class="btip" data-tid="'+tid+'" data-i="'+i+'" tabindex="0"><rect x="'+(PL+i*bw).toFixed(1)+'" y="'+PT+'" width="'+bw.toFixed(1)+'" height="'+ph+'" fill="transparent"/>';
+    s+='<rect class="bbar" x="'+x.toFixed(1)+'" y="'+top.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="'+col+'"/>';
+    if(tid) s+='</g>';
     if(n<=14) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(b[1]<0?top+h+11:top-4).toFixed(1)+'" fill="#c9d6e6" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+fmt(b[1],dec)+'</text>';
-    if(n<=14||i%2===(n-1)%2) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(H-9)+'" fill="#5b6b82" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+esc(b[0])+'</text>'; });
+    if(o.months){ var ym=o.months[i]||'', mo=+ym.slice(5,7);
+      if((n-1-i)%step===0) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(PT+ph+14)+'" fill="#8494ab" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+(MN[mo-1]||'')+'</text>';
+      if(mo===1||i===0){ s+='<text x="'+(PL+i*bw+2).toFixed(1)+'" y="'+(PT+ph+30)+'" fill="#c9d6e6" font-size="10.5" font-weight="700" font-family="IBM Plex Mono">'+ym.slice(0,4)+'</text>'+(i>0?'<line x1="'+(PL+i*bw).toFixed(1)+'" x2="'+(PL+i*bw).toFixed(1)+'" y1="'+PT+'" y2="'+(PT+ph+32)+'" stroke="#2b3e5c" stroke-dasharray="2 3"/>':''); } }
+    else if(n<=14||i%2===(n-1)%2) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(H-9)+'" fill="#5b6b82" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+esc(b[0])+'</text>'; });
   if(lo<0) s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(0)+'" y2="'+Y(0)+'" stroke="#3a4a61"/>';
   if(o.line&&o.line.length){ var d='', st=false; o.line.forEach(function(l,i){ if(l[1]==null){ st=false; return; } d+=(st?'L':'M')+(PL+i*bw+bw/2).toFixed(1)+' '+Y(l[1]).toFixed(1); st=true; });
     s+='<path d="'+d+'" fill="none" stroke="#e8a33d" stroke-width="1.6" stroke-dasharray="5 4"/>';
@@ -2127,11 +2141,41 @@ function extRow(label, key, unit, ccy, calKey, goodUp){
     '<td data-l="2-yr trend">'+sparkPath(P.slice(-24).map(function(p){ return p[1]; }),110,26)+'</td>'+
     '<td data-l="Next release">'+nextReleaseHTML(calKey,true)+'</td></tr>';
 }
+function extAt(k, ym){ var S=extSeries(k); if(!S||!S.pts) return null; for(var i=0;i<S.pts.length;i++) if(S.pts[i][0]===ym) return S.pts[i][1]; return null; }
+function tipRow(lab, v, ccy, strong, extra){ return v==null?'':'<div class="bt-row'+(strong?' bt-strong':'')+'"><span>'+lab+'</span><b class="'+(strong?cls(v):'')+'">'+money(ccy,v)+'</b>'+(extra?'<small>'+extra+'</small>':'')+'</div>'; }
+function extTip(key, ym, prevYm, ccy){
+  var MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var head='<div class="bt-h">'+MN[+ym.slice(5,7)-1]+' '+ym.slice(0,4)+'</div>', b='', pct=function(a,t){ return (a!=null&&t)?fmt(a/t*100,0)+'% of total':''; };
+  if(key==='us_trade_bal'){ var ex=extAt('us_exports',ym), im=extAt('us_imports',ym);
+    b=tipRow('Exports',ex,ccy)+tipRow('− Imports',im,ccy)+tipRow('= Trade balance',extAt('us_trade_bal',ym),ccy,true)+
+      ((extAt('us_goods_bal',ym)!=null)?'<div class="bt-sub">made up of</div>'+tipRow('Goods balance',extAt('us_goods_bal',ym),ccy)+tipRow('Services balance',extAt('us_serv_bal',ym),ccy):''); }
+  else if(key==='us_deficit'){ var rc=extAt('us_receipts',ym), ou=extAt('us_outlays',ym);
+    b=tipRow('Receipts (taxes & other)',rc,ccy)+tipRow('− Outlays (spending)',ou,ccy)+tipRow('= Budget balance',extAt('us_deficit',ym),ccy,true);
+    var fy=+ym.slice(5,7)>=10?+ym.slice(0,4):+ym.slice(0,4)-1, cum=0, ok=false;
+    (extSeries('us_deficit').pts||[]).forEach(function(p){ var y=+p[0].slice(0,4), m=+p[0].slice(5,7); if(p[0]<=ym && ((y===fy&&m>=10)||(y===fy+1&&m<=9))){ cum+=p[1]; ok=true; } });
+    if(ok) b+='<div class="bt-sub">fiscal year '+(fy+1)+' to date (from October)</div>'+tipRow('Cumulative balance',cum,ccy,true); }
+  else if(key==='ca_trade_bal'){ var ce=extAt('ca_exports',ym), ci=extAt('ca_imports',ym), ceu=extAt('ca_exports_us',ym), ciu=extAt('ca_imports_us',ym);
+    b=tipRow('Exports',ce,ccy)+tipRow('− Imports',ci,ccy)+tipRow('= Trade balance',extAt('ca_trade_bal',ym),ccy,true)+
+      (ceu!=null?'<div class="bt-sub">with the United States</div>'+tipRow('Exports to US',ceu,ccy,false,pct(ceu,ce))+tipRow('Imports from US',ciu,ccy,false,pct(ciu,ci))+tipRow('Balance with US',(ceu!=null&&ciu!=null)?ceu-ciu:null,ccy,true):''); }
+  else if(key==='ca_fiscal_series'){ var F=DATA.ext.ca_fiscal||{}, c=(F.components||{})[ym];
+    b=c?tipRow('Revenues',c.rev,ccy)+tipRow('− Program expenses',c.prog,ccy)+tipRow('− Public debt charges',c.debt,ccy)+(c.act!=null?tipRow('− Net actuarial losses',c.act,ccy):''):'<div class="bt-sub">revenue / expense split not available for this month</div>';
+    b+=tipRow('= Budgetary balance',extAt('ca_fiscal_series',ym),ccy,true);
+    if(F.notes&&F.notes_ref===ym) b+='<div class="bt-note">'+F.notes.map(esc).join('<br>')+'</div>'; }
+  var cur=extAt(key,ym), pv=prevYm?extAt(key,prevYm):null;
+  if(cur!=null&&pv!=null) b+='<div class="bt-chg">vs prior month: <b class="'+cls(cur-pv)+'">'+sgn(cur-pv,1,'B')+'</b></div>';
+  return head+b;
+}
 function extBars(key, title, ccy){
   var S=extSeries(key); if(!S||!S.pts||S.pts.length<3) return '';
-  var P=S.pts.slice(-24), L=P[P.length-1];
-  var bars=P.map(function(p,i){ return [mLabel(p[0]+'-01').replace(" '","’"), p[1], i===P.length-1]; });
-  return '<div class="mpanel has-flag">'+cflag(key.slice(0,2))+'<h3 class="mp-h">'+title+': <b>'+money(ccy,L[1])+'</b> ('+esc(mLabel(L[0]+'-01'))+')</h3>'+barChartSVG({bars:bars,yLabel:ccy+' billions',dec:1,H:200})+'<div class="stamp">'+esc(S.src)+' · last 24 months</div></div>';
+  var P0=S.pts.slice(-24), L=P0[P0.length-1], by={}; P0.forEach(function(p){ by[p[0]]=p[1]; });
+  var P=[], y=+P0[0][0].slice(0,4), m=+P0[0][0].slice(5,7);       /* continuous months: gaps (e.g. combined Fiscal Monitor issues) stay empty */
+  while(true){ var ym=y+'-'+String(m).padStart(2,'0'); P.push([ym, by[ym]==null?null:by[ym]]); if(ym>=L[0]) break; m++; if(m>12){ m=1; y++; } }
+  P=P.slice(-24);
+  var bars=P.map(function(p,i){ return [p[0], p[1], i===P.length-1]; });
+  var tips=P.map(function(p,i){ return extTip(key, p[0], i?P[i-1][0]:null, ccy); });
+  return '<div class="mpanel has-flag">'+cflag(key.slice(0,2))+'<h3 class="mp-h">'+title+': <b>'+money(ccy,L[1])+'</b> ('+esc(mLabel(L[0]+'-01'))+')</h3>'+
+    barChartSVG({bars:bars,yLabel:ccy+' billions',dec:1,H:220,months:P.map(function(p){ return p[0]; }),tips:tips})+
+    '<div class="stamp">'+esc(S.src)+' · last 24 months · hover or tap a bar for what makes up the number</div></div>';
 }
 function tradeFiscalHTML(){
   var X=DATA.ext; if(!X) return '<div class="tile wide"><h2>Trade &amp; fiscal balances</h2><p class="note">US and Canada trade and deficit data load on the next refresh.</p></div>';
@@ -2257,6 +2301,26 @@ document.addEventListener('click', function(ev){
   var k=t.closest('[data-mkey]'); if(k){ openMacroDetail(k.getAttribute('data-mkey')); }
 });
 document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMacroDetail(); });
+
+/* ---------- bar breakdown tooltip ---------- */
+var BTT=null, BTPIN=null;
+function btShow(g, pin){
+  var p=document.getElementById('btpop'); if(!p){ p=document.createElement('div'); p.id='btpop'; document.body.appendChild(p); }
+  var tips=BTIPS[g.getAttribute('data-tid')]||[]; p.innerHTML=tips[+g.getAttribute('data-i')]||''; p.classList.add('on'); p.classList.toggle('pinned',!!pin);
+  var r=g.getBoundingClientRect(), w=Math.min(290, window.innerWidth-24); p.style.width=w+'px';
+  var left=r.right+8+w<=window.innerWidth-8?r.right+8:(r.left-8-w>=8?r.left-8-w:Math.max(8,window.innerWidth-w-8));
+  p.style.left=(left+window.scrollX)+'px'; p.style.top=(Math.max(8,r.top)+window.scrollY)+'px';
+  document.querySelectorAll('.btip.act').forEach(function(x){ x.classList.remove('act'); }); g.classList.add('act');
+}
+function btHideNow(){ if(BTPIN) return; var p=document.getElementById('btpop'); if(p) p.classList.remove('on'); document.querySelectorAll('.btip.act').forEach(function(x){ x.classList.remove('act'); }); }
+document.addEventListener('mouseover', function(ev){ var t=ev.target.closest?ev.target:null; if(!t) return; if(t.closest('#btpop')){ clearTimeout(BTT); return; }
+  var g=t.closest('.btip'); if(g&&!BTPIN){ clearTimeout(BTT); btShow(g,false); } });
+document.addEventListener('mouseout', function(ev){ var t=ev.target.closest?ev.target:null; if(!t) return; var from=t.closest('.btip')||t.closest('#btpop'), to=ev.relatedTarget;
+  if(from && !(to && (from.contains(to) || (to.closest&&(to.closest('#btpop')||to.closest('.btip')===from))))){ clearTimeout(BTT); BTT=setTimeout(btHideNow,300); } });
+document.addEventListener('click', function(ev){ var g=ev.target.closest&&ev.target.closest('.btip');
+  if(g){ BTPIN=(BTPIN===g)?null:g; if(BTPIN) btShow(g,true); else btHideNow(); return; }
+  if(BTPIN && !(ev.target.closest&&ev.target.closest('#btpop'))){ BTPIN=null; btHideNow(); } });
+window.addEventListener('scroll', function(){ if(!BTPIN) btHideNow(); }, {passive:true});
 
 /* ---------- event marker popover (input-cost charts) ---------- */
 var EVPIN=null;
