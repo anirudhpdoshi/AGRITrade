@@ -261,6 +261,16 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .dash-card .kpi-spark{display:block;width:100%;height:26px;margin-top:8px}
 .tile-head{flex-wrap:wrap;row-gap:6px}
 .sub{display:contents}.sub:not(.on){display:none}
+.cmp-ctrl{display:flex;flex-wrap:wrap;gap:8px 22px;margin:4px 0 10px;font-size:12.5px}
+.cmp-g{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}.cmp-g b{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.cmp-cb{display:inline-flex;align-items:center;gap:5px;cursor:pointer;color:#c9d6e6;border:1px solid var(--line2);border-radius:6px;padding:3px 8px}
+.cmp-cb input{accent-color:#38b6c9}
+details.cmp-sec{border:1px solid var(--line);border-radius:8px;margin:8px 0;padding:4px 10px 8px;background:var(--panel2)}
+details.cmp-sec summary{cursor:pointer;font-weight:700;font-size:13px;padding:6px 0;color:#e8eef4}
+table.cmp-tbl td,table.cmp-tbl th{text-align:right;white-space:nowrap}table.cmp-tbl td.lbl,table.cmp-tbl th:first-child{text-align:left;white-space:normal}
+table.cmp-tbl td small{display:block;font-size:10.5px}
+table.cmp-tbl tbody tr:hover td{background:rgba(56,182,201,.09)}
+table.cmp-tbl .ruler-col{background:rgba(232,163,61,.10)!important;box-shadow:inset 1px 0 0 rgba(232,163,61,.45),inset -1px 0 0 rgba(232,163,61,.45)}table.cmp-tbl td.cmp-na{color:var(--faint)}
 .cockpit{grid-template-columns:repeat(3,1fr)!important}.cockpit .kpi-s,.cockpit .kpi-k{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}.cockpit .kpi{border-bottom:1px solid var(--line)}.cockpit-h{grid-column:1/-1;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);padding:2px 4px 6px}
 .cockpit .kpi-s{line-height:1.55}
 .vol-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.vol-grid .mini-kv span:first-child{min-width:112px}
@@ -1916,6 +1926,79 @@ function oiChangeHTML(key){
   return '<div class="tile wide" data-src="options"><h2>Open-interest change by strike <span class="h2note">— '+esc(n.chain||'')+' · '+esc(prev.date)+' → latest</span></h2>'+body+'<div class="stamp">Green = contracts added, red = closed · new OI near a wall reinforces it</div></div>';
 }
 
+/* ================= CROP-YEAR COMPARISON (USDA · Canada · Ontario) ================= */
+var CMP=(function(){ var d={y2026:false,y2025:true,y2024:true,y2023:true,us:true,ca:true,on:true,chg:true};
+  try{ var s=JSON.parse(localStorage.getItem('desk.cmp')||'{}'); Object.keys(d).forEach(function(k){ if(typeof s[k]==='boolean') d[k]=s[k]; }); }catch(e){} return d; })();
+function cmpSave(){ try{ localStorage.setItem('desk.cmp', JSON.stringify(CMP)); }catch(e){} }
+function cmpYears(){ return ['2026','2025','2024','2023'].filter(function(y){ return CMP['y'+y]; }); }
+function cmpCell(v, prev, dec, pctMode){
+  if(v==null) return '<td class="cmp-na">—</td>';
+  var ch='';
+  if(CMP.chg && prev!=null && prev!==0){ var p=(v/prev-1)*100; ch='<small class="'+(Math.abs(p)<0.05?'neu':cls(p))+'">'+(Math.abs(p)<0.05?'0.0%':sgn(p,1,'%'))+'</small>'; }
+  if(CMP.chg && pctMode && prev!=null){ var dp=v-prev; ch='<small class="'+cls(dp)+'">'+sgn(dp,1,' pp')+'</small>'; }
+  return '<td><b>'+fmt(v,dec)+'</b>'+ch+'</td>';
+}
+function cmpTable(title, sub, years, rows, labelFn, src){
+  if(!rows.length) return '';
+  var head='<tr><th>Parameter</th>'+years.map(function(y){ return '<th>'+labelFn(y)+'</th>'; }).join('')+'</tr>';
+  var body=rows.map(function(r){ return '<tr'+(r.key?' class="sd-key"':'')+'><td class="lbl">'+esc(r.l)+' <small class="h2note">'+esc(r.u||'')+'</small></td>'+
+    years.map(function(y){ return cmpCell(r.get(y), r.get(String(+y-1)), r.d, r.pp); }).join('')+'</tr>'; }).join('');
+  return '<details class="cmp-sec" open><summary>'+title+' <span class="h2note">'+sub+'</span></summary><div class="tbl-scroll"><table class="sd-tbl cmp-tbl"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div><div class="stamp">'+src+'</div></details>';
+}
+function cmpUS(key, years){
+  var H=DATA.sd_hist&&DATA.sd_hist[key]; if(!H) return '<details class="cmp-sec" open><summary>United States · USDA</summary><p class="note">USDA marketing-year history loads on the next data refresh.</p></details>';
+  var Y=H.years, labs=Object.keys((Y[Object.keys(Y)[0]])||{});
+  function g(lab){ return function(y){ var v=Y[y]&&Y[y][lab]; return v==null?null:v; }; }
+  var pick=['Area Harvested','Yield per Acre','Beginning Stocks','Production','Imports','Total Supply','Feed & Residual','Food, Seed & Industrial','Crushings','Seed & Residual','Domestic Total','Exports','Total Use','Ending Stocks'];
+  var rows=pick.filter(function(l){ return labs.indexOf(l)>=0; }).map(function(l){ return {l:l, u:l==='Area Harvested'?'mil ac':l==='Yield per Acre'?'bu/ac':'mil bu', d:/^(Area|Yield)/.test(l)?1:0, key:/^(Production|Total Supply|Total Use|Ending Stocks)$/.test(l), get:g(l)}; });
+  rows.push({l:'Stocks-to-use', u:'%', d:1, key:true, pp:true, get:function(y){ var e=Y[y]&&Y[y]['Ending Stocks'], t=Y[y]&&Y[y]['Total Use']; return (e!=null&&t)?e/t*100:null; }});
+  rows.push({l:'Exports share of use', u:'%', d:1, pp:true, get:function(y){ var e=Y[y]&&Y[y]['Exports'], t=Y[y]&&Y[y]['Total Use']; return (e!=null&&t)?e/t*100:null; }});
+  return cmpTable('United States · USDA', '— marketing year '+(key==='wheat'?'Jun–May':'Sep–Aug'), years, rows, function(y){ return y+'/'+String(+y+1).slice(2)+(Y[y]?'':' <small>n/a</small>')+(y==='2026'?' <small>proj.</small>':''); },
+    esc(H.source)+' · latest USDA estimate for each year (older years are final or near-final) · USDA area planted and farm price are not in PSD');
+}
+function cmpCA(key, geo, years){
+  var C=DATA.canada&&DATA.canada[key], A=C&&C.annual&&C.annual[geo]; if(!A) return '';
+  var st=caState(key), M=caMeasures(key, st.ca_unit), idx={}; A.years.forEach(function(y,i){ idx[y]=i; });
+  var rows=M.map(function(m){ var s=m.v(A); return {l:m.l, u:m.u, d:m.d, key:m.key, get:function(y){ return idx[y]==null?null:s[idx[y]]; }}; }).filter(function(r){ return years.some(function(y){ return r.get(y)!=null; }) || ['2022','2021'].some(function(y){ return r.get(y)!=null; }); });
+  var bpm=BU_PER_MT[key], imp=st.ca_unit==='imp';
+  var P=C.prices&&C.prices[geo];
+  if(P){ var ser=P.series; rows.push({l:'Avg monthly farm price (crop yr Aug–Jul)', u:imp?'C$/bu':'C$/t', d:2, get:function(y){ var a=ser.filter(function(x){ return x[0]>=y+'-08' && x[0]<=(+y+1)+'-07'; }); if(!a.length) return null; var v=a.reduce(function(s,x){ return s+x[1]; },0)/a.length; return imp?v/bpm:v; }}); }
+  var S=C.stocks&&C.stocks[geo];
+  if(S){ var byd={}; S.forEach(function(x){ byd[x[0]]=x[1]; }); function tot(o){ return o?(o['Farm and commercial, total']!=null?o['Farm and commercial, total']:o['Farm stocks']):null; }
+    function conv(kt){ return kt==null?null:(imp?kt*1000*bpm/1e6:kt/1000); }
+    var lab=S[S.length-1][1]['Farm and commercial, total']!=null?'farm + commercial':'farm only';
+    rows.push({l:'Stocks Dec 31 ('+lab+')', u:imp?'mil bu':'Mt', d:imp?1:2, get:function(y){ return conv(tot(byd[y+'-12'])); }});
+    rows.push({l:'Ending stocks Jul 31 ('+lab+')', u:imp?'mil bu':'Mt', d:imp?1:2, key:true, get:function(y){ return conv(tot(byd[(+y+1)+'-07'])); }}); }
+  var isEst=function(y){ return +y>=new Date().getFullYear(); };
+  return cmpTable((geo==='Ontario'?'Ontario':'Canada')+' · Statistics Canada', '— crop year (harvest year; stocks run Aug–Jul)', years, rows, function(y){ return y+(idx[y]==null?' <small>n/a</small>':isEst(y)?' <small>est.</small>':''); },
+    scLink('annual')+' · '+scLink('prices')+' · '+scLink('stocks')+' · units follow the BU·AC / T·HA toggle on the Canada view'+(P?'':' · no monthly farm price published for this geography'));
+}
+function cropCompareHTML(key){
+  var years=cmpYears(), cb=function(k,l){ return '<label class="cmp-cb"><input type="checkbox" data-cmp="'+k+'" data-cmpk="'+key+'"'+(CMP[k]?' checked':'')+'> '+l+'</label>'; };
+  var body=!years.length?'<p class="note">Tick at least one crop year.</p>':
+    (CMP.us?cmpUS(key,years):'')+(CMP.ca?cmpCA(key,'Canada',years):'')+(CMP.on?cmpCA(key,'Ontario',years):'');
+  return '<div class="tile wide" id="cmp-'+key+'" data-src="sd_hist"><div class="tile-head"><h2>Crop-year comparison — '+GMETA[key].name+' <span class="h2note">side by side, USDA vs Canada vs Ontario</span></h2></div>'+
+    '<div class="cmp-ctrl"><span class="cmp-g"><b>Crop years</b>'+cb('y2026','2026 (current)')+cb('y2025','2025')+cb('y2024','2024')+cb('y2023','2023')+'</span>'+
+    '<span class="cmp-g"><b>Show</b>'+cb('us','USDA (US)')+cb('ca','Canada')+cb('on','Ontario')+cb('chg','y/y change')+'</span></div>'+body+
+    '<div class="stamp">Hover or tap a value: the ruler highlights that row and that crop year in every section · small figures = change vs the year before (pp for ratios) · click a section title to collapse it · your selections are remembered on this device</div></div>';
+}
+/* ruler: hovering / tapping a cell highlights its row (CSS) and its crop-year column across every section */
+function cmpRuler(ev){
+  var td=ev.target.closest?ev.target.closest('table.cmp-tbl td, table.cmp-tbl th'):null;
+  var tile=ev.target.closest?ev.target.closest('[id^="cmp-"]'):null; if(!tile) return;
+  tile.querySelectorAll('.ruler-col').forEach(function(c){ c.classList.remove('ruler-col'); });
+  if(!td||td.cellIndex<1) return;
+  var head=td.closest('table').tHead.rows[0].cells[td.cellIndex], yr=(head.textContent.match(/20\d\d/)||[])[0]; if(!yr) return;
+  tile.querySelectorAll('table.cmp-tbl').forEach(function(tb){ var ci=-1; [].forEach.call(tb.tHead.rows[0].cells,function(h,i){ if(h.textContent.indexOf(yr)===0) ci=i; });
+    if(ci<1) return; [].forEach.call(tb.rows,function(row){ if(row.cells[ci]) row.cells[ci].classList.add('ruler-col'); }); });
+}
+document.addEventListener('mouseover', cmpRuler); document.addEventListener('click', cmpRuler);
+document.addEventListener('change', function(ev){
+  var t=ev.target; if(!t||!t.getAttribute||!t.hasAttribute('data-cmp')) return;
+  CMP[t.getAttribute('data-cmp')]=t.checked; cmpSave();
+  ['corn','wheat','soybeans'].forEach(function(k){ var el=document.getElementById('cmp-'+k); if(el) el.outerHTML=cropCompareHTML(k); });
+});
+
 /* ================= USD/CAD LIVE FEED MONITOR ================= */
 var MON_TAB='next';
 function agriEvents(fromMs, days){
@@ -2015,7 +2098,7 @@ function renderGrain(key){
   if(geo!=='us'){ caState(key).ca_geo=(geo==='on'?'Ontario':'Canada'); }
   var gb=function(v,l){ return '<button data-dash="'+key+'" data-k="fgeo" data-v="'+v+'" aria-pressed="'+(geo===v)+'">'+l+'</button>'; };
   var FH='<div class="tile wide geo-head"><div class="tile-head"><h2>'+meta.name+' fundamentals <span class="h2note">— pick a geography</span></h2><span class="toggle" role="group">'+gb('us','US · USDA / WASDE')+gb('ca','CANADA · STATCAN')+gb('on','ONTARIO')+'</span></div></div>';
-  FU=FH+(geo==='us'?FU:canadaTileHTML(key,true)+canadaChartsHTML(key)+caCalendarHTML());
+  FU=FH+cropCompareHTML(key)+(geo==='us'?FU:canadaTileHTML(key,true)+canadaChartsHTML(key)+caCalendarHTML());
   html+=subWrap(key,'overview',OV)+subWrap(key,'deriv',DV)+subWrap(key,'fund',FU);
   html+='</div><aside class="rail">'+grainAlertsLiveHTML(key)+grainCalendarHTML(key)+newsRailHTML(NEWS[key])+'</aside></div>';
   document.getElementById('panel-'+key).innerHTML=html;
