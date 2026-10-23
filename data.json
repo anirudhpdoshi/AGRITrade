@@ -31,14 +31,14 @@
      ],
      "near_expiry": "Dec-26",
      "intraday": [
-      4.5825,
-      "9:55am ET"
+      4.5625,
+      "11:25am ET"
      ],
      "iv_10d_rel": 0.03578,
      "iv_chain_iv": 17.96,
      "iv_as_of": "2026-10-23",
      "iv_note": "IV and skew from IB midpoint, Oct 23 2026 11:03 AM ET",
-     "intraday_ts": "2026-10-23T09:55:00-04:00",
+     "intraday_ts": "2026-10-23T11:25:00-04:00",
      "ma50": "5.11",
      "ma100": "4.84"
     },
@@ -1968,14 +1968,14 @@
      ],
      "near_expiry": "Jan-27",
      "intraday": [
-      12.7325,
-      "9:55am ET"
+      12.695,
+      "11:25am ET"
      ],
      "iv_10d_rel": 0.02803,
      "iv_chain_iv": 14.07,
      "iv_as_of": "2026-10-23",
      "iv_note": "IV and skew from IB midpoint, Oct 23 2026 11:03 AM ET",
-     "intraday_ts": "2026-10-23T09:55:00-04:00",
+     "intraday_ts": "2026-10-23T11:25:00-04:00",
      "ma50": "12.81",
      "ma100": "12.28"
     },
@@ -3618,14 +3618,14 @@
      ],
      "near_expiry": "Dec-26",
      "intraday": [
-      6.275,
-      "9:55am ET"
+      6.2575,
+      "11:25am ET"
      ],
      "iv_10d_rel": 0.04863,
      "iv_chain_iv": 24.41,
      "iv_as_of": "2026-10-23",
      "iv_note": "IV and skew from IB midpoint, Oct 23 2026 11:03 AM ET",
-     "intraday_ts": "2026-10-23T09:55:00-04:00",
+     "intraday_ts": "2026-10-23T11:25:00-04:00",
      "ma50": "7.04",
      "ma100": "6.75"
     },
@@ -6153,11 +6153,11 @@
     "30Y": 5.29
    },
    "fxcross": {
-    "dxy": 101.72,
-    "dxy_chg": 0.108,
+    "dxy": 101.758,
+    "dxy_chg": 0.146,
     "eurusd": 1.1203,
-    "usdjpy": 156.78,
-    "usdcad_ref": 1.3979
+    "usdjpy": 156.88,
+    "usdcad_ref": 1.3987
    },
    "closes": [
     [
@@ -6236,16 +6236,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 102.32,
-     "chg": 2.85,
-     "pct": 2.87,
+     "last": 102.06,
+     "chg": 2.59,
+     "pct": 2.6,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 111.21,
-     "chg": -1.96,
-     "pct": -1.73,
+     "last": 111.43,
+     "chg": -1.74,
+     "pct": -1.54,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -6257,9 +6257,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 16.85,
+    "value": 16.59,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-23T13:55:00+00:00",
+    "obs_ts": "2026-10-23T15:25:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -6791,10 +6791,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.39785,
+    "mid": 1.3986,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-23T10:05:00-04:00",
+    "ts": "2026-10-23T11:37:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -6934,78 +6934,6 @@
     }
    ],
    "intraday": [
-    [
-     "2026-10-22T18:10+00:00",
-     1.40057
-    ],
-    [
-     "2026-10-22T18:15+00:00",
-     1.40052
-    ],
-    [
-     "2026-10-22T18:20+00:00",
-     1.40063
-    ],
-    [
-     "2026-10-22T18:25+00:00",
-     1.40066
-    ],
-    [
-     "2026-10-22T18:30+00:00",
-     1.40057
-    ],
-    [
-     "2026-10-22T18:35+00:00",
-     1.40038
-    ],
-    [
-     "2026-10-22T18:40+00:00",
-     1.40057
-    ],
-    [
-     "2026-10-22T18:45+00:00",
-     1.40056
-    ],
-    [
-     "2026-10-22T18:50+00:00",
-     1.40052
-    ],
-    [
-     "2026-10-22T18:55+00:00",
-     1.40074
-    ],
-    [
-     "2026-10-22T19:00+00:00",
-     1.40079
-    ],
-    [
-     "2026-10-22T19:05+00:00",
-     1.40063
-    ],
-    [
-     "2026-10-22T19:10+00:00",
-     1.40063
-    ],
-    [
-     "2026-10-22T19:15+00:00",
-     1.4003
-    ],
-    [
-     "2026-10-22T19:20+00:00",
-     1.40073
-    ],
-    [
-     "2026-10-22T19:25+00:00",
-     1.4003
-    ],
-    [
-     "2026-10-22T19:30+00:00",
-     1.40053
-    ],
-    [
-     "2026-10-22T19:35+00:00",
-     1.40054
-    ],
     [
      "2026-10-22T19:40+00:00",
      1.40067
@@ -7889,38 +7817,114 @@
     [
      "2026-10-23T14:00+00:00",
      1.39779
+    ],
+    [
+     "2026-10-23T14:05+00:00",
+     1.3979
+    ],
+    [
+     "2026-10-23T14:10+00:00",
+     1.3979
+    ],
+    [
+     "2026-10-23T14:15+00:00",
+     1.39799
+    ],
+    [
+     "2026-10-23T14:20+00:00",
+     1.39783
+    ],
+    [
+     "2026-10-23T14:25+00:00",
+     1.39868
+    ],
+    [
+     "2026-10-23T14:30+00:00",
+     1.39856
+    ],
+    [
+     "2026-10-23T14:35+00:00",
+     1.39849
+    ],
+    [
+     "2026-10-23T14:40+00:00",
+     1.3979
+    ],
+    [
+     "2026-10-23T14:45+00:00",
+     1.39769
+    ],
+    [
+     "2026-10-23T14:50+00:00",
+     1.39783
+    ],
+    [
+     "2026-10-23T14:55+00:00",
+     1.3979
+    ],
+    [
+     "2026-10-23T15:00+00:00",
+     1.39833
+    ],
+    [
+     "2026-10-23T15:05+00:00",
+     1.39823
+    ],
+    [
+     "2026-10-23T15:10+00:00",
+     1.39803
+    ],
+    [
+     "2026-10-23T15:15+00:00",
+     1.398
+    ],
+    [
+     "2026-10-23T15:20+00:00",
+     1.39839
+    ],
+    [
+     "2026-10-23T15:25+00:00",
+     1.39863
+    ],
+    [
+     "2026-10-23T15:30+00:00",
+     1.39874
+    ],
+    [
+     "2026-10-23T15:35+00:00",
+     1.39857
     ]
    ]
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-23T11:03:00-04:00",
+   "updated_at": "2026-10-23T11:37:49-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-23T10:05:00-04:00",
+    "fx_spot": "2026-10-23T11:37:00-04:00",
     "fx_closes": "2026-10-22T16:30:00-04:00",
     "yields": "2026-10-22T17:00:00-04:00",
     "policy": "2026-10-21T07:35:00-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-13T15:30:00-04:00",
     "cftc_grains": "2026-10-13T15:30:00-04:00",
-    "energy": "2026-10-23T09:55:00-04:00",
-    "crosses": "2026-10-23T09:55:00-04:00",
+    "energy": "2026-10-23T11:25:00-04:00",
+    "crosses": "2026-10-23T11:25:00-04:00",
     "grains_settle": "2026-10-22T14:20:00-04:00",
-    "grains_quote": "2026-10-23T09:55:00-04:00",
+    "grains_quote": "2026-10-23T11:25:00-04:00",
     "options": "2026-10-23T11:03:00-04:00",
-    "news": "2026-10-23T10:05:21-04:00",
+    "news": "2026-10-23T11:37:49-04:00",
     "calendar": "2026-10-21T07:05:00-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
-    "macro": "2026-10-23T09:16:33-04:00",
+    "macro": "2026-10-23T11:37:49-04:00",
     "exports": "2026-10-23T09:16:33-04:00",
     "wasde": "2026-10-23T09:16:33-04:00",
     "canada": "2026-10-22T22:29:24-04:00",
     "ca_calendar": "2026-10-23T09:16:33-04:00",
     "sd_hist": "2026-10-22T23:06:37-04:00",
-    "inputs": "2026-10-22T23:25:40-04:00",
+    "inputs": "2026-10-23T11:37:49-04:00",
     "ext": "2026-10-23T10:05:21-04:00",
-    "ca_retail": "2026-10-23T09:21:03-04:00"
+    "ca_retail": "2026-10-23T11:37:49-04:00"
    },
    "sources": {
     "news": "Google News RSS search, refreshed every 15 min",
@@ -7950,7 +7954,7 @@
      "ca_retail"
     ],
     "failed": [],
-    "at": "2026-10-23T10:05:21-04:00"
+    "at": "2026-10-23T11:37:49-04:00"
    },
    "releases_checked": "2026-10-23T09:16:33-04:00",
    "exports_checked": "2026-10-23T09:16:33-04:00",
@@ -7987,7 +7991,7 @@
    },
    "canada_checked": "2026-10-22T22:29:24-04:00",
    "ca_calendar_checked": "2026-10-23T09:16:33-04:00",
-   "canada_watch": "2026-10-23T10:05:21-04:00",
+   "canada_watch": "2026-10-23T11:37:49-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -8002,8 +8006,8 @@
     "32100007": "2026-10-09T08:30"
    },
    "sd_hist_checked": "2026-10-22T23:06:37-04:00",
-   "inputs_checked": "2026-10-22T23:25:40-04:00",
-   "macro_checked": "2026-10-23T09:16:33-04:00",
+   "inputs_checked": "2026-10-23T11:37:49-04:00",
+   "macro_checked": "2026-10-23T11:37:49-04:00",
    "ca_retail_dims": {
     "GEO": [
      "Canada"
@@ -8055,7 +8059,7 @@
      "thousands"
     ]
    },
-   "ca_retail_checked": "2026-10-23T09:21:03-04:00",
+   "ca_retail_checked": "2026-10-23T11:37:49-04:00",
    "ext_checked": "2026-10-23T10:05:21-04:00"
   },
   "macro": [
@@ -10686,16 +10690,12 @@
     "good": "up",
     "freq": "M",
     "measure": "",
-    "period": "Aug '26",
-    "obs_date": "2026-08-01",
-    "value": 51.7,
-    "prior": 55.2,
-    "chg": -3.5,
+    "period": "Sep '26",
+    "obs_date": "2026-09-01",
+    "value": 48.1,
+    "prior": 51.7,
+    "chg": -3.6,
     "history": [
-     [
-      "Sep '25",
-      55.1
-     ],
      [
       "Oct '25",
       53.6
@@ -10739,14 +10739,14 @@
      [
       "Aug '26",
       51.7
+     ],
+     [
+      "Sep '26",
+      48.1
      ]
     ],
     "src": "FRED UMCSENT",
     "hist24": [
-     [
-      "Sep '24",
-      70.1
-     ],
      [
       "Oct '24",
       70.5
@@ -10838,9 +10838,13 @@
      [
       "Aug '26",
       51.7
+     ],
+     [
+      "Sep '26",
+      48.1
      ]
     ],
-    "seen_at": null
+    "seen_at": "2026-10-23T11:37:49-04:00"
    },
    {
     "key": "ca_cpi",
@@ -22720,16 +22724,12 @@
     "good": "up",
     "freq": "M",
     "measure": "m/m",
-    "period": "Jul '26",
-    "obs_date": "2026-07-01",
-    "value": -0.74,
-    "prior": 0.63,
-    "chg": -1.37,
+    "period": "Aug '26",
+    "obs_date": "2026-08-01",
+    "value": 1.2,
+    "prior": -0.81,
+    "chg": 2.01,
     "history": [
-     [
-      "Aug '25",
-      0.92
-     ],
      [
       "Sep '25",
       -1.02
@@ -22764,27 +22764,27 @@
      ],
      [
       "May '26",
-      1.04
+      1.1
      ],
      [
       "Jun '26",
-      0.63
+      0.64
      ],
      [
       "Jul '26",
-      -0.74
+      -0.81
+     ],
+     [
+      "Aug '26",
+      1.2
      ]
     ],
-    "level_b": 73.7,
-    "yoy": 5.08,
+    "level_b": 74.57,
+    "yoy": 5.35,
     "src": "Statistics Canada 20-10-0056-01",
-    "ecom_b": 5.49,
-    "ecom_share": 7.5,
+    "ecom_b": 5.65,
+    "ecom_share": 7.6,
     "hist24": [
-     [
-      "Aug '24",
-      -0.27
-     ],
      [
       "Sep '24",
       1.06
@@ -22867,18 +22867,27 @@
      ],
      [
       "May '26",
-      1.04
+      1.1
      ],
      [
       "Jun '26",
-      0.63
+      0.64
      ],
      [
       "Jul '26",
-      -0.74
+      -0.81
+     ],
+     [
+      "Aug '26",
+      1.2
      ]
     ],
-    "seen_at": null
+    "seen_at": "2026-10-23T11:37:49-04:00",
+    "rev": {
+     "period": "Jul '26",
+     "from": -0.74,
+     "to": -0.81
+    }
    },
    {
     "key": "ca_retail_ex",
@@ -22889,16 +22898,12 @@
     "good": "up",
     "freq": "M",
     "measure": "m/m",
-    "period": "Jul '26",
-    "obs_date": "2026-07-01",
-    "value": -0.72,
-    "prior": 0.5,
-    "chg": -1.23,
+    "period": "Aug '26",
+    "obs_date": "2026-08-01",
+    "value": 1.21,
+    "prior": -0.83,
+    "chg": 2.04,
     "history": [
-     [
-      "Aug '25",
-      0.68
-     ],
      [
       "Sep '25",
       -0.0
@@ -22933,7 +22938,7 @@
      ],
      [
       "May '26",
-      1.18
+      1.21
      ],
      [
       "Jun '26",
@@ -22941,17 +22946,17 @@
      ],
      [
       "Jul '26",
-      -0.72
+      -0.83
+     ],
+     [
+      "Aug '26",
+      1.21
      ]
     ],
-    "level_b": 54.0,
-    "yoy": 5.88,
+    "level_b": 54.61,
+    "yoy": 6.35,
     "src": "Statistics Canada 20-10-0056-01 (derived: total minus auto dealers)",
     "hist24": [
-     [
-      "Aug '24",
-      -0.94
-     ],
      [
       "Sep '24",
       1.04
@@ -23034,7 +23039,7 @@
      ],
      [
       "May '26",
-      1.18
+      1.21
      ],
      [
       "Jun '26",
@@ -23042,10 +23047,19 @@
      ],
      [
       "Jul '26",
-      -0.72
+      -0.83
+     ],
+     [
+      "Aug '26",
+      1.21
      ]
     ],
-    "seen_at": null
+    "seen_at": "2026-10-23T11:37:49-04:00",
+    "rev": {
+     "period": "Jul '26",
+     "from": -0.72,
+     "to": -0.83
+    }
    },
    {
     "key": "ca_retail_core",
@@ -23056,16 +23070,12 @@
     "good": "up",
     "freq": "M",
     "measure": "m/m",
-    "period": "Jul '26",
-    "obs_date": "2026-07-01",
-    "value": -0.7,
-    "prior": 1.23,
-    "chg": -1.92,
+    "period": "Aug '26",
+    "obs_date": "2026-08-01",
+    "value": 1.14,
+    "prior": -0.71,
+    "chg": 1.85,
     "history": [
-     [
-      "Aug '25",
-      0.9
-     ],
      [
       "Sep '25",
       -0.28
@@ -23100,7 +23110,7 @@
      ],
      [
       "May '26",
-      0.88
+      0.9
      ],
      [
       "Jun '26",
@@ -23108,17 +23118,17 @@
      ],
      [
       "Jul '26",
-      -0.7
+      -0.71
+     ],
+     [
+      "Aug '26",
+      1.14
      ]
     ],
-    "level_b": 46.65,
-    "yoy": 3.92,
+    "level_b": 47.19,
+    "yoy": 4.18,
     "src": "Statistics Canada 20-10-0056-01 (derived: total minus auto dealers and gasoline stations)",
     "hist24": [
-     [
-      "Aug '24",
-      -0.7
-     ],
      [
       "Sep '24",
       1.78
@@ -23201,7 +23211,7 @@
      ],
      [
       "May '26",
-      0.88
+      0.9
      ],
      [
       "Jun '26",
@@ -23209,10 +23219,14 @@
      ],
      [
       "Jul '26",
-      -0.7
+      -0.71
+     ],
+     [
+      "Aug '26",
+      1.14
      ]
     ],
-    "seen_at": null
+    "seen_at": "2026-10-23T11:37:49-04:00"
    }
   ]
  },
@@ -23269,7 +23283,7 @@
   ],
   "wheat": [
    [
-    "2026-10-23 13:19 UTC",
+    "2026-10-23 14:56 UTC",
     "www.bloomberg.com",
     "Wheat Slides for Eighth Week in Longest Losing Streak Since 1997",
     "https://news.google.com/rss/articles/CBMitgFBVV95cUxPRzZBZlZxQ1pxc0tFYUw1UnA4VjBkWlFWdXJGdVpfenpUY3d6ZXUxcWFoNS1LbTBFT3VfRmlNa2FzLVhCTzdreTczajNMaHg4N1l2bTB4WjFzQzhMcEtsZGFaRFFUWGU2akp0U0lacHpzVzF1NXRiQWdEcXFOTVdlUGJMdVk5N0VQWWZGWEUwNUpZNFdmRkY1TkhpMmZPMjdIVFlEUnhJczhqZUgyZnZfRjRzRGRLQQ?oc=5"
@@ -23319,6 +23333,12 @@
   ],
   "soybeans": [
    [
+    "2026-10-23 14:32 UTC",
+    "www.rfdtv.com",
+    "Biofuel Demand Now Uses the Majority of Soybean Oil",
+    "https://news.google.com/rss/articles/CBMifkFVX3lxTE9XR0V3UmVBdFZlTWtPRk5iTlMtOG1PY3BYWDdvazlObWVnNHBIZzYxTjRBcXlZVmkxTkpKUUlybHIzb1JOOHRhWjkzZlJtWndQOWFtUGFyd3RlQlNHcFQ0LUlqZkVFTnFmc0ZQUEJldnFJRTI2SnpyV3ZuU0FGZw?oc=5"
+   ],
+   [
     "2026-10-23 11:29 UTC",
     "www.agriculture.com",
     "3 Big Things Today, Oct. 23, 2026",
@@ -23332,9 +23352,9 @@
    ],
    [
     "2026-10-23 08:45 UTC",
-    "global.chinadaily.com.cn",
+    "www.chinadaily.com.cn",
     "A soybean harvest beyond control",
-    "https://news.google.com/rss/articles/CBMiggFBVV95cUxOWXlaNWxBTXdJbFpGS2t5QkZvcDMtTDNCVHM1RzRxeWNRcUtLMWdvZVNjdnlyZUk3SkNpU2JDVGRmdld6YjNVZVhjVE1ZZ0VWOUVBZURla1ZVTVdQb3A5OFE5cnFjMXdnZVZtNHlmbTNrcUhQWndTMkk1YnI4c3dfSDVn?oc=5"
+    "https://news.google.com/rss/articles/CBMifkFVX3lxTFA0Ui1LZ0pJZnhtbG9DVGkwTW1mamdGNFMwb0U5Y1FpZ3Z3aS1zRXVOMnRxbEVsNURoUkFKTXBkbG11VGdLMTFqWjc3UVdRWVpYRmlsenFGTXpmdWVJV0xRU205Q0Q4bTNzWS0xSHJIcEk3NW1aZUVMT0Z3cXVvZw?oc=5"
    ],
    [
     "2026-10-23 08:10 UTC",
@@ -23347,12 +23367,6 @@
     "commodity-board.com",
     "Soybeans Market Analysis: Chinese Demand, USDA Sales and Brazil Crush 2027 — CMB News",
     "https://news.google.com/rss/articles/CBMimgFBVV95cUxOTnhHbmNnSjJ1Rk80Y3VnOEQ5bWNERndYOUZsVU5qcVNfN3lGSWhRTC11bENuWlphbTBkV1B5OUdVRTd2RzZCdmdIRmxDeHQ1T25Hb3BrQkNNMzFqcnM5dXMzcXVfSHE1dWVYT0JtbkwyS0lGbjhlb1RmRWNpN0loNlpqTXlEZGRDcnA5WVF2cHR1TUl5NmRoQXhR?oc=5"
-   ],
-   [
-    "2026-10-23 06:24 UTC",
-    "www.brecorder.com",
-    "Soybeans rise on strong export sales, but harvest keeps weekly loss in view",
-    "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1sMTFNMnhnZ1MzbGlWeWJQTFAzTllJRno5UlplY3VHV0xRR094bnJucmxyLTJCd1J5Tk84QUJ0cFctSXZsNThMRUZISE1jLTU5T1hVMGJ30gFWQVVfeXFMTWwxMU0yeGdnUzNsaVZ5YlBMUDNOWUlGejlSWmVjdUdXTFFHT3hucm5ybHItMkJ3UnlOTzhBQnRwVy1Jdmw1OExFRkhITWMtNTlPWFUwYnc?oc=5"
    ],
    [
     "2026-10-23 06:00 UTC",
@@ -23369,10 +23383,10 @@
   ],
   "fx": [
    [
-    "2026-10-23 13:50 UTC",
-    "sg.finance.yahoo.com",
-    "Canadian dollar holds near one-month high as rate outlook supports loonie",
-    "https://news.google.com/rss/articles/CBMihgFBVV95cUxOcDQ3NmlGMUI3RHNNNEVoa2ZjUG5LYXJFRlZpSU85QkM0dnM3UmlYX1RiaF9Ed2tINlJJSktzTVlueHdfTF84SGlWOG40X2liQS1vVElwZUl2QXg0djVuVmxxWDRtSE5sN0dzc21SWHhsem00VE1TYnVHYWRUUE9JbXJfeldmZw?oc=5"
+    "2026-10-23 15:03 UTC",
+    "uk.finance.yahoo.com",
+    "UK Retail Sales Slip in September Amid Gloomy Consumer Sentiment",
+    "https://news.google.com/rss/articles/CBMiiAFBVV95cUxNQjlZWHE1enNONTcxcDEyWF9ZbWE0YmZFREFwSG9aTXNTM0xEUmJ5N1k0OWNaTnFleTZUUWx2Sm1nM2Y4UFF6c0IwcnZ3c3VEc21ET2dxNkdsb1hhcndfaFA2UEVpQ0thRDlMOXpNalE4aUZfYkN5VkpPNUYzdmhsUnp1RFlXTC1k?oc=5"
    ],
    [
     "2026-10-23 13:42 UTC",
@@ -23381,16 +23395,22 @@
     "https://news.google.com/rss/articles/CBMixgFBVV95cUxOTVA4V3BacDB6QTNkM0RYWHFOUWItMjl3ZmlEQlg4TzJQZFFhaUtQOWtXV1c0ODR1akN3VlJjOE1wbTZnNjFaRjZQSktRUEVRVjlvTDVTaFRpNG5PM0ZSb2JheEw1ZWNyX00wMmRHd093TEVRTmI0T0N3SXJObUNLTkNLVGpIRlJyMnM5cjhNWEdyS3BIZjNCeWt5aW5Pc0xkOUxZOG9RUThtVmVhYUk3dl90TVdDQXlyR19BQjRUa2UzbmNPbWc?oc=5"
    ],
    [
-    "2026-10-23 13:03 UTC",
-    "www.marketscreener.com",
+    "2026-10-23 13:00 UTC",
+    "www.tradingview.com",
     "CANADA FX DEBT - Canadian dollar strengthens, benchmark yield climbs",
-    "https://news.google.com/rss/articles/CBMiugFBVV95cUxOcVlJZzF2cFRxRk40OVZKVl9VRzdBWDZDV0tCdmtRdG4xeXJVbks3MHZnRWNXc3JnTE1qVExHU0dnS3RmdDNHOVdmZXVKUk9pMFh0OEVIaTdEVVlVMUhUbm1vRENaTEtRbFQ2aFBYSWx1Y3U1ZFZFMXI1aUNyQzk4WFg0TmNwTFdGRDhMZXM3S0JsNUdhRTZZNHdkeHgxUW12MnZOcWVUdnJxMUN1eUNBUWlqejBZNllwakE?oc=5"
+    "https://news.google.com/rss/articles/CBMi0AFBVV95cUxOUGV0NjNDeEVlZ3JnaW01OEctNlM1Z3c3TzhaV0otWTc4T3hIWlRwSVFBMEREbGxjdlRsbERHM2FQOEZhUWJQUGxKMHJfYXEwRjVZdjZtZDdxR2d0cWU0a0JkWXMxSGZQRjFnMmZFZDhCc2dnS2R0TnZ6VnJqMFVtUXNkWGl6UFNrRGlkNlBLeVV2SjB0eDhtbHpORVE4dWdBUjA2UmwxUU1yT0NSTllJN1ZYcjBLOGh1YWJFbDB6eGxuWDlOZEw2aDByNGhCeVpn?oc=5"
+   ],
+   [
+    "2026-10-23 12:30 UTC",
+    "investinglive.com",
+    "Canada August retail sales +1.2% vs +1.3% expected",
+    "https://news.google.com/rss/articles/CBMif0FVX3lxTE12ZzZJNi1MSVhMeUlod2xyRkw1eHJMcTlOaVFHM2pEcXI5cm1JcHFGUWZYV0daek9yMFJUNEt1Q0tfNDVDRF90QW9UVUtVZUpWSmVVaHMzZUI3LUd5R3E0MUFxd2FSVm5KZ05kNTN2UkRHQk5NZjZsMzNjMVU5eFE?oc=5"
    ],
    [
     "2026-10-23 12:13 UTC",
-    "finance.yahoo.com",
+    "ca.finance.yahoo.com",
     "Canadian Dollar May Rise on Possible Bank of Canada Rate Hike Next Week, UBS Says",
-    "https://news.google.com/rss/articles/CBMinwFBVV95cUxOSDk3LVRGRXRsOHozZHRIWHh6MkZVUHluMm9Dc0Y0RXdaRkVIeGdzRHRQazJqWmNFMWtGZEd3MUl1Nm5mVURsUXhfX05LcVZpakJtRXYyZ0Ztd0xTTjBRal9FY1BWY3RHdlMycHV1YXJWZG5YM2N3bVdxVUJBSXhkbUcyWHhOWUtHVURmMlV1R3g4Qlp2NlNvUDBzeW9UMUE?oc=5"
+    "https://news.google.com/rss/articles/CBMiigFBVV95cUxPZEVnSUYxMzVCOFE0alo2N1gzR19UVUM3NzdESGFiRTRfMFlod1BBblEza0pJZlIwbmJxVUsyNXhDWmlqZ0xLNXhUSUlxZzZUenBhb3M4NVJGdEpVMksxejFMd3paNjAwclh5anIxVW9rTmVfRlMyZFdUVk9vajBNV1dsVFpfQ3lVQVE?oc=5"
    ],
    [
     "2026-10-23 12:06 UTC",
@@ -23403,12 +23423,6 @@
     "www.wealthprofessional.ca",
     "“It needs to be scrapped,” National Bank’s CEO says of Canada’s tax code",
     "https://news.google.com/rss/articles/CBMixgFBVV95cUxQRjY1TlFyVFZjNnZMeTVJSWV1Yy1QbXVWUVkweTVxZ3hSdFFib0pUamdEa1lJMDV3Q0xnV3lDY2xzRzZQUEg3RFBDdGpjMF9hbW1mSzRyTDZLZHVFWHhya29YazV0TGVMV0tlREhNQnBDUVZ4MG1rY1ZnVnZqYUN1S3p4WDkxQ1FwMWNWTThHVFU4bjJpdjAwXzNMOUtsY0FiMEtCeWdGTk5MQkhBV1V5bVc5TEh3WjNXUUgwMlgyTDlnMVNWeXc?oc=5"
-   ],
-   [
-    "2026-10-23 09:23 UTC",
-    "ca.investing.com",
-    "Canadian dollar strengthens as oil prices, BoC rate hike bets support loonie",
-    "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPcjRlUUtrNU1VcXZUWHpnbG1XcUVrUG5aRlhYWmJqSzZXWFloVk96b1V1NGd3em4xcEtOemlZMGpLX2RXdG5QWXlzYm1oMmdLUUo3NGFsRFVOamZDSzFSbm11Q2VFeEhTVlhpa19lM0FQTjVOVl9qRXdZTERmdXB3cHY4d1E5ckRudmYxZ1FJT3lPc2VlY0JPT3JySE9uNUpHclN2TzVmV094T0I3NXRmNWZHbWxsY1loc0VmaW03dHVEZw?oc=5"
    ],
    [
     "2026-10-23 08:00 UTC",
