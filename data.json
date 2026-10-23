@@ -1375,14 +1375,14 @@
      ],
      "near_expiry": "Jan-27",
      "intraday": [
-      12.57,
-      "9:15pm ET"
+      12.565,
+      "9:20pm ET"
      ],
      "iv_10d_rel": 0.02749,
      "iv_chain_iv": 13.8,
      "iv_as_of": "2026-10-22",
      "iv_note": "Jan options (Nov expire Oct 23); IV and skew from IB midpoint, Oct 22 5:30pm ET",
-     "intraday_ts": "2026-10-22T21:15:00-04:00",
+     "intraday_ts": "2026-10-22T21:20:00-04:00",
      "ma50": "12.81",
      "ma100": "12.28"
     },
@@ -2432,7 +2432,7 @@
      ],
      "near_expiry": "Dec-26",
      "intraday": [
-      6.31,
+      6.3075,
       "9:20pm ET"
      ],
      "iv_10d_rel": 0.04928,
@@ -4189,10 +4189,10 @@
     "30Y": 5.42
    },
    "fxcross": {
-    "dxy": 101.547,
-    "dxy_chg": -0.229,
-    "eurusd": 1.1223,
-    "usdjpy": 156.44,
+    "dxy": 101.549,
+    "dxy_chg": -0.227,
+    "eurusd": 1.1225,
+    "usdjpy": 156.43,
     "usdcad_ref": 1.4001
    },
    "closes": [
@@ -4272,16 +4272,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 99.98,
-     "chg": 2.83,
-     "pct": 2.91,
+     "last": 99.85,
+     "chg": 2.7,
+     "pct": 2.78,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 113.76,
-     "chg": 4.94,
-     "pct": 4.54,
+     "last": 113.63,
+     "chg": 4.81,
+     "pct": 4.42,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -4293,7 +4293,7 @@
     }
    ],
    "wcs_diff": {
-    "value": 14.51,
+    "value": 14.38,
     "source": "computed: WTI last minus WCS last (same stored run)",
     "obs_ts": "2026-10-23T01:20:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
@@ -4761,10 +4761,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.4001,
+    "mid": 1.3997,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-22T21:29:00-04:00",
+    "ts": "2026-10-22T21:31:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -4904,10 +4904,6 @@
     }
    ],
    "intraday": [
-    [
-     "2026-10-22T05:30+00:00",
-     1.40315
-    ],
     [
      "2026-10-22T05:35+00:00",
      1.4028
@@ -5126,7 +5122,7 @@
     ],
     [
      "2026-10-22T10:05+00:00",
-     1.40251
+     1.40252
     ],
     [
      "2026-10-22T10:10+00:00",
@@ -5214,7 +5210,7 @@
     ],
     [
      "2026-10-22T11:55+00:00",
-     1.40348
+     1.40353
     ],
     [
      "2026-10-22T12:00+00:00",
@@ -5514,7 +5510,7 @@
     ],
     [
      "2026-10-22T18:10+00:00",
-     1.40057
+     1.4004
     ],
     [
      "2026-10-22T18:15+00:00",
@@ -5626,123 +5622,7 @@
     ],
     [
      "2026-10-22T20:30+00:00",
-     1.40157
-    ],
-    [
-     "2026-10-22T20:35+00:00",
      1.40145
-    ],
-    [
-     "2026-10-22T20:40+00:00",
-     1.4012
-    ],
-    [
-     "2026-10-22T20:45+00:00",
-     1.40132
-    ],
-    [
-     "2026-10-22T20:50+00:00",
-     1.40099
-    ],
-    [
-     "2026-10-22T20:55+00:00",
-     1.40081
-    ],
-    [
-     "2026-10-22T21:00+00:00",
-     1.40048
-    ],
-    [
-     "2026-10-22T21:05+00:00",
-     1.4001
-    ],
-    [
-     "2026-10-22T21:10+00:00",
-     1.40052
-    ],
-    [
-     "2026-10-22T21:15+00:00",
-     1.40048
-    ],
-    [
-     "2026-10-22T21:20+00:00",
-     1.40049
-    ],
-    [
-     "2026-10-22T21:25+00:00",
-     1.40059
-    ],
-    [
-     "2026-10-22T21:30+00:00",
-     1.40059
-    ],
-    [
-     "2026-10-22T21:35+00:00",
-     1.4006
-    ],
-    [
-     "2026-10-22T21:40+00:00",
-     1.4005
-    ],
-    [
-     "2026-10-22T21:45+00:00",
-     1.40062
-    ],
-    [
-     "2026-10-22T21:50+00:00",
-     1.40061
-    ],
-    [
-     "2026-10-22T21:55+00:00",
-     1.4
-    ],
-    [
-     "2026-10-22T22:00+00:00",
-     1.40058
-    ],
-    [
-     "2026-10-22T22:05+00:00",
-     1.40047
-    ],
-    [
-     "2026-10-22T22:10+00:00",
-     1.40052
-    ],
-    [
-     "2026-10-22T22:15+00:00",
-     1.40038
-    ],
-    [
-     "2026-10-22T22:20+00:00",
-     1.40041
-    ],
-    [
-     "2026-10-22T22:25+00:00",
-     1.40047
-    ],
-    [
-     "2026-10-22T22:30+00:00",
-     1.4001
-    ],
-    [
-     "2026-10-22T22:35+00:00",
-     1.40041
-    ],
-    [
-     "2026-10-22T22:40+00:00",
-     1.40037
-    ],
-    [
-     "2026-10-22T22:45+00:00",
-     1.40041
-    ],
-    [
-     "2026-10-22T22:50+00:00",
-     1.40045
-    ],
-    [
-     "2026-10-22T22:55+00:00",
-     1.4003
     ],
     [
      "2026-10-22T23:00+00:00",
@@ -5794,7 +5674,7 @@
     ],
     [
      "2026-10-23T00:00+00:00",
-     1.40016
+     1.4002
     ],
     [
      "2026-10-23T00:05+00:00",
@@ -5862,16 +5742,20 @@
     ],
     [
      "2026-10-23T01:25+00:00",
-     1.4001
+     1.40009
+    ],
+    [
+     "2026-10-23T01:30+00:00",
+     1.40005
     ]
    ]
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-22T21:29:46-04:00",
+   "updated_at": "2026-10-22T21:31:57-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-22T21:29:00-04:00",
+    "fx_spot": "2026-10-22T21:31:00-04:00",
     "fx_closes": "2026-10-22T16:30:00-04:00",
     "yields": "2026-10-21T17:00:00-04:00",
     "policy": "2026-10-21T07:35:00-04:00",
@@ -5883,12 +5767,12 @@
     "grains_settle": "2026-10-22T14:20:00-04:00",
     "grains_quote": "2026-10-22T21:20:00-04:00",
     "options": "2026-10-22T17:30:00-04:00",
-    "news": "2026-10-22T21:29:46-04:00",
+    "news": "2026-10-22T21:31:57-04:00",
     "calendar": "2026-10-21T07:05:00-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-22T19:36:35-04:00",
     "exports": "2026-10-22T21:27:37-04:00",
-    "wasde": "2026-09-11T12:00:00-04:00"
+    "wasde": "2026-10-22T21:31:57-04:00"
    },
    "sources": {
     "news": "Google News RSS search, refreshed every 15 min",
@@ -5908,19 +5792,16 @@
      "releases",
      "macro",
      "settles",
-     "exports"
-    ],
-    "failed": [
+     "exports",
      "wasde"
     ],
-    "at": "2026-10-22T21:29:46-04:00"
+    "failed": [],
+    "at": "2026-10-22T21:31:57-04:00"
    },
    "releases_checked": "2026-10-22T21:27:37-04:00",
    "macro_checked": "2026-10-22T19:36:35-04:00",
    "exports_checked": "2026-10-22T21:27:37-04:00",
-   "last_errors": {
-    "wasde": "RuntimeError: corn new 2026: PSD Area Planted None vs stored 96.8 — not used; PSD lines: ['area harvested|(1000 ha)', 'beginning stocks|(1000 mt)', 'domestic consumption|(1000 mt)', 'ending stocks|(1000 mt)', 'exports|(1000 mt)', 'feed dom. consumption|(1000 mt)', 'fsi consumption|(1000 mt)', 'imports|(1000 mt)', 'production|(1000 mt)', 'total distribution|(1000 mt)', 'total supply|(1000 mt)', 'ty exports|(1000 mt)', 'ty imp. from u.s.|(1000 mt)', 'ty imports|(1000 mt)', 'yield|(mt/ha)']"
-   }
+   "wasde_checked": "2026-10-22T21:31:57-04:00"
   },
   "macro": [
    {
@@ -7820,36 +7701,36 @@
   },
   "wasde": {
    "corn": {
-    "report": "Sep 2026",
-    "prior_report": "Aug 2026",
+    "report": "Oct 2026",
+    "prior_report": "Sep 2026",
     "unit_note": "Acres in millions, yield in bu/ac, price in $/bu, otherwise million bushels",
     "new": {
      "my": "2026/27",
      "rows": [
       [
        "Area Planted",
-       96.7,
-       96.8
+       96.8,
+       null
       ],
       [
        "Area Harvested",
-       88.6,
+       88.5,
        88.5
       ],
       [
        "Yield per Acre",
-       180.7,
-       178.5
+       178.5,
+       181.2
       ],
       [
        "Beginning Stocks",
-       1945,
-       1922
+       1922,
+       2095
       ],
       [
        "Production",
-       16013,
-       15800
+       15800,
+       16034
       ],
       [
        "Imports",
@@ -7858,43 +7739,43 @@
       ],
       [
        "Total Supply",
-       17983,
-       17747
+       17747,
+       18154
       ],
       [
        "Feed & Residual",
-       6100,
-       5950
+       5950,
+       6000
       ],
       [
        "Food, Seed & Industrial",
        6955,
-       6955
+       7005
       ],
       [
        "Domestic Total",
-       13055,
-       12905
+       12905,
+       13005
       ],
       [
        "Exports",
        3275,
-       3275
+       3300
       ],
       [
        "Total Use",
-       16330,
-       16180
+       16180,
+       16305
       ],
       [
        "Ending Stocks",
-       1653,
-       1567
+       1567,
+       1849
       ],
       [
        "Avg Farm Price",
-       4.5,
-       4.8
+       4.8,
+       null
       ]
      ]
     },
@@ -7904,12 +7785,12 @@
       [
        "Area Planted",
        98.8,
-       98.8
+       null
       ],
       [
        "Area Harvested",
        91.3,
-       91.3
+       90.9
       ],
       [
        "Yield per Acre",
@@ -7924,88 +7805,88 @@
       [
        "Production",
        17021,
-       17021
+       16963
       ],
       [
        "Imports",
-       28,
-       30
+       30,
+       31
       ],
       [
        "Total Supply",
-       18600,
-       18602
+       18602,
+       18546
       ],
       [
        "Feed & Residual",
        6350,
-       6350
+       6119
       ],
       [
        "Food, Seed & Industrial",
        6905,
-       6905
+       6902
       ],
       [
        "Domestic Total",
        13255,
-       13255
+       13022
       ],
       [
        "Exports",
-       3400,
-       3425
+       3425,
+       3429
       ],
       [
        "Total Use",
-       16655,
-       16680
+       16680,
+       16451
       ],
       [
        "Ending Stocks",
-       1945,
-       1922
+       1922,
+       2095
       ],
       [
        "Avg Farm Price",
        4.15,
-       4.15
+       null
       ]
      ]
     },
-    "source": "USDA WASDE Sep 2026 (desk drop-in)"
+    "source": "USDA PSD (FAS Open Data) · converted from metric to U.S. units"
    },
    "soybeans": {
-    "report": "Sep 2026",
-    "prior_report": "Aug 2026",
+    "report": "Oct 2026",
+    "prior_report": "Sep 2026",
     "unit_note": "Acres in millions, yield in bu/ac, price in $/bu, otherwise million bushels",
     "new": {
      "my": "2026/27",
      "rows": [
       [
        "Area Planted",
-       86.8,
-       86.9
+       86.9,
+       null
       ],
       [
        "Area Harvested",
-       85.8,
+       85.9,
        85.9
       ],
       [
        "Yield per Acre",
-       52.7,
-       52.8
+       52.8,
+       53.1
       ],
       [
        "Beginning Stocks",
        325,
-       325
+       315
       ],
       [
        "Production",
-       4519,
-       4535
+       4535,
+       4562
       ],
       [
        "Imports",
@@ -8014,8 +7895,8 @@
       ],
       [
        "Total Supply",
-       4869,
-       4885
+       4885,
+       4902
       ],
       [
        "Crushings",
@@ -8024,28 +7905,28 @@
       ],
       [
        "Exports",
-       1660,
-       1685
+       1685,
+       1695
       ],
       [
        "Seed & Residual",
-       110,
-       111
+       111,
+       112
       ],
       [
        "Total Use",
-       4549,
-       4575
+       4575,
+       4587
       ],
       [
        "Ending Stocks",
-       320,
-       310
+       310,
+       315
       ],
       [
        "Avg Farm Price",
-       11.4,
-       12.0
+       12.0,
+       null
       ]
      ]
     },
@@ -8055,7 +7936,7 @@
       [
        "Area Planted",
        81.2,
-       81.2
+       null
       ],
       [
        "Area Harvested",
@@ -8075,55 +7956,55 @@
       [
        "Production",
        4262,
-       4262
+       4261
       ],
       [
        "Imports",
        25,
-       25
+       22
       ],
       [
        "Total Supply",
        4612,
-       4612
+       4608
       ],
       [
        "Crushings",
        2655,
-       2655
+       2646
       ],
       [
        "Exports",
        1520,
-       1520
+       1515
       ],
       [
        "Seed & Residual",
        112,
-       112
+       132
       ],
       [
        "Total Use",
        4287,
-       4287
+       4293
       ],
       [
        "Ending Stocks",
        325,
-       325
+       315
       ],
       [
        "Avg Farm Price",
-       10.4,
-       10.5
+       10.5,
+       null
       ]
      ]
     },
-    "source": "USDA WASDE Sep 2026 (desk drop-in)"
+    "source": "USDA PSD (FAS Open Data) · converted from metric to U.S. units"
    },
    "wheat": {
-    "report": "Sep 2026",
-    "prior_report": "Aug 2026",
+    "report": "Oct 2026",
+    "prior_report": "Sep 2026",
     "unit_note": "Acres in millions, yield in bu/ac, price in $/bu, otherwise million bushels",
     "new": {
      "my": "2026/27",
@@ -8131,17 +8012,17 @@
       [
        "Area Planted",
        42.7,
-       42.7
+       null
       ],
       [
        "Area Harvested",
        32.1,
-       32.1
+       31.9
       ],
       [
        "Yield per Acre",
        47.8,
-       47.8
+       48.1
       ],
       [
        "Beginning Stocks",
@@ -8151,17 +8032,17 @@
       [
        "Production",
        1531,
-       1531
+       1534
       ],
       [
        "Imports",
        140,
-       140
+       145
       ],
       [
        "Total Supply",
        2591,
-       2591
+       2599
       ],
       [
        "Food, Seed & Industrial",
@@ -8171,32 +8052,32 @@
       [
        "Feed & Residual",
        80,
-       80
+       90
       ],
       [
        "Domestic Total",
        1099,
-       1099
+       1109
       ],
       [
        "Exports",
        775,
-       775
+       750
       ],
       [
        "Total Use",
        1874,
-       1874
+       1859
       ],
       [
        "Ending Stocks",
        717,
-       717
+       740
       ],
       [
        "Avg Farm Price",
-       6.2,
-       6.4
+       6.4,
+       null
       ]
      ]
     },
@@ -8206,12 +8087,12 @@
       [
        "Area Planted",
        45.3,
-       45.3
+       null
       ],
       [
        "Area Harvested",
        37.2,
-       37.2
+       37.3
       ],
       [
        "Yield per Acre",
@@ -8226,7 +8107,7 @@
       [
        "Production",
        1985,
-       1985
+       1989
       ],
       [
        "Imports",
@@ -8236,7 +8117,7 @@
       [
        "Total Supply",
        2964,
-       2964
+       2969
       ],
       [
        "Food, Seed & Industrial",
@@ -8246,12 +8127,12 @@
       [
        "Feed & Residual",
        119,
-       119
+       124
       ],
       [
        "Domestic Total",
        1136,
-       1136
+       1141
       ],
       [
        "Exports",
@@ -8261,7 +8142,7 @@
       [
        "Total Use",
        2044,
-       2044
+       2049
       ],
       [
        "Ending Stocks",
@@ -8271,11 +8152,11 @@
       [
        "Avg Farm Price",
        5.06,
-       5.06
+       null
       ]
      ]
     },
-    "source": "USDA WASDE Sep 2026 (desk drop-in)"
+    "source": "USDA PSD (FAS Open Data) · converted from metric to U.S. units"
    }
   }
  },
@@ -8362,12 +8243,6 @@
     "https://news.google.com/rss/articles/CBMijAFBVV95cUxNeUlVbnM1ME1JR2lucDN1YUs4dXkwN1FnOXBRQ2FIYjJDZXQ0ZjlISHJGQ0pOd05SeldFOG5UdkMtQ3FuWF9EekhkdVZ6ZkhqZXdyNHViR1JYZV9DWWlVZXl5bGdSdE8xd1NVc2Q3MEFCUGVaZXhEV3kzZ1ppVDd2Z2RKM1NVVl82bHZxbg?oc=5"
    ],
    [
-    "2026-10-22 16:05 UTC",
-    "www.vietnam.vn",
-    "Natural gas prices fell for the fourth consecutive session to $2.79/MMBtu.",
-    "https://news.google.com/rss/articles/CBMilAFBVV95cUxPd2huQXdXcFQwNDR0RkppSnB2ZmZvcDA5RW5aelBYa1NmNWlPVlZRZ3kwdDlZLWdaMFNMbzZ4MW02U1V5NHlnSFBzcVFmWEU0ZllFZ2twS3RVRWF1Z0JfcThfYTk5czZXOWt1QXJrX2RkcS05X01qSXhkRW9QVklQT2E1YXNTMjEzM1RKSDdEczBFYlA5?oc=5"
-   ],
-   [
     "2026-10-22 15:24 UTC",
     "www.agweb.com",
     "Corn and Wheat Look for Lows, Soybeans Bounce on Exports: Cattle Correct",
@@ -8378,6 +8253,12 @@
     "ukragroconsult.com",
     "Ukrainian wheat prices could rise to $200–210/t this winter amid reduced planting areas",
     "https://news.google.com/rss/articles/CBMivwFBVV95cUxNQzFpU2hsT0hiVS1uT21od3dnTThfNnRPZzZCUUhWQ2hENm14RGNfRW1FdEM4N21jeTZhaEduRGRnRGlDWmZ0M1hmSFgxalFrNGRURUtaaG14RVl3QW9MdkxwbHo5SXpyWHFlRXZ4NDhRQXYxZHBNMHgySnlQVkZuRXEwSFB4OUJwY3R6clB3RjlNU0pOYXUyMEp5LTltWlhmSWtIdFYzOXlnQWNwaF9RWVBJbWhVdUNOcEQ3X3A5OA?oc=5"
+   ],
+   [
+    "2026-10-22 13:08 UTC",
+    "commodity-board.com",
+    "Wheat Market Update: MATIF Firms, CBOT Softens, Black Sea Basis Mixed — CMB News",
+    "https://news.google.com/rss/articles/CBMipAFBVV95cUxPUkRZY3BhVWF4NEpBakdOSmRQMU12UE8wYVVJdDgtbXYwTDNHanBHVFEzcWk5al9ZVnF3X1g0RlpHdGFLbmRmWGRMN0tGTDkwLVFETDhTUVRHSXNRZnpqSl9SdEpJMjFDbFBGUlNVMFc5b0RVdFY5cjlZN0F6MWVrcGlkeks5Tkp1ZW1jWkpNM010NkRUcDhnTmI4NHpoU2tiZi0zTA?oc=5"
    ]
   ],
   "soybeans": [
@@ -8392,12 +8273,6 @@
     "www.barchart.com",
     "Soybeans Close Thursday Mostly Higher, as Export Business Continues",
     "https://news.google.com/rss/articles/CBMirwFBVV95cUxQTkZvcHI5VlR3Tk0zMXEyaXdKSmd2QWg4V1lvSkcyeUdIb3RRTm1WUERGT050RWdwMXNZNWFLMWdfYVptQ1JsTEhMR0NxY0x3SjVGemJuWXpyRFhsbkdmclVXLXR3QWY1VEM2a3NqdzVwLUowZmN0ZlNYaWx5ci1DeUh6R0JmblFNNENxUmtCOC1wVkVIVWViOUhld1Y5UW5vWmVBRXhzaHZLc25pbHVJ?oc=5"
-   ],
-   [
-    "2026-10-22 20:21 UTC",
-    "stjosephpost.com",
-    "Commodity markets daily recap",
-    "https://news.google.com/rss/articles/CBMidkFVX3lxTE5PbV9xWjlMalhQMGVWZnVrck54Mnc1THBkUE1ES09FNDJ5VUQzVUI4NnYtR0hNeGI0RkVIWGU1SEtEQVBFRjZtUUhaVUhWZEFKRXJyTTA0R3c1dHZtUENiYzV2c2o0QlZ4MF9Qb1ZtTjdVZGlnMHc?oc=5"
    ],
    [
     "2026-10-22 19:12 UTC",
@@ -8428,14 +8303,26 @@
     "www.indexbox.io",
     "USDA Export Sales: Soybeans and Corn Outpace Wheat - News and Statistics",
     "https://news.google.com/rss/articles/CBMijAFBVV95cUxNeUlVbnM1ME1JR2lucDN1YUs4dXkwN1FnOXBRQ2FIYjJDZXQ0ZjlISHJGQ0pOd05SeldFOG5UdkMtQ3FuWF9EekhkdVZ6ZkhqZXdyNHViR1JYZV9DWWlVZXl5bGdSdE8xd1NVc2Q3MEFCUGVaZXhEV3kzZ1ppVDd2Z2RKM1NVVl82bHZxbg?oc=5"
+   ],
+   [
+    "2026-10-22 13:59 UTC",
+    "ukragroconsult.com",
+    "Palm oil prices rise amid strong Malaysian exports and higher soybean oil prices",
+    "https://news.google.com/rss/articles/CBMitwFBVV95cUxPS3EwY0c1NGwwRi1aNkJsZXRmZEV1TGxLUVFIaUtuaG5FaWxPNGliQU5iQmxwUHl4dXBWTHZUMDhTZGRwb05ZQkJ3X3FZTy1tbFRpczJWZ0dxMkt2ZGc4WDc5R2I2cVFSRENYWmp1ajVERmRicU80Um9jTUVxTERQM0lBMmtKbi1qcTM0TVNpZEgzMm8xVzZtLUFPcmVZaW15T3pmcWxicHJyV01tSFotc3RCbUpta1E?oc=5"
    ]
   ],
   "fx": [
    [
-    "2026-10-22 21:31 UTC",
-    "www.wsj.com",
-    "Bank of Canada Survey Records Notable Rise in Inflation Expectations",
-    "https://news.google.com/rss/articles/CBMivgFBVV95cUxNMDBwUUhTck9tQ3ZiSUlQVXVGRWxMMWExUlJaWDVRTENTVHU0anA4NDZmdWR1NEVjMmQ2ZURVcDZkV0VUeXhBUEhBb1JwemM5czY3X0loRFRSQkFQNHkzZDVpbHcwNHJ6OGFiUE1VZzJlcy1rX0I2WU9Dc2pUWElnUWh2V01GNVJOR3VQSEhYTF9OUVhtcWE5QmdhdGpmMVV0bkJJNFZLN2gwWjRjaGdGSENnX1ZCanMxdGV6dTNn?oc=5"
+    "2026-10-22 21:34 UTC",
+    "www.nerdwallet.com",
+    "Best Credit Cards in Canada",
+    "https://news.google.com/rss/articles/CBMigwFBVV95cUxPOUdIbDA3SjdJTjEweW8zZWJTbnMwSUpuVGR4OVF4SHB0YjJScHRCLVlMdzRvcGpOMl8tdXo1YXdEQU43SlJCSzNSdDNoRHhSaWdoQjBReWtIRTZOOGZRdDlnQ3NnUE1LYTdkbjI1NXhWYldvRGJHRlpZcnVEa3lqRUJLTQ?oc=5"
+   ],
+   [
+    "2026-10-22 19:41 UTC",
+    "www.mpamag.com",
+    "Could inflation fears push the Bank of Canada toward its first hike since 2023?",
+    "https://news.google.com/rss/articles/CBMi3gFBVV95cUxPYzhqTFZuMzY0ZVI5YTlXSEtybk85MFNzanE4TUp0czVSMnlMSkU2UEs0TGZYUU1EaS1iU1I1SXR3UUR2b1NCelhpRHV1eUhWZTJaM0k4NDBfYTFFalJMNFVCSHdqb2s1b3R5ZEZFMGFxOU9Bbm9DNlVNTGRUYURzeDNtY0tjTDE2cmxwaE9tRGhTcVpEbjl1X0MwbWRnaTc5cXNKeDB2bnVRZkc3M1NTc2N4eEhlTWY0QXhCb0JMbFU0ZTBkVlFZTTA2YzhITW5DUGNQY3NKMkpHMFk1S3c?oc=5"
    ],
    [
     "2026-10-22 18:56 UTC",
@@ -8448,12 +8335,6 @@
     "www.marketscreener.com",
     "CANADA FX DEBT-Canadian dollar extends daily winning streak as interest rate spreads narrow",
     "https://news.google.com/rss/articles/CBMi3AFBVV95cUxPcVR2WFdoVnFRREdNYy1oM1d1YkdKNGhtM3NFUlBhQlpoY1J5R1hpWENFNEg1T2MzMVA5cjdzV0NTMFV1TXd6TXoxVUdWb29MM3h6N2dKV3o1OXpjWjRtdFYtaE9tRGg2RzZ0MFRIVnYxeUM4WVdOSEpuM1oxZ25HdUs0U1NsR3NUSVo5d2tSc3B3c3g3cWlQZTVFcTVJOHZyZEwtc1VndzNZUm5oTFlOeEIyclc2VWZmaVZoQk4xdllpQlBnNWFuaFhZM09kalJtd21jUWtLX2pkOHNF?oc=5"
-   ],
-   [
-    "2026-10-22 18:38 UTC",
-    "www.mpamag.com",
-    "Inflation fears push Bank of Canada toward first hike since 2022",
-    "https://news.google.com/rss/articles/CBMiywFBVV95cUxPWFdoeE0yV0NuSE1JcG95dGlMVkoyZ0V3ZlVkaVM5d3FqVUxRYmdqRTNMRnhoRHFDSHpBLW5YXzJVS3NjSXJfUUVQbkUxb3AzSjAxaWJDZkRVQ3VkMlY3aUFIdVFqZmIwWWx5U2VQMERUeWhuODVJU24yc1dCV3hXRW01TW1GNjE2WXl6VW5RaE9mQ3JpMXVWWUFlWWpDVlBEWDNqT0NKLVo4Nm83M1Q4ZVFwaFJSR0VBbEczQWM2cGxKeHJjSTFsU3J0OA?oc=5"
    ],
    [
     "2026-10-22 18:02 UTC",
@@ -8474,10 +8355,10 @@
     "https://news.google.com/rss/articles/CBMitwFBVV95cUxQa1g0WWYybmp1ZVMxODFBMXNQenZmVXJITWM4Rk5uNnRwbnUwTlhqSkJ5NGpUZG9oYmF1bExxSTJHMGgzeFoxci0tRUEzVE1DT0pldHFiWmF4eElNQ0M5ZWtjOUxJU3V3d055eVdhT1J0a1k2WnFFRXFNQks3bldzWFhKMER3N1VpbVhVQUg1M2dkdlRTZ2VHTjkxREEtSG1aM291TXJXRzBQMzZvU3FzMzdwemljZXM?oc=5"
    ],
    [
-    "2026-10-22 14:53 UTC",
-    "www.inkl.com",
-    "Why You Should Bet on the Canadian Dollar Here",
-    "https://news.google.com/rss/articles/CBMifEFVX3lxTE9pTWY1SHowdl9zc3NsNzZ4MGZjd2xzU19TQ0gzTE96OXlPV3c1Ui11TnAycW50cXljbGFaZ3Y3dzlCUUl4N3hWNlU2X0VlNFF2RVg5VlQ1c3QyVmtqYTlDSGtjcGk5MXU3aEV3eVdPLU1xeHpVZGN0Tl85aHY?oc=5"
+    "2026-10-22 13:42 UTC",
+    "twaslnews1.twaslnews.com",
+    "Canadian Dollar steadies as US Dollar recovery limits further upside | FXStreet",
+    "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9lU2RnSmdHNVMzb2pqbVVrMlpYZFRGdEtpV1hiMXVzZzJfaWVOMi1wRURJcTJmcWlnbEtTTEJXRVR4cXo5eW5jaGl2WkNoODNqU0xN?oc=5"
    ]
   ]
  }
