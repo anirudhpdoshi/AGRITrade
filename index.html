@@ -261,7 +261,10 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .dash-card .kpi-spark{display:block;width:100%;height:26px;margin-top:8px}
 .tile-head{flex-wrap:wrap;row-gap:6px}
 .sub{display:contents}.sub:not(.on){display:none}
-.btip{cursor:pointer;outline:none}.btip:hover .bbar,.btip.act .bbar{filter:brightness(1.35);stroke:#e8b93d;stroke-width:1.2}
+.btip{cursor:pointer;outline:none}
+.flowpanel{grid-column:1/-1}.flowwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media (max-width:760px){.flowwrap .flowchart{min-width:700px}}.fcol:hover .colbg{fill:rgba(56,182,201,.08)}.fcol.act .colbg{fill:rgba(232,185,61,.16);stroke:#e8b93d;stroke-width:1}
+.bt-math{white-space:normal;word-break:break-word;margin-top:6px;padding:5px 8px;background:#0d1626;border-radius:6px;font-family:"IBM Plex Mono",monospace;font-size:12px;color:#e8b93d}.btip:hover .bbar,.btip.act .bbar{filter:brightness(1.35);stroke:#e8b93d;stroke-width:1.2}
 #btpop{position:absolute;z-index:9500;display:none;background:#13213a;border:1px solid #38b6c9;border-radius:10px;padding:11px 13px;box-shadow:0 12px 34px rgba(0,0,0,.55);font-size:12.5px;color:#c9d6e6}
 #btpop.on{display:block}.bt-h{font-weight:800;color:#fff;margin-bottom:6px}
 .bt-row{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-family:"IBM Plex Mono",monospace;font-size:12px;padding:2px 0}.bt-row b{color:#fff}.bt-row small{grid-column:1/-1;color:#8494ab;font-size:10.5px;margin-top:-2px}
@@ -2201,20 +2204,21 @@ function extRow(label, key, unit, ccy, calKey, goodUp){
     '<td data-l="Next release">'+nextReleaseHTML(calKey,true)+'</td></tr>';
 }
 function extAt(k, ym){ var S=extSeries(k); if(!S||!S.pts) return null; for(var i=0;i<S.pts.length;i++) if(S.pts[i][0]===ym) return S.pts[i][1]; return null; }
+function mathLine(a,b,ccy){ var d=a-b, f=function(v){ return (v<0?'\u2212':'')+fmt(Math.abs(v),2); }; return '<div class="bt-math">'+f(a)+' \u2212 '+f(b)+' = <b>'+f(d)+'</b> '+ccy+'B</div>'; }
 function tipRow(lab, v, ccy, strong, extra){ return v==null?'':'<div class="bt-row'+(strong?' bt-strong':'')+'"><span>'+lab+'</span><b class="'+(strong?cls(v):'')+'">'+money(ccy,v)+'</b>'+(extra?'<small>'+extra+'</small>':'')+'</div>'; }
 function extTip(key, ym, prevYm, ccy){
   var MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
   var head='<div class="bt-h">'+MN[+ym.slice(5,7)-1]+' '+ym.slice(0,4)+'</div>', b='', pct=function(a,t){ return (a!=null&&t)?fmt(a/t*100,0)+'% of total':''; };
   if(key==='us_trade_bal'){ var ex=extAt('us_exports',ym), im=extAt('us_imports',ym);
-    b=tipRow('Exports',ex,ccy)+tipRow('− Imports',im,ccy)+tipRow('= Trade balance',extAt('us_trade_bal',ym),ccy,true)+
+    b=tipRow('Exports',ex,ccy)+tipRow('− Imports',im,ccy)+tipRow('= Trade balance',extAt('us_trade_bal',ym),ccy,true)+(ex!=null&&im!=null?mathLine(ex,im,ccy):'')+
       ((extAt('us_goods_bal',ym)!=null)?'<div class="bt-sub">made up of</div>'+tipRow('Goods balance',extAt('us_goods_bal',ym),ccy)+tipRow('Services balance',extAt('us_serv_bal',ym),ccy):''); }
   else if(key==='us_deficit'){ var rc=extAt('us_receipts',ym), ou=extAt('us_outlays',ym);
-    b=tipRow('Receipts (taxes & other)',rc,ccy)+tipRow('− Outlays (spending)',ou,ccy)+tipRow('= Budget balance',extAt('us_deficit',ym),ccy,true);
+    b=tipRow('Receipts (taxes & other)',rc,ccy)+tipRow('− Outlays (spending)',ou,ccy)+tipRow('= Budget balance',extAt('us_deficit',ym),ccy,true)+(rc!=null&&ou!=null?mathLine(rc,ou,ccy):'');
     var fy=+ym.slice(5,7)>=10?+ym.slice(0,4):+ym.slice(0,4)-1, cum=0, ok=false;
     (extSeries('us_deficit').pts||[]).forEach(function(p){ var y=+p[0].slice(0,4), m=+p[0].slice(5,7); if(p[0]<=ym && ((y===fy&&m>=10)||(y===fy+1&&m<=9))){ cum+=p[1]; ok=true; } });
     if(ok) b+='<div class="bt-sub">fiscal year '+(fy+1)+' to date (from October)</div>'+tipRow('Cumulative balance',cum,ccy,true); }
   else if(key==='ca_trade_bal'){ var ce=extAt('ca_exports',ym), ci=extAt('ca_imports',ym), ceu=extAt('ca_exports_us',ym), ciu=extAt('ca_imports_us',ym);
-    b=tipRow('Exports',ce,ccy)+tipRow('− Imports',ci,ccy)+tipRow('= Trade balance',extAt('ca_trade_bal',ym),ccy,true)+
+    b=tipRow('Exports',ce,ccy)+tipRow('− Imports',ci,ccy)+tipRow('= Trade balance',extAt('ca_trade_bal',ym),ccy,true)+(ce!=null&&ci!=null?mathLine(ce,ci,ccy):'')+
       (ceu!=null?'<div class="bt-sub">with the United States</div>'+tipRow('Exports to US',ceu,ccy,false,pct(ceu,ce))+tipRow('Imports from US',ciu,ccy,false,pct(ciu,ci))+tipRow('Balance with US',(ceu!=null&&ciu!=null)?ceu-ciu:null,ccy,true):''); }
   else if(key==='ca_fiscal_series'){ var F=DATA.ext.ca_fiscal||{}, c=(F.components||{})[ym];
     b=c?tipRow('Revenues',c.rev,ccy)+tipRow('− Program expenses',c.prog,ccy)+tipRow('− Public debt charges',c.debt,ccy)+(c.act!=null?tipRow('− Net actuarial losses',c.act,ccy):''):'<div class="bt-sub">revenue / expense split not available for this month</div>';
@@ -2236,6 +2240,69 @@ function extBars(key, title, ccy){
     barChartSVG({bars:bars,yLabel:ccy+' billions',dec:1,H:220,months:P.map(function(p){ return p[0]; }),tips:tips})+
     '<div class="stamp">'+esc(S.src)+' · last 24 months · hover or tap a bar for what makes up the number</div></div>';
 }
+/* exports vs imports (dots + OLS trendlines) over balance bars, one hover/click column per month */
+function olsFit(vals){ var pts=vals.map(function(v,i){ return [i,v]; }).filter(function(p){ return p[1]!=null; }), n=pts.length; if(n<3) return null;
+  var sx=0,sy=0,sxx=0,sxy=0; pts.forEach(function(p){ sx+=p[0]; sy+=p[1]; sxx+=p[0]*p[0]; sxy+=p[0]*p[1]; }); var b=(n*sxy-sx*sy)/(n*sxx-sx*sx), a=(sy-b*sx)/n; return {a:a,b:b}; }
+function flowComboSVG(o){
+  /* o: {months, inflow:{label,vals,color}, outflow:{label,vals,color}, bal, ccy, tips, inLab, outLab} */
+  var tid='b'+(++BTN); BTIPS[tid]=o.tips;
+  var M=o.months, n=M.length, W=760, PL=52, PR=118, pw=W-PL-PR, T1=26, H1=170, T2=T1+H1+22, H2=120, Y0=T2+H2, H=Y0+62;
+  var bw=pw/n, s='', MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function X(i){ return PL+bw*i+bw/2; }
+  var lv=o.inflow.vals.concat(o.outflow.vals).filter(function(v){ return v!=null; }), lo=Math.min.apply(null,lv), hi=Math.max.apply(null,lv), pd=(hi-lo)*0.12||1; lo-=pd; hi+=pd;
+  function YL(v){ return T1+H1*(1-(v-lo)/(hi-lo)); }
+  var bv=o.bal.filter(function(v){ return v!=null; }), blo=Math.min(0,Math.min.apply(null,bv)), bhi=Math.max(0,Math.max.apply(null,bv)), bp=(bhi-blo)*0.12||1; blo-=bp; bhi+=bp;
+  function YB(v){ return T2+H2*(1-(v-blo)/(bhi-blo)); }
+  /* hit/highlight columns first so they sit behind everything */
+  M.forEach(function(m,i){ s+='<g class="btip fcol" data-tid="'+tid+'" data-i="'+i+'" tabindex="0"><rect class="colbg" x="'+(PL+bw*i).toFixed(1)+'" y="'+(T1-6)+'" width="'+bw.toFixed(1)+'" height="'+(H-T1-2)+'" rx="3" fill="transparent"/></g>'; });
+  /* panel titles + grids */
+  s+='<text x="'+PL+'" y="'+(T1-10)+'" fill="#c9d6e6" font-size="11" font-weight="700" font-family="IBM Plex Mono">'+esc(o.inLab||'EXPORTS vs IMPORTS')+' ('+o.ccy+' B)</text>';
+  s+='<text x="'+PL+'" y="'+(T2-8)+'" fill="#c9d6e6" font-size="11" font-weight="700" font-family="IBM Plex Mono">'+esc(o.balLab||'BALANCE')+' ('+o.ccy+' B)</text>';
+  niceTicks(lo,hi,4).forEach(function(v){ s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+YL(v).toFixed(1)+'" y2="'+YL(v).toFixed(1)+'" stroke="#1e2a3a" pointer-events="none"/><text x="'+(PL-6)+'" y="'+(YL(v)+3.5).toFixed(1)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end" pointer-events="none">'+fmt(v,0)+'</text>'; });
+  niceTicks(blo,bhi,3).forEach(function(v){ s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+YB(v).toFixed(1)+'" y2="'+YB(v).toFixed(1)+'" stroke="#1e2a3a" pointer-events="none"/><text x="'+(PL-6)+'" y="'+(YB(v)+3.5).toFixed(1)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end" pointer-events="none">'+fmt(v,Math.abs(bhi-blo)<12?1:0)+'</text>'; });
+  s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+YB(0)+'" y2="'+YB(0)+'" stroke="#3a4a61" pointer-events="none"/>';
+  /* balance bars */
+  o.bal.forEach(function(v,i){ if(v==null) return; var y=YB(v), b0=YB(0); s+='<rect class="bbar" data-bi="'+i+'" x="'+(PL+bw*i+bw*0.18).toFixed(1)+'" y="'+Math.min(y,b0).toFixed(1)+'" width="'+(bw*0.64).toFixed(1)+'" height="'+Math.max(1,Math.abs(b0-y)).toFixed(1)+'" rx="2" fill="'+(v<0?'#e0655f':(i===n-1?'#38b6c9':'#3fb97f'))+'" pointer-events="none"/>'; });
+  /* lines + dots + OLS trendlines */
+  var labs=[];
+  [o.inflow,o.outflow].forEach(function(S){
+    var d='', st=false; S.vals.forEach(function(v,i){ if(v==null){ st=false; return; } d+=(st?'L':'M')+X(i).toFixed(1)+' '+YL(v).toFixed(1); st=true; });
+    s+='<path d="'+d+'" fill="none" stroke="'+S.color+'" stroke-width="1.6" opacity=".55" pointer-events="none"/>';
+    S.vals.forEach(function(v,i){ if(v!=null) s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+YL(v).toFixed(1)+'" r="3" fill="'+S.color+'" pointer-events="none"/>'; });
+    var f=olsFit(S.vals); if(f){ s+='<line x1="'+X(0).toFixed(1)+'" x2="'+X(n-1).toFixed(1)+'" y1="'+YL(f.a).toFixed(1)+'" y2="'+YL(f.a+f.b*(n-1)).toFixed(1)+'" stroke="'+S.color+'" stroke-width="2" stroke-dasharray="6 4" pointer-events="none"/>'; }
+    var last=S.vals[n-1]; if(last!=null) labs.push({y:YL(last), t:S.label+' '+fmt(last,1), c:S.color, tr:f?'trend '+(f.b>=0?'+':'−')+fmt(Math.abs(f.b),2)+'/mo':''});
+  });
+  labs.sort(function(a,b){ return a.y-b.y; }); if(labs.length===2&&labs[1].y-labs[0].y<26) labs[1].y=labs[0].y+26;
+  labs.forEach(function(l){ s+='<text x="'+(PL+pw+8)+'" y="'+(l.y+2).toFixed(1)+'" fill="'+l.c+'" font-size="11" font-weight="700" font-family="IBM Plex Mono" pointer-events="none">'+esc(l.t)+'</text><text x="'+(PL+pw+8)+'" y="'+(l.y+14).toFixed(1)+'" fill="'+l.c+'" font-size="9.5" font-family="IBM Plex Mono" opacity=".85" pointer-events="none">'+l.tr+'</text>'; });
+  var lb=o.bal[n-1]; if(lb!=null) s+='<text x="'+(PL+pw+8)+'" y="'+(YB(lb)+4).toFixed(1)+'" fill="'+(lb<0?'#ff9d97':'#5fd598')+'" font-size="11" font-weight="700" font-family="IBM Plex Mono" pointer-events="none">Bal '+money(o.ccy,lb)+'</text>';
+  /* x axis: month, year, and the two values under every bar */
+  var vy=Y0+14;
+  s+='<text x="'+(PL-6)+'" y="'+(vy)+'" fill="'+o.inflow.color+'" font-size="9" font-weight="700" font-family="IBM Plex Mono" text-anchor="end" pointer-events="none">'+o.inflow.short+'</text><text x="'+(PL-6)+'" y="'+(vy+12)+'" fill="'+o.outflow.color+'" font-size="9" font-weight="700" font-family="IBM Plex Mono" text-anchor="end" pointer-events="none">'+o.outflow.short+'</text>';
+  M.forEach(function(m,i){ var cx=X(i).toFixed(1), mo=+m.slice(5,7), a=o.inflow.vals[i], b=o.outflow.vals[i], big=Math.max(Math.abs(a||0),Math.abs(b||0))>=100;
+    s+='<text x="'+cx+'" y="'+vy+'" fill="'+o.inflow.color+'" font-size="'+(big?7.5:8.5)+'" font-family="IBM Plex Mono" text-anchor="middle" pointer-events="none">'+(a==null?'':fmt(a,0))+'</text>';
+    s+='<text x="'+cx+'" y="'+(vy+12)+'" fill="'+o.outflow.color+'" font-size="'+(big?7.5:8.5)+'" font-family="IBM Plex Mono" text-anchor="middle" pointer-events="none">'+(b==null?'':fmt(b,0))+'</text>';
+    s+='<text x="'+cx+'" y="'+(vy+27)+'" fill="#8494ab" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle" pointer-events="none">'+MN[mo-1]+'</text>';
+    if(mo===1||i===0) s+='<text x="'+(PL+bw*i+2).toFixed(1)+'" y="'+(vy+41)+'" fill="#c9d6e6" font-size="10.5" font-weight="700" font-family="IBM Plex Mono" pointer-events="none">'+m.slice(0,4)+'</text>'+(i>0?'<line x1="'+(PL+bw*i).toFixed(1)+'" x2="'+(PL+bw*i).toFixed(1)+'" y1="'+T1+'" y2="'+(vy+43)+'" stroke="#2b3e5c" stroke-dasharray="2 3" pointer-events="none"/>':'');
+  });
+  return '<svg viewBox="0 0 '+W+' '+H+'" class="chart-svg flowchart" role="img" aria-label="'+esc(o.aria||'exports, imports and balance')+'">'+s+'</svg>';
+}
+function flowPanel(kind){
+  var cfg={us_trade:{bal:'us_trade_bal',inK:'us_exports',outK:'us_imports',ccy:'$',title:'US trade: exports vs imports',inL:'Exports',outL:'Imports',inS:'EXP',outS:'IMP',top:'EXPORTS vs IMPORTS',bot:'TRADE BALANCE = EXPORTS − IMPORTS'},
+           ca_trade:{bal:'ca_trade_bal',inK:'ca_exports',outK:'ca_imports',ccy:'C$',title:'Canada trade: exports vs imports',inL:'Exports',outL:'Imports',inS:'EXP',outS:'IMP',top:'EXPORTS vs IMPORTS',bot:'TRADE BALANCE = EXPORTS − IMPORTS'},
+           us_fiscal:{bal:'us_deficit',inK:'us_receipts',outK:'us_outlays',ccy:'$',title:'US federal budget: receipts vs outlays',inL:'Receipts',outL:'Outlays',inS:'REC',outS:'OUT',top:'RECEIPTS vs OUTLAYS',bot:'BUDGET BALANCE = RECEIPTS − OUTLAYS'}}[kind];
+  var B=extSeries(cfg.bal), I=extSeries(cfg.inK), O=extSeries(cfg.outK); if(!B||!I||!O) return '';
+  var months=B.pts.slice(-24).map(function(p){ return p[0]; });
+  var iv=months.map(function(m){ return extAt(cfg.inK,m); }), ov=months.map(function(m){ return extAt(cfg.outK,m); }), bv=months.map(function(m){ return extAt(cfg.bal,m); });
+  var tips=months.map(function(m,i){ return extTip(cfg.bal, m, i?months[i-1]:null, cfg.ccy); });
+  var L=months.length-1, fi=olsFit(iv), fo=olsFit(ov);
+  var read=cfg.inL+' trend '+(fi?(fi.b>=0?'+':'−')+money(cfg.ccy,Math.abs(fi.b)).replace('B','B/month'):'n/a')+', '+cfg.outL.toLowerCase()+' trend '+(fo?(fo.b>=0?'+':'−')+money(cfg.ccy,Math.abs(fo.b)).replace('B','B/month'):'n/a')+
+    ' → '+(fi&&fo?((fi.b-fo.b)>=0?'the balance is improving by about '+money(cfg.ccy,Math.abs(fi.b-fo.b))+' a month on trend':'the balance is worsening by about '+money(cfg.ccy,Math.abs(fi.b-fo.b))+' a month on trend'):'');
+  return '<div class="mpanel has-flag flowpanel">'+cflag(kind.slice(0,2))+'<h3 class="mp-h">'+cfg.title+' — '+esc(mLabel(months[L]+'-01'))+': '+money(cfg.ccy,iv[L])+' − '+money(cfg.ccy,ov[L])+' = <b class="'+cls(bv[L])+'">'+money(cfg.ccy,bv[L])+'</b></h3>'+
+    '<div class="flowwrap">'+flowComboSVG({months:months, inflow:{label:cfg.inL,short:cfg.inS,vals:iv,color:'#5fd598'}, outflow:{label:cfg.outL,short:cfg.outS,vals:ov,color:'#f0a35e'}, bal:bv, ccy:cfg.ccy, tips:tips, inLab:cfg.top, balLab:cfg.bot})+'</div>'+
+    '<p class="mdc-read" style="margin:6px 2px 0">'+read+'.</p>'+
+    '<div class="stamp">'+esc(B.src)+' · dots = monthly values, dashed = straight-line trend over 24 months · hover a month for the exact maths · click to highlight a month</div></div>';
+}
+
 function tradeFiscalHTML(){
   var X=DATA.ext; if(!X) return '<div class="tile wide"><h2>Trade &amp; fiscal balances</h2><p class="note">US and Canada trade and deficit data load on the next refresh.</p></div>';
   var cf=X.ca_fiscal, showUS=MGEO!=='ca', showCA=MGEO!=='us';
@@ -2249,7 +2316,8 @@ function tradeFiscalHTML(){
       extRow('Merchandise trade balance','ca_trade_bal','B','C$','ca_trade',true)+extRow('Exports','ca_exports','B','C$','ca_trade',true)+extRow('Imports','ca_imports','B','C$','ca_trade',false)+
       extRow('Federal budgetary balance (monthly)','ca_fiscal_series','B','C$','ca_fiscal',true)+'</table></div>'+
       (cf&&cf.ytd?'<div class="mini-kv"><span>Fiscal year to date</span><b class="'+cls(cf.ytd.value)+'">'+money('C$',cf.ytd.value)+'</b> '+esc(cf.ytd.period)+(cf.ytd.prior!=null?' vs '+money('C$',cf.ytd.prior)+' a year earlier':'')+'</div>':''):'';
-  var charts=(showUS?extBars('us_trade_bal','US trade balance','$')+extBars('us_deficit','US federal budget balance','$'):'')+(showCA?extBars('ca_trade_bal','Canada trade balance','C$')+extBars('ca_fiscal_series','Canada federal budgetary balance','C$'):'');
+  var charts=(showUS?(flowPanel('us_trade')||extBars('us_trade_bal','US trade balance','$'))+(flowPanel('us_fiscal')||extBars('us_deficit','US federal budget balance','$')):'')+
+    (showCA?(flowPanel('ca_trade')||extBars('ca_trade_bal','Canada trade balance','C$'))+extBars('ca_fiscal_series','Canada federal budgetary balance','C$'):'');
   var errs=X.errors&&Object.keys(X.errors).length?' · waiting on: '+Object.keys(X.errors).join(', '):'';
   return '<div class="tile wide" data-src="ext"><div class="tile-head"><h2>Trade &amp; fiscal balances <span class="h2note">— exports, imports, deficits · 2-year trend · next release</span></h2></div>'+us+ca+
     '<div class="mpanels'+(MGEO==='both'?'':' one')+'">'+charts+'</div>'+
