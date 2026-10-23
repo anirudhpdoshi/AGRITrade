@@ -609,9 +609,13 @@ def ca_retail(D, N):
         print("  checked <6h ago — skipping")
         return False
     acc, dims = {}, {"naics": set(), "adj": set()}
+    cols = {}
     for row in _sc_table(20100056):
         if row.get("GEO") != "Canada":
             continue
+        for c_, v_ in row.items():
+            if c_ not in ("REF_DATE", "VALUE", "DGUID", "COORDINATE", "VECTOR", "STATUS", "SYMBOL", "TERMINATED", "DECIMALS", "SCALAR_ID", "UOM_ID"):
+                cols.setdefault(c_, set()).add(v_)
         nai = next((row[c] for c in row if c.startswith("North American Industry")), "")
         adj = row.get("Adjustments", "")
         dims["naics"].add(nai); dims["adj"].add(adj)
@@ -624,6 +628,7 @@ def ca_retail(D, N):
         v = _num(row.get("VALUE"))
         if key and v is not None:
             acc.setdefault(key, {})[row["REF_DATE"][:10] if len(row["REF_DATE"]) > 7 else row["REF_DATE"] + "-01"] = v
+    meta["ca_retail_dims"] = {c_: sorted(v_)[:40] for c_, v_ in cols.items()}
     if not acc.get("tot"):
         raise RuntimeError(f"no total retail line; NAICS seen: {sorted(dims['naics'])[:15]} adj: {sorted(dims['adj'])}"[:700])
     old = {m["key"]: m for m in D.get("macro_extra", [])}
