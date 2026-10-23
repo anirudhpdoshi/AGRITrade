@@ -8430,11 +8430,11 @@
     "30Y": 5.29
    },
    "fxcross": {
-    "dxy": 101.804,
-    "dxy_chg": 0.191,
+    "dxy": 101.801,
+    "dxy_chg": 0.188,
     "eurusd": 1.1198,
-    "usdjpy": 156.86,
-    "usdcad_ref": 1.4
+    "usdjpy": 156.87,
+    "usdcad_ref": 1.4004
    },
    "closes": [
     [
@@ -8513,16 +8513,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 103.5,
-     "chg": 4.03,
-     "pct": 4.05,
+     "last": 103.78,
+     "chg": 4.31,
+     "pct": 4.33,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 111.84,
-     "chg": -1.33,
-     "pct": -1.18,
+     "last": 112.06,
+     "chg": -1.11,
+     "pct": -0.98,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -8534,9 +8534,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 18.03,
+    "value": 18.31,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-23T19:20:00+00:00",
+    "obs_ts": "2026-10-23T19:40:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -9826,10 +9826,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.40011,
+    "mid": 1.4,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-23T15:33:00-04:00",
+    "ts": "2026-10-23T15:52:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -9969,22 +9969,6 @@
     }
    ],
    "intraday": [
-    [
-     "2026-10-22T23:35+00:00",
-     1.40024
-    ],
-    [
-     "2026-10-22T23:40+00:00",
-     1.40028
-    ],
-    [
-     "2026-10-22T23:45+00:00",
-     1.40033
-    ],
-    [
-     "2026-10-22T23:50+00:00",
-     1.40032
-    ],
     [
      "2026-10-22T23:55+00:00",
      1.40026
@@ -10927,28 +10911,44 @@
     ],
     [
      "2026-10-23T19:30+00:00",
-     1.40014
+     1.40015
+    ],
+    [
+     "2026-10-23T19:35+00:00",
+     1.3996
+    ],
+    [
+     "2026-10-23T19:40+00:00",
+     1.40023
+    ],
+    [
+     "2026-10-23T19:45+00:00",
+     1.40032
+    ],
+    [
+     "2026-10-23T19:50+00:00",
+     1.40036
     ]
    ]
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-23T15:33:06-04:00",
+   "updated_at": "2026-10-23T15:52:18-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-23T15:33:00-04:00",
+    "fx_spot": "2026-10-23T15:52:00-04:00",
     "fx_closes": "2026-10-22T16:30:00-04:00",
     "yields": "2026-10-22T17:00:00-04:00",
     "policy": "2026-10-21T07:35:00-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-20T15:30:00-04:00",
     "cftc_grains": "2026-10-20T15:30:00-04:00",
-    "energy": "2026-10-23T15:20:00-04:00",
-    "crosses": "2026-10-23T15:20:00-04:00",
+    "energy": "2026-10-23T15:40:00-04:00",
+    "crosses": "2026-10-23T15:40:00-04:00",
     "grains_settle": "2026-10-23T14:20:00-04:00",
     "grains_quote": "2026-10-23T14:15:00-04:00",
     "options": "2026-10-23T11:03:00-04:00",
-    "news": "2026-10-23T15:33:06-04:00",
+    "news": "2026-10-23T15:52:18-04:00",
     "calendar": "2026-10-21T07:05:00-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-23T15:25:06-04:00",
@@ -10989,7 +10989,7 @@
      "ca_retail"
     ],
     "failed": [],
-    "at": "2026-10-23T15:33:06-04:00"
+    "at": "2026-10-23T15:52:18-04:00"
    },
    "releases_checked": "2026-10-23T15:25:06-04:00",
    "exports_checked": "2026-10-23T15:25:06-04:00",
@@ -11026,7 +11026,7 @@
    },
    "canada_checked": "2026-10-22T22:29:24-04:00",
    "ca_calendar_checked": "2026-10-23T15:25:06-04:00",
-   "canada_watch": "2026-10-23T15:33:06-04:00",
+   "canada_watch": "2026-10-23T15:52:18-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -26430,12 +26430,6 @@
     "https://news.google.com/rss/articles/CBMicEFVX3lxTE9jdzg5bE1xMTF3R1lCMWZ1MmpoSE9aeHVlalF5SXI1dFpSeFVaUWVRdGVQWkN0OGF1Z2xfdFVWSUZDYkdrMW13OHNuZER0MzlYWjlGZjVtVHlTeGJzQkJ6N0xHQUswN0xzUUVVQjBHZjY?oc=5"
    ],
    [
-    "2026-10-23 19:09 UTC",
-    "www.marketscreener.com",
-    "CANADA FX DEBT-Canadian dollar hits five-week high as data supports rate hike bets",
-    "https://news.google.com/rss/articles/CBMi0AFBVV95cUxNX3o1X1Nmc1pLeHlmc3VrenRCcmVHNVdoSFFRU0dQQkpwR1huWDg4SjhiZWZKTkltbEtNOEx2SEFzYlgtS0Z5NTJOSVRVWDdqXzI1WEh5dGgzQktyVjBTUkxPQS1ZTm9qQk1aNEwybHJJeFdQZTJlRkVybEM3VS1xaXI3TUplQ3NnSFNxN1puT2hLa1BEMWZ6VXl4VHh1YmxWSTNpbDdmTndjX3A5WThmQko2VUtyVzBNeEZHTjhZcVB4T2gyZU5CWTJoeVlMT0dk?oc=5"
-   ],
-   [
     "2026-10-23 19:01 UTC",
     "finimize.com",
     "Canadian Dollar Hits A Five-Week High On Oil And Spending",
@@ -26446,6 +26440,12 @@
     "www.reuters.com",
     "POLL Bank of Canada to raise rates to 2.50% on October 28 and once again by end-March",
     "https://news.google.com/rss/articles/CBMiswFBVV95cUxNcXBVcldURXc1c3hRcmpNWXdhcWRVR1hibkVqNF9YM1V4NzIzdmlDUzlGZHpjaVJWQlp3M1N2ckpRMzlSdlZZRTRJcVloUTNnR0l4UE1fSXlhTXpZWFlqVGdYWEljWG9DdWpXRGQyaUlvVkdyNUlhZjF0TS1iRWNLYTZjZjNZZXc0Zi1fUzdvWm0xYWk4VmNiaU9WdHhVUno5WTBxMGhkNWpkZWVJUXA4bVdtYw?oc=5"
+   ],
+   [
+    "2026-10-23 18:50 UTC",
+    "www.cbc.ca",
+    "Bank fees can add up, be difficult to see, consumer group says",
+    "https://news.google.com/rss/articles/CBMihAFBVV95cUxNUzloekVOdXV6dlY1M0RUUVROZXJERVU2OTBURGFqOXBVeUVzNF9pN1I2UF9rekdHMjhXUWpuODE2TGIzYWMzamxzVW1aU21UV0VPUmdhMmtobGJsV1c2VVVnS0t0bV9zTTBEYVd6U05FRXR4ODBpQ25ReWhKT0hzNU5MdV8?oc=5"
    ],
    [
     "2026-10-23 15:57 UTC",
@@ -26464,6 +26464,106 @@
     "uk.finance.yahoo.com",
     "UK Retail Sales Slip in September Amid Gloomy Consumer Sentiment",
     "https://news.google.com/rss/articles/CBMiiAFBVV95cUxNQjlZWHE1enNONTcxcDEyWF9ZbWE0YmZFREFwSG9aTXNTM0xEUmJ5N1k0OWNaTnFleTZUUWx2Sm1nM2Y4UFF6c0IwcnZ3c3VEc21ET2dxNkdsb1hhcndfaFA2UEVpQ0thRDlMOXpNalE4aUZfYkN5VkpPNUYzdmhsUnp1RFlXTC1k?oc=5"
+   ]
+  ],
+  "geo": [
+   [
+    "2026-10-23 16:06 UTC",
+    "www.ctvnews.ca",
+    "Eric Ham: What’s behind Trump’s recent about-face on Canada",
+    "https://news.google.com/rss/articles/CBMirgFBVV95cUxQUXE2OTVBY0VLd3BUN2tmRDJ1VXB5VEJJSlVxUUgtY3REM1B1X2ZNYWhWLUV1WDJ2d3RIZHl5Q2RkaTZvUkVZN0VrVy1Ub203NUktbHdsMXJjY1hwS0l4QW5VWkQ4MG5EWHpCa2Y1WkFHZV9LRS1nVXNpRVFOak9ZY0xpd1NIYlppZW9DZFhBTGFoNE5YV1B1ZXB4T3hobldEQ0RzVzlYbnBEY3pwVUE?oc=5"
+   ],
+   [
+    "2026-10-23 15:14 UTC",
+    "www.ctvnews.ca",
+    "Tariffs to drop on some Canadian goods, says U.S. senator",
+    "https://news.google.com/rss/articles/CBMiqwFBVV95cUxPTkh1c08zUUpybG03V3Z3amM0VF83ZkRCVWpqWmlTY29fOG5MYklqcjBCNHM5eTVBelJRT0lmUlpBcjNKZ1ZRLVZNblJMZ2oteFlLY3VuWlgwQXpzQTJsMGJFbkpmblV6VHliSGo5OGVCNkZNTnhDUExFemV3SVlLbkctWTFoZ2lYQm1CcmxFSERrLUNjaTNsanNwSlZBSEVhcnNlUU1JRWUtMlE?oc=5"
+   ],
+   [
+    "2026-10-23 15:14 UTC",
+    "www.ctvnews.ca",
+    "Trump says deal with Canada close, but he holds ‘all the cards’",
+    "https://news.google.com/rss/articles/CBMiswFBVV95cUxNWmt2YzEzN19yZlVFY2xmczFicUFvRmNRaFM3V0UzaG1YTjJ3NmlBbkNCcFVCcGhsbmdMa0p4X1RQWUZkcE14REVpWmdjQjJNZHVIRkgtOHVwTXFVbWFkSTJhRU9pR01Ya2ZVbTlCekhEZXVZeWZ5akRsTjFlUUtremxEdGIwN2dfSk9FXzZrdU56SDBlQXhfY1RDa2FIT0RBZ0lBTWFzdlUxX0paMDZRUUNmdw?oc=5"
+   ],
+   [
+    "2026-10-23 13:27 UTC",
+    "goldseek.com",
+    "The War on Grain",
+    "https://news.google.com/rss/articles/CBMiT0FVX3lxTFBISjFIbWlWalZkZDNBLXhTVm9jUUpTN0VKR3Z5aDFvSjIxZFIwUDF0RU5Tdm9IR3pCYkY2cjFMSXl0elNfSjRkQ281SmpWMk0?oc=5"
+   ],
+   [
+    "2026-10-23 06:34 UTC",
+    "english.nv.ua",
+    "Ukraine eyes moving customs into EU territory — FT",
+    "https://news.google.com/rss/articles/CBMijgFBVV95cUxNSDJQNXdRbk02MzRNYTNXbW5yZUlVUXFNdVBNdkR1X0gwQkNLRFhnVnJXNDFHVTdPZzRUR1RDbGpFZERNN2E1clhBdU84ZU9TdXZVU2tPSURmcE94U0ZCLWREQjlLeWdLM2VIUFlhVWJwcnNKd3NEMHRQX2hwT0tlYVNncE5kM0pWREY0WEdR0gGOAUFVX3lxTE1IMlA1d1FuTTYzNE1hM1dtbnJlSVVRcU11UE12RHVfSDBCQ0tEWGdWclc0MUdVN09nNFRHVENsakVkRE03YTVyWEF1TzhlT1N1dlVTa09JRGZwT3hTRkItZERCOUt5Z0szZUhQWWFVYnByc0p3c0QwdFBfaHBPS2VhU2dwTmQzSlZERjRYR1E?oc=5"
+   ],
+   [
+    "2026-10-23 06:10 UTC",
+    "www.capital.bg",
+    "Ships keep close to the Western Black Sea coast",
+    "https://news.google.com/rss/articles/CBMipAFBVV95cUxNalpuLVdxd2I3V09tR1haMUc3OXBlTEZLaUhnZmJ6c25NZ20xUnVjcVNZWjluZmNQTlR5N1p6VzBMYktVaVJoV1ZtdW5BS1NKNHdNYnZGX3ZwMjRtbXVJR05zTmJDOVp5MzhhLXM0dm1uMGhRWG9PLWpwajBsLWZ3NVlJYnVhcHpTUVF5WWhKLVNsUkNGMFlXTFBhNk9fYkNkN2JXdA?oc=5"
+   ],
+   [
+    "2026-10-23 01:03 UTC",
+    "www.qatar-tribune.com",
+    "Canada, Turkey forge trade and defense deals as Carney looks beyond US",
+    "https://news.google.com/rss/articles/CBMiwAFBVV95cUxNaHhBMUY3NUxrY2tUaG4xSkZkOVV2cXRTMjVkZlpnc0VqNGxZcTdzQTg3MldtLVNWVnlwV0ZsLVExMk1wa1BvNzk2dlozWXNKdDdBaEgtU0ZQNnh2Zlg0UnJFMDJxVVFzV1dkdzVJeW5lNHl2Z2JMbEFwNjdoMTBvSGNEYXh2WDZ2RUozV1ViTVFzb3c2RlNOTFl3RGFmSTJLeV9qYml1cTQ5UnByZ3J0VzJCX0xsSkVsMTc5RXpmREU?oc=5"
+   ],
+   [
+    "2026-10-23 00:47 UTC",
+    "www.brecorder.com",
+    "Soybeans dip on US harvest pressure",
+    "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1DLVFseXMwOWR4bGRrNm5DTDVfazhpTEZGaGE0ODhnbEN3UkxsZlpidGJuVnUtaG9zcUtHaWwxd1A1aUFrZGI3dFBQQkJlMmZOdlFMZ3Jn0gFWQVVfeXFMTUMtUWx5czA5ZHhsZGs2bkNMNV9rOGlMRkZoYTQ4OGdsQ3dSTGxmWmJ0Ym5WdS1ob3NxS0dpbDF3UDVpQWtkYjd0UFBCQmUyZk52UUxncmc?oc=5"
+   ]
+  ],
+  "macro": [
+   [
+    "2026-10-23 19:31 UTC",
+    "www.rbc.com",
+    "Growth to remain strong despite inflation headwinds",
+    "https://news.google.com/rss/articles/CBMioAFBVV95cUxPS2JtN2t3R3N4a05fQ0dDbk1OOVowc2hHREo4OEZoSV9HN05RRm5qR1pwUEt3YzJIdFJ0UFJkMEZlR213ZUFERVRxQmpXRWRGci1FT2UxQzQ4eS1najdkaW0tellDZzlQTzl6YXpLRC0xUU1qVVBFYUdRSTYtVUViV0hWUkpHQkxNR2Zjc1lybERBV0dwN0pDVzRRWW9la0s4?oc=5"
+   ],
+   [
+    "2026-10-23 18:06 UTC",
+    "financefeeds.com",
+    "Global FX Market Summary: Oil Shock, Safe-Haven Shifts & Central Bank Divides Shake Markets -23 October 2026",
+    "https://news.google.com/rss/articles/CBMiyAFBVV95cUxNR3M4OFNTZXU1ano4WF9Mdzc3SkZTeHk1ZVhITHo2TWNoNWh4OFU1cWw0YXlERFRoU2NQY0VLTVVmMThISFZnd0ZvN1dfT2NXWXVsSEttWFdVZW9VUVZhWmFUVVNCNTZsX1g0b3lnZkk2RURqYUFwVGk3WVV4cFk3SnVkdjlrVElxaDdpZW9kVVE0ZWwzdlBvQjVfMU9jTHFCdzhvaDZyVDJJLWR3ZlFLaVFEeWxNeW1SZ2hVQWNpczFkOGZFOUFnMQ?oc=5"
+   ],
+   [
+    "2026-10-23 16:35 UTC",
+    "www.tradingview.com",
+    "Fed Pause May Not Mean Rate Hikes Are Over",
+    "https://news.google.com/rss/articles/CBMipAFBVV95cUxPOFdUY25acE5BeEozTC1TUC11SUROVWNZWWtHWi1PLUpxVXd6UzVaN29rb25WcVNoT0JCYTFPUmw1S3BKaTdsQS1BUVB2LWZ3ZW5kQ09WeDlyaTVkN0JpVW0xVVRTM2JpRXA3UnRmNDJOcC1UemgwWm53U3VTVGZ6dEI4RE43UVRPaHdQS28zeWRiaUpKbVZWX0Jwel9OdHp4MHFDcA?oc=5"
+   ],
+   [
+    "2026-10-23 16:23 UTC",
+    "www.wsj.com",
+    "Week Ahead for FX, Bonds: Decisions From Fed, Other Central Banks in Focus",
+    "https://news.google.com/rss/articles/CBMirAFBVV95cUxPZl9NRnpPb3laN0tSUlB6NFUwekhQWkUyNG11ck5jQmxHZUxTZl82RzJoVmlLMzlQY2JCS1BuTC1mMDlZYjdXVHFFeTgxTXJ5eGJZazZOcGdLaDg4RFhvaDNidXhySlVzRFBTUmoyeTJ4YjYtMUR2M0RYT1M2WVZSRTIxYlNQQjk2RGJmWmRTMml5MEoyV1h5bHpSQ2dFaExzZVJmU1N3djBENFhM?oc=5"
+   ],
+   [
+    "2026-10-23 15:37 UTC",
+    "thehill.com",
+    "Consumer confidence holds steady from September amid persistent inflation",
+    "https://news.google.com/rss/articles/CBMiiwFBVV95cUxQZWZxdkZobjV2TGtfaG9DcTVVVGxNVWt2SFBYc0JkbnZuNDBuUzJyb2hWMU5Ub3lXaVdjb2xsMHRxemFCdFYyaHlBMFRRRURvTmZDUlNickg2bE9hZ09adi1PODNBaUxpajkzSnNxTzRCUW1Qci1CRG1TZjhtNk1Yb1VSTVZzSlpSam9N0gGLAUFVX3lxTFBlZnF2RmhuNXZMa19ob0NxNVVUbE1Va3ZIUFhzQmRudm40MG5TMnJvaFYxTlRveVdpV2NvbGwwdHF6YUJ0VjJoeUEwVFFFRG9OZkNSU2JySDZsT2FnT1p2LU84M0FpTGlqOTNKc3FPNEJRbVByLUJEbVNmOG02TVhvVVJNVnNKWlJqb00?oc=5"
+   ],
+   [
+    "2026-10-23 15:03 UTC",
+    "www.fxstreet.com",
+    "Gold Weekly Forecast: Inflation fears attract bears ahead of critical Fed meeting",
+    "https://news.google.com/rss/articles/CBMixgFBVV95cUxOY0JSQ2pFSE5ydUZiN1FCdFNTeHZEbER5cEtXWUFoSDN0RjRocGV6cUhnWk42OVdfRDlfMTBVSG1sZFpxWnpkdUo2YUZNTXlIYWFoU1BObnhWODRCeG9odk9KT0FjdGdjbWdaUWdIa05sU3pKaVNfbl9kd2ZCNW1zaHBueFNzazk5N1MycjlhNy1MaHY4MS10LThVM1g4cWFjWnY4ZU9aZm9xc2ZwejlCdTJJYWFuWVJpOUxpbm1TeUV4b2xyTFE?oc=5"
+   ],
+   [
+    "2026-10-23 14:58 UTC",
+    "www.baltictimes.com",
+    "9 News Headlines That Move Gold Prices: A Trader’s Guide",
+    "https://news.google.com/rss/articles/CBMijgFBVV95cUxNWHBJWmd0Z2g4am5fUW5iUERqZzVxc1JVQWc2azZUNFhYZzdtY3pMRmtjUEl3aDZuNGRONHVXS3psLUwwSFUtUWJBWkNvdDU0dkItZm5WTzkyQkFtblRmNUVCcUZRcTJNU0d5T1k5YWZfNFFjblhBVEdtaWwtTE9JaUIzSXctNGRPM21TdWhR?oc=5"
+   ],
+   [
+    "2026-10-23 14:50 UTC",
+    "seekingalpha.com",
+    "Federal Reserve Preview: A Pause Before A December Hike",
+    "https://news.google.com/rss/articles/CBMilgFBVV95cUxNT3RBYVgyMVBKc0hqUHpiVmRDT3NlNi15ak9TbERPdHFPRmIySllLRlB1NmQ4LXZpRGhQcDR1ak9kMG85MDBpdzhhUFpZUjNvdldMX0o0ZFJXVndlamZxSDB6bFJQVEY0UlZIR2ZrczFCa1BRN3VDdkhkUFFHbU1vZVNlZW0wZEw1T2dkYzJzOHBPNHBVQnc?oc=5"
    ]
   ]
  }
