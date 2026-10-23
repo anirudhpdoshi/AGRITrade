@@ -621,14 +621,21 @@ def ca_retail(D, N):
         dims["naics"].add(nai); dims["adj"].add(adj)
         if adj.lower() != "seasonally adjusted":
             continue
+        sales = (row.get("Sales") or "").lower()
         n = nai.lower()
-        key = "ex" if n.startswith("retail trade") and "excluding motor vehicle" in n and "gasoline" not in n else \
-              "core" if n.startswith("retail trade") and "excluding" in n and "gasoline" in n and "motor vehicle" in n else \
-              "tot" if re.match(r"^retail trade \[44-45\]$", n) else None
+        key = None
+        if sales.startswith("total retail"):
+            key = "tot" if n.startswith("retail trade [44-45]") else "auto" if "[441]" in n else "gas" if "[457]" in n else None
+        elif sales.startswith("retail e-commerce") and n.startswith("retail trade [44-45]"):
+            key = "ecom"
         v = _num(row.get("VALUE"))
         if key and v is not None:
             acc.setdefault(key, {})[row["REF_DATE"][:10] if len(row["REF_DATE"]) > 7 else row["REF_DATE"] + "-01"] = v
     meta["ca_retail_dims"] = {c_: sorted(v_)[:40] for c_, v_ in cols.items()}
+    if acc.get("tot") and acc.get("auto"):
+        acc["ex"] = {d: v - acc["auto"][d] for d, v in acc["tot"].items() if d in acc["auto"]}
+        if acc.get("gas"):
+            acc["core"] = {d: acc["ex"][d] - acc["gas"][d] for d in acc["ex"] if d in acc["gas"]}
     if not acc.get("tot"):
         raise RuntimeError(f"no total retail line; NAICS seen: {sorted(dims['naics'])[:15]} adj: {sorted(dims['adj'])}"[:700])
     old = {m["key"]: m for m in D.get("macro_extra", [])}
@@ -650,7 +657,11 @@ def ca_retail(D, N):
         m = {"key": key, "name": name, "group": "ca", "unit": "%", "dec": 1, "good": "up", "freq": "M", "measure": "m/m",
              "period": _label(h[-1][0], "M"), "obs_date": h[-1][0], "value": round(h[-1][1], 2), "prior": round(h[-2][1], 2),
              "chg": round(h[-1][1] - h[-2][1], 2), "history": [[_label(d, "M"), round(v, 2)] for d, v in h],
-             "level_b": round(lvl, 2), "yoy": yoy, "src": "Statistics Canada 20-10-0056-01"}
+             "level_b": round(lvl, 2), "yoy": yoy, "src": "Statistics Canada 20-10-0056-01" + ("" if k == "tot" else " (derived: total minus " + ("auto dealers" if k == "ex" else "auto dealers and gasoline stations") + ")")}
+        if k == "tot" and acc.get("ecom"):
+            e_ = sorted(acc["ecom"].items())
+            m["ecom_b"] = round(e_[-1][1] / 1e6, 2)
+            m["ecom_share"] = round(e_[-1][1] / raw[-1][1] * 100, 1) if e_[-1][0] == raw[-1][0] else None
         _track(m, old.get(key), pts_all)
         out.append(m)
     D["macro_extra"] = out

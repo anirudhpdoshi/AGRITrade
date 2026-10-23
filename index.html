@@ -261,6 +261,30 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .dash-card .kpi-spark{display:block;width:100%;height:26px;margin-top:8px}
 .tile-head{flex-wrap:wrap;row-gap:6px}
 .sub{display:contents}.sub:not(.on){display:none}
+.mk-click{cursor:pointer}.mk-click:hover{color:#fff}
+.mcard{cursor:pointer;transition:border-color .15s,transform .15s}.mcard:hover{border-color:#38b6c9;transform:translateY(-1px)}
+#mdc-overlay{position:fixed;inset:0;background:rgba(4,8,14,.72);z-index:9000;display:none;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto}
+#mdc-overlay.on{display:flex}
+.mdc-wrap{position:relative;width:100%;max-width:760px;background:#0f1a2c;border-top:5px solid #e8b93d;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.mdc-x{position:absolute;top:8px;right:10px;background:transparent;border:0;color:#c9d6e6;font-size:28px;cursor:pointer;line-height:1}
+.mdc{padding:22px 24px 20px}
+.mdc-ttl{font-size:24px;font-weight:800;letter-spacing:.02em;color:#fff}
+.mdc-sub{color:#c9d6e6;margin-top:4px;font-size:14px}.mdc-hl{color:#e8b93d;margin-top:6px;font-size:14px}
+.mdc-main,.mdc-box{background:#18263d;border-radius:10px;padding:16px 18px;margin-top:14px}
+.mdc-k{font-weight:700;letter-spacing:.06em;color:#b9c7da;font-size:13px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mdc-v{font-size:44px;font-weight:800;color:#fff;margin:6px 0}.mdc-v small{font-size:20px;color:#b9c7da}.mdc-v2{font-size:24px;font-weight:800;color:#fff;margin:6px 0}
+.mdc-l{color:#b9c7da;font-size:13px;line-height:1.5}
+.mdc-chip{border:2px solid;border-radius:20px;padding:2px 14px;font-size:12px;font-weight:800;letter-spacing:.05em}.mdc-chip.beat{color:#5fd598;border-color:#3fb97f}.mdc-chip.miss{color:#ff7a72;border-color:#e0655f}.mdc-chip.inl{color:#c9d6e6;border-color:#8494ab}
+.mdc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mdc-band{background:#1f3352;border-radius:10px;padding:12px 18px;margin-top:14px;font-weight:700;color:#fff;font-size:14px;line-height:1.6}.mdc-band div:nth-child(n+3){color:#e8b93d;font-weight:500}
+.mdc-h{margin:18px 0 6px;font-size:15px;font-weight:800;color:#fff;letter-spacing:.03em;text-transform:uppercase}
+.mdc-p{color:#c9d6e6;font-size:14px;line-height:1.55;margin:0}
+.mdc-chart{background:#18263d;border-radius:10px;padding:8px 10px}
+.mdc-read{color:#e8b93d;font-size:13.5px;margin:10px 0 0}
+.mdc-rels{display:flex;flex-wrap:wrap;gap:8px}.mdc-rel{background:#18263d;border:1px solid #2b3e5c;border-radius:8px;padding:8px 12px;color:#c9d6e6;cursor:pointer;display:flex;gap:8px;align-items:baseline;font:inherit;font-size:13px}.mdc-rel b{color:#fff}
+.mdc-foot{margin-top:16px;color:#8494ab;font-family:"IBM Plex Mono",monospace;font-size:12px;line-height:1.6}.mdc-foot b{color:#fff}.mdc-foot .countdown{color:#e8a33d}
+.mdc-ask{margin-top:12px;background:#1a2a42;border:1px solid #38b6c9;color:#e8eef4;border-radius:8px;padding:8px 14px;cursor:pointer;font:inherit;font-size:13px}
+@media (max-width:760px){.mdc{padding:18px 14px}.mdc-ttl{font-size:19px}.mdc-v{font-size:34px}.mdc-grid{grid-template-columns:1fr}}
 .mnext{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted);margin-top:4px}.mnext b{color:#e8eef4;font-weight:600}.mnext .countdown{color:#e8a33d}
 .live-fx-row{display:grid;grid-template-columns:210px 1fr;gap:14px;align-items:center}
 .live-px{font-family:"IBM Plex Mono",monospace;font-size:28px;font-weight:700}.live-chg{font-size:15px;padding:2px 8px;border-radius:6px;display:inline-block;margin-top:4px}
@@ -1788,7 +1812,7 @@ function divBarsHTML(rows, dec, unit){
 }
 
 /* ---------- MACRO dashboard (US vs Canada) ---------- */
-function mget(k){ return (DATA.macro||[]).filter(function(m){ return m.key===k; })[0]; }
+function mget(k){ return macroAll().filter(function(m){ return m.key===k; })[0]; }
 function trailAvg(pts, n){ if(!pts||pts.length<n) return null; var v=pts.slice(-n).map(function(p){ return p[1]; }); return v.reduce(function(a,b){ return a+b; },0)/v.length; }
 function macroLinePanel(m, opt){
   if(!m||!m.long) return '<div class="mpanel"><h3 class="mp-h">'+esc(opt.country+' '+opt.what)+'</h3><p class="note">Five-year history loads on the next macro refresh.</p></div>';
@@ -1796,12 +1820,12 @@ function macroLinePanel(m, opt){
   if(opt.target!=null) refs.push({v:opt.target,label:'Target',color:'#8494ab',dash:'2 3'});
   [[24,'2Y avg','#e8a33d'],[36,'3Y avg','#c084fc'],[60,'5Y avg','#5fd598']].forEach(function(a){ var v=trailAvg(pts,a[0]); if(v!=null) refs.push({v:+v.toFixed(2),label:a[1],color:a[2]}); });
   var head=opt.headline(last, m);
-  return '<div class="mpanel"><h3 class="mp-h">'+head+'</h3>'+
+  return '<div class="mpanel"><h3 class="mp-h mk-click" data-mkey="'+m.key+'" title="Click for the full breakdown">'+head+' <span class="h2note">\u24d8</span></h3>'+
     lineChartSVG({series:[{pts:pts.slice(-60),color:opt.color,label:'Actual',width:2.2}], refs:refs, yLabel:opt.yLabel, dec:1, aria:head.replace(/<[^>]+>/g,'')})+
     nextReleaseHTML(m.key)+'<div class="stamp">'+esc(m.src)+' · latest '+esc(m.period)+' · dashed = trailing 2/3/5-yr averages'+(opt.target!=null?' · dotted = 2% target':'')+'</div></div>';
 }
 function macroKpiCard(title, us, ca, dec, unit){
-  function row(flag, m){ if(!m) return ''; var ch=m.chg; return '<div class="mini-kv"><span>'+flag+' '+esc(m.period)+'</span><b>'+fmt(m.value,dec)+unit+'</b> <span class="'+(Math.abs(ch)<Math.pow(10,-dec)/2?'neu':cls(ch))+'">'+(Math.abs(ch)<Math.pow(10,-dec)/2?'unch.':sgn(ch,dec,unit==='%'?' pp':''))+'</span></div>'+nextReleaseHTML(m.key,true); }
+  function row(flag, m){ if(!m) return ''; var ch=m.chg; return '<div class="mini-kv mk-click" data-mkey="'+m.key+'" title="Click for the full breakdown"><span>'+flag+' '+esc(m.period)+'</span><b>'+fmt(m.value,dec)+unit+'</b> <span class="'+(Math.abs(ch)<Math.pow(10,-dec)/2?'neu':cls(ch))+'">'+(Math.abs(ch)<Math.pow(10,-dec)/2?'unch.':sgn(ch,dec,unit==='%'?' pp':''))+'</span></div>'+nextReleaseHTML(m.key,true); }
   return '<div class="dash-card"><div class="dk">'+title+'</div>'+(MGEO!=='ca'?row('US',us):'')+(MGEO!=='us'?row('CA',ca):'')+'</div>';
 }
 function macroCompareHTML(){
@@ -2129,6 +2153,103 @@ function liveFxHTML(){
     '<div class="live-chart" data-live-chart>'+fxIntradaySVG(fxIntradayPoints())+'</div></div></div>';
 }
 
+/* ================= MACRO INDICATOR DETAIL CARD (click any macro card) ================= */
+var MACRO_INFO={
+  us_cpi:['Headline consumer price inflation (BLS), year over year.','Hotter CPI keeps the Fed restrictive → supports USD → USD/CAD up.',['us_core_cpi','us_core_pce']],
+  us_core_cpi:['CPI excluding food and energy — the Fed’s preferred read of underlying CPI.','Sticky core = fewer Fed cuts priced → USD-supportive.',['us_cpi','us_core_pce']],
+  us_core_pce:['Core PCE price index (BEA) — the Fed’s target measure (2%).','Above-target core PCE limits Fed easing → USD-supportive.',['us_core_cpi','us_cpi']],
+  us_nfp:['Monthly change in US nonfarm payrolls (BLS Establishment Survey).','Strong hiring = firmer economy and yields → USD up; weak prints raise cut odds → USD down.',['us_ur','us_ahe','us_claims']],
+  us_ur:['US unemployment rate (BLS Household Survey).','A rising rate signals slack → Fed cuts more likely → USD-negative.',['us_nfp','us_claims','us_cclaims']],
+  us_claims:['Initial jobless claims, weekly (Department of Labor).','The most timely labour signal: rising claims = cooling jobs market → USD-negative.',['us_cclaims','us_ur']],
+  us_cclaims:['Continuing jobless claims — people still receiving benefits.','Rising = slower re-employment → softer labour market → USD-negative.',['us_claims','us_ur']],
+  us_ahe:['Average hourly earnings, year over year (BLS).','Wage growth feeds services inflation → firmer = USD-supportive.',['us_nfp','us_core_cpi']],
+  us_retail:['Advance retail and food services sales, month over month (Census).','Consumer spending is ~70% of US GDP: strong sales → USD-supportive.',['us_umich','us_gdp']],
+  us_gdp:['Real GDP, quarter over quarter at an annualized rate (BEA).','Growth outpacing Canada widens the policy gap → USD/CAD up.',['ca_gdpq','us_retail']],
+  us_umich:['University of Michigan consumer sentiment (final reading).','Leading read on spending; weak sentiment → USD-negative at the margin.',['us_retail']],
+  ca_cpi:['Canada headline CPI, year over year (Statistics Canada).','Hotter CPI keeps the BoC from easing → CAD-supportive → USD/CAD down.',['ca_trim','ca_median']],
+  ca_trim:['CPI-trim — the BoC’s preferred core measure (trims the extremes).','Firm core inflation = fewer BoC cuts → CAD-supportive.',['ca_median','ca_cpi']],
+  ca_median:['CPI-median — the BoC’s other preferred core measure.','Firm core inflation = fewer BoC cuts → CAD-supportive.',['ca_trim','ca_cpi']],
+  ca_emp:['Monthly change in Canadian employment (Labour Force Survey).','Strong job gains → CAD-supportive (USD/CAD down); losses add pressure on the BoC to cut.',['ca_ur']],
+  ca_ur:['Canada unemployment rate (Labour Force Survey).','Rising unemployment → more BoC easing priced → CAD-negative.',['ca_emp']],
+  ca_gdp:['Real GDP by industry, month over month (Statistics Canada).','Monthly growth momentum; weak prints raise BoC cut odds → CAD-negative.',['ca_gdpq','ca_retail']],
+  ca_retail:['Total retail trade sales, seasonally adjusted, month over month (Statistics Canada).','Consumer demand: strong sales → CAD-supportive; weakness argues for BoC cuts.',['ca_retail_ex','ca_retail_core']],
+  ca_retail_ex:['Retail sales excluding motor vehicle & parts dealers — strips out lumpy auto sales.','Cleaner read of underlying consumer demand.',['ca_retail','ca_retail_core']],
+  ca_retail_core:['Retail sales excluding gasoline stations and auto dealers — the “core” read.','Removes price-driven gasoline swings: best gauge of spending momentum.',['ca_retail','ca_retail_ex']]
+};
+function macroAll(){ return (DATA.macro||[]).concat(DATA.macro_extra||[]); }
+function mfind(k){ return macroAll().filter(function(m){ return m.key===k; })[0]; }
+function mval(m,v){ var u=m.unit==='K'?'K':m.unit; return (m.measure==='m/m'&&v>0?'+':'')+fmt(v,m.dec)+u; }
+function consensusFor(m){
+  var R=(DATA.fx.releases||[]).filter(function(r){ return r.key===m.key; })[0]; if(!R) return null;
+  var a=R.period.split(' '), lab=a[0]+" '"+(a[1]||'').slice(2);
+  return lab===m.period?R:null;
+}
+function streakText(m){
+  var h=(m.hist24||m.history).map(function(x){ return x[1]; }), n=h.length, L=h[n-1];
+  var isChange=/m\/m|q\/q/.test(m.measure)||m.unit==='K'&&m.measure;
+  var out=[];
+  if(isChange){ var k=0; for(var i=n-1;i>=0&&((L>0&&h[i]>0)||(L<0&&h[i]<0));i--) k++; if(k>=2) out.push(k+(k===2?'nd':k===3?'rd':'th')+' straight '+(L>0?'gain':'decline'));
+    var pos=h.filter(function(v){ return v>0; }).length; out.push(pos+' gains in last '+n); }
+  else { var u=0,d=0; for(var j=n-1;j>0&&h[j]>h[j-1];j--) u++; for(var j2=n-1;j2>0&&h[j2]<h[j2-1];j2--) d++; if(u>=2) out.push('rising '+u+' readings in a row'); if(d>=2) out.push('falling '+d+' readings in a row'); }
+  for(var b=n-2;b>=0;b--){ if((L>=0&&h[b]>=L)||(L<0&&h[b]<=L)){ if(n-2-b>=2) out.push((L>=h[n-2]?'highest':'lowest')+' since '+(m.hist24||m.history)[b][0]); break; } if(b===0) out.push((L>=h[n-2]?'highest':'lowest')+' in '+n+' readings'); }
+  return out;
+}
+function macroDetailHTML(key){
+  var m=mfind(key); if(!m) return '<p class="note">No data for this indicator yet.</p>';
+  var info=MACRO_INFO[key]||['',''], H=m.hist24||m.history, vals=H.map(function(x){ return x[1]; }), n=vals.length;
+  var avg=function(k){ var a=vals.slice(-k); return a.reduce(function(s,v){ return s+v; },0)/a.length; };
+  var C=consensusFor(m), chip='';
+  if(C&&C.consensus!=null){ var diff=+(m.value-C.consensus).toFixed(m.dec), inl=Math.abs(diff)<Math.pow(10,-m.dec)/2;
+    var better=m.good==='down'?diff<0:diff>0; chip='<span class="mdc-chip '+(inl?'inl':better?'beat':'miss')+'">'+(inl?'INLINE':better?'BEAT':'MISS')+(inl?'':' '+sgn(diff,m.dec))+'</span>'; }
+  var flag=m.group==='us'?'United States':'Canada', ccy=m.group==='us'?'USD':'CAD';
+  var rel=m.seen_at?'first seen '+new Date(m.seen_at).toLocaleString('en-US',{timeZone:'America/Toronto',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET':(C&&C.released?'released '+new Date(C.released).toLocaleString('en-US',{timeZone:'America/Toronto',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET':'latest period '+m.period);
+  var st=streakText(m), a3=avg(Math.min(3,n)), a12=avg(Math.min(12,n)), hi=Math.max.apply(null,vals.slice(-12)), lo=Math.min.apply(null,vals.slice(-12));
+  var headline=(m.chg>0?'Up':m.chg<0?'Down':'Unchanged')+' from '+mval(m,m.prior)+' · '+(m.value>a12?'above':'below')+' its 12-reading average ('+mval(m,+a12.toFixed(m.dec+1))+')'+(st.length?' · '+st[0]:'');
+  var isChange=/m\/m|q\/q/.test(m.measure)||key==='us_gdp'||key==='ca_gdpq'||key==='us_nfp'||key==='ca_emp';
+  var bars=H.slice(-12).map(function(x,i,a){ return [x[0].replace(" '","’").replace(/^(\w{3})’\d\d$/,'$1'), x[1], i===a.length-1]; });
+  var bv=bars.map(function(b){ return b[1]; }), bmin=Math.min.apply(null,bv), bmax=Math.max.apply(null,bv);
+  var chart1=barChartSVG({bars:bars,yLabel:(m.measure||'level')+(m.unit?' ('+m.unit+')':''),dec:m.dec,H:220,aria:m.name+' last 12 readings',floor:(!isChange&&bmin>0)?Math.max(0,bmin-(bmax-bmin)*0.6-Math.abs(bmin)*0.02):null});
+  var chg=H.slice(-12).map(function(x,i,a){ var p=i?a[i-1][1]:(H.length>12?H[H.length-13][1]:null); return [x[0].replace(" '","’").replace(/^(\w{3})’\d\d$/,'$1'), p==null?null:+(x[1]-p).toFixed(m.dec+1), i===a.length-1]; });
+  var chart2=!isChange?barChartSVG({bars:chg,yLabel:'change vs prior',dec:m.dec,H:180}):'';
+  var rel3=(info[2]||[]).map(mfind).filter(Boolean).map(function(r){ return '<button class="mdc-rel" data-mkey="'+r.key+'"><span>'+esc(r.name)+(r.measure?' '+r.measure:'')+'</span><b>'+mval(r,r.value)+'</b><small class="'+cls(r.chg)+'">'+sgn(r.chg,r.dec)+'</small></button>'; }).join('');
+  var extra=[];
+  if(m.level_b!=null) extra.push('Level: C$'+fmt(m.level_b,1)+' billion'+(m.yoy!=null?' · '+sgn(m.yoy,1,'%')+' y/y':''));
+  if(m.ecom_b!=null) extra.push('E-commerce C$'+fmt(m.ecom_b,1)+'B'+(m.ecom_share!=null?' ('+fmt(m.ecom_share,1)+'% of retail)':''));
+  if(m.rev) extra.push('Revision: '+esc(m.rev.period)+' '+mval(m,m.rev.from)+' → '+mval(m,m.rev.to));
+  if(/cpi|pce|trim|median/.test(key)) extra.push((m.value>2.05?'Above':m.value<1.95?'Below':'At')+' the 2% '+(m.group==='us'?'Fed':'BoC')+' target by '+fmt(Math.abs(m.value-2),1)+' pp');
+  var nx=nextRelease(key);
+  return '<div class="mdc">'+
+    '<div class="mdc-top"><div class="mdc-ttl">'+esc(flag.toUpperCase()+' '+m.name.toUpperCase())+'</div><div class="mdc-sub">'+esc(m.period)+(m.measure?' · '+m.measure:'')+' — '+rel+'</div><div class="mdc-hl">'+headline+'</div></div>'+
+    '<div class="mdc-main"><div class="mdc-k">'+esc(m.name)+' — '+esc(m.period)+chip+'</div><div class="mdc-v">'+mval(m,m.value)+(m.measure?' <small>'+m.measure+'</small>':'')+'</div>'+
+      '<div class="mdc-l">'+(C&&C.consensus!=null?'Consensus: '+mval(m,C.consensus)+' (desk survey) | ':'Consensus: not captured for this print | ')+'Prior ('+esc(H[n-2]?H[n-2][0]:'')+'): '+mval(m,m.prior)+(m.rev?', rev. from '+mval(m,m.rev.from):'')+'</div></div>'+
+    '<div class="mdc-grid"><div class="mdc-box"><div class="mdc-k">3-reading average</div><div class="mdc-v2">'+mval(m,+a3.toFixed(m.dec+1))+'</div><div class="mdc-l">12-reading avg '+mval(m,+a12.toFixed(m.dec+1))+'</div></div>'+
+      '<div class="mdc-box"><div class="mdc-k">12-reading range</div><div class="mdc-v2">'+mval(m,lo)+' → '+mval(m,hi)+'</div><div class="mdc-l">latest sits at '+fmt(hi>lo?(m.value-lo)/(hi-lo)*100:50,0)+'% of the range</div></div></div>'+
+    (extra.concat(st.slice(1)).length?'<div class="mdc-band">'+extra.concat(st.slice(1)).map(function(t){ return '<div>'+t+'</div>'; }).join('')+'</div>':'')+
+    '<h4 class="mdc-h">What it is &amp; why it matters for USD/CAD</h4><p class="mdc-p">'+esc(info[0])+' '+esc(info[1])+'</p>'+
+    '<h4 class="mdc-h">Trend — '+esc(m.name)+(m.measure?', '+m.measure:'')+', last '+Math.min(12,n)+' readings</h4><div class="mdc-chart">'+chart1+'</div>'+
+    (chart2?'<h4 class="mdc-h">Change vs prior reading</h4><div class="mdc-chart">'+chart2+'</div>':'')+
+    '<p class="mdc-read">Read: '+st.concat([m.value>a3?'latest above its 3-reading average':'latest below its 3-reading average']).join('; ')+'.</p>'+
+    (rel3?'<h4 class="mdc-h">Related indicators <span class="h2note">(tap to open)</span></h4><div class="mdc-rels">'+rel3+'</div>':'')+
+    '<div class="mdc-foot">'+(nx&&nx.t?'Next release: <b>'+etLabel(nx.t,true)+' ET</b> · <span class="countdown" data-t="'+nx.t+'">'+cdText(nx.t-Date.now())+'</span>':'Next release: '+esc(nx&&nx.note||'not scheduled'))+' · source: '+esc(m.src)+' · '+ccy+'</div>'+
+    '<button class="mdc-ask" data-mask="'+key+'">Ask Claude about this print</button>'+
+  '</div>';
+}
+function openMacroDetail(key){
+  var o=document.getElementById('mdc-overlay');
+  if(!o){ o=document.createElement('div'); o.id='mdc-overlay'; o.innerHTML='<div class="mdc-wrap" role="dialog" aria-modal="true"><button class="mdc-x" aria-label="Close">×</button><div class="mdc-body"></div></div>'; document.body.appendChild(o); }
+  o.querySelector('.mdc-body').innerHTML=macroDetailHTML(key); o.classList.add('on'); o.setAttribute('data-key',key); o.querySelector('.mdc-wrap').scrollTop=0;
+}
+function closeMacroDetail(){ var o=document.getElementById('mdc-overlay'); if(o) o.classList.remove('on'); }
+document.addEventListener('click', function(ev){
+  var t=ev.target.closest?ev.target:null; if(!t) return;
+  if(t.closest('.mdc-x')||t.id==='mdc-overlay'){ closeMacroDetail(); return; }
+  var a=t.closest('[data-mask]'); if(a){ var m=mfind(a.getAttribute('data-mask'));
+    var q='Analyze this '+(m.group==='us'?'US':'Canada')+' '+m.name+' print for a USD/CAD and grain trader. Latest '+m.period+': '+m.value+m.unit+' '+(m.measure||'')+'; prior '+m.prior+'; last readings '+(m.hist24||m.history).map(function(x){ return x[0]+' '+x[1]; }).join(', ')+'. What does it mean for the BoC/Fed path and USD/CAD?';
+    window.open('https://claude.ai/new?q='+encodeURIComponent(q),'_blank','noopener'); return; }
+  var k=t.closest('[data-mkey]'); if(k){ openMacroDetail(k.getAttribute('data-mkey')); }
+});
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMacroDetail(); });
+
 /* ================= USD/CAD LIVE FEED MONITOR ================= */
 var MON_TAB='next';
 function agriEvents(fromMs, days){
@@ -2308,7 +2429,7 @@ function macroCard(m){
   var mv=Math.abs(m.value)<Math.pow(10,-m.dec)/2?0:m.value;   /* no "-0.0" */
   var val=(m.measure==='m/m'&&mv>0?'+':'')+fmt(mv,m.dec)+u;
   var hist=m.history.map(function(h){ return h[0]+': '+fmt(h[1],m.dec)+u; }).join(' · ');
-  return '<div class="mcard" title="'+esc(m.name+' — last '+m.history.length+' readings: '+hist)+'">'+
+  return '<div class="mcard" role="button" tabindex="0" data-mkey="'+m.key+'" title="'+esc('Click for the full breakdown · '+m.name+' — last '+m.history.length+' readings: '+hist)+'">'+
     '<div class="mk">'+esc(m.name)+(m.measure?' <span>'+m.measure+'</span>':'')+'</div>'+
     '<div class="mv">'+val+'</div>'+
     '<div class="mc '+tone+'">'+arrow+' '+(flat?'unch.':sgn(ch,m.dec,chU))+' <span>vs '+esc(m.history.length>1?m.history[m.history.length-2][0]:'prior')+'</span></div>'+
@@ -2326,12 +2447,12 @@ function macroDiffs(){
   return out.join('');
 }
 function fxMacroHTML(){
-  var all=DATA.macro||[];
+  var all=macroAll();
   if(!all.length) return '<div class="tile wide" data-src="macro"><h2>Macro monitor</h2><p class="note">US and Canada indicators load on the next data refresh.</p></div>';
   all=all.filter(function(m){ return !m.chart_only; });
   function grp(g){ return all.filter(function(m){ return m.group===g; }).map(macroCard).join(''); }
   var errs=DATA.meta.macro_errors?Object.keys(DATA.meta.macro_errors).length:0;
-  return '<div class="tile wide" data-src="macro"><h2>All macro indicators <span class="h2note">— latest print, change vs prior, last 12 readings · hover a card for the values</span></h2>'+
+  return '<div class="tile wide" data-src="macro"><h2>All macro indicators <span class="h2note">— click any card for the full breakdown · latest print, change vs prior, last 12 readings</span></h2>'+
     '<div class="m-legend"><span class="up">▲ stronger</span><span class="dn">▼ weaker</span><span class="heat">▲ inflation hotter</span><span class="cool">▼ inflation cooler</span></div>'+
     (MGEO!=='ca'?'<h3 class="m-h">United States <span class="chip inline">USD</span></h3><div class="m-grid">'+grp('us')+'</div>':'')+
     (MGEO!=='us'?'<h3 class="m-h">Canada <span class="chip inline">CAD</span></h3><div class="m-grid">'+grp('ca')+'</div>':'')+
