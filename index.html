@@ -261,6 +261,19 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .dash-card .kpi-spark{display:block;width:100%;height:26px;margin-top:8px}
 .tile-head{flex-wrap:wrap;row-gap:6px}
 .sub{display:contents}.sub:not(.on){display:none}
+.layout.has-secnav{grid-template-columns:200px minmax(0,1fr) 332px}
+.secnav{position:sticky;top:calc(var(--strip-h,40px) + 64px);align-self:start;display:flex;flex-direction:column;gap:3px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 8px;min-width:0;max-height:calc(100vh - 130px);overflow:auto}
+.secnav:empty{display:none}
+.sn-h{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);padding:2px 8px 8px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.sn-b{display:flex;justify-content:space-between;align-items:center;gap:6px;text-align:left;background:none;border:0;border-left:3px solid transparent;color:var(--muted);font:inherit;font-size:13px;padding:7px 8px;border-radius:0 7px 7px 0;cursor:pointer}
+.sn-b small{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);background:#14213a;border-radius:8px;padding:0 6px}
+.sn-b:hover{background:#14213a;color:#e8eef4}.sn-b[aria-pressed="true"]{border-left-color:#38b6c9;background:#14263d;color:#fff;font-weight:600}
+.sec-off{display:none!important}
+.pk.btip:hover{border-color:#38b6c9}
+.pk-tip-k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#38b6c9;font-weight:700;margin-top:7px}
+@media (max-width:1240px){.layout.has-secnav{grid-template-columns:minmax(0,1fr) 332px}.secnav{grid-column:1/-1;position:sticky;top:calc(var(--strip-h,40px) + 56px);z-index:30;box-shadow:0 6px 14px rgba(0,0,0,.35);flex-direction:row;overflow-x:auto;max-height:none;padding:6px;border-radius:10px}
+  .sn-h{display:none}.sn-b{flex:0 0 auto;border-left:0;border-bottom:3px solid transparent;border-radius:7px;white-space:nowrap}.sn-b[aria-pressed="true"]{border-bottom-color:#38b6c9}}
+@media (max-width:1020px){.layout.has-secnav{grid-template-columns:1fr}}
 .oi-ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .pk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
 .pk{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;min-width:0}.pk.crit{border-color:#e0655f;background:rgba(224,101,95,.08)}
@@ -2668,9 +2681,20 @@ function positioningKpiHTML(key){
     (K.spread_idx!=null?'<div class="pk"><div class="pk-k">Commercial vs spec spread</div><div class="pk-v">'+fmt(K.spread_idx,0)+'<small>/100 (3-yr)</small></div>'+gaugeHTML(K.spread_idx,0,100,[10,50,90],function(v){ return v; })+'<div class="pk-s">Funds '+sg(K.net)+' vs '+commLab.toLowerCase()+' '+sg(K.comm_net)+' (Δ '+sg(K.comm_d1)+')<br>'+(K.spread_idx>=90||K.spread_idx<=10?'<b>extreme divergence — hedgers fully opposite the funds</b>':'within the normal range')+'</div></div>':
       '<div class="pk"><div class="pk-k">Commercial vs spec spread</div><div class="pk-v">—</div><div class="pk-s">'+commLab+' columns load on the next CFTC refresh</div></div>')
   ];
+  var who=isFx?'leveraged funds (hedge funds & CTAs) in CAD futures':'managed money (hedge funds & CTAs) in '+GMETA[key].name.toLowerCase(), bias=isFx?'CAD':GMETA[key].name.toLowerCase();
+  function tip(h, what, read, now, why){ return '<div class="bt-h">'+h+'</div><div>'+what+'</div><div class="pk-tip-k">How to read</div><div>'+read+'</div><div class="pk-tip-k">This week</div><div>'+now+'</div><div class="pk-tip-k">Why it matters</div><div>'+why+'</div>'; }
+  var tid='b'+(++BTN); BTIPS[tid]=[
+    tip('52-week z-score','How far the net position of '+who+' sits from its own 1-year average, in standard deviations.','0 = normal · ±1σ = leaning · beyond ±2σ = statistically extreme crowding (happens ~5% of weeks).','Net '+sg(K.net)+' contracts = '+sgn(K.z52,2,'σ')+' → '+S.zs+'.','Short-term radar for crowding. Extreme longs leave fewer buyers left; extreme shorts are fuel for a squeeze.'),
+    tip('3-year COT Index','Where this week’s net position sits inside its 3-year (156-week) range, on a 0–100 scale.','0 = most short in 3 years · 100 = most long · above 80 = extreme long · below 20 = extreme short.','Index '+fmt(K.cot3,0)+' → '+S.cs+'.','Puts the weekly number in multi-year context so a big-looking position is judged against the cycle, not one year.'),
+    tip('Double-extreme flag','Fires only when the z-score and the COT Index are both extreme on the same side.','Needs z ≥ +2 and COT > 80 (long) or z ≤ −2 and COT < 20 (short).',S.dbl?'<b>Active — '+S.dbl+'</b>.':'Not active — z '+sgn(K.z52,2,'σ')+', COT '+fmt(K.cot3,0)+'.','When short-term and multi-year gauges agree, the odds of mean reversion (or a short squeeze) rise sharply.'),
+    tip('Flow velocity & streak','Week-over-week change in the net position, expressed as a % of total open interest, plus how many weeks in a row funds have bought or sold.','A move larger than ±2% of open interest in one week is fast money · 4+ weeks in the same direction = a persistent trend.','Net change '+sg(K.d1)+' ('+(K.vel_pct_oi!=null?sgn(K.vel_pct_oi,2,'%'):'—')+' of OI) · '+Math.abs(K.streak)+' week(s) of net '+(K.streak>0?'buying':'selling')+'.','Shows whether fund money is actively pushing the '+bias+' trend or the move is running out of sponsors.'),
+    tip('Open interest change','Weekly % change in the total number of open contracts, read together with the direction of fund flow.','OI up + funds buying = fresh longs · OI up + funds selling = fresh shorts · OI down + funds buying = short covering · OI down + funds selling = long liquidation.','OI '+(K.doi_pct!=null?sgn(K.doi_pct,2,'%'):'—')+' → '+flowRead(K)+'.','Tells you if a move is backed by new money (sustainable) or only by positions closing (can exhaust quickly).'),
+    tip('Commercial vs spec spread','The gap between funds’ net position and the '+(isFx?'dealers’ (sell-side banks)':'producers/merchants’ (physical hedgers)')+' net position, ranked in its 3-year range (0–100).','Near 100 = funds most long vs hedgers most short in 3 years · near 0 = the reverse · above 90 or below 10 = extreme.',K.spread_idx!=null?'Spread index '+fmt(K.spread_idx,0)+' · funds '+sg(K.net)+' vs '+(isFx?'dealers':'commercials')+' '+sg(K.comm_net)+'.':'Not loaded yet.','Hedgers trade the physical market. When they take the exact opposite side of the funds at an extreme, tension between fundamentals and momentum is high.')
+  ];
+  cards=cards.map(function(c,i){ return c.replace('<div class="pk','<div tabindex="0" data-tid="'+tid+'" data-i="'+i+'" class="btip pk'); });
   return '<div class="tile wide poskpi has-flag" data-src="'+(isFx?'cftc_fx':'cftc_grains')+'">'+cflag(isFx?'ca':'us')+'<h2>Positioning KPIs <span class="h2note">— '+title+' · positions as of '+esc(fmtDate(K.date))+'</span></h2>'+
     (alerts.length?'<div class="pk-alerts">'+alerts.map(function(a){ return '<span class="pk-al '+a[0]+'">'+a[1]+'</span>'; }).join('')+'</div>':'<div class="pk-alerts"><span class="pk-al ok">No positioning alerts this week</span></div>')+
-    '<div class="pk-grid">'+cards.join('')+'</div>'+
+    '<div class="pk-grid">'+cards.join('')+'</div><div class="stamp" style="border:0;padding-top:6px;margin-top:6px">Hover or tap any card for what it measures, how to read it and why it matters.</div>'+
     '<div class="stamp">z-score = (net − 52-wk mean) ÷ 52-wk st.dev (alert ±2σ) · COT Index = 100 × (net − 3-yr min) ÷ (3-yr max − min) (alert >80 / <20) · flow velocity = weekly net change ÷ open interest (alert ±2%) · streak alert ≥ 4 weeks · OI Δ alert ±2% · CFTC positions are as of Tuesday, released Friday 3:30 pm ET</div></div>';
 }
 
@@ -3277,6 +3301,74 @@ document.querySelector('main').addEventListener('click', function(ev){
   document.getElementById('pos-'+key).innerHTML=positioningHTML(key);
   document.getElementById('oi-'+key).innerHTML=oiTileHTML(key);
 });
+
+
+/* ================= LEFT SECTION NAVIGATOR (groups the cards of each sub-tab) ================= */
+var SECG={
+  grain:{
+    overview:[['snap','Snapshot & KPIs',/kpi-strip|dash-head/],['fan','Price & σ fan',/σ fan/],['insight','Insight',/\bInsight\b/],['ask','Ask Claude',/ask-tile/]],
+    deriv:[['cockpit','Derivatives cockpit',/kpi-strip/],['pos','Positioning KPIs',/poskpi|ckwrap/],['cftc','CFTC managed money',/cftc_grains/],['opt','Options data',/Options positioning|Open interest by strike|Open-interest change/],['vol','Volatility & skew',/Volatility|IV skew/],['carry','Carry & roll',/Curve & calendar|Futures roll/]],
+    fund:[['cmp','Crop-year comparison',/Crop-year comparison/],['sd','Supply & demand (WASDE)',/supply & demand/i],['dest','Export destinations',/Export destinations/i],['exp','Export sales',/Export Sales/i],['cal','Agri calendar',/agri calendar/i],['caprod','Production & farm prices',/production by crop year|farm price/i],['ca','Canada / Ontario stats',/Canada|Ontario/]],
+    inputs:[['cost','Input cost summary',/input costs/i],['paths','Price paths & events',/price paths/i]]
+  },
+  fx:{
+    overview:[['snap','Snapshot',/kpi-strip/],['spot','Spot & key levels',/spot & key levels/i],['daily','Daily chart',/daily closes/i],['model','Model view',/Model view/],['ask','Ask Claude',/ask-tile/]],
+    deriv:[['pos','Positioning KPIs',/poskpi|ckwrap/],['fwd','Forward curve',/Forward curve/],['cftc','CFTC CAD funds',/cftc_fx|CFTC CAD/],['sent','Sentiment & FX options',/Retail sentiment/]],
+    macro:[['live','Live USD/CAD',/live-fx/],['dash','Macro dashboard',/macro dashboard/i],['tf','Trade & fiscal',/Trade & fiscal/i],['all','All indicators',/All macro indicators/],['rel','Latest releases',/Latest releases/]],
+    rates:[['ys','Yield spreads',/yield spreads/i],['en','Energy',/Energy/],['pol','Policy expectations',/Policy expectations/]]
+  }
+};
+var SECMQ=window.matchMedia('(max-width:1240px)');
+function placeSecNav(L, nav){
+  var G=L.querySelector(':scope>.grid'), st=G&&G.querySelector(':scope>.subnav-tile');
+  if(SECMQ.matches&&st){ if(nav.previousElementSibling!==st) st.after(nav); }
+  else if(nav.parentNode!==L||L.firstChild!==nav){ L.insertBefore(nav, L.firstChild); }
+}
+SECMQ.addEventListener&&SECMQ.addEventListener('change', function(){ ['corn','wheat','soybeans','fx'].forEach(buildSecNav); });
+var SEC={}; try{ SEC=JSON.parse(localStorage.getItem('desk.sec')||'{}')||{}; }catch(e){}
+function secKey(panel){ return panel+'.'+SUB[panel]; }
+function buildSecNav(panel){
+  var P=document.getElementById('panel-'+panel); if(!P) return;
+  var L=P.querySelector('.layout'); if(!L) return;
+  var sub=P.querySelector('[data-subpanel].on'); var nav=L.querySelector(':scope>.secnav');
+  if(!nav) nav=P.querySelector('.secnav');
+  if(!nav){ nav=document.createElement('nav'); nav.className='secnav'; nav.setAttribute('aria-label','Sections'); }
+  L.classList.add('has-secnav'); placeSecNav(L, nav);
+  if(!sub){ nav.innerHTML=''; return; }
+  var rules=(SECG[panel==='fx'?'fx':'grain']||{})[sub.getAttribute('data-subpanel')]||[], groups={}, order=[];
+  [].forEach.call(sub.children, function(t){
+    if(/geo-head/.test(t.className)){ t.setAttribute('data-sec','*'); return; }
+    var h=t.querySelector('h2,h3'), txt=t.className+' '+(t.getAttribute('data-src')||'')+' '+(t.id||'')+' '+(h?h.textContent:'');
+    var hit=null; for(var i=0;i<rules.length;i++){ if(rules[i][2].test(txt)){ hit=rules[i]; break; } }
+    var id=hit?hit[0]:'more', lab=hit?hit[1]:(h?h.textContent.split('—')[0].trim():'More');
+    if(!hit){ id='more-'+order.length; }
+    t.setAttribute('data-sec', id);
+    if(!groups[id]){ groups[id]={id:id,lab:lab,n:0,idx:hit?rules.indexOf(hit):99+order.length}; order.push(id); }
+    groups[id].n++;
+  });
+  var list=order.map(function(k){ return groups[k]; }).sort(function(a,b){ return a.idx-b.idx; });
+  var cur=SEC[secKey(panel)]||'all'; if(cur!=='all'&&!groups[cur]) cur='all';
+  var subLab=(P.querySelector('[data-sub="'+sub.getAttribute('data-subpanel')+'"] .sb-name')||{}).textContent||'';
+  nav.innerHTML='<div class="sn-h">'+esc(subLab)+'</div>'+
+    '<button class="sn-b" data-secp="'+panel+'" data-sec-v="all" aria-pressed="'+(cur==='all')+'"><span>All sections</span><small>'+list.length+'</small></button>'+
+    list.map(function(g){ return '<button class="sn-b" data-secp="'+panel+'" data-sec-v="'+g.id+'" aria-pressed="'+(cur===g.id)+'"><span>'+esc(g.lab)+'</span>'+(g.n>1?'<small>'+g.n+'</small>':'')+'</button>'; }).join('');
+  [].forEach.call(sub.children, function(t){ var s=t.getAttribute('data-sec'); t.classList.toggle('sec-off', cur!=='all' && s!=='*' && s!==cur); });
+  var act=nav.querySelector('[aria-pressed="true"]'); if(act&&SECMQ.matches) nav.scrollLeft=Math.max(0,act.offsetLeft-nav.clientWidth/2+act.offsetWidth/2);
+  if(panel!=='fx'&&typeof drawDestMaps==='function'&&cur==='dest') setTimeout(drawDestMaps,30);
+}
+document.addEventListener('click', function(ev){
+  var b=ev.target.closest&&ev.target.closest('[data-sec-v]'); if(!b) return;
+  var panel=b.getAttribute('data-secp'); SEC[secKey(panel)]=b.getAttribute('data-sec-v');
+  try{ localStorage.setItem('desk.sec', JSON.stringify(SEC)); }catch(e){}
+  buildSecNav(panel);
+  var L=document.querySelector('#panel-'+panel+' .layout>.grid'); if(L){ var y=L.getBoundingClientRect().top+window.scrollY-120; if(window.scrollY>y) window.scrollTo({top:y,behavior:'smooth'}); }
+});
+(function(){
+  var _rg=renderGrain, _rf=renderFX, _ss=setSub;
+  renderGrain=function(k){ _rg(k); buildSecNav(k); };
+  renderFX=function(){ _rf(); buildSecNav('fx'); };
+  setSub=function(p,id){ _ss(p,id); buildSecNav(p); };
+})();
 
 function renderAll(){ renderGrain('corn'); renderGrain('wheat'); renderGrain('soybeans'); renderFX(); drawDestMaps(); if(typeof paintAwaiting==='function') paintAwaiting(); }
 renderAll();
