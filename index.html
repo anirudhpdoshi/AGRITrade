@@ -261,6 +261,7 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .dash-card .kpi-spark{display:block;width:100%;height:26px;margin-top:8px}
 .tile-head{flex-wrap:wrap;row-gap:6px}
 .sub{display:contents}.sub:not(.on){display:none}
+.ev-n{display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:9px;background:#1a2a42;border:1px solid #8494ab;text-align:center;font-size:10px;font-weight:700;margin-right:4px}
 .cmp-ctrl{display:flex;flex-wrap:wrap;gap:8px 22px;margin:4px 0 10px;font-size:12.5px}
 .cmp-g{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}.cmp-g b{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
 .cmp-cb{display:inline-flex;align-items:center;gap:5px;cursor:pointer;color:#c9d6e6;border:1px solid var(--line2);border-radius:6px;padding:3px 8px}
@@ -1727,7 +1728,7 @@ function niceTicks(lo, hi, n){ var span=hi-lo||1, step=Math.pow(10,Math.floor(Ma
 function mLabel(iso){ var M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return M[+iso.slice(5,7)-1]+" '"+iso.slice(2,4); }
 /* line chart: o={series:[{pts:[[iso,v]],color,label,width}], refs:[{v,label,color,dash}], yLabel, dec, W, H, aria} — direct labels at the right edge */
 function lineChartSVG(o){
-  var W=o.W||480, H=o.H||220, PL=44, PR=112, PT=14, PB=30, pw=W-PL-PR, ph=H-PT-PB, dec=o.dec==null?1:o.dec;
+  var W=o.W||480, H=o.H||220, PL=44, PR=112, PT=(o.events&&o.events.length)?24:14, PB=30, pw=W-PL-PR, ph=H-PT-PB, dec=o.dec==null?1:o.dec;
   var xs=o.series[0].pts.map(function(p){ return p[0]; }), n=xs.length; if(n<2) return '<p class="note">Not enough history yet.</p>';
   var vals=[]; o.series.forEach(function(s){ s.pts.forEach(function(p){ if(p[1]!=null) vals.push(p[1]); }); }); (o.refs||[]).forEach(function(r){ if(r.v!=null) vals.push(r.v); });
   var lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals), pad=(hi-lo)*0.08||0.5; lo-=pad; hi+=pad; if(o.zero&&lo>0) lo=0;
@@ -1738,6 +1739,10 @@ function lineChartSVG(o){
   if(lo<0&&hi>0) s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(0)+'" y2="'+Y(0)+'" stroke="#3a4a61"/>';
   var every=Math.max(1,Math.ceil(n/7));
   xs.forEach(function(x,i){ if((n-1-i)%every===0) s+='<text x="'+X(i).toFixed(1)+'" y="'+(H-10)+'" fill="#5b6b82" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+(x.length>=7?mLabel(x):esc(x))+'</text>'; });
+  var placed=[];
+  (o.events||[]).forEach(function(e){ var i=-1; for(var k=0;k<n;k++){ if(xs[k]>=e.date){ i=k; break; } } if(i<0) return;
+    var exn=X(i), lvl=0; placed.forEach(function(p){ if(Math.abs(p[0]-exn)<15) lvl=Math.max(lvl,p[1]+1); }); placed.push([exn,lvl]);
+    var ex=exn.toFixed(1), cy=PT+2+lvl*15; s+='<line x1="'+ex+'" x2="'+ex+'" y1="'+cy+'" y2="'+(PT+ph)+'" stroke="#8494ab" stroke-width="1" stroke-dasharray="2 3"/><circle cx="'+ex+'" cy="'+cy+'" r="7" fill="#1a2a42" stroke="#8494ab"/><text x="'+ex+'" y="'+(cy+3.5)+'" fill="#e8eef4" font-size="9" font-weight="700" font-family="IBM Plex Mono" text-anchor="middle">'+e.n+'</text>'; });
   (o.refs||[]).forEach(function(r){ if(r.v==null) return; s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(r.v).toFixed(1)+'" y2="'+Y(r.v).toFixed(1)+'" stroke="'+r.color+'" stroke-width="1.3" stroke-dasharray="'+(r.dash||'5 4')+'"/>'; labs.push({y:Y(r.v), t:r.label+' '+fmt(r.v,dec), c:r.color}); });
   o.series.forEach(function(sr){ var d='', started=false;
     sr.pts.forEach(function(p){ if(p[1]==null){ started=false; return; } var i=idx[p[0]]; d+=(started?'L':'M')+X(i).toFixed(1)+' '+Y(p[1]).toFixed(1); started=true; });
@@ -1999,6 +2004,58 @@ document.addEventListener('change', function(ev){
   ['corn','wheat','soybeans'].forEach(function(k){ var el=document.getElementById('cmp-'+k); if(el) el.outerHTML=cropCompareHTML(k); });
 });
 
+/* ================= FARM INPUT COSTS ================= */
+var INPUT_MAP={
+  corn:[['urea','Nitrogen — urea (46-0-0); tracks anhydrous & UAN'],['ppi_n','Nitrogen fertilizer basket (anhydrous, urea, UAN)'],['natgas','Nitrogen feedstock + grain drying'],['propane','Grain drying'],['ulsd','Field machinery'],['ppi_chem','Herbicides (atrazine) & other ag chemicals'],['wti','Energy baseline']],
+  soybeans:[['dap','Phosphorus — DAP (tracks MAP)'],['potash','Potash (0-0-60)'],['ppi_p','Phosphate fertilizer basket'],['ppi_chem','Herbicides (glyphosate) & other ag chemicals'],['ulsd','Field machinery'],['wti','Energy baseline']],
+  wheat:[['urea','Nitrogen — urea'],['dap','Phosphorus — DAP'],['potash','Potash (0-0-60)'],['ppi_n','Nitrogen fertilizer basket'],['ppi_chem','Fungicides & other ag chemicals'],['ulsd','Multiple field passes'],['wti','Energy baseline']]
+};
+function inPts(s, yrs){ var cut=new Date(); cut.setFullYear(cut.getFullYear()-(yrs||2)); var c=cut.toISOString().slice(0,10); return s.pts.filter(function(p){ return p[0]>=c; }); }
+function chgOver(s, days){ var P=s.pts, L=P[P.length-1], t=new Date(L[0]); t.setDate(t.getDate()-days); var c=t.toISOString().slice(0,10);
+  var b=null; for(var i=P.length-1;i>=0;i--){ if(P[i][0]<=c){ b=P[i]; break; } } return b?(L[1]/b[1]-1)*100:null; }
+function inFmt(s, v){ return s.unit==='index'?fmt(v,1):s.unit==='$/mt'?'$'+fmt(v,0):s.unit==='$/bbl'?'$'+fmt(v,2):'$'+fmt(v,3); }
+function inputEvents(key){ var E=(DATA.inputs&&DATA.inputs.events)||[]; return E.map(function(e,i){ return Object.assign({n:i+1},e); }).filter(function(e){ return e.tags.indexOf('*')>=0||e.tags.indexOf(key)>=0; }); }
+function inputsNextEvent(){
+  var now=Date.now(), out=[];
+  for(var i=0;i<10;i++){ var x=new Date(now+i*86400000), p={};
+    new Intl.DateTimeFormat('en-US',{timeZone:'America/Toronto',year:'numeric',month:'numeric',day:'numeric',weekday:'short'}).formatToParts(x).forEach(function(q){ p[q.type]=q.value; });
+    if(p.weekday==='Wed') out.push({t:zonedMs(+p.year,+p.month,+p.day,10,30,'America/Toronto'),label:'EIA weekly petroleum (diesel, propane)'});
+    if(p.weekday==='Thu') out.push({t:zonedMs(+p.year,+p.month,+p.day,10,30,'America/Toronto'),label:'EIA natural gas storage'}); }
+  fxEvList().forEach(function(e){ if(/PPI/.test(e.label)&&/USD/.test(e.label)) out.push({t:e.t,label:'US PPI (fertilizer & chemical indexes)'}); });
+  return nextOf(out);
+}
+function inputsHTML(key){
+  var I=DATA.inputs, S=I&&I.series;
+  if(!S||!Object.keys(S).length) return '<div class="tile wide"><h2>Input costs</h2><p class="note">Fertilizer, chemical and energy prices load on the next data refresh.</p></div>';
+  var g=DATA.grains[key], F=+g.fan.intraday[0], bpm=BU_PER_MT[key], list=INPUT_MAP[key].filter(function(x){ return S[x[0]]; });
+  var rows=list.map(function(x){ var s=S[x[0]], L=s.pts[s.pts.length-1], c1=chgOver(s,31), c3=chgOver(s,92), c12=chgOver(s,365), c24=chgOver(s,730);
+    function c(v){ return v==null?'<td class="cmp-na">—</td>':'<td class="'+cls(-v)+'">'+sgn(v,1,'%')+'</td>'; }
+    return '<tr><td class="lbl" data-l=""><b>'+esc(s.label)+'</b><br><small class="h2note">'+esc(x[1])+'</small></td><td data-l="Latest"><b>'+inFmt(s,L[1])+'</b><br><small class="h2note">'+esc(s.unit)+' · '+esc(L[0])+'</small></td>'+c(c1)+c(c3)+c(c12)+c(c24)+'<td data-l="2-yr trend">'+sparkPath(inPts(s,2).map(function(p){ return p[1]; }),110,26)+'</td></tr>'; }).join('');
+  var avg=list.map(function(x){ return chgOver(S[x[0]],365); }).filter(function(v){ return v!=null; });
+  var pres=avg.length?avg.reduce(function(a,b){ return a+b; },0)/avg.length:null;
+  var aff='';
+  var fert=key==='soybeans'?(S.potash?['potash','potash']:S.dap?['dap','DAP']:null):(S.urea?['urea','urea']:null);
+  if(fert){ var fp=S[fert[0]].pts[S[fert[0]].pts.length-1][1]; aff='<div class="dash-card"><div class="dk">Affordability</div><div class="dv">'+fmt(fp/F,0)+'<small> bu of '+GMETA[key].name.toLowerCase()+' buys 1 t of '+fert[1]+'</small></div><div class="dsub">'+fert[1]+' $'+fmt(fp,0)+'/t ('+esc(S[fert[0]].pts[S[fert[0]].pts.length-1][0].slice(0,7))+') ÷ '+esc(GMETA[key].contract)+' $'+fmt(F,4)+'/bu · higher = inputs dearer vs the crop</div></div>'; }
+  var top='<div class="dash-grid">'+
+    '<div class="dash-card"><div class="dk">Input pressure · 1-yr</div><div class="dv '+cls(-(pres||0))+'">'+(pres==null?'—':sgn(pres,1,'%'))+'</div><div class="dsub">simple average of the 1-yr change of the '+avg.length+' inputs below (not cost-weighted)</div></div>'+aff+
+    '<div class="dash-card"><div class="dk">Latest event</div><div class="dsub">'+(function(){ var E=(DATA.inputs.events||[]), e=E[E.length-1]; return e?'<b>'+esc(e.date)+'</b> · '+esc(e.label):'—'; })()+'</div></div></div>';
+  var html='<div class="tile wide" data-src="inputs"><div class="tile-head"><h2>'+GMETA[key].name+' input costs <span class="h2note">— fertilizer, chemicals, energy · 2-year view</span></h2></div>'+top+
+    '<div class="tbl-scroll" style="margin-top:10px"><table class="sd-tbl cmp-tbl"><thead><tr><th>Input · role</th><th>Latest</th><th>1M</th><th>3M</th><th>1Y</th><th>2Y</th><th>2-yr trend</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<div class="stamp">Red = input dearer (bad for margins), green = cheaper · FRED (EIA energy spot prices; BLS producer price indexes) · World Bank Pink Sheet (urea, DAP, potash, $/mt, monthly) · checked '+esc(asOf('inputs',true))+' · seed and retail chemical prices have no free daily feed — the BLS pesticide index stands in for glyphosate/atrazine</div></div>';
+  /* charts: one per input, with numbered event markers */
+  var charts=list.map(function(x){ var s=S[x[0]], pts=inPts(s,2), L=pts[pts.length-1], c24=chgOver(s,730);
+    var ev=inputEvents(x[0]).filter(function(e){ return e.date>=pts[0][0]; });
+    return '<div class="mpanel"><h3 class="mp-h">'+esc(s.label)+': <b>'+inFmt(s,L[1])+'</b>'+(c24!=null?', <span class="'+cls(-c24)+'">'+sgn(c24,1,'%')+'</span> in 2 yrs':'')+'</h3>'+
+      lineChartSVG({series:[{pts:pts,color:s.kind==='energy'?'#e8a33d':s.kind==='chem'?'#c084fc':'#5fd598',label:'Last'}],yLabel:s.unit,dec:s.unit==='index'?1:s.unit==='$/mt'?0:2,H:200,events:ev,aria:s.label+' over two years'})+
+      '<div class="stamp">'+esc(s.src)+' · '+esc(s.unit)+(ev.length?' · markers = events '+ev.map(function(e){ return e.n; }).join(', '):'')+'</div></div>'; }).join('');
+  html+='<div class="tile wide" data-src="inputs"><h2>Two-year price paths with key events <span class="h2note">— numbered markers match the event list below</span></h2><div class="mpanels">'+charts+'</div></div>';
+  var E=(DATA.inputs.events||[]);
+  html+='<div class="tile wide"><h2>Key events — geopolitics &amp; policy <span class="h2note">— what moved input prices</span></h2>'+
+    E.map(function(e,i){ return '<div class="kv"><span class="kk"><span class="ev-n">'+(i+1)+'</span> '+esc(e.date)+' · '+esc(e.label)+'</span><span class="vv"><a href="'+safeUrl(e.src)+'" target="_blank" rel="noopener">source</a></span></div>'; }).join('')+
+    '<div class="stamp">Each event is taken from the linked report · markers appear only on the inputs the event affected</div></div>';
+  return html;
+}
+
 /* ================= USD/CAD LIVE FEED MONITOR ================= */
 var MON_TAB='next';
 function agriEvents(fromMs, days){
@@ -2047,6 +2104,7 @@ function grainSubnavHTML(key){
   return subnavHTML(key, [
     {id:'overview', label:'Overview', ev:nextOf(all, function(e){ return e.kind==='wasde'||e.kind==='contract'||e.kind==='ca'; })||nextOf(all)},
     {id:'deriv', label:'Derivatives', ev:nextOf(us, function(e){ return e.kind==='contract'||e.kind==='cftc'; })},
+    {id:'inputs', label:'Input costs', ev:inputsNextEvent()},
     {id:'fund', label:'Fundamentals · '+(geo==='us'?'USDA':geo==='on'?'Ontario':'Canada'), ev:geo==='us'?nextOf(us, function(e){ return e.kind==='usda'||e.kind==='wasde'; }):nextOf(ca)}
   ], live);
 }
@@ -2099,7 +2157,7 @@ function renderGrain(key){
   var gb=function(v,l){ return '<button data-dash="'+key+'" data-k="fgeo" data-v="'+v+'" aria-pressed="'+(geo===v)+'">'+l+'</button>'; };
   var FH='<div class="tile wide geo-head"><div class="tile-head"><h2>'+meta.name+' fundamentals <span class="h2note">— pick a geography</span></h2><span class="toggle" role="group">'+gb('us','US · USDA / WASDE')+gb('ca','CANADA · STATCAN')+gb('on','ONTARIO')+'</span></div></div>';
   FU=FH+cropCompareHTML(key)+(geo==='us'?FU:canadaTileHTML(key,true)+canadaChartsHTML(key)+caCalendarHTML());
-  html+=subWrap(key,'overview',OV)+subWrap(key,'deriv',DV)+subWrap(key,'fund',FU);
+  html+=subWrap(key,'overview',OV)+subWrap(key,'deriv',DV)+subWrap(key,'fund',FU)+subWrap(key,'inputs',inputsHTML(key));
   html+='</div><aside class="rail">'+grainAlertsLiveHTML(key)+grainCalendarHTML(key)+newsRailHTML(NEWS[key])+'</aside></div>';
   document.getElementById('panel-'+key).innerHTML=html;
 }
