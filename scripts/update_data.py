@@ -279,6 +279,66 @@ def _tag_prices(series, closes, label):
     print(f"  {label}: tagged {sum(1 for x in series if 'px' in x)}/{len(series)} report weeks with prices")
 
 
+def _fieldnum(row, pat):
+    k = next((k for k in row if re.search(pat, k)), None)
+    return (int(float(row[k])) if k and _num(row[k]) is not None else None), k
+
+
+def _pos_kpis(rows, spec_long, spec_short, comm_long_pat, comm_short_pat, oi_key="open_interest_all", means=None):
+    """CFTC positioning KPIs: 52-wk z-score, 3-yr COT index, flow velocity (% OI), streak, OI change, commercial-spec spread."""
+    import statistics as st_
+    net, oi, comm, dates = [], [], [], []
+    keys_used = {}
+    for x in rows:
+        lo, sh = _num(x.get(spec_long)), _num(x.get(spec_short))
+        if lo is None or sh is None:
+            continue
+        net.append(lo - sh); oi.append(_num(x.get(oi_key)) or 0); dates.append(x["report_date_as_yyyy_mm_dd"][:10])
+        cl, kl = _fieldnum(x, comm_long_pat); cs, ks = _fieldnum(x, comm_short_pat)
+        keys_used = {"comm_long": kl, "comm_short": ks}
+        comm.append(cl - cs if cl is not None and cs is not None else None)
+    if len(net) < 10:
+        return None
+    n = net[-1]
+    w52 = net[-52:]
+    sd = st_.pstdev(w52) or 1
+    z52 = (n - st_.mean(w52)) / sd
+    w156 = net[-156:]
+    cot = 100.0 * (n - min(w156)) / ((max(w156) - min(w156)) or 1)
+    d1 = net[-1] - net[-2]
+    vel = 100.0 * d1 / oi[-1] if oi[-1] else None
+    streak = 0
+    sgn_ = 1 if d1 > 0 else -1 if d1 < 0 else 0
+    for i in range(len(net) - 1, 0, -1):
+        d = net[i] - net[i - 1]
+        if sgn_ and ((d > 0 and sgn_ > 0) or (d < 0 and sgn_ < 0)):
+            streak += 1
+        else:
+            break
+    doi = (oi[-1] / oi[-2] - 1) * 100 if oi[-2] else None
+    out = {"date": dates[-1], "net": n, "oi": oi[-1], "z52": round(z52, 2), "cot3": round(cot, 1), "d1": d1,
+           "vel_pct_oi": round(vel, 2) if vel is not None else None, "streak": streak * sgn_, "doi_pct": round(doi, 2) if doi is not None else None,
+           "z_hist": [], "cot_hist": [], "net_hist": [[dates[i], net[i]] for i in range(max(0, len(net) - 52), len(net))],
+           "oi_hist": [[dates[i], oi[i]] for i in range(max(0, len(net) - 26), len(net))], "fields": keys_used}
+    for i in range(max(52, len(net) - 26), len(net)):
+        w = net[i - 51:i + 1]; sdv = st_.pstdev(w) or 1
+        out["z_hist"].append([dates[i], round((net[i] - st_.mean(w)) / sdv, 2)])
+        w3 = net[max(0, i - 155):i + 1]; out["cot_hist"].append([dates[i], round(100.0 * (net[i] - min(w3)) / ((max(w3) - min(w3)) or 1), 1)])
+    cv = [c for c in comm if c is not None]
+    if len(cv) == len(comm) and len(cv) >= 10:
+        spread = [net[i] - comm[i] for i in range(len(net))]
+        sw = spread[-156:]
+        out.update(comm_net=comm[-1], comm_d1=comm[-1] - comm[-2], spread=spread[-1],
+                   spread_idx=round(100.0 * (spread[-1] - min(sw)) / ((max(sw) - min(sw)) or 1), 1),
+                   spread_z=round((spread[-1] - st_.mean(spread[-52:])) / (st_.pstdev(spread[-52:]) or 1), 2),
+                   comm_hist=[[dates[i], comm[i]] for i in range(max(0, len(net) - 52), len(net))])
+    if means:
+        m1, m0 = means.get(dates[-1]), means.get(dates[-2]) if len(dates) > 1 else None
+        if m1 and m0:
+            out["px_chg_pct"] = round((m1[0] / m0[0] - 1) * 100, 2)
+    return out
+
+
 def cftc_fx(D, N):
     rows = socrata("gpe5-46if", "090741", 160)  # CAD, CME — Traders in Financial Futures
     nets = [int(float(r["lev_money_positions_long"])) - int(float(r["lev_money_positions_short"])) for r in rows]
@@ -291,6 +351,10 @@ def cftc_fx(D, N):
     series = [{"date": x["report_date_as_yyyy_mm_dd"][:10],
                "long": int(float(x["lev_money_positions_long"])), "short": int(float(x["lev_money_positions_short"])),
                "net": int(float(x["lev_money_positions_long"])) - int(float(x["lev_money_positions_short"]))} for x in rows[-10:]]
+    try:
+        D["fx"]["pos"]["kpi"] = _pos_kpis(rows, "lev_money_positions_long", "lev_money_positions_short", r"^dealer_positions_long", r"^dealer_positions_short")
+    except Exception as e:
+        print("  CAD positioning KPIs failed:", e)
     try:
         cl = _daily_closes("CAD=X", period="4y")
         _tag_prices(series, cl, "USD/CAD")
@@ -328,6 +392,14 @@ def cftc_grains(D, N):
             st["basis"] = _fund_basis(full, _week_means([x["date"] for x in full], cl))
         except Exception as e:
             print(f"  {k} price tags failed:", e)
+        try:
+            wm_ = _week_means([x["date"] for x in full], cl)
+        except Exception:
+            wm_ = None
+        try:
+            st["kpi"] = _pos_kpis(rows, "m_money_positions_long_all", "m_money_positions_short_all", r"^prod_merc_positions_long", r"^prod_merc_positions_short", means=wm_)
+        except Exception as e:
+            print(f"  {k} positioning KPIs failed:", e)
         D["grains"][k]["cftc_stats"] = st
         D["grains"][k]["cftc"] = ser
         last = ser[-1]["date"]
