@@ -31,14 +31,14 @@
      ],
      "near_expiry": "Dec-26",
      "intraday": [
-      4.59,
-      "9:35am ET"
+      4.5825,
+      "9:55am ET"
      ],
      "iv_10d_rel": 0.03558,
      "iv_chain_iv": 17.86,
      "iv_as_of": "2026-10-22",
      "iv_note": null,
-     "intraday_ts": "2026-10-23T09:35:00-04:00",
+     "intraday_ts": "2026-10-23T09:55:00-04:00",
      "ma50": "5.11",
      "ma100": "4.84"
     },
@@ -1486,14 +1486,14 @@
      ],
      "near_expiry": "Jan-27",
      "intraday": [
-      12.7075,
-      "9:35am ET"
+      12.7325,
+      "9:55am ET"
      ],
      "iv_10d_rel": 0.02749,
      "iv_chain_iv": 13.8,
      "iv_as_of": "2026-10-22",
      "iv_note": "Jan options (Nov expire Oct 23); IV and skew from IB midpoint, Oct 22 5:30pm ET",
-     "intraday_ts": "2026-10-23T09:35:00-04:00",
+     "intraday_ts": "2026-10-23T09:55:00-04:00",
      "ma50": "12.81",
      "ma100": "12.28"
     },
@@ -2655,13 +2655,13 @@
      "near_expiry": "Dec-26",
      "intraday": [
       6.275,
-      "9:35am ET"
+      "9:55am ET"
      ],
      "iv_10d_rel": 0.04928,
      "iv_chain_iv": 24.74,
      "iv_as_of": "2026-10-22",
      "iv_note": null,
-     "intraday_ts": "2026-10-23T09:35:00-04:00",
+     "intraday_ts": "2026-10-23T09:55:00-04:00",
      "ma50": "7.04",
      "ma100": "6.75"
     },
@@ -4522,11 +4522,11 @@
     "30Y": 5.29
    },
    "fxcross": {
-    "dxy": 101.683,
-    "dxy_chg": 0.072,
-    "eurusd": 1.1199,
-    "usdjpy": 156.65,
-    "usdcad_ref": 1.3978
+    "dxy": 101.72,
+    "dxy_chg": 0.108,
+    "eurusd": 1.1203,
+    "usdjpy": 156.78,
+    "usdcad_ref": 1.3979
    },
    "closes": [
     [
@@ -4605,16 +4605,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 101.93,
-     "chg": 2.46,
-     "pct": 2.47,
+     "last": 102.32,
+     "chg": 2.85,
+     "pct": 2.87,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 110.8,
-     "chg": -2.37,
-     "pct": -2.09,
+     "last": 111.21,
+     "chg": -1.96,
+     "pct": -1.73,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -4626,9 +4626,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 16.46,
+    "value": 16.85,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-23T13:35:00+00:00",
+    "obs_ts": "2026-10-23T13:55:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -5160,10 +5160,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.3976,
+    "mid": 1.39785,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-23T09:46:00-04:00",
+    "ts": "2026-10-23T10:05:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -5303,22 +5303,6 @@
     }
    ],
    "intraday": [
-    [
-     "2026-10-22T17:50+00:00",
-     1.40056
-    ],
-    [
-     "2026-10-22T17:55+00:00",
-     1.40038
-    ],
-    [
-     "2026-10-22T18:00+00:00",
-     1.40038
-    ],
-    [
-     "2026-10-22T18:05+00:00",
-     1.40053
-    ],
     [
      "2026-10-22T18:10+00:00",
      1.40057
@@ -6261,28 +6245,40 @@
     ],
     [
      "2026-10-23T13:45+00:00",
-     1.3976
+     1.39778
+    ],
+    [
+     "2026-10-23T13:50+00:00",
+     1.39739
+    ],
+    [
+     "2026-10-23T13:55+00:00",
+     1.39754
+    ],
+    [
+     "2026-10-23T14:00+00:00",
+     1.39779
     ]
    ]
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-23T09:46:19-04:00",
+   "updated_at": "2026-10-23T10:05:21-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-23T09:46:00-04:00",
+    "fx_spot": "2026-10-23T10:05:00-04:00",
     "fx_closes": "2026-10-22T16:30:00-04:00",
     "yields": "2026-10-22T17:00:00-04:00",
     "policy": "2026-10-21T07:35:00-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-13T15:30:00-04:00",
     "cftc_grains": "2026-10-13T15:30:00-04:00",
-    "energy": "2026-10-23T09:35:00-04:00",
-    "crosses": "2026-10-23T09:35:00-04:00",
+    "energy": "2026-10-23T09:55:00-04:00",
+    "crosses": "2026-10-23T09:55:00-04:00",
     "grains_settle": "2026-10-22T14:20:00-04:00",
-    "grains_quote": "2026-10-23T09:35:00-04:00",
+    "grains_quote": "2026-10-23T09:55:00-04:00",
     "options": "2026-10-22T17:30:00-04:00",
-    "news": "2026-10-23T09:46:19-04:00",
+    "news": "2026-10-23T10:05:21-04:00",
     "calendar": "2026-10-21T07:05:00-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-23T09:16:33-04:00",
@@ -6292,7 +6288,7 @@
     "ca_calendar": "2026-10-23T09:16:33-04:00",
     "sd_hist": "2026-10-22T23:06:37-04:00",
     "inputs": "2026-10-22T23:25:40-04:00",
-    "ext": "2026-10-23T09:46:19-04:00",
+    "ext": "2026-10-23T10:05:21-04:00",
     "ca_retail": "2026-10-23T09:21:03-04:00"
    },
    "sources": {
@@ -6323,7 +6319,7 @@
      "ca_retail"
     ],
     "failed": [],
-    "at": "2026-10-23T09:46:19-04:00"
+    "at": "2026-10-23T10:05:21-04:00"
    },
    "releases_checked": "2026-10-23T09:16:33-04:00",
    "exports_checked": "2026-10-23T09:16:33-04:00",
@@ -6360,7 +6356,7 @@
    },
    "canada_checked": "2026-10-22T22:29:24-04:00",
    "ca_calendar_checked": "2026-10-23T09:16:33-04:00",
-   "canada_watch": "2026-10-23T09:46:19-04:00",
+   "canada_watch": "2026-10-23T10:05:21-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -6428,7 +6424,8 @@
      "thousands"
     ]
    },
-   "ca_retail_checked": "2026-10-23T09:21:03-04:00"
+   "ca_retail_checked": "2026-10-23T09:21:03-04:00",
+   "ext_checked": "2026-10-23T10:05:21-04:00"
   },
   "macro": [
    {
@@ -20909,8 +20906,170 @@
      "value": -5.1,
      "prior": -7.8
     },
-    "parsed": 2,
-    "components": {},
+    "parsed": 10,
+    "components": {
+     "2024-04": {
+      "rev": 41.008,
+      "prog": 40.943,
+      "debt": 4.429,
+      "act": 0.63,
+      "bal": -4.994
+     },
+     "2024-08": {
+      "rev": 35.439,
+      "prog": 32.881,
+      "debt": 4.474,
+      "act": 0.63,
+      "bal": -2.546
+     },
+     "2024-09": {
+      "rev": 36.135,
+      "prog": 35.455,
+      "debt": 4.989,
+      "act": 1.14,
+      "bal": -3.169
+     },
+     "2024-10": {
+      "rev": 40.989,
+      "prog": 37.867,
+      "debt": 4.28,
+      "act": 0.335,
+      "bal": -1.493
+     },
+     "2024-11": {
+      "rev": 37.89,
+      "prog": 41.832,
+      "debt": 3.936,
+      "act": 0.335,
+      "bal": -8.213
+     },
+     "2024-12": {
+      "rev": 44.335,
+      "prog": 38.277,
+      "debt": 4.721,
+      "act": 0.335,
+      "bal": 1.002
+     },
+     "2025-01": {
+      "rev": 42.963,
+      "prog": 43.341,
+      "debt": 4.421,
+      "act": 0.335,
+      "bal": -5.134
+     },
+     "2025-02": {
+      "rev": 51.247,
+      "prog": 39.541,
+      "debt": 3.797,
+      "act": 0.335,
+      "bal": 7.574
+     },
+     "2025-03": {
+      "rev": 44.977,
+      "prog": 64.209,
+      "debt": 4.313,
+      "act": 0.335,
+      "bal": -23.88
+     },
+     "2025-04": {
+      "rev": 40.329,
+      "prog": 41.238,
+      "debt": 5.027,
+      "act": 0.335,
+      "bal": -6.271
+     },
+     "2025-06": {
+      "rev": 44.808,
+      "prog": 36.675,
+      "debt": 4.169,
+      "act": 0.335,
+      "bal": 3.629
+     },
+     "2025-07": {
+      "rev": 42.607,
+      "prog": 38.959,
+      "debt": 4.825,
+      "act": 0.335,
+      "bal": -1.512
+     },
+     "2025-08": {
+      "rev": 37.733,
+      "prog": 35.87,
+      "debt": 4.408,
+      "act": 0.735,
+      "bal": -3.28
+     },
+     "2025-09": {
+      "rev": 37.051,
+      "prog": 37.084,
+      "debt": 4.575,
+      "act": 0.415,
+      "bal": -5.023
+     },
+     "2025-10": {
+      "rev": 41.543,
+      "prog": 39.036,
+      "debt": 4.37,
+      "act": 0.415,
+      "bal": -2.278
+     },
+     "2025-11": {
+      "rev": 37.476,
+      "prog": 40.722,
+      "debt": 4.356,
+      "act": 0.415,
+      "bal": -8.017
+     },
+     "2025-12": {
+      "rev": 46.116,
+      "prog": 40.906,
+      "debt": 4.55,
+      "act": 0.415,
+      "bal": 0.245
+     },
+     "2026-01": {
+      "rev": 41.47,
+      "prog": 41.565,
+      "debt": 4.558,
+      "act": 0.415,
+      "bal": -5.068
+     },
+     "2026-02": {
+      "rev": 48.415,
+      "prog": 38.449,
+      "debt": 3.892,
+      "act": 0.415,
+      "bal": 5.659
+     },
+     "2026-03": {
+      "rev": 46.771,
+      "prog": 62.967,
+      "debt": 4.401,
+      "act": 9.13,
+      "bal": -29.727
+     },
+     "2026-04": {
+      "rev": 45.89,
+      "prog": 41.753,
+      "debt": 4.768,
+      "act": 0.415,
+      "bal": -1.046
+     },
+     "2026-06": {
+      "rev": 44.818,
+      "prog": 38.73,
+      "debt": 4.684,
+      "act": 0.415,
+      "bal": 0.989
+     },
+     "2026-07": {
+      "rev": 42.825,
+      "prog": 41.807,
+      "debt": 5.371,
+      "act": 0.415,
+      "bal": -4.768
+     }
+    },
     "notes": [
      "Revenues increased by $0.",
      "Program expenses excluding net actuarial losses were up $2.",
@@ -21479,6 +21638,12 @@
   ],
   "wheat": [
    [
+    "2026-10-23 13:19 UTC",
+    "www.bloomberg.com",
+    "Wheat Slides for Eighth Week in Longest Losing Streak Since 1997",
+    "https://news.google.com/rss/articles/CBMitgFBVV95cUxPRzZBZlZxQ1pxc0tFYUw1UnA4VjBkWlFWdXJGdVpfenpUY3d6ZXUxcWFoNS1LbTBFT3VfRmlNa2FzLVhCTzdreTczajNMaHg4N1l2bTB4WjFzQzhMcEtsZGFaRFFUWGU2akp0U0lacHpzVzF1NXRiQWdEcXFOTVdlUGJMdVk5N0VQWWZGWEUwNUpZNFdmRkY1TkhpMmZPMjdIVFlEUnhJczhqZUgyZnZfRjRzRGRLQQ?oc=5"
+   ],
+   [
     "2026-10-23 12:08 UTC",
     "ua.news",
     "Russia is looking for new ways to export grain through Abkhazia — Bloomberg",
@@ -21519,12 +21684,6 @@
     "www.voiceofemirates.com",
     "The Grain Market in 2026: Continued Decline for Wheat and Corn, with Expectations of Shrinking Cultivated Areas",
     "https://news.google.com/rss/articles/CBMi-AFBVV95cUxQX3FDMzZLOHh2QnFlMzBRVGZ5RlY5RG0zZW5kQWo3SlJuVWlGeU5BRDlEZnRmOFRXWkxoUUJOWURTMTk3MUdNb3J4YjBfYjJLZFJWbFJtVE0waXVWbVNnUXVESGxUbTJnQ3BqTXphM2hhMjJ2b3FKNTJNMHAyVDN0d0RRdzVQX1NvY3MwNFRMVTU0ckY4OFU4Y3ptMEVGd1k1aGx2ZlFic1JuUXFYcXVveXpTSktibHJseUtqVG1tTmdwYklYcDhZblNsUTVLbFNKQ2szaV83WXdERDJpd3VpbndIZVVPTXNqdVlzVS1YYmxnQlVtVElGVw?oc=5"
-   ],
-   [
-    "2026-10-23 08:41 UTC",
-    "www.apk-inform.com",
-    "Russia exported just over 1.1 million tons of grain in the first 20 days of October",
-    "https://news.google.com/rss/articles/CBMiVEFVX3lxTE5YR2FseS1lU182cVh2WjNRMmlVTHo2VFBHX0x6ZVpjdU5tX0t1NDFMNF9fWjB0cktuSGtOX190MjRWTlc1cEkyRkRZek90MU5VQzhwSw?oc=5"
    ]
   ],
   "soybeans": [
@@ -21553,16 +21712,16 @@
     "https://news.google.com/rss/articles/CBMiiwFBVV95cUxNNnc5ZFVXZ0JhT2ZUMnN1QXFvWEFERzlXSE9tNG5qalc1aDlDR1JtRDJ4emZnNFhMS2NpcGFpLXZkWUt5bzZiLXU0QUdjYkhxa21Ob2dDRjlFV1ZlLUljZWhsaGdZV3drR2VhanNmR0VFNDBrVHFCVk0wQ3NYUTVoMjBKczA1eW9RVlZN?oc=5"
    ],
    [
-    "2026-10-23 07:09 UTC",
-    "commodity-board.com",
-    "Soybean Market Brief: India Shifts from Sunflower to Soy and Palm Oil — CMB News",
-    "https://news.google.com/rss/articles/CBMiogFBVV95cUxNaE9iNDBuM1AzdWpQWVVxMU5pS3V3VlZpbGF2aW8zWHdybEpTTS1uOUp6aGt5UjR3NFBEX284UUw5U180TW1TWjBZQjJvSUM2MTFZX3hvMVA1NnRGV0k1R0JhMENFMXJialFwNHVFak1feVlkS0dFUjV4azU1bWc4TVUzU0lGZEU1YUxiQWNsM0VXUVdvajhtLW9xOUlCV1RuVXc?oc=5"
-   ],
-   [
     "2026-10-23 06:41 UTC",
     "commodity-board.com",
     "Soybeans Market Analysis: Chinese Demand, USDA Sales and Brazil Crush 2027 — CMB News",
     "https://news.google.com/rss/articles/CBMimgFBVV95cUxOTnhHbmNnSjJ1Rk80Y3VnOEQ5bWNERndYOUZsVU5qcVNfN3lGSWhRTC11bENuWlphbTBkV1B5OUdVRTd2RzZCdmdIRmxDeHQ1T25Hb3BrQkNNMzFqcnM5dXMzcXVfSHE1dWVYT0JtbkwyS0lGbjhlb1RmRWNpN0loNlpqTXlEZGRDcnA5WVF2cHR1TUl5NmRoQXhR?oc=5"
+   ],
+   [
+    "2026-10-23 06:24 UTC",
+    "www.brecorder.com",
+    "Soybeans rise on strong export sales, but harvest keeps weekly loss in view",
+    "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1sMTFNMnhnZ1MzbGlWeWJQTFAzTllJRno5UlplY3VHV0xRR094bnJucmxyLTJCd1J5Tk84QUJ0cFctSXZsNThMRUZISE1jLTU5T1hVMGJ30gFWQVVfeXFMTWwxMU0yeGdnUzNsaVZ5YlBMUDNOWUlGejlSWmVjdUdXTFFHT3hucm5ybHItMkJ3UnlOTzhBQnRwVy1Jdmw1OExFRkhITWMtNTlPWFUwYnc?oc=5"
    ],
    [
     "2026-10-23 06:00 UTC",
@@ -21578,6 +21737,18 @@
    ]
   ],
   "fx": [
+   [
+    "2026-10-23 13:50 UTC",
+    "sg.finance.yahoo.com",
+    "Canadian dollar holds near one-month high as rate outlook supports loonie",
+    "https://news.google.com/rss/articles/CBMihgFBVV95cUxOcDQ3NmlGMUI3RHNNNEVoa2ZjUG5LYXJFRlZpSU85QkM0dnM3UmlYX1RiaF9Ed2tINlJJSktzTVlueHdfTF84SGlWOG40X2liQS1vVElwZUl2QXg0djVuVmxxWDRtSE5sN0dzc21SWHhsem00VE1TYnVHYWRUUE9JbXJfeldmZw?oc=5"
+   ],
+   [
+    "2026-10-23 13:42 UTC",
+    "www.fxstreet.com",
+    "Canadian Dollar extends winning streak as Fed-BoC policy divergence comes into focus",
+    "https://news.google.com/rss/articles/CBMixgFBVV95cUxOTVA4V3BacDB6QTNkM0RYWHFOUWItMjl3ZmlEQlg4TzJQZFFhaUtQOWtXV1c0ODR1akN3VlJjOE1wbTZnNjFaRjZQSktRUEVRVjlvTDVTaFRpNG5PM0ZSb2JheEw1ZWNyX00wMmRHd093TEVRTmI0T0N3SXJObUNLTkNLVGpIRlJyMnM5cjhNWEdyS3BIZjNCeWt5aW5Pc0xkOUxZOG9RUThtVmVhYUk3dl90TVdDQXlyR19BQjRUa2UzbmNPbWc?oc=5"
+   ],
    [
     "2026-10-23 13:03 UTC",
     "www.marketscreener.com",
@@ -21609,22 +21780,10 @@
     "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPcjRlUUtrNU1VcXZUWHpnbG1XcUVrUG5aRlhYWmJqSzZXWFloVk96b1V1NGd3em4xcEtOemlZMGpLX2RXdG5QWXlzYm1oMmdLUUo3NGFsRFVOamZDSzFSbm11Q2VFeEhTVlhpa19lM0FQTjVOVl9qRXdZTERmdXB3cHY4d1E5ckRudmYxZ1FJT3lPc2VlY0JPT3JySE9uNUpHclN2TzVmV094T0I3NXRmNWZHbWxsY1loc0VmaW03dHVEZw?oc=5"
    ],
    [
-    "2026-10-23 09:17 UTC",
-    "www.tmgm.com",
-    "US Dollar weakness amid tech earnings and Middle East risk aversion lifts Canadian Dollar",
-    "https://news.google.com/rss/articles/CBMi7gFBVV95cUxObW9tMThNUlhwU2QwTF9jbHNiV1U2TU9ZY0U5NnJkY2lBakFZVmxSU05MS1VGelNOM3ZONTF5b1BVa2tsc2dYSDhoWDBodS1vemdZZEJRY3lTUFpvOWtoNF81dDlWVjhXMlZwUnJXZFJ5aWRWcVpXUkxfUkpob3U2YjR3SG13SEN0OVVXUnBSMk9hbUxSek9Xb2JWdDhiOGJBeGFKd0daWV96dE41MW9WMWpWeE9XcGJYNkw4aFlLY3dXcHlmM1ppQldpbU8xaXBzSFpaX2tmRzQ2aXZqa3ppV0ZUVGRzV0ljY0lKNk5n?oc=5"
-   ],
-   [
     "2026-10-23 08:00 UTC",
     "www.cbc.ca",
     "Same scam. 2 countries. Why Canadians don’t get their money back",
     "https://news.google.com/rss/articles/CBMicEFVX3lxTE9TanBpc2FnanpvcXFmak0tLTQ0SWhaTE82Y1lXeDFLeFU4aU1LdDFnSXliMVJvVFprSDhSYV9UQm45RHZPSEFlRWlKcHZlXy1nbXRkU0k3Q2pHMXRXbHlIbDFGal9pR3dIb0NTV1hfdHg?oc=5"
-   ],
-   [
-    "2026-10-23 01:49 UTC",
-    "www.fxstreet.com",
-    "Canadian Dollar advances as US Dollar weakens on tech earnings, Middle East risk aversion",
-    "https://news.google.com/rss/articles/CBMiywFBVV95cUxON3F1SUc0NjJJdXBYYTFLMTZabkhMN3ZtNnZJaFk5d0N0YWxkWEVWWXlzYWhabGp5YVp0MkNyZ3U4ZUZpdW1zY0JDUW02My1yR1VFcWljY2l0eVZ5ekVkd1k4eWNwS19xM3JobDA5T0FvaFBiUENwR3N6eVpRU1ZmVDVRV3FEQk5EY3ZCSE5Ea0xRR2RkcUdIYWpTZjFjVElFWE1CSUNnMU40Zi1qWXdsaGlVUktEY0lUb3VEX3NfS0xDcUt6ei0tSGhkRQ?oc=5"
    ]
   ]
  }
