@@ -4522,11 +4522,11 @@
     "30Y": 5.29
    },
    "fxcross": {
-    "dxy": 101.701,
-    "dxy_chg": 0.09,
-    "eurusd": 1.1199,
-    "usdjpy": 156.47,
-    "usdcad_ref": 1.3977
+    "dxy": 101.685,
+    "dxy_chg": 0.074,
+    "eurusd": 1.1201,
+    "usdjpy": 156.46,
+    "usdcad_ref": 1.3973
    },
    "closes": [
     [
@@ -4605,16 +4605,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 101.4,
-     "chg": 1.93,
-     "pct": 1.94,
+     "last": 101.27,
+     "chg": 1.8,
+     "pct": 1.81,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 110.43,
-     "chg": -2.74,
-     "pct": -2.42,
+     "last": 110.29,
+     "chg": -2.88,
+     "pct": -2.54,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -4626,9 +4626,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 15.93,
+    "value": 15.8,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-23T13:05:00+00:00",
+    "obs_ts": "2026-10-23T13:10:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -5160,10 +5160,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.39789,
+    "mid": 1.3975,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-23T09:19:00-04:00",
+    "ts": "2026-10-23T09:21:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -5303,10 +5303,6 @@
     }
    ],
    "intraday": [
-    [
-     "2026-10-22T17:20+00:00",
-     1.40084
-    ],
     [
      "2026-10-22T17:25+00:00",
      1.40076
@@ -6261,28 +6257,32 @@
     ],
     [
      "2026-10-23T13:15+00:00",
-     1.39789
+     1.39771
+    ],
+    [
+     "2026-10-23T13:20+00:00",
+     1.3975
     ]
    ]
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-23T09:19:06-04:00",
+   "updated_at": "2026-10-23T09:21:03-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-23T09:19:00-04:00",
+    "fx_spot": "2026-10-23T09:21:00-04:00",
     "fx_closes": "2026-10-22T16:30:00-04:00",
     "yields": "2026-10-22T17:00:00-04:00",
     "policy": "2026-10-21T07:35:00-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-13T15:30:00-04:00",
     "cftc_grains": "2026-10-13T15:30:00-04:00",
-    "energy": "2026-10-23T09:05:00-04:00",
-    "crosses": "2026-10-23T09:05:00-04:00",
+    "energy": "2026-10-23T09:10:00-04:00",
+    "crosses": "2026-10-23T09:10:00-04:00",
     "grains_settle": "2026-10-22T14:20:00-04:00",
     "grains_quote": "2026-10-23T08:40:00-04:00",
     "options": "2026-10-22T17:30:00-04:00",
-    "news": "2026-10-23T09:19:06-04:00",
+    "news": "2026-10-23T09:21:03-04:00",
     "calendar": "2026-10-21T07:05:00-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-23T09:16:33-04:00",
@@ -6293,7 +6293,7 @@
     "sd_hist": "2026-10-22T23:06:37-04:00",
     "inputs": "2026-10-22T23:25:40-04:00",
     "ext": "2026-10-23T09:16:33-04:00",
-    "ca_retail": "2026-10-23T09:19:06-04:00"
+    "ca_retail": "2026-10-23T09:21:03-04:00"
    },
    "sources": {
     "news": "Google News RSS search, refreshed every 15 min",
@@ -6323,7 +6323,7 @@
      "ca_retail"
     ],
     "failed": [],
-    "at": "2026-10-23T09:19:06-04:00"
+    "at": "2026-10-23T09:21:03-04:00"
    },
    "releases_checked": "2026-10-23T09:16:33-04:00",
    "exports_checked": "2026-10-23T09:16:33-04:00",
@@ -6360,7 +6360,7 @@
    },
    "canada_checked": "2026-10-22T22:29:24-04:00",
    "ca_calendar_checked": "2026-10-23T09:16:33-04:00",
-   "canada_watch": "2026-10-23T09:19:06-04:00",
+   "canada_watch": "2026-10-23T09:21:03-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -6428,7 +6428,8 @@
     "SCALAR_FACTOR": [
      "thousands"
     ]
-   }
+   },
+   "ca_retail_checked": "2026-10-23T09:21:03-04:00"
   },
   "macro": [
    {
@@ -20058,158 +20059,494 @@
     "measure": "m/m",
     "period": "Jul '26",
     "obs_date": "2026-07-01",
-    "value": -3.49,
-    "prior": 9.74,
-    "chg": -13.23,
+    "value": -0.74,
+    "prior": 0.63,
+    "chg": -1.37,
     "history": [
      [
       "Aug '25",
-      -5.47
+      0.92
      ],
      [
       "Sep '25",
-      -1.45
+      -1.02
      ],
      [
       "Oct '25",
-      2.1
+      0.08
      ],
      [
       "Nov '25",
-      -2.1
+      1.24
      ],
      [
       "Dec '25",
-      4.68
+      -0.39
      ],
      [
       "Jan '26",
-      0.87
+      1.33
      ],
      [
       "Feb '26",
-      -1.07
+      0.56
      ],
      [
       "Mar '26",
-      4.3
+      0.93
      ],
      [
       "Apr '26",
-      -1.36
+      0.4
      ],
      [
       "May '26",
-      0.01
+      1.04
      ],
      [
       "Jun '26",
-      9.74
+      0.63
      ],
      [
       "Jul '26",
-      -3.49
+      -0.74
      ]
     ],
-    "level_b": 5.49,
-    "yoy": 5.99,
+    "level_b": 73.7,
+    "yoy": 5.08,
     "src": "Statistics Canada 20-10-0056-01",
+    "ecom_b": 5.49,
+    "ecom_share": 7.5,
     "hist24": [
      [
       "Aug '24",
-      -4.0
+      -0.27
      ],
      [
       "Sep '24",
-      4.8
+      1.06
      ],
      [
       "Oct '24",
-      1.56
+      1.05
      ],
      [
       "Nov '24",
-      0.14
+      0.04
      ],
      [
       "Dec '24",
-      -0.17
+      2.64
      ],
      [
       "Jan '25",
-      -1.25
+      -0.45
      ],
      [
       "Feb '25",
-      -0.58
+      -1.66
      ],
      [
       "Mar '25",
-      -2.17
+      1.25
      ],
      [
       "Apr '25",
-      4.12
+      0.2
      ],
      [
       "May '25",
-      -3.37
+      -1.14
      ],
      [
       "Jun '25",
-      -1.04
+      1.39
      ],
      [
       "Jul '25",
-      7.48
+      -0.63
      ],
      [
       "Aug '25",
-      -5.47
+      0.92
      ],
      [
       "Sep '25",
-      -1.45
+      -1.02
      ],
      [
       "Oct '25",
-      2.1
+      0.08
      ],
      [
       "Nov '25",
-      -2.1
+      1.24
      ],
      [
       "Dec '25",
-      4.68
+      -0.39
      ],
      [
       "Jan '26",
-      0.87
+      1.33
      ],
      [
       "Feb '26",
-      -1.07
+      0.56
      ],
      [
       "Mar '26",
-      4.3
+      0.93
      ],
      [
       "Apr '26",
-      -1.36
+      0.4
      ],
      [
       "May '26",
-      0.01
+      1.04
      ],
      [
       "Jun '26",
-      9.74
+      0.63
      ],
      [
       "Jul '26",
-      -3.49
+      -0.74
+     ]
+    ],
+    "seen_at": null
+   },
+   {
+    "key": "ca_retail_ex",
+    "name": "Retail sales ex-autos",
+    "group": "ca",
+    "unit": "%",
+    "dec": 1,
+    "good": "up",
+    "freq": "M",
+    "measure": "m/m",
+    "period": "Jul '26",
+    "obs_date": "2026-07-01",
+    "value": -0.72,
+    "prior": 0.5,
+    "chg": -1.23,
+    "history": [
+     [
+      "Aug '25",
+      0.68
+     ],
+     [
+      "Sep '25",
+      -0.0
+     ],
+     [
+      "Oct '25",
+      -0.46
+     ],
+     [
+      "Nov '25",
+      1.87
+     ],
+     [
+      "Dec '25",
+      -0.16
+     ],
+     [
+      "Jan '26",
+      1.13
+     ],
+     [
+      "Feb '26",
+      0.45
+     ],
+     [
+      "Mar '26",
+      1.29
+     ],
+     [
+      "Apr '26",
+      0.01
+     ],
+     [
+      "May '26",
+      1.18
+     ],
+     [
+      "Jun '26",
+      0.5
+     ],
+     [
+      "Jul '26",
+      -0.72
+     ]
+    ],
+    "level_b": 54.0,
+    "yoy": 5.88,
+    "src": "Statistics Canada 20-10-0056-01 (derived: total minus auto dealers)",
+    "hist24": [
+     [
+      "Aug '24",
+      -0.94
+     ],
+     [
+      "Sep '24",
+      1.04
+     ],
+     [
+      "Oct '24",
+      0.47
+     ],
+     [
+      "Nov '24",
+      -1.19
+     ],
+     [
+      "Dec '24",
+      3.3
+     ],
+     [
+      "Jan '25",
+      0.21
+     ],
+     [
+      "Feb '25",
+      0.22
+     ],
+     [
+      "Mar '25",
+      -0.89
+     ],
+     [
+      "Apr '25",
+      -0.29
+     ],
+     [
+      "May '25",
+      -0.3
+     ],
+     [
+      "Jun '25",
+      1.94
+     ],
+     [
+      "Jul '25",
+      -0.8
+     ],
+     [
+      "Aug '25",
+      0.68
+     ],
+     [
+      "Sep '25",
+      -0.0
+     ],
+     [
+      "Oct '25",
+      -0.46
+     ],
+     [
+      "Nov '25",
+      1.87
+     ],
+     [
+      "Dec '25",
+      -0.16
+     ],
+     [
+      "Jan '26",
+      1.13
+     ],
+     [
+      "Feb '26",
+      0.45
+     ],
+     [
+      "Mar '26",
+      1.29
+     ],
+     [
+      "Apr '26",
+      0.01
+     ],
+     [
+      "May '26",
+      1.18
+     ],
+     [
+      "Jun '26",
+      0.5
+     ],
+     [
+      "Jul '26",
+      -0.72
+     ]
+    ],
+    "seen_at": null
+   },
+   {
+    "key": "ca_retail_core",
+    "name": "Retail ex gas & autos",
+    "group": "ca",
+    "unit": "%",
+    "dec": 1,
+    "good": "up",
+    "freq": "M",
+    "measure": "m/m",
+    "period": "Jul '26",
+    "obs_date": "2026-07-01",
+    "value": -0.7,
+    "prior": 1.23,
+    "chg": -1.92,
+    "history": [
+     [
+      "Aug '25",
+      0.9
+     ],
+     [
+      "Sep '25",
+      -0.28
+     ],
+     [
+      "Oct '25",
+      -0.25
+     ],
+     [
+      "Nov '25",
+      1.79
+     ],
+     [
+      "Dec '25",
+      -0.58
+     ],
+     [
+      "Jan '26",
+      1.0
+     ],
+     [
+      "Feb '26",
+      0.56
+     ],
+     [
+      "Mar '26",
+      0.07
+     ],
+     [
+      "Apr '26",
+      -0.75
+     ],
+     [
+      "May '26",
+      0.88
+     ],
+     [
+      "Jun '26",
+      1.23
+     ],
+     [
+      "Jul '26",
+      -0.7
+     ]
+    ],
+    "level_b": 46.65,
+    "yoy": 3.92,
+    "src": "Statistics Canada 20-10-0056-01 (derived: total minus auto dealers and gasoline stations)",
+    "hist24": [
+     [
+      "Aug '24",
+      -0.7
+     ],
+     [
+      "Sep '24",
+      1.78
+     ],
+     [
+      "Oct '24",
+      0.26
+     ],
+     [
+      "Nov '24",
+      -1.43
+     ],
+     [
+      "Dec '24",
+      3.43
+     ],
+     [
+      "Jan '25",
+      -0.52
+     ],
+     [
+      "Feb '25",
+      0.25
+     ],
+     [
+      "Mar '25",
+      0.09
+     ],
+     [
+      "Apr '25",
+      -0.11
+     ],
+     [
+      "May '25",
+      -0.12
+     ],
+     [
+      "Jun '25",
+      1.91
+     ],
+     [
+      "Jul '25",
+      -0.82
+     ],
+     [
+      "Aug '25",
+      0.9
+     ],
+     [
+      "Sep '25",
+      -0.28
+     ],
+     [
+      "Oct '25",
+      -0.25
+     ],
+     [
+      "Nov '25",
+      1.79
+     ],
+     [
+      "Dec '25",
+      -0.58
+     ],
+     [
+      "Jan '26",
+      1.0
+     ],
+     [
+      "Feb '26",
+      0.56
+     ],
+     [
+      "Mar '26",
+      0.07
+     ],
+     [
+      "Apr '26",
+      -0.75
+     ],
+     [
+      "May '26",
+      0.88
+     ],
+     [
+      "Jun '26",
+      1.23
+     ],
+     [
+      "Jul '26",
+      -0.7
      ]
     ],
     "seen_at": null
@@ -20287,6 +20624,12 @@
     "https://news.google.com/rss/articles/CBMilwFBVV95cUxQdDVhcHp1cXBRS1lZellSX0NCdWo1Q2NuMXR6dS1UTTJhYUk3VmlLcDliQjFTSjB6TFNwUVJrd0M1MmRxQnZCTnBVUmtzb0dQU3hadnF0Z0tCeDBnX0FJeEdXMk9fQWdfRmNtaEFCS2YzZFVnQTI3Z1d6RGx0dHFlSUxjRmFKTnFJNU9qNUZ1SWN5eWthRWU0?oc=5"
    ],
    [
+    "2026-10-23 11:00 UTC",
+    "agupdate.com",
+    "Wheat prices erode during ‘tough sledding’ period",
+    "https://news.google.com/rss/articles/CBMiowFBVV95cUxOWUxVaWRSSGhnSUpUS3lPYVA5NndaMWsxWTB5dUxoR0M2MG5XVUwwT1hXSDI1V1k4STc3TDFIY0xaZjBWb3lGc01lV3ZaMi1UdUh0UkEzRUdTcFpfaTZORFZITFI1NXROR3V0RmVRQ043azFtYnNNcWZLdGlBN0pkeHRCVEhkeklmaFZoTVUtNndyX051VlNCbkVQanJGaUdhSGNz?oc=5"
+   ],
+   [
     "2026-10-23 10:15 UTC",
     "ukragroconsult.com",
     "Wheat futures fall for eighth consecutive week for first time since 1997",
@@ -20305,16 +20648,10 @@
     "https://news.google.com/rss/articles/CBMi-AFBVV95cUxQX3FDMzZLOHh2QnFlMzBRVGZ5RlY5RG0zZW5kQWo3SlJuVWlGeU5BRDlEZnRmOFRXWkxoUUJOWURTMTk3MUdNb3J4YjBfYjJLZFJWbFJtVE0waXVWbVNnUXVESGxUbTJnQ3BqTXphM2hhMjJ2b3FKNTJNMHAyVDN0d0RRdzVQX1NvY3MwNFRMVTU0ckY4OFU4Y3ptMEVGd1k1aGx2ZlFic1JuUXFYcXVveXpTSktibHJseUtqVG1tTmdwYklYcDhZblNsUTVLbFNKQ2szaV83WXdERDJpd3VpbndIZVVPTXNqdVlzVS1YYmxnQlVtVElGVw?oc=5"
    ],
    [
-    "2026-10-23 08:41 UTC",
-    "www.apk-inform.com",
-    "Russia exported just over 1.1 million tons of grain in the first 20 days of October",
-    "https://news.google.com/rss/articles/CBMiVEFVX3lxTE5YR2FseS1lU182cVh2WjNRMmlVTHo2VFBHX0x6ZVpjdU5tX0t1NDFMNF9fWjB0cktuSGtOX190MjRWTlc1cEkyRkRZek90MU5VQzhwSw?oc=5"
-   ],
-   [
-    "2026-10-23 07:49 UTC",
-    "ukragroconsult.com",
-    "Kazakhstan’s wheat flour exports rise to 1.4 mln tons",
-    "https://news.google.com/rss/articles/CBMikgFBVV95cUxPWkVXc2psRC1CcXJneGNrcF9maEdTRG9GekNZd1NxT3Ffb1M1SmpSVGF0MVJjMkI5al9INHlZVjIwQWlpbVVQWHM0SllDbHYzXzFnaHMtN3pzNEdvaFQzamJxakVlTC1JS2dIZFFHeWhpZHc4Z29HTWFOTTl4czBjekZtQmpNd1dsVkx2SWpJQWgzUQ?oc=5"
+    "2026-10-23 07:02 UTC",
+    "commodity-board.com",
+    "Indian wheat market tightens as OMSS tenders miss mill demand — CMB News",
+    "https://news.google.com/rss/articles/CBMikAFBVV95cUxOUTBzU2FNTGIwem1Da3RmOWxDb3dkQ0VHbXpUZ3c4YUFpOVpZY1JCaWxqeVNLNmVscUw4Y2lLTXRHM05Id0dCblQwS016U0YxenIzelN0dWpUTHcxaFBuMk02djlXc0REQk5aTW51UXEzcVFiR3Y1cW1VNS1IcXg4R0JUTk9uS1RUM2c1LV9PRTQ?oc=5"
    ]
   ],
   "soybeans": [
@@ -20332,9 +20669,9 @@
    ],
    [
     "2026-10-23 08:45 UTC",
-    "www.chinadaily.com.cn",
+    "global.chinadaily.com.cn",
     "A soybean harvest beyond control",
-    "https://news.google.com/rss/articles/CBMifkFVX3lxTFA0Ui1LZ0pJZnhtbG9DVGkwTW1mamdGNFMwb0U5Y1FpZ3Z3aS1zRXVOMnRxbEVsNURoUkFKTXBkbG11VGdLMTFqWjc3UVdRWVpYRmlsenFGTXpmdWVJV0xRU205Q0Q4bTNzWS0xSHJIcEk3NW1aZUVMT0Z3cXVvZw?oc=5"
+    "https://news.google.com/rss/articles/CBMiggFBVV95cUxOWXlaNWxBTXdJbFpGS2t5QkZvcDMtTDNCVHM1RzRxeWNRcUtLMWdvZVNjdnlyZUk3SkNpU2JDVGRmdld6YjNVZVhjVE1ZZ0VWOUVBZURla1ZVTVdQb3A5OFE5cnFjMXdnZVZtNHlmbTNrcUhQWndTMkk1YnI4c3dfSDVn?oc=5"
    ],
    [
     "2026-10-23 08:10 UTC",
