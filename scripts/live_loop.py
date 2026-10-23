@@ -10,7 +10,7 @@ DXY and crosses. Everything else stays on the 15-minute update_data.py run.
 Usage: python scripts/live_loop.py --minutes 33 --every 60
 """
 import argparse, json, os, subprocess, sys, time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import update_data as U  # noqa: E402
@@ -18,6 +18,51 @@ import update_data as U  # noqa: E402
 ROOT = U.ROOT
 WT = "/tmp/live-worktree"
 FAST = [("fx_spot", U.fx_spot), ("grains_quote", U.grains_quote), ("energy", U.energy), ("crosses", U.crosses)]
+
+# Release watch: for 3 h after a scheduled release, the block that carries it is re-fetched
+# here (every loop for CFTC/exports/WASDE, every 2nd loop for the ~25-series macro block)
+# until the new numbers are in, and the changed sub-trees ride along in live.json ("rel"),
+# so an open page sees them within a minute instead of waiting for the 15-min job + Pages build.
+REL = {
+    "cftc_grains": ("cftc", U.cftc_grains, lambda D: [f"grains.{k}.cftc" for k in D["grains"]] + [f"grains.{k}.cftc_stats" for k in D["grains"]]),
+    "cftc_fx": ("cftc", U.cftc_fx, lambda D: ["fx.pos"]),
+    "exports": ("exports", U.exports, lambda D: ["exports"]),
+    "wasde": ("wasde", U.wasde, lambda D: ["wasde"]),
+    "macro": ("macro", U.macro, lambda D: ["macro", "macro_extra"]),
+}
+
+
+def _get(D, path):
+    for p in path.split("."):
+        D = D[p]
+    return D
+
+
+def rel_done(D, name):
+    """True once the release this block is waiting for is already in D."""
+    et = U.NOW.astimezone(U.TOR)
+    if name in ("cftc_grains", "cftc_fx"):
+        exp = (et.date() - timedelta(days=(et.weekday() - 1) % 7)).isoformat()   # this week's Tuesday
+        have = D["grains"]["corn"]["cftc"][-1]["date"] if name == "cftc_grains" else (D["fx"]["pos"].get("kpi") or {}).get("date", "")
+        return have >= exp
+    if name == "exports":
+        exp = (et.date() - timedelta(days=7)).isoformat()
+        wk = (D.get("exports") or {}).get("corn", {}).get("weeks") or [[None, ""]]
+        return wk[-1][1] >= exp
+    if name == "wasde":
+        lab = max(d for d in U.WASDE_DATES if d <= et.date().isoformat())
+        return (D.get("wasde") or {}).get("corn", {}).get("report") == datetime.fromisoformat(lab).strftime("%b %Y")
+    if name == "macro":
+        seen = {m["key"]: m.get("seen_at") for m in D.get("macro", [])}
+        for k, v in (D.get("release_cal") or {}).items():
+            ts = [datetime.fromisoformat(x).replace(tzinfo=U.TOR) for x in v.get("dates", [])]
+            if v.get("rule") == "thu0830":
+                ts += [t for t in U._release_times(D, "macro") if t.weekday() == 3 and t.hour == 8]
+            for t in ts:
+                if U.NOW - timedelta(hours=3) <= t <= U.NOW and k in seen and (not seen[k] or datetime.fromisoformat(seen[k]) < t):
+                    return False
+        return True
+    return True
 
 
 def sh(*a, cwd=ROOT, check=True):
@@ -74,6 +119,7 @@ def main():
     first = not os.path.exists(os.path.join(WT, "live.json"))
     stop = time.time() + a.minutes * 60
     last_core = None
+    rel_out, it = {}, 0
     while time.time() < stop:
         t0 = time.time()
         U.NOW = datetime.now(timezone.utc)
@@ -84,7 +130,25 @@ def main():
                 ok.append(name)
             except Exception as e:
                 print(f"[{name}] failed: {e}")
+        it += 1
+        for name, (kind, fn, paths) in REL.items():
+            if not U.recent_release(D, kind) or rel_done(D, name):
+                continue
+            if name == "macro" and it % 2:
+                continue
+            try:
+                D["meta"].pop({"macro": "macro_checked", "exports": "exports_checked", "wasde": "wasde_checked"}.get(name, "_"), None)
+                fn(D, {})
+                if rel_done(D, name):
+                    rel_out[name] = {"asof": D["meta"]["asof"].get(name) or U.iso(U.NOW), "set": {p: _get(D, p) for p in paths(D)}}
+                    print(U.iso(U.NOW), "release landed:", name)
+                else:
+                    print(U.iso(U.NOW), "release not out yet:", name)
+            except Exception as e:
+                print(f"[rel {name}] failed: {e}")
         core = payload(D)
+        if rel_out:
+            core["rel"] = rel_out
         if ok and core != last_core:
             body = {**core, "updated_at": U.iso(U.NOW), "ok": ok}
             try:

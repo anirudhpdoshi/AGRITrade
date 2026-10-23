@@ -745,10 +745,41 @@ def ca_retail(D, N):
     return True
 
 
+def _release_times(D, kind):
+    """Scheduled release instants (aware datetimes) in the last 8 days for a block."""
+    today = NOW.astimezone(TOR).date()
+    days = [today - timedelta(days=i) for i in range(8)]
+    at = lambda d, h, m: datetime(d.year, d.month, d.day, h, m, tzinfo=TOR)
+    if kind == "macro":
+        out = []
+        for v in (D.get("release_cal") or {}).values():
+            for s_ in v.get("dates", []):
+                try:
+                    out.append(datetime.fromisoformat(s_).replace(tzinfo=TOR))
+                except ValueError:
+                    pass
+            if v.get("rule") == "thu0830":
+                out += [at(d, 8, 30) for d in days if d.weekday() == 3]
+        return out
+    if kind == "exports":
+        return [at(d, 8, 30) for d in days if d.weekday() == 3]
+    if kind == "cftc":
+        return [at(d, 15, 30) for d in days if d.weekday() == 4]
+    if kind == "wasde":
+        return [at(datetime.fromisoformat(d).date(), 12, 0) for d in WASDE_DATES]
+    return []
+
+
+def recent_release(D, kind, hours=3):
+    """True while a scheduled release for this block happened within the last `hours` —
+    the 2-6 h 'checked recently' throttles are lifted so new numbers land within minutes."""
+    return any(NOW - timedelta(hours=hours) <= t <= NOW for t in _release_times(D, kind))
+
+
 def macro(D, N):
     meta = D["meta"]
     last = meta.get("macro_checked")
-    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=2):
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=2) and not recent_release(D, "macro"):
         print("  checked <2h ago — skipping")
         return False
     old = {m["key"]: m for m in D.get("macro", [])}
@@ -935,7 +966,7 @@ def exports(D, N):
         return False
     meta = D["meta"]
     last = meta.get("exports_checked")
-    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=6):
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=6) and not recent_release(D, "exports"):
         print("  checked <6h ago — skipping")
         return False
     H = {"X-Api-Key": key}
@@ -1090,7 +1121,7 @@ def wasde(D, N):
         return False
     meta = D["meta"]
     last = meta.get("wasde_checked")
-    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=6):
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=6) and not recent_release(D, "wasde"):
         print("  checked <6h ago — skipping")
         return False
     H = {"X-Api-Key": key}

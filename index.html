@@ -309,6 +309,8 @@ li.n-desk b{color:#ffd0cc;font-size:12.5px}
 .ck.pass .ck-i{background:rgba(63,185,127,.2);color:#5fd598}.ck.flag .ck-i{background:rgba(232,163,61,.2);color:#e8a33d}.ck.info .ck-i{background:#1a2a42;color:#c9d6e6}
 .ck-d{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.5}.ck-d b{color:#e8eef4}
 @media (max-width:760px){.pk-grid{grid-template-columns:1fr}}
+.aw-errbox{margin:0 0 10px;padding:9px 12px;border-radius:8px;background:rgba(224,101,95,.1);border:1px solid #7a3a36;color:#ffc9c4;font-size:12.5px;line-height:1.5}.aw-errbox b{color:#ff9d97}
+.await-err{box-shadow:inset 0 0 0 1px #7a3a36}.has-flag .aw-errbox{margin-right:38px}
 .awaiting{position:relative;overflow:hidden}
 .awaiting>*{visibility:hidden}
 .awaiting::before{content:"";position:absolute;inset:14px;border-radius:8px;z-index:2;
@@ -2806,20 +2808,61 @@ function awaitingList(){
     if(last&&last.date<exp) out.push({sel:'[data-src="cftc_grains"],[data-src="cftc_fx"],.poskpi', label:'Awaiting CFTC Commitments of Traders — positions as of '+exp}); }
   var es=lastWeekday('Thu',8,30,7);
   if(es&&now-es.t<DAY){ var exp2=isoAdd(es.y,es.m,es.d,-7), E=(DATA.exports&&DATA.exports.corn)||{}, lw=(E.weeks||[]).slice(-1)[0];
-    if(lw&&lw[0]<exp2) out.push({sel:'[data-src="exports"]', label:'Awaiting USDA weekly export sales'}); }
+    if(lw&&lw[1]<exp2) out.push({sel:'[data-src="exports"]', label:'Awaiting USDA weekly export sales'}); }
   (typeof USDA_WASDE!=='undefined'?USDA_WASDE:[]).forEach(function(dt){ var p=dt.split('-'), t=zonedMs(+p[0],+p[1],+p[2],12,0,'America/Toronto');
     var lab=new Date(Date.UTC(+p[0],+p[1]-1,15)).toLocaleString('en-US',{month:'short',year:'numeric',timeZone:'UTC'});
     if(now>=t&&now-t<DAY&&DATA.wasde&&DATA.wasde.corn&&DATA.wasde.corn.report!==lab) out.push({sel:'[data-src="wasde"]', label:'Awaiting USDA WASDE '+lab}); });
-  macroAll().forEach(function(m){ var C=DATA.release_cal&&DATA.release_cal[m.key]; if(!C||!C.dates) return;
-    C.dates.forEach(function(s){ var a=s.split('T'), d=a[0].split('-'), h=a[1].split(':'), t=zonedMs(+d[0],+d[1],+d[2],+h[0],+h[1],'America/Toronto');
+  macroAll().forEach(function(m){ var C=DATA.release_cal&&DATA.release_cal[m.key]; if(!C) return;
+    var ds=(C.dates||[]).slice(); if(C.rule==='thu0830'){ var th=lastWeekday('Thu',8,30,7); if(th) ds.push(th.y+'-'+('0'+th.m).slice(-2)+'-'+('0'+th.d).slice(-2)+'T08:30'); }
+    ds.forEach(function(s){ var a=s.split('T'), d=a[0].split('-'), h=a[1].split(':'), t=zonedMs(+d[0],+d[1],+d[2],+h[0],+h[1],'America/Toronto');
       if(now>=t&&now-t<DAY&&(!m.seen_at||new Date(m.seen_at).getTime()<t)) out.push({sel:'.mcard[data-mkey="'+m.key+'"]', label:'Awaiting '+m.name+' release', small:true}); }); });
   return out;
 }
-function paintAwaiting(){
-  document.querySelectorAll('.awaiting').forEach(function(el){ el.classList.remove('awaiting'); el.removeAttribute('data-await'); });
-  awaitingList().forEach(function(a){ document.querySelectorAll(a.sel).forEach(function(el){ el.classList.add('awaiting'); if(a.small) el.classList.add('aw-sm'); el.setAttribute('data-await', a.label+' · refreshing automatically'); }); });
+/* Release watch: while a released number has not reached the page, re-check every 30 s;
+   after 5 misses wait 1 min and try once more; still missing -> show an error under the card
+   (previous data stays visible) and keep retrying every 5 min until it lands. */
+var AW={tries:0, next:0, last:0, err:false, busy:false, prev:{}};
+function hhmmss(t){ return new Date(t).toLocaleTimeString('en-US',{timeZone:'America/Toronto',hour:'numeric',minute:'2-digit',second:'2-digit'}); }
+function paintAwaiting(list){
+  list=list||awaitingList();
+  document.querySelectorAll('.awaiting,.await-err').forEach(function(el){ el.classList.remove('awaiting','aw-sm','await-err'); el.removeAttribute('data-await'); });
+  document.querySelectorAll('.aw-errbox').forEach(function(e){ e.remove(); });
+  var now=Date.now(), wait=Math.max(0,Math.ceil((AW.next-now)/1000));
+  var stage=AW.busy?'checking now…':AW.tries<5?'check '+(AW.tries+1)+' of 5 in '+wait+' s':'final check in '+wait+' s';
+  list.forEach(function(a){ document.querySelectorAll(a.sel).forEach(function(el){
+    if(AW.err){ el.classList.add('await-err');
+      var b=document.createElement('div'); b.className='aw-errbox';
+      b.innerHTML='<b>⚠ New data cannot be displayed</b> — '+esc(a.label.replace(/^Awaiting /,''))+' has not reached the desk after '+AW.tries+' checks (source still publishing or the fetch failed). Showing the previous data below. Retrying every 5 min · last check '+(AW.last?hhmmss(AW.last):'—')+' · next in '+Math.floor(wait/60)+':'+('0'+wait%60).slice(-2);
+      el.insertBefore(b, el.firstChild);
+    } else { el.classList.add('awaiting'); if(a.small) el.classList.add('aw-sm'); el.setAttribute('data-await', a.label+' · data released, fetching · '+stage+(AW.last?' · last check '+hhmmss(AW.last):'')); }
+  }); });
 }
-setInterval(paintAwaiting, 10000);
+function awaitCheck(){
+  var L=window.DESK_LIVE; if(!L||AW.busy) return;
+  AW.busy=true; AW.last=Date.now(); paintAwaiting();
+  var pr=[L.pollLive?L.pollLive(true):null, L.pollData?L.pollData(true):null].filter(Boolean);
+  Promise.all(pr).catch(function(){}).then(function(){
+    AW.busy=false;
+    if(!awaitingList().length) return;
+    AW.tries++;
+    if(AW.tries<5) AW.next=Date.now()+30000;
+    else if(AW.tries===5) AW.next=Date.now()+60000;
+    else { AW.err=true; AW.next=Date.now()+300000; }
+    paintAwaiting();
+  });
+}
+function awaitTick(){
+  if(window.DESK_LOCKED) return;
+  var list=awaitingList(), cur={};
+  list.forEach(function(a){ cur[a.label]=1; });
+  Object.keys(AW.prev).forEach(function(l){ if(!cur[l]&&window.DESK_LIVE&&DESK_LIVE.toast) DESK_LIVE.toast('<b>✓ Updated</b> — '+esc(l.replace(/^Awaiting /,''))+' is now on the desk'); });
+  var fresh=list.some(function(a){ return !AW.prev[a.label]; });
+  AW.prev=cur;
+  if(!list.length){ if(AW.tries||AW.err){ AW.tries=0; AW.err=false; AW.next=0; } paintAwaiting(list); return; }
+  if(fresh&&!AW.tries){ AW.next=Date.now(); }           /* a release just hit: check straight away */
+  if(Date.now()>=AW.next&&!AW.busy) awaitCheck(); else paintAwaiting(list);
+}
+setInterval(awaitTick, 1000);
 
 /* ================= USD/CAD LIVE FEED MONITOR ================= */
 var MON_TAB='next';

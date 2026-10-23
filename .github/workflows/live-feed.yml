@@ -34,3 +34,5 @@ jobs:
 
       - name: Publish live.json every 60 s
         run: python scripts/live_loop.py --minutes 33 --every 60
+        env:
+          FAS_API_KEY: ${{ secrets.FAS_API_KEY }}

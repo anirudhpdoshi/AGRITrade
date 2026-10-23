@@ -297,8 +297,8 @@
   function openRailState() {
     return [].map.call(document.querySelectorAll("details.rail-card"), function (d) { return d.open; });
   }
-  function pollData() {
-    if (document.hidden || window.DESK_LOCKED) return Promise.resolve();
+  function pollData(force) {
+    if ((document.hidden && !force) || window.DESK_LOCKED) return Promise.resolve();
     return fetch("data.json?t=" + Date.now(), { cache: "no-store" })
       .then(function (r) { if (!r.ok) throw r.status; return r.json(); })
       .then(function (j) {
@@ -328,6 +328,12 @@
     }
     if (newer(L.asof.energy, A.energy)) { DATA.fx.energy = L.fx.energy; DATA.fx.wcs_diff = L.fx.wcs_diff; A.energy = L.asof.energy; changed = true; }
     if (newer(L.asof.crosses, A.crosses)) { DATA.fx.fxcross = L.fx.fxcross; A.crosses = L.asof.crosses; changed = true; }
+    if (L.rel) Object.keys(L.rel).forEach(function (b) {       /* released data fetched by the fast lane */
+      var R = L.rel[b];
+      if (!R || !R.set || !newer(R.asof, A[b])) return;
+      Object.keys(R.set).forEach(function (p) { var ks = p.split("."), o = DATA; for (var i = 0; i < ks.length - 1; i++) { o = o[ks[i]] = o[ks[i]] || {}; } o[ks[ks.length - 1]] = R.set[p]; });
+      A[b] = R.asof; changed = true;
+    });
     DATA.meta.live_at = L.updated_at;
     return changed;
   }
@@ -349,8 +355,8 @@
     var before = Object.assign({}, DATA.meta.asof);
     if (mergeLive(L)) rerender(before); else paintStrip();
   }
-  function pollLive() {
-    if (document.hidden || window.DESK_LOCKED) return Promise.resolve();
+  function pollLive(force) {
+    if ((document.hidden && !force) || window.DESK_LOCKED) return Promise.resolve();
     var h = { Accept: "application/vnd.github.raw+json" };
     if (liveEtag) h["If-None-Match"] = liveEtag;
     return fetch(LIVE_API, { headers: h, cache: "no-store" })
@@ -406,5 +412,5 @@
   window.addEventListener("desk:unlock", onUnlock);
   if (window.DESK_LOCKED === false) onUnlock();      // live.js arrived after an unlock
 
-  window.DESK_LIVE = { onTick: onTick, pollData: pollData, applyLive: applyLive }; // handy for testing in the console
+  window.DESK_LIVE = { onTick: onTick, pollData: pollData, pollLive: pollLive, applyLive: applyLive, toast: toast }; // handy for testing in the console
 })();
