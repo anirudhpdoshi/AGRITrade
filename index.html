@@ -463,7 +463,7 @@ function etLabel(ms,withDay){
 }
 function safeUrl(u){ return /^https?:\/\//i.test(u||"") ? esc(u) : "#"; }
 function isAuto(key){ var m=DATA.meta||{}; return m.asof && m.built_at && new Date(m.asof[key])>new Date(m.built_at); }
-function fmt(n, d){ return n.toLocaleString("en-US",{minimumFractionDigits:(d==null?0:d), maximumFractionDigits:(d==null?0:d)}); }
+function fmt(n, d){ if(Math.abs(n)<0.5*Math.pow(10,-(d==null?0:d))) n=0; return n.toLocaleString("en-US",{minimumFractionDigits:(d==null?0:d), maximumFractionDigits:(d==null?0:d)}); }
 function money(v){ return "$" + fmt(v, v < 10 ? (Math.round(v*100)%25===0?2:4) : 2); }
 function money2(v){ return "$" + fmt(v,2); }
 function sgn(v, d, suf){ var s = (v>0?"+":v<0?"−":"") + fmt(Math.abs(v), d==null?1:d) + (suf||""); return s; }
@@ -1699,7 +1699,7 @@ function macroLinePanel(m, opt){
     '<div class="stamp">'+esc(m.src)+' · latest '+esc(m.period)+' · dashed = trailing 2/3/5-yr averages'+(opt.target!=null?' · dotted = 2% target':'')+'</div></div>';
 }
 function macroKpiCard(title, us, ca, dec, unit){
-  function row(flag, m){ if(!m) return ''; var ch=m.chg; return '<div class="mini-kv"><span>'+flag+' '+esc(m.period)+'</span><b>'+fmt(m.value,dec)+unit+'</b> <span class="'+(Math.abs(ch)<Math.pow(10,-dec)/2?'neu':cls(ch))+'">'+sgn(ch,dec,unit==='%'?' pp':'')+'</span></div>'; }
+  function row(flag, m){ if(!m) return ''; var ch=m.chg; return '<div class="mini-kv"><span>'+flag+' '+esc(m.period)+'</span><b>'+fmt(m.value,dec)+unit+'</b> <span class="'+(Math.abs(ch)<Math.pow(10,-dec)/2?'neu':cls(ch))+'">'+(Math.abs(ch)<Math.pow(10,-dec)/2?'unch.':sgn(ch,dec,unit==='%'?' pp':''))+'</span></div>'; }
   return '<div class="dash-card"><div class="dk">'+title+'</div>'+(MGEO!=='ca'?row('US',us):'')+(MGEO!=='us'?row('CA',ca):'')+'</div>';
 }
 function macroCompareHTML(){

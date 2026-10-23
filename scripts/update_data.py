@@ -23,7 +23,7 @@ FX options, forecast/scenarios/bias, trade template, calendar.
 
 Usage:  python scripts/update_data.py [--only fx_spot,news] [--dry-run]
 """
-import argparse, csv, io, json, re, statistics, sys, traceback
+import argparse, csv, io, json, re, statistics, sys, time, traceback
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
@@ -443,6 +443,16 @@ def _valet_series(sid, n, start=None):
 
 
 def _statcan(vec, n):
+    for attempt in range(3):
+        try:
+            return _statcan1(vec, n)
+        except requests.exceptions.ConnectionError:
+            if attempt == 2:
+                raise
+            time.sleep(3 + attempt * 4)
+
+
+def _statcan1(vec, n):
     r = requests.post("https://www150.statcan.gc.ca/t1/wds/rest/getDataFromVectorsAndLatestNPeriods",
                       headers={**UA, "Content-Type": "application/json"},
                       data=json.dumps([{"vectorId": vec, "latestN": n}]), timeout=25)
@@ -541,7 +551,8 @@ def macro(D, N):
     if not out:
         raise RuntimeError(f"all macro series failed: {errs}")
     D["macro"] = out
-    meta["macro_checked"] = iso(NOW)
+    # a failed chart series retries on the next 15-min run instead of waiting the full 2 h
+    meta["macro_checked"] = iso(NOW - timedelta(minutes=105)) if any(k in MACRO_LONG for k in errs) else iso(NOW)
     meta["asof"]["macro"] = iso(NOW)
     if errs:
         meta["macro_errors"] = errs
