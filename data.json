@@ -4522,10 +4522,10 @@
     "30Y": 5.29
    },
    "fxcross": {
-    "dxy": 101.678,
-    "dxy_chg": 0.067,
-    "eurusd": 1.1201,
-    "usdjpy": 156.39,
+    "dxy": 101.701,
+    "dxy_chg": 0.09,
+    "eurusd": 1.1199,
+    "usdjpy": 156.47,
     "usdcad_ref": 1.3977
    },
    "closes": [
@@ -4605,16 +4605,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 101.11,
-     "chg": 1.64,
-     "pct": 1.65,
+     "last": 101.4,
+     "chg": 1.93,
+     "pct": 1.94,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 110.13,
-     "chg": -3.04,
-     "pct": -2.69,
+     "last": 110.43,
+     "chg": -2.74,
+     "pct": -2.42,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -4626,7 +4626,7 @@
     }
    ],
    "wcs_diff": {
-    "value": 15.64,
+    "value": 15.93,
     "source": "computed: WTI last minus WCS last (same stored run)",
     "obs_ts": "2026-10-23T13:05:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
@@ -5160,10 +5160,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.39769,
+    "mid": 1.39789,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-23T09:15:00-04:00",
+    "ts": "2026-10-23T09:19:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -6261,16 +6261,16 @@
     ],
     [
      "2026-10-23T13:15+00:00",
-     1.39769
+     1.39789
     ]
    ]
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-23T09:16:33-04:00",
+   "updated_at": "2026-10-23T09:19:06-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-23T09:15:00-04:00",
+    "fx_spot": "2026-10-23T09:19:00-04:00",
     "fx_closes": "2026-10-22T16:30:00-04:00",
     "yields": "2026-10-22T17:00:00-04:00",
     "policy": "2026-10-21T07:35:00-04:00",
@@ -6282,7 +6282,7 @@
     "grains_settle": "2026-10-22T14:20:00-04:00",
     "grains_quote": "2026-10-23T08:40:00-04:00",
     "options": "2026-10-22T17:30:00-04:00",
-    "news": "2026-10-23T09:16:33-04:00",
+    "news": "2026-10-23T09:19:06-04:00",
     "calendar": "2026-10-21T07:05:00-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-23T09:16:33-04:00",
@@ -6293,7 +6293,7 @@
     "sd_hist": "2026-10-22T23:06:37-04:00",
     "inputs": "2026-10-22T23:25:40-04:00",
     "ext": "2026-10-23T09:16:33-04:00",
-    "ca_retail": "2026-10-23T09:16:33-04:00"
+    "ca_retail": "2026-10-23T09:19:06-04:00"
    },
    "sources": {
     "news": "Google News RSS search, refreshed every 15 min",
@@ -6323,7 +6323,7 @@
      "ca_retail"
     ],
     "failed": [],
-    "at": "2026-10-23T09:16:33-04:00"
+    "at": "2026-10-23T09:19:06-04:00"
    },
    "releases_checked": "2026-10-23T09:16:33-04:00",
    "exports_checked": "2026-10-23T09:16:33-04:00",
@@ -6360,7 +6360,7 @@
    },
    "canada_checked": "2026-10-22T22:29:24-04:00",
    "ca_calendar_checked": "2026-10-23T09:16:33-04:00",
-   "canada_watch": "2026-10-23T09:16:33-04:00",
+   "canada_watch": "2026-10-23T09:19:06-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -6377,7 +6377,59 @@
    "sd_hist_checked": "2026-10-22T23:06:37-04:00",
    "inputs_checked": "2026-10-22T23:25:40-04:00",
    "ext_checked": "2026-10-23T09:16:33-04:00",
-   "macro_checked": "2026-10-23T09:16:33-04:00"
+   "macro_checked": "2026-10-23T09:16:33-04:00",
+   "ca_retail_dims": {
+    "GEO": [
+     "Canada"
+    ],
+    "North American Industry Classification System (NAICS)": [
+     "Automobile dealers [4411]",
+     "Automotive parts, accessories and tire retailers [4413]",
+     "Beer, wine and liquor retailers [4453]",
+     "Building material and garden equipment and supplies dealers [444]",
+     "Cannabis retailers [459993]",
+     "Clothing and clothing accessories retailers [4581]",
+     "Clothing, clothing accessories, shoes, jewellery, luggage and leather goods retailers [458]",
+     "Convenience retailers and vending machine operators [44513]",
+     "Electronics and appliances retailers [4492]",
+     "Floor covering, window treatment and other home furnishing retailers [44912]",
+     "Food and beverage retailers [445]",
+     "Furniture retailers [44911]",
+     "Furniture, floor covering, window treatment and other home furnishings retailers [4491]",
+     "Furniture, home furnishings, electronics and appliances retailers [449]",
+     "Gasoline stations and fuel vendors [457]",
+     "General merchandise retailers [455]",
+     "Grocery and convenience retailers [4451]",
+     "Health and personal care retailers [456]",
+     "Jewellery, luggage and leather goods retailers [4583]",
+     "Miscellaneous retailers [459B]",
+     "Motor vehicle and parts dealers [441]",
+     "New car dealers [44111]",
+     "Other motor vehicle dealers [4412]",
+     "Retail trade [44-45]",
+     "Shoe retailers [4582]",
+     "Specialty food retailers [4452]",
+     "Sporting goods, hobby, musical instrument, book retailers and news dealers [459A]",
+     "Sporting goods, hobby, musical instrument, book, and miscellaneous retailers [459]",
+     "Supermarkets and other grocery retailers (except convenience retailers) [44511]",
+     "Used car dealers [44112]"
+    ],
+    "Sales": [
+     "Retail e-commerce sales",
+     "Total retail sales"
+    ],
+    "Adjustments": [
+     "Seasonally adjusted",
+     "Unadjusted"
+    ],
+    "UOM": [
+     "Dollars"
+    ],
+    "SCALAR_FACTOR": [
+     "thousands"
+    ]
+   },
+   "ca_retail_checked": "2026-10-23T09:19:06-04:00"
   },
   "macro": [
    {
@@ -20236,12 +20288,6 @@
     "https://news.google.com/rss/articles/CBMilwFBVV95cUxQdDVhcHp1cXBRS1lZellSX0NCdWo1Q2NuMXR6dS1UTTJhYUk3VmlLcDliQjFTSjB6TFNwUVJrd0M1MmRxQnZCTnBVUmtzb0dQU3hadnF0Z0tCeDBnX0FJeEdXMk9fQWdfRmNtaEFCS2YzZFVnQTI3Z1d6RGx0dHFlSUxjRmFKTnFJNU9qNUZ1SWN5eWthRWU0?oc=5"
    ],
    [
-    "2026-10-23 11:00 UTC",
-    "agupdate.com",
-    "Wheat prices erode during ‘tough sledding’ period",
-    "https://news.google.com/rss/articles/CBMiowFBVV95cUxOWUxVaWRSSGhnSUpUS3lPYVA5NndaMWsxWTB5dUxoR0M2MG5XVUwwT1hXSDI1V1k4STc3TDFIY0xaZjBWb3lGc01lV3ZaMi1UdUh0UkEzRUdTcFpfaTZORFZITFI1NXROR3V0RmVRQ043azFtYnNNcWZLdGlBN0pkeHRCVEhkeklmaFZoTVUtNndyX051VlNCbkVQanJGaUdhSGNz?oc=5"
-   ],
-   [
     "2026-10-23 10:15 UTC",
     "ukragroconsult.com",
     "Wheat futures fall for eighth consecutive week for first time since 1997",
@@ -20264,6 +20310,12 @@
     "www.apk-inform.com",
     "Russia exported just over 1.1 million tons of grain in the first 20 days of October",
     "https://news.google.com/rss/articles/CBMiVEFVX3lxTE5YR2FseS1lU182cVh2WjNRMmlVTHo2VFBHX0x6ZVpjdU5tX0t1NDFMNF9fWjB0cktuSGtOX190MjRWTlc1cEkyRkRZek90MU5VQzhwSw?oc=5"
+   ],
+   [
+    "2026-10-23 07:49 UTC",
+    "ukragroconsult.com",
+    "Kazakhstan’s wheat flour exports rise to 1.4 mln tons",
+    "https://news.google.com/rss/articles/CBMikgFBVV95cUxPWkVXc2psRC1CcXJneGNrcF9maEdTRG9GekNZd1NxT3Ffb1M1SmpSVGF0MVJjMkI5al9INHlZVjIwQWlpbVVQWHM0SllDbHYzXzFnaHMtN3pzNEdvaFQzamJxakVlTC1JS2dIZFFHeWhpZHc4Z29HTWFOTTl4czBjekZtQmpNd1dsVkx2SWpJQWgzUQ?oc=5"
    ]
   ],
   "soybeans": [
@@ -20304,16 +20356,16 @@
     "https://news.google.com/rss/articles/CBMimgFBVV95cUxOTnhHbmNnSjJ1Rk80Y3VnOEQ5bWNERndYOUZsVU5qcVNfN3lGSWhRTC11bENuWlphbTBkV1B5OUdVRTd2RzZCdmdIRmxDeHQ1T25Hb3BrQkNNMzFqcnM5dXMzcXVfSHE1dWVYT0JtbkwyS0lGbjhlb1RmRWNpN0loNlpqTXlEZGRDcnA5WVF2cHR1TUl5NmRoQXhR?oc=5"
    ],
    [
-    "2026-10-23 06:24 UTC",
-    "www.brecorder.com",
-    "Soybeans rise on strong export sales, but harvest keeps weekly loss in view",
-    "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1sMTFNMnhnZ1MzbGlWeWJQTFAzTllJRno5UlplY3VHV0xRR094bnJucmxyLTJCd1J5Tk84QUJ0cFctSXZsNThMRUZISE1jLTU5T1hVMGJ30gFWQVVfeXFMTWwxMU0yeGdnUzNsaVZ5YlBMUDNOWUlGejlSWmVjdUdXTFFHT3hucm5ybHItMkJ3UnlOTzhBQnRwVy1Jdmw1OExFRkhITWMtNTlPWFUwYnc?oc=5"
-   ],
-   [
     "2026-10-23 06:00 UTC",
     "951thebull.com",
     "China Trade Uncertainty Adds Pressure to U.S. Soybean Markets",
     "https://news.google.com/rss/articles/CBMimwFBVV95cUxOMFVuT0ZBdG9zMGVXRmIzSmQwNVdWVlJxcUpTRU9qNHhnTXBFeTAwUUQwZEp4LVZmamlUWnhTM05weEhnVzV5N0lhR0tRM0tfSVZpSjg1OS1qOHhUalIzdmZtdENPR3c3bUxVUVFFU285blpCUDltX0wzZ0FDcHZsQW5OaDJlLUtLM3N1M2tESUpHbG1LZnpsN1Nqbw?oc=5"
+   ],
+   [
+    "2026-10-23 05:13 UTC",
+    "commodity-board.com",
+    "China soybeans October: small export windows to Asia, firm protein premiums — CMB News",
+    "https://news.google.com/rss/articles/CBMikgFBVV95cUxQUUtzaUJfUHVNNTFpbThCWmJ4Y1lDdG1lUnFGeGR2YThYWm5abncwQ3RnWGFOQkhjejA5SjJCSEdNX09uRmxteXVNOG5TSnQ0UGNVUkhUU2tjSE1PVkROdU5PMmI2R3NSTVAxM3VzYjFnZkhWS2Jkam9vT3pIQ2JEcWxoQ29paGwzNlpweG8tTXdJZw?oc=5"
    ]
   ],
   "fx": [
@@ -20354,16 +20406,16 @@
     "https://news.google.com/rss/articles/CBMiywFBVV95cUxON3F1SUc0NjJJdXBYYTFLMTZabkhMN3ZtNnZJaFk5d0N0YWxkWEVWWXlzYWhabGp5YVp0MkNyZ3U4ZUZpdW1zY0JDUW02My1yR1VFcWljY2l0eVZ5ekVkd1k4eWNwS19xM3JobDA5T0FvaFBiUENwR3N6eVpRU1ZmVDVRV3FEQk5EY3ZCSE5Ea0xRR2RkcUdIYWpTZjFjVElFWE1CSUNnMU40Zi1qWXdsaGlVUktEY0lUb3VEX3NfS0xDcUt6ei0tSGhkRQ?oc=5"
    ],
    [
-    "2026-10-22 23:30 UTC",
-    "www.nerdwallet.com",
-    "Best Credit Cards in Canada",
-    "https://news.google.com/rss/articles/CBMigwFBVV95cUxPOUdIbDA3SjdJTjEweW8zZWJTbnMwSUpuVGR4OVF4SHB0YjJScHRCLVlMdzRvcGpOMl8tdXo1YXdEQU43SlJCSzNSdDNoRHhSaWdoQjBReWtIRTZOOGZRdDlnQ3NnUE1LYTdkbjI1NXhWYldvRGJHRlpZcnVEa3lqRUJLTQ?oc=5"
+    "2026-10-22 21:31 UTC",
+    "www.wsj.com",
+    "Bank of Canada Survey Records Notable Rise in Inflation Expectations",
+    "https://news.google.com/rss/articles/CBMivgFBVV95cUxNMDBwUUhTck9tQ3ZiSUlQVXVGRWxMMWExUlJaWDVRTENTVHU0anA4NDZmdWR1NEVjMmQ2ZURVcDZkV0VUeXhBUEhBb1JwemM5czY3X0loRFRSQkFQNHkzZDVpbHcwNHJ6OGFiUE1VZzJlcy1rX0I2WU9Dc2pUWElnUWh2V01GNVJOR3VQSEhYTF9OUVhtcWE5QmdhdGpmMVV0bkJJNFZLN2gwWjRjaGdGSENnX1ZCanMxdGV6dTNn?oc=5"
    ],
    [
-    "2026-10-22 22:09 UTC",
-    "energynow.ca",
-    "Walking a Tightrope: Bank of Canada Remains on Hold – ATB Economics",
-    "https://news.google.com/rss/articles/CBMimgFBVV95cUxOZ3lPcEEtUnVfSEpqUExzQU1XYzZTNmw0LTRneXlrSERkam9hc0VPZTBPQ1g4NDRoaElyWmpKVjctX3lUeDI1bmlDOFNXV1NPV3ZtOFZUU3NadVBxZHdXXzh0U19HWGlpcHhjODRNdVZSUU1nYzMya3hTR3V3MG05Wlp5TkhpYlVHdkZ6YVpDTi1QclQ0cHYwTEZn?oc=5"
+    "2026-10-22 18:56 UTC",
+    "www.moneysense.ca",
+    "Bank of Canada interest rate forecast: What to expect on October 28",
+    "https://news.google.com/rss/articles/CBMiigFBVV95cUxQbHBZaUh2NGdOZ2RCS1FUUC1NY2FRcWRuY0NZWV91Zm56dkR4NlZCRWpjM2FTSTQ4NUR1cWt6RTVGZnltTUVWbjRfUmdQRTlUNjZFVWt4V3FLak45aFU4ejlRcTY4dGc0R0hHSmJySlFnMGhZLTBfMUlQV004UDROS09vR0RzTHNrY3c?oc=5"
    ]
   ]
  }
