@@ -263,10 +263,10 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .sub{display:contents}.sub:not(.on){display:none}
 .evm{cursor:pointer;outline:none}.evm:hover .evc,.evm.act .evc,.evm:focus .evc{fill:#e8b93d;stroke:#e8b93d}.evm.act line,.evm:hover line{stroke:#e8b93d;stroke-dasharray:none}
 #evpop{position:absolute;z-index:9500;display:none;background:#13213a;border:1px solid #e8b93d;border-radius:10px;padding:12px 14px;box-shadow:0 12px 34px rgba(0,0,0,.55);font-size:13px;color:#c9d6e6}
-#evpop.on{display:block}#evpop:not(.pinned){pointer-events:none}#evpop.pinned{box-shadow:0 0 0 2px rgba(232,185,61,.35),0 12px 34px rgba(0,0,0,.55)}
+#evpop.on{display:block}#evpop.pinned{box-shadow:0 0 0 2px rgba(232,185,61,.35),0 12px 34px rgba(0,0,0,.55)}
 .evp-h{font-family:"IBM Plex Mono",monospace;font-size:12px;color:#e8b93d;font-weight:700}.evp-t{color:#fff;font-weight:600;margin:6px 0 8px;line-height:1.4}
 .evp-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:baseline;font-family:"IBM Plex Mono",monospace;font-size:12px;padding:3px 0;border-top:1px dashed #263a58}.evp-row b{color:#fff}
-.evp-f{margin-top:8px;font-size:11.5px;color:#8494ab}.evp-f a{color:#38b6c9}
+.evp-f{margin-top:8px;font-size:11.5px;color:#8494ab}.evp-link{display:inline-block;margin-top:8px;padding:5px 10px;border:1px solid #38b6c9;border-radius:6px;color:#7dd8e6;text-decoration:none;font-size:12px}.evp-link:hover{background:#1a3350;color:#fff}
 .mk-click{cursor:pointer}.mk-click:hover{color:#fff}
 .mcard{cursor:pointer;transition:border-color .15s,transform .15s}.mcard:hover{border-color:#38b6c9;transform:translateY(-1px)}
 #mdc-overlay{position:fixed;inset:0;background:rgba(4,8,14,.72);z-index:9000;display:none;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto}
@@ -288,7 +288,7 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .mdc-chart{background:#18263d;border-radius:10px;padding:8px 10px}
 .mdc-read{color:#e8b93d;font-size:13.5px;margin:10px 0 0}
 .mdc-rels{display:flex;flex-wrap:wrap;gap:8px}.mdc-rel{background:#18263d;border:1px solid #2b3e5c;border-radius:8px;padding:8px 12px;color:#c9d6e6;cursor:pointer;display:flex;gap:8px;align-items:baseline;font:inherit;font-size:13px}.mdc-rel b{color:#fff}
-.mdc-foot{margin-top:16px;color:#8494ab;font-family:"IBM Plex Mono",monospace;font-size:12px;line-height:1.6}.mdc-foot b{color:#fff}.mdc-foot .countdown{color:#e8a33d}
+.mdc-foot a{color:#7dd8e6}.mdc-foot{margin-top:16px;color:#8494ab;font-family:"IBM Plex Mono",monospace;font-size:12px;line-height:1.6}.mdc-foot b{color:#fff}.mdc-foot .countdown{color:#e8a33d}
 .mdc-ask{margin-top:12px;background:#1a2a42;border:1px solid #38b6c9;color:#e8eef4;border-radius:8px;padding:8px 14px;cursor:pointer;font:inherit;font-size:13px}
 @media (max-width:760px){.mdc{padding:18px 14px}.mdc-ttl{font-size:19px}.mdc-v{font-size:34px}.mdc-grid{grid-template-columns:1fr}}
 .mnext{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted);margin-top:4px}.mnext b{color:#e8eef4;font-weight:600}.mnext .countdown{color:#e8a33d}
@@ -2233,7 +2233,7 @@ function macroDetailHTML(key){
     (chart2?'<h4 class="mdc-h">Change vs prior reading</h4><div class="mdc-chart">'+chart2+'</div>':'')+
     '<p class="mdc-read">Read: '+st.concat([m.value>a3?'latest above its 3-reading average':'latest below its 3-reading average']).join('; ')+'.</p>'+
     (rel3?'<h4 class="mdc-h">Related indicators <span class="h2note">(tap to open)</span></h4><div class="mdc-rels">'+rel3+'</div>':'')+
-    '<div class="mdc-foot">'+(nx&&nx.t?'Next release: <b>'+etLabel(nx.t,true)+' ET</b> · <span class="countdown" data-t="'+nx.t+'">'+cdText(nx.t-Date.now())+'</span>':'Next release: '+esc(nx&&nx.note||'not scheduled'))+' · source: '+esc(m.src)+' · '+ccy+'</div>'+
+    '<div class="mdc-foot">'+(nx&&nx.t?'Next release: <b>'+etLabel(nx.t,true)+' ET</b> · <span class="countdown" data-t="'+nx.t+'">'+cdText(nx.t-Date.now())+'</span>':'Next release: '+esc(nx&&nx.note||'not scheduled'))+' · data: '+esc(m.src)+' · '+ccy+(nx&&nx.src?' · <a href="'+safeUrl(nx.src)+'" target="_blank" rel="noopener">official release calendar \u2197</a>':'')+'</div>'+
     '<button class="mdc-ask" data-mask="'+key+'">Ask Claude about this print</button>'+
   '</div>';
 }
@@ -2266,7 +2266,7 @@ function evPopHTML(n, sk){
       lines+='<div class="evp-row"><span>Now</span><b>'+inFmt(S,L[1])+'</b><small class="'+cls(-pc(at[1],L[1]))+'">'+sgn(pc(at[1],L[1]),1,'%')+' since event</small></div>'; } }
   var also=(DATA.inputs.events[n-1].tags.indexOf('*')>=0?'all inputs':DATA.inputs.events[n-1].tags.map(function(t){ return DATA.inputs.series[t]?DATA.inputs.series[t].label.replace(/ \(.*\)/,''):t; }).join(', '));
   return '<div class="evp-h"><span class="ev-n">'+n+'</span> '+esc(new Date(e.date+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))+'</div><div class="evp-t">'+esc(e.label)+'</div>'+lines+
-    '<div class="evp-f">Affected: '+esc(also)+' · <a href="'+safeUrl(e.src)+'" target="_blank" rel="noopener">source</a>'+(EVPIN?'':' · click marker to pin')+'</div>';
+    '<div class="evp-f">Affected: '+esc(also)+'</div><a class="evp-link" href="'+safeUrl(e.src)+'" target="_blank" rel="noopener">Open source report \u2197</a>';
 }
 function evShow(g, pin){
   var p=document.getElementById('evpop'); if(!p){ p=document.createElement('div'); p.id='evpop'; document.body.appendChild(p); }
@@ -2278,9 +2278,19 @@ function evShow(g, pin){
   p.style.left=(left+window.scrollX)+'px'; p.style.top=(Math.max(8,top)+window.scrollY)+'px';
   document.querySelectorAll('.evm.act').forEach(function(x){ x.classList.remove('act'); }); g.classList.add('act');
 }
-function evHide(){ if(EVPIN) return; var p=document.getElementById('evpop'); if(p) p.classList.remove('on'); document.querySelectorAll('.evm.act').forEach(function(x){ x.classList.remove('act'); }); }
-document.addEventListener('mouseover', function(ev){ var g=ev.target.closest&&ev.target.closest('.evm'); if(g&&!EVPIN) evShow(g,false); });
-document.addEventListener('mouseout', function(ev){ var g=ev.target.closest&&ev.target.closest('.evm'); if(g&&!(ev.relatedTarget&&g.contains(ev.relatedTarget))) evHide(); });
+var EVT=null;
+function evHideNow(){ if(EVPIN) return; var p=document.getElementById('evpop'); if(p) p.classList.remove('on'); document.querySelectorAll('.evm.act').forEach(function(x){ x.classList.remove('act'); }); }
+function evHide(){ clearTimeout(EVT); EVT=setTimeout(evHideNow, 350); }          /* grace period: lets the mouse travel into the box to click its link */
+document.addEventListener('mouseover', function(ev){
+  var t=ev.target.closest?ev.target:null; if(!t) return;
+  if(t.closest('#evpop')){ clearTimeout(EVT); return; }
+  var g=t.closest('.evm'); if(g&&!EVPIN){ clearTimeout(EVT); evShow(g,false); }
+});
+document.addEventListener('mouseout', function(ev){
+  var t=ev.target.closest?ev.target:null; if(!t) return;
+  var from=t.closest('.evm')||t.closest('#evpop'), to=ev.relatedTarget;
+  if(from && !(to && (from.contains(to) || (to.closest&&(to.closest('#evpop')||to.closest('.evm')===from))))) evHide();
+});
 document.addEventListener('focusin', function(ev){ var g=ev.target.closest&&ev.target.closest('.evm'); if(g) evShow(g,false); });
 document.addEventListener('click', function(ev){
   var g=ev.target.closest&&ev.target.closest('.evm');
