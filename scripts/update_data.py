@@ -975,6 +975,47 @@ def wasde(D, N):
     return bool(changed)
 
 
+def sd_hist(D, N):
+    """US balance sheets for the last four marketing years (latest USDA estimate of each) for the crop-year comparison table."""
+    import os
+    key = os.environ.get("FAS_API_KEY", "").strip()
+    if not key:
+        return False
+    meta = D["meta"]
+    last = meta.get("sd_hist_checked")
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=24) and D.get("sd_hist"):
+        print("  checked <24h ago — skipping")
+        return False
+    H = {"X-Api-Key": key}
+    out, errs = {}, {}
+    for k, code in PSD_CODE.items():
+        w = (D.get("wasde") or {}).get(k)
+        new_my = int(w["new"]["my"][:4]) if w else NOW.year
+        yrs = {}
+        for yr in range(new_my - 3, new_my + 1):
+            try:
+                vals = _sd_values(k, _psd_us(code, yr, H, k))
+                if not vals.get("Production"):
+                    raise RuntimeError("no production line")
+                yrs[str(yr)] = vals
+            except Exception as e:
+                errs[f"{k} {yr}"] = str(e)[:160]
+        if yrs:
+            out[k] = {"years": yrs, "my_label": {y: f"{y}/{str(int(y) + 1)[2:]}" for y in yrs},
+                      "units": "mil acres · bu/acre · mil bu", "source": "USDA PSD (FAS Open Data), latest estimate per marketing year"}
+    if not out:
+        raise RuntimeError(f"no PSD history: {errs}")
+    D["sd_hist"] = out
+    meta["sd_hist_checked"] = iso(NOW)
+    meta["asof"]["sd_hist"] = iso(NOW)
+    if errs:
+        meta["sd_hist_errors"] = errs
+    else:
+        meta.pop("sd_hist_errors", None)
+    print("  sd_hist:", {k: list(v["years"]) for k, v in out.items()}, "errors", len(errs))
+    return True
+
+
 # ------------------------------------------------------------------ Canada / Ontario (Statistics Canada)
 SC_CROP = {"corn": r"^corn for grain", "soybeans": r"^soybeans?$|^soybeans? \[", "wheat": r"^wheat, all"}
 SC_PRICE = {"corn": r"^corn", "soybeans": r"^soybean", "wheat": r"^(ontario )?(winter )?wheat(?!.*including payments)"}
@@ -1195,7 +1236,7 @@ def canada(D, N):
 
 BLOCKS = [("fx_spot", fx_spot), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar)]
+          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist)]
 
 
 def main():
