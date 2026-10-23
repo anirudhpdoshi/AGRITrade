@@ -857,9 +857,132 @@ def wasde(D, N):
     return bool(changed)
 
 
+# ------------------------------------------------------------------ Canada / Ontario (Statistics Canada)
+SC_CROP = {"corn": r"^corn for grain", "soybeans": r"^soybeans?$|^soybeans? \[", "wheat": r"^wheat, all"}
+SC_PRICE = {"corn": r"^corn", "soybeans": r"^soybean", "wheat": r"^wheat(?!.*durum)"}
+SC_GEOS = ("Ontario", "Canada")
+
+
+def _sc_table(pid):
+    """Stream a full StatCan table (CSV inside a zip) row by row as dicts."""
+    import zipfile
+    j = get(f"https://www150.statcan.gc.ca/t1/wds/rest/getFullTableDownloadCSV/{pid}/en").json()
+    url = j.get("object") if isinstance(j, dict) else None
+    if not url:
+        raise RuntimeError(f"StatCan {pid}: no download URL ({str(j)[:120]})")
+    r_ = requests.get(url, headers=UA, timeout=180)
+    r_.raise_for_status()
+    z = zipfile.ZipFile(io.BytesIO(r_.content))
+    name = next(n for n in z.namelist() if n.endswith(".csv") and "MetaData" not in n)
+    with z.open(name) as f:
+        yield from csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
+
+
+def _num0(x):
+    v = _num(x)
+    return v
+
+
+def canada(D, N):
+    meta = D["meta"]
+    last = meta.get("canada_checked")
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=20):
+        print("  checked <20h ago — skipping")
+        return False
+    C = D.setdefault("canada", {})
+    seen = {"crops": set(), "disp": set(), "prices": set(), "stocks": set(), "stock_kinds": set()}
+    errs = []
+    # ---- annual area / yield / production / price (32-10-0359-01) ----
+    try:
+        acc = {}
+        for row in _sc_table(32100359):
+            geo = row.get("GEO", "")
+            if geo not in SC_GEOS:
+                continue
+            crop, disp = row.get("Type of crop", ""), row.get("Harvest disposition", "")
+            seen["crops"].add(crop); seen["disp"].add(disp)
+            for k, pat in SC_CROP.items():
+                if re.search(pat, crop.strip().lower()):
+                    v = _num(row.get("VALUE"))
+                    if v is not None:
+                        acc.setdefault(k, {}).setdefault(geo, {}).setdefault(disp, {})[row["REF_DATE"][:4]] = v
+        MEAS = {"seeded_ac": r"^seeded area \(acres", "harv_ac": r"^harvested area \(acres", "seeded_ha": r"^seeded area \(hectares",
+                "harv_ha": r"^harvested area \(hectares", "yield_bu": r"^average yield \(bushels", "yield_kg": r"^average yield \(kilograms",
+                "prod_bu": r"^production \(bushels", "prod_t": r"^production \(metric", "price_t": r"^average farm price \(dollars per tonne",
+                "value": r"^total farm value"}
+        for k, geos in acc.items():
+            for geo, disps in geos.items():
+                years = sorted({y for d in disps.values() for y in d})[-16:]
+                out = {"years": years}
+                for key, pat in MEAS.items():
+                    src = next((d for name, d in disps.items() if re.search(pat, name.strip().lower())), None)
+                    out[key] = [src.get(y) if src else None for y in years]
+                C.setdefault(k, {}).setdefault("annual", {})[geo] = out
+        if not acc:
+            raise RuntimeError("no matching crops")
+    except Exception as e:
+        errs.append(f"32100359: {e} | crops seen: {sorted(seen['crops'])[:40]} | disp: {sorted(seen['disp'])[:30]}")
+    # ---- monthly farm prices (32-10-0077-01) ----
+    try:
+        pr = {}
+        for row in _sc_table(32100077):
+            geo = row.get("GEO", "")
+            if geo not in SC_GEOS:
+                continue
+            prod = (row.get("Farm products") or "").strip()
+            seen["prices"].add(prod)
+            for k, pat in SC_PRICE.items():
+                if re.search(pat, prod.lower()) and "dollars per metric tonne" in (row.get("UOM") or "").lower():
+                    v = _num(row.get("VALUE"))
+                    if v is not None:
+                        pr.setdefault(k, {}).setdefault(geo, {}).setdefault(prod, {})[row["REF_DATE"][:7]] = v
+        for k, geos in pr.items():
+            for geo, prods in geos.items():
+                best = max(prods.items(), key=lambda kv: max(kv[1]))     # the product line with the latest data
+                ser = sorted(best[1].items())[-36:]
+                C.setdefault(k, {}).setdefault("prices", {})[geo] = {"product": best[0], "series": ser}
+        if not pr:
+            raise RuntimeError("no matching price series")
+    except Exception as e:
+        errs.append(f"32100077: {e} | products seen: {sorted(seen['prices'])[:40]}")
+    # ---- stocks (32-10-0007-01) ----
+    try:
+        st = {}
+        for row in _sc_table(32100007):
+            geo = row.get("GEO", "")
+            if geo not in SC_GEOS:
+                continue
+            crop = (row.get("Type of crop") or "").strip()
+            kind = next((row[c] for c in row if c not in ("REF_DATE", "GEO", "DGUID", "UOM", "UOM_ID", "SCALAR_FACTOR", "SCALAR_ID", "VECTOR",
+                                                          "COORDINATE", "VALUE", "STATUS", "SYMBOL", "TERMINATED", "DECIMALS", "Type of crop")), "")
+            seen["stocks"].add(crop); seen["stock_kinds"].add(kind)
+            for k, pat in SC_CROP.items():
+                if re.search(pat, crop.lower()):
+                    v = _num(row.get("VALUE"))
+                    if v is not None:
+                        st.setdefault(k, {}).setdefault(geo, {}).setdefault(row["REF_DATE"][:7], {})[kind] = v
+        for k, geos in st.items():
+            for geo, dates in geos.items():
+                C.setdefault(k, {}).setdefault("stocks", {})[geo] = [[d, v] for d, v in sorted(dates.items())[-9:]]
+        if not st:
+            raise RuntimeError("no matching stocks")
+    except Exception as e:
+        errs.append(f"32100007: {e} | crops: {sorted(seen['stocks'])[:30]} | kinds: {sorted(seen['stock_kinds'])[:20]}")
+    if errs:
+        meta["canada_errors"] = errs
+    else:
+        meta.pop("canada_errors", None)
+    if not C:
+        raise RuntimeError("; ".join(errs)[:1100])
+    meta["canada_checked"] = iso(NOW)
+    meta["asof"]["canada"] = iso(NOW)
+    print("  canada:", {k: list(v) for k, v in C.items()}, "errors:", len(errs))
+    return True
+
+
 BLOCKS = [("fx_spot", fx_spot), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde)]
+          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada)]
 
 
 def main():
