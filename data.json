@@ -31,14 +31,14 @@
      ],
      "near_expiry": "Dec-26",
      "intraday": [
-      4.6175,
-      "9:15pm ET"
+      4.615,
+      "9:20pm ET"
      ],
      "iv_10d_rel": 0.03558,
      "iv_chain_iv": 17.86,
      "iv_as_of": "2026-10-22",
      "iv_note": null,
-     "intraday_ts": "2026-10-22T21:15:00-04:00",
+     "intraday_ts": "2026-10-22T21:20:00-04:00",
      "ma50": "5.11",
      "ma100": "4.84"
     },
@@ -1375,7 +1375,7 @@
      ],
      "near_expiry": "Jan-27",
      "intraday": [
-      12.5675,
+      12.57,
       "9:15pm ET"
      ],
      "iv_10d_rel": 0.02749,
@@ -2432,14 +2432,14 @@
      ],
      "near_expiry": "Dec-26",
      "intraday": [
-      6.3075,
-      "9:15pm ET"
+      6.31,
+      "9:20pm ET"
      ],
      "iv_10d_rel": 0.04928,
      "iv_chain_iv": 24.74,
      "iv_as_of": "2026-10-22",
      "iv_note": null,
-     "intraday_ts": "2026-10-22T21:15:00-04:00",
+     "intraday_ts": "2026-10-22T21:20:00-04:00",
      "ma50": "7.04",
      "ma100": "6.75"
     },
@@ -4189,11 +4189,11 @@
     "30Y": 5.42
    },
    "fxcross": {
-    "dxy": 101.528,
-    "dxy_chg": -0.248,
-    "eurusd": 1.1225,
-    "usdjpy": 156.42,
-    "usdcad_ref": 1.3997
+    "dxy": 101.547,
+    "dxy_chg": -0.229,
+    "eurusd": 1.1223,
+    "usdjpy": 156.44,
+    "usdcad_ref": 1.4001
    },
    "closes": [
     [
@@ -4272,16 +4272,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 99.96,
-     "chg": 2.81,
-     "pct": 2.89,
+     "last": 99.98,
+     "chg": 2.83,
+     "pct": 2.91,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 113.81,
-     "chg": 4.99,
-     "pct": 4.59,
+     "last": 113.76,
+     "chg": 4.94,
+     "pct": 4.54,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -4293,9 +4293,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 14.49,
+    "value": 14.51,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-23T01:15:00+00:00",
+    "obs_ts": "2026-10-23T01:20:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -4761,10 +4761,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.40007,
+    "mid": 1.4001,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-22T21:27:00-04:00",
+    "ts": "2026-10-22T21:29:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -5862,28 +5862,28 @@
     ],
     [
      "2026-10-23T01:25+00:00",
-     1.40007
+     1.4001
     ]
    ]
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-22T21:27:37-04:00",
+   "updated_at": "2026-10-22T21:29:46-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-22T21:27:00-04:00",
+    "fx_spot": "2026-10-22T21:29:00-04:00",
     "fx_closes": "2026-10-22T16:30:00-04:00",
     "yields": "2026-10-21T17:00:00-04:00",
     "policy": "2026-10-21T07:35:00-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-13T15:30:00-04:00",
     "cftc_grains": "2026-10-13T15:30:00-04:00",
-    "energy": "2026-10-22T21:15:00-04:00",
-    "crosses": "2026-10-22T21:15:00-04:00",
+    "energy": "2026-10-22T21:20:00-04:00",
+    "crosses": "2026-10-22T21:20:00-04:00",
     "grains_settle": "2026-10-22T14:20:00-04:00",
-    "grains_quote": "2026-10-22T21:15:00-04:00",
+    "grains_quote": "2026-10-22T21:20:00-04:00",
     "options": "2026-10-22T17:30:00-04:00",
-    "news": "2026-10-22T21:27:37-04:00",
+    "news": "2026-10-22T21:29:46-04:00",
     "calendar": "2026-10-21T07:05:00-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-22T19:36:35-04:00",
@@ -5907,20 +5907,19 @@
      "news",
      "releases",
      "macro",
+     "settles",
      "exports"
     ],
     "failed": [
-     "settles",
      "wasde"
     ],
-    "at": "2026-10-22T21:27:37-04:00"
+    "at": "2026-10-22T21:29:46-04:00"
    },
    "releases_checked": "2026-10-22T21:27:37-04:00",
    "macro_checked": "2026-10-22T19:36:35-04:00",
    "exports_checked": "2026-10-22T21:27:37-04:00",
    "last_errors": {
-    "settles": "RuntimeError: ZCZ26: source differs from verified settles by up to 0.0150 — not used",
-    "wasde": "RuntimeError: corn new: PSD Area Planted None vs stored 96.8 — mismatch, not used"
+    "wasde": "RuntimeError: corn new 2026: PSD Area Planted None vs stored 96.8 — not used; PSD lines: ['area harvested|(1000 ha)', 'beginning stocks|(1000 mt)', 'domestic consumption|(1000 mt)', 'ending stocks|(1000 mt)', 'exports|(1000 mt)', 'feed dom. consumption|(1000 mt)', 'fsi consumption|(1000 mt)', 'imports|(1000 mt)', 'production|(1000 mt)', 'total distribution|(1000 mt)', 'total supply|(1000 mt)', 'ty exports|(1000 mt)', 'ty imp. from u.s.|(1000 mt)', 'ty imports|(1000 mt)', 'yield|(mt/ha)']"
    }
   },
   "macro": [
@@ -8345,10 +8344,10 @@
     "https://news.google.com/rss/articles/CBMiwAFBVV95cUxQUlVoNmowb3daeXVsTHhFRXhGbnk4Q3gzS1NMSDdOWjJoR18xY0NrTGRadktSYldvR1FlWVVMM3Yxd2N5bFhfWUlTekhaU2Q5dHVwbXNTQUowSGM0T3FhVWNORW9GdGpDMmZYVXQtcXd5cXJZSHFGdDBERFpHdGM5NDcyTl9hU3FhekQ3Z3lreW5YbXZLLWpTY3QxXzg2U2FJSG93M1BnSlFHdlg1MExsYVQ1WDR1dGdoUlhwZlk2WlE?oc=5"
    ],
    [
-    "2026-10-22 18:49 UTC",
-    "www.albertafarmexpress.ca",
+    "2026-10-22 19:12 UTC",
+    "www.producer.com",
     "U.S. Grain/Oilseed Review: Soybeans rebound, little movement for corn, wheat",
-    "https://news.google.com/rss/articles/CBMivgFBVV95cUxQMng0bWh1OWRoYUxCVjgxb0FuZ3F1MHBrSHZaSTU3MFREUEJVWE05amtLNGhSakJxUGw0MEY2SVBlNE1IcmhrSkdnY3AwQUpRQzE0MDA2Y3NzYjhiYkhkTktrUUp4ajdaM0Zpb1RWeU56LXBmVEVGc1Jib0VOTWhhU3l2LWJBSmxhd0g4b0tJcmg1dmRNWTBaS2JIejRnNHB0MGg0QmlhR0tTbVZQSXAwOFhoYlZPUWdIbFIzTll3?oc=5"
+    "https://news.google.com/rss/articles/CBMisgFBVV95cUxQRWFyYW1lWHpTSGJyT2FSNUFQS3Vtd1NmY1Q0Rjk3RG1NTGU1S3o0Y1Y4QUx6SnBMV1RlUE1ZbWZMRkVab1VINTFnUGFjVF9kTUs3azNST25MU0VlNmI5WVRaNERERUdBSWNObDRHcHZsRXFQekRnOV93NG1qN01sNXdJdC1nd1NtMEJsUVpyYy1VVVZVeHRZOW8wMldkNFJSZFpsVXlXd3Zpem95RmEzQU53?oc=5"
    ],
    [
     "2026-10-22 16:57 UTC",
