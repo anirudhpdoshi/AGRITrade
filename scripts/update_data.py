@@ -1194,18 +1194,15 @@ def _fm_components(html):
     for tb in re.findall(r"(?is)<table.*?</table>", html):
         cap = _strip_html(tb[:600])
         mm_ = re.findall(r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})", cap)
-        m = None
-        if mm_:
-            best = max(mm_, key=lambda t: (int(t[1]), MONTHS_FULL.index(t[0])))
-            m = re.search(best[0] + r"\s+" + best[1], cap)
+        best = max(mm_, key=lambda t: (int(t[1]), MONTHS_FULL.index(t[0]))) if mm_ else None
         rows = []
         for tr in re.findall(r"(?is)<tr.*?</tr>", tb):
             cells = [_h.unescape(re.sub(r"<[^>]+>", " ", c)).strip() for c in re.findall(r"(?is)<t[hd][^>]*>(.*?)</t[hd]>", tr)]
             if cells:
                 rows.append(cells)
-        if not m or not any(c and c[0].lower().startswith("budgetary balance") for c in rows):
+        if not best or not any(c and c[0].lower().startswith("budgetary balance") for c in rows):
             continue
-        key = f"{m.group(2)}-{MONTHS_FULL.index(m.group(1)) + 1:02d}"
+        key = f"{best[1]}-{MONTHS_FULL.index(best[0]) + 1:02d}"
         rec = {}
         for c in rows:
             lab = re.sub(r"\s+", " ", c[0]).lower()
