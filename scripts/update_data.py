@@ -605,7 +605,7 @@ def ca_retail(D, N):
     """Canada retail trade (StatCan 20-10-0056-01, seasonally adjusted): total and ex motor vehicle & parts dealers."""
     meta = D["meta"]
     last = meta.get("ca_retail_checked")
-    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=6):
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=1):
         print("  checked <6h ago — skipping")
         return False
     acc, dims = {}, {"naics": set(), "adj": set()}
