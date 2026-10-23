@@ -859,7 +859,7 @@ def wasde(D, N):
 
 # ------------------------------------------------------------------ Canada / Ontario (Statistics Canada)
 SC_CROP = {"corn": r"^corn for grain", "soybeans": r"^soybeans?$|^soybeans? \[", "wheat": r"^wheat, all"}
-SC_PRICE = {"corn": r"^corn", "soybeans": r"^soybean", "wheat": r"^wheat(?!.*durum)"}
+SC_PRICE = {"corn": r"^corn", "soybeans": r"^soybean", "wheat": r"^(wheat|winter wheat)"}
 SC_GEOS = ("Ontario", "Canada")
 
 
@@ -908,8 +908,7 @@ def canada(D, N):
                         acc.setdefault(k, {}).setdefault(geo, {}).setdefault(disp, {})[row["REF_DATE"][:4]] = v
         MEAS = {"seeded_ac": r"^seeded area \(acres", "harv_ac": r"^harvested area \(acres", "seeded_ha": r"^seeded area \(hectares",
                 "harv_ha": r"^harvested area \(hectares", "yield_bu": r"^average yield \(bushels", "yield_kg": r"^average yield \(kilograms",
-                "prod_bu": r"^production \(bushels", "prod_t": r"^production \(metric", "price_t": r"^average farm price \(dollars per tonne",
-                "value": r"^total farm value"}
+                "prod_bu": r"^production \(bushels", "prod_t": r"^production \(metric", "price_t": r"farm price", "value": r"farm value"}
         for k, geos in acc.items():
             for geo, disps in geos.items():
                 years = sorted({y for d in disps.values() for y in d})[-16:]
@@ -932,7 +931,10 @@ def canada(D, N):
             prod = (row.get("Farm products") or "").strip()
             seen["prices"].add(prod)
             for k, pat in SC_PRICE.items():
-                if re.search(pat, prod.lower()) and "dollars per metric tonne" in (row.get("UOM") or "").lower():
+                pl = prod.lower()
+                if k == "wheat" and "durum" in pl and "except durum" not in pl:
+                    continue   # durum is a western crop; Ontario wheat is "Wheat (except durum wheat)"
+                if re.search(pat, pl) and "dollars per metric tonne" in (row.get("UOM") or "").lower():
                     v = _num(row.get("VALUE"))
                     if v is not None:
                         pr.setdefault(k, {}).setdefault(geo, {}).setdefault(prod, {})[row["REF_DATE"][:7]] = v
@@ -968,6 +970,8 @@ def canada(D, N):
             raise RuntimeError("no matching stocks")
     except Exception as e:
         errs.append(f"32100007: {e} | crops: {sorted(seen['stocks'])[:30]} | kinds: {sorted(seen['stock_kinds'])[:20]}")
+    meta["canada_dims"] = {"disp": sorted(seen["disp"])[:30], "prices_on": sorted(
+        p for p in seen["prices"] if re.search(r"wheat|corn|soy", p.lower()))[:30]}
     if errs:
         meta["canada_errors"] = errs
     else:

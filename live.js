@@ -22,7 +22,7 @@
   var CADENCE = {
     fx_spot: 15, grains_quote: 30, energy: 120, news: 240,
     crosses: 1440, fx_closes: 1440, yields: 1440, policy: 1440, sentiment: 1440,
-    options: 1440, grains_settle: 1440, calendar: 10080, releases: 46080, macro: 240, cftc_fx: 10080, cftc_grains: 10080
+    options: 1440, grains_settle: 1440, calendar: 10080, releases: 46080, macro: 240, cftc_fx: 10080, cftc_grains: 10080, canada: 2880
   };
 
   /* ------------------------------------------------------------------ utils */

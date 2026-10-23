@@ -257,6 +257,9 @@ table.sd-tbl td,table.sd-tbl th{padding:6px 10px}
 table.sd-tbl tr.sd-key td{background:rgba(56,182,201,.05)}
 table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .tile-head .toggle+.toggle{margin-left:6px}
+.tbl-scroll{overflow-x:auto}
+.dash-card .kpi-spark{display:block;width:100%;height:26px;margin-top:8px}
+.tile-head{flex-wrap:wrap;row-gap:6px}
 table.dest-tbl{font-size:13px}
 .dest-map{margin-top:8px}
 .map-wrap{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:10px;align-items:center}
@@ -1409,6 +1412,7 @@ function grainContext(key){
   if(w){ ['new','old'].forEach(function(cr){ L.push('WASDE '+w.report+' vs '+w.prior_report+' '+w[cr].my+': '+w[cr].rows.map(function(r){ return r[0]+' '+(r[1]==null?'-':r[1])+'->'+(r[2]==null?'-':r[2]); }).join('; ')); }); }
   L.push('Export sales last 10 weeks (MT, week ending: net sales): '+E.weeks.map(function(x){ return x[0].slice(5)+':'+x[2]+(x[3]!=null?' [est '+x[3]+'-'+x[4]+']':''); }).join(', '));
   if(ds){ L.push('Top destinations w/e '+ds.week+' (net / prior wk / MY commitment): '+ds.top_week.slice(0,6).map(function(r){ return r.country+' '+r.net+'/'+r.prev+'/'+r.commit; }).join('; ')); L.push('Total MY commitments '+ds.total.commit+' MT'); }
+  var CA=canadaContext(key); if(CA) L.push(CA);
   L.push('Upcoming: '+usdaEvents(key,Date.now(),21).filter(function(e){ return e.t>Date.now(); }).slice(0,6).map(function(e){ return e.label+' '+etLabel(e.t,true); }).join('; '));
   return L.join('\n');
 }
@@ -1444,7 +1448,115 @@ function askClaude(scope){
 function grainDashboardHTML(key){
   return '<div class="tile wide dash-head"><h2>'+GMETA[key].name+' KPI dashboard <span class="h2note">— countdown, balance sheet, export pace</span></h2>'+
     '<div class="dash-grid">'+grainHeroHTML(key)+grainBalanceHTML(key)+grainPaceHTML(key)+'</div></div>'+
-    wasdeTableHTML(key)+destTileHTML(key);
+    wasdeTableHTML(key)+destTileHTML(key)+canadaTileHTML(key);
+}
+
+/* ================= CANADA · ONTARIO (Statistics Canada) ================= */
+var SC_LINKS={annual:["32-10-0359-01","3210035901","Estimated areas, yield, production, average farm price and total farm value of principal field crops"],
+  prices:["32-10-0077-01","3210007701","Monthly average farm prices for crops"],
+  stocks:["32-10-0007-01","3210000701","Stocks of principal field crops at March 31, July 31 and December 31"]};
+function scLink(k){ var L=SC_LINKS[k]; return '<a href="https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid='+L[1]+'" target="_blank" rel="noopener" title="'+esc(L[2])+'">StatCan '+L[0]+'</a>'; }
+function caState(key){ var s=dstate(key); if(!s.ca_geo){ s.ca_geo='Ontario'; s.ca_view='avg'; s.ca_unit='imp'; } return s; }
+function caAvg(arr, from, to){ var v=arr.slice(Math.max(0,from), to).filter(function(x){ return x!=null; }); return v.length?v.reduce(function(a,b){return a+b;},0)/v.length:null; }
+/* each measure: label, getter(annual,i) in display units for imperial/metric, decimals */
+function caMeasures(key, unit){
+  var bpm=BU_PER_MT[key], imp=unit==='imp';
+  function col(a,f){ return a[f]||[]; }
+  return [
+    {l:'Seeded area', u:imp?'k acres':'k ha', d:0, v:function(a){ return col(a,imp?'seeded_ac':'seeded_ha').map(function(x){ return x==null?null:x/1000; }); }},
+    {l:'Harvested area', u:imp?'k acres':'k ha', d:0, v:function(a){ return col(a,imp?'harv_ac':'harv_ha').map(function(x){ return x==null?null:x/1000; }); }},
+    {l:'Yield', u:imp?'bu/ac':'t/ha', d:imp?1:2, key:true, v:function(a){ return imp?col(a,'yield_bu'):col(a,'yield_kg').map(function(x){ return x==null?null:x/1000; }); }},
+    {l:'Production', u:imp?'mil bu':'Mt', d:imp?1:2, key:true, v:function(a){ return imp?col(a,'prod_bu').map(function(x){ return x==null?null:x/1000; }):col(a,'prod_t').map(function(x){ return x==null?null:x/1e6; }); }},
+    {l:'Avg farm price', u:imp?'C$/bu':'C$/t', d:2, v:function(a){ return col(a,'price_t').map(function(x){ return x==null?null:(imp?x/bpm:x); }); }},
+    {l:'Total farm value', u:'C$ mil', d:0, v:function(a){ return col(a,'value').map(function(x){ return x==null?null:x/1000; }); }}
+  ];
+}
+function caPct(a,b){ return (a==null||b==null||!b)?null:(a/b-1)*100; }
+function caPctHTML(p){ return p==null?'<span class="neu">—</span>':'<span class="'+cls(p)+'">'+sgn(p,1,'%')+'</span>'; }
+function caFmt(v,d){ return v==null?'—':fmt(v,d); }
+function caLatestIdx(arr){ for(var i=arr.length-1;i>=0;i--) if(arr[i]!=null) return i; return -1; }
+function caPriceSeries(C, geo){ var p=C.prices&&(C.prices[geo]||C.prices.Canada); return p&&p.series&&p.series.length?p:null; }
+function canadaCardsHTML(key){
+  var C=DATA.canada&&DATA.canada[key], st=caState(key), A=C&&C.annual&&C.annual[st.ca_geo]; if(!A) return '';
+  var M=caMeasures(key, st.ca_unit), yrs=A.years, prod=M[3].v(A), yl=M[2].v(A), area=M[0].v(A);
+  var i=caLatestIdx(prod), y=yrs[i], est=(+y>=new Date().getFullYear());
+  var p5=caAvg(prod,i-5,i), y5=caAvg(yl,i-5,i), a5=caAvg(area,i-5,i);
+  var out='<div class="dash-card"><div class="dk">'+esc(st.ca_geo)+' production · '+esc(y)+(est?' est.':'')+'</div>'+
+    '<div class="dv">'+caFmt(prod[i],M[3].d)+'<small> '+M[3].u+'</small></div>'+
+    '<div class="dsub">'+caPctHTML(caPct(prod[i],prod[i-1]))+' vs '+esc(yrs[i-1])+' · '+caPctHTML(caPct(prod[i],p5))+' vs 5-yr avg</div>'+
+    '<div class="mini-kv"><span>Yield</span><b>'+caFmt(yl[i],M[2].d)+' '+M[2].u+'</b> '+caPctHTML(caPct(yl[i],y5))+' vs 5-yr</div>'+
+    '<div class="mini-kv"><span>Seeded</span><b>'+caFmt(area[i],0)+' '+M[0].u+'</b> '+caPctHTML(caPct(area[i],a5))+' vs 5-yr</div>'+
+    sparkPath(prod.slice(Math.max(0,i-9),i+1).filter(function(x){return x!=null;}),160,26)+'</div>';
+  /* monthly farm price + futures in CAD */
+  var P=caPriceSeries(C, st.ca_geo), bpm=BU_PER_MT[key], imp=st.ca_unit==='imp', ufac=imp?1/bpm:1, uu=imp?'C$/bu':'C$/t';
+  var g=DATA.grains[key], fut=g&&g.fan&&+g.fan.intraday[0], fx=DATA.fx&&DATA.fx.feed&&+DATA.fx.feed.mid;
+  var futCad=(fut&&fx)?fut*bpm*fx:null;
+  out+='<div class="dash-card"><div class="dk">Farm price'+(P?' · '+esc(P.series[P.series.length-1][0])+(P!==(C.prices||{})[st.ca_geo]?' (Canada)':''):'')+'</div>';
+  if(P){ var s=P.series, L=s[s.length-1][1], prev=s.length>1?s[s.length-2][1]:null, yago=s.length>12?s[s.length-13][1]:null;
+    out+='<div class="dv">'+fmt(L*ufac,2)+'<small> '+uu+'</small></div>'+
+      '<div class="dsub">'+caPctHTML(caPct(L,prev))+' m/m · '+caPctHTML(caPct(L,yago))+' y/y</div>';
+    if(futCad) out+='<div class="mini-kv"><span>CBOT in C$</span><b>'+fmt(futCad*ufac,2)+'</b> '+esc(GMETA[key].contract)+' @ '+fmt(fx,4)+'</div>'+
+      '<div class="mini-kv"><span>Farm − futures</span><b class="'+cls(L-futCad)+'">'+sgn((L-futCad)*ufac,2)+'</b> indicative</div>';
+    out+=sparkPath(s.slice(-24).map(function(x){return x[1];}),160,26);
+  } else {
+    out+='<div class="dv">—</div><div class="dsub">StatCan has not published a monthly '+esc(GMETA[key].name.toLowerCase())+' price for '+esc(st.ca_geo)+'</div>';
+    if(futCad) out+='<div class="mini-kv"><span>CBOT in C$</span><b>'+fmt(futCad*ufac,2)+' '+uu+'</b> @ '+fmt(fx,4)+'</div>';
+  }
+  out+='</div>';
+  /* stocks */
+  var S=C.stocks&&C.stocks[st.ca_geo];
+  out+='<div class="dash-card"><div class="dk">'+esc(st.ca_geo)+' stocks</div>';
+  if(S&&S.length){ var last=S[S.length-1], tot=function(o){ return o['Farm and commercial, total']!=null?o['Farm and commercial, total']:o['Farm stocks']; };
+    var conv=function(kt){ return imp?kt*1000*bpm/1e6:kt/1000; }, su=imp?'mil bu':'Mt';
+    var same=S.filter(function(x){ return x[0].slice(5)===last[0].slice(5); }), ly=same.length>1?same[same.length-2]:null;
+    out+='<div class="dv">'+fmt(conv(tot(last[1])),imp?1:2)+'<small> '+su+' · '+esc(last[0])+'</small></div>'+
+      '<div class="dsub">'+(ly?caPctHTML(caPct(tot(last[1]),tot(ly[1])))+' vs '+esc(ly[0]):'')+(last[1]['Farm and commercial, total']!=null?' · farm + commercial':' · farm stocks only (commercial not split by province)')+'</div>';
+    if(last[1]['Farm stocks']!=null&&last[1]['Commercial stocks']!=null) out+='<div class="mini-kv"><span>Farm</span><b>'+fmt(conv(last[1]['Farm stocks']),imp?1:2)+'</b> Commercial <b>'+fmt(conv(last[1]['Commercial stocks']),imp?1:2)+'</b></div>';
+    var pv=S[S.length-2]; if(pv) out+='<div class="mini-kv"><span>Prior ('+esc(pv[0])+')</span><b>'+fmt(conv(tot(pv[1])),imp?1:2)+'</b> '+su+'</div>';
+  } else out+='<div class="dv">—</div><div class="dsub">No stocks series</div>';
+  return out+'</div>';
+}
+function canadaTableHTML(key){
+  var C=DATA.canada&&DATA.canada[key], st=caState(key), A=C&&C.annual&&C.annual[st.ca_geo]; if(!A) return '';
+  var M=caMeasures(key, st.ca_unit).map(function(m){ m.s=m.v(A); return m; }).filter(function(m){ return m.s.some(function(x){ return x!=null; }); });
+  var yrs=A.years, i=caLatestIdx(M[0].s);
+  M.forEach(function(m){ var j=caLatestIdx(m.s); if(j>i) i=j; });
+  var html;
+  if(st.ca_view==='avg'){
+    html='<table class="sd-tbl"><thead><tr><th>Measure</th><th>'+esc(yrs[i])+'</th><th>'+esc(yrs[i-1])+'</th><th>5-yr avg<br><small>'+esc(yrs[Math.max(0,i-5)])+'–'+esc(yrs[i-1])+'</small></th><th>10-yr avg<br><small>'+esc(yrs[Math.max(0,i-10)])+'–'+esc(yrs[i-1])+'</small></th><th>vs 5-yr</th><th>vs 10-yr</th></tr></thead><tbody>'+
+      M.map(function(m){ var a5=caAvg(m.s,i-5,i), a10=caAvg(m.s,i-10,i);
+        return '<tr'+(m.key?' class="sd-key"':'')+'><td class="lbl" data-l="">'+esc(m.l)+' <small class="h2note">'+m.u+'</small></td><td data-l="'+esc(yrs[i])+'"><b>'+caFmt(m.s[i],m.d)+'</b></td><td data-l="'+esc(yrs[i-1])+'">'+caFmt(m.s[i-1],m.d)+'</td><td data-l="5-yr avg">'+caFmt(a5,m.d)+'</td><td data-l="10-yr avg">'+caFmt(a10,m.d)+'</td><td data-l="vs 5-yr">'+caPctHTML(caPct(m.s[i],a5))+'</td><td data-l="vs 10-yr">'+caPctHTML(caPct(m.s[i],a10))+'</td></tr>'; }).join('')+'</tbody></table>';
+  } else {
+    var rows=[]; for(var j=i;j>=Math.max(0,i-9);j--) rows.push(j);
+    html='<div class="tbl-scroll"><table class="sd-tbl"><thead><tr><th>Year</th>'+M.map(function(m){ return '<th>'+esc(m.l)+'<br><small>'+m.u+'</small></th>'; }).join('')+'</tr></thead><tbody>'+
+      rows.map(function(j){ return '<tr><td class="lbl" data-l="">'+esc(yrs[j])+'</td>'+M.map(function(m){ var a5=caAvg(m.s,j-5,j), p=caPct(m.s[j],a5);
+        return '<td data-l="'+esc(m.l)+'">'+(m.key?'<b>':'')+caFmt(m.s[j],m.d)+(m.key?'</b>':'')+(m.key&&p!=null?' <small class="'+cls(Math.round(p))+'">'+(Math.round(p)?sgn(Math.round(p),0,'%'):'0%')+'</small>':'')+'</td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table></div>';
+  }
+  return html;
+}
+function canadaTileHTML(key){
+  var C=DATA.canada&&DATA.canada[key]; if(!C||!C.annual) return '';
+  var st=caState(key), b=function(k,v,lab){ return '<button data-dash="'+key+'" data-k="'+k+'" data-v="'+v+'" aria-pressed="'+(st[k]===v)+'">'+lab+'</button>'; };
+  var y=new Date().getFullYear(), A=C.annual[st.ca_geo], latest=A&&A.years[A.years.length-1];
+  return '<div class="tile wide" data-src="canada"><div class="tile-head"><h2>'+(st.ca_geo==='Canada'?'Canada':'Canada · Ontario')+' '+GMETA[key].name.toLowerCase()+' <span class="h2note">— Statistics Canada official estimates'+(st.ca_view==='years'?' · last 10 crop years':'')+'</span></h2>'+
+    '<span class="toggle" role="group">'+b('ca_geo','Ontario','ONTARIO')+b('ca_geo','Canada','CANADA')+'</span>'+
+    '<span class="toggle" role="group">'+b('ca_view','avg','HISTORICAL AVERAGES')+b('ca_view','years','YEAR BY YEAR')+'</span>'+
+    '<span class="toggle" role="group">'+b('ca_unit','imp','BU · AC')+b('ca_unit','met','T · HA')+'</span></div>'+
+    '<div class="dash-grid">'+canadaCardsHTML(key)+'</div>'+
+    '<div style="margin-top:10px">'+canadaTableHTML(key)+'</div>'+
+    '<div class="stamp">Sources: '+scLink('annual')+' (area, yield, production, farm price/value) · '+scLink('prices')+' (monthly farm price) · '+scLink('stocks')+' (stocks)'+
+    (latest&&+latest>=y?' · '+esc(latest)+' figures are StatCan in-season estimates; the final Field Crop Survey lands in early December':'')+
+    ' · averages are the 5/10 crop years before the latest · "Farm − futures" compares the latest monthly farm price with today’s CBOT quote converted at live USD/CAD — indicative only, not a cash bid · checked '+esc(asOf('canada',true))+'</div></div>';
+}
+function canadaContext(key){
+  var C=DATA.canada&&DATA.canada[key]; if(!C||!C.annual) return '';
+  var L=[];
+  ['Ontario','Canada'].forEach(function(geo){ var A=C.annual[geo]; if(!A) return; var n=A.years.length, s=Math.max(0,n-11);
+    L.push('StatCan '+geo+' '+key+' by year '+A.years.slice(s).join('/')+': yield bu/ac '+A.yield_bu.slice(s).join('/')+'; production thousand bu '+A.prod_bu.slice(s).join('/')+'; seeded acres '+A.seeded_ac.slice(s).join('/'));
+    var P=C.prices&&C.prices[geo]; if(P) L.push('StatCan '+geo+' monthly farm price C$/t ('+P.product+'): '+P.series.slice(-13).map(function(x){ return x[0]+' '+x[1]; }).join(', '));
+    var S=C.stocks&&C.stocks[geo]; if(S) L.push('StatCan '+geo+' stocks (thousand t): '+S.slice(-4).map(function(x){ return x[0]+' '+JSON.stringify(x[1]); }).join('; '));
+  });
+  return L.join('\n');
 }
 
 /* ================= USD/CAD LIVE FEED MONITOR ================= */
