@@ -318,8 +318,8 @@
 
   /* ------------------------------------------------------ fast lane: live.json every 60 s */
   var lastLive = null, liveEtag = "";
-  var LIVE_API = "https://api.github.com/repos/" + (CFG.liveRepo || "anirudhpdoshi/usd-cad-desk-live") + "/contents/live.json?ref=live";
-  var LIVE_RAW = "https://raw.githubusercontent.com/" + (CFG.liveRepo || "anirudhpdoshi/usd-cad-desk-live") + "/live/live.json";
+  var LIVE_API = "https://api.github.com/repos/" + (CFG.liveRepo || "anirudhpdoshi/AGRITrade") + "/contents/live.json?ref=live";
+  var LIVE_RAW = "https://raw.githubusercontent.com/" + (CFG.liveRepo || "anirudhpdoshi/AGRITrade") + "/live/live.json";
   function newer(a, b) { return a && (!b || new Date(a) > new Date(b)); }
   function mergeLive(L) {
     var A = DATA.meta.asof, changed = false;

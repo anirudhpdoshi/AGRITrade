@@ -36,7 +36,7 @@ import requests
 ROOT = Path(__file__).resolve().parent.parent
 DATA_PATH = ROOT / "data.json"
 TOR = ZoneInfo("America/Toronto")
-UA = {"User-Agent": "usd-cad-desk-live/1.0 (+https://github.com/anirudhpdoshi/usd-cad-desk-live)"}
+UA = {"User-Agent": "agritrade-desk/1.0 (+https://github.com/anirudhpdoshi/AGRITrade)"}
 NOW = datetime.now(timezone.utc)
 
 

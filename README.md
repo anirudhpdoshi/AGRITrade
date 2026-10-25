@@ -1,6 +1,6 @@
 # Grain & USD/CAD Desk — live
 
-Live page: https://anirudhpdoshi.github.io/usd-cad-desk-live/
+Live page: https://anirudhpdoshi.github.io/AGRITrade/
 
 Four tabs (Corn ZCZ26, Wheat ZWZ26, Soybeans ZSX26, USD/CAD) rendered from one static `index.html`, with a live layer on top.
 
