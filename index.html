@@ -545,6 +545,8 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
   function touch(){ if(!window.DESK_LOCKED) ss(ACT, String(Date.now())); }
   function lock(reason){
     window.DESK_LOCKED=true; ss(KEY,null); ss(ACT,null);
+    if(window.LIVE_CONFIG) window.LIVE_CONFIG.finnhubKey="";        /* wipe the unsealed stream key from memory */
+    try{ window.dispatchEvent(new Event("desk:lock")); }catch(e){}
     document.body.classList.add("locked"); ov.style.display="flex"; lk.style.display="none";
     msg.textContent = reason==="idle" ? "Locked after 20 minutes without activity. Enter the passcode to continue." : "Enter the owner passcode to open the desk.";
     inp.value=""; setTimeout(function(){ try{ inp.focus(); }catch(e){} }, 50);
@@ -554,6 +556,19 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
     document.body.classList.remove("locked"); ov.style.display="none"; lk.style.display="block"; err.textContent="";
     try{ window.dispatchEvent(new Event("desk:unlock")); }catch(e){}
   }
+  /* unseal browser keys (config.js, written only by the publishing job) with the passcode just entered */
+  async function unseal(pw){
+    var V=window.DESK_VAULT; if(!V||V.v!==1||!crypto.subtle) return;
+    try{
+      var d=function(s){ return Uint8Array.from(atob(s), function(c){ return c.charCodeAt(0); }); };
+      var base=await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+      var k=await crypto.subtle.deriveKey({name:"PBKDF2", salt:d(V.salt), iterations:V.iter, hash:"SHA-256"}, base, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+      var pt=await crypto.subtle.decrypt({name:"AES-GCM", iv:d(V.iv), additionalData:new TextEncoder().encode("desk-vault-v1")}, k, d(V.ct));
+      var o=JSON.parse(new TextDecoder().decode(pt));
+      if(window.LIVE_CONFIG && o.finnhub) window.LIVE_CONFIG.finnhubKey=o.finnhub;
+      window.dispatchEvent(new Event("desk:keys"));
+    }catch(e){ /* wrong vault / tampered: stay on the keyless feeds */ }
+  }
   async function sha(t){ var b=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)); return Array.from(new Uint8Array(b)).map(function(x){ return x.toString(16).padStart(2,"0"); }).join(""); }
   document.getElementById("gateBox").addEventListener("submit", async function(e){
     e.preventDefault();
@@ -562,7 +577,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
     btn.disabled=true;
     var ok=(await sha(v))===HASH;
     btn.disabled=false;
-    if(ok){ fails=0; unlock(); }
+    if(ok){ fails=0; unlock(); unseal(v); }
     else { fails++; inp.value=""; err.textContent="Incorrect passcode."+(fails>=5?" Locked for 30 s.":""); if(fails>=5){ coolUntil=Date.now()+30000; fails=0; } }
   });
   lk.addEventListener("click", function(){ lock("manual"); });
@@ -3581,7 +3596,7 @@ renderAll();
 /* Live layer config. finnhubKey: free key from finnhub.io enables the streaming
    USD/CAD tick (it is visible in page source — use a free-tier key only).
    Leave blank to use the keyless ~30s reference-rate poll. */
-window.LIVE_CONFIG = { finnhubKey: (window.DESK_KEYS && window.DESK_KEYS.finnhub) || "", dataPollSec: 300, refPollSec: 30, livePollSec: 60, liveRepo: "anirudhpdoshi/usd-cad-desk-live" };
+window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePollSec: 60, liveRepo: "anirudhpdoshi/usd-cad-desk-live" };
 </script>
 <script>(function(){var d=document.createElement("script");d.src="direct.js?v="+Date.now();document.body.appendChild(d);})();</script>
 <script>(function(){var m=document.createElement("script");m.src="motion.js?v="+Date.now();document.body.appendChild(m);})();</script>

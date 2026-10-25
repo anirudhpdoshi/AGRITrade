@@ -1,6 +1,6 @@
 name: Deploy site
-# Publishes the desk to GitHub Pages and injects browser keys from repository secrets at publish time,
-# so they never live in the code or its git history. Requires Settings -> Pages -> Source: "GitHub Actions".
+# Publishes the desk to GitHub Pages. Browser keys come from repository secrets and are published only
+# sealed with the desk passcode (scripts/build_site.py) - never in plain text, never in the code or git history. Requires Settings -> Pages -> Source: "GitHub Actions".
 on:
   push:
     branches: [main]
@@ -24,21 +24,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { ref: main }
-      - name: Build site and inject keys
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Build site (keys sealed, never plain text)
         env:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          DESK_PASSCODE: ${{ secrets.DESK_PASSCODE }}
+          ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
         run: |
-          mkdir -p _site
-          cp index.html live.js direct.js motion.js fwd.js data.json _site/
-          [ -f README.md ] && cp README.md _site/ || true
-          python3 - <<'PY'
-          import json, os, re
-          k = os.environ.get("FINNHUB_API_KEY", "").strip()
-          if k and not re.fullmatch(r"[A-Za-z0-9_-]{8,80}", k):
-              raise SystemExit("FINNHUB_API_KEY has an unexpected format - not injected")
-          open("_site/config.js", "w").write("window.DESK_KEYS=" + json.dumps({"finnhub": k}) + ";\n")
-          print("Finnhub key:", "present (" + str(len(k)) + " chars)" if k else "MISSING - add the FINNHUB_API_KEY secret")
-          PY
+          pip install -q cryptography
+          python scripts/build_site.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: { path: _site }

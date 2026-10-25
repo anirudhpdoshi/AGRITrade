@@ -274,7 +274,7 @@
         if (m.type === "trade" && m.data && m.data.length) onTick(+m.data[m.data.length - 1].p, "Finnhub/OANDA stream");
       } catch (e) {}
     };
-    ws.onclose = function () { ws = null; setTimeout(connectStream, wsBackoff); wsBackoff = Math.min(wsBackoff * 2, 60000); };
+    ws.onclose = function () { ws = null; if (CFG.finnhubKey && !window.DESK_LOCKED) { setTimeout(connectStream, wsBackoff); wsBackoff = Math.min(wsBackoff * 2, 60000); } };
     ws.onerror = function () { try { ws.close(); } catch (e) {} };
   }
 
@@ -412,6 +412,8 @@
     pollRef();
   }
   window.addEventListener("desk:unlock", onUnlock);
+  window.addEventListener("desk:keys", function () { connectStream(); });            /* key unsealed after the passcode */
+  window.addEventListener("desk:lock", function () { if (ws) { try { ws.close(); } catch (e) {} ws = null; } });
   if (window.DESK_LOCKED === false) onUnlock();      // live.js arrived after an unlock
 
   window.DESK_LIVE = { onTick: onTick, pollData: pollData, pollLive: pollLive, applyLive: applyLive, toast: toast, feedState: feedState }; // handy for testing in the console
