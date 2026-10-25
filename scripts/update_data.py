@@ -199,7 +199,7 @@ def yields(D, N):
         ids = {"1M": "TB.CDN.30D.MID", "3M": "TB.CDN.90D.MID", "6M": "TB.CDN.180D.MID", "1Y": "TB.CDN.1Y.MID"}
         obs = valet("observations/" + ",".join(ids.values()) + "/json?recent=20")["observations"]
         bills, bdates = {}, {}
-        for o in obs:   # each tenor's latest print (the 1Y bill is not quoted every day)
+        for o in sorted(obs, key=lambda o: o["d"]):   # oldest -> newest, so each tenor ends on its latest print (1Y bill is not quoted daily)
             for t, c in ids.items():
                 v = _num((o.get(c) or {}).get("v"))
                 if v is not None and 0 <= v < 15:
