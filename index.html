@@ -3576,11 +3576,12 @@ document.addEventListener('click', function(ev){
 function renderAll(){ renderGrain('corn'); renderGrain('wheat'); renderGrain('soybeans'); renderFX(); drawDestMaps(); if(typeof paintAwaiting==='function') paintAwaiting(); }
 renderAll();
 </script>
+<script src="config.js"></script>
 <script>
 /* Live layer config. finnhubKey: free key from finnhub.io enables the streaming
    USD/CAD tick (it is visible in page source — use a free-tier key only).
    Leave blank to use the keyless ~30s reference-rate poll. */
-window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePollSec: 60, liveRepo: "anirudhpdoshi/usd-cad-desk-live" };
+window.LIVE_CONFIG = { finnhubKey: (window.DESK_KEYS && window.DESK_KEYS.finnhub) || "", dataPollSec: 300, refPollSec: 30, livePollSec: 60, liveRepo: "anirudhpdoshi/usd-cad-desk-live" };
 </script>
 <script>(function(){var d=document.createElement("script");d.src="direct.js?v="+Date.now();document.body.appendChild(d);})();</script>
 <script>(function(){var m=document.createElement("script");m.src="motion.js?v="+Date.now();document.body.appendChild(m);})();</script>
