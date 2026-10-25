@@ -213,16 +213,10 @@
 
   function paintSpot(p, flash) {
     var fx = DATA.fx, big = $("fx-spot-big");
-    if (big) {
-      big.textContent = fmtN(p, 5);
-      if (flash && last !== null && p !== last) {
-        big.classList.remove("flash-up", "flash-dn"); void big.offsetWidth;
-        big.classList.add(p > last ? "flash-up" : "flash-dn");
-      }
-    }
+    if (big) big.textContent = fmtN(p, 5);
     var chg = (p / fx.spot.ref - 1) * 100, c = $("fx-spot-chg");
     var ks = $("kpi-spot"), kc = $("kpi-spot-chg");
-    if (ks) { ks.textContent = fmtN(p, 5); if (flash && last !== null && p !== last) { ks.classList.remove("flash-up", "flash-dn"); void ks.offsetWidth; ks.classList.add(p > last ? "flash-up" : "flash-dn"); } }
+    if (ks) ks.textContent = fmtN(p, 5);
     if (kc) { kc.textContent = (chg > 0 ? "+" : chg < 0 ? "\u2212" : "") + fmtN(Math.abs(chg), 2) + "%"; kc.className = chg > 0 ? "up" : chg < 0 ? "dn" : "neu"; }
     if (c) { c.textContent = (chg > 0 ? "+" : chg < 0 ? "−" : "") + fmtN(Math.abs(chg), 3) + "%"; c.className = chg > 0 ? "up" : chg < 0 ? "dn" : "neu"; }
     document.querySelectorAll('[data-live="usdcad"]').forEach(function (el) { el.textContent = fmtN(p, 5); });
@@ -246,6 +240,7 @@
       var fs = $("fx-fwd-spot"); if (fs) fs.textContent = "spot " + fmtN(p, 5) + " (live)";
       var lc = $("fx-levelcheck"); if (lc && typeof window.fxLevelCheck === "function") lc.innerHTML = window.fxLevelCheck(p);
     }
+    if (window.MOTION) window.MOTION.scan();   /* flash / roll the changed prices, glide the chart marker */
   }
 
   function onTick(p, source) {

@@ -662,6 +662,16 @@ var NEWSCAT=[
   ['agri','Agri',/corn|wheat|soy|grain|crop|harvest|usda|wasde|farm|cattle|oilseed|canola|planting|fertili|cbot|bushel|ethanol|livestock|hog|barley|oats|feed/i]
 ];
 var NEWSALERT=/surge|plunge|soar|tumble|record|halt|emergency|limit (up|down)|crash|spike|week high|week low|lowest|highest|jump|slump|sink|rall(y|ies)|breaking|warns?|shock|default|downgrade/i;
+var NSEEN=null, NFIRST=false, NANIM={};
+function newsSeen(){ if(NSEEN) return NSEEN; NSEEN={}; try{ var a=JSON.parse(localStorage.getItem('desk.newsSeen2')||'null'); if(a&&typeof a==='object') NSEEN=a; else NFIRST=true; }catch(e){ NFIRST=true; } return NSEEN; }
+var NHOT=/usda|wasde|export sales|crop progress|crop production|weather|drought|frost|freeze|flood|heat ?wave|la ni[ñn]a|el ni[ñn]o|monsoon|harvest delay/i;
+function newsMark(titles){   /* NEW for 10 min after a headline first reaches this browser; slide-in plays once; first visit only seeds */
+  var S=newsSeen(), now=Date.now(), out={};
+  var seed=NFIRST||performance.now()<20000;   /* first 20 s after opening: the page swaps its built-in headlines for the latest file, which is not news */
+  titles.forEach(function(t){ if(!S[t]){ S[t]=seed?1:now; if(!seed) NANIM[t]=1; } out[t]={isNew:S[t]>1&&now-S[t]<600000, anim:!!NANIM[t]}; });
+  return out;
+}
+function newsCommit(){ NFIRST=false; NANIM={}; var S=newsSeen(), k=Object.keys(S); if(k.length>400) k.slice(0,k.length-400).forEach(function(t){ delete S[t]; }); try{ localStorage.setItem('desk.newsSeen2', JSON.stringify(S)); }catch(e){} }
 var NSEL={}; try{ NSEL=JSON.parse(localStorage.getItem('desk.news')||'{}')||{}; }catch(e){}
 function newsPool(key){
   var seen={}, out=[], order=[key].concat(['fx','corn','wheat','soybeans','geo','macro'].filter(function(k){ return k!==key; }));
@@ -691,8 +701,9 @@ function newsBodyHTML(key){
   var lab={fx:'FX',agri:'Agri',geo:'Geo',macro:'Macro',other:'Other'};
   var items=P.filter(function(o){ return sel==='all'||(sel==='alert'?o.alert:o.cat===sel); });
   var lis=(sel==='alert'||sel==='all'?A.map(function(a){ return '<li class="n-desk"><div class="news-meta"><span class="ncat alert">Desk alert</span> computed from the latest CFTC / rates data</div><b>'+esc(a)+'</b></li>'; }):[]).join('')+
-    items.slice(0,sel==='all'?14:20).map(function(o){ var n=o.n;
-      return '<li><div class="news-meta"><span class="ncat '+o.cat+'">'+lab[o.cat]+'</span>'+(o.alert?'<span class="ncat alert">Alert</span>':'')+n[0].slice(5,16)+' UTC · '+esc(n[1].replace(/^www\./,''))+'</div><a href="'+safeUrl(n[3])+'" target="_blank" rel="noopener">'+esc(n[2])+'</a></li>'; }).join('');
+    (function(){ var shown=items.slice(0,sel==='all'?14:20), NEWM=newsMark(shown.map(function(o){ return o.n[2]; })); setTimeout(newsCommit,0);
+    return shown.map(function(o){ var n=o.n, M=NEWM[n[2]]||{}, isNew=M.isNew, hot=M.anim&&NHOT.test(n[2]);
+      return '<li class="'+(M.anim?'n-new':'')+(hot?' n-hot':'')+'"><div class="news-meta">'+(isNew?'<span class="n-newtag">NEW</span>':'')+'<span class="ncat '+o.cat+'">'+lab[o.cat]+'</span>'+(o.alert?'<span class="ncat alert">Alert</span>':'')+n[0].slice(5,16)+' UTC · '+esc(n[1].replace(/^www\./,''))+'</div><a href="'+safeUrl(n[3])+'" target="_blank" rel="noopener">'+esc(n[2])+'</a></li>'; }).join(''); })();
   return chips+'<ul class="news-list">'+(lis||'<li class="news-meta">No headlines in this category right now.</li>')+'</ul>'+
     '<div class="stamp">Headlines pulled '+asOf('news',true)+' · pooled across all desks, de-duplicated and tagged by keyword · publish times UTC · titles link out to the publisher</div>';
 }
@@ -1571,7 +1582,7 @@ function grainKpiHTML(key){
   var E=(DATA.exports&&DATA.exports[key])||EXPORT[key], w=E.weeks[E.weeks.length-1], v=esVerdict(w);
   var spark=sparkPath(g.history.map(function(h){ return h.s; }),120,26);
   return '<div class="tile wide kpi-strip">'+
-    kpi(meta.contract+' (delayed)', '<span class="g-kpi" data-grain="'+key+'">'+money2(q)+'</span>', '<span class="'+cls(chg)+'">'+sgn(chg,2,'%')+'</span> vs settle · '+esc(f.intraday[1]), spark)+
+    kpi(meta.contract+' (delayed)', '<span class="g-kpi" data-grain="'+key+'" data-tick="kpi-'+key+'" data-roll>'+money2(q)+'</span>', '<span class="'+cls(chg)+'">'+sgn(chg,2,'%')+'</span> vs settle · '+esc(f.intraday[1]), spark)+
     kpi('Settle · '+fmtShortDate(f.settle_date), money2(f.anchor), 'z '+f.z+' · MA20 $'+f.ma20)+
     kpi('Options ('+meta.chainNear+')', 'P/C '+f.pcr, 'P $'+fmt(f.put_wall[0],2)+' · C $'+fmt(f.call_wall[0],2))+
     kpi('Managed money', sgn(Math.round(last.net/1000),0)+'<small>k</small>', '<span class="'+cls(last.net-prev.net)+'">'+sgn(Math.round((last.net-prev.net)/100)/10,1)+'k</span> w/w · '+fmtShortDate(last.date))+
@@ -2506,7 +2517,7 @@ function tradeFiscalHTML(){
 function liveFxHTML(){
   var fx=DATA.fx, p=+fx.feed.mid, chg=(p/fx.spot.ref-1)*100, up=chg>=0;
   return '<div class="tile wide live-fx" data-src="fx_spot"><div class="tile-head"><h2>USD/CAD live <span class="h2note">— moves with every tick · colour = vs prior close (green above, red below) · arrow on the price tag = direction of the last tick</span></h2></div>'+
-    '<div class="live-fx-row"><div class="live-px"><span data-live="usdcad">'+fmt(p,5)+'</span> <span class="live-chg '+(up?'up':'dn')+'" data-live-chg>'+(up?'▲ ':'▼ ')+sgn(chg,2,'%')+'</span><div class="dsub">vs prior close '+fmt(fx.spot.ref,4)+'</div></div>'+
+    '<div class="live-fx-row"><div class="live-px"><span data-live="usdcad" data-tick="usd-live" data-roll>'+fmt(p,5)+'</span> <span class="live-chg '+(up?'up':'dn')+'" data-live-chg>'+(up?'▲ ':'▼ ')+sgn(chg,2,'%')+'</span><div class="dsub">vs prior close '+fmt(fx.spot.ref,4)+'</div></div>'+
     '<div class="live-chart" data-live-chart>'+fxIntradaySVG(fxIntradayPoints())+'</div></div></div>';
 }
 
@@ -2958,8 +2969,8 @@ document.addEventListener('click', function(ev){
 function grainSubnavHTML(key){
   var now=Date.now(), us=usdaEvents(key, now, 120), ca=caEvents(now, 180), all=us.concat(ca).sort(function(a,b){ return a.t-b.t; });
   var geo=dstate(key).fgeo||'us', g=DATA.grains[key], f=g.fan, meta=GMETA[key], L=+f.intraday[0], A=+f.anchor, ch=L-A, fx=+DATA.fx.feed.mid;
-  var live='<span class="sl-pill">'+(isAuto('grains_quote')?'LIVE · DELAYED':'SNAPSHOT')+'</span> <span class="sl-k">'+esc(meta.contract)+'</span> <b>$'+fmt(L,4)+'</b> <span class="'+cls(ch)+'">'+sgn(ch*100,2,'¢')+'</span> vs settle '+fmt(A,4)+
-    ' · <span class="sl-k">C$/t</span> <b>'+fmt(L*BU_PER_MT[key]*fx,2)+'</b> · <span class="sl-k">USD/CAD</span> <b data-live="usdcad">'+fmt(fx,5)+'</b> · <span class="sl-k">quote</span> '+esc(f.intraday[1]||'');
+  var live='<span class="sl-pill">'+(isAuto('grains_quote')?'LIVE · DELAYED':'SNAPSHOT')+'</span> <span class="sl-k">'+esc(meta.contract)+'</span> <b data-tick="strip-'+key+'" data-roll>$'+fmt(L,4)+'</b> <span class="'+cls(ch)+'">'+sgn(ch*100,2,'¢')+'</span> vs settle '+fmt(A,4)+
+    ' · <span class="sl-k">C$/t</span> <b>'+fmt(L*BU_PER_MT[key]*fx,2)+'</b> · <span class="sl-k">USD/CAD</span> <b data-live="usdcad" data-tick="usd-'+key+'" data-roll>'+fmt(fx,5)+'</b> · <span class="sl-k">quote</span> '+esc(f.intraday[1]||'');
   return subnavHTML(key, [
     {id:'overview', label:'Overview', ev:nextOf(all, function(e){ return e.kind==='wasde'||e.kind==='contract'||e.kind==='ca'; })||nextOf(all)},
     {id:'deriv', label:'Derivatives', ev:nextOf(us, function(e){ return e.kind==='contract'||e.kind==='cftc'; })},
@@ -3129,7 +3140,7 @@ function fxKpiHTML(){
   var chg=(fx.feed.mid/fx.spot.ref-1)*100, p=fx.pos, wti=fx.energy[0], ten=R["10Y"];
   var closes=fx.closes.map(function(c){ return c[1]; }), nets=(p.series||[]).map(function(r){ return r.net; });
   return '<div class="tile wide kpi-strip">'+
-    kpi('USD/CAD', '<span id="kpi-spot">'+fmt(fx.feed.mid,5)+'</span>', '<span id="kpi-spot-chg" class="'+cls(chg)+'">'+sgn(chg,2,'%')+'</span> vs '+fmt(fx.spot.ref,4), sparkPath(closes,120,26), 'kpi-spot-card')+
+    kpi('USD/CAD', '<span id="kpi-spot" data-tick="kpi-usdcad" data-roll>'+fmt(fx.feed.mid,5)+'</span>', '<span id="kpi-spot-chg" class="'+cls(chg)+'">'+sgn(chg,2,'%')+'</span> vs '+fmt(fx.spot.ref,4), sparkPath(closes,120,26), 'kpi-spot-card')+
     kpi('10Y US–CA', fmt(ten.sp,1)+'<small> bps</small>', '<span class="'+cls(ten.dod)+'">'+sgn(ten.dod,1)+'</span> d/d · <span class="'+cls(ten.wow)+'">'+sgn(ten.wow,1)+'</span> w/w')+
     kpi('CFTC CAD net', sgn(Math.round(p.net/1000),0)+'<small>k</small>', fmt(p.pct_oi,1)+'% of OI · <span class="'+cls(p.wow)+'">'+sgn(Math.round(p.wow/100)/10,1)+'k</span> w/w', sparkPath(nets,120,26))+
     kpi('1-day bias', esc(fx.bias.label.replace(' USD/CAD','').replace('Conditional ','')), 'bear '+fmt(fx.scen.bearish_usdcad.probability_pct,0)+'% · bull '+fmt(fx.scen.bullish_usdcad.probability_pct,0)+'%')+
@@ -3245,7 +3256,7 @@ function fxIntradaySVG(pts){
   s+='<path d="'+d+'L'+X(t1).toFixed(1)+' '+(PT+ph)+'L'+X(t0).toFixed(1)+' '+(PT+ph)+'Z" fill="'+(up?'rgba(63,185,127,.10)':'rgba(224,101,95,.10)')+'"/>';
   s+='<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="1.8" stroke-linejoin="round"/>';
   var lp=pts[pts.length-1], pp=pts[pts.length-2], tick=lp[1]>pp[1]?'\u25b2':lp[1]<pp[1]?'\u25bc':'\u25b8', tcol=lp[1]>=ref?'#1f8a57':'#b8443f';
-  s+='<circle cx="'+X(lp[0]).toFixed(1)+'" cy="'+Y(lp[1]).toFixed(1)+'" r="4" fill="'+col+'" stroke="#fff" stroke-width="1"/>';
+  s+='<circle class="mv-last" cx="'+X(lp[0]).toFixed(1)+'" cy="'+Y(lp[1]).toFixed(1)+'" r="4" fill="'+col+'" stroke="#fff" stroke-width="1"/>';
   var ty=Math.max(PT+8,Math.min(PT+ph-8,Y(lp[1])));
   s+='<rect x="'+(W-PR+2)+'" y="'+(ty-9).toFixed(1)+'" width="'+(PR-4)+'" height="18" rx="3" fill="'+tcol+'"/><text x="'+(W-PR/2)+'" y="'+(ty+4).toFixed(1)+'" fill="#fff" font-size="10.5" font-weight="700" font-family="IBM Plex Mono" text-anchor="middle">'+tick+' '+lp[1].toFixed(4)+'</text>';
   var hiP=pts.reduce(function(a,b){return b[1]>a[1]?b:a;}), loP=pts.reduce(function(a,b){return b[1]<a[1]?b:a;});
@@ -3343,7 +3354,7 @@ function fxSubnavHTML(){
   var ev=fxEvList(), cb=/Overnight Rate|Federal Funds Rate/;
   var cftc=usdaEvents('corn', Date.now(), 10).filter(function(e){ return e.kind==='cftc'; }).map(function(e){ return {t:e.t,label:'CFTC COT · CAD positioning'}; });
   var fx=DATA.fx, chg=(fx.feed.mid/fx.spot.ref-1)*100, w=fx.energy[0], R={}; fx.rates.forEach(function(r){ R[r.t]=r; });
-  var live='<span class="sl-pill">'+(isAuto('fx_spot')?'LIVE':'SNAPSHOT')+'</span> <span class="sl-k">USD/CAD</span> <b data-live="usdcad">'+fmt(fx.feed.mid,5)+'</b> <span class="'+cls(chg)+'">'+sgn(chg,2,'%')+'</span>'+
+  var live='<span class="sl-pill">'+(isAuto('fx_spot')?'LIVE':'SNAPSHOT')+'</span> <span class="sl-k">USD/CAD</span> <b data-live="usdcad" data-tick="usd-fx" data-roll>'+fmt(fx.feed.mid,5)+'</b> <span class="'+cls(chg)+'">'+sgn(chg,2,'%')+'</span>'+
     ' · <span class="sl-k">10Y US–CA</span> <b>'+fmt(R['10Y'].sp,1)+'</b> bps · <span class="sl-k">WTI</span> <b>$'+fmt(w.last,2)+'</b> <span class="'+cls(w.pct)+'">'+sgn(w.pct,2,'%')+'</span> · <span class="sl-k">DXY</span> <b>'+fmt(fx.fxcross.dxy,2)+'</b>';
   return subnavHTML('fx', [
     {id:'overview', label:'Overview', ev:nextOf(ev, function(e){ return e.impact==='High'; })},
@@ -3555,6 +3566,7 @@ renderAll();
 window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePollSec: 60, liveRepo: "anirudhpdoshi/usd-cad-desk-live" };
 </script>
 <script>(function(){var d=document.createElement("script");d.src="direct.js?v="+Date.now();document.body.appendChild(d);})();</script>
+<script>(function(){var m=document.createElement("script");m.src="motion.js?v="+Date.now();document.body.appendChild(m);})();</script>
 <script>(function(){var s=document.createElement("script");s.src="live.js?v="+Date.now();document.body.appendChild(s);})();</script>
 </body>
 </html>
