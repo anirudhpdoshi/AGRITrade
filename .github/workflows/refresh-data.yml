@@ -36,6 +36,7 @@ jobs:
         run: python scripts/update_data.py
         env:
           FAS_API_KEY: ${{ secrets.FAS_API_KEY }}
+          ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
 
       - name: Commit if changed
         run: |

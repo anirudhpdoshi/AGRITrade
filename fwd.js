@@ -94,20 +94,33 @@
   function inKey(I) { return JSON.stringify([I.us, I.ca, I.usDate, I.caDate]); }
 
   /* feed / session state — from live.js, never inferred from the UI updating */
+  /* Spot source chain (transparent: every state names its source and age):
+       1 Finnhub stream (browser, unsealed after passcode)  - live while a tick arrived < 90 s ago
+       2 otherwise the FRESHEST of: Coinbase reference poll (~30 s, browser) · Alpha Vantage (server, every 30 min)
+         · Yahoo CAD=X (server: ~60 s fast lane on weekdays, else 15 min) - each with its own staleness limit
+       market closed always wins; three failed browser polls with nothing fresh = FEED UNAVAILABLE */
+  var LIMIT = { ref: 90e3, alpha: 45 * 60e3, yahoo: 20 * 60e3 };
+  function ago(ms) { var m = Math.round(ms / 60000); return m < 1 ? "<1 min old" : m < 120 ? m + " min old" : Math.round(m / 60) + " h old"; }
   function feedState() {
     var L = window.DESK_LIVE && window.DESK_LIVE.feedState ? window.DESK_LIVE.feedState() : null, now = Date.now(), D = window.DATA;
-    var feedT = D && D.meta.asof.fx_spot ? Date.parse(D.meta.asof.fx_spot) : 0, src = D && D.fx.feed.source || "server feed";
-    var tickFresh = L && L.lastTick && now - L.lastTick < 90000;
-    var useTick = L && L.lastTick && L.last > 0 && L.lastTick >= feedT;   /* newest valid price wins, live or not */
-    var spot = useTick ? L.last : (D && D.fx.feed.mid), spotT = useTick ? L.lastTick : feedT;
+    var c = [];
+    if (L && L.lastTick && L.last > 0) c.push({ k: L.stream ? "stream" : "ref", p: L.last, t: L.lastTick });
+    if (D && D.fx.alpha && D.fx.alpha.mid > 0) c.push({ k: "alpha", p: D.fx.alpha.mid, t: Date.parse(D.fx.alpha.ts) });
+    if (D && D.fx.feed && D.fx.feed.mid > 0) c.push({ k: "yahoo", p: D.fx.feed.mid, t: Date.parse(D.meta.asof.fx_spot || D.fx.feed.ts) });
+    c = c.filter(function (x) { return isFinite(x.t); });
+    var live = c.filter(function (x) { return x.k === "stream" && now - x.t < 90000; })[0];
+    var best = live || c.sort(function (a, b) { return b.t - a.t; })[0] || { k: "none", p: null, t: 0 };
+    var age = now - best.t, NAME = { stream: "Finnhub stream", ref: "Coinbase reference rate", alpha: "Alpha Vantage", yahoo: "Yahoo Finance (delayed)", none: "no source" };
+    var tail = " · " + (best.t ? clock(best.t) + " ET · " + ago(age) : "no price yet");
     var st;
-    if (L && !L.session.open) st = { k: "closed", chip: "FX MARKET CLOSED", txt: "weekend close · reopens Sun 5 pm ET · curve priced off the last available spot (" + clock(spotT) + " ET)" };
-    else if (tickFresh && L.stream) st = { k: "live", chip: "LIVE STREAM", txt: esc(L.source) + " · last tick " + clock(L.lastTick) + " ET" };
-    else if (tickFresh) st = { k: "ref", chip: "REFERENCE RATE", txt: "keyless reference-rate poll (~30 s) · indicative mid, not an executable quote · " + clock(L.lastTick) + " ET" };
-    else if (L && L.refFails >= 3) st = { k: "down", chip: "FEED UNAVAILABLE", txt: "spot poll failed " + L.refFails + "× in a row · showing last price " + clock(spotT) + " ET" };
-    else if (feedT && now - feedT < 20 * 60000) st = { k: "delayed", chip: "DELAYED", txt: esc(src) + " · " + clock(feedT) + " ET" };
-    else st = { k: "stale", chip: "STALE", txt: "last spot " + (spotT ? clock(spotT) + " ET (" + Math.round((now - spotT) / 60000) + " min old)" : "unknown") };
-    st.spot = spot; st.spotT = spotT;
+    if (L && !L.session.open) st = { k: "closed", chip: "FX MARKET CLOSED", txt: "weekend close · reopens Sun 5 pm ET · priced off the last spot: " + NAME[best.k] + tail };
+    else if (live) st = { k: "live", chip: "LIVE STREAM", txt: "Finnhub (OANDA) stream · last tick " + clock(best.t) + " ET" };
+    else if (best.k === "ref" && age < LIMIT.ref) st = { k: "ref", chip: "REFERENCE RATE", txt: "Coinbase reference poll (~30 s) · indicative mid, not an executable quote" + tail };
+    else if (best.k === "alpha" && age < LIMIT.alpha) st = { k: "delayed", chip: "ALPHA VANTAGE", txt: "server check every 30 min" + tail };
+    else if (best.k === "yahoo" && age < LIMIT.yahoo) st = { k: "delayed", chip: "DELAYED", txt: "Yahoo Finance CAD=X delayed mid" + tail };
+    else if (L && L.refFails >= 3) st = { k: "down", chip: "FEED UNAVAILABLE", txt: "live and reference feeds not responding · last price from " + NAME[best.k] + tail };
+    else st = { k: "stale", chip: "STALE", txt: "no fresh price · last from " + NAME[best.k] + tail };
+    st.spot = best.p; st.spotT = best.t; st.source = best.k;
     return st;
   }
 

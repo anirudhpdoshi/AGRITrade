@@ -44,6 +44,20 @@ def iso(dt):
     return dt.astimezone(TOR).isoformat(timespec="seconds")
 
 
+SECRET_ENV = ("FAS_API_KEY", "ALPHAVANTAGE_API_KEY", "FINNHUB_API_KEY", "DESK_PASSCODE")
+
+
+def redact(text):
+    """Strip every secret value from text that may reach logs or the public data.json."""
+    import os
+    text = str(text)
+    for n in SECRET_ENV:
+        v = os.environ.get(n, "").strip()
+        if v:
+            text = text.replace(v, "***")
+    return re.sub(r"(?i)(apikey|api_key|token|key)=[^&\s'\"]+", r"\1=***", text)
+
+
 def get(url, headers=None, **kw):
     r = requests.get(url, headers={**UA, **(headers or {})}, timeout=25, **kw)
     r.raise_for_status()
@@ -391,6 +405,55 @@ def cftc_fx(D, N):
                           p1y=pctile(nets[-52:], net), p3y=pctile(nets[-156:], net), series=series)
     d = r["report_date_as_yyyy_mm_dd"][:10]
     D["meta"]["asof"]["cftc_fx"] = d + "T15:30:00-04:00"
+    return True
+
+
+def fx_alpha(D, N):
+    """USD/CAD from Alpha Vantage CURRENCY_EXCHANGE_RATE — second-tier spot behind the browser's Finnhub stream.
+    Free key = 25 requests/day: checked at most every 30 min, weekdays 08:00-19:30 ET, hard cap 24/day.
+    The key is server-only (GitHub secret); every error is redacted before it can reach logs or data.json."""
+    import os
+    key = os.environ.get("ALPHAVANTAGE_API_KEY", "").strip()
+    if not key:
+        print("  ALPHAVANTAGE_API_KEY not set - tier skipped")
+        return False
+    meta, et = D["meta"], NOW.astimezone(TOR)
+    if et.weekday() >= 5 or not (8 * 60 <= et.hour * 60 + et.minute <= 19 * 60 + 30):
+        print("  outside 08:00-19:30 ET weekdays - skipped")
+        return False
+    last = meta.get("alpha_checked")
+    if last and NOW - datetime.fromisoformat(last) < timedelta(minutes=29):
+        print("  checked <30 min ago - skipping")
+        return False
+    day = et.date().isoformat()
+    cnt = meta.get("alpha_calls") or {}
+    if cnt.get("d") != day:
+        cnt = {"d": day, "n": 0}
+    if cnt["n"] >= 24:
+        print("  daily cap (24) reached - skipping")
+        return False
+    cnt["n"] += 1
+    meta["alpha_calls"], meta["alpha_checked"] = cnt, iso(NOW)
+    try:
+        r_ = requests.get("https://www.alphavantage.co/query", headers=UA, timeout=25,
+                          params={"function": "CURRENCY_EXCHANGE_RATE", "from_currency": "USD", "to_currency": "CAD", "apikey": key})
+        status = r_.status_code
+        j = r_.json() if status == 200 else {}
+    except Exception as e:
+        raise RuntimeError("Alpha Vantage request failed: " + type(e).__name__) from None   # no URL / key in the message
+    q = j.get("Realtime Currency Exchange Rate")
+    if not q:
+        note = (j.get("Note") or j.get("Information") or j.get("Error Message") or f"HTTP {status}")
+        raise RuntimeError("Alpha Vantage: " + redact(note)[:160])
+    mid = _num(q.get("5. Exchange Rate"))
+    ref = D["fx"]["feed"].get("mid") or mid
+    if not mid or abs(mid / ref - 1) > 0.03:
+        raise RuntimeError(f"Alpha Vantage USD/CAD {mid} implausible vs {ref}")
+    ts = datetime.strptime(q["6. Last Refreshed"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+    D["fx"]["alpha"] = {"mid": round(mid, 5), "bid": _num(q.get("8. Bid Price")), "ask": _num(q.get("9. Ask Price")),
+                        "ts": iso(ts), "src": "Alpha Vantage (30-min server check)"}
+    meta["asof"]["fx_alpha"] = iso(ts)
+    print(f"  Alpha Vantage USD/CAD {mid} @ {iso(ts)} (call {cnt['n']}/24 today)")
     return True
 
 
@@ -1711,7 +1774,7 @@ def canada(D, N):
     return True
 
 
-BLOCKS = [("fx_spot", fx_spot), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
+BLOCKS = [("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("energy", energy),
           ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail)]
 
@@ -1738,9 +1801,9 @@ def main():
             restored = json.loads(snapshot)
             D.clear(); D.update(restored["D"]); N.clear(); N.update(restored["N"])
             failed.append(name)
-            errors[name] = f"{type(e).__name__}: {e}"[:1200]
-            print(f"  FAILED: {e}")
-            traceback.print_exc(limit=1, file=sys.stdout)
+            errors[name] = redact(f"{type(e).__name__}: {e}")[:1200]
+            print(f"  FAILED: {redact(e)}")
+            print(redact(traceback.format_exc(limit=1)))
     if errors:
         D["meta"]["last_errors"] = errors  # no timestamp: a repeating failure won't commit every run
     else:
