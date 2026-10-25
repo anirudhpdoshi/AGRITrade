@@ -234,10 +234,10 @@
     var st = $("fx-spot-stamp");
     if (st) st.textContent = "Streaming mid · " + feedName + " · last tick " + etClock(new Date(liveTickAt || Date.now())) +
       " ET · " + ticks.length + " ticks this session";
-    if (Date.now() - lastFwdPaint > 2000 && typeof window.fxForwardsHTML === "function") {
+    if (window.FWD) window.FWD.update(p);       /* forward curve updates in place (batched inside fwd.js) */
+    else if (Date.now() - lastFwdPaint > 2000 && typeof window.fxForwardsHTML === "function") { var fw = $("fx-fwd"); if (fw) fw.innerHTML = window.fxForwardsHTML(p); }
+    if (Date.now() - lastFwdPaint > 2000) {
       lastFwdPaint = Date.now();
-      var fw = $("fx-fwd"); if (fw) fw.innerHTML = window.fxForwardsHTML(p);
-      var fs = $("fx-fwd-spot"); if (fs) fs.textContent = "spot " + fmtN(p, 5) + " (live)";
       var lc = $("fx-levelcheck"); if (lc && typeof window.fxLevelCheck === "function") lc.innerHTML = window.fxLevelCheck(p);
     }
     if (window.MOTION) window.MOTION.scan();   /* flash / roll the changed prices, glide the chart marker */
@@ -279,13 +279,20 @@
   }
 
   /* keyless reference-rate poll — used when no key, or the stream goes quiet */
+  var refFails = 0, refLastOk = 0;
   function pollRef() {
     if (document.hidden || window.DESK_LOCKED) return;
     if (ws && Date.now() - liveTickAt < 90000) return;   // stream healthy
     fetch("https://api.coinbase.com/v2/exchange-rates?currency=USD", { cache: "no-store" })
-      .then(function (r) { return r.json(); })
-      .then(function (j) { var v = j && j.data && j.data.rates && +j.data.rates.CAD; if (v) onTick(v, "reference rate, ~30s poll"); })
-      .catch(function () {});
+      .then(function (r) { if (!r.ok) throw r.status; return r.json(); })
+      .then(function (j) { var v = j && j.data && j.data.rates && +j.data.rates.CAD;
+        if (v > 0) { refFails = 0; refLastOk = Date.now(); onTick(v, "reference rate, ~30s poll"); } else refFails++; })
+      .catch(function () { refFails++; if (window.FWD) window.FWD.update(); });
+  }
+  /* honest feed state for the forward curve: what actually delivered the last price, and when */
+  function feedState() {
+    return { source: feedName, stream: !!(ws && CFG.finnhubKey && /stream/i.test(feedName || "")), lastTick: liveTickAt, last: last,
+             refFails: refFails, refLastOk: refLastOk, session: fxSession(new Date(Date.now())), online: navigator.onLine !== false };
   }
 
   /* ------------------------------------------------------ data.json re-poll */
@@ -407,5 +414,5 @@
   window.addEventListener("desk:unlock", onUnlock);
   if (window.DESK_LOCKED === false) onUnlock();      // live.js arrived after an unlock
 
-  window.DESK_LIVE = { onTick: onTick, pollData: pollData, pollLive: pollLive, applyLive: applyLive, toast: toast }; // handy for testing in the console
+  window.DESK_LIVE = { onTick: onTick, pollData: pollData, pollLive: pollLive, applyLive: applyLive, toast: toast, feedState: feedState }; // handy for testing in the console
 })();

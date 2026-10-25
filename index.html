@@ -292,6 +292,23 @@ li.n-desk b{color:#ffd0cc;font-size:12.5px}
 @media (max-width:1240px){.layout.has-secnav{grid-template-columns:minmax(0,1fr) 332px}.secnav{grid-column:1/-1;position:sticky;top:calc(var(--strip-h,40px) + 56px);z-index:30;box-shadow:0 6px 14px rgba(0,0,0,.35);flex-direction:row;overflow-x:auto;max-height:none;padding:6px;border-radius:10px}
   .sn-h{display:none}.sn-b{flex:0 0 auto;border-left:0;border-bottom:3px solid transparent;border-radius:7px;white-space:nowrap}.sn-b[aria-pressed="true"]{border-bottom-color:#38b6c9}}
 @media (max-width:1020px){.layout.has-secnav{grid-template-columns:1fr}}
+.fwd-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 0 8px}
+.fwd-chip{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:2px 8px;border-radius:4px;border:1px solid;transition:color .3s,border-color .3s,background-color .3s}
+.fwd-chip.live{color:#5fd598;border-color:#2b6b4c;background:rgba(63,185,127,.12)}.fwd-chip.ref{color:#7fd3e0;border-color:#2a5d66;background:rgba(56,182,201,.1)}
+.fwd-chip.delayed{color:#e8c069;border-color:#6e5a2a}.fwd-chip.stale{color:#f0a35a;border-color:#7a5224;background:rgba(232,163,61,.12)}
+.fwd-chip.down{color:#ff9d97;border-color:#7a3a36;background:rgba(224,101,95,.12)}.fwd-chip.closed{color:#9aa8bb;border-color:#34445a;background:#121c2c}
+.fwd-dim .fwd-chart svg{opacity:.55;transition:opacity .4s}.fwd-chart svg{transition:opacity .4s}
+table.fwd-in{width:100%;border-collapse:collapse;font-size:11.5px;margin:0 0 8px;font-family:"IBM Plex Mono",monospace}
+table.fwd-in th,table.fwd-in td{padding:3px 6px;text-align:right;border-bottom:1px solid #1a2638;white-space:nowrap}
+table.fwd-in th:first-child{text-align:left;color:#c9d6e6}table.fwd-in thead th{color:var(--faint);font-size:10px;letter-spacing:.08em}
+table.fwd-in td.fi-src{text-align:left;color:var(--faint);font-size:10.5px;white-space:normal}table.fwd-in td.fi-src.old{color:#f0a35a}
+.fwd-note{font-size:11.5px;color:#e8c069;margin:-4px 0 8px}
+.fwd-srcline{display:none;font-size:10.5px;color:var(--faint);margin:-4px 0 8px;line-height:1.4}
+.fwd-cause{min-height:18px;font-size:11.5px;color:#9fb3c8;font-family:"IBM Plex Mono",monospace;margin:4px 0}
+.fwd-t td.fdl{font-size:11px}.fwd-t td.fdl.up{color:#5fd598}.fwd-t td.fdl.dn{color:#ff9d97}
+.fwd-t td b,.fwd-t td span{font-variant-numeric:tabular-nums}
+@media (max-width:760px){.fwd-srcline{display:block}table.fwd-in th:last-child,table.fwd-in td.fi-src{display:none!important}table.fwd-in{display:block;overflow-x:auto}table.fwd-in thead{display:table-header-group!important}table.fwd-in tr{display:table-row!important}table.fwd-in th,table.fwd-in td{display:table-cell!important}table.fwd-in td::before{content:none!important}
+  table.fwd-t th:nth-child(5),table.fwd-t td.fdl{display:none!important}}
 .oi-ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .pk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:10px}
 .pk{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;min-width:0}.pk.crit{border-color:#e0655f;background:rgba(224,101,95,.08)}
@@ -3457,10 +3474,9 @@ function renderFX(){
     '<div class="kv"><span class="kk">EUR/USD \u00b7 USD/JPY</span><span class="vv">'+fmt(fx.fxcross.eurusd,4)+' \u00b7 '+fmt(fx.fxcross.usdjpy,2)+'</span></div>'+
     '<div class="stamp">Delayed quotes \u00b7 WCS leg is the last stored read</div></div>';
   /* forwards — CIP-theoretical, recomputed by live.js on every spot tick */
-  T.forwards='<div class="tile wide" data-src="fx_spot"><h2>Forward curve <span class="h2note">— CIP-theoretical</span></h2>'+
-    '<p class="note" style="margin:0 0 6px;font-size:12.5px;color:#b9c7da">CIP-theoretical \u2014 computed from spot + rate differentials, not traded quotes</p>'+
+  T.forwards='<div class="tile wide" data-src="fx_spot"><h2>Forward curve <span class="h2note">\u2014 theoretical (covered interest parity), not traded quotes</span></h2>'+
     '<div id="fx-fwd">'+fxForwardsHTML(fx.feed.mid)+'</div>'+
-    '<div class="stamp">Value dates = spot date (T+1) + tenor, weekends rolled forward (bank holidays not adjusted) \u00b7 F = spot \u00d7 (1 + CAD rate \u00d7 T) \u00f7 (1 + US rate \u00d7 T) \u00b7 sub-1Y: US 3M bill vs BoC overnight \u00b7 1Y\u20135Y: benchmark yields ('+asOf('yields')+') \u00b7 <span id="fx-fwd-spot">spot '+fmt(fx.feed.mid,5)+'</span></div></div>';
+    '<div class="stamp">USD/CAD = CAD per USD \u00b7 F = S \u00d7 DF<sub>USD</sub> \u00f7 DF<sub>CAD</sub> \u00b7 under 1Y: money-market simple interest, DF = 1/(1 + r\u00b7T) \u00b7 1Y and beyond: semi-annual bond yields, DF = (1 + r/2)<sup>\u22122T</sup> \u00b7 T = actual days spot\u2192value date \u00f7 365 (both inputs are government yields on a 365-day basis) \u00b7 spot date T+1, months end-of-month + modified following (weekends only; bank holidays not adjusted) \u00b7 each currency\u2019s rate interpolated linearly between its curve nodes \u00b7 traded forward points also reflect cross-currency basis, credit and dealer spreads, so executable forwards differ</div></div>';
   html+=fxSubnavHTML()+
     subWrap('fx','overview', fxKpiHTML()+T.spot+T.closes+T.model+askTileHTML('fx'))+
     subWrap('fx','deriv', positioningKpiHTML('fx')+T.forwards+T.cftc+T.sentiment.replace('class="tile"','class="tile wide"'))+
@@ -3468,6 +3484,7 @@ function renderFX(){
     subWrap('fx','rates', T.yields+T.energy.replace('class="tile wide"','class="tile"')+T.policy);
   html+='</div><aside class="rail">'+liveMonitorHTML()+fxAlertsHTML()+'</aside></div>';
   document.getElementById('panel-fx').innerHTML=html;
+  if(window.FWD) FWD.mount();   /* rebuild the live forward-curve component inside the fresh tile */
 }
 
 /* ---------------- wiring ---------------- */
@@ -3567,6 +3584,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 </script>
 <script>(function(){var d=document.createElement("script");d.src="direct.js?v="+Date.now();document.body.appendChild(d);})();</script>
 <script>(function(){var m=document.createElement("script");m.src="motion.js?v="+Date.now();document.body.appendChild(m);})();</script>
+<script>(function(){var f=document.createElement("script");f.src="fwd.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var s=document.createElement("script");s.src="live.js?v="+Date.now();document.body.appendChild(s);})();</script>
 </body>
 </html>

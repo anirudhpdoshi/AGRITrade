@@ -123,7 +123,7 @@ def fx_closes(D, N):
     return True
 
 
-US_COLS = {"3M": "3 Mo", "1Y": "1 Yr", "2Y": "2 Yr", "3Y": "3 Yr", "5Y": "5 Yr", "7Y": "7 Yr",
+US_COLS = {"1M": "1 Mo", "2M": "2 Mo", "3M": "3 Mo", "4M": "4 Mo", "6M": "6 Mo", "1Y": "1 Yr", "2Y": "2 Yr", "3Y": "3 Yr", "5Y": "5 Yr", "7Y": "7 Yr",
            "10Y": "10 Yr", "20Y": "20 Yr", "30Y": "30 Yr"}
 CA_LABEL = {"2Y": "2 year", "5Y": "5 year", "10Y": "10 year", "30Y": "long"}
 
@@ -194,6 +194,29 @@ def yields(D, N):
     fx["widest"] = max(fx["rates"], key=lambda r: r["sp"])["t"]
     D["meta"]["asof"]["yields"] = d0 + "T17:00:00-04:00"
     print("  tenors refreshed:", changed, "as of", d0)
+    # forward-curve inputs: both curves' short ends on one close (US CMT bills + BoC T-bill mid yields) and the 2Y/5Y benchmarks
+    try:
+        ids = {"1M": "TB.CDN.30D.MID", "3M": "TB.CDN.90D.MID", "6M": "TB.CDN.180D.MID", "1Y": "TB.CDN.1Y.MID"}
+        obs = valet("observations/" + ",".join(ids.values()) + "/json?recent=10")["observations"]
+        bills, bdate = {}, None
+        for o in obs:   # latest date with every bill tenor
+            vals = {t: _num((o.get(c) or {}).get("v")) for t, c in ids.items()}
+            if all(v is not None and 0 <= v < 15 for v in vals.values()):
+                bills, bdate = vals, o["d"]
+        if not bills:
+            raise RuntimeError("no complete T-bill row")
+        cad = ca[d0] if d0 in ca else ca[max(ca)]
+        fx["fwd_inputs"] = {
+            "us": {"date": d0, "src": "US Treasury daily par yield curve (CMT, bond-equivalent)",
+                   "nodes": {k: us[d0][k] for k in ("1M", "2M", "3M", "4M", "6M", "1Y", "2Y", "5Y") if k in us[d0]}},
+            "ca": {"date": bdate, "src": "Bank of Canada: T-bill mid yields + GoC benchmark bonds",
+                   "nodes": {**bills, **{k: cad[k] for k in ("2Y", "5Y") if k in cad}}, "bond_date": d0 if d0 in ca else max(ca)}}
+        for row in fx["rates"]:   # the 1Y row had no Canada benchmark and was never refreshed: use the 1Y bills
+            if row["t"] == "1Y" and "1Y" in us[d0]:
+                row.update(us=round(us[d0]["1Y"], 3), ca=round(bills["1Y"], 3), sp=round((us[d0]["1Y"] - bills["1Y"]) * 100, 1), asof=d0, ca_src="BoC 1Y T-bill")
+        print("  fwd inputs:", fx["fwd_inputs"]["us"]["nodes"], fx["fwd_inputs"]["ca"]["nodes"])
+    except Exception as e:
+        print("  forward-curve inputs skipped:", e)
     try:
         v = valet("observations/V39079/json?recent=1")["observations"][-1]["V39079"]["v"]
         if 0 < float(v) < 10:
