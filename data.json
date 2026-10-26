@@ -31,14 +31,14 @@
      ],
      "near_expiry": "Dec-26",
      "intraday": [
-      4.535,
-      "12:05pm ET"
+      4.5425,
+      "12:20pm ET"
      ],
      "iv_10d_rel": 0.03741,
      "iv_chain_iv": 18.78,
      "iv_as_of": "2026-10-26",
      "iv_note": "IV and skew from IB midpoint, Oct 26 2026 8:45 AM ET",
-     "intraday_ts": "2026-10-26T12:05:00-04:00",
+     "intraday_ts": "2026-10-26T12:20:00-04:00",
      "ma50": "5.10",
      "ma100": "4.84"
     },
@@ -2737,14 +2737,14 @@
      ],
      "near_expiry": "Jan-27",
      "intraday": [
-      12.49,
-      "12:05pm ET"
+      12.4925,
+      "12:20pm ET"
      ],
      "iv_10d_rel": 0.02829,
      "iv_chain_iv": 14.2,
      "iv_as_of": "2026-10-26",
      "iv_note": "IV and skew from IB midpoint, Oct 26 2026 8:45 AM ET",
-     "intraday_ts": "2026-10-26T12:05:00-04:00",
+     "intraday_ts": "2026-10-26T12:20:00-04:00",
      "ma50": "12.83",
      "ma100": "12.29"
     },
@@ -5203,14 +5203,14 @@
      ],
      "near_expiry": "Dec-26",
      "intraday": [
-      6.17,
-      "12:05pm ET"
+      6.1625,
+      "12:20pm ET"
      ],
      "iv_10d_rel": 0.04988,
      "iv_chain_iv": 25.04,
      "iv_as_of": "2026-10-26",
      "iv_note": "IV and skew from IB midpoint, Oct 26 2026 8:45 AM ET",
-     "intraday_ts": "2026-10-26T12:05:00-04:00",
+     "intraday_ts": "2026-10-26T12:20:00-04:00",
      "ma50": "7.04",
      "ma100": "6.75"
     },
@@ -8513,11 +8513,11 @@
     "6M": 4.3
    },
    "fxcross": {
-    "dxy": 101.991,
-    "dxy_chg": 0.178,
-    "eurusd": 1.1183,
-    "usdjpy": 157.58,
-    "usdcad_ref": 1.402
+    "dxy": 101.992,
+    "dxy_chg": 0.179,
+    "eurusd": 1.1186,
+    "usdjpy": 157.54,
+    "usdcad_ref": 1.4017
    },
    "closes": [
     [
@@ -8596,16 +8596,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 102.75,
-     "chg": -0.52,
-     "pct": -0.5,
+     "last": 102.81,
+     "chg": -0.46,
+     "pct": -0.45,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 111.87,
-     "chg": -4.85,
-     "pct": -4.16,
+     "last": 111.91,
+     "chg": -4.81,
+     "pct": -4.12,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -8617,9 +8617,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 17.28,
+    "value": 17.34,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-26T16:05:00+00:00",
+    "obs_ts": "2026-10-26T16:20:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -10135,10 +10135,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.40242,
+    "mid": 1.40194,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-26T12:14:00-04:00",
+    "ts": "2026-10-26T12:30:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -11060,7 +11060,19 @@
     ],
     [
      "2026-10-26T16:15+00:00",
-     1.40245
+     1.40249
+    ],
+    [
+     "2026-10-26T16:20+00:00",
+     1.40203
+    ],
+    [
+     "2026-10-26T16:25+00:00",
+     1.4019
+    ],
+    [
+     "2026-10-26T16:30+00:00",
+     1.40194
     ]
    ],
    "fwd_inputs": {
@@ -11101,22 +11113,22 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-26T12:15:30-04:00",
+   "updated_at": "2026-10-26T12:30:24-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-26T12:14:00-04:00",
+    "fx_spot": "2026-10-26T12:30:00-04:00",
     "fx_closes": "2026-10-23T16:30:00-04:00",
     "yields": "2026-10-23T17:00:00-04:00",
     "policy": "2026-10-26T11:30:29-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-20T15:30:00-04:00",
     "cftc_grains": "2026-10-20T15:30:00-04:00",
-    "energy": "2026-10-26T12:05:00-04:00",
-    "crosses": "2026-10-26T12:05:00-04:00",
+    "energy": "2026-10-26T12:20:00-04:00",
+    "crosses": "2026-10-26T12:20:00-04:00",
     "grains_settle": "2026-10-23T14:20:00-04:00",
-    "grains_quote": "2026-10-26T12:05:00-04:00",
+    "grains_quote": "2026-10-26T12:20:00-04:00",
     "options": "2026-10-26T11:10:58-04:00",
-    "news": "2026-10-26T12:15:30-04:00",
+    "news": "2026-10-26T12:30:24-04:00",
     "calendar": "2026-10-26T11:30:29-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-26T11:15:24-04:00",
@@ -11165,7 +11177,7 @@
     "failed": [
      "cftc_grains"
     ],
-    "at": "2026-10-26T12:15:30-04:00"
+    "at": "2026-10-26T12:30:24-04:00"
    },
    "releases_checked": "2026-10-26T12:15:30-04:00",
    "exports_checked": "2026-10-26T09:05:37-04:00",
@@ -11202,7 +11214,7 @@
    },
    "canada_checked": "2026-10-26T09:30:24-04:00",
    "ca_calendar_checked": "2026-10-26T09:05:37-04:00",
-   "canada_watch": "2026-10-26T12:15:30-04:00",
+   "canada_watch": "2026-10-26T12:30:24-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -26474,10 +26486,22 @@
  "NEWS": {
   "corn": [
    [
+    "2026-10-26 15:12 UTC",
+    "www.agrolatam.com",
+    "Brazil's Currency Shock Puts U.S. Soybean Exports at Risk",
+    "https://news.google.com/rss/articles/CBMiggFBVV95cUxOVm1HQTcwT09pZE00MFlFZHBXbkpuQ0MycURnanRCSDJCMnZjd1B1WWlQa1dpLXJ6NzFmc2VpR3lfcUlVOWZiQmFwaHRWdlFqSEhENWI1d2x1M3NYUzV5ODdCcTc0bDFNaXZRLTZtZnhJMHUxOENiRUdMTHE5ckd3aGFR?oc=5"
+   ],
+   [
     "2026-10-26 14:20 UTC",
     "commodity-board.com",
     "EU 2026 corn harvest losses and Black Sea prices — CMB News",
     "https://news.google.com/rss/articles/CBMipgFBVV95cUxPQTl0Rm1MS0d5ZEQyTmhTbGFOeHh5Y2xncnFmUnRiZEEzVTNQeFlpOGJPb3B3cjRvYU1Wbmo2eDhmVWIxZjlaS205YVljOGFOMDNGbGVjT1Z5ODJWWnpfc0NRR3kwTUVlcVp3OFl6SzdTM3hkeDl4YWQwYmZFMEROY19VbUtWbVVYbW56SUlSY3poOFBrMGR5YzczdXgwNnptX0RaS0hn?oc=5"
+   ],
+   [
+    "2026-10-26 12:31 UTC",
+    "www.barchart.com",
+    "Corn Falling with Spillover Pressure from Soybeans",
+    "https://news.google.com/rss/articles/CBMimgFBVV95cUxPazVDdWVtbnM5cUpRSm5PY2tad09Zck9Vam81SGg3WEljSnhQck1KT2dkenhvdlIyTEtEYVplSmdMX0xDdnhNZUg3eC0td29qZ0YtNGhua29TdENRQ3c3VXVDQmdvRzdCTU5tU2VxbDl0UHp0ZERFRmtuM09TckRxMVN4ZjZyTGFYVTB4cVhHOG1YM0lkMnFRWlZB?oc=5"
    ],
    [
     "2026-10-26 10:44 UTC",
@@ -26504,25 +26528,19 @@
     "https://news.google.com/rss/articles/CBMizAFBVV95cUxONTY0cW90dWNJM0ZSdmVKeFk4VjJSSUlPLVRHcllocmp2RUdheS1GZGhFMkNpSzh6N28xd3luZXJrZlc5NUFKQXBlRF91RnRtM1VZd180X01WeThfTkNXR1FPOUN0ZnRGX2t2QVFYRnZZZERpMjZhZ0M0bmZpblk5Z3VWMjVhTWxaSVljUTFSNlkyUmJGSDVwSV9XejU2eGhxQWo4RmhPY1ppaXZoSTQ3R0kxM2lsdWJZMmU0SHVaS2pGVnpaZE1NZ3dHcGE?oc=5"
    ],
    [
-    "2026-10-23 22:28 UTC",
-    "www.agweb.com",
-    "Soybeans Up Friday, Corn and Wheat Falter: What Bottoms the Grain Markets?",
-    "https://news.google.com/rss/articles/CBMimgFBVV95cUxOX1ZLd2QxZlJBYzhTZjhjUEpNVVYzSEhNUlpOeGU4NzNtOGplQlVMSjlMTm91NzBMX3dqR0l6ai03NXQzOEpReG41QkFDRVNhRW1GUEFWZ05kQXY3NlNyeGxORHk5R0lpeE1mOXRkcEo2RGpseDFrZnR0RHZFOXVRR0xCVUt4VTM0SUVrNmFhQ2hYWmRsV3dWTHln?oc=5"
-   ],
-   [
-    "2026-10-23 22:07 UTC",
-    "fr.tradingview.com",
-    "Corn Falls Lower into the Weekend, as NASS Issues Correction to September Report",
-    "https://news.google.com/rss/articles/CBMi0wFBVV95cUxOUk40cFdYM19BdGo4QWtINFR1ejFocjdrVjE1MDY2WUhGeG9vN0t1azRhV3I4ajJxejJyZWctVENTcjhhRXlYcVphZXZlM0hTOGlYblFKeXpqLTNUN2tsMWVvV2ROWUxaS3N1aGItVDFUekc0ZVB6WkVmcU9OYUJ5Z0tYYTV4UW1BN3pTdklSbUt6RHpaazRzTmRUX0RDQ2gwZkYzUWZVcV83dHRlNEZvNzlnWEpQMzJDV0ZhMDJCN0l0VTJkOVhaclJnb1dXeVN2SjBr?oc=5"
-   ],
-   [
-    "2026-10-23 19:02 UTC",
-    "www.producer.com",
-    "U.S. Grain/Oilseed Review: Mixed movement in grains, oilseeds",
-    "https://news.google.com/rss/articles/CBMinwFBVV95cUxNRlk2b2VMaF8taldZVy1YTlkwZVFMRVZnRlBvbFRMMk5PVkJ6ejhRYXN5bkxHQkN3Ul9NSVh4Zy1XQmVuel9ZMFUwTV9HTjQ5QnUwMmVfZHVocVNUZE1YWEEtOEJqdE9qTElKaDFsdHBiLTYxSXRSOFh5NWpQYXpGNm0xZndKS2hCbUxrZGlGU0l6SElyOWpuMlNmTVZYU0E?oc=5"
+    "2026-10-24 21:25 UTC",
+    "www.brecorder.com",
+    "Soybeans hold firm on export demand, energy complex",
+    "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5qQUhIaG9hSm5vMkwzY19YbEZCbUw1Y1hfaUhMOXRwNGxUc2VlTnV4UzBqaWtwSVRqSmhkczFSeTB4QWlnLUpULThtZUo1VHRQRHJmTGx30gFWQVVfeXFMTmpBSEhob2FKbm8yTDNjX1hsRkJtTDVjWF9pSEw5dHA0bFRzZWVOdXhTMGppa3BJVGpKaGRzMVJ5MHhBaWctSlQtOG1lSjVUdFBEcmZMbHc?oc=5"
    ]
   ],
   "wheat": [
+   [
+    "2026-10-26 16:22 UTC",
+    "www.farms.com",
+    "Market Selloff Pushes Grains Lower",
+    "https://news.google.com/rss/articles/CBMiigFBVV95cUxOM3ZRWWNKdmJRRHRVTVFtazUxUmxVQ1dHcWJURW9FanZwQW1maFBfcTN2LUVZRDZ1ck5FNENDN2M0TFFhWWExdlZxbGU2clU4UVA3MEZ0cEp2d3RLeHY2RHlLTGlBWDBKaEdJcEdFWDZuUkNpRDJoQU1XQlVQYmRjSVk2QnNUQi02LUE?oc=5"
+   ],
    [
     "2026-10-26 16:06 UTC",
     "www.themoscowtimes.com",
@@ -26564,12 +26582,6 @@
     "fakti.bg",
     "Attacks in the Black Sea hit Ukrainian wheat exports ᐉ News from Fakti.bg - Business",
     "https://news.google.com/rss/articles/CBMikAFBVV95cUxNSW1KdmFmc0NER1FwZzFWMC1RVUZScndlUncxLTFIZHgxQWVoWTR5dWVNbW1ZS21ZQTBJWXIyZlZjVVR6NUxCd0huTEt0aENlVjBzY1pRY2g4bGdvTi0wLUhiNUNUSng4VmZZbWFEaWVoVEdFa3IwZVZqM2hiNnVMME5sTFhybWNVZHpZbWJWcWE?oc=5"
-   ],
-   [
-    "2026-10-26 10:45 UTC",
-    "www.fastmarkets.com",
-    "Cash market update: Wheat falls on rising supply despite Black Sea risks as China’s US soybean purchases near 70% of its commitment",
-    "https://news.google.com/rss/articles/CBMi-gFBVV95cUxQek1mZXZQekhsV1ZvWE5Pa0NMbnhxcEF5Q1dlcER3eFEtMUxseDBXSWdTZHJoRHk3cVhqWm9FNFRHM2tvVTlOdTZGQko4bjhuZ05XVTZoSGQ2TTR4MXpfTzNJNzZOUFNmdU5kUlg0anlIQnR4M0dwVEdZbWJtYU92QVFhR3JXWlFYWGFydl9TNXRReklvcXpQbjJGUkMtajhvT2k3dEl3bWtSNXA5TFNvcVhnOVl1akU3eV9BWjdPcl83ckdQMU16bWV5elZHOVhFdGhGWDJ5RFdPT2hmMHN6eDVDbTVTdkRZRms1b0trVFNfWGV5RXdRVlB3?oc=5"
    ]
   ],
   "soybeans": [
@@ -26578,12 +26590,6 @@
     "www.agrolatam.com",
     "Brazil's Currency Shock Puts U.S. Soybean Exports at Risk",
     "https://news.google.com/rss/articles/CBMiggFBVV95cUxOVm1HQTcwT09pZE00MFlFZHBXbkpuQ0MycURnanRCSDJCMnZjd1B1WWlQa1dpLXJ6NzFmc2VpR3lfcUlVOWZiQmFwaHRWdlFqSEhENWI1d2x1M3NYUzV5ODdCcTc0bDFNaXZRLTZtZnhJMHUxOENiRUdMTHE5ckd3aGFR?oc=5"
-   ],
-   [
-    "2026-10-26 14:19 UTC",
-    "www.bloomberg.com",
-    "Soybeans Hit 2-Month Low as Lula’s Win Lifts China Trade Outlook",
-    "https://news.google.com/rss/articles/CBMitgFBVV95cUxOZ0dXZW51Tlp0SEJNc0ZJaEpHX3JWcE9tbUVhOHQ3Y2xlNko1X0RDVkxVc2xMc2RjYVc5NUt0OHJQeXBOeF9NT1J3V2N2RXFvcG5Mb3RTNzRxVDhvWHhibUVJUG9RdDFselg4emFuNVcwcUNOc2tJNldZMXcxLXFPY3RGbUx2Y3FFT2tEOHcxR1hJVFdtMl9kNl9mVk5yVl9LWUNWel95bkFDMXR2aUYxcDhBQnJjQQ?oc=5"
    ],
    [
     "2026-10-26 13:02 UTC",
@@ -26616,6 +26622,12 @@
     "https://news.google.com/rss/articles/CBMilgFBVV95cUxPc2lEazlMWnRSM1lrbkFXdDNWVmpycmF0dzFKSHd0Wng3RnY2VFJReU1xSW5EN1p4anJaU1FiQlE3NGhZaTJBX0NESjZCZ1gza1NXMlBockVmYUZoSC00T0k0dmlJb0p5enFSakxKXzNKU1F4dkhfV3NsSEhqSldCb3RXeFdFZjl1bmlhbEMyOFZsQmw3Q2c?oc=5"
    ],
    [
+    "2026-10-26 10:44 UTC",
+    "ukragroconsult.com",
+    "Wheat and corn prices fall, while soybeans gain in Chicago on Friday",
+    "https://news.google.com/rss/articles/CBMipgFBVV95cUxORlJPS25HcTBXdkVkNElGQ1BrRVVtX2FUaHZrWDVDYUgxcDdNREl3em1ZMGtHUkhKdnctOEo0ZFVhVVJWTW96R0dQNWJsRjc5V291Q2hXM1dnSGxOQjQ2T2NvRklLU0Rsek1kNXIzdU9pZ3hHREQ0OWUzd1psc3JaYkFobFJtQ3BQeGdnVmdwVFliUkNlN2hQNndiclBrWG54QnU0ZHhn?oc=5"
+   ],
+   [
     "2026-10-26 09:26 UTC",
     "www.global-agriculture.com",
     "China’s Soybean Buying Picks Up, But a Tariff Wall Still Blocks Full Trade Recovery",
@@ -26630,10 +26642,10 @@
     "https://news.google.com/rss/articles/CBMiwgFBVV95cUxQY1hrUDhqTk53R2pYcDZuOHN0MDNSeVdPUklvT0J0Vy1PUGktN2hUcU9peUx6cmVGYkhOWi1ra3VaT2JZVGxmMnhOYWw4SHNYZV9RanNqVXVDRGJjcEZIZEkxLXpZR05SRjNiTms5NEpCeUQxa19BbWFXRUp3RWhtSnNfUUZWUVEzTjhQT0N6WVFrRk9IcHgtOHpEQmt1LUJwTktiV3UzRUNJN0tEUmlGVl9BUjY0NG81YkE1c0tJZm43dw?oc=5"
    ],
    [
-    "2026-10-26 14:42 UTC",
-    "www.country-guide.ca",
+    "2026-10-26 14:56 UTC",
+    "www.albertafarmexpress.ca",
     "Canadian Dollar and Business Outlook: Loonie retreats with crude oil",
-    "https://news.google.com/rss/articles/CBMisAFBVV95cUxOUzhZdDNsT0toZFJhbXBJd1BtMHFmQnJYQjVreDItUVVpWlVDTUVUWnVWWVprMHVocEVqRmpNZm92UDFVMWNSSWN5d1pKa1pjOUtuWEJNY3poVlRLZGNQcV93ckZ1a0tseHY0N0dzbm9wZjVFdkZGM2R5b3NYS1I1dnpVbGNGMlFJOG85R01oMC1KVnZBZHRUMzlYbFdlRmh0bnQ2dVJibFA3bnF2alZsXw?oc=5"
+    "https://news.google.com/rss/articles/CBMitwFBVV95cUxPWXRQN1Z3LWJrdG1jRjFfVmthT1RSbERONzZINEZTYVZ0Z2RiNW5FaEc3bkJUN3o3dEZmd0sxZjl0bGhnejVSdVZBMjVYMUc0dUNWVU9VeUljbUZ6YjE3OE1UT3Y3US12TkhiaXZOSkIybWZuSmlrbUlVcnZNMWpXaUw4bzczSHkwS0JXbGoxbzNRNUk5OU5pUzZHLUZVTVQ0SGR4cHJvbld4c2lUZVc4NzhORW1NejQ?oc=5"
    ],
    [
     "2026-10-26 14:26 UTC",
@@ -26654,12 +26666,6 @@
     "https://news.google.com/rss/articles/CBMiiAFBVV95cUxQWnFDeWxobERNWEY3TS1Za3B1ZFM3TEtrYWI0Y1NGcFo1OGJ5SXk5Y0xwNENIOWFULXFVVExLSll2am5sUkJIaDZ0cHB4NmVKRElRUTBZeUdNLWFkVjFQYzFrMlVQS3BUUDR4eU41Vmh6WDc1eTNFcHUtcElEZy1FWXVuTlpzV1BP?oc=5"
    ],
    [
-    "2026-10-26 13:46 UTC",
-    "energynow.ca",
-    "Gasoline Price Rebound Pushes Canada Inflation Rate to 3%",
-    "https://news.google.com/rss/articles/CBMijwFBVV95cUxPSTdQZmltNl90NVVWTlhySUVzandmNVhrZUZqckZUTWgxTWljdWpZTHh2b2dMYlgyOXlfb2J4SHVkdk12eXpYcHpGb243U2N2LXByTFpkcjlRZHk2S3JXbGl6MFdjLVRUb09PZ0tlZThJaFhwTGU4OTZIWTBMTE8tY0E1NTZER0xfTEFyT1M5MA?oc=5"
-   ],
-   [
     "2026-10-26 13:19 UTC",
     "www.lexpert.ca",
     "What is the Canada Infrastructure Bank?",
@@ -26670,21 +26676,15 @@
     "vocal.media",
     "Canada’s Economy Is Hooked on Mortgage Renewals, Not Resources",
     "https://news.google.com/rss/articles/CBMikAFBVV95cUxQMFIxY1E0VndmWVdFTXNrWDE2YXUtX3VmRGphQW1lQm50Tk44S2c2akVOLXR0RXdpVEJYQTNFZ2ZkYUJlaEctMUJpRllRSmlQUUpCZFMtUl83cUxPMWxJZG9JYVhwMFJ5TndLZVZrb0lhVGhSWGU5Tlg3aG5mczJpWXMwZFBlNlN2enUyREcxbmI?oc=5"
+   ],
+   [
+    "2026-10-26 13:00 UTC",
+    "www.tradingview.com",
+    "CANADA FX DEBT - Canadian dollar weakens, benchmark yield slips",
+    "https://news.google.com/rss/articles/CBMiygFBVV95cUxONEo0SV9XMEpfN0ZBSUZReS1ienF6VWloOFpMWm41NHBRQWhaZGZJYnZrVnRWZDdpR3BDWWZVNmYyazNkT2ROay1vd3RvbF8tY0x2dVJIQUc5bktCTGV4ZlpSMng0YjFibEF0T25PY3J1RTNzc3luN2hqMXZONmUtU1BTVUZ3elVsWUdSMUlfUG05NUVlY2NLbU9WWms2OG9NdU9rT0FfYXVUaTBLVVJGLWVZdmZJVXRRZ00zQkwyZWNqRGQxRGxUY3l3?oc=5"
    ]
   ],
   "geo": [
-   [
-    "2026-10-26 15:43 UTC",
-    "ianslive.in",
-    "India's proposal to end Russia-Ukraine conflict designed to protect energy infrastructure, secure Black Sea shipping",
-    "https://news.google.com/rss/articles/CBMi5AFBVV95cUxOWkthZXRUQndSWE1hWmZHN01SNkxSQ3FmTWV6MXo1RUZKNVMza094LTdIbU1VeXdjQXNFaUpJNi11R3VrZWpQVGNJaXFYSWk4ZjVYdThjc3dCdFlIZ0otekFqb2pTSGpZbWJ6Mm4tRFJkVW5wNWUzVFdUVTJxeVp0N2J4cTc4eUhxS2NWaWx5UkRRN0lzNjA1dWt0Q3Atak9CMnZtbEpsQmxLTWhFZjZPb2VjTE44UUN4S25zdlJjUkFmZUZKM3lOOVRNTWEzRjBSdjdKendyaG5rX2diTGJLOEp6OUc?oc=5"
-   ],
-   [
-    "2026-10-26 15:12 UTC",
-    "www.bloomberg.com",
-    "Wheat Erases Black Sea Premium as Russia Signals Shipping Talks",
-    "https://news.google.com/rss/articles/CBMitAFBVV95cUxOTjNKZnhKaEE5YUszQkVxajVUOFA5eEFrRmI4Ri1IbWVGSVBuV21rNFdWbjVNajA1S3ZtQlB3dllpcldib1dVYzYyYWlVTDdGSEdPa0FvZW80NWp5Zm1DUnowVU9hUWJDanpTNzB0dFgtdU5jeGgtREgzcjQ5SXNiUk9UWTNvY3c2dG5YN09yNldlZXhKM3BjUGJybTJ4cUVOam9zd2R4b25lbU9vNGpiWjkyMmU?oc=5"
-   ],
    [
     "2026-10-26 15:03 UTC",
     "www.ctvnews.ca",
@@ -26704,25 +26704,49 @@
     "https://news.google.com/rss/articles/CBMitgFBVV95cUxPdndEd085NVl6ODh6Mmp1NFV4Qk1qN2kyWjlkcEhMUmtkcnN6ZXJpdV9VLUpzcXVOeWc3VWhQdzRGR053bm5OanVNLVRmSlJDeUdjYVNqYWNLb2Jsa2RmMENKV0RzemJwcFA2NHZrN2FqdDRXeUUySlR2eTE4YXNNbEtkWTdPUlpwR0FSU3RGbE5DZ0tzckRCTHBnY18tamVLTTkwZ0RKcWJTampaV21OV29uTjhfdw?oc=5"
    ],
    [
-    "2026-10-26 14:20 UTC",
-    "www.businessupturn.com",
-    "Russia Reports Drone Strikes on Two Ukraine-Bound Cargo Ships as Black Sea Shipping Risks Intensify",
-    "https://news.google.com/rss/articles/CBMi5gFBVV95cUxNdHVycWlpRUxHQWI5T0tITjJ1eEMzalNKcUQ3dm5pQXFmNUtLbTM0MFN5TlN0dl9CQ0Z1WElPR0poMGF1ZVZxRHM5TzFpV2xBcnU5dnBkZWsxT3VCalZrUjFTMmJGeXNQdjJiZnpTTzJ2Rmp5TVozQ1FjTV9JdzRpVHh5eGNKREU1ZFF4dFF5ZkpjX3hhWVZQYWlnZkVCMHFuNVNfMWV6VnlhNzg1elRvTmpkSTZnMUV6OWFZdjUyM0NXUzQtWHBPSVYxM2JzYlZDM3BZcU5jendvd0hYZEJ1Y2YxV0UtZw?oc=5"
-   ],
-   [
-    "2026-10-26 14:15 UTC",
-    "www.businessupturn.com",
-    "Romania Blames Russia After Drone Strike Sinks Comoros-Flagged Cargo Ship Khoryv Near Constanta, Killing Sailor and Leaving Three Missing",
-    "https://news.google.com/rss/articles/CBMilwJBVV95cUxOTkNDaDhMVWdRLV90MTJ4cnpLUjNyQk1TcWlFZzJLaUExYy1vVEU4amQ3ZXVmdzIwM1JxN2VKUzBVTDVvenFNOVhSVGpueEF3OUh1NndzRFNTS0RubHEwZWExb3NmdHd0WlowUTRrcTJkbVQwaV9TX0F1bHpMRndrYXR3OWxuQ0xJN01jdXFMZkFhbzhLa0xZa0Q2VTI1aWpsM2JvR2g2eF9IYVVNbzdDbkdoT2lweDROcl82cHA5WGVZU0lqODVfdENRY3hzRnNKWjIwd1RSU3JoY2dKOTh2NW5VbmZybnZCUngyTjlJWWQ5bFJhYWd2N0RlbE9QNzRfVXpnSkhGRHV3M3J6TFI5cGt5d1hhdUU?oc=5"
-   ],
-   [
     "2026-10-26 13:21 UTC",
     "euromaidanpress.com",
     "Drones keep sinking ships off Romania and Bulgaria—French and US patrol planes are watching",
     "https://news.google.com/rss/articles/CBMiywFBVV95cUxPNXlpNElweUsza1pteEw2aFZnQ0NSZGc0d09zeVJ2VHcxUVpwdEVRUjEwUEU4bEtPeTVDTnhYRDVpR1pvYzhhOHJ0YTNHN3RpOTdfMzY3Yi0tYzJKR1BwaE1KTWlCT2tLVHphLUhRcUU1cHBiNWxfa18yUGFrek9KV3Qya0NvQmJoNGF0cVpXQ25va3FOcGkyRWF2WjBDV2RmM1VrRk9UTGxOR3oxT3VScDhjOTVVSy12V0N0dmN3NWNQV3BvVF9oLXVKRQ?oc=5"
+   ],
+   [
+    "2026-10-26 12:18 UTC",
+    "www.daily-sun.com",
+    "India’s Black Sea gambit: Can New Delhi succeed where others have failed?",
+    "https://news.google.com/rss/articles/CBMisgFBVV95cUxObmpiM20tcTlzTldNMEdJMmNDcExWTXVOY1NYSVpzLVFpR0ExTVRPc0laTlBqZlVOczFCbWxNdk1wOEMyY1g4WTdiXzFhNUJuZVFuSXBsTnZqOVpvdnc1VlRWZlhIc3lfQnFkbGpORWlybGJfWFJKYnFWeGdJd3JFeXFKWkc4eFNlaEFNUUhxMnlMczB3VG1UaFU4ZVlqZzlLTEVYTXdGeFA1OHZTeVZXd01B?oc=5"
+   ],
+   [
+    "2026-10-26 11:56 UTC",
+    "www.tradingview.com",
+    "Wheat Holds at 15-Week Low",
+    "https://news.google.com/rss/articles/CBMigwFBVV95cUxNOWtZTmVOVDVpd3lNYlhzTnQwQk9XZWtVbDZVWTNlRndDVFRXbW9SNTRRM2FHanBNeGMwb1JaQW1aUEE2WjJaOE1zVDQ4aG9UNXAxcG52X1kwMGpXUHVWMHc3eXNGWjBTSEkzQmVQbDFlT3VyemlXVVVHQ2lrYU9scG5NZw?oc=5"
+   ],
+   [
+    "2026-10-26 07:24 UTC",
+    "asia.nikkei.com",
+    "Black Sea attacks cut Ukraine wheat exports to Indonesia, Bangladesh",
+    "https://news.google.com/rss/articles/CBMisgFBVV95cUxOMjRmX1VyWXgzYWtvR1FOcGlxdGR3RUdzX2RNbHA0VndLYzhKZ3RSMjFBUkprQmJCMDdIWmxwMHJENUtYenlDeFdnbVBsTFR0cm5DRXhweGxRTHBldHplczlaWTRuQVVJczh6cEhpT0NNM09DYXQ4MF9RR3VxSnotOW9yNnpCeG5ZMzUyNnYwN2xJcmVRNmt5cElKUWtFZkR2cWVTTW8yR2d0OU55cXpYdk1n?oc=5"
+   ],
+   [
+    "2026-10-26 06:10 UTC",
+    "www.vietnam.vn",
+    "The Black Sea has become the most dangerous shipping route in the world.",
+    "https://news.google.com/rss/articles/CBMikAFBVV95cUxNbW9yd2l5SUVQeW00aHNXWDRRc0JpZmNidmVBcmk0R2ZKb0RHUFpwVm1qYmx4WmdydmZBWmxOSERwVi0ycmR5LUpPMHdMX01lWWU5ZjJGbWptOENkbkgwNGp0UHVjYkR1R2JIV2N3amFjRmJ1Z3A5aVp1TDdnTmhzdVFpZjlmS01XN1VQd2N0bzc?oc=5"
    ]
   ],
   "macro": [
+   [
+    "2026-10-26 14:55 UTC",
+    "www.wsj.com",
+    "Week Ahead for FX, Bonds: Decisions From Fed, Other Central Banks in Focus",
+    "https://news.google.com/rss/articles/CBMirAFBVV95cUxPZl9NRnpPb3laN0tSUlB6NFUwekhQWkUyNG11ck5jQmxHZUxTZl82RzJoVmlLMzlQY2JCS1BuTC1mMDlZYjdXVHFFeTgxTXJ5eGJZazZOcGdLaDg4RFhvaDNidXhySlVzRFBTUmoyeTJ4YjYtMUR2M0RYT1M2WVZSRTIxYlNQQjk2RGJmWmRTMml5MEoyV1h5bHpSQ2dFaExzZVJmU1N3djBENFhM?oc=5"
+   ],
+   [
+    "2026-10-26 14:42 UTC",
+    "sundayguardianlive.com",
+    "US Stock Market Today LIVE: Dow Jones Rises 105 Points, S&P 500 Gains 0.21% & Nasdaq Climbs 0.28% at Open as Oil Prices & Fed Rate Decision in Focus; Check What Investors Should Know",
+    "https://news.google.com/rss/articles/CBMixAJBVV95cUxQUElCMUpvSE9GVUYtYXVKZ2I1Ukl6Nk9GWXI5T1Faak1kalRPRXR6ano5Y0YzZ3QzUTIyYmRQQkRkSmFkVkYza1NDcXZhWXR5RW03TE9GTTE2dnJGYU5DLTZ2akFBODU1Z2ljY1JzTGVya0pvdFRnS2JPbS04d1dKeDNlNW1KNGtzcVpqS1hLYUVra3lpajZTUzdNcDRLcW1tLTJvR2JDR29rSElGTVA0SjZ6Nk9jQ2ZqdUNGOU15SWFEWTE5VkJ0eUhlSVFnaFA1Q0Y5RkFzN19iM0NDVzFZZTRQNnluOEhpcGhvY05hQzhfVzR5ano1RGpBZjBpckZ1TmtuNFJtWkJNRUE1d3czR1RxLUYtT1NKQXdsVkgyUDg1MGxJcV9SczFRWDNyeGEwelcyaW5Fc2F2amVkOUhlYlhXc2zSAcQCQVVfeXFMUFBJQjFKb0hPRlVGLWF1SmdiNVJJejZPRllyOU9RWmpNZGpUT0V0emp6OWNGM2d0M1EyMmJkUEJEZEphZFZGM2tTQ3F2YVl0eUVtN0xPRk0xNnZyRmFOQy02dmpBQTg1NWdpY2NSc0xlcmtKb3RUZ0tiT20tOHdXSngzZTVtSjRrc3FaaktYS2FFa2t5aWo2U1M3TXA0S3FtbS0yb0diQ0dva0hJRk1QNEo2ejZPY0NmanVDRjlNeUlhRFkxOVZCdHlIZUlRZ2hQNUNGOUZBczdfYjNDQ1cxWWU0UDZ5bjhIaXBob2NOYUM4X1c0eWp6NURqQWYwaXJGdU5rbjRSbVpCTUVBNXd3M0dUcS1GLU9TSkF3bFZIMlA4NTBsSXFfUnMxUVgzcnhhMHpXMmluRXNhdmplZDlIZWJYV3Ns?oc=5"
+   ],
    [
     "2026-10-26 14:32 UTC",
     "www.tradingview.com",
@@ -26758,18 +26782,6 @@
     "coinedition.com",
     "PCE Arrives After the Fed: Bitcoin Faces a Second Macro Test on October 29",
     "https://news.google.com/rss/articles/CBMinwFBVV95cUxNeWRtLVAwRDRhbkRNLTVkM0xLMzJyNGRncHpxajczR0Z3OHFsOUVrTTlZQU9aeEZRazlZZU84cXBmSG5QQnlpbEFyb0dqQjFlMzlVcVBiU1c4c2tNMnpxVGRjWm1GWnpZQlZDYXZpTTRLdjRVTGU4UzZDY3FvLXJXODlzeFg2b2dvcXh1SndXbFh4aGg1cDk1U2RrQVZiNUk?oc=5"
-   ],
-   [
-    "2026-10-26 09:05 UTC",
-    "pluang.com",
-    "Bitcoin struggles near $80K amid key Fed rate d...",
-    "https://news.google.com/rss/articles/CBMiigFBVV95cUxOaVdCdDJjNVNLb1lRdGxURmhQTmtRcmNERE1RQzVjelZsLWxpSU5IbHlCSHBhcW5YWGV2UzBmLVJrUWFWY3dJUFpTYU1SQzUwQzljMjNzcE9IdjZGQUxOYktHRTJ0eDNncFAyamFmTUxHNVhvOVFvbTlMQXQ2YWZ0QjVRSjlZaGpPbGc?oc=5"
-   ],
-   [
-    "2026-10-26 08:39 UTC",
-    "crypto.news",
-    "Crypto week ahead: Bitcoin faces Fed, inflation, GDP tests",
-    "https://news.google.com/rss/articles/CBMidkFVX3lxTFBfWkM5V1A2ZEptSkJHWVVBZGFLUURISF83R3B4U0RDcXgxTlNYYXh3MEFobjIyZEkzcm5ndUhLS3dSZ1U4NjNraDJMVnl1dzNDYW1vM0hNSGhYSE9kNklVQlJaMzRYdmNvdmhYeVd0N3BTSFlzZ1E?oc=5"
    ]
   ]
  }
