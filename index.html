@@ -1530,9 +1530,7 @@ var grainState = { corn:"near", wheat:"near", soybeans:"near" };
 function positioningHTML(key){
   var g=DATA.grains[key], meta=GMETA[key], side=grainState[key], ds=g[side];
   var isNear = side==="near";
-  var head = isNear
-    ? meta.chainNear+' options · '+(ds.oi_label||'chain pull Oct 22, 2026 · OI as of Oct 21 close')
-    : meta.chainFar+' options · chain pull Oct 22, 2026 · OI as of Oct 21 close';
+  var head = (isNear?meta.chainNear:meta.chainFar)+' options · '+oiLabel(ds);
   var extra = isNear
     ? stat("Chain IV", fmt(ds.iv,2)+"%") + stat("Options expire", meta.optExp)
     : stat("Range read", "Put wall "+money2(ds.put_wall[0])+" → call wall "+money2(ds.call_wall[0]));
@@ -1547,8 +1545,10 @@ function positioningHTML(key){
     stat("Put wall", money2(ds.put_wall[0]), fmt(ds.put_wall[1])+" OI") + extra +
     '</div>'+
     (ds.note ? '<p class="note">'+esc(ds.note)+(ds.underlying?' \u00b7 underlying futures '+money2(ds.underlying):'')+(ds.partial?' \u00b7 totals and P/C cover the pulled strikes only':'')+'</p>' : '')+
-    (isNear ? '' : '<div class="stamp" style="border:0;margin-top:10px;padding-top:0">FAR MONTH — chain pull Oct 22, 2026 · OI as of Oct 21 close, frozen. Range the market is defining: '+money2(ds.put_wall[0])+' – '+money2(ds.call_wall[0])+'.</div>');
+    (isNear ? '' : '<div class="stamp" style="border:0;margin-top:10px;padding-top:0">FAR MONTH — '+oiLabel(ds)+'. Range the market is defining: '+money2(ds.put_wall[0])+' – '+money2(ds.call_wall[0])+'.</div>');
 }
+/* the pull date comes from the data (written by the daily options refresh) — never fixed text */
+function oiLabel(ds){ return ds&&ds.oi_label ? ds.oi_label : 'chain pull Oct 22, 2026 · OI as of Oct 21 close'; }
 
 var OIV={}; try{ OIV=JSON.parse(localStorage.getItem('desk.oiv')||'{}')||{}; }catch(e){}
 function daysToFnd(key){
@@ -1569,7 +1569,7 @@ function oiTileHTML(key){
   var tot=cp==='call'?'Call OI '+fmt(ds.calls)+' · wall '+fmt(ds.call_wall[0],2):cp==='put'?'Put OI '+fmt(ds.puts)+' · wall '+fmt(ds.put_wall[0],2):'P/C '+fmt(ds.pcr,2);
   var leg=(cp!=='put'?'<span><span class="sw" style="background:var(--call)"></span>Call OI</span><span><span class="sw" style="background:#ffd27a"></span>Call wall strike</span>':'')+
           (cp!=='call'?'<span><span class="sw" style="background:var(--put)"></span>Put OI</span><span><span class="sw" style="background:#ff9d97"></span>Put wall strike</span>':'');
-  return '<div class="tile-head"><h2>Open interest by strike — <span class="h2note">'+monLab+(mon==='far'&&side==='near'?' (next month)':'')+' · Oct 22, 2026 chain pull · '+tot+'</span></h2>'+
+  return '<div class="tile-head"><h2>Open interest by strike — <span class="h2note">'+monLab+(mon==='far'&&side==='near'?' (next month)':'')+' · '+esc(oiLabel(ds))+' · '+tot+'</span></h2>'+
     '<div class="oi-ctl">'+cpT+mT+'</div></div>'+
     (nextOn?'<p class="note" style="margin:4px 0 0">'+dF+' day'+(dF===1?'':'s')+' to first notice — next option month strikes available for roll planning.</p>':'')+
     oiSVG(ds.rows, ds, cp)+'<div class="legend">'+leg+'</div>';
