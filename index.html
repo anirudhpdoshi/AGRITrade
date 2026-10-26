@@ -640,6 +640,52 @@ table.wa{min-width:860px}
 .w5r .wb{justify-self:end}
 @media (max-width:1100px){.w5{grid-template-columns:1fr}}
 @media (max-width:760px){.w5r{grid-template-columns:18px minmax(0,1fr) auto 56px 80px}.w5bar{display:none}}
+.wasof{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:400;letter-spacing:0;text-transform:none;color:#8a97ab;margin-left:8px}
+.wasof.blk{display:block;margin:-2px 0 8px}.regts .wasof{margin:0 0 4px;display:block}.kpi .wasof{display:block;margin:4px 0 0;font-size:10px}
+.w5gh small .wasof{margin:0}
+
+/* ---- panel collapse / fold ---- */
+.sn-h{display:flex;justify-content:space-between;align-items:center}
+.sn-min{all:unset;cursor:pointer;color:var(--faint);font-size:14px;line-height:1;padding:2px 6px;border-radius:6px}.sn-min:hover{color:#fff;background:#14213a}
+.tn.shut .tn-kids{display:none}.tn.shut .tn-chev{transform:none!important}
+@media (min-width:1241px){
+  body.nav-min .layout.has-secnav{grid-template-columns:56px minmax(0,1fr) 332px}
+  body.nav-min .wlay{grid-template-columns:56px minmax(0,1fr)}
+  body.nav-min .secnav{padding:8px 4px;overflow:visible}
+  body.nav-min .sn-h{justify-content:center;border:0;padding:2px 0 6px}body.nav-min .sn-h>span{display:none}body.nav-min .sn-min{transform:rotate(180deg)}
+  body.nav-min .tn-h{grid-template-columns:1fr;justify-items:center;padding:10px 0}
+  body.nav-min .tn-t,body.nav-min .tn-chev,body.nav-min .tn-kids{display:none}
+  body.nav-min .tn-dot{width:12px;height:12px}
+  body.nav-min .tn{position:relative}
+  body.nav-min .tn-h:hover:after{content:attr(data-name);position:absolute;left:52px;top:6px;white-space:nowrap;background:#0f1a2b;border:1px solid var(--line);padding:4px 9px;border-radius:7px;font-size:12px;color:#fff;z-index:50}
+}
+/* ---- knowledge bank ---- */
+.kb-sw{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:14px;padding:3px 10px 3px 4px;margin-left:auto}
+.kb-sw i{width:26px;height:14px;border-radius:8px;background:#22324a;position:relative;transition:background .2s}
+.kb-sw i:after{content:"";position:absolute;left:2px;top:2px;width:10px;height:10px;border-radius:50%;background:#8a97ab;transition:transform .2s,background .2s}
+.kb-sw[aria-checked="true"]{border-color:#38b6c9;color:#fff}.kb-sw[aria-checked="true"] i{background:#1d6f7c}.kb-sw[aria-checked="true"] i:after{transform:translateX(12px);background:#fff}
+.kb-sw b{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em}
+.subctx .sc-ev{margin-left:0}
+.kbox{display:none;margin:4px 0 12px;padding:10px 12px;border-radius:9px;background:color-mix(in srgb,var(--sa,#38b6c9) 8%,#0c1524);border:1px dashed color-mix(in srgb,var(--sa,#38b6c9) 50%,transparent);font-size:12.5px;line-height:1.5;color:#c9d6e6}
+body.kb-on .kbox{display:block;animation:tnIn .2s ease-out}
+.kbox>div{margin:2px 0}.kbox b{color:#fff;font-weight:600;margin-right:4px}.kb-t{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sa,#38b6c9);margin-bottom:4px!important}.kb-src{color:#8a97ab;font-size:11.5px}
+.kpi-strip>.kbox{grid-column:1/-1}
+.kb-guide .kbg-d{font-size:13.5px;color:#c9d6e6;margin:2px 0 10px;line-height:1.55}
+.kbg-q{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 12px;margin-bottom:12px;font-size:12.5px}.kbg-q ul{margin:4px 0 0;padding-left:18px;color:#c9d6e6}
+.kbg-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kbg-i{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;border:1px solid var(--line);border-left:3px solid var(--sa,#38b6c9);border-radius:9px;padding:9px 12px;background:var(--panel2)}
+.kbg-i p{margin:3px 0;font-size:12.5px;color:#c9d6e6;line-height:1.45}.kbg-i small{color:#8a97ab;font-size:11.5px;line-height:1.4;display:block}
+.kbg-go{all:unset;cursor:pointer;white-space:nowrap;font-size:12px;color:var(--sa,#38b6c9);border:1px solid color-mix(in srgb,var(--sa,#38b6c9) 50%,transparent);border-radius:12px;padding:3px 10px}.kbg-go:hover{background:color-mix(in srgb,var(--sa,#38b6c9) 16%,transparent)}
+.sn-guide span{color:#c9d6e6}.sn-guide[aria-pressed="true"] span{color:#fff}
+@media (max-width:760px){.kbg-list{grid-template-columns:1fr}.kb-sw{margin-left:0}}
+.wrefresh{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:12px;padding:2px 9px}
+.wrefresh .countdown{font-size:11px}.wrefresh.late{color:#e8b93d;border-color:#6e5a2a}
+.zoom-ov{position:fixed;inset:0;z-index:9999;background:rgba(4,8,15,.82);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:2vh 2vw;animation:tnIn .18s ease-out}
+.zoom-box{width:min(1500px,96vw);background:var(--panel);border:1px solid var(--line2,#2a3a52);border-radius:14px;padding:14px 18px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.zoom-h{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;font-size:14px;font-weight:600;color:#e8eef4;margin-bottom:10px}.zoom-h .h2note{font-weight:400;color:var(--faint);font-size:12px}
+.zoom-x{all:unset;cursor:pointer;font-size:16px;color:var(--muted);padding:2px 8px;border-radius:6px}.zoom-x:hover{background:#14213a;color:#fff}
+.zoom-f{margin-top:8px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint)}
+main .tile svg{cursor:zoom-in}main .tile svg.flag,main .tile .wsp,main .tile svg[width="12"],main .kpi-spark{cursor:default}
 </style>
 </head>
 <body class="locked">
@@ -1581,15 +1627,17 @@ function rollData(key){
   function n0(v){ return (v>0?'+':v<0?'-':'')+fmt(Math.abs(v)); }
   function beh(dOI, dP){ var t=dOI>0&&dP>0?'new longs':dOI>0&&dP<0?'new shorts':dOI<0&&dP>0?'short covering':dOI<0&&dP<0?'long liquidation':'steady';
     return n0(dOI)+' OI / '+(dP>0?'+':dP<0?'-':'')+Math.abs(dP).toFixed(1)+'¢ → '+t; }
-  R.src={};
+  R.src={}; R.oldPrelim=[]; var lastAdd=add.length?add[add.length-1][0]:'';
   add.forEach(function(a){
     if(have[a[0]]) return;
     var prev=R.dailyN[R.dailyN.length-1], fOI=a[1], dOI=a[2], roll=+(dOI/(fOI+dOI)*100).toFixed(1), sp=+((a[3]-a[4])*100).toFixed(2);
     var pfS=prev[5]!=null?prev[5]:hist[prev[0]], pdS=prev[6]!=null?prev[6]:(pfS!=null?pfS-prev[4]/100:null);
     var row=[a[0],fOI,dOI,roll,sp,a[3],a[4]]; R.dailyN.push(row); have[a[0]]=1; R.src[a[0]]=a[5]||'';
-    var lab=MON3[a[0].slice(0,2)]+' '+a[0].slice(3)+(/^P/.test(a[5]||'')?' (prelim)':'');
+    /* only the newest session can still be waiting for its final OI; an older row sourced from a preliminary bulletin is flagged ᵖ and footnoted */
+    var isP=/^P/.test(a[5]||''), lab=MON3[a[0].slice(0,2)]+' '+a[0].slice(3)+(isP?(a[0]===lastAdd?' (prelim)':' ᵖ'):'');
+    if(isP&&a[0]!==lastAdd) R.oldPrelim.push(MON3[a[0].slice(0,2)]+' '+a[0].slice(3)+' ('+String(a[5]).replace(/^P-/,'')+')');
     R.dailyT.push([lab, fmt(fOI), fmt(dOI), n0((fOI+dOI)-(prev[1]+prev[2])), roll.toFixed(1)+'%', ((roll-prev[3])>=0?'+':'')+(roll-prev[3]).toFixed(1), sp.toFixed(1)+'¢', ((sp-prev[4])>=0?'+':'')+(sp-prev[4]).toFixed(1)]);
-    if(pfS!=null) R.beh.push([MON3[a[0].slice(0,2)]+' '+a[0].slice(3)+(/^P/.test(a[5]||'')?'ᵖ':''), beh(fOI-prev[1], (a[3]-pfS)*100), beh(dOI-prev[2], (a[4]-pdS)*100)]);
+    if(pfS!=null) R.beh.push([MON3[a[0].slice(0,2)]+' '+a[0].slice(3)+(isP?'ᵖ':''), beh(fOI-prev[1], (a[3]-pfS)*100), beh(dOI-prev[2], (a[4]-pdS)*100)]);
   });
   var N=R.dailyN, F=N[0], L=N[N.length-1], k5=N[Math.max(0,N.length-6)], st=R.stats;
   st.roll=L[3].toFixed(1)+'%'; st.fnet=n0(L[1]-F[1]); st.dnet=n0(L[2]-F[2]); st.cnet=n0((L[1]+L[2])-(F[1]+F[2]));
@@ -1658,7 +1706,8 @@ function rollTileHTML(key){
     '<div class="beh-wrap"><h3>Trader behaviour — what each session\u2019s flow says · last 9 session deltas</h3>'+
     '<div class="beh-row beh-head"><span class="bd">Date</span><span class="bt">Front ('+R.front+') — unwinding</span><span class="bt">Deferred ('+R.def+') — adding</span></div>'+behRows+
     '<p class="decode">Decode: price↑+OI↑ = new longs · price↓+OI↑ = new shorts · price↑+OI↓ = short covering · price↓+OI↓ = long liquidation</p>'+
-    '<div class="stamp" style="border:0;margin-top:4px;padding-top:8px">Latest session ('+esc(R.lastLabel)+') highlighted</div></div>'+
+    '<div class="stamp" style="border:0;margin-top:4px;padding-top:8px">Latest session ('+esc(R.lastLabel)+') highlighted'+(/prelim/.test(R.lastLabel)?' · preliminary until the exchange final is confirmed (daily check 10:52 am ET)':'')+
+      (R.oldPrelim.length?' · ᵖ '+esc(R.oldPrelim.join(', '))+': exchange preliminary open interest, captured before the daily final-OI confirmation started — the final for that date is not available from our sources, so the preliminary figure is kept and marked':'')+'</div></div>'+
     '<div class="stamp">Per-contract open interest: rollover-card history through Oct 20, then CME daily bulletin / Interactive Brokers (prelim = exchange preliminary OI, published ~10:30 pm ET on trade date; final ~10:30 am ET next day) · settles: CBOT daily settlements · behaviour rule: OI and price change of each contract that session</div></div>';
 }
 
@@ -3155,7 +3204,7 @@ function renderGrain(key){
   var html='<div class="layout"><div class="grid">'+grainSubnavHTML(key), OV=grainKpiHTML(key)+grainDashboardHTML(key), DV='', FU='';
   /* fan tile */
   var FL=fanLevels(g, meta);
-  OV+='<div class="tile wide" data-src="grains_quote" data-grain="'+key+'"><h2>'+meta.name+' '+meta.contract+' — 10-day σ fan <span class="h2note">settle fan anchored '+fmtDate(f.settle_date)+' · live fan re-anchored on the latest delayed quote</span></h2>'+
+  OV+='<div class="tile wide" data-src="grains_quote" data-grain="'+key+'"><h2>'+meta.name+' '+meta.contract+' — 10-day σ fan <span class="h2note">double-click the chart to zoom · settle fan anchored '+fmtDate(f.settle_date)+' · live fan re-anchored on the latest delayed quote</span></h2>'+
     '<div class="stat-row" style="margin:6px 0 10px">'+
     stat("Daily σ", "$"+fmt(f.sig,4)) +
     stat("Chain IV", fmt(f.iv_chain_iv,2)+"%") +
@@ -3679,6 +3728,55 @@ var SECG={
 };
 var SUBTHEME={overview:'#38b6c9',deriv:'#a78bfa',macro:'#e8b93d',fund:'#e8b93d',rates:'#3fb97f',inputs:'#f08a5d'};
 var GTITLE={corn:'Corn · ZCZ26',wheat:'Wheat · ZWZ26',soybeans:'Soybeans · ZSX26',fx:'USD/CAD desk'};
+
+/* ---------- left-panel collapse, knowledge bank, per-menu guide ---------- */
+var NAVSHUT={}, NAVMIN=false, KBON=false;
+try{ NAVSHUT=JSON.parse(localStorage.getItem('desk.navshut')||'{}')||{}; NAVMIN=localStorage.getItem('desk.navmin')==='1'; KBON=localStorage.getItem('desk.kb')==='1'; }catch(e){}
+document.body.classList.toggle('nav-min', NAVMIN); document.body.classList.toggle('kb-on', KBON);
+function kbSwitchHTML(){ return '<button class="kb-sw" data-kbsw role="switch" aria-checked="'+KBON+'" title="Show a plain-language explanation on every card"><i></i><span>Knowledge bank</span><b>'+(KBON?'ON':'OFF')+'</b></button>'; }
+function kbBox(e){
+  if(!e) return '';
+  return '<div class="kbox"><div class="kb-t">ⓘ '+esc(e.t)+'</div>'+
+    (e.what?'<div><b>What it shows</b> '+esc(e.what)+'</div>':'')+(e.read?'<div><b>How to read it</b> '+esc(e.read)+'</div>':'')+
+    (e.use?'<div><b>Why it matters</b> '+esc(e.use)+'</div>':'')+(e.src?'<div class="kb-src"><b>Source</b> '+esc(e.src)+'</div>':'')+'</div>';
+}
+window.kbBox=kbBox;
+function kbDecorate(panel, sub, sid, list, cur){
+  var K=window.KB; if(!K) return;
+  var set=panel==='fx'?'fx':'grain', done={};
+  [].forEach.call(sub.children, function(t){
+    var id=t.getAttribute('data-sec'); if(!id||id==='*'||done[id]) return; done[id]=1;
+    var e=K[set][id]; if(!e||t.querySelector(':scope>.kbox')) return;
+    var w=document.createElement('div'); w.innerHTML=kbBox(e); var box=w.firstChild;
+    var h=t.querySelector(':scope>.tile-head, :scope>h2'); if(h) h.after(box); else t.insertBefore(box, t.firstChild);
+  });
+  if(cur!=='guide') return;
+  var M=(K.menus[set]||{})[sid]||{}, g=document.createElement('div'); g.className='tile wide kb-guide'; g.setAttribute('data-sec','guide');
+  g.innerHTML='<h2>Guide — '+esc(M.t||sid)+' <span class="h2note">— what this menu is for and where to find each answer</span></h2>'+
+    '<p class="kbg-d">'+esc(M.d||'')+'</p>'+(M.q?'<div class="kbg-q"><b>Questions this menu answers</b><ul>'+M.q.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul></div>':'')+
+    '<div class="kbg-list">'+list.map(function(gr){ var e=K[set][gr.id]||{};
+      return '<div class="kbg-i"><div><b>'+esc(gr.lab)+'</b><p>'+esc(e.what||'Supporting detail for this menu.')+'</p>'+(e.read?'<small>'+esc(e.read)+'</small>':'')+'</div>'+
+        '<button class="kbg-go" data-secp="'+panel+'" data-sec-v="'+gr.id+'">Open →</button></div>'; }).join('')+'</div>'+
+    '<div class="stamp">Tip: turn on the Knowledge bank switch (top bar) to see the same explanation inside every card · the left panel can be collapsed with «, and the open menu folds when you click its name again</div>';
+  var first=[].filter.call(sub.children, function(t){ return t.getAttribute('data-sec')!=='*'; })[0];
+  sub.insertBefore(g, first||null);
+}
+function navReflow(){ ['corn','wheat','soybeans','fx'].forEach(function(p){ if(typeof buildSecNav==='function') buildSecNav(p); }); if(window.WORLD) WORLD.render(); }
+document.addEventListener('click', function(ev){
+  var t=ev.target.closest?ev.target:null; if(!t) return;
+  if(t.closest('[data-navmin]')){ ev.stopPropagation(); NAVMIN=!NAVMIN; document.body.classList.toggle('nav-min', NAVMIN); try{ localStorage.setItem('desk.navmin', NAVMIN?'1':'0'); }catch(e){} return; }
+  if(t.closest('[data-kbsw]')){ ev.stopPropagation(); KBON=!KBON; document.body.classList.toggle('kb-on', KBON); try{ localStorage.setItem('desk.kb', KBON?'1':'0'); }catch(e){}
+    document.querySelectorAll('[data-kbsw]').forEach(function(b){ b.setAttribute('aria-checked', KBON); b.querySelector('b').textContent=KBON?'ON':'OFF'; }); return; }
+  /* clicking the name of the menu that is already open folds / unfolds its section list */
+  var h=t.closest('.tn-h[aria-selected="true"]');
+  if(h && !document.body.classList.contains('nav-min')){
+    var pn=(h.closest('.tab-panel')||{}).id||''; pn=pn.replace('panel-',''); ev.stopPropagation(); ev.preventDefault();
+    NAVSHUT[pn]=!NAVSHUT[pn]; try{ localStorage.setItem('desk.navshut', JSON.stringify(NAVSHUT)); }catch(e){}
+    var tn=h.closest('.tn'); tn.classList.toggle('shut', !!NAVSHUT[pn]); h.setAttribute('aria-expanded', !NAVSHUT[pn]); return;
+  }
+  if(t.closest('.tn-h')){ var pn2=((t.closest('.tab-panel')||{}).id||'').replace('panel-',''); if(NAVSHUT[pn2]){ NAVSHUT[pn2]=false; try{ localStorage.setItem('desk.navshut', JSON.stringify(NAVSHUT)); }catch(e){} } }
+}, true);
+window.addEventListener('load', function(){ var k=document.createElement('script'); k.src='kb.js?v='+Date.now(); k.onload=navReflow; document.body.appendChild(k); });
 var SECMQ=window.matchMedia('(max-width:1240px)');
 function placeSecNav(L, nav){
   var G=L.querySelector(':scope>.grid'), st=G&&G.querySelector(':scope>.subnav-tile');
@@ -3697,6 +3795,7 @@ function buildSecNav(panel){
   L.classList.add('has-secnav'); placeSecNav(L, nav);
   if(!sub){ nav.innerHTML=''; return; }
   var rules=(SECG[panel==='fx'?'fx':'grain']||{})[sub.getAttribute('data-subpanel')]||[], groups={}, order=[];
+  var og=sub.querySelector(':scope>.kb-guide'); if(og) og.remove();
   [].forEach.call(sub.children, function(t){
     if(/geo-head/.test(t.className)){ t.setAttribute('data-sec','*'); return; }
     var h=t.querySelector('h2,h3'), txt=t.className+' '+(t.getAttribute('data-src')||'')+' '+(t.id||'')+' '+(h?h.textContent:'');
@@ -3708,26 +3807,27 @@ function buildSecNav(panel){
     groups[id].n++;
   });
   var list=order.map(function(k){ return groups[k]; }).sort(function(a,b){ return a.idx-b.idx; });
-  var cur=SEC[secKey(panel)]||'all'; if(cur!=='all'&&!groups[cur]) cur='all';
+  var cur=SEC[secKey(panel)]||'all'; if(cur!=='all'&&cur!=='guide'&&!groups[cur]) cur='all';
   var subLab=(P.querySelector('[data-sub="'+sub.getAttribute('data-subpanel')+'"] .sb-name')||{}).textContent||'';
   var sid=sub.getAttribute('data-subpanel'), acc=SUBTHEME[sid]||'#38b6c9', L2=P.querySelector('.layout');
   P.style.setProperty('--sa', acc); if(L2) L2.setAttribute('data-subt', sid);
-  var secLab=cur==='all'?'All sections':(groups[cur]||{}).lab||'';
+  var secLab=cur==='all'?'All sections':cur==='guide'?'Guide':(groups[cur]||{}).lab||'';
+  var GB='<button class="sn-b sn-guide" data-secp="'+panel+'" data-sec-v="guide" aria-pressed="'+(cur==='guide')+'"><span>ⓘ Guide — what\u2019s in here</span></button>';
   if(!SECMQ.matches){
     /* desktop: one tree — every menu with its next event; the open menu expands into its sections */
     var heads=[].map.call(P.querySelectorAll('.subnav [data-sub]'), function(b){ return {id:b.getAttribute('data-sub'), name:(b.querySelector('.sb-name')||{}).textContent||'', ev:(b.querySelector('.sb-ev')||{}).textContent||'', cd:b.querySelector('.sb-cd')}; });
-    nav.innerHTML='<div class="sn-h">'+esc(GTITLE[panel]||'Sections')+'</div>'+heads.map(function(h){
+    nav.innerHTML='<div class="sn-h"><span>'+esc(GTITLE[panel]||'Sections')+'</span><button class="sn-min" data-navmin title="Collapse / expand the menu panel" aria-label="Collapse menu panel">\u00ab</button></div>'+heads.map(function(h){
       var on=h.id===sid, c=SUBTHEME[h.id]||'#38b6c9', cd=h.cd&&h.cd.querySelector('.countdown');
-      return '<div class="tn'+(on?' open':'')+'" style="--tc:'+c+'">'+
-        '<button class="tn-h" data-sub="'+h.id+'" data-subp="'+panel+'" aria-selected="'+on+'" aria-expanded="'+on+'"><i class="tn-dot"></i><span class="tn-t"><b>'+esc(h.name)+'</b>'+
+      return '<div class="tn'+(on?' open':'')+(on&&NAVSHUT[panel]?' shut':'')+'" style="--tc:'+c+'">'+
+        '<button class="tn-h" data-name="'+esc(h.name)+'" data-sub="'+h.id+'" data-subp="'+panel+'" aria-selected="'+on+'" aria-expanded="'+on+'"><i class="tn-dot"></i><span class="tn-t"><b>'+esc(h.name)+'</b>'+
         (cd&&!/No scheduled/.test(h.ev)?'<small title="'+esc(h.ev)+'">'+esc(h.ev)+'</small><small class="tn-cd">in <span class="countdown" data-t="'+cd.getAttribute('data-t')+'" data-fmt="hms">'+cd.textContent+'</span></small>':'<small>No scheduled event</small>')+
         '</span><span class="tn-chev" aria-hidden="true">›</span></button>'+
-        (on?'<div class="tn-kids">'+
+        (on?'<div class="tn-kids">'+GB+
           '<button class="sn-b" data-secp="'+panel+'" data-sec-v="all" aria-pressed="'+(cur==='all')+'"><span>All sections</span><small>'+list.length+'</small></button>'+
           list.map(function(g){ return '<button class="sn-b" data-secp="'+panel+'" data-sec-v="'+g.id+'" aria-pressed="'+(cur===g.id)+'"><span>'+esc(g.lab)+'</span>'+(g.n>1?'<small>'+g.n+'</small>':'')+'</button>'; }).join('')+'</div>':'')+
       '</div>'; }).join('');
   } else {
-  nav.innerHTML='<div class="sn-h">'+esc(subLab)+'</div>'+
+  nav.innerHTML='<div class="sn-h">'+esc(subLab)+'</div>'+GB+
     '<button class="sn-b" data-secp="'+panel+'" data-sec-v="all" aria-pressed="'+(cur==='all')+'"><span>All sections</span><small>'+list.length+'</small></button>'+
     list.map(function(g){ return '<button class="sn-b" data-secp="'+panel+'" data-sec-v="'+g.id+'" aria-pressed="'+(cur===g.id)+'"><span>'+esc(g.lab)+'</span>'+(g.n>1?'<small>'+g.n+'</small>':'')+'</button>'; }).join('');
   }
@@ -3735,8 +3835,9 @@ function buildSecNav(panel){
     if(st&&!cx){ cx=document.createElement('div'); cx.className='subctx'; st.insertBefore(cx, st.firstChild); }
     if(cx){ var hb=P.querySelector('.subnav [data-sub="'+sid+'"]'), ev=hb&&hb.querySelector('.sb-ev'), cdd=hb&&hb.querySelector('.sb-cd');
       cx.innerHTML='<span class="sc-pill"><i></i>'+esc(subLab)+'</span><span class="sc-sec">› '+esc(secLab)+'</span>'+
-        (ev&&!/No scheduled/.test(ev.textContent)?'<span class="sc-ev">Next: <b>'+esc(ev.textContent)+'</b> '+(cdd?cdd.innerHTML:'')+'</span>':''); }
+        (ev&&!/No scheduled/.test(ev.textContent)?'<span class="sc-ev">Next: <b>'+esc(ev.textContent)+'</b> '+(cdd?cdd.innerHTML:'')+'</span>':'')+kbSwitchHTML(); }
   [].forEach.call(sub.children, function(t){ var s=t.getAttribute('data-sec'); t.classList.toggle('sec-off', cur!=='all' && s!=='*' && s!==cur); });
+  kbDecorate(panel, sub, sid, list, cur);
   var act=nav.querySelector('[aria-pressed="true"]'); if(act&&SECMQ.matches) nav.scrollLeft=Math.max(0,act.offsetLeft-nav.clientWidth/2+act.offsetWidth/2);
   if(panel!=='fx'&&typeof drawDestMaps==='function'&&cur==='dest') setTimeout(drawDestMaps,30);
 }
@@ -3756,6 +3857,30 @@ document.addEventListener('click', function(ev){
 
 function renderAll(){ renderGrain('corn'); renderGrain('wheat'); renderGrain('soybeans'); renderFX(); drawDestMaps(); if(typeof paintAwaiting==='function') paintAwaiting(); }
 renderAll();
+</script>
+<script>
+/* double-click any chart to open it large (Esc, ✕ or a click outside closes it) */
+(function(){
+  var ov=null;
+  function close(){ if(ov){ ov.remove(); ov=null; document.body.style.overflow=''; } }
+  function open(svg){
+    var tile=svg.closest('.tile'), h=tile&&tile.querySelector('h2'), c=svg.cloneNode(true), r=svg.getBoundingClientRect();
+    if(!c.getAttribute('viewBox')){ var w=+svg.getAttribute('width')||r.width, hh=+svg.getAttribute('height')||r.height; c.setAttribute('viewBox','0 0 '+w+' '+hh); }
+    c.removeAttribute('width'); c.removeAttribute('height'); c.setAttribute('preserveAspectRatio','xMidYMid meet');
+    c.style.cssText='width:100%;height:auto;max-height:78vh;display:block';
+    ov=document.createElement('div'); ov.className='zoom-ov'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true');
+    ov.innerHTML='<div class="zoom-box"><div class="zoom-h"><span>'+(h?h.innerHTML:'Chart')+'</span><button class="zoom-x" aria-label="Close">✕</button></div><div class="zoom-c"></div><div class="zoom-f">Snapshot at '+new Date().toLocaleTimeString('en-US',{timeZone:'America/Toronto',hour:'numeric',minute:'2-digit',second:'2-digit'})+' ET · Esc or click outside to close</div></div>';
+    ov.querySelector('.zoom-c').appendChild(c); document.body.appendChild(ov); document.body.style.overflow='hidden';
+    ov.addEventListener('click', function(e){ if(e.target===ov||e.target.closest('.zoom-x')) close(); });
+  }
+  document.addEventListener('dblclick', function(e){
+    var svg=e.target.closest&&e.target.closest('main .tile svg, #panel-world .tile svg'); if(!svg||svg.closest('.zoom-ov')) return;
+    while(svg.parentNode&&svg.parentNode.closest&&svg.parentNode.closest('svg')) svg=svg.parentNode.closest('svg');
+    var r=svg.getBoundingClientRect(); if(r.width<140||r.height<60) return;
+    e.preventDefault(); open(svg);
+  });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') close(); });
+})();
 </script>
 <script src="config.js"></script>
 <script>

@@ -140,6 +140,16 @@
       a.map(function (v, k) { return (k / (a.length - 1) * 60).toFixed(1) + "," + (17 - (v - mn) / r * 16).toFixed(1); }).join(" ") + '"/></svg>';
   }
   function last(i) { return (i.kind === "yield" ? nf(i.last, 3) + "%" : i.kind === "spread" ? nf(i.last, 1) + " bp" : nf(i.last, i.dec)); }
+
+  /* "as of" stamp for any set of instruments: newest and oldest source bar, in Toronto time, with age */
+  function asOf(list, cls) {
+    var ts = (list || []).map(function (i) { return Date.parse(i.ts); }).filter(isFinite);
+    if (!ts.length) return "";
+    var mx = Math.max.apply(null, ts), mn = Math.min.apply(null, ts), now = Date.now();
+    var t = function (ms) { return new Date(ms).toLocaleString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); };
+    var txt = "as of " + t(mx) + " ET · " + ago(now - mx) + " ago" + (mx - mn > 3600000 ? " · oldest " + t(mn) + " (" + ago(now - mn) + ")" : "");
+    return '<span class="wasof' + (cls ? " " + cls : "") + '" title="Source bar times from the provider, shown in Toronto time. Closed markets show their last session close.">' + txt + "</span>";
+  }
   function rowHTML(i) {
     var ex = W.exchanges[i.ex] || {}, st = status(ex, Date.now());
     return '<tr data-wid="' + i.id + '"><td class="wn">' + fl(i.cc, 13) + ' <span><b>' + esc(i.name) + '</b><small>' + esc(i.alt_of ? i.sym + " (alt)" : i.sym) + (i.note ? " · " + esc(i.note) : "") + "</small></span></td>" +
@@ -163,9 +173,9 @@
       var rows = list.filter(function (i) { return i.group === g; });
       if (g === "Indices") rows.sort(function (a, b) { return ["Asia-Pacific", "Europe", "Americas"].indexOf(a.region) - ["Asia-Pacific", "Europe", "Americas"].indexOf(b.region); });
       if (!rows.length) return "";
-      return '<tr class="wgh"><td colspan="10">' + g + "</td></tr>" + rows.map(rowHTML).join("");
+      return '<tr class="wgh"><td colspan="10">' + ({ Indices: "Equity indices", FX: "Currencies" }[g] || g) + " " + asOf(rows) + "</td></tr>" + rows.map(rowHTML).join("");
     }).join("");
-    return '<div class="tile wide"><h2>All markets <span class="h2note">— last price, change, today’s range, 52-week position · hover a status for the exchange, an age for the source time</span></h2>' + filt +
+    return '<div class="tile wide"><h2>All markets <span class="h2note">— last price, change, today’s range, 52-week position · hover a status for the exchange, an age for the source time</span></h2>' + asOf(list, "blk") + filt +
       '<div class="wtw"><table class="wt"><thead><tr><th>Market</th><th>Status</th><th class="r">LTP</th><th class="r">Chg</th><th class="r">% Chg</th><th class="r">High</th><th class="r">Low</th><th>52-week range</th><th>30d</th><th>Data</th></tr></thead><tbody>' +
       (body || '<tr><td colspan="10" class="neu">No markets match the filter.</td></tr>') + "</tbody></table></div>" +
       '<div class="stamp">LTP = last traded/quoted price · % change vs the previous official close (yields and spreads in basis points) · high/low = current session · 52-week range from daily highs/lows · badges: NEW 52W HIGH/LOW when today’s range breaks the prior 52-week extreme, “% from” when within 5% · ROLL = continuous futures symbol switched contracts; change measured against that contract’s own previous close</div></div>';
@@ -185,7 +195,7 @@
         '<div class="sst"><span class="wst ' + st + '">' + SLAB[st] + "</span>" + (nx ? '<small>' + (nx.opening ? "opens" : "closes") + ' in <span class="countdown" data-t="' + nx.t + '">' + ago(nx.t - now) + "</span></small>" : "") + "</div></div>";
     }).join("");
     var hours = ""; for (var h = 0; h <= 24; h += 3) hours += '<span style="left:' + (h / 24 * 100) + '%">' + (h % 12 || 12) + (h < 12 || h === 24 ? "a" : "p") + "</span>";
-    return '<div class="tile wide"><h2>Global sessions <span class="h2note">— today on Toronto time · bars = regular hours (lighter = overnight/extended, amber = lunch or daily break) · white line = now</span></h2>' +
+    return '<div class="tile wide"><h2>Global sessions <span class="h2note">— today on Toronto time · bars = regular hours (lighter = overnight/extended, amber = lunch or daily break) · white line = now</span></h2>' + '<span class="wasof blk">live clock · ' + new Date().toLocaleString("en-US", { timeZone: "America/Toronto", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " ET · statuses recomputed every minute</span>" +
       '<div class="sgrid"><div></div><div class="shrs">' + hours + "</div><div></div>" + rows + "</div>" +
       '<div class="stamp">Hours from each exchange’s published regular session in local time (daylight-saving handled per time zone) · exchange holidays are not in a calendar: a scheduled-open market with no fresh bars is shown as “no trading today (holiday?)” in the data column · FX trades 24/5 (Sun 5 pm – Fri 5 pm New York) · CME Globex has a daily 4–5 pm CT break</div></div>';
   }
@@ -200,7 +210,7 @@
       var body = GROUPS.map(function (g) {
         var r = xs.filter(function (i) { return i.group === g; }).sort(function (a, b) { return dist(a) - dist(b); });
         if (!r.length) return "";
-        return '<div class="w5g"><div class="w5gh">' + ({ Indices: "Equity indices", FX: "Currencies" }[g] || g) + "<small>" + r.length + "</small></div>" + r.map(function (i) {
+        return '<div class="w5g"><div class="w5gh">' + ({ Indices: "Equity indices", FX: "Currencies" }[g] || g) + "<small>" + asOf(r) + " · " + r.length + "</small></div>" + r.map(function (i) {
           var w = i.w52, isNew = hi ? w.new_high : w.new_low, d = hi ? w.pct_from_high : w.pct_from_low;
           var tag = isNew ? '<span class="wb ' + (hi ? "nh" : "nl") + '">NEW 52W ' + (hi ? "HIGH" : "LOW") + "</span>" : '<span class="w5d">' + nf(d, 1) + "%" + (hi ? " below" : " above") + "</span>";
           var fill = Math.max(4, Math.min(100, 100 - (isNew ? 0 : d) * 20));
@@ -212,7 +222,7 @@
         xs.filter(function (i) { return hi ? i.w52.new_high : i.w52.new_low; }).length + " new " + (hi ? "highs" : "lows") + "</small></div>" +
         (body || '<p class="note">None within 5% right now.</p>') + "</div>";
     }
-    return '<div class="tile wide"><h2>52-week watch <span class="h2note">— markets at or within 5% of their 52-week high or low, by asset class · bar = how close (full = at the extreme)</span></h2><div class="w5">' + side(true) + side(false) + "</div></div>";
+    return '<div class="tile wide"><h2>52-week watch <span class="h2note">— markets at or within 5% of their 52-week high or low, by asset class · bar = how close (full = at the extreme)</span></h2>' + asOf(L, "blk") + '<div class="w5">' + side(true) + side(false) + "</div></div>";
   }
   function overviewHTML() {
     var L = inst(), px = L.filter(function (i) { return i.kind === "price" && i.pct != null && !/^vix/.test(i.id); });
@@ -221,15 +231,15 @@
     var g = function (id) { return L.filter(function (i) { return i.id === id; })[0]; }, k = function (id, lab) { var i = g(id); return i ? '<div class="kpi"><div class="kpi-k">' + lab + '</div><div class="kpi-v">' + last(i) + '</div><div class="kpi-s">' + chgCell(i) + " · " + age(i) + "</div></div>" : ""; };
     var regs = ["Asia-Pacific", "Europe", "Americas"].map(function (r) {
       var xs = idx.filter(function (i) { return i.region === r; }), av = xs.length ? xs.reduce(function (s, i) { return s + i.pct; }, 0) / xs.length : null;
-      return '<div class="reg"><div class="regh">' + r + ' <span class="' + cl(av) + '">' + sg(av, 2, "%") + "</span></div>" + xs.map(moverRow).join("") + "</div>";
+      return '<div class="reg"><div class="regh">' + r + ' <span class="' + cl(av) + '">' + sg(av, 2, "%") + "</span></div>" + '<div class="regts">' + asOf(xs) + "</div>" + xs.map(moverRow).join("") + "</div>";
     }).join("");
     var w52 = L.filter(function (i) { return i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low); })
       .sort(function (a, b) { return (b.w52.new_high || b.w52.new_low) - (a.w52.new_high || a.w52.new_low); });
     var al = (W.alerts || []).slice(0, 6);
-    return '<div class="tile wide kpi-strip">' + '<div class="kpi"><div class="kpi-k">Index breadth</div><div class="kpi-v">' + adv + "<small> / " + idx.length + ' up</small></div><div class="kpi-s">' + (idx.length - adv) + " down · vs previous close</div></div>" +
+    return '<div class="tile wide kpi-strip">' + '<div class="kpi"><div class="kpi-k">Index breadth</div><div class="kpi-v">' + adv + "<small> / " + idx.length + ' up</small></div><div class="kpi-s">' + (idx.length - adv) + " down · vs previous close</div>" + asOf(idx) + "</div>" +
       k("spx", "S&P 500") + k("dxy", "US dollar (DXY)") + k("vix", "VIX") + k("gold", "Gold") + k("wti", "WTI crude") + "</div>" +
-      '<div class="tile"><h2>Biggest gainers <span class="h2note">— % vs previous close</span></h2>' + up.slice(0, 6).map(moverRow).join("") + "</div>" +
-      '<div class="tile"><h2>Biggest decliners <span class="h2note">— % vs previous close</span></h2>' + dn.slice(0, 6).map(moverRow).join("") + "</div>" +
+      '<div class="tile"><h2>Biggest gainers <span class="h2note">— % vs previous close</span></h2>' + asOf(up.slice(0, 6), "blk") + up.slice(0, 6).map(moverRow).join("") + "</div>" +
+      '<div class="tile"><h2>Biggest decliners <span class="h2note">— % vs previous close</span></h2>' + asOf(dn.slice(0, 6), "blk") + dn.slice(0, 6).map(moverRow).join("") + "</div>" +
       '<div class="tile wide"><h2>Regional equity performance <span class="h2note">— average index move by region, latest session</span></h2><div class="regs">' + regs + "</div></div>" +
       w52WatchHTML(L) +
       '<div class="tile wide"><h2>Latest alerts <span class="h2note">— from the server engine (runs every 15 min, also while this page is closed)</span></h2>' + (al.length ? alertRows(al) : '<p class="note">No alerts yet this session.</p>') + "</div>";
@@ -243,7 +253,7 @@
   function alertsHTML() {
     var list = (W.alerts || []).filter(function (a) { return V.sev === "all" || (V.sev === "major" ? a.tier >= 2 : V.sev === "up" ? a.dir === "up" : V.sev === "down" ? a.dir === "down" : true); });
     var t = W.thresholds || {};
-    return '<div class="tile wide"><h2>Alert feed <span class="h2note">— ' + (W.alerts || []).length + " stored · tiers " + (t.pct || []).map(function (x, k) { return (t.names || [])[k] + " ±" + x + "%"; }).join(", ") + " (yields " + (t.bp || []).join("/") + " bp)</span></h2>" +
+    return '<div class="tile wide"><h2>Alert feed <span class="h2note">— ' + (W.alerts || []).length + " stored · tiers " + (t.pct || []).map(function (x, k) { return (t.names || [])[k] + " ±" + x + "%"; }).join(", ") + " (yields " + (t.bp || []).join("/") + " bp)</span></h2>" + '<span class="wasof blk">server engine last ran ' + tDate(W.updated_at) + " ET (" + ago(Date.now() - Date.parse(W.updated_at)) + " ago)" + ((W.alerts || [])[0] ? " · newest alert " + tDate(W.alerts[0].at) + " ET" : "") + "</span>" +
       '<div class="wfil">' + [["all", "All"], ["major", "Major and above"], ["up", "Upward"], ["down", "Downward"]].map(function (x) { return '<button class="nchip" data-wsev="' + x[0] + '" aria-pressed="' + (V.sev === x[0]) + '">' + x[1] + "</button>"; }).join("") +
       '<button class="nchip" data-wnotify aria-pressed="' + NOTIFY + '">' + (NOTIFY ? "Browser notifications on" : "Turn on browser notifications") + "</button></div>" +
       (list.length ? alertRows(list) : '<p class="note">No alerts match.</p>') +
@@ -268,7 +278,7 @@
     h.innerHTML = '<div class="wclk">' + cities.map(function (c) { return '<span>' + fl(c[2], 11) + " <b>" + new Date(now).toLocaleTimeString("en-US", { timeZone: c[1], hour: "numeric", minute: "2-digit" }) + "</b><small>" + c[0] + "</small></span>"; }).join("") + "</div>" +
       '<div class="wsrc">' + (err ? '<span class="pk-al hot">' + esc(err) + "</span> " : "") + (W ? '<span class="pk-al ' + (stale ? "warn" : "ok") + '">server data ' + ago(a) + " old" + (stale ? " — server runs paused (weekend) or failing" : "") + "</span> " : '<span class="pk-al warn">loading world.json…</span>') + "</div>";
   }
-  var WTHEME = { overview: "#38b6c9", sessions: "#6ea8ff", markets: "#e8b93d", alerts: "#ff8a84", health: "#3fb97f" };
+  var WTHEME = { overview: "#38b6c9", sessions: "#6ea8ff", markets: "#e8b93d", alerts: "#ff8a84", health: "#3fb97f", guide: "#9aa8bb" };
   function navHTML() {
     var L = inst(), now = Date.now(), ex = (W && W.exchanges) || {}, al = (W && W.alerts) || [];
     var openN = Object.keys(ex).filter(function (k) { var s = status(ex[k], now); return s === "open" || s === "extended"; }).length;
@@ -279,7 +289,8 @@
       ["sessions", "Sessions", W ? openN + " of " + Object.keys(ex).length + " venues open now" : ""],
       ["markets", "Markets", W ? L.length + " instruments · " + sig + " 52-week signals" : ""],
       ["alerts", "Alerts", W ? al.length + " stored · " + al.filter(function (a) { return a.tier >= 2; }).length + " major+" : ""],
-      ["health", "Data health", W ? (H.ok || 0) + " / " + (H.expected || 0) + " returned" : ""]];
+      ["health", "Data health", W ? (H.ok || 0) + " / " + (H.expected || 0) + " returned" : ""],
+      ["guide", "Guide", "what each view is for"]];
     function kid(attr, val, on, lab, n) { return '<button class="sn-b" ' + attr + '="' + val + '" aria-pressed="' + on + '"><span>' + esc(lab) + "</span>" + (n != null ? "<small>" + n + "</small>" : "") + "</button>"; }
     function kids(id) {
       if (!W) return "";
@@ -290,15 +301,54 @@
         .map(function (x) { return kid("data-wsev", x[0], V.sev === x[0], x[1], x[2]); }).join("");
       return "";
     }
-    return '<div class="sn-h">World markets</div>' + heads.map(function (h) {
+    var shut = window.NAVSHUT && window.NAVSHUT.world;
+    return '<div class="sn-h"><span>World markets</span><button class="sn-min" data-navmin title="Collapse / expand the menu panel" aria-label="Collapse menu panel">\u00ab</button></div>' + heads.map(function (h) {
       var on = V.sub === h[0], k = on ? kids(h[0]) : "", hasK = h[0] === "markets" || h[0] === "alerts";
-      return '<div class="tn' + (on ? " open" : "") + '" style="--tc:' + WTHEME[h[0]] + '"><button class="tn-h" data-wsub="' + h[0] + '" aria-selected="' + on + '"><i class="tn-dot"></i><span class="tn-t"><b>' + h[1] + "</b><small>" + esc(h[2]) + '</small></span><span class="tn-chev" aria-hidden="true">' + (hasK ? "›" : "") + "</span></button>" + (k ? '<div class="tn-kids">' + k + "</div>" : "") + "</div>";
+      return '<div class="tn' + (on ? " open" : "") + (on && shut ? " shut" : "") + '" style="--tc:' + WTHEME[h[0]] + '"><button class="tn-h" data-name="' + h[1] + '" data-wsub="' + h[0] + '" aria-selected="' + on + '"><i class="tn-dot"></i><span class="tn-t"><b>' + h[1] + "</b><small>" + esc(h[2]) + '</small></span><span class="tn-chev" aria-hidden="true">' + (hasK ? "›" : "") + "</span></button>" + (k ? '<div class="tn-kids">' + k + "</div>" : "") + "</div>";
     }).join("");
   }
   function ctxHTML() {
-    var lab = { overview: "Overview", sessions: "Sessions", markets: "Markets", alerts: "Alerts", health: "Data health" }[V.sub] || "Overview";
+    var lab = { overview: "Overview", sessions: "Sessions", markets: "Markets", alerts: "Alerts", health: "Data health", guide: "Guide" }[V.sub] || "Overview";
     var sec = V.sub === "markets" ? (V.flagged ? "52-week signals only" : V.grp === "all" ? "All markets" : V.grp) : V.sub === "alerts" ? ({ all: "All alerts", major: "Major and above", up: "Upward", down: "Downward" }[V.sev] || "") : "";
-    return '<span class="sc-pill"><i></i>' + lab + "</span>" + (sec ? '<span class="sc-sec">› ' + esc(sec) + "</span>" : "");
+    return '<span class="sc-pill"><i></i>' + lab + "</span>" + (sec ? '<span class="sc-sec">› ' + esc(sec) + "</span>" : "") + refreshHTML() + (typeof window.kbSwitchHTML === "function" ? window.kbSwitchHTML() : "");
+  }
+
+  /* server refresh clock: the scheduler dispatches world-markets at :07 :22 :37 :52 UTC, Sun–Fri (UTC); a run publishes ~2–3 min later */
+  var LAND_MS = 150000;
+  function nextRun(now) {
+    var t = new Date(now); t.setUTCSeconds(0, 0);
+    for (var k = 0; k < 4 * 24 * 60; k++) {
+      var c = new Date(t.getTime() + k * 60000), d = c.getUTCDay();
+      if (c.getUTCMinutes() % 15 === 7 && d !== 6 && c.getTime() + LAND_MS > now) return c.getTime();
+    }
+    return null;
+  }
+  function refreshHTML() {
+    var now = Date.now(), nr = nextRun(now); if (!nr) return "";
+    var land = nr + LAND_MS, age = W ? now - Date.parse(W.updated_at) : null, weekend = new Date(now).getUTCDay() === 6;
+    var late = W && !weekend && age > 22 * 60000;
+    var hm = function (ms) { return new Date(ms).toLocaleTimeString("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit" }); };
+    return '<span class="wrefresh' + (late ? " late" : "") + '" title="Server engine runs every 15 min (:07, :22, :37, :52 UTC) Sunday–Friday; new data lands about 2–3 minutes after each run starts. This page checks for it every minute while open.">' +
+      (late ? "server refresh overdue · last data " + ago(age) + " old · " : "") + "next server refresh ~" + hm(land) + " ET in " +
+      '<span class="countdown" data-t="' + land + '" data-fmt="hms">' + (window.hmsText ? window.hmsText(land - now) : ago(land - now)) + "</span></span>";
+  }
+  function guideHTML() {
+    var M = (window.KB && window.KB.menus && window.KB.menus.world) || {};
+    return '<div class="tile wide kb-guide"><h2>Guide — World markets <span class="h2note">— what each view answers and where to click</span></h2>' +
+      '<p class="kbg-d">This tab watches equity indices, currencies, metals, energy, ags, government yields and the VIX around the clock. A server engine refreshes the data every 15 minutes (Sunday–Friday) and records alerts even while this page is closed; every number shows its source time.</p>' +
+      '<div class="kbg-list">' + ["overview", "sessions", "markets", "alerts", "health"].map(function (k) { var m = M[k] || {};
+        return '<div class="kbg-i" style="--sa:' + WTHEME[k] + '"><div><b>' + esc(m.t || k) + "</b><p>" + esc(m.d || "") + "</p>" + (m.q ? "<small>Answers: " + m.q.map(esc).join(" · ") + "</small>" : "") + '</div><button class="kbg-go" data-wsub="' + k + '">Open →</button></div>'; }).join("") +
+      '</div><div class="stamp">Tip: turn on the Knowledge bank switch (top bar) to see an explanation inside every card</div></div>';
+  }
+  function kbDecorateW(B) {
+    var K = window.KB && window.KB.world; if (!K) return;
+    [].forEach.call(B.querySelectorAll(".tile"), function (t) {
+      if (t.querySelector(":scope>.kbox")) return;
+      var h = t.querySelector(":scope>h2"), key = h ? h.childNodes[0].textContent.trim() : (t.classList.contains("kpi-strip") ? "Index breadth" : "");
+      var e = K[key]; if (!e || !window.kbBox) return;
+      var w = document.createElement("div"); w.innerHTML = window.kbBox(e); var box = w.firstChild;
+      if (h) h.after(box); else t.insertBefore(box, t.firstChild);
+    });
   }
   function render() {
     var P = document.getElementById("panel-world"); if (!P) return;
@@ -310,7 +360,8 @@
     document.getElementById("wCtx").innerHTML = ctxHTML();
     var B = document.getElementById("wBody");
     if (!W) { B.innerHTML = '<div class="tile wide"><p class="note">Loading global market data…</p></div>'; return; }
-    B.innerHTML = V.sub === "sessions" ? sessionsHTML() : V.sub === "markets" ? marketsHTML() : V.sub === "alerts" ? alertsHTML() : V.sub === "health" ? healthHTML() : overviewHTML();
+    B.innerHTML = V.sub === "guide" ? guideHTML() : V.sub === "sessions" ? sessionsHTML() : V.sub === "markets" ? marketsHTML() : V.sub === "alerts" ? alertsHTML() : V.sub === "health" ? healthHTML() : overviewHTML();
+    kbDecorateW(B);
     if (window.MOTION) window.MOTION.scan();
   }
   document.addEventListener("click", function (ev) {
@@ -330,7 +381,7 @@
   });
   function active() { var P = document.getElementById("panel-world"); return P && P.classList.contains("active"); }
   setInterval(function () { if (!window.DESK_LOCKED && (active() || Date.now() - lastTry > 600000)) poll(); }, 30000);
-  setInterval(function () { if (active()) { paintHead(); if (V.sub === "sessions" && W) render(); } }, 60000);
+  setInterval(function () { if (active()) { paintHead(); var cx = document.getElementById("wCtx"); if (cx) cx.innerHTML = ctxHTML(); if (W && Date.now() > nextRun(Date.parse(W.updated_at) + 60000) + LAND_MS) poll(true); if (V.sub === "sessions" && W) render(); } }, 60000);
   window.addEventListener("desk:unlock", function () { poll(true); });
   document.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("#tabbtn-world"); if (b) { render(); poll(); } });
   window.WORLD = { poll: poll, render: render, status: status, flag: fl, _data: function () { return W; } };
