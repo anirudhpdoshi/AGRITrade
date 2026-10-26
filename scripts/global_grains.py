@@ -449,9 +449,9 @@ def canada_exports_block(S):
     def col(rx, avoid=()):
         return next((c for c in cols if re.search(rx, c, re.I) and c not in avoid), None)
     gcol = col(r"grain|commodit")
-    dcol = col(r"destination|country|region")
+    dcol = col(r"destination") or col(r"country|region")
     vcol = col(r"tonne|volume|value|quantity|ktonne")
-    ycol = col(r"crop ?year")
+    ycol = col(r"crop ?year") or col(r"^year$")
     mcol = col(r"month|period|date", (ycol,))
     out = {"source": "Canadian Grain Commission — exports of Canadian grain from licensed facilities (open data, monthly)", "status": "observed",
            "columns": cols, "sample": rows[:3], "crops": {}}
@@ -464,6 +464,13 @@ def canada_exports_block(S):
     want = {"corn": re.compile(r"^corn$", re.I), "soybeans": re.compile(r"^soybeans?$", re.I),
             "wheat": re.compile(r"^(wheat|cw wheat|wheat \(excl|wheat, excl|wheat excluding)", re.I)}
     MON = {m: i + 1 for i, m in enumerate(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"])}
+    # 'Year' may be a calendar year or a crop year (Aug-Jul): if the newest year holds any month other than August
+    # it is a calendar year (a crop-year label would only have reached August so far)
+    yrs = [int(r.get(ycol)[:4]) for r in rows if (r.get(ycol) or "")[:4].isdigit()] if ycol else []
+    ymax = max(yrs) if yrs else None
+    newest_months = {MON.get((r.get(mcol) or "")[:3].lower()) for r in rows if ycol and (r.get(ycol) or "")[:4] == str(ymax)}
+    crop_year = bool(re.search(r"crop", ycol or "", re.I)) or (newest_months <= {8, None})
+    out_year_basis = "crop year (Aug-Jul)" if crop_year else "calendar year"
     def ym(r):
         v = (r.get(mcol) or "").strip()
         m = re.match(r"^(\d{4})-(\d{2})", v)
@@ -473,7 +480,7 @@ def canada_exports_block(S):
         cy = (r.get(ycol) or "").strip() if ycol else ""
         mm = re.match(r"^(\d{4})", cy)
         if mo and mm:
-            y = int(mm.group(1)) + (1 if mo < 8 else 0)          # crop year Aug-Jul
+            y = int(mm.group(1)) + (1 if (crop_year and mo < 8) else 0)
             return f"{y}-{mo:02d}"
         return None
     for crop, rx in want.items():
@@ -497,6 +504,7 @@ def canada_exports_block(S):
             for d, v in dest[k].items():
                 agg[d] = agg.get(d, 0) + v
         tot = sum(agg.values())
+        out["year_basis"] = out_year_basis
         out["crops"][crop] = {"unit": "tonnes", "monthly_t": dict(sorted(mon.items())[-30:]),
                               "dest_window": f"{months[0]}..{months[-1]}" if months else None,
                               "top": [{"country": k, "t": round(v), "share": share(v, tot)} for k, v in sorted(agg.items(), key=lambda t: -t[1])[:8]]}
