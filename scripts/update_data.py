@@ -588,7 +588,7 @@ def fx_model(D, N):
     zmae = sum(abs(y) for y in Y) / len(Y) * 100
     Phi = lambda z: 0.5 * (1 + math.erf(z / 2 ** 0.5))
     phi = lambda z: math.exp(-z * z / 2) / (2 * math.pi) ** 0.5
-    lo, hi = p50 - 0.25 * sig, p50 + 0.25 * sig
+    lo, hi = -0.25 * sig, 0.25 * sig     # neutral = a move within +-0.25 sigma of no change (bands sit around zero, not around P50)
     def band(l, h):   # probability and conditional mean of N(p50, sig) on (l, h)
         zl = -1e9 if l is None else (l - p50) / sig; zh = 1e9 if h is None else (h - p50) / sig
         pr = Phi(zh) - Phi(zl)
@@ -603,7 +603,7 @@ def fx_model(D, N):
                 "features": ["2Y US-CA spread change (bps)", "DXY log return (%)", "WTI log return (%)"]}
     fx["scen"] = {"status": "ok", "horizon": "1D", "model": "OLS baseline",
                   "asof": {"origin_date": b, "base_spot_close": round(base, 4), "base_source": "Bank of Canada FXUSDCAD close at origin", "train_pairs": len(Y)},
-                  "method": "normal forecast distribution N(P50, residual sigma); neutral band = +/-0.25 sigma; probabilities and conditional expected moves from that distribution",
+                  "method": "normal forecast distribution N(P50, residual sigma); neutral band = no change +/-0.25 sigma; probabilities and conditional expected moves from that distribution",
                   "bullish_usdcad": {"probability_pct": round(pu * 100, 1), "expected_move_pct": round(mu, 3), "range": [lvl(hi), lvl(p50 + 1.2816 * sig)]},
                   "neutral": {"probability_pct": round(pn * 100, 1), "expected_move_pct": round(mn, 3), "range": [lvl(lo), lvl(hi)]},
                   "bearish_usdcad": {"probability_pct": round(pb * 100, 1), "expected_move_pct": round(mb, 3), "range": [lvl(p50 - 1.2816 * sig), lvl(lo)]},
