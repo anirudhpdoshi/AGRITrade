@@ -212,7 +212,7 @@
     var M = {}, src = [];
     function addM(o, ser, div) { if (!ser) return; Object.keys(ser).forEach(function (ym) { (M[ym] = M[ym] || {})[o] = ser[ym] / div; }); }
     if (US) { addM("us", US.monthly_kt, 1); src.push("US: USDA FAS weekly export shipments summed by week-ending month (" + esc(US.my) + " and prior year)"); }
-    if (CA) { addM("ca", CA.monthly_t, 1000); src.push("Canada: Statistics Canada / CGC exports by destination (monthly)"); }
+    if (CA) { addM("ca", CA.monthly_t, 1000); src.push("Canada: Canadian Grain Commission exports from licensed facilities (monthly; shipments not passing a licensed elevator, e.g. some direct rail\/truck to the US, are not included)"); }
     if (BR) { addM("br", BR.monthly_kt, 1); src.push("Brazil: Comex Stat customs exports (monthly, through " + esc(G.comex.data_updated || "") + ")"); }
     var months = Object.keys(M).sort().filter(function (ym) { var m = M[ym]; return (m.us || 0) + (m.ca || 0) + (m.br || 0) > 0; }).slice(-12);
     if (months.length) {
