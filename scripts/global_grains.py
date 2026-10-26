@@ -39,6 +39,7 @@ NAME_FIX = {"burma": "MMR", "korea, south": "KOR", "korea, north": "PRK", "russi
             "bosnia and herzegovina": "BIH", "serbia": "SRB", "montenegro": "MNE", "kosovo": "XKX", "libya": "LBY",
             "palestine": "PSE", "brunei": "BRN", "timor-leste": "TLS", "micronesia": "FSM", "cape verde": "CPV"}
 KEY = os.environ.get("FAS_API_KEY", "").strip()
+KEY_A3 = {"USA", "CAN", "BRA", "ARG", "UKR", "RUS", "EU", "CHN", "AUS", "IND", "KAZ", "PRY"}   # full yearly rows kept for these
 
 
 def red(s):
@@ -258,6 +259,10 @@ def psd_block(S, crop):
             "hist": {season_label(y): T[y].get(cc, {}).get("prod") for y in sorted(T) if T[y].get(cc, {}).get("prod") is not None},
             "rev_prod": None, "rev_exp": None,
             "updated_month": v.get("_m"),
+            "years": ({str(y): dict({k: T[y].get(cc, {}).get(k) for k in ("prod", "exp", "imp", "dom", "end", "area", "yield", "beg", "crush")},
+                                    share_prod=share(T[y].get(cc, {}).get("prod"), sum(x.get("prod", 0) for x in T[y].values())),
+                                    share_exp=share(T[y].get(cc, {}).get("exp"), sum(x.get("exp", 0) for x in T[y].values())))
+                       for y in sorted(T) if T[y].get(cc)} if iso in KEY_A3 else None),
         })
     countries.sort(key=lambda c: -(c["cur"].get("prod") or 0))
     return {"source": "USDA FAS PSD (Production, Supply and Distribution)", "my": season_label(cur), "my_prev": season_label(cur - 1),
@@ -340,15 +345,17 @@ def comex_post(S, body, tries=8):
 
 
 def comex_block(S):
+    """Brazil exports by month and destination (observed customs data), this calendar year and last, 2 requests."""
     upd = get(S, COMEX + "/general/dates/updated").json()["data"]
     y, m = int(upd["year"]), int(upd["monthNumber"])
     out = {"source": "Comex Stat (MDIC) — Brazilian export statistics", "status": "observed", "data_updated": upd.get("updated"),
            "period": f"{y}-01..{y}-{m:02d}", "period_prev": f"{y - 1}-01..{y - 1}-{m:02d}", "crops": {}}
     inv = {v: k for k, v in NCM.items()}
     res = {k: {} for k in NCM}
-    for yy in (y, y - 1):                      # one request per year for all three products (2 requests in total)
+    mon = {k: {} for k in NCM}
+    for yy in (y, y - 1):
         time.sleep(12)
-        lst = comex_post(S, {"flow": "export", "monthDetail": False, "period": {"from": f"{yy}-01", "to": f"{yy}-{m:02d}"},
+        lst = comex_post(S, {"flow": "export", "monthDetail": True, "period": {"from": f"{yy}-01", "to": f"{yy}-12" if yy < y else f"{yy}-{m:02d}"},
                              "filters": [{"filter": "ncm", "values": list(NCM.values())}], "details": ["ncm", "country"],
                              "metrics": ["metricFOB", "metricKG"]})
         for x in lst or []:
@@ -356,7 +363,13 @@ def comex_block(S):
             crop = inv.get(code) or next((c for c, n in NCM.items() if n in json.dumps(x)), None)
             if not crop:
                 continue
-            res[crop].setdefault(yy, {})[x["country"]] = (float(x.get("metricKG") or 0) / 1e6, float(x.get("metricFOB") or 0))
+            mn = int(str(x.get("monthNumber") or x.get("month") or "0")[-2:] or 0)
+            kt, usd = float(x.get("metricKG") or 0) / 1e6, float(x.get("metricFOB") or 0)
+            key = f"{yy}-{mn:02d}"
+            mon[crop][key] = round(mon[crop].get(key, 0) + kt, 3)
+            if mn and mn <= m:                                  # same months both years for the YTD comparison
+                a = res[crop].setdefault(yy, {}).setdefault(x["country"], [0.0, 0.0])
+                a[0] += kt; a[1] += usd
     for crop, r in res.items():
         cur, prv = r.get(y, {}), r.get(y - 1, {})
         tot = sum(v[0] for v in cur.values())
@@ -365,7 +378,108 @@ def comex_block(S):
         top = sorted(cur.items(), key=lambda t: -t[1][0])[:8]
         out["crops"][crop] = {"ncm": NCM[crop], "kt": round(tot, 1), "kt_prev": round(totp, 1), "yoy": pct_change(tot, totp),
                               "usd": round(usd), "usd_per_t": round(usd / (tot * 1000), 1) if tot else None,
+                              "monthly_kt": dict(sorted(mon[crop].items())),
                               "top": [{"country": k, "kt": round(v[0], 1), "share": share(v[0], tot), "kt_prev": round(prv.get(k, (0, 0))[0], 1)} for k, v in top]}
+    return out
+
+
+ESR = "https://api.fas.usda.gov/api/esr"
+ESR_MATCH = {"corn": ["corn"], "soybeans": ["soybeans"], "wheat": ["all wheat", "wheat - all", "wheat"]}
+
+
+def esr_block(S):
+    """US exports (shipments) by month and destination from USDA FAS Export Sales Reporting: weekly exports summed by
+    the calendar month of the week-ending date; destinations = marketing-year-to-date shipments at the latest week."""
+    H = {"X-Api-Key": KEY}
+    comms = get(S, f"{ESR}/commodities", headers=H).json()
+    ctry = {}
+    for c in get(S, f"{ESR}/countries", headers=H).json():
+        nm = (c.get("countryDescription") or c.get("countryName") or "").strip()
+        ctry[str(c.get("countryCode"))] = nm.title() if nm.isupper() else nm
+    rel = {str(x.get("commodityCode")): int(x["marketYear"]) for x in get(S, f"{ESR}/datareleasedates", headers=H).json() if x.get("marketYear")}
+    out = {"source": "USDA FAS Export Sales Reporting (weekly shipments)", "status": "observed", "crops": {}}
+    for crop, names in ESR_MATCH.items():
+        cand = [c for n in names for c in comms if n == (c.get("commodityName") or "").strip().lower()]
+        if not cand:
+            continue
+        code = str(cand[0]["commodityCode"])
+        my = rel.get(code)
+        if not my:
+            continue
+        mon, dest, latest, my_ytd = {}, {}, None, {}
+        for yy in (my, my - 1):
+            rows = get(S, f"{ESR}/exports/commodityCode/{code}/allCountries/marketYear/{yy}", headers=H).json()
+            wk = sorted({r["weekEndingDate"][:10] for r in rows})
+            if yy == my and wk:
+                latest = wk[-1]
+            for r in rows:
+                d = r["weekEndingDate"][:10]
+                mon[d[:7]] = mon.get(d[:7], 0) + (r.get("weeklyExports") or 0) / 1000.0         # t -> kt
+            if wk:
+                # MY-to-date shipments at the same point of the marketing year (same number of weeks)
+                n = len(sorted({r["weekEndingDate"][:10] for r in rows if yy == my})) if yy == my else my_ytd.get("n", len(wk))
+                cut = wk[min(n, len(wk)) - 1]
+                tot = sum((r.get("accumulatedExports") or 0) for r in rows if r["weekEndingDate"][:10] == cut) / 1000.0
+                my_ytd[yy] = round(tot, 1)
+                if yy == my:
+                    my_ytd["n"] = n
+                    for r in rows:
+                        if r["weekEndingDate"][:10] == cut:
+                            nm = ctry.get(str(r.get("countryCode")), str(r.get("countryCode")))
+                            dest[nm] = dest.get(nm, 0) + (r.get("accumulatedExports") or 0) / 1000.0
+        totd = sum(dest.values())
+        top = sorted(dest.items(), key=lambda t: -t[1])[:8]
+        out["crops"][crop] = {"my": season_label(my), "week": latest, "kt": my_ytd.get(my), "kt_prev": my_ytd.get(my - 1),
+                              "yoy": pct_change(my_ytd.get(my), my_ytd.get(my - 1)), "monthly_kt": {k: round(v, 1) for k, v in sorted(mon.items())},
+                              "top": [{"country": k, "kt": round(v, 1), "share": share(v, totd)} for k, v in top]}
+    return out
+
+
+STATCAN_EXP = "32100008"
+
+
+def canada_exports_block(S):
+    """Canada monthly grain exports by destination (Statistics Canada / Canadian Grain Commission table 32-10-0008)."""
+    import csv, zipfile
+    meta = get(S, f"https://www150.statcan.gc.ca/t1/wds/rest/getFullTableDownloadCSV/{STATCAN_EXP}/en").json()
+    url = meta.get("object")
+    z = zipfile.ZipFile(io.BytesIO(get(S, url, timeout=180).content))
+    name = [n for n in z.namelist() if n.endswith(".csv") and "MetaData" not in n][0]
+    rd = csv.DictReader(io.TextIOWrapper(z.open(name), encoding="utf-8-sig"))
+    cols = rd.fieldnames
+    ccol = next((c for c in cols if re.search(r"grain|commodit|type", c, re.I) and c not in ("REF_DATE", "GEO")), None)
+    dcol = next((c for c in cols if re.search(r"destination|countr", c, re.I)), None)
+    want = {"corn": re.compile(r"^corn", re.I), "soybeans": re.compile(r"^soybean", re.I), "wheat": re.compile(r"^wheat(,? (total|all)|$| excluding durum)?", re.I)}
+    mon = {k: {} for k in want}
+    dest = {k: {} for k in want}
+    labels = set()
+    for r in rd:
+        lab = (r.get(ccol) or "").strip()
+        labels.add(lab)
+        for crop, rx in want.items():
+            if not rx.search(lab) or (crop == "wheat" and "durum" in lab.lower() and "exclud" not in lab.lower()):
+                continue
+            v = num(r.get("VALUE"))
+            if v is None:
+                continue
+            d = (r.get(dcol) or "").strip()
+            ym = r["REF_DATE"][:7]
+            if re.match(r"^(total|all)", d, re.I) or d.lower().startswith("total"):
+                mon[crop][ym] = mon[crop].get(ym, 0) + v
+            else:
+                dest[crop].setdefault(ym, {})[d] = dest[crop].get(ym, {}).get(d, 0) + v
+    out = {"source": "Statistics Canada / Canadian Grain Commission — exports of grains by final destination (table 32-10-0008)", "status": "observed",
+           "columns": cols[:12], "commodity_labels": sorted(labels)[:40], "crops": {}}
+    for crop in want:
+        m = dict(sorted(mon[crop].items())[-30:])
+        months = sorted(dest[crop])[-12:]
+        agg = {}
+        for ym in months:
+            for d, v in dest[crop][ym].items():
+                agg[d] = agg.get(d, 0) + v
+        tot = sum(agg.values())
+        out["crops"][crop] = {"unit": "tonnes", "monthly_t": m, "dest_window": f"{months[0]}..{months[-1]}" if months else None,
+                              "top": [{"country": k, "t": round(v), "share": share(v, tot)} for k, v in sorted(agg.items(), key=lambda t: -t[1])[:8]]}
     return out
 
 
@@ -462,7 +576,7 @@ def main():
             body["health"]["failed"].append({"part": f"psd/{crop}", "error": red(e)[:200]})
             if prev.get("crops", {}).get(crop, {}).get("psd"):
                 body["crops"][crop]["psd"] = dict(prev["crops"][crop]["psd"], stale=True)
-    for part, fn in (("conab", conab_block), ("fx", fx_block), ("comex", comex_block)):
+    for part, fn in (("conab", conab_block), ("fx", fx_block), ("us_exports", esr_block), ("ca_exports", canada_exports_block), ("comex", comex_block)):
         try:
             body[part] = fn(S)
             body["health"]["ok"].append(part)
