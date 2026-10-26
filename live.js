@@ -313,9 +313,21 @@
         if (lastLive) mergeLive(lastLive);   // never step back behind the fast lane
         rerender(before);
       })
-      .catch(function () { return "err"; });
+      .then(function () { if (dataFails >= 3) unreach(false); dataFails = 0; })
+      .catch(function () { dataFails++; if (dataFails === 3) unreach(true); return "err"; });
   }
 
+  /* three failed data polls in a row -> one clear message; it clears itself when data flows again */
+  var dataFails = 0;
+  function unreach(on) {
+    var b = document.getElementById("unreachBar");
+    if (!on) { if (b) b.remove(); return; }
+    if (b) return;
+    b = document.createElement("div"); b.id = "unreachBar"; b.className = "unreach unreach-bar"; b.setAttribute("role", "status");
+    var t = DATA && DATA.meta && DATA.meta.updated_at ? new Date(DATA.meta.updated_at).toLocaleString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+    b.innerHTML = "\u26a0 Sorry, we can\u2019t be reached now <small>\u2014 the desk could not load new data on its last 3 checks; showing the data received" + (t ? " at " + t + " ET" : "") + " and retrying automatically</small>";
+    var m = document.querySelector("main"); if (m) m.insertBefore(b, m.firstChild);
+  }
   /* ------------------------------------------------------ fast lane: live.json every 60 s */
   var lastLive = null, liveEtag = "";
   var LIVE_API = "https://api.github.com/repos/" + (CFG.liveRepo || "anirudhpdoshi/AGRITrade") + "/contents/live.json?ref=live";

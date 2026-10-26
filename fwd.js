@@ -120,7 +120,7 @@
     else if (best.k === "ref" && age < LIMIT.ref) st = { k: "ref", chip: "REFERENCE RATE", txt: "reference rate (~30 s) · indicative mid, not an executable quote" + tail };
     else if (best.k === "alpha" && age < LIMIT.alpha) st = { k: "delayed", chip: "DELAYED", txt: "delayed rate · checked every 30 min" + tail };
     else if (best.k === "yahoo" && age < LIMIT.yahoo) st = { k: "delayed", chip: "DELAYED", txt: "delayed mid" + tail };
-    else if (L && L.refFails >= 3) st = { k: "down", chip: "FEED UNAVAILABLE", txt: "live and reference feeds not responding · last price from " + NAME[best.k] + tail };
+    else if (L && L.refFails >= 3) st = { k: "down", chip: "FEED UNAVAILABLE", txt: "Sorry, we can\u2019t be reached now \u2014 live and reference feeds not responding · last price from " + NAME[best.k] + tail };
     else st = { k: "stale", chip: "STALE", txt: "no fresh price · last from " + NAME[best.k] + tail };
     st.spot = best.p; st.spotT = best.t; st.source = best.k;
     return st;
@@ -288,7 +288,7 @@
   }
   function readText(res) {
     var y1 = res.legs.filter(function (l) { return l.t === "1Y"; })[0], y5 = res.legs[res.legs.length - 1];   /* longest leg = 2Y */
-    if (!res.ok || !y1 || y1.F == null) return "Forward rates unavailable: " + esc(res.reason || "missing inputs") + ".";
+    if (!res.ok || !y1 || y1.F == null) return "\u26a0 Sorry, we can\u2019t be reached now \u2014 forward rates need " + esc(res.reason || "missing inputs") + ".";
     var disc = y1.pts < 0;
     return "USD/CAD trades at a <b>forward " + (disc ? "discount" : "premium") + "</b> at 1Y: the outright sits " + Math.abs(y1.pts).toFixed(0) + " pips " + (disc ? "below" : "above") + " spot (" + sg(y1.ann, 2, "%") +
       " annualised) because USD rates run " + (disc ? "above" : "below") + " CAD rates (" + y1.rUSD.toFixed(2) + "% vs " + y1.rCAD.toFixed(2) + "% at 1Y)." + (y5 && y5.F != null ? " At " + y5.t + " (" + lab(y5.vd) + ") the outright is " + f5(y5.F) + ", " + sg(y5.ann, 2, "%") + " annualised." : "");

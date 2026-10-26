@@ -696,6 +696,9 @@ main .tile svg{cursor:zoom-in}main .tile svg.flag,main .tile .wsp,main .tile svg
 @keyframes fwdDn{0%{background:rgba(70,140,255,.42)}100%{background:transparent}}
 .fwd-t tr.fl-up td{animation:fwdUp 1.1s ease-out}.fwd-t tr.fl-dn td{animation:fwdDn 1.1s ease-out}
 .fwd-t tr.fl-up .fo{color:#5fd598;transition:color .2s}.fwd-t tr.fl-dn .fo{color:#7fb0ff;transition:color .2s}
+.aw-sub{display:block;font-weight:500;color:#ffc9c4;font-size:12px;margin-top:2px}
+.unreach{padding:10px 12px;border-radius:8px;background:rgba(224,101,95,.1);border:1px solid #7a3a36;color:#ff9d97;font-weight:600;font-size:13px}.unreach small{color:#ffc9c4;font-weight:400}
+.unreach-bar{position:sticky;top:calc(var(--strip-h,40px) + 4px);z-index:60;margin:8px 0}
 </style>
 </head>
 <body class="locked">
@@ -2792,7 +2795,7 @@ function streakText(m){
   return out;
 }
 function macroDetailHTML(key){
-  var m=mfind(key); if(!m) return '<p class="note">No data for this indicator yet.</p>';
+  var m=mfind(key); if(!m) return '<div class="unreach">\u26a0 Sorry, we can\u2019t be reached now <small>\u2014 no data for this indicator yet</small></div>';
   var pend=(typeof awaitingList==='function'?awaitingList():[]).filter(function(x){ return x.sel==='.mcard[data-mkey="'+key+'"]'; })[0], pendHTML='';
   if(pend){ var PM=awaitMsg(pend); pendHTML='<div class="aw-errbox"><div class="aw-t">\u26a0 '+PM.title+'</div><div>'+PM.body+'</div>'+(AW.tries?'<div class="aw-retry">'+AW.tries+' checks so far \u00b7 last check '+(AW.last?hhmmss(AW.last):'\u2014')+'</div>':'')+'</div>'; }
   var info=MACRO_INFO[key]||['',''], H=m.hist24||m.history, vals=H.map(function(x){ return x[1]; }), n=vals.length;
@@ -3105,7 +3108,7 @@ function awaitMsg(a){
   var I=a.info||{}, when=I.t?etLabel(I.t,true):'today';
   var why=AW.netErr?'This desk could not reach its data server on the last check (network or GitHub error) \u2014 check your connection; it will keep retrying.':
     I.who?I.who.charAt(0).toUpperCase()+I.who.slice(1)+' released it at '+when+' ET, but the new numbers have not reached the desk yet. '+(I.lag||''):'The source has not published the new numbers yet.';
-  return {title:(I.flag?flag(I.flag,12)+' ':'')+esc(I.what||a.label.replace(/^Awaiting /,''))+' \u2014 new data cannot be displayed yet',
+  return {title:'Sorry, we can\u2019t be reached now<span class="aw-sub">'+(I.flag?flag(I.flag,12)+' ':'')+esc(I.what||a.label.replace(/^Awaiting /,''))+' \u2014 new data cannot be displayed yet</span>',
     body:why+(I.prev?' <b>Showing the previous reading: '+I.prev+'.</b>':' Showing the previous data.')+(I.url?' <a href="'+safeUrl(I.url)+'" target="_blank" rel="noopener">Check '+esc(I.urlLab||'the source')+' \u2197</a>':''),
     short:(I.short||I.what||'')+': not updated yet \u2014 showing '+(I.prev||'previous data')};
 }
@@ -3122,7 +3125,7 @@ function paintAwaiting(list){
     if(AW.err){ el.classList.add('await-err');
       var b=document.createElement('div'), M=awaitMsg(a), retry='<div class="aw-retry">'+AW.tries+' checks so far \u00b7 retrying every 5 min \u00b7 last check '+(AW.last?hhmmss(AW.last):'\u2014')+' \u00b7 next in '+Math.floor(wait/60)+':'+('0'+wait%60).slice(-2)+'</div>';
       if(a.small){ var I2=a.info||{}; b.className='aw-errbox sm'; b.title=M.short+' \u2014 click the card for details';
-        b.innerHTML='<b>\u26a0 '+esc(I2.short||'')+' not updated</b><div>'+esc((I2.who||'').replace(/^the /,'').replace(/ \(.*\)/,''))+' released '+(I2.t?etLabel(I2.t,true).replace(/^.*?, /,''):'')+' \u00b7 showing '+esc(I2.prev||'previous')+'</div>'; }
+        b.innerHTML='<b>\u26a0 Sorry, we can\u2019t be reached now</b><div>'+esc(I2.short||'')+' not updated</div><div>'+esc((I2.who||'').replace(/^the /,'').replace(/ \(.*\)/,''))+' released '+(I2.t?etLabel(I2.t,true).replace(/^.*?, /,''):'')+' \u00b7 showing '+esc(I2.prev||'previous')+'</div>'; }
       else { b.className='aw-errbox'; b.innerHTML='<div class="aw-t">\u26a0 '+M.title+'</div><div>'+M.body+'</div>'+retry; }
       el.insertBefore(b, el.firstChild);
     } else { var I=a.info||{}; el.classList.add('awaiting'); if(a.small) el.classList.add('aw-sm');

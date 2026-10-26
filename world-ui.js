@@ -90,7 +90,7 @@
     }).then(function (j) { if (j) accept(j); else paintHead(); })
       .catch(function () {
         fetch(RAW + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { if (!r.ok) throw r.status; return r.json(); })
-          .then(accept).catch(function () { err = "could not reach world.json (network or GitHub)"; paintHead(); });
+          .then(accept).catch(function () { err = "Sorry, we can\u2019t be reached now \u2014 world market data did not load (network or GitHub); retrying every minute"; if (W) paintHead(); else render(); });
       });
   }
   function accept(j) {
@@ -359,7 +359,7 @@
     document.getElementById("wNav").innerHTML = navHTML();
     document.getElementById("wCtx").innerHTML = ctxHTML();
     var B = document.getElementById("wBody");
-    if (!W) { B.innerHTML = '<div class="tile wide"><p class="note">Loading global market data…</p></div>'; return; }
+    if (!W) { B.innerHTML = err ? '<div class="tile wide"><div class="unreach">\u26a0 Sorry, we can\u2019t be reached now <small>\u2014 global market data did not load; retrying every minute</small></div></div>' : '<div class="tile wide"><p class="note">Loading global market data…</p></div>'; return; }
     B.innerHTML = V.sub === "guide" ? guideHTML() : V.sub === "sessions" ? sessionsHTML() : V.sub === "markets" ? marketsHTML() : V.sub === "alerts" ? alertsHTML() : V.sub === "health" ? healthHTML() : overviewHTML();
     kbDecorateW(B);
     if (window.MOTION) window.MOTION.scan();
