@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>try{if(localStorage.getItem("desk.theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}</script>
 <script>
 /* Always load the newest page: GitHub Pages caches pages ~10 min, so every open is re-requested
    with a unique stamp (bypasses CDN + browser cache), then the address bar is cleaned up. */
@@ -699,6 +700,19 @@ main .tile svg{cursor:zoom-in}main .tile svg.flag,main .tile .wsp,main .tile svg
 .aw-sub{display:block;font-weight:500;color:#ffc9c4;font-size:12px;margin-top:2px}
 .unreach{padding:10px 12px;border-radius:8px;background:rgba(224,101,95,.1);border:1px solid #7a3a36;color:#ff9d97;font-weight:600;font-size:13px}.unreach small{color:#ffc9c4;font-weight:400}
 .unreach-bar{position:sticky;top:calc(var(--strip-h,40px) + 4px);z-index:60;margin:8px 0}
+
+/* ---- light mode: the whole app (cards, charts, tables, overlays) is re-mapped from the dark palette in one pass;
+   flags and photos are mapped back so they keep their true colours ---- */
+html[data-theme="light"]{filter:invert(.93) hue-rotate(180deg);background:#0a0f16}
+html[data-theme="light"] img,html[data-theme="light"] svg.flag,html[data-theme="light"] .flag,html[data-theme="light"] video,html[data-theme="light"] picture,html[data-theme="light"] .no-invert{filter:invert(1) hue-rotate(180deg)}
+html[data-theme="light"] svg.flag .flag,html[data-theme="light"] .flag svg.flag{filter:none}
+html[data-theme="light"] .zoom-ov{backdrop-filter:none}
+.topbar{position:relative}
+.theme-sw{position:absolute;right:16px;top:18px;display:inline-flex;gap:2px;padding:3px;border-radius:16px;border:1px solid var(--line2);background:var(--panel);cursor:pointer;font:600 12px "Libre Franklin",system-ui,sans-serif}
+.theme-sw span{padding:4px 10px;border-radius:12px;color:var(--faint)}
+html:not([data-theme="light"]) .theme-sw .ts-d,html[data-theme="light"] .theme-sw .ts-l{background:#1a2a42;color:#fff}
+.theme-sw:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+@media (max-width:700px){.theme-sw{position:static;float:right;margin:0 0 6px 8px}.theme-sw span{padding:3px 7px;font-size:11px}}
 </style>
 </head>
 <body class="locked">
@@ -790,6 +804,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
 <div class="snapshot-banner" id="status-strip" role="status" aria-live="polite"><b>STATIC SNAPSHOT</b> — built Thu, Oct 22, 2026 · 2:28 p.m. EDT (America/Toronto) — data frozen at build time from verified records, the same drop-in series behind the desk cards. News, alerts and the economic calendar sit in each tab's right-hand rail, frozen as held at build time. The live dashboard is the gated app; this copy does not update.</div>
 
 <header class="topbar">
+  <button class="theme-sw" id="themeSw" type="button" aria-label="Switch between dark and light mode" title="Dark / light mode"><span class="ts-d">☾ Dark</span><span class="ts-l">☀ Light</span></button>
   <h1>Grain &amp; USD/CAD Desk</h1>
   <div class="sub">Corn · Wheat · Soybeans · USD/CAD — every tile carries its own as-of time; the strip above shows what is live.</div>
 </header>
@@ -3910,6 +3925,13 @@ renderAll();
   });
   document.addEventListener('keydown', function(e){ if(e.key==='Escape') close(); });
 })();
+</script>
+<script>
+document.getElementById("themeSw").addEventListener("click", function(){
+  var light=document.documentElement.getAttribute("data-theme")!=="light";
+  if(light) document.documentElement.setAttribute("data-theme","light"); else document.documentElement.removeAttribute("data-theme");
+  try{ localStorage.setItem("desk.theme", light?"light":"dark"); }catch(e){}
+});
 </script>
 <script src="config.js"></script>
 <script>
