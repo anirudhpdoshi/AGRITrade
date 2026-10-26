@@ -735,6 +735,12 @@ table.ggt td small{color:var(--faint)}tr.ggrow{cursor:pointer}tr.ggrow:hover td{
 .tile:not(.wide) .ggk{grid-template-columns:1fr 1fr}.tile:not(.wide) .ggkk .v{font-size:16px}
 @media (max-width:900px){.ggk{grid-template-columns:1fr 1fr}.ggcols{grid-template-columns:1fr}}
 @media (max-width:760px){table.ggt{display:table!important;font-size:11.5px}table.ggt tr{display:table-row!important}table.ggt th,table.ggt td{display:table-cell!important;padding:4px 3px}table.ggt td::before{content:none!important}.tile:has(table.ggt){overflow-x:auto}}
+
+.ggh3{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:#c9d6e6;margin:14px 0 6px}.ggh3 small{text-transform:none;letter-spacing:0;color:var(--faint);font-weight:400;margin-left:6px}
+svg.ggbars{width:100%;height:auto;display:block}
+.ggds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.ggd{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;min-width:0}.ggd>b{display:block;font-size:13px}.ggd>small{display:block;color:var(--faint);font-size:10.5px;margin-bottom:4px}
+.ggd table.ggt td{font-size:11.5px}tr.ggtot td{border-top:1px solid var(--line2);color:#c9d6e6}
+@media (max-width:900px){.ggds{grid-template-columns:1fr}}
 </style>
 </head>
 <body class="locked">
@@ -1935,7 +1941,7 @@ function grainPaceHTML(key){
     var pct=ds.total.commit/forecastMT*100;
     body+='<div class="dv">'+fmt(pct,1)+'%<small> of USDA forecast committed</small></div>'+
       '<div class="pace-bar"><span style="width:'+Math.min(100,pct).toFixed(1)+'%"></span></div>'+
-      '<div class="dsub">'+fmt(Math.round(ds.total.commit/1e5)/10,1)+' Mt committed vs '+fmt(Math.round(forecastMT/1e5)/10,1)+' Mt USDA ('+fmt(exp)+' mil bu)</div>';
+      '<div class="dsub">'+fmt(Math.round(ds.total.commit/1e5)/10,1)+' MMT committed vs '+fmt(Math.round(forecastMT/1e5)/10,1)+' MMT USDA ('+fmt(exp)+' mil bu)</div>';
   } else {
     body+='<div class="dv">'+fmt(Math.round(last[2]/1000))+'<small>k MT net sales</small></div>';
   }
@@ -2098,7 +2104,7 @@ function caMeasures(key, unit){
     {l:'Seeded area', u:imp?'k acres':'k ha', d:0, v:function(a){ return col(a,imp?'seeded_ac':'seeded_ha').map(function(x){ return x==null?null:x/1000; }); }},
     {l:'Harvested area', u:imp?'k acres':'k ha', d:0, v:function(a){ return col(a,imp?'harv_ac':'harv_ha').map(function(x){ return x==null?null:x/1000; }); }},
     {l:'Yield', u:imp?'bu/ac':'t/ha', d:imp?1:2, key:true, v:function(a){ return imp?col(a,'yield_bu'):col(a,'yield_kg').map(function(x){ return x==null?null:x/1000; }); }},
-    {l:'Production', u:imp?'mil bu':'Mt', d:imp?1:2, key:true, v:function(a){ return imp?col(a,'prod_bu').map(function(x){ return x==null?null:x/1000; }):col(a,'prod_t').map(function(x){ return x==null?null:x/1e6; }); }},
+    {l:'Production', u:imp?'mil bu':'MMT', d:imp?1:2, key:true, v:function(a){ return imp?col(a,'prod_bu').map(function(x){ return x==null?null:x/1000; }):col(a,'prod_t').map(function(x){ return x==null?null:x/1e6; }); }},
     {l:'Avg farm price', u:imp?'C$/bu':'C$/t', d:2, v:function(a){ return col(a,'price_t').map(function(x){ return x==null?null:(imp?x/bpm:x); }); }},
     {l:'Total farm value', u:'C$ mil', d:0, v:function(a){ return col(a,'value').map(function(x){ return x==null?null:x/1000; }); }}
   ];
@@ -2139,7 +2145,7 @@ function canadaCardsHTML(key){
   var S=C.stocks&&C.stocks[st.ca_geo];
   out+='<div class="dash-card"><div class="dk">'+esc(st.ca_geo)+' stocks</div>';
   if(S&&S.length){ var last=S[S.length-1], tot=function(o){ return o['Farm and commercial, total']!=null?o['Farm and commercial, total']:o['Farm stocks']; };
-    var conv=function(kt){ return imp?kt*1000*bpm/1e6:kt/1000; }, su=imp?'mil bu':'Mt';
+    var conv=function(kt){ return imp?kt*1000*bpm/1e6:kt/1000; }, su=imp?'mil bu':'MMT';
     var same=S.filter(function(x){ return x[0].slice(5)===last[0].slice(5); }), ly=same.length>1?same[same.length-2]:null;
     out+='<div class="dv">'+fmt(conv(tot(last[1])),imp?1:2)+'<small> '+su+' · '+esc(last[0])+'</small></div>'+
       '<div class="dsub">'+(ly?caPctHTML(caPct(tot(last[1]),tot(ly[1])))+' vs '+esc(ly[0]):'')+(last[1]['Farm and commercial, total']!=null?' · farm + commercial':' · farm stocks only (commercial not split by province)')+'</div>';
@@ -2456,8 +2462,8 @@ function oiChangeHTML(key){
 }
 
 /* ================= CROP-YEAR COMPARISON (USDA · Canada · Ontario) ================= */
-var CMP=(function(){ var d={y2026:false,y2025:true,y2024:true,y2023:true,us:true,ca:true,on:true,chg:true,unit:'imp',grp:'year'};
-  try{ var s=JSON.parse(localStorage.getItem('desk.cmp')||'{}'); Object.keys(d).forEach(function(k){ if(typeof s[k]===typeof d[k]) d[k]=s[k]; }); }catch(e){} return d; })();
+var CMP=(function(){ var d={y2026:false,y2025:true,y2024:true,y2023:true,us:true,ca:true,on:true,br:true,chg:true,unit:'met',grp:'year',v:2};
+  try{ var s=JSON.parse(localStorage.getItem('desk.cmp')||'{}'); if(s.v!==2){ delete s.unit; delete s.br; } Object.keys(d).forEach(function(k){ if(typeof s[k]===typeof d[k]) d[k]=s[k]; }); d.v=2; }catch(e){} return d; })();
 function cmpSave(){ try{ localStorage.setItem('desk.cmp', JSON.stringify(CMP)); }catch(e){} }
 function cmpYears(){ return ['2026','2025','2024','2023'].filter(function(y){ return CMP['y'+y]; }); }
 /* one value getter per geography, all in the SAME units (imperial: mil ac · bu/ac · mil bu; metric: mil ha · t/ha · Mt) */
@@ -2488,10 +2494,27 @@ function cmpGeoData(key){
       beg:function(y){ return kt(tot(byd[y+'-07'])); }, end:function(y){ return kt(tot(byd[(+y+1)+'-07'])); }, dec31:function(y){ return kt(tot(byd[y+'-12'])); },
       price:P?function(y){ var a=P.series.filter(function(x){ return x[0]>=y+'-08'&&x[0]<=(+y+1)+'-07'; }); if(!a.length) return null; var v=a.reduce(function(s,x){ return s+x[1]; },0)/a.length; return imp?v/bpm:v; }:null };
   });
+  /* Brazil column + world shares: USDA PSD yearly rows from gg.json (loaded on demand) */
+  var GD=window.GG&&GG._data&&GG._data(), P=GD&&GD.crops&&GD.crops[key]&&GD.crops[key].psd;
+  function psdRow(a3){ var c=P&&P.countries.filter(function(x){ return x.a3===a3; })[0]; return c&&c.years; }
+  var BR=psdRow('BRA'), USW=psdRow('USA');
+  function pv(Yr,f,conv){ return function(y){ var r=Yr&&Yr[y]; var v=r&&r[f]; return v==null?null:(conv?conv(v):v); }; }
+  var q=function(v){ return imp?v*bpm/1000:v/1000; };               /* 1,000 t -> mil bu or MMT */
+  if(USW&&G.us){ G.us.wshare=pv(USW,'share_prod'); G.us.wexp=pv(USW,'share_exp'); }
+  var CAW=psdRow('CAN'); if(CAW&&G.ca){ G.ca.wshare=pv(CAW,'share_prod'); G.ca.wexp=pv(CAW,'share_exp'); }
+  if(BR){
+    G.br={name:'Brazil', short:'Brazil', cc:'br', src:'USDA', ylab:function(y){ return y+'/'+String(+y+1).slice(2); }, has:function(y){ return !!BR[y]; },
+      area_h:pv(BR,'area',function(v){ return imp?v*2.47105/1000:v/1000; }), yield:pv(BR,'yield',function(v){ return imp?v*bpm/2.47105:v; }),
+      prod:pv(BR,'prod',q), beg:pv(BR,'beg',q), imp_:pv(BR,'imp',q), dom:pv(BR,'dom',q), crush:pv(BR,'crush',q), exp:pv(BR,'exp',q), end:pv(BR,'end',q),
+      supply:function(y){ var r=BR[y]; return r&&r.prod!=null?q((r.beg||0)+r.prod+(r.imp||0)):null; },
+      use:function(y){ var r=BR[y]; return r&&r.dom!=null?q(r.dom+(r.exp||0)):null; },
+      stu:function(y){ var r=BR[y]; return r&&r.end!=null&&(r.dom||r.exp)?r.end/((r.dom||0)+(r.exp||0))*100:null; },
+      wshare:pv(BR,'share_prod'), wexp:pv(BR,'share_exp') };
+  }
   return G;
 }
 function cmpRows(key){
-  var imp=CMP.unit==='imp', A=imp?'mil ac':'mil ha', Yd=imp?'bu/ac':'t/ha', Q=imp?'mil bu':'Mt';
+  var imp=CMP.unit==='imp', A=imp?'mil ac':'mil ha', Yd=imp?'bu/ac':'t/ha', Q=imp?'mil bu':'MMT';
   return [
     {sec:'Crop size'},
     {id:'area_s', l:'Planted / seeded area', u:A, d:2},
@@ -2499,6 +2522,8 @@ function cmpRows(key){
     {id:'yield', l:'Yield', u:Yd, d:imp?1:2, key:true},
     {id:'prod', l:'Production', u:Q, d:imp?0:2, key:true},
     {id:'share', l:'Production vs US', u:'% of US', d:1, pp:true, calc:'share'},
+    {id:'wshare', l:'Share of world production', u:'% of world (USDA)', d:1, pp:true},
+    {id:'wexp', l:'Share of world exports', u:'% of world (USDA)', d:1, pp:true},
     {sec:'Balance sheet'},
     {id:'beg', l:'Beginning stocks', u:Q, d:imp?0:2, note:'Canada/Ontario: Jul 31 stocks entering the crop year'},
     {id:'imp_', l:'Imports', u:Q, d:imp?0:2},
@@ -2519,18 +2544,19 @@ function cmpVal(G, g, row, y){
 function cmpCell2(v, prev, row, y, g){
   var at=' data-y="'+y+'" data-g="'+g+'"';
   if(v==null) return '<td class="cmp-na"'+at+'>—</td>';
-  var dec=row.d; if(!row.pp&&/mil bu|Mt/.test(row.u)&&Math.abs(v)<100) dec=Math.max(dec,1);
+  var dec=row.d; if(!row.pp&&/mil bu|MMT/.test(row.u)&&Math.abs(v)<100) dec=Math.max(dec,1);
   var ch='';
   if(CMP.chg && prev!=null){ if(row.pp){ var dp=v-prev; ch='<small class="'+cls(dp)+'">'+sgn(dp,1,' pp')+'</small>'; } else if(prev!==0){ var p=(v/prev-1)*100; ch='<small class="'+(Math.abs(p)<0.05?'neu':cls(p))+'">'+(Math.abs(p)<0.05?'0.0%':sgn(p,1,'%'))+'</small>'; } }
   return '<td'+at+'><b>'+fmt(v,dec)+'</b>'+ch+'</td>';
 }
 function cropCompareHTML(key){
-  var years=cmpYears(), G=cmpGeoData(key), geos=['us','ca','on'].filter(function(g){ return CMP[g]&&G[g]; });
+  if(CMP.br&&window.GG&&!(GG._data&&GG._data())) GG.ensure();
+  var years=cmpYears(), G=cmpGeoData(key), geos=['us','ca','on','br'].filter(function(g){ return CMP[g]&&G[g]; });
   var cb=function(k,l){ return '<label class="cmp-cb"><input type="checkbox" data-cmp="'+k+'" data-cmpk="'+key+'"'+(CMP[k]?' checked':'')+'> '+l+'</label>'; };
   var tg=function(k,v,l){ return '<button data-cmpset="'+k+'" data-v="'+v+'" aria-pressed="'+(CMP[k]===v)+'">'+l+'</button>'; };
   var ctrl='<div class="cmp-ctrl"><span class="cmp-g"><b>Crop years</b>'+cb('y2026','2026 (current)')+cb('y2025','2025')+cb('y2024','2024')+cb('y2023','2023')+'</span>'+
-    '<span class="cmp-g"><b>Show</b>'+cb('us',flag('us',11)+' USA')+cb('ca',flag('ca',11)+' Canada')+cb('on',flag('ca',11)+' Ontario')+cb('chg','y/y change')+'</span>'+
-    '<span class="cmp-g"><b>Units</b><span class="toggle">'+tg('unit','imp','ACRES · BU')+tg('unit','met','HECTARES · TONNES')+'</span></span>'+
+    '<span class="cmp-g"><b>Show</b>'+cb('us',flag('us',11)+' USA')+cb('ca',flag('ca',11)+' Canada')+cb('on',flag('ca',11)+' Ontario')+cb('br',(window.WORLD&&WORLD.flag?WORLD.flag('br',11):'')+' Brazil')+cb('chg','y/y change')+'</span>'+
+    '<span class="cmp-g"><b>Units</b><span class="toggle">'+tg('unit','imp','ACRES · BU')+tg('unit','met','HECTARES · MMT')+'</span></span>'+
     '<span class="cmp-g"><b>Group by</b><span class="toggle">'+tg('grp','year','CROP YEAR')+tg('grp','geo','COUNTRY')+'</span></span></div>';
   var body;
   if(!years.length||!geos.length) body='<p class="note">Tick at least one crop year and one country.</p>';
@@ -2550,10 +2576,12 @@ function cropCompareHTML(key){
     body='<div class="tbl-scroll"><table class="sd-tbl cmp-tbl cmp-one"><thead>'+h1+h2+'</thead><tbody>'+body2+'</tbody></table></div>';
   }
   var notes=[];
+  if(CMP.br&&!G.br) notes.push('Brazil column: '+(window.GG&&GG._error&&GG._error()?'Sorry, we can\u2019t be reached now \u2014 global grain data did not load':'loading USDA world data\u2026'));
+  if(G.br) notes.push('Brazil = USDA PSD (USDA estimate; Brazil\u2019s local marketing years aligned by USDA) \u2014 CONAB\u2019s own survey is under Brazil \u00b7 CONAB; world shares = USDA PSD, all countries');
   if(G.us) notes.push('US = USDA PSD, marketing year '+(key==='wheat'?'Jun–May':'Sep–Aug')+', latest estimate per year; planted area and farm price are not in PSD');
   if(G.ca||G.on) notes.push('Canada / Ontario = '+scLink('annual')+' (area, yield, production) · '+scLink('stocks')+' (Jul 31 stocks = beginning / ending stocks of the Aug–Jul crop year'+(G.on&&G.on.farmOnly?'; Ontario stocks are on-farm only':'')+') · '+scLink('prices')+' (Ontario farm price)');
   notes.push('every number converted to the same units ('+(CMP.unit==='imp'?'million acres · bu/acre · million bushels':'million hectares · tonnes/hectare · million tonnes')+') · small figures = change vs the previous crop year · hover a value: the ruler highlights its row and crop year');
-  return '<div class="tile wide" id="cmp-'+key+'" data-src="sd_hist"><div class="tile-head"><h2>Crop-year comparison — '+GMETA[key].name+' <span class="h2note">USA, Canada and Ontario side by side · same units</span></h2></div>'+ctrl+body+
+  return '<div class="tile wide" id="cmp-'+key+'" data-src="sd_hist"><div class="tile-head"><h2>Crop-year comparison — '+GMETA[key].name+' <span class="h2note">USA, Canada, Ontario and Brazil side by side · same units (MMT = million metric tonnes)</span></h2></div>'+ctrl+body+
     '<div class="stamp">'+notes.join(' · ')+'</div></div>';
 }
 /* ruler: row (CSS hover) + every cell of the same crop year */
@@ -3295,7 +3323,7 @@ function renderGrain(key){
   if(geo==='ca'||geo==='on'){ caState(key).ca_geo=(geo==='on'?'Ontario':'Canada'); }
   var gb=function(v,l){ return '<button data-dash="'+key+'" data-k="fgeo" data-v="'+v+'" aria-pressed="'+(geo===v)+'">'+l+'</button>'; };
   var FH='<div class="tile wide geo-head"><div class="tile-head"><h2>'+meta.name+' fundamentals <span class="h2note">— pick a geography</span></h2><span class="toggle" role="group">'+gb('us',flag('us',11)+' US · USDA / WASDE')+gb('ca',flag('ca',11)+' CANADA · STATCAN')+gb('on',flag('ca',11)+' ONTARIO')+gb('br',(window.WORLD&&WORLD.flag?WORLD.flag('br',11):'')+' BRAZIL \u00b7 CONAB')+gb('world',(window.WORLD&&WORLD.flag?WORLD.flag('xx',11):'')+' WORLD \u00b7 USDA')+'</span></div></div>';
-  FU=(geo==='br'||geo==='world')?FH+(window.GG?GG.html(key,geo):'<div class="tile wide"><p class="note">Loading global grain data\u2026</p></div>'):FH+cropCompareHTML(key)+(geo==='us'?FU:canadaTileHTML(key,true)+canadaChartsHTML(key)+caCalendarHTML());
+  FU=(geo==='br'||geo==='world')?FH+cropCompareHTML(key)+(window.GG?GG.exportsHTML(key)+GG.html(key,geo):'<div class="tile wide"><p class="note">Loading global grain data\u2026</p></div>'):FH+cropCompareHTML(key)+(window.GG&&window.SUB&&SUB[key]==='fund'?GG.exportsHTML(key):'<div class="tile wide"><h2>Export comparison <span class="h2note">\u2014 US \u00b7 Canada \u00b7 Brazil</span></h2><p class="note">Loads when Fundamentals is open\u2026</p></div>')+(geo==='us'?FU:canadaTileHTML(key,true)+canadaChartsHTML(key)+caCalendarHTML());
   html+=subWrap(key,'overview',OV)+subWrap(key,'deriv',DV)+subWrap(key,'fund',FU)+subWrap(key,'inputs',inputsHTML(key));
   html+='</div><aside class="rail">'+grainAlertsLiveHTML(key)+grainCalendarHTML(key)+newsRailHTML(NEWS[key], key)+'</aside></div>';
   document.getElementById('panel-'+key).innerHTML=html;
@@ -3766,7 +3794,7 @@ var SECG={
   grain:{
     overview:[['snap','Snapshot & KPIs',/kpi-strip|dash-head/],['fan','Price & σ fan',/σ fan/],['insight','Insight',/\bInsight\b/],['ask','Ask Claude',/ask-tile/]],
     deriv:[['cockpit','Derivatives cockpit',/kpi-strip/],['pos','Positioning KPIs',/poskpi|ckwrap/],['cftc','CFTC managed money',/cftc_grains/],['opt','Options data',/Options positioning|Open interest by strike|Open-interest change/],['vol','Volatility & skew',/Volatility|IV skew/],['carry','Carry & roll',/Curve & calendar|Futures roll/]],
-    fund:[['wmap','World map',/production map/i],['wdet','Country detail',/ detail /],['wprod','Top producers',/Top producers/],['wexp','Top exporters',/Top exporters/],['brsurvey','CONAB survey',/CONAB crop survey/],['brsd','Brazil supply & demand',/Brazil (soybean )?supply/i],['brvs','CONAB vs USDA',/CONAB vs USDA/],['brexp','Brazil exports',/exports \u2014 actual|exports — actual/],['brl','USD/BRL',/USD\/BRL/],['cmp','Crop-year comparison',/Crop-year comparison/],['sd','Supply & demand (WASDE)',/supply & demand/i],['dest','Export destinations',/Export destinations/i],['exp','Export sales',/Export Sales/i],['cal','Agri calendar',/agri calendar/i],['caprod','Production & farm prices',/production by crop year|farm price/i],['ca','Canada / Ontario stats',/Canada|Ontario/]],
+    fund:[['cmp','Crop-year comparison',/Crop-year comparison/],['xcmp','Export comparison',/Export comparison/],['wmap','World map',/production map/i],['wdet','Country detail',/ detail /],['wprod','Top producers',/Top producers/],['wexp','Top exporters',/Top exporters/],['brsurvey','CONAB survey',/CONAB crop survey/],['brsd','Brazil supply & demand',/Brazil (soybean )?supply/i],['brvs','CONAB vs USDA',/CONAB vs USDA/],['brexp','Brazil exports',/exports \u2014 actual|exports — actual/],['brl','USD/BRL',/USD\/BRL/],['sd','Supply & demand (WASDE)',/supply & demand/i],['dest','Export destinations',/Export destinations/i],['exp','Export sales',/Export Sales/i],['cal','Agri calendar',/agri calendar/i],['caprod','Production & farm prices',/production by crop year|farm price/i],['ca','Canada / Ontario stats',/Canada|Ontario/]],
     inputs:[['cost','Input cost summary',/input costs/i],['paths','Price paths & events',/price paths/i]]
   },
   fx:{

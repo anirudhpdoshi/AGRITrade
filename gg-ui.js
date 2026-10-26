@@ -45,7 +45,7 @@
   }
   function repaint() {
     var p = document.querySelector(".tab-panel.active"), k = p && p.id.replace("panel-", "");
-    if (CROP[k] && typeof window.renderGrain === "function") { var g = window.dstate ? window.dstate(k).fgeo : null; if (g === "br" || g === "world") window.renderGrain(k); }
+    if (CROP[k] && typeof window.renderGrain === "function" && window.SUB && window.SUB[k] === "fund") window.renderGrain(k);
   }
 
   /* ---------- World view ---------- */
@@ -53,7 +53,7 @@
   function val(c, m) {
     return m === "prod" ? c.cur.prod : m === "exp" ? c.cur.exp : m === "share_prod" ? c.share_prod : m === "share_exp" ? c.share_exp : m === "yoy" ? c.yoy_prod : m === "rev" ? (c.rev_prod ? c.rev_prod.pct : null) : null;
   }
-  function fmtV(v, m) { return v == null ? "—" : m === "prod" || m === "exp" ? mt(v) + " Mt" : m === "yoy" || m === "rev" ? pc(v) : n1(v) + "%"; }
+  function fmtV(v, m) { return v == null ? "—" : m === "prod" || m === "exp" ? mt(v) + " MMT" : m === "yoy" || m === "rev" ? pc(v) : n1(v) + "%"; }
   function colour(v, m, mx) {
     if (v == null) return null;
     if (m === "yoy" || m === "rev") { var k = Math.min(1, Math.abs(v) / 15); return v >= 0 ? "rgba(63,185,127," + (0.18 + 0.72 * k).toFixed(2) + ")" : "rgba(224,101,95," + (0.18 + 0.72 * k).toFixed(2) + ")"; }
@@ -81,28 +81,28 @@
     return '<div class="tile wide"><h2>' + flagOf(c.a3, 13) + " " + esc(c.name) + " — " + CN[key].toLowerCase() + ' detail <span class="h2note">— USDA PSD · ' + esc(P.my) + " vs " + esc(P.my_prev) + "</span></h2>" +
       '<div class="ggstamp">USDA FAS PSD · release ' + esc(P.release) + " · " + tag("estimate") + (c.updated_month ? " · country last revised in month " + c.updated_month : "") + "</div>" +
       '<div class="ggk">' +
-      k("Production " + esc(P.my), mt(u.prod) + " Mt", '<span class="' + cl(c.yoy_prod) + '">' + pc(c.yoy_prod) + "</span> vs " + mt(p.prod) + " Mt") +
-      k("Share of world production", n1(c.share_prod) + "%", "world " + mt(P.world.prod) + " Mt") +
-      k("Exports", mt(u.exp) + " Mt", n1(c.share_exp) + "% of world exports · " + (c.exp_of_prod != null ? n1(c.exp_of_prod, 0) + "% of own crop" : "")) +
-      k("Ending stocks", mt(u.end) + " Mt", "stocks-to-use " + (c.stu != null ? n1(c.stu) + "%" : "—")) + "</div>" +
+      k("Production " + esc(P.my), mt(u.prod) + " MMT", '<span class="' + cl(c.yoy_prod) + '">' + pc(c.yoy_prod) + "</span> vs " + mt(p.prod) + " MMT") +
+      k("Share of world production", n1(c.share_prod) + "%", "world " + mt(P.world.prod) + " MMT") +
+      k("Exports", mt(u.exp) + " MMT", n1(c.share_exp) + "% of world exports · " + (c.exp_of_prod != null ? n1(c.exp_of_prod, 0) + "% of own crop" : "")) +
+      k("Ending stocks", mt(u.end) + " MMT", "stocks-to-use " + (c.stu != null ? n1(c.stu) + "%" : "—")) + "</div>" +
       '<div class="ggcols"><table class="ggt"><tr><th>Metric</th><th>' + esc(P.my) + "</th><th>" + esc(P.my_prev) + "</th><th></th></tr>" +
       row("Area harvested", n1(u.area != null ? u.area / 1000 : null, 2), n1(p.area != null ? p.area / 1000 : null, 2), "M ha") +
-      row("Yield", n1(u.yield, 2), n1(p.yield, 2), "t/ha") + row("Production", mt(u.prod), mt(p.prod), "Mt") + row("Imports", mt(u.imp), mt(p.imp), "Mt") +
-      row("Domestic use", mt(u.dom), mt(p.dom), "Mt") + (u.crush != null ? row("of which crush", mt(u.crush), "—", "Mt") : "") + row("Exports", mt(u.exp), mt(p.exp), "Mt") + row("Ending stocks", mt(u.end), mt(p.end), "Mt") +
-      row("Revision vs previous USDA report", c.rev_prod ? '<span class="' + cl(c.rev_prod.d) + '">' + (c.rev_prod.d > 0 ? "+" : "") + mt(c.rev_prod.d, 2) + " Mt</span>" : '<span class="neu">' + esc(P.rev_note || "no change stored") + "</span>", "", "") + "</table>" +
-      '<div class="gghist"><b>Production history (USDA, Mt)</b>' + hk.map(function (y) { return '<div class="ghr"><span>' + esc(y) + '</span><i style="width:' + (100 * (H[y] || 0) / hmx).toFixed(1) + '%"></i><em>' + mt(H[y]) + "</em></div>"; }).join("") + "</div></div>" +
+      row("Yield", n1(u.yield, 2), n1(p.yield, 2), "t/ha") + row("Production", mt(u.prod), mt(p.prod), "MMT") + row("Imports", mt(u.imp), mt(p.imp), "MMT") +
+      row("Domestic use", mt(u.dom), mt(p.dom), "MMT") + (u.crush != null ? row("of which crush", mt(u.crush), "—", "MMT") : "") + row("Exports", mt(u.exp), mt(p.exp), "MMT") + row("Ending stocks", mt(u.end), mt(p.end), "MMT") +
+      row("Revision vs previous USDA report", c.rev_prod ? '<span class="' + cl(c.rev_prod.d) + '">' + (c.rev_prod.d > 0 ? "+" : "") + mt(c.rev_prod.d, 2) + "</span>" : "\u2014", "", "MMT") + "</table>" + (c.rev_prod ? "" : '<p class="note">' + esc(P.rev_note || "") + "</p>") +
+      '<div class="gghist"><b>Production history (USDA, MMT)</b>' + hk.map(function (y) { return '<div class="ghr"><span>' + esc(y) + '</span><i style="width:' + (100 * (H[y] || 0) / hmx).toFixed(1) + '%"></i><em>' + mt(H[y]) + "</em></div>"; }).join("") + "</div></div>" +
       '<div class="stamp">USDA figures are estimates for the marketing year shown, not final results · marketing years differ by country (USDA aligns them for comparison) · EU shown as one market, as USDA reports it</div></div>';
   }
   function k(l, v, s) { return '<div class="ggkk"><div class="l">' + l + '</div><div class="v">' + v + '</div><div class="s">' + s + "</div></div>"; }
   function rank(key, P, field, title, note, shareField) {
     var L = P.countries.filter(function (c) { return (c.cur[field] || 0) > 0; }).sort(function (a, b) { return b.cur[field] - a.cur[field]; }).slice(0, 10);
     var mx = L.length ? L[0][shareField] : 1;
-    return '<div class="tile"><h2>' + title + ' <span class="h2note">— ' + note + '</span></h2><div class="ggstamp">USDA PSD · ' + esc(P.my) + " · release " + esc(P.release) + " · world " + mt(P.world[field === "prod" ? "prod" : "exp"]) + " Mt (" + pc(P.world[field === "prod" ? "yoy_prod" : "yoy_exp"]) + " YoY)</div>" +
-      '<table class="ggt"><tr><th>Country</th><th>Mt</th><th>% world</th><th>YoY</th>' + (field === "exp" ? "<th>% of own crop</th>" : "<th>Revision</th>") + "</tr>" +
+    return '<div class="tile"><h2>' + title + ' <span class="h2note">— ' + note + '</span></h2><div class="ggstamp">USDA PSD · ' + esc(P.my) + " · release " + esc(P.release) + " · world " + mt(P.world[field === "prod" ? "prod" : "exp"]) + " MMT (" + pc(P.world[field === "prod" ? "yoy_prod" : "yoy_exp"]) + " YoY)</div>" +
+      '<div class="tbl-scroll"><table class="ggt"><tr><th>Country</th><th>MMT</th><th>% world</th><th>YoY</th>' + (field === "exp" ? "<th>% of own crop</th>" : "<th>Revision</th>") + "</tr>" +
       L.map(function (c) { var sh = c[shareField];
         return '<tr data-dash="' + key + '" data-k="ggc" data-v="' + esc(c.code) + '" class="ggrow"><td>' + flagOf(c.a3, 11) + " " + esc(c.name) + "</td><td>" + mt(c.cur[field]) + '</td><td><span class="ggbar" style="width:' + (60 * sh / mx).toFixed(0) + 'px"></span>' + n1(sh) + "%</td>" +
           '<td class="' + cl(field === "prod" ? c.yoy_prod : c.yoy_exp) + '">' + pc(field === "prod" ? c.yoy_prod : c.yoy_exp) + "</td>" +
-          (field === "exp" ? "<td>" + (c.exp_of_prod != null ? n1(c.exp_of_prod, 0) + "%" : "—") + "</td>" : '<td class="' + (c.rev_prod ? cl(c.rev_prod.d) : "neu") + '">' + (c.rev_prod ? (c.rev_prod.d > 0 ? "+" : "") + mt(c.rev_prod.d, 2) : "—") + "</td>") + "</tr>"; }).join("") + "</table>" +
+          (field === "exp" ? "<td>" + (c.exp_of_prod != null ? n1(c.exp_of_prod, 0) + "%" : "—") + "</td>" : '<td class="' + (c.rev_prod ? cl(c.rev_prod.d) : "neu") + '">' + (c.rev_prod ? (c.rev_prod.d > 0 ? "+" : "") + mt(c.rev_prod.d, 2) : "—") + "</td>") + "</tr>"; }).join("") + "</table></div>" +
       (field === "exp" ? '<p class="note">Big producers are not always big exporters — compare each country’s share of world output with its share of world exports.</p>' : "") + "</div>";
   }
   function worldHTML(key) {
@@ -111,7 +111,7 @@
     var st = window.dstate(key), m = st.ggm || "prod", sel = st.ggc || (P.countries[0] && P.countries[0].code);
     var tg = MEAS.map(function (x) { return '<button data-dash="' + key + '" data-k="ggm" data-v="' + x[0] + '" aria-pressed="' + (m === x[0]) + '">' + x[1] + "</button>"; }).join("");
     return '<div class="tile wide"><div class="tile-head"><h2>World ' + CN[key].toLowerCase() + ' — production map <span class="h2note">— ' + esc(P.my) + ' marketing year</span></h2><span class="toggle ggtg" role="group">' + tg + "</span></div>" +
-      '<div class="ggstamp">' + esc(P.source) + " · release " + esc(P.release) + " · " + tag("estimate") + " · " + esc(P.units) + " · refreshed " + ago(G.updated_at) + " ago" + stale(P) +
+      '<div class="ggstamp">' + esc(P.source) + " · release " + esc(P.release) + " · " + tag("estimate") + " · " + "MMT = million metric tonnes" + " · refreshed " + ago(G.updated_at) + " ago" + stale(P) +
       (m === "rev" && !P.rev_vs ? ' · <b class="warn">' + esc(P.rev_note) + "</b>" : m === "rev" ? " · revision vs release " + esc(P.rev_vs) : "") + "</div>" +
       mapSVG(key, P, m, sel) + "</div>" +
       detailHTML(key, P, sel) +
@@ -131,10 +131,10 @@
       out += '<div class="tile wide"><h2>' + flagOf("BRA", 13) + " Brazil " + CN[key].toLowerCase() + ' — CONAB crop survey <span class="h2note">— ' + esc(G.conab.survey) + " · season " + esc(s[1]) + " vs " + esc(s[0]) + "</span></h2>" +
         '<div class="ggstamp">' + esc(G.conab.source) + " · " + tag("forecast") + ' · <a href="' + esc(G.conab.url) + '" target="_blank" rel="noopener">survey page ↗</a> · area 1,000 ha · yield kg/ha · production 1,000 t' + stale(G.conab) + "</div>" +
         '<div class="ggk">' +
-        k("Production " + esc(s[1]), mt(T.prod[1]) + " Mt", '<span class="' + cl(T.yoy_prod) + '">' + pc(T.yoy_prod) + "</span> vs " + mt(T.prod[0]) + " Mt in " + esc(s[0])) +
+        k("Production " + esc(s[1]), mt(T.prod[1]) + " MMT", '<span class="' + cl(T.yoy_prod) + '">' + pc(T.yoy_prod) + "</span> vs " + mt(T.prod[0]) + " MMT in " + esc(s[0])) +
         k("Area · yield", n1(T.area[1] / 1000, 2) + " M ha", n1(T.yield[1] / 1000, 2) + " t/ha (" + pc(T.yield[0] ? 100 * (T.yield[1] - T.yield[0]) / T.yield[0] : null) + " yield)") +
-        k("Revision vs previous survey", T.rev ? '<span class="' + cl(T.rev.d) + '">' + (T.rev.d > 0 ? "+" : "") + mt(T.rev.d, 2) + " Mt</span>" : "—", T.rev ? pc(T.rev.pct, 2) + " vs " + esc(G.conab.prev_survey || "previous") : esc(T.rev_note || "no earlier survey for this season")) +
-        k("Top states", (T.top_states || []).slice(0, 2).map(function (x) { return esc(x[0]); }).join(" · "), (T.top_states || []).slice(0, 4).map(function (x) { return esc(x[0]) + " " + mt(x[1]) + " Mt"; }).join(" · ")) +
+        k("Revision vs previous survey", T.rev ? '<span class="' + cl(T.rev.d) + '">' + (T.rev.d > 0 ? "+" : "") + mt(T.rev.d, 2) + " MMT</span>" : "—", T.rev ? pc(T.rev.pct, 2) + " vs " + esc(G.conab.prev_survey || "previous") : esc(T.rev_note || "no earlier survey for this season")) +
+        k("Top states", (T.top_states || []).slice(0, 2).map(function (x) { return esc(x[0]); }).join(" · "), (T.top_states || []).slice(0, 4).map(function (x) { return esc(x[0]) + " " + mt(x[1]) + " MMT"; }).join(" · ")) +
         "</div>";
       if (crop === "corn" && C["2a"]) {
         var parts = ["1a", "2a", "3a"].filter(function (p) { return C[p]; });
@@ -161,7 +161,7 @@
       var T2 = C.total, d = T2.prod[1] - br.cur.prod;
       out += '<div class="tile wide"><h2>CONAB vs USDA for Brazil <span class="h2note">— two agencies, shown side by side, never blended</span></h2>' +
         '<div class="ggstamp">USDA PSD ' + esc(P.my) + " (release " + esc(P.release) + ") · CONAB " + esc(T2.seasons[1]) + " (" + esc(G.conab.survey) + ")</div>" +
-        '<table class="ggt"><tr><th></th><th>CONAB</th><th>USDA</th><th>Gap</th></tr><tr><td>Production (Mt)</td><td>' + mt(T2.prod[1]) + "</td><td>" + mt(br.cur.prod) + '</td><td class="' + cl(d) + '">' + (d > 0 ? "+" : "") + mt(d) + "</td></tr>" +
+        '<table class="ggt"><tr><th></th><th>CONAB</th><th>USDA</th><th>Gap</th></tr><tr><td>Production (MMT)</td><td>' + mt(T2.prod[1]) + "</td><td>" + mt(br.cur.prod) + '</td><td class="' + cl(d) + '">' + (d > 0 ? "+" : "") + mt(d) + "</td></tr>" +
         "<tr><td>Brazil share of world production</td><td>—</td><td>" + n1(br.share_prod) + "%</td><td></td></tr><tr><td>Brazil share of world exports</td><td>—</td><td>" + n1(br.share_exp) + "%</td><td></td></tr></table>" +
         '<p class="note">Agencies differ in survey method, timing and crop-year definition (USDA aligns Brazil to its own marketing year), so gaps are normal; a widening gap is worth watching.</p></div>';
     }
@@ -169,7 +169,7 @@
     if (X) {
       out += '<div class="tile"><h2>Brazil ' + CN[key].toLowerCase() + ' exports — actual <span class="h2note">— customs data, year to date</span></h2>' +
         '<div class="ggstamp">' + esc(G.comex.source) + " · " + tag("observed") + " · " + esc(G.comex.period) + " vs " + esc(G.comex.period_prev) + " · NCM " + esc(X.ncm) + " · data through " + esc(G.comex.data_updated || "") + stale(G.comex) + "</div>" +
-        '<div class="ggk">' + k("Exported year to date", n1(X.kt / 1000, 2) + " Mt", '<span class="' + cl(X.yoy) + '">' + pc(X.yoy) + "</span> vs " + n1(X.kt_prev / 1000, 2) + " Mt same months last year") +
+        '<div class="ggk">' + k("Exported year to date", n1(X.kt / 1000, 2) + " MMT", '<span class="' + cl(X.yoy) + '">' + pc(X.yoy) + "</span> vs " + n1(X.kt_prev / 1000, 2) + " MMT same months last year") +
         k("Average export value", X.usd_per_t != null ? "US$" + n1(X.usd_per_t, 0) + "/t" : "—", "FOB, all destinations") + "</div>" +
         '<table class="ggt"><tr><th>Destination</th><th>kt</th><th>Share</th><th>Same period last year</th></tr>' +
         X.top.map(function (r) { return "<tr><td>" + esc(r.country) + "</td><td>" + n1(r.kt, 0) + '</td><td><span class="ggbar bx" style="width:' + (0.6 * r.share).toFixed(0) + 'px"></span>' + n1(r.share) + "%</td><td>" + n1(r.kt_prev, 0) + "</td></tr>"; }).join("") + "</table></div>";
@@ -182,12 +182,78 @@
     return out;
   }
 
+
+  /* ---------- Export comparison: US · Canada · Brazil (MMT) ---------- */
+  function mmt(kt, d) { return kt == null ? "—" : (kt / 1000).toLocaleString("en-US", { minimumFractionDigits: d == null ? 2 : d, maximumFractionDigits: d == null ? 2 : d }); }
+  var MN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function mlab(ym) { return MN[+ym.slice(5, 7) - 1] + " " + ym.slice(2, 4); }
+  function exportsHTML(key) {
+    if (!G) { ensure(); return err ? unreach(err) : '<div class="tile wide"><h2>Export comparison — US · Canada · Brazil</h2><p class="note">Loading export data…</p></div>'; }
+    var crop = CROP[key], P = G.crops && G.crops[crop] && G.crops[crop].psd;
+    var US = G.us_exports && G.us_exports.crops && G.us_exports.crops[crop], CA = G.ca_exports && G.ca_exports.crops && G.ca_exports.crops[crop], BR = G.comex && G.comex.crops && G.comex.crops[crop];
+    var ORG = [["USA", "us", "United States"], ["CAN", "ca", "Canada"], ["BRA", "br", "Brazil"]];
+    if (crop === "wheat") ORG = ORG.concat([["RUS", "", "Russia"], ["EU", "", "European Union"], ["AUS", "", "Australia"], ["ARG", "", "Argentina"]]);
+    if (crop !== "wheat") ORG = ORG.concat([["ARG", "", "Argentina"], ["UKR", "", "Ukraine"]]);
+    var out = '<div class="tile wide ggx"><h2>Export comparison — ' + CN[key].toLowerCase() + ' <span class="h2note">— US · Canada · Brazil (and key rivals) · all figures in MMT = million metric tonnes</span></h2>';
+    /* A. crop-year exports, USDA PSD (one source, aligned years) */
+    if (P) {
+      var yrs = [];
+      P.countries.forEach(function (c) { if (c.years) Object.keys(c.years).forEach(function (y) { if (yrs.indexOf(y) < 0) yrs.push(y); }); });
+      yrs.sort(); yrs = yrs.slice(-4);
+      var row = function (o) { var c = P.countries.filter(function (x) { return x.a3 === o[0]; })[0]; if (!c || !c.years) return "";
+        return "<tr><td>" + flagOf(o[0], 11) + " " + esc(o[2]) + "</td>" + yrs.map(function (y, i) { var r = c.years[y] || {}, pr = i ? (c.years[yrs[i - 1]] || {}) : null, ch = pr && pr.exp ? 100 * (r.exp - pr.exp) / pr.exp : null;
+          return "<td><b>" + (r.exp != null ? mt(r.exp, 2) : "—") + "</b>" + (ch != null && r.exp != null ? '<small class="' + cl(ch) + '"> ' + pc(ch) + "</small>" : "") + "</td>"; }).join("") +
+          "<td>" + n1((c.years[yrs[yrs.length - 1]] || {}).share_exp) + "%</td><td>" + n1(c.exp_of_prod, 0) + "%</td></tr>"; };
+      out += '<h3 class="ggh3">Crop-year exports <small>USDA PSD estimates · marketing year (local years aligned by USDA) · release ' + esc(P.release) + "</small></h3>" +
+        '<div class="tbl-scroll"><table class="ggt"><tr><th>Origin</th>' + yrs.map(function (y) { return "<th>" + esc(y) + "/" + String(+y + 1).slice(2) + "</th>"; }).join("") + "<th>% world exports " + esc(P.my) + "</th><th>% of own crop exported</th></tr>" +
+        ORG.map(row).join("") + '<tr class="ggtot"><td>World</td>' + yrs.map(function () { return "<td></td>"; }).join("").replace(/<td><\/td>$/, "<td><b>" + mt(P.world.exp, 2) + "</b></td>") + "<td>100%</td><td></td></tr></table></div>";
+    }
+    /* B. month over month, actual shipments */
+    var M = {}, src = [];
+    function addM(o, ser, div) { if (!ser) return; Object.keys(ser).forEach(function (ym) { (M[ym] = M[ym] || {})[o] = ser[ym] / div; }); }
+    if (US) { addM("us", US.monthly_kt, 1); src.push("US: USDA FAS weekly export shipments summed by week-ending month (" + esc(US.my) + " and prior year)"); }
+    if (CA) { addM("ca", CA.monthly_t, 1000); src.push("Canada: Statistics Canada / CGC exports by destination (monthly)"); }
+    if (BR) { addM("br", BR.monthly_kt, 1); src.push("Brazil: Comex Stat customs exports (monthly, through " + esc(G.comex.data_updated || "") + ")"); }
+    var months = Object.keys(M).sort().filter(function (ym) { var m = M[ym]; return (m.us || 0) + (m.ca || 0) + (m.br || 0) > 0; }).slice(-12);
+    if (months.length) {
+      var mx = 0; months.forEach(function (ym) { ["us", "ca", "br"].forEach(function (o) { if ((M[ym][o] || 0) > mx) mx = M[ym][o]; }); });
+      var Wd = 760, Hh = 170, pl = 40, bw = (Wd - pl - 10) / months.length, cols = { us: "#e8b93d", ca: "#e0655f", br: "#3fb97f" }, svg = "";
+      for (var gi = 0; gi <= 3; gi++) { var gy = 10 + (Hh - 34) * gi / 3, gv = mx * (1 - gi / 3); svg += '<line x1="' + pl + '" x2="' + Wd + '" y1="' + gy + '" y2="' + gy + '" stroke="#1e2a3a"/><text x="' + (pl - 4) + '" y="' + (gy + 3) + '" font-size="9" fill="#5b6b82" text-anchor="end" font-family="IBM Plex Mono">' + (gv / 1000).toFixed(1) + "</text>"; }
+      months.forEach(function (ym, i) { ["us", "ca", "br"].forEach(function (o, j) { var v = M[ym][o]; if (v == null) return; var h = (Hh - 34) * v / (mx || 1), x = pl + i * bw + 4 + j * (bw - 8) / 3;
+        svg += '<rect x="' + x.toFixed(1) + '" y="' + (10 + Hh - 34 - h).toFixed(1) + '" width="' + ((bw - 8) / 3 - 1).toFixed(1) + '" height="' + h.toFixed(1) + '" fill="' + cols[o] + '"><title>' + mlab(ym) + " · " + { us: "US", ca: "Canada", br: "Brazil" }[o] + ": " + mmt(v) + " MMT</title></rect>"; });
+        svg += '<text x="' + (pl + i * bw + bw / 2).toFixed(1) + '" y="' + (Hh - 10) + '" font-size="9.5" fill="#8494ab" text-anchor="middle" font-family="IBM Plex Mono">' + mlab(ym) + "</text>"; });
+      var momc = function (o, i) { var a = M[months[i]][o], b = i ? M[months[i - 1]][o] : null; return a == null ? "<td>—</td>" : "<td><b>" + mmt(a) + "</b>" + (b ? '<small class="' + cl(a - b) + '"> ' + pc(100 * (a - b) / b, 0) + "</small>" : "") + "</td>"; };
+      out += '<h3 class="ggh3">Month over month — actual exports <small>observed shipments · MMT · small % = change vs previous month</small></h3>' +
+        '<svg class="ggbars" viewBox="0 0 ' + Wd + " " + Hh + '">' + svg + '</svg><div class="gglegend"><span><i style="background:#e8b93d"></i>United States</span><span><i style="background:#e0655f"></i>Canada</span><span><i style="background:#3fb97f"></i>Brazil</span><em>MMT per calendar month · hover a bar</em></div>' +
+        '<div class="tbl-scroll"><table class="ggt"><tr><th>Month</th><th>' + flagOf("USA", 11) + " US</th><th>" + flagOf("CAN", 11) + " Canada</th><th>" + flagOf("BRA", 11) + " Brazil</th></tr>" +
+        months.map(function (ym, i) { return "<tr><td>" + mlab(ym) + (US && US.partial_month === ym ? ' <small class="neu">US to ' + esc(US.week.slice(5)) + "</small>" : "") + "</td>" + momc("us", i) + momc("ca", i) + momc("br", i) + "</tr>"; }).reverse().join("") + "</table></div>";
+    }
+    /* C. destinations side by side */
+    var dcol = function (lab, a3, period, list, toMT) {
+      if (!list || !list.length) return '<div class="ggd"><b>' + flagOf(a3, 11) + " " + lab + '</b><div class="unreach">⚠ Sorry, we can’t be reached now <small>— destination data unavailable</small></div></div>';
+      return '<div class="ggd"><b>' + flagOf(a3, 11) + " " + lab + "</b><small>" + esc(period) + '</small><table class="ggt">' + list.slice(0, 7).map(function (r) {
+        return "<tr><td>" + esc(r.country) + "</td><td>" + mmt(toMT(r)) + '</td><td><span class="ggbar bx" style="width:' + (0.5 * (r.share || 0)).toFixed(0) + 'px"></span>' + n1(r.share) + "%</td></tr>"; }).join("") + "</table></div>";
+    };
+    out += '<h3 class="ggh3">Top destinations <small>MMT · share of each origin’s exports</small></h3><div class="ggds">' +
+      dcol("United States", "USA", US ? "marketing year " + US.my + " to date (week ending " + US.week + ")" : "", US && US.top, function (r) { return r.kt; }) +
+      dcol("Canada", "CAN", CA && CA.dest_window ? "last 12 months " + CA.dest_window : "", CA && CA.top, function (r) { return r.t / 1000; }) +
+      dcol("Brazil", "BRA", BR ? "calendar year to date " + G.comex.period : "", BR && BR.top, function (r) { return r.kt; }) + "</div>";
+    var miss = [!US && "US monthly shipments", !CA && "Canada monthly exports", !BR && "Brazil monthly exports"].filter(Boolean);
+    out += '<div class="stamp">' + src.join(" · ") + (miss.length ? " · Sorry, we can’t be reached now for: " + miss.join(", ") : "") +
+      " · crop-year totals are USDA estimates; monthly figures are observed shipments · periods differ by origin (US and Canada marketing years, Brazil calendar year) and are labelled on each column</div></div>";
+    return out;
+  }
   function html(key, geo) {
     if (!G) { ensure(); return err ? unreach(err) : '<div class="tile wide"><p class="note">Loading global grain data…</p></div>'; }
     ensure();
     return geo === "world" ? worldHTML(key) : brazilHTML(key);
   }
   window.addEventListener("desk:unlock", function () { lastTry = 0; });
-  window.GG = { html: html, ensure: ensure, _data: function () { return G; } };
+  /* opening Fundamentals: load (or reuse) the global data, then repaint so the export comparison fills in */
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest && ev.target.closest('[data-sub="fund"]'); if (!b) return;
+    setTimeout(function () { if (G) repaint(); else ensure(true); }, 0);
+  });
+  window.GG = { html: html, exportsHTML: exportsHTML, ensure: ensure, _data: function () { return G; }, _error: function () { return err; } };
   repaint();
 })();
