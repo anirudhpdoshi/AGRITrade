@@ -191,6 +191,29 @@
   }
   function zonedMs(y, mo, d, h, mi, tz) { if (typeof window.zonedMs === "function") return window.zonedMs(y, mo, d, h, mi, tz); var g = Date.UTC(y, mo - 1, d, h, mi), p = {}; new Intl.DateTimeFormat("en-US", { timeZone: tz, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(new Date(g)).forEach(function (x) { p[x.type] = +x.value; }); return g - (Date.UTC(p.year, p.month - 1, p.day, p.hour % 24, p.minute) - g); }
   function moverRow(i) { return '<div class="mv">' + fl(i.cc, 12) + ' <span class="mvn">' + esc(i.name) + "</span>" + chgCell(i) + '<span class="mvl">' + last(i) + "</span></div>"; }
+
+  /* 52-week watch: two sides (highs | lows), each grouped by asset class, nearest first */
+  function w52WatchHTML(L) {
+    function side(hi) {
+      var xs = L.filter(function (i) { var w = i.w52; return w && (hi ? (w.new_high || w.near_high) : (w.new_low || w.near_low)); });
+      var dist = function (i) { return hi ? (i.w52.new_high ? -1 : i.w52.pct_from_high) : (i.w52.new_low ? -1 : i.w52.pct_from_low); };
+      var body = GROUPS.map(function (g) {
+        var r = xs.filter(function (i) { return i.group === g; }).sort(function (a, b) { return dist(a) - dist(b); });
+        if (!r.length) return "";
+        return '<div class="w5g"><div class="w5gh">' + ({ Indices: "Equity indices", FX: "Currencies" }[g] || g) + "<small>" + r.length + "</small></div>" + r.map(function (i) {
+          var w = i.w52, isNew = hi ? w.new_high : w.new_low, d = hi ? w.pct_from_high : w.pct_from_low;
+          var tag = isNew ? '<span class="wb ' + (hi ? "nh" : "nl") + '">NEW 52W ' + (hi ? "HIGH" : "LOW") + "</span>" : '<span class="w5d">' + nf(d, 1) + "%" + (hi ? " below" : " above") + "</span>";
+          var fill = Math.max(4, Math.min(100, 100 - (isNew ? 0 : d) * 20));
+          return '<div class="w5r">' + fl(i.cc, 12) + '<span class="w5n" title="' + esc(i.sym) + '">' + esc(i.name) + '</span><span class="w5l">' + last(i) + "</span>" + chgCell(i) +
+            '<span class="w5bar"><i style="width:' + fill.toFixed(0) + '%"></i></span>' + tag + "</div>";
+        }).join("") + "</div>";
+      }).join("");
+      return '<div class="w5s ' + (hi ? "hi" : "lo") + '"><div class="w5h"><b>' + (hi ? "▲ Near 52-week HIGH" : "▼ Near 52-week LOW") + "</b><small>" + xs.length + " markets · " +
+        xs.filter(function (i) { return hi ? i.w52.new_high : i.w52.new_low; }).length + " new " + (hi ? "highs" : "lows") + "</small></div>" +
+        (body || '<p class="note">None within 5% right now.</p>') + "</div>";
+    }
+    return '<div class="tile wide"><h2>52-week watch <span class="h2note">— markets at or within 5% of their 52-week high or low, by asset class · bar = how close (full = at the extreme)</span></h2><div class="w5">' + side(true) + side(false) + "</div></div>";
+  }
   function overviewHTML() {
     var L = inst(), px = L.filter(function (i) { return i.kind === "price" && i.pct != null && !/^vix/.test(i.id); });
     var up = px.slice().sort(function (a, b) { return b.pct - a.pct; }), dn = px.slice().sort(function (a, b) { return a.pct - b.pct; });
@@ -208,8 +231,7 @@
       '<div class="tile"><h2>Biggest gainers <span class="h2note">— % vs previous close</span></h2>' + up.slice(0, 6).map(moverRow).join("") + "</div>" +
       '<div class="tile"><h2>Biggest decliners <span class="h2note">— % vs previous close</span></h2>' + dn.slice(0, 6).map(moverRow).join("") + "</div>" +
       '<div class="tile wide"><h2>Regional equity performance <span class="h2note">— average index move by region, latest session</span></h2><div class="regs">' + regs + "</div></div>" +
-      '<div class="tile wide"><h2>52-week watch <span class="h2note">— new 52-week highs/lows and markets within 5% of either</span></h2>' +
-      (w52.length ? '<div class="w52list">' + w52.map(function (i) { return '<div class="w52i">' + fl(i.cc, 12) + " <b>" + esc(i.name) + "</b> " + last(i) + " " + badges(i) + "</div>"; }).join("") + "</div>" : '<p class="note">No market is at or within 5% of a 52-week extreme right now.</p>') + "</div>" +
+      w52WatchHTML(L) +
       '<div class="tile wide"><h2>Latest alerts <span class="h2note">— from the server engine (runs every 15 min, also while this page is closed)</span></h2>' + (al.length ? alertRows(al) : '<p class="note">No alerts yet this session.</p>') + "</div>";
   }
   function alertRows(list) {
@@ -246,12 +268,46 @@
     h.innerHTML = '<div class="wclk">' + cities.map(function (c) { return '<span>' + fl(c[2], 11) + " <b>" + new Date(now).toLocaleTimeString("en-US", { timeZone: c[1], hour: "numeric", minute: "2-digit" }) + "</b><small>" + c[0] + "</small></span>"; }).join("") + "</div>" +
       '<div class="wsrc">' + (err ? '<span class="pk-al hot">' + esc(err) + "</span> " : "") + (W ? '<span class="pk-al ' + (stale ? "warn" : "ok") + '">server data ' + ago(a) + " old" + (stale ? " — server runs paused (weekend) or failing" : "") + "</span> " : '<span class="pk-al warn">loading world.json…</span>') + "</div>";
   }
+  var WTHEME = { overview: "#38b6c9", sessions: "#6ea8ff", markets: "#e8b93d", alerts: "#ff8a84", health: "#3fb97f" };
+  function navHTML() {
+    var L = inst(), now = Date.now(), ex = (W && W.exchanges) || {}, al = (W && W.alerts) || [];
+    var openN = Object.keys(ex).filter(function (k) { var s = status(ex[k], now); return s === "open" || s === "extended"; }).length;
+    var sig = L.filter(function (i) { return i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low); }).length;
+    var H = (W && W.health) || {};
+    var heads = [
+      ["overview", "Overview", "movers · regions · 52-week"],
+      ["sessions", "Sessions", W ? openN + " of " + Object.keys(ex).length + " venues open now" : ""],
+      ["markets", "Markets", W ? L.length + " instruments · " + sig + " 52-week signals" : ""],
+      ["alerts", "Alerts", W ? al.length + " stored · " + al.filter(function (a) { return a.tier >= 2; }).length + " major+" : ""],
+      ["health", "Data health", W ? (H.ok || 0) + " / " + (H.expected || 0) + " returned" : ""]];
+    function kid(attr, val, on, lab, n) { return '<button class="sn-b" ' + attr + '="' + val + '" aria-pressed="' + on + '"><span>' + esc(lab) + "</span>" + (n != null ? "<small>" + n + "</small>" : "") + "</button>"; }
+    function kids(id) {
+      if (!W) return "";
+      if (id === "markets") return kid("data-wgrp", "all", V.grp === "all" && !V.flagged, "All markets", L.length) +
+        GROUPS.map(function (g) { return kid("data-wgrp", g, V.grp === g && !V.flagged, g, L.filter(function (i) { return i.group === g; }).length); }).join("") +
+        kid("data-wflag", "1", V.flagged, "52-week signals only", sig);
+      if (id === "alerts") return [["all", "All alerts", al.length], ["major", "Major and above", al.filter(function (a) { return a.tier >= 2; }).length], ["up", "Upward", al.filter(function (a) { return a.dir === "up"; }).length], ["down", "Downward", al.filter(function (a) { return a.dir === "down"; }).length]]
+        .map(function (x) { return kid("data-wsev", x[0], V.sev === x[0], x[1], x[2]); }).join("");
+      return "";
+    }
+    return '<div class="sn-h">World markets</div>' + heads.map(function (h) {
+      var on = V.sub === h[0], k = on ? kids(h[0]) : "", hasK = h[0] === "markets" || h[0] === "alerts";
+      return '<div class="tn' + (on ? " open" : "") + '" style="--tc:' + WTHEME[h[0]] + '"><button class="tn-h" data-wsub="' + h[0] + '" aria-selected="' + on + '"><i class="tn-dot"></i><span class="tn-t"><b>' + h[1] + "</b><small>" + esc(h[2]) + '</small></span><span class="tn-chev" aria-hidden="true">' + (hasK ? "›" : "") + "</span></button>" + (k ? '<div class="tn-kids">' + k + "</div>" : "") + "</div>";
+    }).join("");
+  }
+  function ctxHTML() {
+    var lab = { overview: "Overview", sessions: "Sessions", markets: "Markets", alerts: "Alerts", health: "Data health" }[V.sub] || "Overview";
+    var sec = V.sub === "markets" ? (V.flagged ? "52-week signals only" : V.grp === "all" ? "All markets" : V.grp) : V.sub === "alerts" ? ({ all: "All alerts", major: "Major and above", up: "Upward", down: "Downward" }[V.sev] || "") : "";
+    return '<span class="sc-pill"><i></i>' + lab + "</span>" + (sec ? '<span class="sc-sec">› ' + esc(sec) + "</span>" : "");
+  }
   function render() {
     var P = document.getElementById("panel-world"); if (!P) return;
-    if (!P.querySelector("#wHead")) P.innerHTML = '<div class="world"><div class="tile wide subnav-tile"><div id="wHead"></div><div class="subnav" role="tablist" id="wTabs"></div></div><div class="grid" id="wBody"></div></div>';
+    if (!P.querySelector("#wHead")) P.innerHTML = '<div class="world wlay"><nav class="secnav wnav" id="wNav" aria-label="World sections"></nav><div class="wmain"><div class="tile wide subnav-tile"><div class="subctx" id="wCtx"></div><div id="wHead"></div></div><div class="grid" id="wBody"></div></div></div>';
+    P.style.setProperty("--sa", WTHEME[V.sub] || "#38b6c9");
+    P.querySelector(".wlay").setAttribute("data-subt", V.sub);
     paintHead();
-    var tabs = [["overview", "Overview", "movers · regions · 52-week"], ["sessions", "Sessions", "who is open now"], ["markets", "Markets", "LTP · % · high/low · 52W"], ["alerts", "Alerts", (W ? (W.alerts || []).length + " stored" : "")], ["health", "Data health", "coverage · delays"]];
-    document.getElementById("wTabs").innerHTML = tabs.map(function (t) { return '<button class="subbtn" data-wsub="' + t[0] + '" aria-selected="' + (V.sub === t[0]) + '"><span class="sb-name">' + t[1] + '</span><span class="sb-ev">' + t[2] + "</span></button>"; }).join("");
+    document.getElementById("wNav").innerHTML = navHTML();
+    document.getElementById("wCtx").innerHTML = ctxHTML();
     var B = document.getElementById("wBody");
     if (!W) { B.innerHTML = '<div class="tile wide"><p class="note">Loading global market data…</p></div>'; return; }
     B.innerHTML = V.sub === "sessions" ? sessionsHTML() : V.sub === "markets" ? marketsHTML() : V.sub === "alerts" ? alertsHTML() : V.sub === "health" ? healthHTML() : overviewHTML();
@@ -260,8 +316,8 @@
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t || !t.closest("#panel-world")) return;
     var b = t.closest("[data-wsub]"); if (b) { V.sub = b.getAttribute("data-wsub"); save(); render(); return; }
-    b = t.closest("[data-wgrp]"); if (b) { V.grp = b.getAttribute("data-wgrp"); save(); render(); return; }
-    b = t.closest("[data-wflag]"); if (b) { V.flagged = !V.flagged; save(); render(); return; }
+    b = t.closest("[data-wgrp]"); if (b) { V.grp = b.getAttribute("data-wgrp"); if (b.closest("#wNav")) V.flagged = false; save(); render(); return; }
+    b = t.closest("[data-wflag]"); if (b) { V.flagged = b.closest("#wNav") ? true : !V.flagged; if (V.flagged && b.closest("#wNav")) V.grp = "all"; save(); render(); return; }
     b = t.closest("[data-wsev]"); if (b) { V.sev = b.getAttribute("data-wsev"); save(); render(); return; }
     b = t.closest("[data-wnotify]"); if (b) {
       if (NOTIFY) { NOTIFY = false; try { localStorage.setItem("desk.worldNotify", "0"); } catch (e) {} render(); return; }
