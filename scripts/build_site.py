@@ -17,10 +17,27 @@ def b64(b):
     return base64.b64encode(b).decode()
 
 
+def refresh_fallback():
+    """index.html embeds a copy of DATA/NEWS that is used only if data.json cannot be fetched. Overwrite that copy
+    with the current data.json at publish time so the fallback is never older than the latest deploy."""
+    doc = json.loads((ROOT / "data.json").read_text())
+    page = (OUT / "index.html").read_text()
+    for name in ("DATA", "NEWS"):
+        if name not in doc:
+            continue
+        blob = json.dumps(doc[name], ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+        page, n = re.subn(r"(?m)^var " + name + r" = .*;$", lambda _m: "var " + name + " = " + blob + ";", page, count=1)
+        if n != 1:
+            sys.exit(f"ABORT: embedded {name} fallback not found in index.html")
+    (OUT / "index.html").write_text(page)
+    print("::notice title=fallback::embedded DATA/NEWS refreshed from data.json")
+
+
 def main():
     OUT.mkdir(exist_ok=True)
     for f in FILES:
         shutil.copy(ROOT / f, OUT / f)
+    refresh_fallback()
     key = os.environ.get("FINNHUB_API_KEY", "").strip()
     pw = os.environ.get("DESK_PASSCODE", "").strip()
     gate = re.search(r'var HASH="([0-9a-f]{64})"', (ROOT / "index.html").read_text()).group(1)
