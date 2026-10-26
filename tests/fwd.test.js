@@ -38,10 +38,17 @@ t("discount deepens with tenor when the gap is stable", () => { const r = F.pric
 console.log("rate-differential response");
 t("raising a USD rate lowers every forward (more discount)", () => { const a = F.price(snap()), b = F.price(snap({ us: Object.fromEntries(Object.entries(US).map(([k, v]) => [k, v + 0.25])) })); a.legs.forEach((l, i) => assert.ok(b.legs[i].F < l.F, l.t)); });
 t("raising a CAD rate raises every forward", () => { const a = F.price(snap()), b = F.price(snap({ ca: Object.fromEntries(Object.entries(CA).map(([k, v]) => [k, v + 0.25])) })); a.legs.forEach((l, i) => assert.ok(b.legs[i].F > l.F, l.t)); });
-t("changing only the CAD 2Y node moves the 2Y leg up only (1Y and 5Y sit on their own nodes; 1W-6M untouched)", () => { const a = F.price(snap()), b = F.price(snap({ ca: Object.assign({}, CA, { "2Y": 3.5 }) }));
-  ["1W", "2W", "1M", "2M", "3M", "6M"].forEach(k => close(leg(b, k).F, leg(a, k).F, 1e-15, k)); assert.ok(leg(b, "2Y").F > leg(a, "2Y").F, "2Y"); ["1Y", "5Y"].forEach(k => close(leg(b, k).F, leg(a, k).F, 1e-15, k + " sits on its own node")); });
+t("changing only the CAD 2Y node moves 13M-2Y legs only (1Y sits on its own node; 1W-6M untouched)", () => { const a = F.price(snap()), b = F.price(snap({ ca: Object.assign({}, CA, { "2Y": 3.5 }) }));
+  ["1W", "2W", "1M", "2M", "3M", "6M"].forEach(k => close(leg(b, k).F, leg(a, k).F, 1e-15, k)); assert.ok(leg(b, "2Y").F > leg(a, "2Y").F, "2Y"); assert.ok(leg(b, "18M").F > leg(a, "18M").F, "18M interpolates toward the moved 2Y node"); close(leg(b, "1Y").F, leg(a, "1Y").F, 1e-15, "1Y sits on its own node"); });
 t("interpolation: 9M rate sits between 6M and 1Y nodes", () => { const r = F.rateAt(US, 0.75); assert.ok(r > 4.30 && r < 4.41); });
 t("flat extrapolation below the first node", () => close(F.rateAt(US, 0.01), 4.10, 1e-12));
+
+console.log("tenor ladder");
+t("26 forward legs: 1W, 2W, then 1M..24M (12M shown as 1Y, 24M as 2Y) - with spot = 27 rows", () => { const r = F.price(snap()); assert.strictEqual(r.legs.length, 26);
+  assert.deepStrictEqual(r.legs.slice(0, 4).map(l => l.t), ["1W", "2W", "1M", "2M"]); assert.strictEqual(r.legs[13].t, "1Y"); assert.strictEqual(r.legs[25].t, "2Y"); assert.ok(!r.legs.some(l => /5Y/.test(l.t))); });
+t("value dates strictly increase and every monthly leg lands on a business day", () => { const r = F.price(snap()); for (let i = 1; i < r.legs.length; i++) assert.ok(r.legs[i].vd > r.legs[i - 1].vd, r.legs[i].t);
+  r.legs.forEach(l => { const w = l.vd.getUTCDay(); assert.ok(w !== 0 && w !== 6, l.t); }); });
+t("24M leg equals the old 2Y convention (spot date + 24 months, modified following)", () => { const r = F.price(snap()); const v = F.valueDate(r.spotDate, "Y", 2); assert.strictEqual(+r.legs[25].vd, +v); });
 
 console.log("missing / invalid inputs");
 for (const bad of [0, -1.4, NaN, null, undefined, "abc", Infinity]) t("invalid spot " + String(bad) + " -> unavailable, no prices", () => { const r = F.price(snap({ spot: bad })); assert.strictEqual(r.ok, false); r.legs.forEach(l => assert.strictEqual(l.F, null)); });

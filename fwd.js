@@ -11,7 +11,9 @@
    These are theoretical covered-interest-parity forwards — NOT traded forward points and not executable quotes. */
 (function (root) {
   "use strict";
-  var TENORS = [["1W", "W", 1], ["2W", "W", 2], ["1M", "M", 1], ["2M", "M", 2], ["3M", "M", 3], ["6M", "M", 6], ["9M", "M", 9], ["1Y", "Y", 1], ["2Y", "Y", 2], ["5Y", "Y", 5]];
+  /* 1W, 2W, then every month out to 24M (12M = 1Y, 24M = 2Y) — 26 forward legs; the table adds spot on top = 27 rows */
+  var TENORS = [["1W", "W", 1], ["2W", "W", 2]];
+  for (var mo = 1; mo <= 24; mo++) TENORS.push([mo === 12 ? "1Y" : mo === 24 ? "2Y" : mo + "M", "M", mo]);
   var NODE_YEARS = { "0D": 0, "1M": 1 / 12, "2M": 2 / 12, "3M": 0.25, "4M": 4 / 12, "6M": 0.5, "1Y": 1, "2Y": 2, "3Y": 3, "5Y": 5, "7Y": 7, "10Y": 10 };
   var DAY = 86400000;
 
@@ -68,7 +70,7 @@
   /* ===================================== live component (browser only) ===================================== */
   var RM = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  var SHOW = { "1M": 1, "3M": 1, "6M": 1, "1Y": 1, "2Y": 1, "5Y": 1 };
+  var SHOW = { "1M": 1, "3M": 1, "6M": 1, "1Y": 1, "18M": 1, "2Y": 1 };
   var W = 760, H = 290, PL = 60, PR = 22, PT = 26, PB = 50, pw = W - PL - PR, ph = H - PT - PB;
   var S = { built: null, geom: null, res: null, inKey: null, inputs: null, spot: null, pending: null, timer: null, lastRun: 0, raf: 0, tid: null, cause: "", causeAt: 0 };
   var NS = "http://www.w3.org/2000/svg";
@@ -158,13 +160,17 @@
     });
     var foot = el("text", { x: PL, y: H - 4, fill: "#5b6b82", "font-size": "9.5", "font-family": "IBM Plex Mono" }, svg);
     foot.textContent = "VALUE DATE (√days) · WHITE = OUTRIGHT · RED = FWD POINTS (pips) · HOVER ANY DOT";
-    var tb = box.querySelector("tbody");
+    var tb = box.querySelector("tbody"), sr = document.createElement("tr");
+    sr.className = "fwd-spot";
+    sr.innerHTML = '<td><span class="fd"></span> <small class="ft-in">SPOT</small></td><td class="ft">SPOT</td><td><b class="fo"></b></td><td><span class="fp">0.0</span></td><td class="fdl"></td><td class="fa">T+1</td>';
+    tb.appendChild(sr);
+    g.spotRow = { tr: sr, d: sr.querySelector(".fd"), o: sr.querySelector(".fo") };
     g.rows = TENORS.map(function (t) {
       var tr = document.createElement("tr");
       tr.innerHTML = '<td><span class="fd"></span> <small class="ft-in">' + t[0] + '</small></td><td class="ft">' + t[0] + '</td>' +
         '<td><b class="fo" data-tick="fwdF-' + t[0] + '" data-roll></b></td><td class="neg"><span class="fp" data-tick="fwdP-' + t[0] + '" data-roll></span></td><td class="fdl"></td><td class="fa"></td>';
       tb.appendChild(tr);
-      return { d: tr.querySelector(".fd"), o: tr.querySelector(".fo"), p: tr.querySelector(".fp"), dl: tr.querySelector(".fdl"), a: tr.querySelector(".fa") };
+      return { tr: tr, d: tr.querySelector(".fd"), o: tr.querySelector(".fo"), p: tr.querySelector(".fp"), dl: tr.querySelector(".fdl"), a: tr.querySelector(".fa") };
     });
     if (window.BTIPS) { S.tid = "fwd" + Math.random().toString(36).slice(2, 7); g.legs.forEach(function (o) { o.hit.setAttribute("data-tid", S.tid); }); }
     g.box = box; return g;
@@ -196,7 +202,7 @@
       var f = G.fs[i], x = G.xs[i], vis = f != null;
       o.hit.style.display = vis ? "" : "none";
       if (!vis) { if (o.show) [o.out, o.pts].forEach(function (t) { t.textContent = ""; }); return; }
-      var y = Y(f), anc = res.legs[i].t === "5Y" ? "end" : "middle";
+      var y = Y(f), anc = i === res.legs.length - 1 ? "end" : "middle";
       o.dot.setAttribute("cx", x); o.dot.setAttribute("cy", y); o.halo.setAttribute("cx", x); o.halo.setAttribute("cy", y);
       if (o.show) {
         o.out.setAttribute("x", x); o.out.setAttribute("y", y - 9); o.out.setAttribute("text-anchor", anc);
@@ -220,10 +226,19 @@
   }
 
   /* ---------- table, inputs, status, cause ---------- */
+  /* refresh tick: green flash = outright rose, blue flash = outright fell (re-triggers on every repricing) */
+  function flash(tr, d) {
+    if (!tr || RM || !d || Math.abs(d) < 5e-7) return;
+    tr.classList.remove("fl-up", "fl-dn"); void tr.offsetWidth; tr.classList.add(d > 0 ? "fl-up" : "fl-dn");
+    clearTimeout(tr._ft); tr._ft = setTimeout(function () { tr.classList.remove("fl-up", "fl-dn"); }, 1100);
+  }
   function table(res, prev) {
     var pBy = {}; (prev && prev.legs || []).forEach(function (l) { pBy[l.t] = l; });
+    var sp = S.built.spotRow;
+    if (sp) { sp.d.textContent = res.spotDate ? lab(res.spotDate) : "—"; sp.o.textContent = res.ok ? f5(res.spot) : "—"; if (prev && prev.ok && res.ok) flash(sp.tr, res.spot - prev.spot); }
     S.built.rows.forEach(function (r, i) {
       var l = res.legs[i], p = pBy[l.t];
+      if (l.F != null && p && p.F != null) flash(r.tr, l.F - p.F);
       r.d.textContent = lab(l.vd);
       r.o.textContent = l.F == null ? "—" : f5(l.F);
       r.p.textContent = l.F == null ? "—" : sg(l.pts, 1);
@@ -244,7 +259,7 @@
   }
   function bizDaysOld(iso) { if (!iso) return 99; var d = Date.parse(iso + "T12:00:00Z"), n = 0; for (var t = d + DAY; t <= Date.now(); t += DAY) { var w = new Date(t).getUTCDay(); if (w && w !== 6) n++; } return n; }
   function inputsHTML(I) {
-    var K = ["1M", "3M", "6M", "1Y", "2Y", "5Y"], cell = function (o, k) { return o[k] != null ? (+o[k]).toFixed(2) + "%" : "—"; };
+    var K = ["1M", "3M", "6M", "1Y", "2Y"], cell = function (o, k) { return o[k] != null ? (+o[k]).toFixed(2) + "%" : "—"; };
     var row = function (flagTxt, o, date, src) { var old = bizDaysOld(date) > 2;
       return '<tr><th>' + flagTxt + '</th>' + K.map(function (k) { return "<td>" + cell(o, k) + "</td>"; }).join("") + '<td class="fi-src' + (old ? " old" : "") + '">' + esc(src) + " · close " + esc(date || "?") + (old ? " · stale" : "") + "</td></tr>"; };
     return '<table class="fwd-in"><thead><tr><th>Rate inputs</th>' + K.map(function (k) { return "<th>" + k + "</th>"; }).join("") + "<th>Source</th></tr></thead><tbody>" +
@@ -264,11 +279,11 @@
     return parts.join(" · ");
   }
   function readText(res) {
-    var y1 = res.legs.filter(function (l) { return l.t === "1Y"; })[0], y5 = res.legs[res.legs.length - 1];
+    var y1 = res.legs.filter(function (l) { return l.t === "1Y"; })[0], y5 = res.legs[res.legs.length - 1];   /* longest leg = 2Y */
     if (!res.ok || !y1 || y1.F == null) return "Forward curve unavailable: " + esc(res.reason || "missing inputs") + ".";
     var disc = y1.pts < 0;
     return "USD/CAD trades at a <b>forward " + (disc ? "discount" : "premium") + "</b> at 1Y: the outright sits " + Math.abs(y1.pts).toFixed(0) + " pips " + (disc ? "below" : "above") + " spot (" + sg(y1.ann, 2, "%") +
-      " annualised) because USD rates run " + (disc ? "above" : "below") + " CAD rates (" + y1.rUSD.toFixed(2) + "% vs " + y1.rCAD.toFixed(2) + "% at 1Y)." + (y5 && y5.F != null ? " At 5Y the annualised carry is " + sg(y5.ann, 2, "%") + "." : "");
+      " annualised) because USD rates run " + (disc ? "above" : "below") + " CAD rates (" + y1.rUSD.toFixed(2) + "% vs " + y1.rCAD.toFixed(2) + "% at 1Y)." + (y5 && y5.F != null ? " At " + y5.t + " (" + lab(y5.vd) + ") the outright is " + f5(y5.F) + ", " + sg(y5.ann, 2, "%") + " annualised." : "");
   }
   function paintStatus() {
     if (!S.built || !document.body.contains(S.built.box)) return;
