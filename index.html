@@ -761,6 +761,11 @@ body.xpand-on{overflow:hidden}
 .fanchip i{width:10px;height:3px;border-radius:2px;opacity:.4}.fanchip[aria-pressed="true"]{color:#e8eef4;border-color:var(--line2);background:#14213a}.fanchip[aria-pressed="true"] i{opacity:1}
 .fanruler{margin:8px 0 2px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:6px 10px}.fanruler svg{width:100%;height:auto;display:block}
 .fanruler-t{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;font-size:12px;color:var(--muted);margin-top:2px}.fanruler-t .mk{color:#ff9d97;font-weight:600}
+.fanzoom{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:0 0 6px}.fanzoom b{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:0 2px 0 6px}.fanzoom b:first-child{margin-left:0}
+.fanz{all:unset;cursor:pointer;min-width:22px;text-align:center;font:600 12px "IBM Plex Mono",monospace;color:#c9d6e6;border:1px solid var(--line2);border-radius:7px;padding:3px 8px;background:var(--panel2)}
+.fanz:hover{border-color:var(--cyan);color:#fff}.fanz.on{background:#14263d;border-color:var(--cyan);color:#fff}
+.fz-info{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);margin-left:4px}.fz-tip{font-size:10.5px;color:var(--faint);margin-left:auto}
+@media (max-width:760px){.fz-tip{display:none}}
 </style>
 </head>
 <body class="locked">
@@ -1157,6 +1162,37 @@ function fanLevels(g, meta){
 }
 
 
+
+/* ---------- fan chart zoom: price zoom in/out around the market, pan up/down, history window, reset; Ctrl/⌘ + wheel or pinch on the chart ---------- */
+var FANZ={};
+function fanZoomHTML(key){
+  var Z=FANZ[key]||{z:1,pan:0,n:0}, n=Z.n||(DATA.grains[key].history||[]).length;
+  var b=function(a,l,t){ return '<button class="fanz" data-fanz="'+a+'" data-fank="'+key+'" title="'+t+'">'+l+'</button>'; };
+  var h=function(v,l){ return '<button class="fanz'+((Z.n||0)===v?' on':'')+'" data-fanh="'+v+'" data-fank="'+key+'">'+l+'</button>'; };
+  return '<div class="fanzoom"><b>Zoom</b>'+b('in','＋','Zoom in (price)')+b('out','－','Zoom out (price)')+b('up','▲','Pan up')+b('down','▼','Pan down')+b('reset','Reset','Reset zoom')+
+    '<span class="fz-info">'+(Z.z||1).toFixed(1)+'×'+(Z.lo!=null?' · '+money2(Z.lo)+' – '+money2(Z.hi):'')+'</span><b>History</b>'+h(0,'All')+h(15,'15d')+h(10,'10d')+h(5,'5d')+
+    '<span class="fz-tip">Ctrl/⌘ + scroll or pinch on the chart also zooms</span></div>';
+}
+function fanZoomDo(key, act){
+  var Z=FANZ[key]||(FANZ[key]={z:1,pan:0,n:0});
+  if(act==='in') Z.z=Math.min(Z.z*1.4, 12); else if(act==='out') Z.z=Math.max(Z.z/1.4, 0.6);
+  else if(act==='up') Z.pan+=0.12/Z.z; else if(act==='down') Z.pan-=0.12/Z.z; else if(act==='reset'){ Z.z=1; Z.pan=0; Z.n=0; }
+  if(Math.abs(Z.z-1)<0.05&&act!=='reset'&&Math.abs(Z.pan)<1e-9) Z.z=1;
+  renderGrain(key);
+}
+document.addEventListener('click', function(ev){
+  var b=ev.target.closest&&ev.target.closest('[data-fanz],[data-fanh]'); if(!b) return;
+  var k=b.getAttribute('data-fank');
+  if(b.hasAttribute('data-fanh')){ (FANZ[k]=FANZ[k]||{z:1,pan:0,n:0}).n=+b.getAttribute('data-fanh'); renderGrain(k); }
+  else fanZoomDo(k, b.getAttribute('data-fanz'));
+});
+var fanWheelT=0;
+document.addEventListener('wheel', function(ev){
+  if(!(ev.ctrlKey||ev.metaKey)) return;
+  var t=ev.target.closest&&ev.target.closest('.tile[data-grain] svg'); if(!t||t.closest('.fanruler')) return;
+  ev.preventDefault(); var now=Date.now(); if(now-fanWheelT<120) return; fanWheelT=now;
+  fanZoomDo(t.closest('.tile[data-grain]').getAttribute('data-grain'), ev.deltaY<0?'in':'out');
+}, {passive:false});
 /* ---------- fan chart: level groups the user can switch on/off, merged near-identical labels, distance to market ---------- */
 var FANG={p1:'sig',m1:'sig',p2:'sig',m2:'sig',p3:'sig3',m3:'sig3',ci99p:'ci',ci99m:'ci',ivp:'iv',ivm:'iv',ma20:'ma',ma50:'ma',callwall:'walls',putwall:'walls',ctr:'anchor',market:'market'};
 var FANV=(function(){ var d={sig:true,sig3:false,ci:false,iv:true,ma:true,walls:true,anchor:false}; try{ var x=JSON.parse(localStorage.getItem('desk.fanv')||'{}'); Object.keys(d).forEach(function(k){ if(typeof x[k]==='boolean') d[k]=x[k]; }); }catch(e){} return d; })();
@@ -1193,7 +1229,8 @@ function fanRulerHTML(g, FL){
     (up?'<span>▲ Nearest resistance <b style="color:'+up.color+'">'+esc(nm(up))+'</b> '+c(up.value-L)+'</span>':'<span>No level above the price</span>')+'</div></div>';
 }
 function fanSVG2(g, meta, FL){
-  var f=g.fan, hist=g.history, A=f.anchor, sig=f.sig, L=f.intraday[0];
+  var fk=String(meta.name||'').toLowerCase(), Z=FANZ[fk]||{z:1,pan:0,n:0};
+  var f=g.fan, hist=Z.n?g.history.slice(-Z.n):g.history, A=f.anchor, sig=f.sig, L=f.intraday[0];
   var W=860,H=400,PL=46,PR=250,PT=16,PB=30, pw=W-PL-PR, ph=H-PT-PB;
   var NH=hist.length, FD=10, span=NH-1+FD;
   var lo=Infinity, hi=-Infinity, i, d;
@@ -1205,12 +1242,16 @@ function fanSVG2(g, meta, FL){
   var core=hi-lo;
   FL.levels.forEach(function(l){ if(fanOn(l.key)&&l.lines){ if(l.value>=lo-core*0.25&&l.value<=hi+core*0.25){ lo=Math.min(lo,l.value); hi=Math.max(hi,l.value); } else l.off=true; } else delete l.off; });
   var pad=(hi-lo)*0.05; lo-=pad; hi+=pad;
+  /* zoom / pan: price window centred on the market (plus pan), narrowed by the zoom factor */
+  if(Z.z!==1||Z.pan){ var full=hi-lo, cen=L+Z.pan*full, half=full/2/Z.z; lo=cen-half; hi=cen+half; }
+  FANZ[fk]=Z; Z.lo=lo; Z.hi=hi;
   function X(x){ return PL + pw*(x/span); }
   function Y(y){ return PT + ph*(1-(y-lo)/(hi-lo)); }
   var s='';
   for(i=0;i<=4;i++){ var gy=PT+ph*i/4, gv=hi-(hi-lo)*i/4;
     s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a" stroke-width="1"/>';
     s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+gv.toFixed(2)+'</text>'; }
+  s+='<clipPath id="fanclip-'+fk+'"><rect x="'+PL+'" y="'+PT+'" width="'+pw+'" height="'+ph+'"/></clipPath><g clip-path="url(#fanclip-'+fk+')">';
   function conePath(anchorVal, mult){
     var pts=[], ptsB=[], dd;
     for(dd=0;dd<=FD;dd++){ var off=mult*sig*Math.sqrt(dd); pts.push([X(NH-1+dd),Y(anchorVal+off)]); ptsB.push([X(NH-1+dd),Y(anchorVal-off)]); }
@@ -1226,7 +1267,7 @@ function fanSVG2(g, meta, FL){
   s+='<path d="'+conePath(L,2.0)+'" fill="#38b6c9" opacity="0.08"/>';
   s+='<path d="'+conePath(L,1.0)+'" fill="#38b6c9" opacity="0.15"/>';
   s+='<line x1="'+X(NH-1)+'" y1="'+PT+'" x2="'+X(NH-1)+'" y2="'+(PT+ph)+'" stroke="#3d5a80" stroke-width="1" stroke-dasharray="3 3"/>';
-  s+='<text x="'+(X(NH-1)-5)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">HISTORY · 25 SETTLES</text>';
+  s+='<text x="'+(X(NH-1)-5)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">HISTORY · '+NH+' SETTLES</text>';
   s+='<text x="'+(X(NH-1)+6)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono">10-DAY FAN</text>';
   function maLine(key, color){
     var p='';
@@ -1261,6 +1302,7 @@ function fanSVG2(g, meta, FL){
   var mly=Y(L)-8; if(mly<PT+12) mly=Y(L)+16;
   s+='<text x="'+(PL+6)+'" y="'+mly.toFixed(1)+'" fill="#ff9d9d" font-size="10.5" font-weight="600" font-family="IBM Plex Mono">MARKET (delayed) '+money2(L)+' · as of '+f.intraday[1]+'</text>';
   s+='<circle cx="'+X(span)+'" cy="'+Y(L)+'" r="4" fill="#ff6b6b"/>';
+  s+='</g>';
   /* right-edge label stack with de-collision (the app's algorithm):
      labels sit at their true price unless a neighbour is too close, in
      which case they are spaced to a minimum gap and a leader line ties
@@ -1274,7 +1316,8 @@ function fanSVG2(g, meta, FL){
     if(mergeable){ m.label=m.label+' \u00b7 '+l.label; m.parts.push(l); m.value=(m.value*(m.parts.length-1)+l.value)/m.parts.length; }
     else merged.push(Object.assign({}, l, {parts:[l]}));
   });
-  merged.forEach(function(l){ if(!l.lines&&l.key!=='market'&&l.key!=='ctr') l.label=l.label+' '+cts(l.value-L); else if(l.lines) l.lines=[(l.off?(l.value>L?'\u25b2 ':'\u25bc ')+'off-scale \u00b7 ':'')+l.lines[0], l.lines[1]+' \u00b7 '+cts(l.value-L)]; });
+  merged.forEach(function(l){ if(!l.lines&&(l.value>hi||l.value<lo)) l.label=(l.value>hi?'\u25b2 ':'\u25bc ')+l.label;
+    if(!l.lines&&l.key!=='market'&&l.key!=='ctr') l.label=l.label+' '+cts(l.value-L); else if(l.lines) l.lines=[(l.off?(l.value>L?'\u25b2 ':'\u25bc ')+'off-scale \u00b7 ':'')+l.lines[0], l.lines[1]+' \u00b7 '+cts(l.value-L)]; });
   var items=merged.map(function(l){ return { l:l, trueY:Math.min(Math.max(Y(l.value),PT),PT+ph), h:l.lines?27:15 }; })
     .filter(function(it){ return it.trueY>=top-60 && it.trueY<=bot+60; })
     .sort(function(a,b){ return a.trueY-b.trueY; });
@@ -1462,7 +1505,7 @@ function fanSVG(g, meta){
   s+='<path d="'+conePath(1.0)+'" fill="'+meta.accent+'" opacity="0.16"/>';
   /* divider between history and forecast */
   s+='<line x1="'+X(NH-1)+'" y1="'+PT+'" x2="'+X(NH-1)+'" y2="'+(PT+ph)+'" stroke="#3d5a80" stroke-width="1" stroke-dasharray="3 3"/>';
-  s+='<text x="'+(X(NH-1)-5)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">HISTORY · 25 SETTLES</text>';
+  s+='<text x="'+(X(NH-1)-5)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">HISTORY · '+NH+' SETTLES</text>';
   s+='<text x="'+(X(NH-1)+6)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono">10-DAY FAN</text>';
   /* expected MA extensions (zero-drift: future closes = anchor) */
   function expMA(w){
@@ -3442,10 +3485,11 @@ function renderGrain(key){
     stat("MA20 / 50 / 100", "$"+f.ma20+" / $"+MA50+(f.ma100?" / $"+f.ma100:"")) +
     stat("Settle 10-day 95% range", f.r10[0].toFixed(2)+" – "+f.r10[1].toFixed(2)) +
     stat("Settle 10-day 99% range", f.r10_99[0].toFixed(2)+" – "+f.r10_99[1].toFixed(2)) +
-    '</div>'+ fanChipsHTML(key)+ fanSVG2(g, meta, FL)+ fanRulerHTML(g, FL)+
+    '</div>'+ fanChipsHTML(key)+ '%%FANZOOM%%'+ fanSVG2(g, meta, FL)+ fanRulerHTML(g, FL)+
     '<p class="posread">'+esc(FL.read)+'</p>'+
     '<div class="legend"><span><span class="sw" style="background:#dbe4f0"></span>Verified settlements ('+g.history.length+')</span><span><span class="sw" style="background:'+meta.accent+'"></span>Settle-anchored fan (LATEST VERIFIED)</span><span><span class="sw" style="background:#38b6c9"></span>Live-anchored fan (delayed quote '+esc(f.intraday[1]||'')+')</span><span><span class="sw" style="background:#f0c169"></span>MA20</span><span><span class="sw" style="background:#b18cff"></span>MA50 / options walls</span><span><span class="sw" style="background:#ff6b6b"></span>Market (delayed)</span><span>Right-edge labels: every live-fan level at day 10, spaced apart with leader lines to each level\u2019s true price — no label overlaps another · exp MA20 / exp MA50 are flat zero-drift extensions of the last trailing values, labeled \u201cexp\u201d — never predictions · IV band uses chain IV '+fmt(f.iv_chain_iv,2)+'% × √(10/252)</span></div>'+
     '<div class="stamp">Settle fan from '+g.history.length+' daily settles through '+fmtDate(f.settle_date)+' (σ = st.dev of the last 30 daily changes) · live fan re-anchored on the delayed quote '+esc(f.intraday[1])+'</div></div>';
+  OV=OV.replace('%%FANZOOM%%', fanZoomHTML(key));
   /* export sales — 10-week trend */
   FU+=wasdeTableHTML(key)+exportTileHTML(key)+destTileHTML(key);
   /* insight + curve (both computed from the data) */
