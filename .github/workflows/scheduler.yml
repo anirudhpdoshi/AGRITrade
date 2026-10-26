@@ -1,0 +1,59 @@
+name: Scheduler (keepalive)
+# GitHub's own `schedule:` triggers fire unreliably on this repo (refresh-data had 7 scheduled runs in 4 days
+# against ~45/day expected). This workflow is the clock instead: one job loops for ~5h40m, dispatching the
+# data workflows on their intended cadence, then dispatches a fresh copy of itself (workflow_dispatch from
+# GITHUB_TOKEN is allowed to start workflows). The cron below is only a backstop that restarts the chain if it
+# ever breaks; a newer run cancels the older loop, so there is never more than one clock.
+#
+#   Refresh desk data   every 15 min, 11:00–22:45 UTC Mon–Fri, plus 00:30 UTC Tue–Sat (evening sweep)
+#   World markets       every 15 min, Sun–Fri (UTC), offset 7 min
+#   Live feed           every 30 min, 12:00–22:30 UTC Mon–Fri (each run loops ~33 min itself)
+on:
+  schedule:
+    - cron: "41 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: scheduler
+  cancel-in-progress: true
+
+jobs:
+  clock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Dispatch loop
+        shell: bash
+        run: |
+          set -u
+          end=$(( $(date -u +%s) + 340*60 ))
+          fire() {   # fire <workflow file>; never fail the loop on one bad dispatch
+            if gh workflow run "$1" --ref main; then echo "$(date -u +%FT%TZ) dispatched $1"
+            else echo "::warning::dispatch of $1 failed at $(date -u +%FT%TZ)"; fi
+          }
+          last=""
+          while [ "$(date -u +%s)" -lt "$end" ]; do
+            m=$(date -u +%M); m=$((10#$m)); h=$(date -u +%H); h=$((10#$h)); dow=$(date -u +%u)  # 1=Mon..7=Sun
+            slot="$(date -u +%F)-$h-$m"
+            if [ "$slot" != "$last" ]; then
+              # refresh-data: quarter hours 11–22 UTC on weekdays; 00:30 UTC Tue–Sat
+              if [ $((m % 15)) -eq 0 ] && [ "$dow" -le 5 ] && [ "$h" -ge 11 ] && [ "$h" -le 22 ]; then fire refresh-data.yml; fi
+              if [ "$m" -eq 30 ] && [ "$h" -eq 0 ] && [ "$dow" -ge 2 ] && [ "$dow" -le 6 ]; then fire refresh-data.yml; fi
+              # world-markets: :07 :22 :37 :52 Sun–Fri
+              if [ $((m % 15)) -eq 7 ] && { [ "$dow" -le 5 ] || [ "$dow" -eq 7 ]; }; then fire world-markets.yml; fi
+              # live-feed: :00 and :30, 12–22 UTC weekdays
+              if [ $((m % 30)) -eq 0 ] && [ "$dow" -le 5 ] && [ "$h" -ge 12 ] && [ "$h" -le 22 ]; then fire live-feed.yml; fi
+              last="$slot"
+            fi
+            sleep $(( 60 - $(date -u +%S | sed 's/^0//') + 1 ))
+          done
+      - name: Hand over to a fresh clock
+        if: ${{ !cancelled() }}
+        run: gh workflow run scheduler.yml --ref main
