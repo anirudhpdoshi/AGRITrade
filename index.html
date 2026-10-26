@@ -3870,6 +3870,22 @@ document.addEventListener('click', function(ev){
 
 function renderAll(){ renderGrain('corn'); renderGrain('wheat'); renderGrain('soybeans'); renderFX(); drawDestMaps(); if(typeof paintAwaiting==='function') paintAwaiting(); }
 renderAll();
+/* speed: after the first full paint, a data refresh repaints only the tab on screen (~0.1 s instead of ~0.5 s);
+   hidden desks are marked stale and repaint the moment they are opened */
+(function(){
+  var full=renderAll, DIRTY={}, R={corn:function(){renderGrain('corn');},wheat:function(){renderGrain('wheat');},soybeans:function(){renderGrain('soybeans');},fx:function(){renderFX();}};
+  function activeTab(){ var a=document.querySelector('.tab-panel.active'); return a?a.id.replace('panel-',''):''; }
+  window.renderAllFull=full;
+  window.renderAll=renderAll=function(){
+    var on=activeTab();
+    Object.keys(R).forEach(function(k){ if(k===on){ R[k](); delete DIRTY[k]; } else DIRTY[k]=1; });
+    if(on&&on!=='fx'&&typeof drawDestMaps==='function') drawDestMaps();
+    if(typeof paintAwaiting==='function') paintAwaiting();
+  };
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.addEventListener('click', function(){
+    var k=b.getAttribute('data-tab'); if(DIRTY[k]&&R[k]){ R[k](); delete DIRTY[k]; if(k!=='fx'&&typeof drawDestMaps==='function') drawDestMaps(); if(typeof paintAwaiting==='function') paintAwaiting(); if(window.MOTION) MOTION.scan(); }
+  }); });
+})();
 </script>
 <script>
 /* double-click any chart to open it large (Esc, ✕ or a click outside closes it) */
