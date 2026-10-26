@@ -8516,11 +8516,11 @@
     "6M": 4.3
    },
    "fxcross": {
-    "dxy": 102.002,
-    "dxy_chg": 0.189,
+    "dxy": 102.03,
+    "dxy_chg": 0.216,
     "eurusd": 1.1178,
-    "usdjpy": 157.49,
-    "usdcad_ref": 1.4016
+    "usdjpy": 157.54,
+    "usdcad_ref": 1.4017
    },
    "closes": [
     [
@@ -8599,16 +8599,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 101.25,
-     "chg": -2.02,
-     "pct": -1.96,
+     "last": 101.36,
+     "chg": -1.91,
+     "pct": -1.85,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 110.27,
-     "chg": -6.45,
-     "pct": -5.53,
+     "last": 110.37,
+     "chg": -6.35,
+     "pct": -5.44,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -8620,9 +8620,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 15.78,
+    "value": 15.89,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-26T20:55:00+00:00",
+    "obs_ts": "2026-10-26T22:05:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -10147,10 +10147,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.40139,
+    "mid": 1.4019,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-26T18:00:00-04:00",
+    "ts": "2026-10-26T18:15:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -10290,18 +10290,6 @@
     }
    ],
    "intraday": [
-    [
-     "2026-10-26T02:05+00:00",
-     1.40026
-    ],
-    [
-     "2026-10-26T02:10+00:00",
-     1.4
-    ],
-    [
-     "2026-10-26T02:15+00:00",
-     1.40014
-    ],
     [
      "2026-10-26T02:20+00:00",
      1.40018
@@ -10600,7 +10588,7 @@
     ],
     [
      "2026-10-26T08:30+00:00",
-     1.40173
+     1.40176
     ],
     [
      "2026-10-26T08:35+00:00",
@@ -10644,7 +10632,7 @@
     ],
     [
      "2026-10-26T09:25+00:00",
-     1.40124
+     1.40128
     ],
     [
      "2026-10-26T09:30+00:00",
@@ -10704,7 +10692,7 @@
     ],
     [
      "2026-10-26T10:40+00:00",
-     1.40152
+     1.40156
     ],
     [
      "2026-10-26T10:45+00:00",
@@ -10836,7 +10824,7 @@
     ],
     [
      "2026-10-26T13:25+00:00",
-     1.40337
+     1.4034
     ],
     [
      "2026-10-26T13:30+00:00",
@@ -11072,7 +11060,7 @@
     ],
     [
      "2026-10-26T18:20+00:00",
-     1.40161
+     1.40164
     ],
     [
      "2026-10-26T18:25+00:00",
@@ -11248,7 +11236,19 @@
     ],
     [
      "2026-10-26T22:00+00:00",
-     1.40135
+     1.40182
+    ],
+    [
+     "2026-10-26T22:05+00:00",
+     1.40192
+    ],
+    [
+     "2026-10-26T22:10+00:00",
+     1.40183
+    ],
+    [
+     "2026-10-26T22:15+00:00",
+     1.4019
     ]
    ],
    "fwd_inputs": {
@@ -11289,22 +11289,22 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-26T18:00:25-04:00",
+   "updated_at": "2026-10-26T18:15:22-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-26T18:00:00-04:00",
+    "fx_spot": "2026-10-26T18:15:00-04:00",
     "fx_closes": "2026-10-26T16:30:00-04:00",
     "yields": "2026-10-23T17:00:00-04:00",
     "policy": "2026-10-26T17:15:23-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-20T15:30:00-04:00",
     "cftc_grains": "2026-10-20T15:30:00-04:00",
-    "energy": "2026-10-26T16:55:00-04:00",
-    "crosses": "2026-10-26T17:50:00-04:00",
+    "energy": "2026-10-26T18:00:00-04:00",
+    "crosses": "2026-10-26T18:00:00-04:00",
     "grains_settle": "2026-10-26T14:20:00-04:00",
     "grains_quote": "2026-10-26T14:15:00-04:00",
     "options": "2026-10-26T11:10:58-04:00",
-    "news": "2026-10-26T18:00:25-04:00",
+    "news": "2026-10-26T18:15:22-04:00",
     "calendar": "2026-10-26T17:15:23-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-26T18:00:25-04:00",
@@ -11352,7 +11352,7 @@
      "fx_model"
     ],
     "failed": [],
-    "at": "2026-10-26T18:00:25-04:00"
+    "at": "2026-10-26T18:15:22-04:00"
    },
    "releases_checked": "2026-10-26T15:22:41-04:00",
    "exports_checked": "2026-10-26T15:15:27-04:00",
@@ -11389,7 +11389,7 @@
    },
    "canada_checked": "2026-10-26T09:30:24-04:00",
    "ca_calendar_checked": "2026-10-26T15:15:27-04:00",
-   "canada_watch": "2026-10-26T18:00:25-04:00",
+   "canada_watch": "2026-10-26T18:15:22-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -26657,12 +26657,6 @@
  "NEWS": {
   "corn": [
    [
-    "2026-10-26 20:16 UTC",
-    "stjosephpost.com",
-    "Commodity markets daily recap",
-    "https://news.google.com/rss/articles/CBMidkFVX3lxTE9QQk9YMGpET2FlM0J3cEpaUmZNRnZDVkZnT3NlckNmMFVLZnFoZ3RQVnM3SXRMMXQ3b3kzazlyUndPZEtXZDE5TF9XbTBfRTh1YlJvdE1zSVVMRFNwcGY4TnFQWlVvcHF3MW9vQ0NFenBLT2hodVE?oc=5"
-   ],
-   [
     "2026-10-26 19:33 UTC",
     "www.producer.com",
     "U.S. Grain/Oilseed Review: A day of declines",
@@ -26691,6 +26685,12 @@
     "www.agrolatam.com",
     "USDA Corn Data Error Shakes Confidence in 2026 Crop Forecasts",
     "https://news.google.com/rss/articles/CBMingFBVV95cUxNcTNfcC1leS1OcEJudXJmWFczZENSOEpVVXQ5NFRjQkZia1dTNmxDcFpwQS1CMGdCNEZEN2g5MVRJLV9LYUIybHNlUlYwb2NYQlZhdzdjSlhjMThrbUk3aWF2NFR2SWpNWDFsd1ZLYl90aUJDLTk0OVBUb2dQV21PR3ZSV2pjblhxVUxkMThwM0ljbV81TmxvRE9uU3h1Zw?oc=5"
+   ],
+   [
+    "2026-10-26 16:21 UTC",
+    "www.farms.com",
+    "Market Selloff Pushes Grains Lower",
+    "https://news.google.com/rss/articles/CBMiigFBVV95cUxOM3ZRWWNKdmJRRHRVTVFtazUxUmxVQ1dHcWJURW9FanZwQW1maFBfcTN2LUVZRDZ1ck5FNENDN2M0TFFhWWExdlZxbGU2clU4UVA3MEZ0cEp2d3RLeHY2RHlLTGlBWDBKaEdJcEdFWDZuUkNpRDJoQU1XQlVQYmRjSVk2QnNUQi02LUE?oc=5"
    ],
    [
     "2026-10-26 15:12 UTC",
@@ -26813,6 +26813,12 @@
     "https://news.google.com/rss/articles/CBMirwFBVV95cUxNZmE0cGYzQ21Lal9SczVwbXhsVVF2QUstcWtzMEtDTU1teVJKcHhVcnJFVjlBUUg1b202d2p4NmtKenV0Wl9WZ0pqM01pRlh6SFRVSXlCODgyMVZ2TTNSekNUR3JZeUhZeVhJeUlsdlZDOTJ2LUpsYmdOb1pqR1hNV1hEQ0hhYnRBeWFTY0ZzOS1Fd3pOYkRUZGVIUGVrd01rd2F0clpzXzRJRm9rcEtz?oc=5"
    ],
    [
+    "2026-10-26 20:58 UTC",
+    "vancouver.citynews.ca",
+    "Bank of Canada now expected to hike key rate as it faces ‘pivotal decision’",
+    "https://news.google.com/rss/articles/CBMivAFBVV95cUxNSjhVU2o1aDRlM2YwbXZDNzl5MWI0cVY2dGh0OEx0eDZQN2t0ejM3anFhR0dIREFvSjIxWm1BNmRic0JldWNNc3RRcE1WUGRGVjhxS2R0aGpZbUZmeGwxekJsa2YtUG80b29LRFJrcWpRbFlJQ2JvUERoSlJQQ3dzRzFpNklMalYwdHRiNUFsbnZjUkdid01Wc2hhR05FWW82YnprQXdrR0FQYjVHeEV4MTd2VnRnelM1b1hsNA?oc=5"
+   ],
+   [
     "2026-10-26 20:21 UTC",
     "ca.investing.com",
     "Canadian dollar steadies after seven-day rally ahead of rate decisions",
@@ -26847,12 +26853,6 @@
     "www.marketscreener.com",
     "CANADA FX DEBT-Canadian dollar steadies after posting longest daily winning streak in four years",
     "https://news.google.com/rss/articles/CBMi4wFBVV95cUxQQTIzVWg2YXpRcUdHd0NtUEtiQWE4VXJIeDJtcG9wYm1jaVFwZF81T0hmX1JUbXFOUE01NzdneDZHMzQxb0l6Rk9iOE9XVDBxWjZPX0NJemJsN2VFdEZrNG0ybG5xY1RZR2Eybm51QzJvWm5uVHBxVHctT3duN2NNMmROcmhPVlFGbGM5a3VyTHU5X1VuZVV2RVBYc2VtZGVKOHZocjBmTk8ybGNfbGNzdWd3YUNfVDM2NUtCYnBGRXlGaTVXYUZraVo2VlhpNTBDdDJYdTlwTjczeXpSQlRDUFM1WQ?oc=5"
-   ],
-   [
-    "2026-10-26 17:27 UTC",
-    "www.westernstandard.news",
-    "Economists factoring in Bank of Canada 50% rate hike by year-end",
-    "https://news.google.com/rss/articles/CBMisAFBVV95cUxQVXhHX0RoaUZlSjA3TWhzenpsaXRuSV81YzlQRUNOT1diOHFTclVDbDlVUklpV0NnQ1FXb3g3ZjZONjRsLWRxdjdnZUh2WWhQOFZnbG5xa3pLSHJUV3NJLVJ0b0E4YmV2N05mWUxZQV9yN1lHQldWVjNrRGVYbWxteFZwZnJhWnR5SlR2LW5YSXc4NjNsaUNveHZiVnpRRGRJcmNaVWo0ZHFoYW85WlE5Z9IBvgFBVV95cUxOTjFsYmc0ZF8tTXVhTk5OT3ZQMlNIWDgxR2xNR1ZZWE83UFFEMGstbHNlWVRHOWl1NDRnTFBhbC1fZlFkUS1iMjVBWENBNU5rNENTeVFQZjJZU2J5c052MjRyYUhyQ1VydVM4VFRud0ozWWdUNWlwR0wzOTRCMzlBbWl3NEllUUdoY1FCYUFJVFVsMDlKOXpWTHRJampGYVNhWTlQcGhxa3VleWYxYWlmTzdCSHFMRTFRVzVzazdn?oc=5"
    ]
   ],
   "geo": [
@@ -26907,7 +26907,7 @@
   ],
   "macro": [
    [
-    "2026-10-26 19:25 UTC",
+    "2026-10-26 20:55 UTC",
     "www.wsj.com",
     "Week Ahead for FX, Bonds: Decisions From Fed, Other Central Banks in Focus",
     "https://news.google.com/rss/articles/CBMirAFBVV95cUxPZl9NRnpPb3laN0tSUlB6NFUwekhQWkUyNG11ck5jQmxHZUxTZl82RzJoVmlLMzlQY2JCS1BuTC1mMDlZYjdXVHFFeTgxTXJ5eGJZazZOcGdLaDg4RFhvaDNidXhySlVzRFBTUmoyeTJ4YjYtMUR2M0RYT1M2WVZSRTIxYlNQQjk2RGJmWmRTMml5MEoyV1h5bHpSQ2dFaExzZVJmU1N3djBENFhM?oc=5"
@@ -26923,6 +26923,12 @@
     "sundayguardianlive.com",
     "Dow Jones Today LIVE: Dow Rises 0.45% as Oil Prices Ease, Big Tech Earnings & Fed Rate Decision in Focus; Check What Investors Should Watch",
     "https://news.google.com/rss/articles/CBMikgJBVV95cUxOajJITlc5OUhZaVRIaFJxU1YzSlVodC1KOFBHZDZMaDlidWgxblh5MGdOek1FNU9qRmhNemlDQ0VMUzFHT1BDd3dyYWNwX2NwYXVTNU12VFBPOS1sRjdYdGZybnd6LTV5Qk1pRnlEb2ZGVHJYT09BV2RmVHA3aVhLSlRIUTNmU0FwYjU1U25RVlFyd3VWUFFnamctVnZyRzdZaFBiTVZJUVJhVWItcnJJYnZhcXpjVEdKdWlOR0VhUGNXNlJCWDFWNGRhUkJHbGg5Q1NRTDZEWVBXRkxIbFp6N1Fud2F6djBWb2VBUk4wbHVQZkp5WVJjWFJnXzVVVUhSVm8yR25NcHFXdlB2U0ZoUU9R0gGSAkFVX3lxTE5qMkhOVzk5SFlpVEhoUnFTVjNKVWh0LUo4UEdkNkxoOWJ1aDFuWHkwZ056TUU1T2pGaE16aUNDRUxTMUdPUEN3d3JhY3BfY3BhdVM1TXZUUE85LWxGN1h0ZnJud3otNXlCTWlGeURvZkZUclhPT0FXZGZUcDdpWEtKVEhRM2ZTQXBiNTVTblFWUXJ3dVZQUWdqZy1WdnJHN1loUGJNVklRUmFVYi1ycklidmFxemNUR0p1aU5HRWFQY1c2UkJYMVY0ZGFSQkdsaDlDU1FMNkRZUFdGTEhsWno3UW53YXp2MFZvZUFSTjBsdVBmSnlZUmNYUmdfNVVVSFJWbzJHbk1wcVd2UHZTRmhRT1E?oc=5"
+   ],
+   [
+    "2026-10-26 16:10 UTC",
+    "cryptodaily.co.uk",
+    "US Economy Outlook 2026: Strong Growth Fuels New Inflation Risks",
+    "https://news.google.com/rss/articles/CBMingFBVV95cUxOVFRCNXNqaXRVcC16YVVoVlNxTGhnZHNmLWZHSnl6bzJMY2hWZDQtX3l3T2dIZDVvV0NOUUhIU0Fpc3NnVll2N2ppaXB2NEpmb3BxM3lyeTk3Z1ZVNHdOSHl2UTdnM0w1bVByWTRWdmlDUmlmU1RHRGt4a2RLUERyLTVrcERERGR3eF9fU2RZWTE4dEJNR3hsSVpnU0ItUQ?oc=5"
    ],
    [
     "2026-10-26 14:42 UTC",
@@ -26947,12 +26953,6 @@
     "www.usnews.com",
     "Fed Meets, Inflation Report Due Ahead of Midterms | National News | U.S. News",
     "https://news.google.com/rss/articles/CBMirwFBVV95cUxPc2paV3hSZkdQcFpBMlJJeVNTV0ppVjhVSldDampyZGZGaThFODNFN2dfWmYtUnAxN0FJTzlYaGh2SWZHNWZsTUdrSlpETk1qbndMYXpCNVc2U3dhV0Jrd3NrLWxzV2JHTDJyV1lyZzRLUnRaNWw2ZkM1RDZVYzc3X1Z4WmswSE1nNWtDVTB0bVc2S1RPMFBlNkZMLXM4U2pUNWJ2eFoxSFRJSjVjNnBZ?oc=5"
-   ],
-   [
-    "2026-10-26 12:44 UTC",
-    "crypto-economy.com",
-    "Federal Reserve Rate Decision Leads Packed Economic Calendar Impacting Crypto Markets",
-    "https://news.google.com/rss/articles/CBMiswFBVV95cUxNd3FfaUY0ZVFfVVFzSHJuRllLV3NrZFBpRlBtVVd5bmRPQnp0NnJ5Y0tVOVV0bmtQc29MUDJvUnhIX01QWUNIdFBVZUVMZHVXeE9HRDBhVHBWR3BiUkh6NHdDRnpPem5wN0VObHYydi1od0w2VVViM0tUazdTem9icEVrazE3OFk0RHJoU3RUMjBqX1RjdWNaUXFEOEk3dkRibnFQSGhGblFqazBsZ0tyMWVrYw?oc=5"
    ]
   ]
  }
