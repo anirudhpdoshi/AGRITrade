@@ -31,14 +31,14 @@
      ],
      "near_expiry": "Dec-26",
      "intraday": [
-      4.5325,
-      "9:35am ET"
+      4.52,
+      "9:50am ET"
      ],
      "iv_10d_rel": 0.03741,
      "iv_chain_iv": 18.78,
      "iv_as_of": "2026-10-26",
      "iv_note": "IV and skew from IB midpoint, Oct 26 2026 8:45 AM ET",
-     "intraday_ts": "2026-10-26T09:35:00-04:00",
+     "intraday_ts": "2026-10-26T09:50:00-04:00",
      "ma50": "5.10",
      "ma100": "4.84"
     },
@@ -2737,14 +2737,14 @@
      ],
      "near_expiry": "Jan-27",
      "intraday": [
-      12.4575,
-      "9:35am ET"
+      12.4625,
+      "9:50am ET"
      ],
      "iv_10d_rel": 0.02829,
      "iv_chain_iv": 14.2,
      "iv_as_of": "2026-10-26",
      "iv_note": "IV and skew from IB midpoint, Oct 26 2026 8:45 AM ET",
-     "intraday_ts": "2026-10-26T09:35:00-04:00",
+     "intraday_ts": "2026-10-26T09:50:00-04:00",
      "ma50": "12.83",
      "ma100": "12.29"
     },
@@ -5203,14 +5203,14 @@
      ],
      "near_expiry": "Dec-26",
      "intraday": [
-      6.255,
-      "9:35am ET"
+      6.2025,
+      "9:50am ET"
      ],
      "iv_10d_rel": 0.04988,
      "iv_chain_iv": 25.04,
      "iv_as_of": "2026-10-26",
      "iv_note": "IV and skew from IB midpoint, Oct 26 2026 8:45 AM ET",
-     "intraday_ts": "2026-10-26T09:35:00-04:00",
+     "intraday_ts": "2026-10-26T09:50:00-04:00",
      "ma50": "7.04",
      "ma100": "6.75"
     },
@@ -8513,11 +8513,11 @@
     "6M": 4.3
    },
    "fxcross": {
-    "dxy": 101.989,
-    "dxy_chg": 0.176,
-    "eurusd": 1.1187,
-    "usdjpy": 157.43,
-    "usdcad_ref": 1.4036
+    "dxy": 101.981,
+    "dxy_chg": 0.168,
+    "eurusd": 1.1179,
+    "usdjpy": 157.47,
+    "usdcad_ref": 1.4043
    },
    "closes": [
     [
@@ -8596,16 +8596,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 101.42,
-     "chg": -1.85,
-     "pct": -1.79,
+     "last": 101.69,
+     "chg": -1.58,
+     "pct": -1.53,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 110.36,
-     "chg": -6.36,
-     "pct": -5.45,
+     "last": 110.8,
+     "chg": -5.92,
+     "pct": -5.07,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -8617,9 +8617,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 15.95,
+    "value": 16.22,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-26T13:35:00+00:00",
+    "obs_ts": "2026-10-26T13:50:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -10135,10 +10135,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.40362,
+    "mid": 1.40471,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-26T09:45:00-04:00",
+    "ts": "2026-10-26T10:00:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -10940,7 +10940,19 @@
     ],
     [
      "2026-10-26T13:45+00:00",
-     1.40362
+     1.40368
+    ],
+    [
+     "2026-10-26T13:50+00:00",
+     1.40432
+    ],
+    [
+     "2026-10-26T13:55+00:00",
+     1.40472
+    ],
+    [
+     "2026-10-26T14:00+00:00",
+     1.40472
     ]
    ],
    "fwd_inputs": {
@@ -10981,20 +10993,20 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-26T09:45:24-04:00",
+   "updated_at": "2026-10-26T10:00:22-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-26T09:45:00-04:00",
+    "fx_spot": "2026-10-26T10:00:00-04:00",
     "fx_closes": "2026-10-23T16:30:00-04:00",
     "yields": "2026-10-23T17:00:00-04:00",
     "policy": "2026-10-26T09:05:37-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-20T15:30:00-04:00",
     "cftc_grains": "2026-10-20T15:30:00-04:00",
-    "energy": "2026-10-26T09:35:00-04:00",
-    "crosses": "2026-10-26T09:35:00-04:00",
+    "energy": "2026-10-26T09:50:00-04:00",
+    "crosses": "2026-10-26T09:50:00-04:00",
     "grains_settle": "2026-10-23T14:20:00-04:00",
-    "grains_quote": "2026-10-26T09:35:00-04:00",
+    "grains_quote": "2026-10-26T09:50:00-04:00",
     "options": "2026-10-26T08:45:00-04:00",
     "news": "2026-10-26T09:45:24-04:00",
     "calendar": "2026-10-26T09:05:37-04:00",
@@ -11023,6 +11035,7 @@
      "fx_closes",
      "yields",
      "cftc_fx",
+     "cftc_grains",
      "grains_quote",
      "energy",
      "crosses",
@@ -11042,10 +11055,8 @@
      "ca_retail",
      "fx_model"
     ],
-    "failed": [
-     "cftc_grains"
-    ],
-    "at": "2026-10-26T09:45:24-04:00"
+    "failed": [],
+    "at": "2026-10-26T10:00:22-04:00"
    },
    "releases_checked": "2026-10-26T09:05:37-04:00",
    "exports_checked": "2026-10-26T09:05:37-04:00",
@@ -11082,7 +11093,7 @@
    },
    "canada_checked": "2026-10-26T09:30:24-04:00",
    "ca_calendar_checked": "2026-10-26T09:05:37-04:00",
-   "canada_watch": "2026-10-26T09:30:24-04:00",
+   "canada_watch": "2026-10-26T10:00:22-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -11154,10 +11165,7 @@
    "ext_checked": "2026-10-26T09:05:37-04:00",
    "calendar_checked": "2026-10-26T09:05:37-04:00",
    "fedodds_checked": "2026-10-26T09:05:37-04:00",
-   "model_checked": "2026-10-26T09:05:37-04:00",
-   "last_errors": {
-    "cftc_grains": "ReadTimeout: HTTPSConnectionPool(host='publicreporting.cftc.gov', port=443): Read timed out. (read timeout=25)"
-   }
+   "model_checked": "2026-10-26T09:05:37-04:00"
   },
   "macro": [
    {
