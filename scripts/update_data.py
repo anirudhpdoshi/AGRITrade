@@ -719,11 +719,33 @@ GRAIN_YF = {"corn": "ZC=F", "wheat": "ZW=F", "soybeans": "ZS=F"}
 
 
 def grains_quote(D, N):
+    """Delayed quote of the desk's FRONT contract (e.g. ZSX26), not Yahoo's continuous symbol: ZS=F rolls to the next
+    month before the desk does (it showed the January price under ZSX26). Continuous is a fallback only, and only when
+    it still tracks the front contract (closer to the front settle than to the deferred settle)."""
     newest = None
-    for k, sym in GRAIN_YF.items():
-        px, ts, _ = yahoo_last(sym)
+    for k, cont in GRAIN_YF.items():
+        g = D["grains"][k]
+        roll = g.get("roll") or []
+        front = roll[0]["contract"] if roll else None
+        px = ts = None
+        src = None
+        if front:
+            try:
+                px, ts, _ = yahoo_last(f"{front}.CBT")
+                src = f"{front}.CBT"
+            except Exception as e:
+                print(f"  {front}.CBT intraday unavailable ({type(e).__name__}) - checking {cont}")
+        if px is None:
+            px, ts, _ = yahoo_last(cont)
+            src = cont
+            if len(roll) > 1 and roll[0].get("settle") and roll[1].get("settle"):
+                fs, ds_ = roll[0]["settle"], roll[1]["settle"]
+                if abs(px / 100.0 - ds_) < abs(px / 100.0 - fs) and abs(ds_ - fs) > 0.02:
+                    raise RuntimeError(f"{cont} has rolled to {roll[1]['contract']} - not shown under {front}")
+        sym = src
         px = px / 100.0  # Yahoo quotes grains in cents/bu
-        f = D["grains"][k]["fan"]
+        f = g["fan"]
+        f["intraday_src"] = src
         if not 0.5 * f["anchor"] < px < 1.5 * f["anchor"]:
             raise RuntimeError(f"{sym} {px} implausible vs settle {f['anchor']}")
         label = ts.astimezone(TOR).strftime("%-I:%M%p").lower() + " ET"
