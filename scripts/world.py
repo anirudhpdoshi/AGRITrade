@@ -53,8 +53,8 @@ EXCHANGES = {
 }
 
 # ------------------------------------------------------------------ instrument universe (Yahoo symbols)
-def I(id_, name, group, region, cc, sym, ex, ccy="", dec=2, kind="price", note=""):
-    return {"id": id_, "name": name, "group": group, "region": region, "cc": cc, "sym": sym, "ex": ex, "ccy": ccy, "dec": dec, "kind": kind, "note": note}
+def I(id_, name, group, region, cc, sym, ex, ccy="", dec=2, kind="price", note="", alts=()):
+    return {"id": id_, "name": name, "group": group, "region": region, "cc": cc, "sym": sym, "ex": ex, "ccy": ccy, "dec": dec, "kind": kind, "note": note, "alts": list(alts)}
 
 UNIVERSE = [
     # equity indices
@@ -70,7 +70,7 @@ UNIVERSE = [
     I("n225", "Nikkei 225", "Indices", "Asia-Pacific", "jp", "^N225", "TSE", "JPY"),
     I("hsi", "Hang Seng", "Indices", "Asia-Pacific", "hk", "^HSI", "HKEX", "HKD"),
     I("shcomp", "Shanghai Composite", "Indices", "Asia-Pacific", "cn", "000001.SS", "SSE", "CNY"),
-    I("csi300", "CSI 300", "Indices", "Asia-Pacific", "cn", "000300.SS", "SSE", "CNY"),
+    I("csi300", "CSI 300", "Indices", "Asia-Pacific", "cn", "000300.SS", "SSE", "CNY", alts=("399300.SZ", "^CSI300")),
     I("nifty", "Nifty 50", "Indices", "Asia-Pacific", "in", "^NSEI", "NSE", "INR"),
     I("asx200", "S&P/ASX 200", "Indices", "Asia-Pacific", "au", "^AXJO", "ASX", "AUD"),
     # FX
@@ -81,7 +81,7 @@ UNIVERSE = [
     I("audusd", "AUD/USD", "FX", "Global", "au", "AUDUSD=X", "FX", "", 5),
     I("nzdusd", "NZD/USD", "FX", "Global", "nz", "NZDUSD=X", "FX", "", 5),
     I("usdchf", "USD/CHF", "FX", "Global", "ch", "CHF=X", "FX", "", 5),
-    I("usdcnh", "USD/CNH", "FX", "Global", "cn", "CNH=X", "FX", "", 4),
+    I("usdcnh", "USD/CNH", "FX", "Global", "cn", "CNH=X", "FX", "", 4, alts=("USDCNH=X",)),
     I("usdinr", "USD/INR", "FX", "Global", "in", "INR=X", "FX", "", 3),
     I("dxy", "US Dollar Index (DXY)", "FX", "Global", "us", "DX-Y.NYB", "FX", "", 3),
     # metals (front-month futures - Yahoo has no free spot)
@@ -222,8 +222,34 @@ def yf():
     return yfinance
 
 
+ROLL_TOL_PCT = 1.0   # continuous-futures roll guard: series prior close vs Yahoo's previous close for the quoted contract
+
+
+def _quote_prev_close(sym):
+    """Yahoo's own previous close for the contract currently quoted under a continuous futures symbol."""
+    try:
+        fi = yf().Ticker(sym).fast_info
+        v = fi.get("previousClose") if hasattr(fi, "get") else getattr(fi, "previous_close", None)
+        v = float(v) if v is not None else None
+        return v if v and v > 0 else None
+    except Exception:
+        return None
+
+
 def fetch_yahoo(universe, now_utc):
-    """Batch daily (1y) + intraday (5m, 5d) bars; returns {id: record} and a list of failed symbols."""
+    """Batch daily (1y) + intraday (5m, 5d) bars; returns {id: record} and a list of failed symbols.
+    Symbols that return nothing are retried with their verified alternates (u['alts'])."""
+    recs, failed = _fetch_batch(universe, now_utc)
+    retry = [dict(u, sym=alt, alt_of=u["sym"]) for u in universe if u["id"] in {f["id"] for f in failed} for alt in u.get("alts", [])[:1]]
+    if retry:
+        r2, f2 = _fetch_batch(retry, now_utc)
+        recs.update(r2)
+        ok = set(r2)
+        failed = [f for f in failed if f["id"] not in ok] + [f for f in f2 if f["id"] not in ok and f["id"] not in {x["id"] for x in failed}]
+    return recs, failed
+
+
+def _fetch_batch(universe, now_utc):
     syms = [u["sym"] for u in universe]
     daily = yf().download(syms, period="1y", interval="1d", group_by="ticker", auto_adjust=False, progress=False, threads=True)
     intra = yf().download(syms, period="5d", interval="5m", group_by="ticker", auto_adjust=False, progress=False, threads=True, prepost=False)
@@ -258,8 +284,21 @@ def fetch_yahoo(universe, now_utc):
                 o = h = l = None
             h = max(h, last) if h is not None else None
             l = min(l, last) if l is not None else None
+            roll = None
+            if u["sym"].endswith("=F"):
+                qp = _quote_prev_close(u["sym"])
+                if qp and abs(qp / prev_close - 1) * 100 > ROLL_TOL_PCT:
+                    roll = {"series_prev_close": prev_close, "contract_prev_close": qp,
+                            "note": "continuous symbol rolled to the next contract - change measured against that contract's own previous close; alerts suppressed this session"}
+                    prev_close = qp
+                    o = h = l = None                       # session range from the new contract's intraday bars only
+                    if it is not None and len(it):
+                        cut = now_utc - timedelta(hours=20)
+                        seg = it[[x.astimezone(timezone.utc) >= cut for x in it.index.to_pydatetime()]]
+                        if len(seg):
+                            o, h, l = float(seg["Open"].iloc[0]), float(seg["High"].max()), float(seg["Low"].min())
             w = week52(list(prior["High"].astype(float))[-251:], list(prior["Low"].astype(float))[-251:], last, h, l)
-            recs[u["id"]] = {**u, "provider": "Yahoo Finance (delayed)", "last": last, "prev_close": prev_close, "open": o, "high": h, "low": l,
+            recs[u["id"]] = {**u, "provider": "Yahoo Finance (delayed)", "roll": roll, "last": last, "prev_close": prev_close, "open": o, "high": h, "low": l,
                              "chg": last - prev_close, "pct": pct(last, prev_close), "pct_open": pct(last, o) if o else None,
                              "ts": last_ts.isoformat(), "session_date": sess.isoformat(), "w52": w,
                              "spark": [round(float(x), 6) for x in list(d["Close"].astype(float))[-30:]]}
@@ -416,6 +455,8 @@ def main():
                 r["quality"] = "delayed"; r["fresh"] = True
         else:
             r["quality"] = "closed"; r["fresh"] = False
+        if r.get("roll"):
+            r["fresh"] = False; r["quality"] = r.get("quality", "") + " · contract roll"
         evs = evaluate_alerts(r, state, now)
         for e in evs:
             e.update(delay_min=r["delay_min"], status=r["status_label"], provider=r["provider"], group=r["group"])
