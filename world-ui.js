@@ -126,7 +126,10 @@
     return '<span class="' + cl(i.pct) + '"><b>' + sg(i.pct, 2, "%") + "</b></span>";
   }
   function age(i) {
-    var q = i.quality || "", ms = i.delay_min != null ? i.delay_min * 60000 : null;
+    /* age is measured from the source's own bar timestamp to NOW (not frozen at the server run), so it keeps
+       counting between server runs; delay_min (age at the server run) is only a fallback if ts is missing */
+    var q = i.quality || "", tsMs = i.ts ? Date.parse(i.ts) : NaN,
+        ms = !isNaN(tsMs) ? Math.max(0, Date.now() - tsMs) : i.delay_min != null ? i.delay_min * 60000 : null;
     var c = /stale|no trading/.test(q) ? "aw" : /closed|end-of-day/.test(q) ? "cz" : "ok";
     return '<span class="wq ' + c + '" title="' + esc(i.provider + " · source time " + tDate(i.ts) + " ET") + '">' + esc(q.replace(" · contract roll", "")) + (ms != null && !/end-of-day/.test(q) ? " · " + ago(ms) : "") + (i.roll ? ' <b title="' + esc(i.roll.note) + '">ROLL</b>' : "") + "</span>";
   }
@@ -234,7 +237,7 @@
       '<p class="note">' + esc(W.provider || "") + "</p>" +
       (H.failed && H.failed.length ? "<h3 class=\"mp-h\">Not returned by the provider this run</h3>" + H.failed.map(function (f) { return '<div class="kv"><span class="kk">' + esc(f.id) + " (" + esc(f.sym) + ')</span><span class="vv">' + esc(f.error) + "</span></div>"; }).join("") : "") +
       (H.gaps && H.gaps.length ? "<h3 class=\"mp-h\">Known coverage gaps</h3>" + H.gaps.map(function (g) { return '<div class="kv"><span class="kk">' + esc(g.name) + '</span><span class="vv">' + esc(g.why) + "</span></div>"; }).join("") : "") +
-      '<div class="stamp">Source-data age and polling time are shown separately: “delayed · 14m” means the last bar is 14 minutes old, not that the page polled 14 minutes ago · the server runs every 15 min Sun–Fri (UTC) · a market open longer than ' + ((W.thresholds || {}).stale_after_min_when_open || 45) + " min without a new bar is marked stale and never alerts</div></div>";
+      '<div class="stamp">Source-data age and polling time are shown separately: “delayed · 14m” means the last bar (by the source’s own timestamp; 5-min bars are stamped at the bar’s start) is 14 minutes old right now, not that the page polled 14 minutes ago · the server runs every 15 min Sun–Fri (UTC) · a market open longer than ' + ((W.thresholds || {}).stale_after_min_when_open || 45) + " min without a new bar is marked stale and never alerts</div></div>";
   }
   function paintHead() {
     var h = document.getElementById("wHead"); if (!h) return;
