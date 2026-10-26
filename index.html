@@ -745,6 +745,17 @@ svg.ggbars{width:100%;height:auto;display:block}
 .oikey-h{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#c9a3ff;margin-bottom:4px}.oikey-h small{text-transform:none;letter-spacing:0;font-weight:400;color:var(--faint);margin-left:6px}
 .oikey ul{margin:4px 0 6px;padding-left:18px;font-size:12.5px;line-height:1.55}.oikey li.hot{color:#ffd27a}.oikey li.warn{color:#e8eef4}.oikey li{color:#b9c7da}.oikey p{font-size:12.5px;color:var(--muted);margin:2px 0}
 .oikey-r{font-size:12px;color:var(--muted)}
+
+/* ---- full-screen card ---- */
+.xpand-btn{all:unset;cursor:pointer;margin-left:auto;font:600 12px "Libre Franklin",system-ui,sans-serif;color:var(--muted);border:1px solid var(--line2);border-radius:14px;padding:4px 12px;white-space:nowrap}
+.xpand-btn:hover{color:#fff;border-color:var(--cyan)}.xpand-btn[aria-pressed="true"]{color:#fff;background:#1a2a42;border-color:var(--cyan)}
+.tile.xpanded{position:fixed;inset:0;z-index:9000;margin:0;border-radius:0;overflow:auto;padding:14px 22px 28px;background:var(--panel);animation:tnIn .18s ease-out;max-width:none}
+.tile.xpanded>.tile-head{position:sticky;top:-14px;z-index:3;background:var(--panel);padding:10px 0 8px;margin:-14px 0 0;border-bottom:1px solid var(--line)}
+.tile.xpanded>.cmp-ctrl{position:sticky;top:var(--xh1,44px);z-index:3;background:var(--panel);padding:8px 0;margin:0;border-bottom:1px solid var(--line)}
+.tile.xpanded .tbl-scroll{overflow:visible}
+.tile.xpanded table.cmp-tbl thead{position:sticky;top:var(--xh2,0px);z-index:6}.tile.xpanded table.cmp-tbl thead th{background:#121c2c!important;box-shadow:0 1px 0 var(--line)}
+body.xpand-on{overflow:hidden}
+@media (max-width:760px){.tile.xpanded{padding:10px 10px 24px}.tile.xpanded .tbl-scroll{overflow-x:auto}.tile.xpanded>.cmp-ctrl{position:static}}
 </style>
 </head>
 <body class="locked">
@@ -2522,6 +2533,28 @@ function oiChangeHTML(key){
   return '<div class="tile wide" data-src="options"><h2>Open-interest change by strike <span class="h2note">— '+esc(n.chain||'')+' · '+esc(prev.date)+' → latest</span></h2>'+body+'<div class="stamp">Green = contracts added, red = closed · new OI near a wall reinforces it</div></div>';
 }
 
+
+/* ---------- full-screen expand for wide comparison cards (crop-year comparison, export comparison) ----------
+   The card itself becomes a full-screen layer over the page (its own selection menu travels with it and stays pinned
+   at the top); Minimize / Esc puts it back exactly where it was. State survives re-renders while the page is open. */
+var XPAND={};
+function xpandBtn(id){ var on=!!XPAND[id]; return '<button class="xpand-btn" data-xpand="'+id+'" aria-pressed="'+on+'" title="'+(on?'Minimize back to the page (Esc)':'Expand to full screen')+'">'+(on?'↙ Minimize':'⤢ Expand')+'</button>'; }
+function xpandSync(){
+  var t=document.querySelector('.tile.xpanded'); document.body.classList.toggle('xpand-on', !!t);
+  if(!t) return;                                          /* stack: title bar, then the selection menu, then the table header */
+  var h=t.querySelector(':scope>.tile-head'), c=t.querySelector(':scope>.cmp-ctrl'), hh=h?h.offsetHeight:0, ch=c&&getComputedStyle(c).position==='sticky'?c.offsetHeight:0;
+  t.style.setProperty('--xh1', (hh-14)+'px'); t.style.setProperty('--xh2', (hh-14+ch)+'px');
+}
+window.addEventListener('resize', xpandSync);
+document.addEventListener('click', function(ev){
+  var b=ev.target.closest&&ev.target.closest('[data-xpand]'); if(!b) return;
+  var id=b.getAttribute('data-xpand'), t=document.getElementById(id); if(!t) return;
+  XPAND[id]=!XPAND[id]; t.classList.toggle('xpanded', XPAND[id]);
+  b.setAttribute('aria-pressed', XPAND[id]); b.title=XPAND[id]?'Minimize back to the page (Esc)':'Expand to full screen'; b.textContent=XPAND[id]?'↙ Minimize':'⤢ Expand';
+  if(!XPAND[id]){ t.style.removeProperty('--xh1'); t.style.removeProperty('--xh2'); } xpandSync(); if(!XPAND[id]) t.scrollIntoView({block:'nearest'});
+});
+document.addEventListener('keydown', function(ev){ if(ev.key!=='Escape') return; var t=document.querySelector('.tile.xpanded'); if(t){ var b=t.querySelector('[data-xpand]'); if(b) b.click(); } });
+window.xpandBtn=xpandBtn; window.XPAND=XPAND;
 /* ================= CROP-YEAR COMPARISON (USDA · Canada · Ontario) ================= */
 var CMP=(function(){ var d={y2026:false,y2025:true,y2024:true,y2023:true,us:true,ca:true,on:true,br:true,chg:true,unit:'met',grp:'year',v:2};
   try{ var s=JSON.parse(localStorage.getItem('desk.cmp')||'{}'); if(s.v!==2){ delete s.unit; delete s.br; } Object.keys(d).forEach(function(k){ if(typeof s[k]===typeof d[k]) d[k]=s[k]; }); d.v=2; }catch(e){} return d; })();
@@ -2642,7 +2675,7 @@ function cropCompareHTML(key){
   if(G.us) notes.push('US = USDA PSD, marketing year '+(key==='wheat'?'Jun–May':'Sep–Aug')+', latest estimate per year; planted area and farm price are not in PSD');
   if(G.ca||G.on) notes.push('Canada / Ontario = '+scLink('annual')+' (area, yield, production) · '+scLink('stocks')+' (Jul 31 stocks = beginning / ending stocks of the Aug–Jul crop year'+(G.on&&G.on.farmOnly?'; Ontario stocks are on-farm only':'')+') · '+scLink('prices')+' (Ontario farm price)');
   notes.push('every number converted to the same units ('+(CMP.unit==='imp'?'million acres · bu/acre · million bushels':'million hectares · tonnes/hectare · million tonnes')+') · small figures = change vs the previous crop year · hover a value: the ruler highlights its row and crop year');
-  return '<div class="tile wide" id="cmp-'+key+'" data-src="sd_hist"><div class="tile-head"><h2>Crop-year comparison — '+GMETA[key].name+' <span class="h2note">USA, Canada, Ontario and Brazil side by side · same units (MMT = million metric tonnes)</span></h2></div>'+ctrl+body+
+  return '<div class="tile wide'+(XPAND['cmp-'+key]?' xpanded':'')+'" id="cmp-'+key+'" data-src="sd_hist"><div class="tile-head"><h2>Crop-year comparison — '+GMETA[key].name+' <span class="h2note">USA, Canada, Ontario and Brazil side by side · same units (MMT = million metric tonnes)</span></h2>'+xpandBtn('cmp-'+key)+'</div>'+ctrl+body+
     '<div class="stamp">'+notes.join(' · ')+'</div></div>';
 }
 /* ruler: row (CSS hover) + every cell of the same crop year */
@@ -2653,7 +2686,7 @@ function cmpRuler(ev){
   tile.querySelectorAll('[data-y="'+td.getAttribute('data-y')+'"]').forEach(function(c){ c.classList.add('ruler-col'); });
 }
 document.addEventListener('mouseover', cmpRuler); document.addEventListener('click', cmpRuler);
-function cmpRefresh(){ ['corn','wheat','soybeans'].forEach(function(k){ var el=document.getElementById('cmp-'+k); if(el) el.outerHTML=cropCompareHTML(k); }); }
+function cmpRefresh(){ ['corn','wheat','soybeans'].forEach(function(k){ var el=document.getElementById('cmp-'+k); if(el) el.outerHTML=cropCompareHTML(k); }); xpandSync(); }
 document.addEventListener('change', function(ev){
   var t=ev.target; if(!t||!t.getAttribute||!t.hasAttribute('data-cmp')) return;
   CMP[t.getAttribute('data-cmp')]=t.checked; cmpSave(); cmpRefresh();

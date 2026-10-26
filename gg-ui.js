@@ -194,7 +194,8 @@
     var ORG = [["USA", "us", "United States"], ["CAN", "ca", "Canada"], ["BRA", "br", "Brazil"]];
     if (crop === "wheat") ORG = ORG.concat([["RUS", "", "Russia"], ["EU", "", "European Union"], ["AUS", "", "Australia"], ["ARG", "", "Argentina"]]);
     if (crop !== "wheat") ORG = ORG.concat([["ARG", "", "Argentina"], ["UKR", "", "Ukraine"]]);
-    var out = '<div class="tile wide ggx"><h2>Export comparison — ' + CN[key].toLowerCase() + ' <span class="h2note">— US · Canada · Brazil (and key rivals) · all figures in MMT = million metric tonnes</span></h2>';
+    var xid = "ggx-" + key, XP = window.XPAND || {};
+    var out = '<div class="tile wide ggx' + (XP[xid] ? " xpanded" : "") + '" id="' + xid + '"><div class="tile-head"><h2>Export comparison — ' + CN[key].toLowerCase() + ' <span class="h2note">— US · Canada · Brazil (and key rivals) · all figures in MMT = million metric tonnes</span></h2>' + (window.xpandBtn ? window.xpandBtn(xid) : "") + "</div>";
     /* A. crop-year exports, USDA PSD (one source, aligned years) */
     if (P) {
       var yrs = [];
