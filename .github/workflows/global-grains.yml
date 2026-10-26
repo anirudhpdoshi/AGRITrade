@@ -1,0 +1,32 @@
+name: Global grains (World + Brazil)
+# USDA PSD world supply & demand, CONAB Brazil crop survey, Comex Stat exports, BCB/BCRA FX -> gg.json on the `ggrain` branch.
+# Twice a day on weekdays (after CONAB / USDA morning releases and after the noon-ET WASDE). Read only when a user picks
+# "Brazil" or "World" in a grain tab's Fundamentals switch; a failure here never touches the rest of the desk.
+on:
+  schedule:
+    - cron: "20 12,17 * * 1-5"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: global-grains
+  cancel-in-progress: false
+jobs:
+  ggrain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+      - run: pip install -r scripts/requirements.txt openpyxl
+      - name: Unit tests (shares, revisions, CONAB parsing)
+        run: python tests/test_global_grains.py
+      - name: Fetch and publish gg.json
+        run: python scripts/global_grains.py
+        env:
+          FAS_API_KEY: ${{ secrets.FAS_API_KEY }}
