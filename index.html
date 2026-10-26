@@ -756,6 +756,11 @@ svg.ggbars{width:100%;height:auto;display:block}
 .tile.xpanded table.cmp-tbl thead{position:sticky;top:var(--xh2,0px);z-index:6}.tile.xpanded table.cmp-tbl thead th{background:#121c2c!important;box-shadow:0 1px 0 var(--line)}
 body.xpand-on{overflow:hidden}
 @media (max-width:760px){.tile.xpanded{padding:10px 10px 24px}.tile.xpanded .tbl-scroll{overflow-x:auto}.tile.xpanded>.cmp-ctrl{position:static}}
+.fanchips{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:2px 0 8px}.fanchips b{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-right:4px}
+.fanchip{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;padding:3px 10px;border-radius:12px;border:1px solid var(--line);color:var(--faint)}
+.fanchip i{width:10px;height:3px;border-radius:2px;opacity:.4}.fanchip[aria-pressed="true"]{color:#e8eef4;border-color:var(--line2);background:#14213a}.fanchip[aria-pressed="true"] i{opacity:1}
+.fanruler{margin:8px 0 2px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:6px 10px}.fanruler svg{width:100%;height:auto;display:block}
+.fanruler-t{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;font-size:12px;color:var(--muted);margin-top:2px}.fanruler-t .mk{color:#ff9d97;font-weight:600}
 </style>
 </head>
 <body class="locked">
@@ -1151,14 +1156,54 @@ function fanLevels(g, meta){
   return { levels:levels, read:read };
 }
 
+
+/* ---------- fan chart: level groups the user can switch on/off, merged near-identical labels, distance to market ---------- */
+var FANG={p1:'sig',m1:'sig',p2:'sig',m2:'sig',p3:'sig3',m3:'sig3',ci99p:'ci',ci99m:'ci',ivp:'iv',ivm:'iv',ma20:'ma',ma50:'ma',callwall:'walls',putwall:'walls',ctr:'anchor',market:'market'};
+var FANV=(function(){ var d={sig:true,sig3:false,ci:false,iv:true,ma:true,walls:true,anchor:false}; try{ var x=JSON.parse(localStorage.getItem('desk.fanv')||'{}'); Object.keys(d).forEach(function(k){ if(typeof x[k]==='boolean') d[k]=x[k]; }); }catch(e){} return d; })();
+function fanOn(key){ var g=FANG[key]; return !g||g==='market'||FANV[g]!==false; }
+function fanChipsHTML(key){
+  var C=[['sig','±1σ / ±2σ','#e8eef4'],['sig3','±3σ','#e8eef4'],['ci','99% CI','#ff9d9d'],['iv','Options IV ±2σ','#38b6c9'],['ma','Moving averages','#f0c169'],['walls','Option walls','#b18cff'],['anchor','Live anchor','#38b6c9']];
+  return '<div class="fanchips"><b>Show levels</b>'+C.map(function(c){ return '<button class="fanchip" data-fanv="'+c[0]+'" data-fank="'+key+'" aria-pressed="'+(FANV[c[0]]!==false)+'"><i style="background:'+c[2]+'"></i>'+c[1]+'</button>'; }).join('')+'</div>';
+}
+document.addEventListener('click', function(ev){
+  var b=ev.target.closest&&ev.target.closest('[data-fanv]'); if(!b) return;
+  var k=b.getAttribute('data-fanv'); FANV[k]=FANV[k]===false; try{ localStorage.setItem('desk.fanv', JSON.stringify(FANV)); }catch(e){}
+  renderGrain(b.getAttribute('data-fank'));
+});
+/* price ruler: every visible level on one horizontal price axis, with the market and the nearest support / resistance named */
+function fanRulerHTML(g, FL){
+  var L=+g.fan.intraday[0], all=FL.levels.filter(function(l){ return l.key!=='market'&&l.key!=='ctr'&&fanOn(l.key); }), lv=all.filter(function(l){ return !l.off; }), offs=all.filter(function(l){ return l.off; });
+  if(!lv.length) return '';
+  var vals=lv.map(function(l){ return l.value; }).concat([L]), lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals), pad=(hi-lo)*0.04||0.01; lo-=pad; hi+=pad;
+  var W=820, H=58, P=14, X=function(v){ return P+(W-2*P)*(v-lo)/(hi-lo); };
+  var dn=lv.filter(function(l){ return l.value<L; }).sort(function(a,b){ return b.value-a.value; })[0], up=lv.filter(function(l){ return l.value>L; }).sort(function(a,b){ return a.value-b.value; })[0];
+  var nm=function(l){ return (l.lines?l.lines[0].replace(/^[A-Za-z]{3}-\d\d /,''):l.label); };
+  var s='<line x1="'+P+'" y1="30" x2="'+(W-P)+'" y2="30" stroke="#2b3e5c" stroke-width="2"/>';
+  if(dn&&up) s+='<rect x="'+X(dn.value).toFixed(1)+'" y="25" width="'+(X(up.value)-X(dn.value)).toFixed(1)+'" height="10" fill="rgba(56,182,201,.18)" rx="2"/>';
+  lv.forEach(function(l){ var x=X(l.value); s+='<line x1="'+x.toFixed(1)+'" y1="22" x2="'+x.toFixed(1)+'" y2="38" stroke="'+l.color+'" stroke-width="'+(l.lines?2.2:1.4)+'"><title>'+esc((l.lines?l.lines.join(' · '):l.label))+'</title></line>'; });
+  var mx=X(L); s+='<path d="M'+mx.toFixed(1)+' 18 l-5 -8 h10z" fill="#ff6b6b"/><line x1="'+mx.toFixed(1)+'" y1="18" x2="'+mx.toFixed(1)+'" y2="42" stroke="#ff6b6b" stroke-width="2"/>';
+  s+='<text x="'+P+'" y="54" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">'+money2(lo+pad)+'</text><text x="'+(W-P)+'" y="54" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end">'+money2(hi-pad)+'</text>';
+  if(dn) s+='<text x="'+X(dn.value).toFixed(1)+'" y="54" fill="'+dn.color+'" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+money2(dn.value)+'</text>';
+  if(up) s+='<text x="'+X(up.value).toFixed(1)+'" y="54" fill="'+up.color+'" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+money2(up.value)+'</text>';
+  s+='<text x="'+mx.toFixed(1)+'" y="8" fill="#ff9d9d" font-size="10" font-weight="700" font-family="IBM Plex Mono" text-anchor="middle">'+money2(L)+'</text>';
+  var c=function(v){ return (v>=0?'+':'−')+Math.round(Math.abs(v)*100)+'¢'; };
+  return '<div class="fanruler"><svg viewBox="0 0 '+W+' '+H+'" class="no-zoom">'+s+'</svg><div class="fanruler-t">'+
+    (dn?'<span>▼ Nearest support <b style="color:'+dn.color+'">'+esc(nm(dn))+'</b> '+c(dn.value-L)+'</span>':'<span>No level below the price</span>')+
+    '<span class="mk">Market '+money2(L)+(offs.length?' <small>\u00b7 off-scale: '+offs.map(function(l){ return esc(nm(l))+' '+c(l.value-L); }).join(', ')+'</small>':'')+'</span>'+
+    (up?'<span>▲ Nearest resistance <b style="color:'+up.color+'">'+esc(nm(up))+'</b> '+c(up.value-L)+'</span>':'<span>No level above the price</span>')+'</div></div>';
+}
 function fanSVG2(g, meta, FL){
   var f=g.fan, hist=g.history, A=f.anchor, sig=f.sig, L=f.intraday[0];
-  var W=820,H=380,PL=46,PR=196,PT=16,PB=30, pw=W-PL-PR, ph=H-PT-PB;
+  var W=860,H=400,PL=46,PR=250,PT=16,PB=30, pw=W-PL-PR, ph=H-PT-PB;
   var NH=hist.length, FD=10, span=NH-1+FD;
   var lo=Infinity, hi=-Infinity, i, d;
   for(i=0;i<NH;i++){ lo=Math.min(lo,hist[i].s); hi=Math.max(hi,hist[i].s); }
-  lo=Math.min(lo, f.r10_99[0]); hi=Math.max(hi, f.r10_99[1]);
-  FL.levels.forEach(function(l){ lo=Math.min(lo,l.value); hi=Math.max(hi,l.value); });
+  /* vertical scale = history + the levels switched ON; an option wall far outside that range is pinned at the edge
+     ("off-scale") instead of squashing the whole chart */
+  if(FANV.ci!==false){ lo=Math.min(lo, f.r10_99[0]); hi=Math.max(hi, f.r10_99[1]); }
+  FL.levels.forEach(function(l){ if(fanOn(l.key)&&!l.lines){ lo=Math.min(lo,l.value); hi=Math.max(hi,l.value); } });
+  var core=hi-lo;
+  FL.levels.forEach(function(l){ if(fanOn(l.key)&&l.lines){ if(l.value>=lo-core*0.25&&l.value<=hi+core*0.25){ lo=Math.min(lo,l.value); hi=Math.max(hi,l.value); } else l.off=true; } else delete l.off; });
   var pad=(hi-lo)*0.05; lo-=pad; hi+=pad;
   function X(x){ return PL + pw*(x/span); }
   function Y(y){ return PT + ph*(1-(y-lo)/(hi-lo)); }
@@ -1191,15 +1236,20 @@ function fanSVG2(g, meta, FL){
   s+=maLine('ma20','#f0c169')+maLine('ma50','#b18cff');
   var lastH=hist[NH-1];
   /* exp MA extensions: flat zero-drift lines at the last trailing values */
+  if(FANV.ma!==false){
   s+='<line x1="'+X(NH-1)+'" y1="'+Y(lastH.ma20)+'" x2="'+X(span)+'" y2="'+Y(lastH.ma20)+'" stroke="#f0c169" stroke-width="1.4" stroke-dasharray="2 3"/>';
-  s+='<line x1="'+X(NH-1)+'" y1="'+Y(lastH.ma50)+'" x2="'+X(span)+'" y2="'+Y(lastH.ma50)+'" stroke="#b18cff" stroke-width="1.4" stroke-dasharray="2 3"/>';
+  s+='<line x1="'+X(NH-1)+'" y1="'+Y(lastH.ma50)+'" x2="'+X(span)+'" y2="'+Y(lastH.ma50)+'" stroke="#b18cff" stroke-width="1.4" stroke-dasharray="2 3"/>'; }
   /* options wall lines */
+  if(FANV.walls!==false&&g.near.call_wall[0]<=hi&&g.near.call_wall[0]>=lo){
   s+='<line x1="'+PL+'" y1="'+Y(g.near.call_wall[0])+'" x2="'+(PL+pw)+'" y2="'+Y(g.near.call_wall[0])+'" stroke="#b18cff" stroke-width="1" stroke-dasharray="2 3" opacity="0.75"/>';
-  s+='<line x1="'+PL+'" y1="'+Y(g.near.put_wall[0])+'" x2="'+(PL+pw)+'" y2="'+Y(g.near.put_wall[0])+'" stroke="#b18cff" stroke-width="1" stroke-dasharray="2 3" opacity="0.75"/>';
+  }
+  if(FANV.walls!==false&&g.near.put_wall[0]<=hi&&g.near.put_wall[0]>=lo){
+  s+='<line x1="'+PL+'" y1="'+Y(g.near.put_wall[0])+'" x2="'+(PL+pw)+'" y2="'+Y(g.near.put_wall[0])+'" stroke="#b18cff" stroke-width="1" stroke-dasharray="2 3" opacity="0.75"/>'; }
   /* IV-implied band edges (live fan, day-10 width held across the fan) */
   var ivH=L*f.iv_10d_rel;
+  if(FANV.iv!==false){
   s+='<line x1="'+X(NH-1)+'" y1="'+Y(L+ivH)+'" x2="'+X(span)+'" y2="'+Y(L+ivH)+'" stroke="#38b6c9" stroke-width="1" stroke-dasharray="6 4" opacity="0.8"/>';
-  s+='<line x1="'+X(NH-1)+'" y1="'+Y(L-ivH)+'" x2="'+X(span)+'" y2="'+Y(L-ivH)+'" stroke="#38b6c9" stroke-width="1" stroke-dasharray="6 4" opacity="0.8"/>';
+  s+='<line x1="'+X(NH-1)+'" y1="'+Y(L-ivH)+'" x2="'+X(span)+'" y2="'+Y(L-ivH)+'" stroke="#38b6c9" stroke-width="1" stroke-dasharray="6 4" opacity="0.8"/>'; }
   /* settlements line */
   var sp=''; hist.forEach(function(hh,idx){ sp+=(sp?'L':'M')+X(idx).toFixed(1)+' '+Y(hh.s).toFixed(1); });
   s+='<path d="'+sp+'" fill="none" stroke="#dbe4f0" stroke-width="2"/>';
@@ -1216,7 +1266,16 @@ function fanSVG2(g, meta, FL){
      which case they are spaced to a minimum gap and a leader line ties
      each label back to its true level — no overlapping label text */
   var rx=PL+pw, top=PT+6, bot=PT+ph-6;
-  var items=FL.levels.map(function(l){ return { l:l, trueY:Y(l.value), h:l.lines?25:14 }; })
+  /* visible groups only; single-line levels within ~0.3% of each other share one label; each shows its distance to the market */
+  var cts=function(v){ return (v>=0?'+':'\u2212')+Math.round(Math.abs(v)*100)+'\u00a2'; };
+  var vis=FL.levels.filter(function(l){ return fanOn(l.key); }).slice().sort(function(a,b){ return b.value-a.value; }), merged=[];
+  vis.forEach(function(l){
+    var m=merged[merged.length-1], mergeable=!l.lines&&l.key!=='market'&&m&&!m.lines&&m.key!=='market'&&Math.abs(m.value-l.value)<=0.003*L;
+    if(mergeable){ m.label=m.label+' \u00b7 '+l.label; m.parts.push(l); m.value=(m.value*(m.parts.length-1)+l.value)/m.parts.length; }
+    else merged.push(Object.assign({}, l, {parts:[l]}));
+  });
+  merged.forEach(function(l){ if(!l.lines&&l.key!=='market'&&l.key!=='ctr') l.label=l.label+' '+cts(l.value-L); else if(l.lines) l.lines=[(l.off?(l.value>L?'\u25b2 ':'\u25bc ')+'off-scale \u00b7 ':'')+l.lines[0], l.lines[1]+' \u00b7 '+cts(l.value-L)]; });
+  var items=merged.map(function(l){ return { l:l, trueY:Math.min(Math.max(Y(l.value),PT),PT+ph), h:l.lines?27:15 }; })
     .filter(function(it){ return it.trueY>=top-60 && it.trueY<=bot+60; })
     .sort(function(a,b){ return a.trueY-b.trueY; });
   var ys=items.map(function(it){ return Math.min(Math.max(it.trueY, top), bot); });
@@ -1232,9 +1291,9 @@ function fanSVG2(g, meta, FL){
     s+='<line x1="'+(rx-1)+'" y1="'+it.trueY.toFixed(1)+'" x2="'+(rx+9)+'" y2="'+ly.toFixed(1)+'" stroke="'+it.l.color+'" stroke-width="1"/>';
     s+='<circle cx="'+(rx-1)+'" cy="'+it.trueY.toFixed(1)+'" r="2" fill="'+it.l.color+'"/>';
     if(it.l.lines){
-      s+='<text x="'+(rx+13)+'" y="'+(ly-2).toFixed(1)+'" fill="'+it.l.color+'" font-size="10" font-weight="600" font-family="IBM Plex Mono"><tspan x="'+(rx+13)+'">'+it.l.lines[0]+'</tspan><tspan x="'+(rx+13)+'" dy="11">'+it.l.lines[1]+'</tspan></text>';
+      s+='<text x="'+(rx+13)+'" y="'+(ly-2).toFixed(1)+'" fill="'+it.l.color+'" font-size="11" font-weight="600" font-family="IBM Plex Mono"><tspan x="'+(rx+13)+'">'+it.l.lines[0]+'</tspan><tspan x="'+(rx+13)+'" dy="12">'+it.l.lines[1]+'</tspan></text>';
     } else {
-      s+='<text x="'+(rx+13)+'" y="'+(ly+3.5).toFixed(1)+'" fill="'+it.l.color+'" font-size="10.5" font-weight="'+(it.l.bold?700:500)+'" font-family="IBM Plex Mono">'+it.l.label+'</text>';
+      s+='<text x="'+(rx+13)+'" y="'+(ly+3.5).toFixed(1)+'" fill="'+it.l.color+'" font-size="11.5" font-weight="'+(it.l.bold?700:500)+'" font-family="IBM Plex Mono">'+it.l.label+'</text>';
     }
   });
   s+='<text x="'+PL+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono">'+hist[0].d.slice(0,10)+'</text>';
@@ -3383,7 +3442,7 @@ function renderGrain(key){
     stat("MA20 / 50 / 100", "$"+f.ma20+" / $"+MA50+(f.ma100?" / $"+f.ma100:"")) +
     stat("Settle 10-day 95% range", f.r10[0].toFixed(2)+" – "+f.r10[1].toFixed(2)) +
     stat("Settle 10-day 99% range", f.r10_99[0].toFixed(2)+" – "+f.r10_99[1].toFixed(2)) +
-    '</div>'+ fanSVG2(g, meta, FL)+
+    '</div>'+ fanChipsHTML(key)+ fanSVG2(g, meta, FL)+ fanRulerHTML(g, FL)+
     '<p class="posread">'+esc(FL.read)+'</p>'+
     '<div class="legend"><span><span class="sw" style="background:#dbe4f0"></span>Verified settlements ('+g.history.length+')</span><span><span class="sw" style="background:'+meta.accent+'"></span>Settle-anchored fan (LATEST VERIFIED)</span><span><span class="sw" style="background:#38b6c9"></span>Live-anchored fan (delayed quote '+esc(f.intraday[1]||'')+')</span><span><span class="sw" style="background:#f0c169"></span>MA20</span><span><span class="sw" style="background:#b18cff"></span>MA50 / options walls</span><span><span class="sw" style="background:#ff6b6b"></span>Market (delayed)</span><span>Right-edge labels: every live-fan level at day 10, spaced apart with leader lines to each level\u2019s true price — no label overlaps another · exp MA20 / exp MA50 are flat zero-drift extensions of the last trailing values, labeled \u201cexp\u201d — never predictions · IV band uses chain IV '+fmt(f.iv_chain_iv,2)+'% × √(10/252)</span></div>'+
     '<div class="stamp">Settle fan from '+g.history.length+' daily settles through '+fmtDate(f.settle_date)+' (σ = st.dev of the last 30 daily changes) · live fan re-anchored on the delayed quote '+esc(f.intraday[1])+'</div></div>';
