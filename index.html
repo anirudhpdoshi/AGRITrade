@@ -713,6 +713,27 @@ html[data-theme="light"] .zoom-ov{backdrop-filter:none}
 html:not([data-theme="light"]) .theme-sw .ts-d,html[data-theme="light"] .theme-sw .ts-l{background:#1a2a42;color:#fff}
 .theme-sw:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 @media (max-width:700px){.theme-sw{position:static;float:right;margin:0 0 6px 8px}.theme-sw span{padding:3px 7px;font-size:11px}}
+
+/* ---- Brazil · CONAB / World · USDA ---- */
+.ggtg{flex-wrap:wrap}
+.ggstamp{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:#8a97ab;margin:2px 0 10px;line-height:1.6}.ggstamp a{color:var(--cyan)}.ggstamp .warn{color:#e3b341;font-weight:500}
+.ggtag{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:6px;border:1px solid}
+.ggtag.est{color:#e8b93d;border-color:#6e5a2a}.ggtag.fc{color:#c9a3ff;border-color:#4e3a72}.ggtag.obs{color:#5fd598;border-color:#2b6b4c}.ggtag.st{color:#ff9d97;border-color:#7a3a36}
+svg.ggmap{width:100%;height:auto;display:block;cursor:default}svg.ggmap path.ggc{cursor:pointer}svg.ggmap path.ggc:hover{stroke:#fff;stroke-width:1}
+.gglegend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11px;color:var(--muted);margin-top:6px}.gglegend i{display:inline-block;width:14px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}.gglegend em{margin-left:auto;color:var(--faint);font-style:normal}
+.ggk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:10px}
+.ggkk{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 11px;min-width:0}.ggkk .l{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+.ggkk .v{font-family:"IBM Plex Mono",monospace;font-size:18px;font-weight:600;margin:2px 0}.ggkk .s{font-size:11.5px;color:var(--muted)}
+table.ggt{width:100%;border-collapse:collapse;font-size:12.5px;margin:4px 0}table.ggt th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);text-align:right;padding:5px 6px;border-bottom:1px solid var(--line);font-weight:600}
+table.ggt td{padding:5px 6px;border-bottom:1px solid #18243a;text-align:right;font-family:"IBM Plex Mono",monospace;white-space:nowrap}table.ggt th:first-child,table.ggt td:first-child{text-align:left;font-family:inherit}
+table.ggt td small{color:var(--faint)}tr.ggrow{cursor:pointer}tr.ggrow:hover td{background:#14213a}
+.ggbar{display:inline-block;height:8px;border-radius:4px;background:#e8b93d;vertical-align:middle;margin-right:6px}.ggbar.bx{background:#38b6c9}
+.ggf{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--faint);border:1px solid var(--line);border-radius:3px;padding:0 3px}
+.ggcols{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
+.gghist{font-size:12px}.gghist b{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin:6px 0}
+.ghr{display:grid;grid-template-columns:62px 1fr 56px;gap:8px;align-items:center;margin:3px 0;font-family:"IBM Plex Mono",monospace;font-size:11px}.ghr i{display:block;height:9px;border-radius:3px;background:#e8b93d}.ghr em{font-style:normal;text-align:right;color:var(--muted)}
+@media (max-width:900px){.ggk{grid-template-columns:1fr 1fr}.ggcols{grid-template-columns:1fr}}
+@media (max-width:760px){table.ggt{display:table!important;font-size:11.5px}table.ggt tr{display:table-row!important}table.ggt th,table.ggt td{display:table-cell!important;padding:4px 3px}table.ggt td::before{content:none!important}.tile:has(table.ggt){overflow-x:auto}}
 </style>
 </head>
 <body class="locked">
@@ -3270,10 +3291,10 @@ function renderGrain(key){
     '<div class="stamp">Managed-money net, trailing '+g.cftc.length+' weekly reports \u00b7 CFTC disaggregated futures-only \u00b7 '+(DATA.meta.cftc_direct?esc(DATA.meta.cftc_direct):'auto-refreshed')+'</div></div>';
   OV+=askTileHTML(key);
   var st=dstate(key), geo=st.fgeo||'us';
-  if(geo!=='us'){ caState(key).ca_geo=(geo==='on'?'Ontario':'Canada'); }
+  if(geo==='ca'||geo==='on'){ caState(key).ca_geo=(geo==='on'?'Ontario':'Canada'); }
   var gb=function(v,l){ return '<button data-dash="'+key+'" data-k="fgeo" data-v="'+v+'" aria-pressed="'+(geo===v)+'">'+l+'</button>'; };
-  var FH='<div class="tile wide geo-head"><div class="tile-head"><h2>'+meta.name+' fundamentals <span class="h2note">— pick a geography</span></h2><span class="toggle" role="group">'+gb('us',flag('us',11)+' US · USDA / WASDE')+gb('ca',flag('ca',11)+' CANADA · STATCAN')+gb('on',flag('ca',11)+' ONTARIO')+'</span></div></div>';
-  FU=FH+cropCompareHTML(key)+(geo==='us'?FU:canadaTileHTML(key,true)+canadaChartsHTML(key)+caCalendarHTML());
+  var FH='<div class="tile wide geo-head"><div class="tile-head"><h2>'+meta.name+' fundamentals <span class="h2note">— pick a geography</span></h2><span class="toggle" role="group">'+gb('us',flag('us',11)+' US · USDA / WASDE')+gb('ca',flag('ca',11)+' CANADA · STATCAN')+gb('on',flag('ca',11)+' ONTARIO')+gb('br',(window.WORLD&&WORLD.flag?WORLD.flag('br',11):'')+' BRAZIL \u00b7 CONAB')+gb('world',(window.WORLD&&WORLD.flag?WORLD.flag('xx',11):'')+' WORLD \u00b7 USDA')+'</span></div></div>';
+  FU=(geo==='br'||geo==='world')?FH+(window.GG?GG.html(key,geo):'<div class="tile wide"><p class="note">Loading global grain data\u2026</p></div>'):FH+cropCompareHTML(key)+(geo==='us'?FU:canadaTileHTML(key,true)+canadaChartsHTML(key)+caCalendarHTML());
   html+=subWrap(key,'overview',OV)+subWrap(key,'deriv',DV)+subWrap(key,'fund',FU)+subWrap(key,'inputs',inputsHTML(key));
   html+='</div><aside class="rail">'+grainAlertsLiveHTML(key)+grainCalendarHTML(key)+newsRailHTML(NEWS[key], key)+'</aside></div>';
   document.getElementById('panel-'+key).innerHTML=html;
@@ -3744,7 +3765,7 @@ var SECG={
   grain:{
     overview:[['snap','Snapshot & KPIs',/kpi-strip|dash-head/],['fan','Price & σ fan',/σ fan/],['insight','Insight',/\bInsight\b/],['ask','Ask Claude',/ask-tile/]],
     deriv:[['cockpit','Derivatives cockpit',/kpi-strip/],['pos','Positioning KPIs',/poskpi|ckwrap/],['cftc','CFTC managed money',/cftc_grains/],['opt','Options data',/Options positioning|Open interest by strike|Open-interest change/],['vol','Volatility & skew',/Volatility|IV skew/],['carry','Carry & roll',/Curve & calendar|Futures roll/]],
-    fund:[['cmp','Crop-year comparison',/Crop-year comparison/],['sd','Supply & demand (WASDE)',/supply & demand/i],['dest','Export destinations',/Export destinations/i],['exp','Export sales',/Export Sales/i],['cal','Agri calendar',/agri calendar/i],['caprod','Production & farm prices',/production by crop year|farm price/i],['ca','Canada / Ontario stats',/Canada|Ontario/]],
+    fund:[['wmap','World map',/production map/i],['wdet','Country detail',/ detail /],['wprod','Top producers',/Top producers/],['wexp','Top exporters',/Top exporters/],['brsurvey','CONAB survey',/CONAB crop survey/],['brsd','Brazil supply & demand',/Brazil (soybean )?supply/i],['brvs','CONAB vs USDA',/CONAB vs USDA/],['brexp','Brazil exports',/exports \u2014 actual|exports — actual/],['brl','USD/BRL',/USD\/BRL/],['cmp','Crop-year comparison',/Crop-year comparison/],['sd','Supply & demand (WASDE)',/supply & demand/i],['dest','Export destinations',/Export destinations/i],['exp','Export sales',/Export Sales/i],['cal','Agri calendar',/agri calendar/i],['caprod','Production & farm prices',/production by crop year|farm price/i],['ca','Canada / Ontario stats',/Canada|Ontario/]],
     inputs:[['cost','Input cost summary',/input costs/i],['paths','Price paths & events',/price paths/i]]
   },
   fx:{
@@ -3944,6 +3965,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var m=document.createElement("script");m.src="motion.js?v="+Date.now();document.body.appendChild(m);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="fwd.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="world-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
+<script>(function(){var f=document.createElement("script");f.src="gg-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var s=document.createElement("script");s.src="live.js?v="+Date.now();document.body.appendChild(s);})();</script>
 </body>
 </html>

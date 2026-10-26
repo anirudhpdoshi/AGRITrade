@@ -35,6 +35,17 @@
     au: ["Australia", "0 0 60 30", '<rect width="60" height="30" fill="#012169"/><g transform="scale(.5)">' + UJ + '</g><g fill="#fff">' + star(15, 23, 3) + star(45, 24, 1.6) + star(39, 13, 1.6) + star(45, 6, 1.6) + star(51, 11, 1.6) + "</g>"],
     nz: ["New Zealand", "0 0 60 30", '<rect width="60" height="30" fill="#012169"/><g transform="scale(.5)">' + UJ + '</g><g fill="#C8102E" stroke="#fff" stroke-width=".6">' + star(45, 25, 2.2) + star(39, 13, 2) + star(45, 6, 1.8) + star(51, 12, 1.8) + "</g>"],
     ch: ["Switzerland", "0 0 20 20", '<rect width="20" height="20" fill="#DA291C"/><path d="M8.3,4h3.4v4.3H16v3.4h-4.3V16H8.3v-4.3H4V8.3h4.3z" fill="#fff"/>'],
+    br: ["Brazil", "0 0 30 21", '<rect width="30" height="21" fill="#009C3B"/><path d="M15,2.5 27.5,10.5 15,18.5 2.5,10.5Z" fill="#FFDF00"/><circle cx="15" cy="10.5" r="4.6" fill="#002776"/><path d="M10.6,9.6c3-.6 6.2-.2 8.8,1.4" stroke="#fff" stroke-width=".7" fill="none"/>'],
+    ar: ["Argentina", "0 0 30 20", '<rect width="30" height="20" fill="#74ACDF"/><rect y="6.67" width="30" height="6.67" fill="#fff"/><circle cx="15" cy="10" r="1.9" fill="#F6B40E"/>'],
+    ru: ["Russia", "0 0 9 6", '<rect width="9" height="2" fill="#fff"/><rect y="2" width="9" height="2" fill="#0039A6"/><rect y="4" width="9" height="2" fill="#D52B1E"/>'],
+    ua: ["Ukraine", "0 0 3 2", '<rect width="3" height="1" fill="#0057B7"/><rect y="1" width="3" height="1" fill="#FFD700"/>'],
+    py: ["Paraguay", "0 0 30 20", '<rect width="30" height="6.67" fill="#D52B1E"/><rect y="6.67" width="30" height="6.67" fill="#fff"/><rect y="13.33" width="30" height="6.67" fill="#0038A8"/>'],
+    za: ["South Africa", "0 0 30 20", '<rect width="30" height="20" fill="#fff"/><rect width="30" height="10" fill="#E03C31"/><rect y="10" width="30" height="10" fill="#001489"/><path d="M0,0 13,10 0,20Z" fill="#000"/><path d="M0,0 13,10 0,20" stroke="#FFB81C" stroke-width="2" fill="none"/><path d="M0,0 13,10 30,10M0,20 13,10" stroke="#007749" stroke-width="3" fill="none"/>'],
+    kz: ["Kazakhstan", "0 0 30 15", '<rect width="30" height="15" fill="#00AFCA"/><circle cx="15" cy="7.5" r="3" fill="#FEC50C"/>'],
+    mx: ["Mexico", "0 0 3 2", '<rect width="1" height="2" fill="#006847"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#CE1126"/><circle cx="1.5" cy="1" r=".22" fill="#8C5A2B"/>'],
+    uy: ["Uruguay", "0 0 27 18", '<rect width="27" height="18" fill="#fff"/><g fill="#0038A8"><rect y="2" width="27" height="2"/><rect y="6" width="27" height="2"/><rect y="10" width="27" height="2"/><rect y="14" width="27" height="2"/></g><rect width="10" height="10" fill="#fff"/><circle cx="5" cy="5" r="2.6" fill="#FCD116"/>'],
+    pk: ["Pakistan", "0 0 30 20", '<rect width="30" height="20" fill="#01411C"/><rect width="7.5" height="20" fill="#fff"/><circle cx="18.5" cy="10" r="5" fill="#fff"/><circle cx="20" cy="9" r="4.3" fill="#01411C"/>'],
+    tr: ["Türkiye", "0 0 30 20", '<rect width="30" height="20" fill="#E30A17"/><circle cx="11" cy="10" r="5" fill="#fff"/><circle cx="12.3" cy="10" r="4" fill="#E30A17"/>'],
     xx: ["Global (OTC)", "0 0 20 20", '<circle cx="10" cy="10" r="9" fill="#1a3a5c" stroke="#7fd3e0" stroke-width="1"/><path d="M1,10h18M10,1v18M4,4.5c4,2 8,2 12,0M4,15.5c4,-2 8,-2 12,0M10,1c-5,5 -5,13 0,18M10,1c5,5 5,13 0,18" fill="none" stroke="#7fd3e0" stroke-width=".7"/>']
   };
   function fl(cc, h) {
