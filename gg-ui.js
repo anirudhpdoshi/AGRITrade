@@ -146,12 +146,12 @@
       out += '<div class="stamp">CONAB figures are forecasts for the season shown and are revised in every monthly survey · Brazil’s 2nd-crop (safrinha) corn is planted after soybeans and harvested Jun–Sep</div></div>';
       var SUP = C.supply, SOY = C.supply_soy;
       if (SUP && SUP.length) {
-        out += '<div class="tile"><h2>Brazil supply &amp; demand <span class="h2note">— CONAB balance sheet, 1,000 t</span></h2><div class="ggstamp">' + esc(G.conab.survey) + " · " + tag("forecast") + " for the latest season</div>" +
+        out += '<div class="tile wide"><h2>Brazil supply &amp; demand <span class="h2note">— CONAB balance sheet, 1,000 t</span></h2><div class="ggstamp">' + esc(G.conab.survey) + " · " + tag("forecast") + " for the latest season</div>" +
           '<table class="ggt"><tr><th>Season</th><th>Beg. stocks</th><th>Production</th><th>Imports</th><th>Use</th><th>Exports</th><th>End stocks</th></tr>' +
           SUP.map(function (r) { return "<tr><td>" + esc(r.season) + (r.survey ? " <small>(" + esc(r.survey) + ")</small>" : "") + "</td><td>" + n1(r.beg, 0) + "</td><td><b>" + n1(r.prod, 0) + "</b></td><td>" + n1(r.imp, 0) + "</td><td>" + n1(r.cons, 0) + "</td><td>" + n1(r.exp, 0) + "</td><td>" + n1(r.end, 0) + "</td></tr>"; }).join("") + "</table></div>";
       } else if (SOY) {
         var ks = Object.keys(SOY), seas = ks.length ? Object.keys(SOY[ks[0]]).slice(-4) : [];
-        out += '<div class="tile"><h2>Brazil soybean supply &amp; demand <span class="h2note">— CONAB, 1,000 t</span></h2><div class="ggstamp">' + esc(G.conab.survey) + " · " + tag("forecast") + "</div>" +
+        out += '<div class="tile wide"><h2>Brazil soybean supply &amp; demand <span class="h2note">— CONAB, 1,000 t</span></h2><div class="ggstamp">' + esc(G.conab.survey) + " · " + tag("forecast") + "</div>" +
           '<table class="ggt"><tr><th>Item</th>' + seas.map(function (x) { return "<th>" + esc(x) + "</th>"; }).join("") + "</tr>" +
           ks.slice(0, 9).map(function (r) { return "<tr><td>" + esc(r.charAt(0).toUpperCase() + r.slice(1)) + "</td>" + seas.map(function (x) { return "<td>" + n1(SOY[r][x], 0) + "</td>"; }).join("") + "</tr>"; }).join("") + "</table></div>";
       }
@@ -159,7 +159,7 @@
     /* CONAB vs USDA */
     if (br && C) {
       var T2 = C.total, d = T2.prod[1] - br.cur.prod;
-      out += '<div class="tile"><h2>CONAB vs USDA for Brazil <span class="h2note">— two agencies, shown side by side, never blended</span></h2>' +
+      out += '<div class="tile wide"><h2>CONAB vs USDA for Brazil <span class="h2note">— two agencies, shown side by side, never blended</span></h2>' +
         '<div class="ggstamp">USDA PSD ' + esc(P.my) + " (release " + esc(P.release) + ") · CONAB " + esc(T2.seasons[1]) + " (" + esc(G.conab.survey) + ")</div>" +
         '<table class="ggt"><tr><th></th><th>CONAB</th><th>USDA</th><th>Gap</th></tr><tr><td>Production (Mt)</td><td>' + mt(T2.prod[1]) + "</td><td>" + mt(br.cur.prod) + '</td><td class="' + cl(d) + '">' + (d > 0 ? "+" : "") + mt(d) + "</td></tr>" +
         "<tr><td>Brazil share of world production</td><td>—</td><td>" + n1(br.share_prod) + "%</td><td></td></tr><tr><td>Brazil share of world exports</td><td>—</td><td>" + n1(br.share_exp) + "%</td><td></td></tr></table>" +

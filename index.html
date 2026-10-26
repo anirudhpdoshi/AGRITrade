@@ -3243,7 +3243,7 @@ function grainSubnavHTML(key){
     {id:'overview', label:'Overview', ev:nextOf(all, function(e){ return e.kind==='wasde'||e.kind==='contract'||e.kind==='ca'; })||nextOf(all)},
     {id:'deriv', label:'Derivatives', ev:nextOf(us, function(e){ return e.kind==='contract'||e.kind==='cftc'; })},
     {id:'inputs', label:'Input costs', ev:inputsNextEvent()},
-    {id:'fund', label:'Fundamentals · '+(geo==='us'?'USDA':geo==='on'?'Ontario':'Canada'), ev:geo==='us'?nextOf(us, function(e){ return e.kind==='usda'||e.kind==='wasde'; }):nextOf(ca)}
+    {id:'fund', label:'Fundamentals · '+({us:'USDA',on:'Ontario',ca:'Canada',br:'Brazil',world:'World'}[geo]||'USDA'), ev:(geo==='ca'||geo==='on')?nextOf(ca):nextOf(us, function(e){ return e.kind==='usda'||e.kind==='wasde'; })}
   ], live);
 }
 function renderGrain(key){
