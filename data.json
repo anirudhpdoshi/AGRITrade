@@ -8513,11 +8513,11 @@
     "6M": 4.3
    },
    "fxcross": {
-    "dxy": 101.923,
-    "dxy_chg": 0.111,
-    "eurusd": 1.1191,
-    "usdjpy": 157.39,
-    "usdcad_ref": 1.4014
+    "dxy": 101.93,
+    "dxy_chg": 0.118,
+    "eurusd": 1.1186,
+    "usdjpy": 157.41,
+    "usdcad_ref": 1.4019
    },
    "closes": [
     [
@@ -8596,16 +8596,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 101.98,
-     "chg": -1.29,
-     "pct": -1.25,
+     "last": 101.81,
+     "chg": -1.46,
+     "pct": -1.41,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 110.82,
-     "chg": -5.9,
-     "pct": -5.05,
+     "last": 110.68,
+     "chg": -6.04,
+     "pct": -5.17,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -8617,9 +8617,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 16.51,
+    "value": 16.34,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-26T18:20:00+00:00",
+    "obs_ts": "2026-10-26T18:35:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -10144,10 +10144,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.4018,
+    "mid": 1.4017,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-26T14:30:00-04:00",
+    "ts": "2026-10-26T14:45:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -11177,7 +11177,19 @@
     ],
     [
      "2026-10-26T18:30+00:00",
+     1.40201
+    ],
+    [
+     "2026-10-26T18:35+00:00",
      1.4018
+    ],
+    [
+     "2026-10-26T18:40+00:00",
+     1.4017
+    ],
+    [
+     "2026-10-26T18:45+00:00",
+     1.40204
     ]
    ],
    "fwd_inputs": {
@@ -11218,22 +11230,22 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-26T14:30:22-04:00",
+   "updated_at": "2026-10-26T14:45:24-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-26T14:30:00-04:00",
+    "fx_spot": "2026-10-26T14:45:00-04:00",
     "fx_closes": "2026-10-23T16:30:00-04:00",
     "yields": "2026-10-23T17:00:00-04:00",
     "policy": "2026-10-26T13:45:26-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-20T15:30:00-04:00",
     "cftc_grains": "2026-10-20T15:30:00-04:00",
-    "energy": "2026-10-26T14:20:00-04:00",
-    "crosses": "2026-10-26T14:20:00-04:00",
+    "energy": "2026-10-26T14:35:00-04:00",
+    "crosses": "2026-10-26T14:35:00-04:00",
     "grains_settle": "2026-10-23T14:20:00-04:00",
     "grains_quote": "2026-10-26T14:15:00-04:00",
     "options": "2026-10-26T11:10:58-04:00",
-    "news": "2026-10-26T14:30:22-04:00",
+    "news": "2026-10-26T14:45:24-04:00",
     "calendar": "2026-10-26T13:45:26-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-26T13:30:26-04:00",
@@ -11281,7 +11293,7 @@
      "fx_model"
     ],
     "failed": [],
-    "at": "2026-10-26T14:30:22-04:00"
+    "at": "2026-10-26T14:45:24-04:00"
    },
    "releases_checked": "2026-10-26T12:15:30-04:00",
    "exports_checked": "2026-10-26T09:05:37-04:00",
@@ -11318,7 +11330,7 @@
    },
    "canada_checked": "2026-10-26T09:30:24-04:00",
    "ca_calendar_checked": "2026-10-26T09:05:37-04:00",
-   "canada_watch": "2026-10-26T14:30:22-04:00",
+   "canada_watch": "2026-10-26T14:45:24-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -26649,10 +26661,10 @@
     "https://news.google.com/rss/articles/CBMifEFVX3lxTE1ycTM4Y0xXY195TldJTDB6WU1qYzVSRWlzR3hLcGJSZVRxN094MUFaTTVZYmNlWEpGcS1Ka0RvR3NrVGJpdS03bkYtVHEzT0VtTUlTVXZyZUxBRkZxLWMxYnkwZDJNZ2g1WFk1ZmlpUGhva3FMVEc2UlJKYng?oc=5"
    ],
    [
-    "2026-10-26 16:40 UTC",
+    "2026-10-26 16:41 UTC",
     "ahdb.org.uk",
     "Arable Market Report – 26 October 2026",
-    "https://news.google.com/rss/articles/CBMibkFVX3lxTFBaeHFfcm1RV1dzemNRczhGWWtoaDNJdEFuaGNXSzV2QVBnNFFYc29MbmJvbDlWbWNSbEdDVkRTS0ZMcVRKRFNRWDJDWUtReHdwbk1JNHY0ZVpPeFVONFEybDlJSnBwZnEtNzBsREdB?oc=5"
+    "https://news.google.com/rss/articles/CBMiXEFVX3lxTE8tQ2pzdnpDcGZUN25raXIxVktsLUlUTnhXVGk1ZUVBYjlpQ0pOMGt2dDEtX2hlQ3NHRGs0Z09wUFdMRFAxT21fQkN3ckFsSVZ6ZzZzMnJTVTdQc0Fp?oc=5"
    ],
    [
     "2026-10-26 16:21 UTC",
@@ -26686,12 +26698,6 @@
    ]
   ],
   "soybeans": [
-   [
-    "2026-10-26 17:06 UTC",
-    "www.americanagnetwork.com",
-    "Soybean Exports Stay Strong as Corn Inspections Hit a Three-Year Low",
-    "https://news.google.com/rss/articles/CBMitAFBVV95cUxPVUpRVVZaUGp1RHRUVlB3V1dYS1UyaFh0YnR3TnZKNFJZcDFxemJFRlc5dl9LdjFBeTZ4YWZ4N3k0TjFSVEp4NEljaUxSaDVKS3BYclRXRlN0RDQ0eG1FdlRIb1NVU0d0cjh6RHBTWDMxRENJUVhRUG84NHdHeXNnYXpkZ2FSV3ZBN0RvazBvQWVLeFN6RWFkRUt0WTJlS3FscXRaaVlpUE81VGNnU2hpbHRqRnM?oc=5"
-   ],
    [
     "2026-10-26 15:30 UTC",
     "www.bloomberg.com",
@@ -26733,6 +26739,12 @@
     "brownfieldagnews.com",
     "Short U.S.-China trade extension keeps ag markets waiting",
     "https://news.google.com/rss/articles/CBMilgFBVV95cUxPc2lEazlMWnRSM1lrbkFXdDNWVmpycmF0dzFKSHd0Wng3RnY2VFJReU1xSW5EN1p4anJaU1FiQlE3NGhZaTJBX0NESjZCZ1gza1NXMlBockVmYUZoSC00T0k0dmlJb0p5enFSakxKXzNKU1F4dkhfV3NsSEhqSldCb3RXeFdFZjl1bmlhbEMyOFZsQmw3Q2c?oc=5"
+   ],
+   [
+    "2026-10-26 09:26 UTC",
+    "www.global-agriculture.com",
+    "China’s Soybean Buying Picks Up, But a Tariff Wall Still Blocks Full Trade Recovery",
+    "https://news.google.com/rss/articles/CBMi0wFBVV95cUxOX2JQMXJrNjI5bnctS1RQVDUtUmV6X0VrXzExVUc3ZnhaWmNOMWRISGhSQ1dVSXFaalE1amljcnQ3ZjFLQ2NuQmJCcGphRHN6cm13TlVwOWJaQWJ3TXJzQ0FzU3hCUHJZWlF2RTB6QmVYTDVVRHlBN3I1bi1SMmNIaXVPU2h2cXhzc3Y2UTluQ0dsbjB6V3BOcjhubW9YZW9VQ1N2Ym5LTUpXcTl5WW00LWFKUExFM0o5WEplMEZERXBQRG5oSUUzcW9ObVFDb1R0cVg4?oc=5"
    ]
   ],
   "fx": [
@@ -26749,6 +26761,12 @@
     "https://news.google.com/rss/articles/CBMi4wFBVV95cUxQQTIzVWg2YXpRcUdHd0NtUEtiQWE4VXJIeDJtcG9wYm1jaVFwZF81T0hmX1JUbXFOUE01NzdneDZHMzQxb0l6Rk9iOE9XVDBxWjZPX0NJemJsN2VFdEZrNG0ybG5xY1RZR2Eybm51QzJvWm5uVHBxVHctT3duN2NNMmROcmhPVlFGbGM5a3VyTHU5X1VuZVV2RVBYc2VtZGVKOHZocjBmTk8ybGNfbGNzdWd3YUNfVDM2NUtCYnBGRXlGaTVXYUZraVo2VlhpNTBDdDJYdTlwTjczeXpSQlRDUFM1WQ?oc=5"
    ],
    [
+    "2026-10-26 17:27 UTC",
+    "www.westernstandard.news",
+    "Economists factoring in Bank of Canada 50% rate hike by year-end",
+    "https://news.google.com/rss/articles/CBMisAFBVV95cUxQVXhHX0RoaUZlSjA3TWhzenpsaXRuSV81YzlQRUNOT1diOHFTclVDbDlVUklpV0NnQ1FXb3g3ZjZONjRsLWRxdjdnZUh2WWhQOFZnbG5xa3pLSHJUV3NJLVJ0b0E4YmV2N05mWUxZQV9yN1lHQldWVjNrRGVYbWxteFZwZnJhWnR5SlR2LW5YSXc4NjNsaUNveHZiVnpRRGRJcmNaVWo0ZHFoYW85WlE5Z9IBvgFBVV95cUxOTjFsYmc0ZF8tTXVhTk5OT3ZQMlNIWDgxR2xNR1ZZWE83UFFEMGstbHNlWVRHOWl1NDRnTFBhbC1fZlFkUS1iMjVBWENBNU5rNENTeVFQZjJZU2J5c052MjRyYUhyQ1VydVM4VFRud0ozWWdUNWlwR0wzOTRCMzlBbWl3NEllUUdoY1FCYUFJVFVsMDlKOXpWTHRJampGYVNhWTlQcGhxa3VleWYxYWlmTzdCSHFMRTFRVzVzazdn?oc=5"
+   ],
+   [
     "2026-10-26 16:43 UTC",
     "www.theglobeandmail.com",
     "Market Factors: Analyst sees threat to Canadian bank oligopoly",
@@ -26761,16 +26779,10 @@
     "https://news.google.com/rss/articles/CBMiwgFBVV95cUxQY1hrUDhqTk53R2pYcDZuOHN0MDNSeVdPUklvT0J0Vy1PUGktN2hUcU9peUx6cmVGYkhOWi1ra3VaT2JZVGxmMnhOYWw4SHNYZV9RanNqVXVDRGJjcEZIZEkxLXpZR05SRjNiTms5NEpCeUQxa19BbWFXRUp3RWhtSnNfUUZWUVEzTjhQT0N6WVFrRk9IcHgtOHpEQmt1LUJwTktiV3UzRUNJN0tEUmlGVl9BUjY0NG81YkE1c0tJZm43dw?oc=5"
    ],
    [
-    "2026-10-26 15:06 UTC",
-    "www.manitobacooperator.ca",
+    "2026-10-26 14:42 UTC",
+    "www.producer.com",
     "Canadian Dollar and Business Outlook: Loonie retreats with crude oil",
-    "https://news.google.com/rss/articles/CBMitwFBVV95cUxPOFhWNXZHTHFzeDFHbm5wSVdsN2RwamFZWXMyaDRJcnZkZTY5eDZQT0hlNHpGZTF0ZTZjZUlxVkVtX1E3ZTZxdmoxRklvemM3TzVfdVltb0RQVTFMbnR4T2lFWVB3Y3JoejRsdDI4ZkQ0bnpVYzRTOUJLbzV2SHVacTNJZ01nVEVfb0RsOHZPZUxRM2FUSG8xbG5UTGdmcE1WbTBHUUtqX3ZJYzk0dDZfVkFEb1NpUnM?oc=5"
-   ],
-   [
-    "2026-10-26 14:30 UTC",
-    "www.tmgm.com",
-    "Canadian Dollar eases despite expectations of a BoC rate hike",
-    "https://news.google.com/rss/articles/CBMixgFBVV95cUxOdkdwMzBtVjVTYlN4WmJIZVFGOHNSX1VhTUVfSWRuOGpuWENVNXdtZGtpaVVqVTVVWDE4aFYxa3lFU3AtU2hIbm1CZ0hlR3hpMFRtcExVN0NOY3pOZ3VqLVMzTWNOd1A1NkJwei1aV25OeEptYk1yMTZJbTExMW9CWEFoaHN2MnRwa3oxNkt3ekhSQ0RnT1Q0NFhMekl5NmRXNm05MmFmWEFhYVZ6QzVfY3hYbUxnaDV6TTZycTRmSDBmR3diZUE?oc=5"
+    "https://news.google.com/rss/articles/CBMiqwFBVV95cUxNYkE0UmpRSnEtUHh4RVdFd0RnSk1IOEl1NEdQUzlubUlkaGEzSTRUZndCcFFsazVaV0xSaV9VN2JKNHJ2OUdjb3FhXzJ6aFExWjNaUzNMSGJmZFNYWlhBSkNiRWIxRjlES3lQNnBOSVJaQ3V3ZkExRk9yOWJFcDhtMzNlY0tUN1JPYXJCS0QwcVFJM19uc3BlUUc2Zy1jYUI5Mm9kRWgzVy1URWc?oc=5"
    ],
    [
     "2026-10-26 14:26 UTC",
@@ -26787,6 +26799,12 @@
   ],
   "geo": [
    [
+    "2026-10-26 18:41 UTC",
+    "news.az",
+    "Russia considers using Ochamchire naval base in Abkhazia for grain shipments",
+    "https://news.google.com/rss/articles/CBMingFBVV95cUxQNXJjY1NndEFnTkxnc2k2eDdMRGgxR09uNlVHSFRVUzE3VWhKRTJKYlFaeUJJLTlOZnFrVnNaZnRZZFIwM1pvTmdnZTNNMGZLUWJWT1dSSl9DaDJobDJJeGRZaU1uckxlYWRJWmg0dXFHVnd4dmRTSEREM1g2T0pyNHB1WXhQeGxHSzJvd05TUmYtcmFXbW02VTRoaVdSUQ?oc=5"
+   ],
+   [
     "2026-10-26 18:24 UTC",
     "macleans.ca",
     "The Trade War Will Hurt the U.S. More Than Canada",
@@ -26799,10 +26817,16 @@
     "https://news.google.com/rss/articles/CBMi5AFBVV95cUxNbl9Cc0FZY3pLbHM4ZEtwQXdESzZ6MkhEZW1XTmpQOC1DcGxTWXhGXzQ4QWk0SWR0N3JSc1M3QWV3WXBRMm9oclNRQUxrbXhyek80WWp1N1hyUmxKWXZyWktzQ00yY1h0X01NX0trd3h1UVdIN1dqdVE4Tk96ZWtZMlBKZkFCdGdFdzA1TVE5bFRtdC1QeWZkbVg0eVJGM1RXc21MT3N4cFU1UGZqR0FXSVpLa1VNb0g2SkJ1UXlldEhVbHdTaXVOaVg0YnNTN083ZEszYmJ4c2dQUXhFZ1cydVBiVnE?oc=5"
    ],
    [
-    "2026-10-26 17:57 UTC",
-    "militarnyi.com",
-    "Russia Plans to Export Grain Through Ochamchire Naval Base in Abkhazia",
-    "https://news.google.com/rss/articles/CBMigAFBVV95cUxQa1JoOGNYWGhQbUR2dmYtY3ZRRlJ3LUd0YmxjaXRZUGFYQ25QUGgtcm4zR09JVXNmaF9iMi1NSkVIVkFFZDVKWE1LeVduNjZiSTMyMDc0ZXRNM2hBWWNtNnQyTVYwOFVqeVFSd05ZeTFaY1RaU0JsZXpTemtOUjltVA?oc=5"
+    "2026-10-26 17:23 UTC",
+    "www.foodmanufacturing.com",
+    "Trump, Seeking to Help Maine Sen. Susan Collins, Exempts Some Canadian Imports From His 50% Tariffs",
+    "https://news.google.com/rss/articles/CBMi7AFBVV95cUxNOVdsUjQtRzJnVlpXaldFekFIT3hNMTNMMGFHT0g0VGtOX0RvVThGQzVtaXFiOWt6YUxiUjdEUEhoUVV6WUhmNnlNSXdTd0xfS0N3VG9XQzhEOUZNcTRVRkotcXhWV0lrM1FtcGM2M1FPRms1TFlKSVNGQy1scjlfTXp4S3RVQjlpbUljTndwY1MwZ1B0YkZkcGFPZXdOcHVORkZabzNQY0VBY3VLQ1FIMW5adVV5eFZVQWRueUZnTUxDd09RVTdxbjFPUkZzakhVV3EySnVwWENJYkZJMFl5NXBoZFN0Q0ZzaEhyMA?oc=5"
+   ],
+   [
+    "2026-10-26 16:17 UTC",
+    "www.dailysabah.com",
+    "Russia reviewing proposals to ensure Black Sea grain shipping: Official | Daily Sabah",
+    "https://news.google.com/rss/articles/CBMitAFBVV95cUxNbkNuTDM5T2lxdGU0Q1F6cE13VDdLVDZrTU5yamNxOWx3aE94VnNkR3ljQWttRS14aGVlREZfSVpZUjZOV3ZRZjhVQjZCRlZtOUprdTd5dndPUFhnX1lSVFBDcHNNVWU2REJ2MUNhWU5ZVGRwY3NTem1mWlRIUmxqV2g1cmt4N3F3VU5qSllGcEY5S3hMaVpVZk5LQnQybENCd0xOWV9sQXpwR2tadkFidC1NdnrSAbQBQVVfeXFMTW5DbkwzOU9pcXRlNENRenBNd1Q3S1Q2a01OcmpjcTlsd2hPeFZzZEd5Y0FrbUUteGhlZURGX0laWVI2Tld2UWY4VUI2QkZWbTlKa3U3eXZ3T1BYZ19ZUlRQQ3BzTVVlNkRCdjFDYVlOWVRkcGNzU3ptZlpUSFJsaldoNXJreDdxd1VOakpZRnBGOUt4TGlaVWZOS0J0MmxDQndMTllfbEF6cEdrWnZBYnQtTXZ6?oc=5"
    ],
    [
     "2026-10-26 15:12 UTC",
@@ -26821,18 +26845,6 @@
     "www.businessupturn.com",
     "DP World’s Churchill Port Deal Could Open a New Canadian Export Corridor to Europe and the Middle East",
     "https://news.google.com/rss/articles/CBMi7wFBVV95cUxQYXVSc2hqUUhOVm5oNUFLMHVQOUtBbDctbEMxX0NRbnNaMC1YYmhPa1dtc3o4cTZrUHBxdks1cHBvaEwtdkJBUFE4Q2FvMmw5ampRSS1URi1kTlZzb2E2N3BIRTIwcndIdE12ZmtWV2xYMEV6RUcyU0o0bWVnNi1yUHR1RW0wcTJrNzYtU05acjdxMGNsWjRjeE5kTVdEOHRrVDhTdnJseVVRS1ZhMkN6QWktdUxWeTJEZkt6b21FeTJUSlc3djJJcldMcXJCdHNwcTNQaGNGUWxPZmpMVVNhM1JwT1pDZGd2dGpKUExWYw?oc=5"
-   ],
-   [
-    "2026-10-26 14:32 UTC",
-    "www.ctvnews.ca",
-    "Trump says he expects trade war with Canada to end 'pretty soon'",
-    "https://news.google.com/rss/articles/CBMitgFBVV95cUxPdndEd085NVl6ODh6Mmp1NFV4Qk1qN2kyWjlkcEhMUmtkcnN6ZXJpdV9VLUpzcXVOeWc3VWhQdzRGR053bm5OanVNLVRmSlJDeUdjYVNqYWNLb2Jsa2RmMENKV0RzemJwcFA2NHZrN2FqdDRXeUUySlR2eTE4YXNNbEtkWTdPUlpwR0FSU3RGbE5DZ0tzckRCTHBnY18tamVLTTkwZ0RKcWJTampaV21OV29uTjhfdw?oc=5"
-   ],
-   [
-    "2026-10-26 14:20 UTC",
-    "www.businessupturn.com",
-    "Russia Reports Drone Strikes on Two Ukraine-Bound Cargo Ships as Black Sea Shipping Risks Intensify",
-    "https://news.google.com/rss/articles/CBMi5gFBVV95cUxNdHVycWlpRUxHQWI5T0tITjJ1eEMzalNKcUQ3dm5pQXFmNUtLbTM0MFN5TlN0dl9CQ0Z1WElPR0poMGF1ZVZxRHM5TzFpV2xBcnU5dnBkZWsxT3VCalZrUjFTMmJGeXNQdjJiZnpTTzJ2Rmp5TVozQ1FjTV9JdzRpVHh5eGNKREU1ZFF4dFF5ZkpjX3hhWVZQYWlnZkVCMHFuNVNfMWV6VnlhNzg1elRvTmpkSTZnMUV6OWFZdjUyM0NXUzQtWHBPSVYxM2JzYlZDM3BZcU5jendvd0hYZEJ1Y2YxV0UtZw?oc=5"
    ]
   ],
   "macro": [
