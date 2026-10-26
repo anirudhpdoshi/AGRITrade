@@ -2,7 +2,7 @@ name: Coverage check (Brazil / World fundamentals)
 on:
   push:
     branches: [coverage-gg]
-    paths: ["scripts/coverage_gg2.py"]
+    paths: ["scripts/coverage_gg3.py"]
 permissions:
   contents: write
 jobs:
@@ -17,7 +17,7 @@ jobs:
       - name: Probe sources (read-only)
         env:
           FAS_API_KEY: ${{ secrets.FAS_API_KEY }}
-        run: python scripts/coverage_gg2.py
+        run: python scripts/coverage_gg3.py
       - name: Save results to this branch
         run: |
           git config user.name "coverage-bot"; git config user.email "coverage-bot@users.noreply.github.com"
