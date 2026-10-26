@@ -429,56 +429,76 @@ def esr_block(S):
                             dest[nm] = dest.get(nm, 0) + (r.get("accumulatedExports") or 0) / 1000.0
         totd = sum(dest.values())
         top = sorted(dest.items(), key=lambda t: -t[1])[:8]
-        out["crops"][crop] = {"my": season_label(my), "week": latest, "kt": my_ytd.get(my), "kt_prev": my_ytd.get(my - 1),
+        out["crops"][crop] = {"my": season_label(my - 1), "week": latest, "partial_month": latest[:7] if latest else None, "kt": my_ytd.get(my), "kt_prev": my_ytd.get(my - 1),
                               "yoy": pct_change(my_ytd.get(my), my_ytd.get(my - 1)), "monthly_kt": {k: round(v, 1) for k, v in sorted(mon.items())},
                               "top": [{"country": k, "kt": round(v, 1), "share": share(v, totd)} for k, v in top]}
     return out
 
 
-STATCAN_EXP = "32100008"
+CGC_CSV = "https://www.canada.ca/content/dam/cgc-ccg/documents/statistiques-statistics/exports-grain-licensed-facilities/exports-grain-licensed-facilities.csv"
 
 
 def canada_exports_block(S):
-    """Canada monthly grain exports by destination (Statistics Canada / Canadian Grain Commission table 32-10-0008)."""
-    import csv, zipfile
-    meta = get(S, f"https://www150.statcan.gc.ca/t1/wds/rest/getFullTableDownloadCSV/{STATCAN_EXP}/en").json()
-    url = meta.get("object")
-    z = zipfile.ZipFile(io.BytesIO(get(S, url, timeout=180).content))
-    name = [n for n in z.namelist() if n.endswith(".csv") and "MetaData" not in n][0]
-    rd = csv.DictReader(io.TextIOWrapper(z.open(name), encoding="utf-8-sig"))
-    cols = rd.fieldnames
-    ccol = next((c for c in cols if re.search(r"grain|commodit|type", c, re.I) and c not in ("REF_DATE", "GEO")), None)
-    dcol = next((c for c in cols if re.search(r"destination|countr", c, re.I)), None)
-    want = {"corn": re.compile(r"^corn", re.I), "soybeans": re.compile(r"^soybean", re.I), "wheat": re.compile(r"^wheat(,? (total|all)|$| excluding durum)?", re.I)}
-    mon = {k: {} for k in want}
-    dest = {k: {} for k in want}
-    labels = set()
-    for r in rd:
-        lab = (r.get(ccol) or "").strip()
-        labels.add(lab)
-        for crop, rx in want.items():
-            if not rx.search(lab) or (crop == "wheat" and "durum" in lab.lower() and "exclud" not in lab.lower()):
+    """Canada monthly grain exports by destination - Canadian Grain Commission open data (exports from licensed
+    facilities, Aug 2014 to date, monthly). Column names are detected, and the header is kept for audit."""
+    import csv
+    raw = get(S, CGC_CSV, timeout=120).content.decode("utf-8-sig", errors="replace")
+    rd = csv.DictReader(io.StringIO(raw))
+    cols = rd.fieldnames or []
+    rows = list(rd)
+    def col(rx, avoid=()):
+        return next((c for c in cols if re.search(rx, c, re.I) and c not in avoid), None)
+    gcol = col(r"grain|commodit")
+    dcol = col(r"destination|country|region")
+    vcol = col(r"tonne|volume|value|quantity|ktonne")
+    ycol = col(r"crop ?year")
+    mcol = col(r"month|period|date", (ycol,))
+    out = {"source": "Canadian Grain Commission — exports of Canadian grain from licensed facilities (open data, monthly)", "status": "observed",
+           "columns": cols, "sample": rows[:3], "crops": {}}
+    if not (gcol and dcol and vcol and mcol):
+        raise RuntimeError("CGC CSV layout not recognised: " + ", ".join(cols))
+    labels = sorted({(r.get(gcol) or "").strip() for r in rows})
+    out["grain_labels"] = labels[:60]
+    unit = (vcol or "").lower()
+    mult = 1000.0 if "000" in unit or "kilotonne" in unit or "ktonne" in unit else 1.0
+    want = {"corn": re.compile(r"^corn$", re.I), "soybeans": re.compile(r"^soybeans?$", re.I),
+            "wheat": re.compile(r"^(wheat|cw wheat|wheat \(excl|wheat, excl|wheat excluding)", re.I)}
+    MON = {m: i + 1 for i, m in enumerate(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"])}
+    def ym(r):
+        v = (r.get(mcol) or "").strip()
+        m = re.match(r"^(\d{4})-(\d{2})", v)
+        if m:
+            return f"{m.group(1)}-{m.group(2)}"
+        mo = MON.get(v[:3].lower())
+        cy = (r.get(ycol) or "").strip() if ycol else ""
+        mm = re.match(r"^(\d{4})", cy)
+        if mo and mm:
+            y = int(mm.group(1)) + (1 if mo < 8 else 0)          # crop year Aug-Jul
+            return f"{y}-{mo:02d}"
+        return None
+    for crop, rx in want.items():
+        mon, dest = {}, {}
+        for r in rows:
+            g = (r.get(gcol) or "").strip()
+            if not rx.search(g) or (crop == "wheat" and "durum" in g.lower()):
                 continue
-            v = num(r.get("VALUE"))
-            if v is None:
+            k = ym(r)
+            v = num(r.get(vcol))
+            if not k or v is None:
                 continue
             d = (r.get(dcol) or "").strip()
-            ym = r["REF_DATE"][:7]
-            if re.match(r"^(total|all)", d, re.I) or d.lower().startswith("total"):
-                mon[crop][ym] = mon[crop].get(ym, 0) + v
-            else:
-                dest[crop].setdefault(ym, {})[d] = dest[crop].get(ym, {}).get(d, 0) + v
-    out = {"source": "Statistics Canada / Canadian Grain Commission — exports of grains by final destination (table 32-10-0008)", "status": "observed",
-           "columns": cols[:12], "commodity_labels": sorted(labels)[:40], "crops": {}}
-    for crop in want:
-        m = dict(sorted(mon[crop].items())[-30:])
-        months = sorted(dest[crop])[-12:]
+            if re.match(r"^(total|all)", d, re.I):
+                continue
+            mon[k] = mon.get(k, 0) + v * mult
+            dest.setdefault(k, {})[d] = dest.get(k, {}).get(d, 0) + v * mult
+        months = sorted(dest)[-12:]
         agg = {}
-        for ym in months:
-            for d, v in dest[crop][ym].items():
+        for k in months:
+            for d, v in dest[k].items():
                 agg[d] = agg.get(d, 0) + v
         tot = sum(agg.values())
-        out["crops"][crop] = {"unit": "tonnes", "monthly_t": m, "dest_window": f"{months[0]}..{months[-1]}" if months else None,
+        out["crops"][crop] = {"unit": "tonnes", "monthly_t": dict(sorted(mon.items())[-30:]),
+                              "dest_window": f"{months[0]}..{months[-1]}" if months else None,
                               "top": [{"country": k, "t": round(v), "share": share(v, tot)} for k, v in sorted(agg.items(), key=lambda t: -t[1])[:8]]}
     return out
 
