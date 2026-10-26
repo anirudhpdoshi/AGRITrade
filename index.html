@@ -558,6 +558,42 @@ table.wa{min-width:860px}
 @media (max-width:1100px){.kpi-strip{grid-template-columns:repeat(3,minmax(0,1fr))}.regs{grid-template-columns:1fr}}
 @media (max-width:760px){table.wt{display:table!important;font-size:11.5px}table.wt thead{display:table-header-group!important}table.wt tbody{display:table-row-group!important}table.wt tr{display:table-row!important;padding:0}table.wt th,table.wt td{display:table-cell!important;padding:5px 6px}table.wt td::before{content:none!important}table.wt td.r{text-align:right!important}table.wt tr.wgh td{text-align:left!important}.shrs span:nth-child(even){display:none}table.wt td:first-child{max-width:150px}.wn span b{white-space:normal}}
 @media (max-width:760px){.world .subnav{grid-template-columns:1fr 1fr}.kpi-strip{grid-template-columns:1fr 1fr}.sgrid{grid-template-columns:118px 1fr 86px;gap:6px}.sname small{display:none}.sname{font-size:11.5px}.wclk small{display:none}}
+
+/* ---- left menu tree + per-menu colour theme (desktop) ---- */
+@media (min-width:1241px){
+  .layout.has-secnav .subnav-tile .subnav{display:none}
+  .layout.has-secnav{grid-template-columns:236px minmax(0,1fr) 332px}
+  .secnav{padding:10px 6px;gap:4px}
+  .tn{border-radius:9px;border:1px solid transparent;transition:background .2s,border-color .2s}
+  .tn.open{background:color-mix(in srgb,var(--tc) 7%,transparent);border-color:color-mix(in srgb,var(--tc) 35%,transparent)}
+  .tn-h{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:10px minmax(0,1fr) 12px;gap:8px;align-items:center;padding:8px 8px;cursor:pointer;border-radius:8px}
+  .tn-h:hover{background:#14213a}.tn-h:focus-visible{outline:2px solid var(--tc)}
+  .tn-dot{width:8px;height:8px;border-radius:50%;background:var(--tc);opacity:.45;box-shadow:0 0 0 3px color-mix(in srgb,var(--tc) 15%,transparent)}
+  .tn.open .tn-dot{opacity:1}
+  .tn-t{display:flex;flex-direction:column;min-width:0;gap:2px}
+  .tn-t b{font-size:13px;font-weight:600;color:var(--muted)}.tn.open .tn-t b{color:#fff}
+  .tn-t small{font-size:10.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tn-t small .countdown{font-size:10.5px;color:#e8a33d}
+  .tn-chev{color:var(--faint);font-size:15px;transition:transform .2s;text-align:center}.tn.open .tn-chev{transform:rotate(90deg);color:var(--tc)}
+  .tn-kids{display:flex;flex-direction:column;gap:1px;padding:2px 6px 8px 22px;animation:tnIn .18s ease-out}
+  .tn-kids .sn-b{font-size:12.5px;padding:5px 8px;border-left:2px solid #22324a}
+  .tn-kids .sn-b[aria-pressed="true"]{border-left-color:var(--tc);background:color-mix(in srgb,var(--tc) 16%,transparent);color:#fff}
+  @keyframes tnIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  .subctx{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .sc-pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sa);background:color-mix(in srgb,var(--sa) 14%,transparent);border:1px solid color-mix(in srgb,var(--sa) 45%,transparent);border-radius:14px;padding:3px 11px}
+  .sc-pill i{width:7px;height:7px;border-radius:50%;background:var(--sa)}
+  .sc-sec{font-size:13px;color:#e8eef4;font-weight:600}
+  .sc-ev{margin-left:auto;font-size:12px;color:var(--muted)}.sc-ev b{color:#c9d6e6;font-weight:500}.sc-ev .sb-date{color:var(--faint)}
+}
+.subctx:not(:empty)~.subnav{margin-top:0}
+@media (max-width:1240px){.subctx{display:none}}
+/* the open menu's colour runs through its tiles so you always know where you are */
+.layout[data-subt] .subnav-tile{border-top:2px solid var(--sa,#38b6c9)}
+.layout[data-subt] .sub.on>.tile{border-top:2px solid color-mix(in srgb,var(--sa,#38b6c9) 70%,transparent)}
+.layout[data-subt] .sub.on>.tile>h2:first-child,.layout[data-subt] .sub.on>.tile .tile-head>h2{color:color-mix(in srgb,var(--sa,#38b6c9) 55%,#c9d6e6)}
+.subbtn[aria-selected="true"]{border-color:var(--sa,#38b6c9);box-shadow:inset 0 -2px 0 var(--sa,#38b6c9)}
+.sn-b[aria-pressed="true"]{border-left-color:var(--sa,#38b6c9)}
+@media (max-width:1240px){.sn-b[aria-pressed="true"]{border-bottom-color:var(--sa,#38b6c9)}}
 </style>
 </head>
 <body class="locked">
@@ -3595,6 +3631,8 @@ var SECG={
     rates:[['ys','Yield spreads',/yield spreads/i],['en','Energy',/Energy/],['pol','Policy expectations',/Policy expectations/]]
   }
 };
+var SUBTHEME={overview:'#38b6c9',deriv:'#a78bfa',macro:'#e8b93d',fund:'#e8b93d',rates:'#3fb97f',inputs:'#f08a5d'};
+var GTITLE={corn:'Corn · ZCZ26',wheat:'Wheat · ZWZ26',soybeans:'Soybeans · ZSX26',fx:'USD/CAD desk'};
 var SECMQ=window.matchMedia('(max-width:1240px)');
 function placeSecNav(L, nav){
   var G=L.querySelector(':scope>.grid'), st=G&&G.querySelector(':scope>.subnav-tile');
@@ -3626,9 +3664,32 @@ function buildSecNav(panel){
   var list=order.map(function(k){ return groups[k]; }).sort(function(a,b){ return a.idx-b.idx; });
   var cur=SEC[secKey(panel)]||'all'; if(cur!=='all'&&!groups[cur]) cur='all';
   var subLab=(P.querySelector('[data-sub="'+sub.getAttribute('data-subpanel')+'"] .sb-name')||{}).textContent||'';
+  var sid=sub.getAttribute('data-subpanel'), acc=SUBTHEME[sid]||'#38b6c9', L2=P.querySelector('.layout');
+  P.style.setProperty('--sa', acc); if(L2) L2.setAttribute('data-subt', sid);
+  var secLab=cur==='all'?'All sections':(groups[cur]||{}).lab||'';
+  if(!SECMQ.matches){
+    /* desktop: one tree — every menu with its next event; the open menu expands into its sections */
+    var heads=[].map.call(P.querySelectorAll('.subnav [data-sub]'), function(b){ return {id:b.getAttribute('data-sub'), name:(b.querySelector('.sb-name')||{}).textContent||'', ev:(b.querySelector('.sb-ev')||{}).textContent||'', cd:b.querySelector('.sb-cd')}; });
+    nav.innerHTML='<div class="sn-h">'+esc(GTITLE[panel]||'Sections')+'</div>'+heads.map(function(h){
+      var on=h.id===sid, c=SUBTHEME[h.id]||'#38b6c9', cd=h.cd&&h.cd.querySelector('.countdown');
+      return '<div class="tn'+(on?' open':'')+'" style="--tc:'+c+'">'+
+        '<button class="tn-h" data-sub="'+h.id+'" data-subp="'+panel+'" aria-selected="'+on+'" aria-expanded="'+on+'"><i class="tn-dot"></i><span class="tn-t"><b>'+esc(h.name)+'</b>'+
+        (cd&&!/No scheduled/.test(h.ev)?'<small title="'+esc(h.ev)+'">'+esc(h.ev)+'</small><small class="tn-cd">in <span class="countdown" data-t="'+cd.getAttribute('data-t')+'" data-fmt="hms">'+cd.textContent+'</span></small>':'<small>No scheduled event</small>')+
+        '</span><span class="tn-chev" aria-hidden="true">›</span></button>'+
+        (on?'<div class="tn-kids">'+
+          '<button class="sn-b" data-secp="'+panel+'" data-sec-v="all" aria-pressed="'+(cur==='all')+'"><span>All sections</span><small>'+list.length+'</small></button>'+
+          list.map(function(g){ return '<button class="sn-b" data-secp="'+panel+'" data-sec-v="'+g.id+'" aria-pressed="'+(cur===g.id)+'"><span>'+esc(g.lab)+'</span>'+(g.n>1?'<small>'+g.n+'</small>':'')+'</button>'; }).join('')+'</div>':'')+
+      '</div>'; }).join('');
+    var st=P.querySelector('.subnav-tile'), cx=st&&st.querySelector('.subctx');
+    if(st&&!cx){ cx=document.createElement('div'); cx.className='subctx'; st.insertBefore(cx, st.firstChild); }
+    if(cx){ var hb=P.querySelector('.subnav [data-sub="'+sid+'"]'), ev=hb&&hb.querySelector('.sb-ev'), cdd=hb&&hb.querySelector('.sb-cd');
+      cx.innerHTML='<span class="sc-pill"><i></i>'+esc(subLab)+'</span><span class="sc-sec">› '+esc(secLab)+'</span>'+
+        (ev&&!/No scheduled/.test(ev.textContent)?'<span class="sc-ev">Next: <b>'+esc(ev.textContent)+'</b> '+(cdd?cdd.innerHTML:'')+'</span>':''); }
+  } else {
   nav.innerHTML='<div class="sn-h">'+esc(subLab)+'</div>'+
     '<button class="sn-b" data-secp="'+panel+'" data-sec-v="all" aria-pressed="'+(cur==='all')+'"><span>All sections</span><small>'+list.length+'</small></button>'+
     list.map(function(g){ return '<button class="sn-b" data-secp="'+panel+'" data-sec-v="'+g.id+'" aria-pressed="'+(cur===g.id)+'"><span>'+esc(g.lab)+'</span>'+(g.n>1?'<small>'+g.n+'</small>':'')+'</button>'; }).join('');
+  }
   [].forEach.call(sub.children, function(t){ var s=t.getAttribute('data-sec'); t.classList.toggle('sec-off', cur!=='all' && s!=='*' && s!==cur); });
   var act=nav.querySelector('[aria-pressed="true"]'); if(act&&SECMQ.matches) nav.scrollLeft=Math.max(0,act.offsetLeft-nav.clientWidth/2+act.offsetWidth/2);
   if(panel!=='fx'&&typeof drawDestMaps==='function'&&cur==='dest') setTimeout(drawDestMaps,30);
