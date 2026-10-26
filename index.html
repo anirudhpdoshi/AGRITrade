@@ -1045,6 +1045,24 @@ function fxCalendarHTML(){
    Every value derives from the fan math, chain IV, trailing MAs and options
    walls already in DATA — the live anchor is the delayed quote frozen at
    build time (fan.intraday). Nothing new is sourced. */
+
+/* Option walls relative to the LIVE underlying price (recomputed on every repaint from the strike rows):
+   call wall = most call OI at/above the underlying, put wall = most put OI at/below it. Deferred option months use
+   live front price + the settled calendar spread to that contract. The raw "largest anywhere" strikes are kept. */
+function applyWalls(k){
+  var g=DATA.grains&&DATA.grains[k]; if(!g||!g.fan) return;
+  var L=+g.fan.intraday[0], R=g.roll||[], fr=R[0];
+  ['near','far'].forEach(function(side){
+    var n=g[side]; if(!n||!n.rows||!n.rows.length) return;
+    if(!n.call_wall_any){ n.call_wall_any=n.call_wall; n.put_wall_any=n.put_wall; }
+    var rc=R.filter(function(r){ return r.contract===n.contract; })[0], U=L, src='live delayed quote';
+    if(rc&&fr&&rc.contract!==fr.contract&&rc.settle!=null&&fr.settle!=null){ U=L+(rc.settle-fr.settle); src='live front price + '+rc.contract+'/'+fr.contract+' settled spread'; }
+    if(!(U>0)) return;
+    var cw=null, pw=null;
+    n.rows.forEach(function(r){ if(r[0]>=U-1e-9&&(!cw||r[1]>cw[1])) cw=[r[0],r[1]]; if(r[0]<=U+1e-9&&(!pw||r[2]>pw[1])) pw=[r[0],r[2]]; });
+    n.call_wall=cw||n.call_wall_any; n.put_wall=pw||n.put_wall_any; n.wall_ref=U; n.wall_ref_src=src;
+  });
+}
 function fanLevels(g, meta){
   var f=g.fan, L=f.intraday[0], w10=f.sig*Math.sqrt(10), ivH=L*f.iv_10d_rel;
   var lastH=g.history[g.history.length-1];
@@ -1784,9 +1802,13 @@ function positioningHTML(key){
     '<div class="stat-row">'+
     stat("Call OI", fmt(ds.calls)) + stat("Put OI", fmt(ds.puts)) +
     stat("Put/Call (OI)", fmt(ds.pcr,2)) +
-    stat("Call wall", money2(ds.call_wall[0]), fmt(ds.call_wall[1])+" OI") +
-    stat("Put wall", money2(ds.put_wall[0]), fmt(ds.put_wall[1])+" OI") + extra +
+    stat("Call wall", money2(ds.call_wall[0]), fmt(ds.call_wall[1])+" OI \u00b7 at/above "+money2(ds.wall_ref||0)) +
+    stat("Put wall", money2(ds.put_wall[0]), fmt(ds.put_wall[1])+" OI \u00b7 at/below "+money2(ds.wall_ref||0)) + extra +
     '</div>'+
+    (ds.wall_ref?'<p class="note">Walls follow the live price: call wall = strike with the most call OI at or above the underlying, put wall = most put OI at or below it (underlying '+esc(ds.contract||'')+' \u2248 '+money2(ds.wall_ref)+', '+esc(ds.wall_ref_src)+'). '+
+      ((ds.put_wall_any&&Math.abs(ds.put_wall_any[0]-ds.put_wall[0])>1e-6)?'Largest put OI anywhere: '+money2(ds.put_wall_any[0])+' ('+fmt(ds.put_wall_any[1])+', in the money). ':'')+
+      ((ds.call_wall_any&&Math.abs(ds.call_wall_any[0]-ds.call_wall[0])>1e-6)?'Largest call OI anywhere: '+money2(ds.call_wall_any[0])+' ('+fmt(ds.call_wall_any[1])+', in the money). ':'')+
+      'Open interest is exchange end-of-day data ('+esc(oiLabel(ds))+'); the walls move intraday only because the price does.</p>':'')+
     (ds.note ? '<p class="note">'+esc(ds.note)+(ds.underlying?' \u00b7 underlying futures '+money2(ds.underlying):'')+(ds.partial?' \u00b7 totals and P/C cover the pulled strikes only':'')+'</p>' : '')+
     (isNear ? '' : '<div class="stamp" style="border:0;margin-top:10px;padding-top:0">FAR MONTH — '+oiLabel(ds)+'. Range the market is defining: '+money2(ds.put_wall[0])+' – '+money2(ds.call_wall[0])+'.</div>');
 }
@@ -3928,7 +3950,7 @@ document.addEventListener('click', function(ev){
 });
 (function(){
   var _rg=renderGrain, _rf=renderFX, _ss=setSub;
-  renderGrain=function(k){ _rg(k); buildSecNav(k); };
+  renderGrain=function(k){ applyWalls(k); _rg(k); buildSecNav(k); };
   renderFX=function(){ _rf(); buildSecNav('fx'); };
   setSub=function(p,id){ _ss(p,id); buildSecNav(p); };
 })();
