@@ -3689,7 +3689,7 @@ function renderFX(){
     '<div class="kv"><span class="kk">EUR/USD \u00b7 USD/JPY</span><span class="vv">'+fmt(fx.fxcross.eurusd,4)+' \u00b7 '+fmt(fx.fxcross.usdjpy,2)+'</span></div>'+
     '<div class="stamp">Delayed quotes \u00b7 WCS leg is the last stored read</div></div>';
   /* forwards — CIP-theoretical, recomputed by live.js on every spot tick */
-  T.forwards='<div class="tile wide" data-src="fx_spot"><h2>Forward curve <span class="h2note">\u2014 theoretical (covered interest parity), not traded quotes</span></h2>'+
+  T.forwards='<div class="tile wide" data-src="fx_spot"><h2>Forward rates <span class="h2note">\u2014 chart, levels and table reprice with every live spot tick · theoretical (covered interest parity), not traded quotes</span></h2>'+
     '<div id="fx-fwd">'+fxForwardsHTML(fx.feed.mid)+'</div>'+
     '<div class="stamp">USD/CAD = CAD per USD \u00b7 F = S \u00d7 DF<sub>USD</sub> \u00f7 DF<sub>CAD</sub> \u00b7 under 1Y: money-market simple interest, DF = 1/(1 + r\u00b7T) \u00b7 1Y and beyond: semi-annual bond yields, DF = (1 + r/2)<sup>\u22122T</sup> \u00b7 T = actual days spot\u2192value date \u00f7 365 (both inputs are government yields on a 365-day basis) \u00b7 spot date T+1, months end-of-month + modified following (weekends only; bank holidays not adjusted) \u00b7 each currency\u2019s rate interpolated linearly between its curve nodes \u00b7 traded forward points also reflect cross-currency basis, credit and dealer spreads, so executable forwards differ</div></div>';
   html+=fxSubnavHTML()+
@@ -3731,7 +3731,7 @@ var SECG={
   },
   fx:{
     overview:[['snap','Snapshot',/kpi-strip/],['spot','Spot & key levels',/spot & key levels/i],['daily','Daily chart',/daily closes/i],['model','Model view',/Model view/],['ask','Ask Claude',/ask-tile/]],
-    deriv:[['pos','Positioning KPIs',/poskpi|ckwrap/],['fwd','Forward curve',/Forward curve/],['cftc','CFTC CAD funds',/cftc_fx|CFTC CAD/],['sent','Sentiment & FX options',/Retail sentiment/]],
+    deriv:[['pos','Positioning KPIs',/poskpi|ckwrap/],['fwd','Forward rates',/Forward rates|Forward curve/],['cftc','CFTC CAD funds',/cftc_fx|CFTC CAD/],['sent','Sentiment & FX options',/Retail sentiment/]],
     macro:[['live','Live USD/CAD',/live-fx/],['dash','Macro dashboard',/macro dashboard/i],['tf','Trade & fiscal',/Trade & fiscal/i],['all','All indicators',/All macro indicators/],['rel','Latest releases',/Latest releases/]],
     rates:[['ys','Yield spreads',/yield spreads/i],['en','Energy',/Energy/],['pol','Policy expectations',/Policy expectations/]]
   }

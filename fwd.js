@@ -112,14 +112,14 @@
     c = c.filter(function (x) { return isFinite(x.t); });
     var live = c.filter(function (x) { return x.k === "stream" && now - x.t < 90000; })[0];
     var best = live || c.sort(function (a, b) { return b.t - a.t; })[0] || { k: "none", p: null, t: 0 };
-    var age = now - best.t, NAME = { stream: "Finnhub stream", ref: "Coinbase reference rate", alpha: "Alpha Vantage", yahoo: "Yahoo Finance (delayed)", none: "no source" };
+    var age = now - best.t, NAME = { stream: "live stream", ref: "reference rate", alpha: "delayed rate (30-min check)", yahoo: "delayed rate", none: "no source" };
     var tail = " · " + (best.t ? clock(best.t) + " ET · " + ago(age) : "no price yet");
     var st;
     if (L && !L.session.open) st = { k: "closed", chip: "FX MARKET CLOSED", txt: "weekend close · reopens Sun 5 pm ET · priced off the last spot: " + NAME[best.k] + tail };
-    else if (live) st = { k: "live", chip: "LIVE STREAM", txt: "Finnhub (OANDA) stream · last tick " + clock(best.t) + " ET" };
-    else if (best.k === "ref" && age < LIMIT.ref) st = { k: "ref", chip: "REFERENCE RATE", txt: "Coinbase reference poll (~30 s) · indicative mid, not an executable quote" + tail };
-    else if (best.k === "alpha" && age < LIMIT.alpha) st = { k: "delayed", chip: "ALPHA VANTAGE", txt: "server check every 30 min" + tail };
-    else if (best.k === "yahoo" && age < LIMIT.yahoo) st = { k: "delayed", chip: "DELAYED", txt: "Yahoo Finance CAD=X delayed mid" + tail };
+    else if (live) st = { k: "live", chip: "LIVE STREAM", txt: "live stream · last tick " + clock(best.t) + " ET" };
+    else if (best.k === "ref" && age < LIMIT.ref) st = { k: "ref", chip: "REFERENCE RATE", txt: "reference rate (~30 s) · indicative mid, not an executable quote" + tail };
+    else if (best.k === "alpha" && age < LIMIT.alpha) st = { k: "delayed", chip: "DELAYED", txt: "delayed rate · checked every 30 min" + tail };
+    else if (best.k === "yahoo" && age < LIMIT.yahoo) st = { k: "delayed", chip: "DELAYED", txt: "delayed mid" + tail };
     else if (L && L.refFails >= 3) st = { k: "down", chip: "FEED UNAVAILABLE", txt: "live and reference feeds not responding · last price from " + NAME[best.k] + tail };
     else st = { k: "stale", chip: "STALE", txt: "no fresh price · last from " + NAME[best.k] + tail };
     st.spot = best.p; st.spotT = best.t; st.source = best.k;
@@ -213,8 +213,16 @@
   }
   function labels(res) {
     var g = S.built;
-    g.legs.forEach(function (o, i) { var l = res.legs[i]; if (!o.show) return;
+    var prev = S.res && S.res.ok ? S.res : null;
+    g.legs.forEach(function (o, i) { var l = res.legs[i], p = prev && prev.legs[i], d = (l.F != null && p && p.F != null) ? l.F - p.F : 0;
+      /* chart levels tick in sync with the table: green = outright rose, blue = fell */
+      if (d && Math.abs(d) >= 5e-7 && !RM) { var c = d > 0 ? "#5fd598" : "#7fb0ff";
+        o.dot.setAttribute("fill", c); if (o.show) o.out.setAttribute("fill", c);
+        clearTimeout(o._ft); o._ft = setTimeout(function () { o.dot.setAttribute("fill", "#e8a33d"); if (o.show) o.out.setAttribute("fill", "#e8eef4"); }, 1100); }
+      if (!o.show) return;
       o.out.textContent = l.F == null ? "" : l.F.toFixed(4); o.pts.textContent = l.F == null ? "n/a" : sg(l.pts, 0); o.date.textContent = lab(l.vd, true); });
+    if (prev && res.ok && res.spot !== prev.spot && !RM) { var sc = res.spot > prev.spot ? "#5fd598" : "#7fb0ff"; g.spotTxt.setAttribute("fill", sc); g.spotLine.setAttribute("stroke", sc);
+      clearTimeout(g._st); g._st = setTimeout(function () { g.spotTxt.setAttribute("fill", "#38b6c9"); g.spotLine.setAttribute("stroke", "#38b6c9"); }, 1100); }
   }
   function animate(from, to, res) {
     cancelAnimationFrame(S.raf);
@@ -280,7 +288,7 @@
   }
   function readText(res) {
     var y1 = res.legs.filter(function (l) { return l.t === "1Y"; })[0], y5 = res.legs[res.legs.length - 1];   /* longest leg = 2Y */
-    if (!res.ok || !y1 || y1.F == null) return "Forward curve unavailable: " + esc(res.reason || "missing inputs") + ".";
+    if (!res.ok || !y1 || y1.F == null) return "Forward rates unavailable: " + esc(res.reason || "missing inputs") + ".";
     var disc = y1.pts < 0;
     return "USD/CAD trades at a <b>forward " + (disc ? "discount" : "premium") + "</b> at 1Y: the outright sits " + Math.abs(y1.pts).toFixed(0) + " pips " + (disc ? "below" : "above") + " spot (" + sg(y1.ann, 2, "%") +
       " annualised) because USD rates run " + (disc ? "above" : "below") + " CAD rates (" + y1.rUSD.toFixed(2) + "% vs " + y1.rCAD.toFixed(2) + "% at 1Y)." + (y5 && y5.F != null ? " At " + y5.t + " (" + lab(y5.vd) + ") the outright is " + f5(y5.F) + ", " + sg(y5.ann, 2, "%") + " annualised." : "");

@@ -271,7 +271,7 @@
     ws.onmessage = function (ev) {
       try {
         var m = JSON.parse(ev.data);
-        if (m.type === "trade" && m.data && m.data.length) onTick(+m.data[m.data.length - 1].p, "Finnhub/OANDA stream");
+        if (m.type === "trade" && m.data && m.data.length) onTick(+m.data[m.data.length - 1].p, "live stream");
       } catch (e) {}
     };
     ws.onclose = function () { ws = null; if (CFG.finnhubKey && !window.DESK_LOCKED) { setTimeout(connectStream, wsBackoff); wsBackoff = Math.min(wsBackoff * 2, 60000); } };
@@ -286,7 +286,7 @@
     fetch("https://api.coinbase.com/v2/exchange-rates?currency=USD", { cache: "no-store" })
       .then(function (r) { if (!r.ok) throw r.status; return r.json(); })
       .then(function (j) { var v = j && j.data && j.data.rates && +j.data.rates.CAD;
-        if (v > 0) { refFails = 0; refLastOk = Date.now(); onTick(v, "reference rate, ~30s poll"); } else refFails++; })
+        if (v > 0) { refFails = 0; refLastOk = Date.now(); onTick(v, "reference rate (~30 s)"); } else refFails++; })
       .catch(function () { refFails++; if (window.FWD) window.FWD.update(); });
   }
   /* honest feed state for the forward curve: what actually delivered the last price, and when */
