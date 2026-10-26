@@ -1,0 +1,26 @@
+name: Coverage check (Brazil / World fundamentals)
+on:
+  push:
+    branches: [coverage-gg]
+    paths: ["scripts/coverage_gg.py", ".github/workflows/coverage-gg.yml"]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install requests
+      - name: Probe sources (read-only)
+        env:
+          FAS_API_KEY: ${{ secrets.FAS_API_KEY }}
+        run: python scripts/coverage_gg.py > /dev/null
+      - name: Save results to this branch
+        run: |
+          git config user.name "coverage-bot"; git config user.email "coverage-bot@users.noreply.github.com"
+          git add coverage/coverage.json
+          git commit -m "coverage results $(date -u +%FT%TZ)" || echo "no change"
+          git push origin HEAD:coverage-gg
