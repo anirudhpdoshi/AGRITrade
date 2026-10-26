@@ -8516,11 +8516,11 @@
     "6M": 4.3
    },
    "fxcross": {
-    "dxy": 101.973,
-    "dxy_chg": 0.16,
-    "eurusd": 1.1183,
-    "usdjpy": 157.5,
-    "usdcad_ref": 1.4017
+    "dxy": 101.98,
+    "dxy_chg": 0.167,
+    "eurusd": 1.1181,
+    "usdjpy": 157.51,
+    "usdcad_ref": 1.4019
    },
    "closes": [
     [
@@ -8599,16 +8599,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 101.84,
-     "chg": -1.43,
-     "pct": -1.38,
+     "last": 101.67,
+     "chg": -1.6,
+     "pct": -1.55,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 110.72,
-     "chg": -6.0,
-     "pct": -5.14,
+     "last": 110.57,
+     "chg": -6.15,
+     "pct": -5.27,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -8620,9 +8620,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 16.37,
+    "value": 16.2,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-26T19:35:00+00:00",
+    "obs_ts": "2026-10-26T19:50:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -10147,10 +10147,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.40211,
+    "mid": 1.40196,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-26T15:45:00-04:00",
+    "ts": "2026-10-26T16:00:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -10291,10 +10291,6 @@
    ],
    "intraday": [
     [
-     "2026-10-26T00:00+00:00",
-     1.40141
-    ],
-    [
      "2026-10-26T00:05+00:00",
      1.40155
     ],
@@ -10316,7 +10312,7 @@
     ],
     [
      "2026-10-26T00:30+00:00",
-     1.40113
+     1.40112
     ],
     [
      "2026-10-26T00:35+00:00",
@@ -10700,7 +10696,7 @@
     ],
     [
      "2026-10-26T08:30+00:00",
-     1.40173
+     1.40176
     ],
     [
      "2026-10-26T08:35+00:00",
@@ -10744,7 +10740,7 @@
     ],
     [
      "2026-10-26T09:25+00:00",
-     1.40124
+     1.40128
     ],
     [
      "2026-10-26T09:30+00:00",
@@ -10804,7 +10800,7 @@
     ],
     [
      "2026-10-26T10:40+00:00",
-     1.40152
+     1.40156
     ],
     [
      "2026-10-26T10:45+00:00",
@@ -10936,7 +10932,7 @@
     ],
     [
      "2026-10-26T13:25+00:00",
-     1.40337
+     1.4034
     ],
     [
      "2026-10-26T13:30+00:00",
@@ -11172,7 +11168,7 @@
     ],
     [
      "2026-10-26T18:20+00:00",
-     1.40161
+     1.40164
     ],
     [
      "2026-10-26T18:25+00:00",
@@ -11237,6 +11233,22 @@
     [
      "2026-10-26T19:40+00:00",
      1.4018
+    ],
+    [
+     "2026-10-26T19:45+00:00",
+     1.40204
+    ],
+    [
+     "2026-10-26T19:50+00:00",
+     1.40214
+    ],
+    [
+     "2026-10-26T19:55+00:00",
+     1.40198
+    ],
+    [
+     "2026-10-26T20:00+00:00",
+     1.40196
     ]
    ],
    "fwd_inputs": {
@@ -11277,22 +11289,22 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-26T15:45:28-04:00",
+   "updated_at": "2026-10-26T16:00:21-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-26T15:45:00-04:00",
+    "fx_spot": "2026-10-26T16:00:00-04:00",
     "fx_closes": "2026-10-23T16:30:00-04:00",
     "yields": "2026-10-23T17:00:00-04:00",
     "policy": "2026-10-26T15:00:42-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-20T15:30:00-04:00",
     "cftc_grains": "2026-10-20T15:30:00-04:00",
-    "energy": "2026-10-26T15:35:00-04:00",
-    "crosses": "2026-10-26T15:35:00-04:00",
+    "energy": "2026-10-26T15:50:00-04:00",
+    "crosses": "2026-10-26T15:50:00-04:00",
     "grains_settle": "2026-10-26T14:20:00-04:00",
     "grains_quote": "2026-10-26T14:15:00-04:00",
     "options": "2026-10-26T11:10:58-04:00",
-    "news": "2026-10-26T15:45:28-04:00",
+    "news": "2026-10-26T16:00:21-04:00",
     "calendar": "2026-10-26T15:00:42-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-26T15:45:28-04:00",
@@ -11340,7 +11352,7 @@
      "fx_model"
     ],
     "failed": [],
-    "at": "2026-10-26T15:45:28-04:00"
+    "at": "2026-10-26T16:00:21-04:00"
    },
    "releases_checked": "2026-10-26T15:22:41-04:00",
    "exports_checked": "2026-10-26T15:15:27-04:00",
@@ -11377,7 +11389,7 @@
    },
    "canada_checked": "2026-10-26T09:30:24-04:00",
    "ca_calendar_checked": "2026-10-26T15:15:27-04:00",
-   "canada_watch": "2026-10-26T15:45:28-04:00",
+   "canada_watch": "2026-10-26T16:00:21-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -26651,12 +26663,6 @@
     "https://news.google.com/rss/articles/CBMilgFBVV95cUxOODliRE5CNlk4cGZpOFJUNkRYQnpjbXh6LUFGQWNZdVg4cFh3cHB3YW1XUTE4RTZiUVUyMWNLcTZDdS1SU1lkSWxEbUFFN21qRk1Velo3ODVzNTc4a0Z5TENNZVE2Q2YzakJqbmdWWWtDbnZ0LUdrQnhuMjdKdE4yVEpHYTRSSUJXNmVJamZ4OFlmTnNFZnc?oc=5"
    ],
    [
-    "2026-10-26 18:52 UTC",
-    "www.profarmer.com",
-    "Market Snapshot | Soybeans test key support at 100-day moving average",
-    "https://news.google.com/rss/articles/CBMivgFBVV95cUxNZVVVTE10NU82YVMxYWtjTXBiMkZLR2xzZnF5ZjRjUEQzWHFBSjJrY3pEN0F5R0RpQmduRG5CSlF0TUVjWVRYWlQ1YjNSMVY1U202QnpCTjNHeWNLSUxZU0c4alRaRUh1LWY0RjBCc0IzRURORXlSZjAwcWs4YmljV3dWYk9NVm5UcU1ST0x6VUlyT0JGYmVuREs1NTRPbHhSYjVhT09PTG9RNEI2VFFFOWxKdjRVcV9jMDBLUFhB?oc=5"
-   ],
-   [
     "2026-10-26 17:25 UTC",
     "www.dakotanewsnetwork.com",
     "Soybean Exports Stay Strong as Corn Inspections Hit a Three-Year Low",
@@ -26691,6 +26697,12 @@
     "commodity-board.com",
     "EU silage corn yields down 15% while corn prices stay stable — CMB News",
     "https://news.google.com/rss/articles/CBMilAFBVV95cUxNa2xsdVB3YnUyN1dBY1Jjb2ZLYkxkdm1vaFgxaE9tNndUM3QwODZCTUxHLXJjUlRvYWNyeUxvcWVJMlpWRTBvVnN0ZW9TR1JmbXlsVmdpcjVpYklZMWtiRXRTdTVyb0xwajVkaE5zWmh1Wi1KRnduMnJ6X0lDY2c2ZFlzVTUzVjlqU0NtVUs0Wl9JX1Yz?oc=5"
+   ],
+   [
+    "2026-10-26 14:20 UTC",
+    "commodity-board.com",
+    "EU 2026 corn harvest losses and Black Sea prices — CMB News",
+    "https://news.google.com/rss/articles/CBMipgFBVV95cUxPQTl0Rm1MS0d5ZEQyTmhTbGFOeHh5Y2xncnFmUnRiZEEzVTNQeFlpOGJPb3B3cjRvYU1Wbmo2eDhmVWIxZjlaS205YVljOGFOMDNGbGVjT1Z5ODJWWnpfc0NRR3kwTUVlcVp3OFl6SzdTM3hkeDl4YWQwYmZFMEROY19VbUtWbVVYbW56SUlSY3poOFBrMGR5YzczdXgwNnptX0RaS0hn?oc=5"
    ]
   ],
   "wheat": [
@@ -26827,7 +26839,7 @@
    [
     "2026-10-26 16:14 UTC",
     "www.fxstreet.com",
-    "Canadian Dollar eases from six-week high ahead of Fed, BoC interest rate decisions",
+    "Canadian Dollar eases from six-week high ahead of Fed, BoC rate decisions",
     "https://news.google.com/rss/articles/CBMiwgFBVV95cUxQY1hrUDhqTk53R2pYcDZuOHN0MDNSeVdPUklvT0J0Vy1PUGktN2hUcU9peUx6cmVGYkhOWi1ra3VaT2JZVGxmMnhOYWw4SHNYZV9RanNqVXVDRGJjcEZIZEkxLXpZR05SRjNiTms5NEpCeUQxa19BbWFXRUp3RWhtSnNfUUZWUVEzTjhQT0N6WVFrRk9IcHgtOHpEQmt1LUJwTktiV3UzRUNJN0tEUmlGVl9BUjY0NG81YkE1c0tJZm43dw?oc=5"
    ],
    [
@@ -26837,13 +26849,19 @@
     "https://news.google.com/rss/articles/CBMiqAFBVV95cUxNeDdPQV9hVEo4eEFTSlhrVkowRE9mVVlJQzJkZTJnOG1TTUl1ZWYtNG1CcWk2MWlmZG51eVd2S0NJT0pWeHphblVQWThQMTc2OVhDd3VQQXZRU0gteVYtQlkxa29fcVpVV3VKSkl6NVdRTWhvT0E5X3VfVVI0UlVVdnhoUERGMFpxWVR1YXFiSENWQ2lTUTFNLTBEcU1ObHlfTW9OZ01VcmLSAa4BQVVfeXFMT0NxQThhZzl5Q29YNEt0Nl9FV3NrYzRMa1JXX0Vmd2pROGhvVHM3TFJ5NGRrOWVnY0FCOS1LM25MdVdINW8tNjZSS2NDSmhZbUZ4cFdOMWU4N1RObVVpNG43YTJRelY2R21VRDVjcm51cVk0b0ZISVdmNWFFcTdVOFJRdEZLamtrZXg0eER4cW9RbEt2R0lONGxjSXpYZ3RZbXRxbk9iaWdmREw0YVZB?oc=5"
    ],
    [
-    "2026-10-26 15:06 UTC",
-    "www.manitobacooperator.ca",
+    "2026-10-26 14:56 UTC",
+    "www.albertafarmexpress.ca",
     "Canadian Dollar and Business Outlook: Loonie retreats with crude oil",
-    "https://news.google.com/rss/articles/CBMitwFBVV95cUxPOFhWNXZHTHFzeDFHbm5wSVdsN2RwamFZWXMyaDRJcnZkZTY5eDZQT0hlNHpGZTF0ZTZjZUlxVkVtX1E3ZTZxdmoxRklvemM3TzVfdVltb0RQVTFMbnR4T2lFWVB3Y3JoejRsdDI4ZkQ0bnpVYzRTOUJLbzV2SHVacTNJZ01nVEVfb0RsOHZPZUxRM2FUSG8xbG5UTGdmcE1WbTBHUUtqX3ZJYzk0dDZfVkFEb1NpUnM?oc=5"
+    "https://news.google.com/rss/articles/CBMitwFBVV95cUxPWXRQN1Z3LWJrdG1jRjFfVmthT1RSbERONzZINEZTYVZ0Z2RiNW5FaEc3bkJUN3o3dEZmd0sxZjl0bGhnejVSdVZBMjVYMUc0dUNWVU9VeUljbUZ6YjE3OE1UT3Y3US12TkhiaXZOSkIybWZuSmlrbUlVcnZNMWpXaUw4bzczSHkwS0JXbGoxbzNRNUk5OU5pUzZHLUZVTVQ0SGR4cHJvbld4c2lUZVc4NzhORW1NejQ?oc=5"
    ]
   ],
   "geo": [
+   [
+    "2026-10-26 19:41 UTC",
+    "nationalsecurityjournal.org",
+    "Donald Trump's Biggest Mistake Ever Everyone Missies: Starting a Trade War with Canada That Is Jacking Up Inflation",
+    "https://news.google.com/rss/articles/CBMi5AFBVV95cUxPbXFuSUdvSzJRZFo5eUlNRXFpWXJZcGNZQUtBQW1ZaXJwT1dDb2laOFJpd0V5WTRHdXJFT0lZcWljM1JOeXFqSDc0QWJfNHlxejhiQ3o0YWU1ckp3Mmp4NTJRT1Vfb25FWlJPOGZxcldnMlhTSnk2NzRjejV5UDQ4Y241aHV1RmFGTEVUQWN1QU04emQ3SERWeTlXcE5GeW1Jem9BRmlwdHFBaS0zMnZiSUZXeko2VlNYNGhlT2hYTVFnTjViVVh2ckhqWEFpa2M0ejFqLVpBYXJhNnllVUh1RHpfaDg?oc=5"
+   ],
    [
     "2026-10-26 19:27 UTC",
     "www.ctvnews.ca",
@@ -26863,7 +26881,7 @@
     "https://news.google.com/rss/articles/CBMingFBVV95cUxQNXJjY1NndEFnTkxnc2k2eDdMRGgxR09uNlVHSFRVUzE3VWhKRTJKYlFaeUJJLTlOZnFrVnNaZnRZZFIwM1pvTmdnZTNNMGZLUWJWT1dSSl9DaDJobDJJeGRZaU1uckxlYWRJWmg0dXFHVnd4dmRTSEREM1g2T0pyNHB1WXhQeGxHSzJvd05TUmYtcmFXbW02VTRoaVdSUQ?oc=5"
    ],
    [
-    "2026-10-26 18:24 UTC",
+    "2026-10-26 18:27 UTC",
     "macleans.ca",
     "The Trade War Will Hurt the U.S. More Than Canada",
     "https://news.google.com/rss/articles/CBMihAFBVV95cUxQSzA1WklaeHVXSnlheUIwd0JXbzd6UUYzZVhXRTN5VVAtS3JaNUszYzA5cVBCOG9JcVhXSktBNFR5RDJ2eEswVkU3cGlFcm9SYzhGWS1NTUc1cGRvZU1LUkJIVVhTSDBxUU1BZnVLZV9FOE9oV0NMLXVxcUFKdkZSVlZvU2s?oc=5"
@@ -26885,12 +26903,6 @@
     "www.dailysabah.com",
     "Russia reviewing proposals to ensure Black Sea grain shipping: Official | Daily Sabah",
     "https://news.google.com/rss/articles/CBMitAFBVV95cUxNbkNuTDM5T2lxdGU0Q1F6cE13VDdLVDZrTU5yamNxOWx3aE94VnNkR3ljQWttRS14aGVlREZfSVpZUjZOV3ZRZjhVQjZCRlZtOUprdTd5dndPUFhnX1lSVFBDcHNNVWU2REJ2MUNhWU5ZVGRwY3NTem1mWlRIUmxqV2g1cmt4N3F3VU5qSllGcEY5S3hMaVpVZk5LQnQybENCd0xOWV9sQXpwR2tadkFidC1NdnrSAbQBQVVfeXFMTW5DbkwzOU9pcXRlNENRenBNd1Q3S1Q2a01OcmpjcTlsd2hPeFZzZEd5Y0FrbUUteGhlZURGX0laWVI2Tld2UWY4VUI2QkZWbTlKa3U3eXZ3T1BYZ19ZUlRQQ3BzTVVlNkRCdjFDYVlOWVRkcGNzU3ptZlpUSFJsaldoNXJreDdxd1VOakpZRnBGOUt4TGlaVWZOS0J0MmxDQndMTllfbEF6cEdrWnZBYnQtTXZ6?oc=5"
-   ],
-   [
-    "2026-10-26 15:12 UTC",
-    "www.bloomberg.com",
-    "Wheat Erases Black Sea Premium as Russia Signals Shipping Talks",
-    "https://news.google.com/rss/articles/CBMitAFBVV95cUxOTjNKZnhKaEE5YUszQkVxajVUOFA5eEFrRmI4Ri1IbWVGSVBuV21rNFdWbjVNajA1S3ZtQlB3dllpcldib1dVYzYyYWlVTDdGSEdPa0FvZW80NWp5Zm1DUnowVU9hUWJDanpTNzB0dFgtdU5jeGgtREgzcjQ5SXNiUk9UWTNvY3c2dG5YN09yNldlZXhKM3BjUGJybTJ4cUVOam9zd2R4b25lbU9vNGpiWjkyMmU?oc=5"
    ]
   ],
   "macro": [
