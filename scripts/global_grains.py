@@ -326,46 +326,56 @@ def conab_block(S):
     return out
 
 
+def comex_post(S, body, tries=8):
+    """Comex Stat allows only a few requests per minute per IP (shared GitHub runners hit it often): back off and retry."""
+    for i in range(tries):
+        r = S.post(COMEX + "/general?language=en", json=body, timeout=120)
+        if r.status_code == 429:
+            time.sleep(20 + 10 * i)
+            continue
+        r.raise_for_status()
+        d = r.json().get("data")
+        return d.get("list") if isinstance(d, dict) else d
+    raise RuntimeError("Comex Stat rate limit (429) after %d tries" % tries)
+
+
 def comex_block(S):
     upd = get(S, COMEX + "/general/dates/updated").json()["data"]
     y, m = int(upd["year"]), int(upd["monthNumber"])
     out = {"source": "Comex Stat (MDIC) — Brazilian export statistics", "status": "observed", "data_updated": upd.get("updated"),
            "period": f"{y}-01..{y}-{m:02d}", "period_prev": f"{y - 1}-01..{y - 1}-{m:02d}", "crops": {}}
-    for crop, ncm in NCM.items():
-        res = {}
-        for yy in (y, y - 1):
-            body = {"flow": "export", "monthDetail": False, "period": {"from": f"{yy}-01", "to": f"{yy}-{m:02d}"},
-                    "filters": [{"filter": "ncm", "values": [ncm]}], "details": ["country"], "metrics": ["metricFOB", "metricKG"]}
-            lst = None
-            for i in range(5):
-                r = S.post(COMEX + "/general?language=en", json=body, timeout=120)
-                if r.status_code == 429:
-                    time.sleep(15 * (i + 1))
-                    continue
-                r.raise_for_status()
-                d = r.json().get("data")
-                lst = d.get("list") if isinstance(d, dict) else d
-                break
-            if lst is None:
-                raise RuntimeError("Comex Stat rate limit")
-            res[yy] = {x["country"]: (float(x.get("metricKG") or 0) / 1e6, float(x.get("metricFOB") or 0)) for x in lst}
-            time.sleep(16)
-        tot = sum(v[0] for v in res[y].values())
-        totp = sum(v[0] for v in res[y - 1].values())
-        top = sorted(res[y].items(), key=lambda t: -t[1][0])[:8]
-        out["crops"][crop] = {"ncm": ncm, "kt": round(tot, 1), "kt_prev": round(totp, 1), "yoy": pct_change(tot, totp),
-                              "usd": round(sum(v[1] for v in res[y].values())), "usd_per_t": round(sum(v[1] for v in res[y].values()) / (tot * 1000), 1) if tot else None,
-                              "top": [{"country": k, "kt": round(v[0], 1), "share": share(v[0], tot), "kt_prev": round(res[y - 1].get(k, (0, 0))[0], 1)} for k, v in top]}
+    inv = {v: k for k, v in NCM.items()}
+    res = {k: {} for k in NCM}
+    for yy in (y, y - 1):                      # one request per year for all three products (2 requests in total)
+        time.sleep(12)
+        lst = comex_post(S, {"flow": "export", "monthDetail": False, "period": {"from": f"{yy}-01", "to": f"{yy}-{m:02d}"},
+                             "filters": [{"filter": "ncm", "values": list(NCM.values())}], "details": ["ncm", "country"],
+                             "metrics": ["metricFOB", "metricKG"]})
+        for x in lst or []:
+            code = str(x.get("coNcm") or x.get("ncm") or "")[:8]
+            crop = inv.get(code) or next((c for c, n in NCM.items() if n in json.dumps(x)), None)
+            if not crop:
+                continue
+            res[crop].setdefault(yy, {})[x["country"]] = (float(x.get("metricKG") or 0) / 1e6, float(x.get("metricFOB") or 0))
+    for crop, r in res.items():
+        cur, prv = r.get(y, {}), r.get(y - 1, {})
+        tot = sum(v[0] for v in cur.values())
+        totp = sum(v[0] for v in prv.values())
+        usd = sum(v[1] for v in cur.values())
+        top = sorted(cur.items(), key=lambda t: -t[1][0])[:8]
+        out["crops"][crop] = {"ncm": NCM[crop], "kt": round(tot, 1), "kt_prev": round(totp, 1), "yoy": pct_change(tot, totp),
+                              "usd": round(usd), "usd_per_t": round(usd / (tot * 1000), 1) if tot else None,
+                              "top": [{"country": k, "kt": round(v[0], 1), "share": share(v[0], tot), "kt_prev": round(prv.get(k, (0, 0))[0], 1)} for k, v in top]}
     return out
 
 
 def fx_block(S):
     out = {}
-    js = get(S, "https://api.bcb.gov.br/dados/serie/bcdata.sgs.1/dados/ultimos/45?formato=json").json()
+    to = now_utc().date()
+    js = get(S, "https://api.bcb.gov.br/dados/serie/bcdata.sgs.1/dados?formato=json&dataInicial=" + (to - dt.timedelta(days=45)).strftime("%d/%m/%Y") + "&dataFinal=" + to.strftime("%d/%m/%Y")).json()
     ser = [[dt.datetime.strptime(x["data"], "%d/%m/%Y").strftime("%Y-%m-%d"), float(x["valor"])] for x in js]
     out["brl"] = {"name": "USD/BRL", "source": "Banco Central do Brasil (PTAX sell, SGS 1)", "series": ser}
     try:
-        to = now_utc().date()
         u = f"https://api.bcra.gob.ar/estadisticascambiarias/v1.0/Cotizaciones/USD?fechadesde={to - dt.timedelta(days=45)}&fechahasta={to}"
         js = get(S, u).json()["results"]
         ser = sorted([[x["fecha"], float(x["detalle"][0]["tipoCotizacion"])] for x in js if x.get("detalle")])
@@ -452,7 +462,7 @@ def main():
             body["health"]["failed"].append({"part": f"psd/{crop}", "error": red(e)[:200]})
             if prev.get("crops", {}).get(crop, {}).get("psd"):
                 body["crops"][crop]["psd"] = dict(prev["crops"][crop]["psd"], stale=True)
-    for part, fn in (("conab", conab_block), ("comex", comex_block), ("fx", fx_block)):
+    for part, fn in (("conab", conab_block), ("fx", fx_block), ("comex", comex_block)):
         try:
             body[part] = fn(S)
             body["health"]["ok"].append(part)
