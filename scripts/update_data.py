@@ -457,6 +457,226 @@ def fx_alpha(D, N):
     return True
 
 
+# ------------------------------------------------------------------ economic calendar (live, weekly)
+FF_FEEDS = ["https://nfs.faireconomy.media/ff_calendar_thisweek.json", "https://nfs.faireconomy.media/ff_calendar_nextweek.json"]
+CAL_TZ = ZoneInfo("America/Denver")   # the page's calendar renderer reads stored times as US Mountain
+
+
+def calendar(D, N):
+    """USD + CAD economic calendar (this week and next) from the public ForexFactory JSON feed — replaces the
+    week that used to be stored by hand. Keeps any stored event still in the future that the feed does not carry."""
+    meta = D["meta"]
+    last = meta.get("calendar_checked")
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=1):
+        print("  checked <1h ago - skipping")
+        return False
+    rows = []
+    for u in FF_FEEDS:
+        try:
+            rows += get(u).json()
+        except Exception as e:
+            print("  feed skipped:", u.rsplit("/", 1)[-1], type(e).__name__)
+    if not rows:
+        raise RuntimeError("no calendar rows from either feed")
+    out, seen = [], set()
+    for x in rows:
+        if x.get("country") not in ("USD", "CAD") or x.get("impact") not in ("High", "Medium", "Low"):
+            continue
+        try:
+            t = datetime.fromisoformat(x["date"]).astimezone(CAL_TZ)
+        except Exception:
+            continue
+        k = (x["country"], x.get("title"), t.isoformat())
+        if k in seen:
+            continue
+        seen.add(k)
+        out.append({"date": t.date().isoformat(), "time": t.strftime("%-I:%M%p").lower(), "ccy": x["country"], "event": x.get("title", ""),
+                    "impact": x["impact"], "fc": x.get("forecast") or None, "prev": x.get("previous") or None})
+    out.sort(key=lambda e: (e["date"], datetime.strptime(e["time"], "%I:%M%p").time() if re.match(r"\d", e["time"]) else datetime.min.time()))
+    if len(out) < 5:
+        raise RuntimeError(f"only {len(out)} USD/CAD events - feed shape changed?")
+    D["fx"]["events"] = out
+    meta["calendar_checked"] = iso(NOW)
+    meta["asof"]["calendar"] = iso(NOW)
+    meta.setdefault("sources", {})["calendar"] = "ForexFactory weekly calendar feed (USD, CAD), times stored as US Mountain"
+    print(f"  calendar: {len(out)} USD/CAD events {out[0]['date']}..{out[-1]['date']}")
+    return True
+
+
+# ------------------------------------------------------------------ USD/CAD model: 1-day bias + OLS forecast / scenarios (recomputed daily)
+def _closes_yf(sym, period="1y", scale=1.0):
+    h = yf().Ticker(sym).history(period=period, interval="1d")
+    return {i.date().isoformat(): float(r["Close"]) * scale for i, r in h.iterrows() if r["Close"] == r["Close"]}
+
+
+def fx_model(D, N):
+    """Re-runs the desk's model panel from live inputs instead of leaving a stored run:
+    - 1-day bias: sign-weighted driver score (same drivers and weights as the stored model):
+      2Y spread d/d (w1.0), 10Y spread d/d (0.8), DXY d/d (1.0), WTI d/d (0.7, oil up -> CAD firmer), CFTC crowding contrarian (0.8),
+      25D risk reversal (0.4, only while the FX-options read is <= 7 days old). score = sum(sign*w) / sum(w).
+    - OLS 1-day forecast: next-day USD/CAD log return regressed on today's [2Y spread change, DXY return, WTI return] over the
+      last 90 day-pairs; P50 = fitted value from the latest day; normal N(P50, residual sigma) gives P10/P90 and the
+      bearish / neutral (+-0.25 sigma) / bullish probabilities with conditional expected moves. Backtest MAE vs a zero-return
+      forecast over the same window is reported so the panel can say when the model does not beat 'no change'."""
+    import math
+    meta, fx = D["meta"], D["fx"]
+    last = meta.get("model_checked")
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=3):
+        print("  model ran <3h ago - skipping")
+        return False
+    R = {r["t"]: r for r in fx["rates"]}
+    sg = lambda v: 1 if v and v > 0 else -1 if v and v < 0 else 0
+    drivers = []
+    def add(name, sign, w, detail):
+        drivers.append({"name": name, "sign": sign, "weight": w, "detail": detail})
+    for t, w in (("2Y", 1.0), ("10Y", 0.8)):
+        dd = (R.get(t) or {}).get("dod")
+        if dd is not None:
+            add(f"{t} spread 1D change", sg(dd), w, f"{dd:+.1f} bps DoD" + (" (widening US-CA spread supports USD/CAD)" if dd > 0 else " (narrowing spread weighs on USD/CAD)" if dd < 0 else ""))
+    dx = fx["fxcross"].get("dxy_chg")
+    if dx is not None:
+        add("DXY 1D change", sg(dx), 1.0, f"{dx:+.2f}% DoD (broad USD)")
+    wti = next((e for e in fx["energy"] if e["name"].startswith("WTI")), None)
+    if wti and wti.get("pct") is not None:
+        add("WTI 1D change", -sg(wti["pct"]), 0.7, f"{wti['pct']:+.2f}% DoD (oil {'up -> CAD firmer -> USD/CAD down' if wti['pct'] > 0 else 'down -> CAD softer -> USD/CAD up'})")
+    po = fx["pos"].get("pct_oi")
+    if po is not None:
+        s_ = -1 if po <= -20 else 1 if po >= 20 else 0
+        add("CFTC crowding (contrarian)", s_, 0.8, f"funds net {po:+.1f}% of OI" + (" - extreme crowded short CAD, squeeze risk argues against chasing USD/CAD up" if s_ < 0 else " - extreme crowded long CAD" if s_ > 0 else " - not crowded"))
+    fo = fx.get("fxopt") or {}
+    fo_t = (meta["asof"].get("fxopt") or "")
+    if fo.get("rr") is not None and fo_t and NOW - datetime.fromisoformat(fo_t) < timedelta(days=7):
+        add("25D risk reversal", sg(fo["rr"]), 0.4, f"RR {fo['rr']:+.2f} pp")
+    if drivers:
+        sc = sum(d["sign"] * d["weight"] for d in drivers) / sum(d["weight"] for d in drivers)
+        lab = ("Bullish" if sc >= 0.5 else "Conditional Bullish" if sc >= 0.15 else "Bearish" if sc <= -0.5 else "Conditional Bearish" if sc <= -0.15 else "Neutral") + " USD/CAD"
+        fx["bias"] = {"label": lab, "score": round(sc, 3), "drivers": drivers, "asof": iso(NOW),
+                      "method": "sign-weighted driver score: sum(sign x weight) / sum(weight); |score| >= 0.15 conditional, >= 0.5 directional"}
+    # ---- OLS forecast
+    start = (NOW - timedelta(days=260)).date().isoformat()
+    cad = dict(_valet_series("FXUSDCAD", 0, start))
+    us2 = dict(_fred("DGS2", start))
+    grp = valet(f"observations/group/bond_yields_benchmark/json?start_date={start}")
+    c2code = next((c for c in grp.get("seriesDetail", {}) if ".2YR." in c.upper()), None)
+    ca2 = {o["d"]: _num((o.get(c2code) or {}).get("v")) for o in grp.get("observations", [])} if c2code else {}
+    dxy, wti_c = _closes_yf("DX-Y.NYB"), _closes_yf("CL=F")
+    days = sorted(d for d in cad if d in us2 and ca2.get(d) is not None and d in dxy and d in wti_c)
+    X, Y = [], []
+    for i in range(1, len(days) - 1):
+        a, b, c = days[i - 1], days[i], days[i + 1]
+        X.append([1.0, ((us2[b] - ca2[b]) - (us2[a] - ca2[a])) * 100, math.log(dxy[b] / dxy[a]) * 100, math.log(wti_c[b] / wti_c[a]) * 100])
+        Y.append(math.log(cad[c] / cad[b]) * 100)
+    X, Y = X[-90:], Y[-90:]
+    if len(X) < 40:
+        raise RuntimeError(f"model: only {len(X)} aligned day-pairs")
+    def solve(A, y):   # normal equations (4x4), Gaussian elimination
+        k = len(A[0]); M = [[sum(A[r][i] * A[r][j] for r in range(len(A))) for j in range(k)] + [sum(A[r][i] * y[r] for r in range(len(A)))] for i in range(k)]
+        for i in range(k):
+            p = max(range(i, k), key=lambda r_: abs(M[r_][i])); M[i], M[p] = M[p], M[i]
+            for r_ in range(k):
+                if r_ != i:
+                    f = M[r_][i] / M[i][i]; M[r_] = [M[r_][j] - f * M[i][j] for j in range(k + 1)]
+        return [M[i][k] / M[i][i] for i in range(k)]
+    beta = solve(X, Y)
+    res = [Y[i] - sum(beta[j] * X[i][j] for j in range(4)) for i in range(len(Y))]
+    sig = (sum(e * e for e in res) / max(1, len(res) - 4)) ** 0.5
+    a, b = days[-2], days[-1]
+    xl = [1.0, ((us2[b] - ca2[b]) - (us2[a] - ca2[a])) * 100, math.log(dxy[b] / dxy[a]) * 100, math.log(wti_c[b] / wti_c[a]) * 100]
+    p50 = sum(beta[j] * xl[j] for j in range(4))
+    base = cad[b]
+    mae = sum(abs(e) for e in res) / len(res) * 100   # bps
+    zmae = sum(abs(y) for y in Y) / len(Y) * 100
+    Phi = lambda z: 0.5 * (1 + math.erf(z / 2 ** 0.5))
+    phi = lambda z: math.exp(-z * z / 2) / (2 * math.pi) ** 0.5
+    lo, hi = p50 - 0.25 * sig, p50 + 0.25 * sig
+    def band(l, h):   # probability and conditional mean of N(p50, sig) on (l, h)
+        zl = -1e9 if l is None else (l - p50) / sig; zh = 1e9 if h is None else (h - p50) / sig
+        pr = Phi(zh) - Phi(zl)
+        m = p50 + sig * (phi(zl) - phi(zh)) / pr if pr > 1e-9 else p50
+        return pr, m
+    pb, mb = band(None, lo); pn, mn = band(lo, hi); pu, mu = band(hi, None)
+    lvl = lambda pct: round(base * math.exp(pct / 100), 4)
+    fx["fc"] = {**{k: v for k, v in (fx.get("fc") or {}).items() if k.endswith("_reason")},
+                "p50_pct": round(p50, 3), "p10": round(p50 - 1.2816 * sig, 3), "p90": round(p50 + 1.2816 * sig, 3), "spot50": lvl(p50),
+                "mae": round(mae, 2), "zero_mae": round(zmae, 2), "hit": round(sum(1 for i in range(len(Y)) if (Y[i] > 0) == (Y[i] - res[i] > 0)) / len(Y), 4),
+                "beta": [round(x, 4) for x in beta], "sigma_pct": round(sig, 3), "train_pairs": len(Y), "origin_date": b, "asof": iso(NOW),
+                "features": ["2Y US-CA spread change (bps)", "DXY log return (%)", "WTI log return (%)"]}
+    fx["scen"] = {"status": "ok", "horizon": "1D", "model": "OLS baseline",
+                  "asof": {"origin_date": b, "base_spot_close": round(base, 4), "base_source": "Bank of Canada FXUSDCAD close at origin", "train_pairs": len(Y)},
+                  "method": "normal forecast distribution N(P50, residual sigma); neutral band = +/-0.25 sigma; probabilities and conditional expected moves from that distribution",
+                  "bullish_usdcad": {"probability_pct": round(pu * 100, 1), "expected_move_pct": round(mu, 3), "range": [lvl(hi), lvl(p50 + 1.2816 * sig)]},
+                  "neutral": {"probability_pct": round(pn * 100, 1), "expected_move_pct": round(mn, 3), "range": [lvl(lo), lvl(hi)]},
+                  "bearish_usdcad": {"probability_pct": round(pb * 100, 1), "expected_move_pct": round(mb, 3), "range": [lvl(p50 - 1.2816 * sig), lvl(lo)]},
+                  "spot_base": round(base, 4), "spot_module_mid": fx["feed"].get("mid")}
+    meta["model_checked"] = iso(NOW)
+    meta["asof"]["model"] = iso(NOW)
+    print(f"  model: bias {fx.get('bias', {}).get('score')} · P50 {p50:+.3f}% sigma {sig:.3f}% · MAE {mae:.1f} vs zero {zmae:.1f} bps · {len(Y)} pairs to {b}")
+    return True
+
+
+# ------------------------------------------------------------------ Fed odds from fed funds futures (FedWatch-style)
+def _month_code(y, m):
+    return "FGHJKMNQUVXZ"[m - 1] + str(y)[2:]
+
+
+def fed_odds(D, N):
+    """Meeting-by-meeting Fed target probabilities from CBOT 30-day fed funds futures (Yahoo ZQ<m><yy>.CBT) and the
+    NY Fed effective rate, the same arithmetic as CME FedWatch: the month average implied by each contract is split into
+    pre- and post-meeting days; the implied change is spread over 25 bp steps and chained meeting to meeting."""
+    import calendar as _cal, math
+    meta, fx = D["meta"], D["fx"]
+    last = meta.get("fedodds_checked")
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=1):
+        print("  checked <1h ago - skipping")
+        return False
+    effr_j = get("https://markets.newyorkfed.org/api/rates/unsecured/effr/last/1.json").json()["refRates"][0]
+    effr, lo0, hi0 = float(effr_j["percentRate"]), float(effr_j["targetRateFrom"]), float(effr_j["targetRateTo"])
+    meets = [datetime.fromisoformat(s_).date() for s_ in (D.get("release_cal", {}).get("us_policy", {}).get("dates") or [])]
+    today = NOW.astimezone(TOR).date()
+    meets = [m for m in meets if m >= today][:3]
+    if not meets:
+        raise RuntimeError("no upcoming FOMC dates in release_cal.us_policy")
+    def avg_rate(y, m):
+        px, _, _ = yahoo_last(f"ZQ{_month_code(y, m)}.CBT", "1h")
+        if not 90 < px < 100:
+            raise RuntimeError(f"ZQ {y}-{m} price {px} implausible")
+        return 100 - px
+    dist = {0: 1.0}            # number of 25 bp moves vs today's range -> probability
+    r_pre = effr
+    out = []
+    for i, md in enumerate(meets):
+        ndays = _cal.monthrange(md.year, md.month)[1]
+        nxt = (md.year + (md.month == 12), md.month % 12 + 1)
+        next_has_meeting = any((m.year, m.month) == nxt for m in meets)
+        if md.day > ndays - 7 and not next_has_meeting:      # late-month meeting: use the following month's contract
+            r_post = avg_rate(*nxt)
+        else:
+            a = avg_rate(md.year, md.month)
+            pre_days = md.day
+            r_post = (a * ndays - r_pre * pre_days) / (ndays - pre_days)
+        steps = (r_post - r_pre) / 0.25
+        k = math.floor(steps); w = steps - k
+        new = {}
+        for n, p in dist.items():
+            new[n + k] = new.get(n + k, 0) + p * (1 - w)
+            new[n + k + 1] = new.get(n + k + 1, 0) + p * w
+        dist = {n: p for n, p in new.items() if p > 0.0005}
+        tot = sum(dist.values())
+        rng = lambda n: f"{int(round((lo0 + 0.25 * n) * 100))}-{int(round((hi0 + 0.25 * n) * 100))}" + (" (current)" if n == 0 else "")
+        out.append({"meeting": md.isoformat(),
+                    "no_change_pct": round(dist.get(0, 0) / tot * 100, 1),
+                    "hike_pct": round(sum(p for n, p in dist.items() if n > 0) / tot * 100, 1),
+                    "ease_pct": round(sum(p for n, p in dist.items() if n < 0) / tot * 100, 1),
+                    "ranges": [{"label": rng(n), "prob_pct": round(p / tot * 100, 1)} for n, p in sorted(dist.items())]})
+        r_pre = r_post
+    fx["policy"]["fed"] = out
+    fx["policy"]["fed_range"] = f"{int(lo0 * 100)}-{int(hi0 * 100)} (NY Fed target range) · EFFR {effr:.2f}%"
+    meta["fedodds_checked"] = iso(NOW)
+    meta["asof"]["policy"] = iso(NOW)
+    print("  fed odds:", [(o["meeting"], o["no_change_pct"], o["hike_pct"], o["ease_pct"]) for o in out])
+    return True
+
+
 GRAIN_CFTC = {"corn": "002602", "wheat": "001602", "soybeans": "005602"}
 
 
@@ -1776,7 +1996,7 @@ def canada(D, N):
 
 BLOCKS = [("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail)]
+          ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model)]
 
 
 def main():

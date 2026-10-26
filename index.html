@@ -15,7 +15,7 @@ u.searchParams.delete("fresh");history.replaceState(null,"",u.pathname+(u.search
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
 <link rel="icon" href="data:,">
-<title>Merged Dashboard — Static Snapshot (Oct 22, 2026)</title>
+<title>AGRITrade — Grain &amp; USD/CAD Desk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -613,7 +613,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
 </main>
 
 <footer class="foot">
-  Sources: CBOT delayed quotes, CFTC, USDA FAS, Bank of Canada, Statistics Canada, US Treasury, FRED/BLS, Google News. Auto-refreshed every 15 minutes on weekdays; grain settlements, options chains and model outputs are manual drop-ins. Educational use only — not trading advice.
+  Sources: CBOT delayed quotes, CFTC, USDA FAS, Bank of Canada, Statistics Canada, US Treasury, FRED/BLS, Google News. Market data refreshes automatically (15-min server runs, ~60 s fast lane on weekdays, direct-from-source at releases); options and open interest refresh each weekday from Interactive Brokers (8:23 am preliminary, 10:52 am final); the model panel is recomputed daily. Every card shows its source and age — retail sentiment and FX-options reads have no free live feed and are labelled with their read date. Educational use only — not trading advice.
 </footer>
 
 <script>
@@ -1532,7 +1532,7 @@ function positioningHTML(key){
   var isNear = side==="near";
   var head = (isNear?meta.chainNear:meta.chainFar)+' options · '+oiLabel(ds);
   var extra = isNear
-    ? stat("Chain IV", fmt(ds.iv,2)+"%") + stat("Options expire", meta.optExp)
+    ? stat("Chain IV", fmt(ds.iv,2)+"%") + stat("Options expire", ds.expires?fmtDate(ds.expires):meta.optExp)
     : stat("Range read", "Put wall "+money2(ds.put_wall[0])+" → call wall "+money2(ds.call_wall[0]));
   return '<div class="tile-head"><h2>Options positioning — <span class="h2note">'+head+'</span></h2>'+
     '<span class="toggle" role="group" aria-label="Near or far option month">'+
@@ -3026,7 +3026,7 @@ function renderGrain(key){
     stat("Settle 10-day 99% range", f.r10_99[0].toFixed(2)+" – "+f.r10_99[1].toFixed(2)) +
     '</div>'+ fanSVG2(g, meta, FL)+
     '<p class="posread">'+esc(FL.read)+'</p>'+
-    '<div class="legend"><span><span class="sw" style="background:#dbe4f0"></span>Verified settlements (25)</span><span><span class="sw" style="background:'+meta.accent+'"></span>Settle-anchored fan (LATEST VERIFIED)</span><span><span class="sw" style="background:#38b6c9"></span>Live-anchored fan (delayed quote, frozen)</span><span><span class="sw" style="background:#f0c169"></span>MA20</span><span><span class="sw" style="background:#b18cff"></span>MA50 / options walls</span><span><span class="sw" style="background:#ff6b6b"></span>Market (delayed)</span><span>Right-edge labels: every live-fan level at day 10, spaced apart with leader lines to each level\u2019s true price — no label overlaps another · exp MA20 / exp MA50 are flat zero-drift extensions of the last trailing values, labeled \u201cexp\u201d — never predictions · IV band uses chain IV '+fmt(f.iv_chain_iv,2)+'% × √(10/252)</span></div>'+
+    '<div class="legend"><span><span class="sw" style="background:#dbe4f0"></span>Verified settlements ('+g.history.length+')</span><span><span class="sw" style="background:'+meta.accent+'"></span>Settle-anchored fan (LATEST VERIFIED)</span><span><span class="sw" style="background:#38b6c9"></span>Live-anchored fan (delayed quote '+esc(f.intraday[1]||'')+')</span><span><span class="sw" style="background:#f0c169"></span>MA20</span><span><span class="sw" style="background:#b18cff"></span>MA50 / options walls</span><span><span class="sw" style="background:#ff6b6b"></span>Market (delayed)</span><span>Right-edge labels: every live-fan level at day 10, spaced apart with leader lines to each level\u2019s true price — no label overlaps another · exp MA20 / exp MA50 are flat zero-drift extensions of the last trailing values, labeled \u201cexp\u201d — never predictions · IV band uses chain IV '+fmt(f.iv_chain_iv,2)+'% × √(10/252)</span></div>'+
     '<div class="stamp">Settle fan from '+g.history.length+' daily settles through '+fmtDate(f.settle_date)+' (σ = st.dev of the last 30 daily changes) · live fan re-anchored on the delayed quote '+esc(f.intraday[1])+'</div></div>';
   /* export sales — 10-week trend */
   FU+=wasdeTableHTML(key)+exportTileHTML(key)+destTileHTML(key);
@@ -3042,7 +3042,7 @@ function renderGrain(key){
   /* skew */
   DV+='<div class="tile wide"><h2>IV skew <span class="h2note">— liquid side · ±2σ window</span></h2>'+ skewSVG(g, meta)+
     '<div class="legend"><span><span class="sw" style="background:var(--put)"></span>Puts below futures</span><span><span class="sw" style="background:var(--call)"></span>Calls at/above futures</span></div>'+
-    '<div class="stamp">'+(f.iv_note?esc(f.iv_note):'Per-strike theoretical IV, end-of-day Oct 21, 2026 vintage (read Oct 22)')+' · window = futures ± 2× the 10-day σ · market-implied, not a prediction</div></div>';
+    '<div class="stamp">'+(f.iv_note?esc(f.iv_note):'Per-strike theoretical IV'+(f.iv_as_of?', as of '+esc(fmtDate(f.iv_as_of)):''))+' · window = futures ± 2× the 10-day σ · market-implied, not a prediction</div></div>';
   /* CFTC */
   DV+='<div class="tile wide" data-src="cftc_grains"><h2>CFTC managed money <span class="h2note">— weekly, latest verified · every bar labeled, trend line across the weekly nets</span></h2>'+
     '<div class="big" style="color:'+(last.net>=0?'var(--green)':'var(--red)')+'">'+(last.net>=0?'+':'−')+fmt(Math.abs(last.net))+' <span style="font-size:14px;color:var(--muted)">net contracts</span></div>'+
@@ -3442,7 +3442,7 @@ function renderFX(){
   var drv=fx.bias.drivers.map(function(d){
     return '<div class="kv"><span class="kk">'+esc(d.name)+'</span><span class="vv" style="font-family:inherit;font-weight:500;font-size:12.5px">'+esc(d.detail)+'</span></div>';
   }).join("");
-  T.model='<div class="tile wide"><h2>Model view — 1-day bias &amp; OLS forecast <span class="h2note">· stored model run, origin '+fmtDate(fx.scen.asof.origin_date)+'</span></h2>'+
+  T.model='<div class="tile wide" data-src="model"><h2>Model view — 1-day bias &amp; OLS forecast <span class="h2note">· '+(fx.fc.asof?'recomputed daily · origin close '+fmtDate(fx.scen.asof.origin_date):'stored model run, origin '+fmtDate(fx.scen.asof.origin_date))+'</span></h2>'+
     '<div class="sl-grid"><div>'+
     '<div class="med">'+esc(fx.bias.label)+' <span class="neu" style="font-size:13px">score '+fx.bias.score+'</span></div>'+
     '<div class="stat-row">'+stat("Bearish", fmt(sc.bearish_usdcad.probability_pct,1)+"%", sc.bearish_usdcad.range[0].toFixed(4)+"–"+sc.bearish_usdcad.range[1].toFixed(4))+
@@ -3453,7 +3453,9 @@ function renderFX(){
     stat("Backtest MAE", fmt(fx.fc.mae,1)+" bps", "vs "+fmt(fx.fc.zero_mae,1)+" zero-return")+stat("Hit rate", fmt(fx.fc.hit*100,1)+"%")+'</div>'+
     '<p class="read" style="font-size:13px">Only the 1D horizon clears the walk-forward gate; 5D and 20D are shown as neutral cones (they lose to a zero-return forecast in backtest).</p>'+
     '</div></div>'+
-    '<div class="stamp">Base close '+fmt(fx.scen.asof.base_spot_close,4)+' · drivers (2Y/10Y spread moves, DXY, WTI, CFTC crowding, risk reversal) are on their own tiles · manual model run — not refreshed automatically · educational, not a trade recommendation</div></div>';
+    '<div class="stamp">Base close '+fmt(fx.scen.asof.base_spot_close,4)+' ('+esc(fx.scen.asof.base_source||'')+') \u00b7 '+(fx.fc.features?'OLS on '+fx.fc.train_pairs+' day-pairs: next-day return vs '+fx.fc.features.join(', ')+' \u00b7 residual \u03c3 '+fmt(fx.fc.sigma_pct,3)+'%':'stored model run')+
+      (fx.fc.mae!=null&&fx.fc.zero_mae!=null?(fx.fc.mae<fx.fc.zero_mae?' \u00b7 beats a zero-return forecast in backtest':' \u00b7 <b>does not beat a zero-return forecast in backtest \u2014 treat as context, not signal</b>'):'')+
+      ' \u00b7 bias = sign-weighted drivers (2Y/10Y spread moves, DXY, WTI, CFTC crowding'+(fx.bias.drivers&&fx.bias.drivers.some(function(d){ return /risk reversal/.test(d.name); })?', risk reversal':'; risk reversal left out while the FX-options read is stale')+') \u00b7 educational, not a trade recommendation</div></div>';
   /* policy expectations */
   var fedRows=fx.policy.fed.map(function(mt){
     return '<div class="kv"><span class="kk">Fed · '+mt.meeting+'</span><span class="vv">Hold '+fmt(mt.no_change_pct,1)+'% · Hike '+fmt(mt.hike_pct,1)+'% · Ease '+fmt(mt.ease_pct,1)+'%</span></div>';
@@ -3467,7 +3469,8 @@ function renderFX(){
   T.policy='<div class="tile" data-src="policy"><h2>Policy expectations <span class="h2note">— futures-implied</span></h2>'+polChart+fedRows+
     '<div class="kv"><span class="kk">Fed funds target</span><span class="vv">'+(function(){ var f=/(\d{3})-(\d{3})/.exec(fx.policy.fed_range||''); return f?fmt(f[1]/100,2)+'\u2013'+fmt(f[2]/100,2)+'%':esc(fx.policy.fed_range); })()+'</span></div>'+corRows+
     '<div class="kv"><span class="kk">BoC overnight (current)</span><span class="vv">'+fmt(fx.policy.corra_now,2)+'%</span></div>'+
-    '<div class="stamp">Fed probabilities pulled Oct 21, 06:20 CT · CORRA implied rates pulled Oct 21, 07:35 ET · futures-implied, not forecasts</div></div>';
+    '<div class="stamp">Fed probabilities '+(fx.policy.fed_range&&/NY Fed/.test(fx.policy.fed_range)?'computed '+asOf('policy',true)+' from CBOT fed funds futures + NY Fed effective rate (FedWatch-style)':'pulled '+asOf('policy',true))+
+      ' \u00b7 CORRA futures read '+(fx.policy.corra_asof?esc(fmtDate(fx.policy.corra_asof)):'date unknown')+' (Montreal Exchange \u2014 no free live feed, manual read) \u00b7 futures-implied, not forecasts</div></div>';
   /* positioning & sentiment */
   T.cftc=fxCftcHTML();
   T.sentiment='<div class="tile" data-src="sentiment"><h2>Retail sentiment &amp; FX options</h2>'+
@@ -3477,7 +3480,7 @@ function renderFX(){
     '<div class="kv"><span class="kk">25\u0394 risk reversal</span><span class="vv">'+sgn(fx.fxopt.rr,2,' pp')+' \u00b7 neutral band</span></div>'+
     '<div class="kv"><span class="kk">1M implied vol · call / put</span><span class="vv">'+fmt(fx.fxopt.civ,2)+'% / '+fmt(fx.fxopt.piv,2)+'%</span></div>'+
     '<div class="kv"><span class="kk">Realized vol (20D)</span><span class="vv">'+fmt(fx.fxopt.rvol,2)+'%</span></div>'+
-    '<div class="stamp">Retail panel pulled '+asOf('sentiment',true)+' \u00b7 FX options as of Oct 16 \u00b7 manual drop-ins</div></div>';
+    '<div class="stamp">Retail sentiment read '+asOf('sentiment',true)+' \u00b7 FX options read '+(fx.fxopt.asof?esc(fmtDate(fx.fxopt.asof)):'date unknown')+' \u00b7 neither has a free live feed, so both are manual reads \u2014 check the age before relying on them</div></div>';
   /* energy */
   var enRows=fx.energy.map(function(e){
     return '<div class="kv"><span class="kk">'+e.name+' <span style="color:var(--faint)">('+e.delay+')</span></span><span class="vv">$'+fmt(e.last,2)+' <span class="'+cls(e.pct)+'">'+sgn(e.pct,2,'%')+'</span></span></div>';
