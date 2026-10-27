@@ -816,6 +816,8 @@ table.oi-mtab td.oi-asof{font-family:inherit;font-size:11px;color:var(--muted);t
 #chartTip{position:fixed;z-index:9999;pointer-events:none;background:#0b1424;border:1px solid #3d5a80;border-radius:8px;padding:7px 10px;font:12px/1.5 "IBM Plex Mono",monospace;color:#dfe7f1;box-shadow:0 6px 20px rgba(0,0,0,.45);display:none;max-width:300px}
 #chartTip b{color:#fff;font-family:Inter,system-ui,sans-serif}
 .kasof{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);margin-top:6px;border-top:1px dashed var(--line);padding-top:4px}
+.ver-bar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:10000;background:#132238;border:1px solid #e8b93d;border-radius:12px;padding:10px 14px;color:#e8eef4;font-size:13px;box-shadow:0 10px 28px rgba(0,0,0,.5);display:flex;gap:10px;align-items:center;flex-wrap:wrap;max-width:calc(100vw - 32px)}
+.ver-bar button{appearance:none;border:0;background:#e8b93d;color:#111;font-weight:700;border-radius:8px;padding:5px 12px;cursor:pointer}.ver-bar small{color:var(--muted)}
 </style>
 </head>
 <body class="locked">
@@ -4253,6 +4255,19 @@ renderAll();
   document.querySelectorAll('.tab-btn').forEach(function(b){ b.addEventListener('click', function(){
     var k=b.getAttribute('data-tab'); if(DIRTY[k]&&R[k]){ R[k](); delete DIRTY[k]; if(k!=='fx'&&typeof drawDestMaps==='function') drawDestMaps(); if(typeof paintAwaiting==='function') paintAwaiting(); if(window.MOTION) MOTION.scan(); }
   }); });
+})();
+</script>
+<script>
+/* new-version check: the publish step stamps DESK_BUILD; when a newer build is live, offer a one-click reload */
+window.DESK_BUILD="dev";
+(function(){
+  if(window.DESK_BUILD==="dev"&&location.hostname!=="anirudhpdoshi.github.io") return;
+  function bar(){ if(document.getElementById('verBar')) return; var b=document.createElement('div'); b.id='verBar'; b.className='ver-bar'; b.setAttribute('role','status');
+    b.innerHTML='<b>A newer version of the desk is live.</b> <button type="button" id="verGo">Reload now</button><small>loads the latest screens; your views and settings are kept</small>';
+    document.body.appendChild(b); document.getElementById('verGo').onclick=function(){ location.reload(); }; }
+  function check(){ fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(function(r){ return r.ok?r.json():null; }).then(function(j){ if(j&&j.v&&j.v!==window.DESK_BUILD) bar(); }).catch(function(){}); }
+  setTimeout(check, 15000); setInterval(check, 120000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) check(); });
 })();
 </script>
 <script>

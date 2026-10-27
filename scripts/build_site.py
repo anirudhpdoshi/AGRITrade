@@ -33,11 +33,29 @@ def refresh_fallback():
     print("::notice title=fallback::embedded DATA/NEWS refreshed from data.json")
 
 
+def stamp_version():
+    """Code version = hash of the published code files (not data). The page compares it with version.json every
+    two minutes and offers a one-click reload when a newer build is live, so an open tab never runs stale code."""
+    h = hashlib.sha256()
+    for f in FILES:
+        if f != "data.json":
+            h.update((ROOT / f).read_bytes())
+    v = h.hexdigest()[:12]
+    page = (OUT / "index.html").read_text()
+    page, n = re.subn(r'window\.DESK_BUILD="[^"]*"', 'window.DESK_BUILD="' + v + '"', page, count=1)
+    if n != 1:
+        sys.exit("ABORT: DESK_BUILD marker not found in index.html")
+    (OUT / "index.html").write_text(page)
+    (OUT / "version.json").write_text(json.dumps({"v": v}) + "\n")
+    print("::notice title=version::" + v)
+
+
 def main():
     OUT.mkdir(exist_ok=True)
     for f in FILES:
         shutil.copy(ROOT / f, OUT / f)
     refresh_fallback()
+    stamp_version()
     key = os.environ.get("FINNHUB_API_KEY", "").strip()
     pw = os.environ.get("DESK_PASSCODE", "").strip()
     gate = re.search(r'var HASH="([0-9a-f]{64})"', (ROOT / "index.html").read_text()).group(1)
