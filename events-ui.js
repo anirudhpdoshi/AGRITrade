@@ -197,9 +197,26 @@
     grains_settle: ["CBOT grain settlements", "corn:overview"], exports: ["USDA weekly export sales", "corn:fund"], wasde: ["WASDE balance sheets", "corn:fund"], canada: ["Statistics Canada field-crop tables", "corn:fund"],
     sd_hist: ["Supply & demand history", "corn:fund"], inputs: ["Input costs (fertilizer, chemicals, energy)", "corn:inputs"], yields: ["Government bond yields", "fx:rates"], policy: ["Central-bank policy & rate odds", "fx:rates"],
     sentiment: ["Positioning sentiment", "fx:deriv"], fxopt: ["USD/CAD options (risk reversals)", "fx:deriv"], releases: ["Macro release consensus", "fx:macro"], fx_closes: ["USD/CAD daily closes", "fx:overview"] };
+  delete ASOF.policy;   /* re-checked every run; real policy moves arrive as macro releases */
+  /* content fingerprints: a milestone fires only when the data itself changes, not when the server merely re-checks a source */
+  function fp(o) { var t = JSON.stringify(o) || "", h = 0; for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return t.length + ":" + h; }
+  function G(k) { return (DATA.grains && DATA.grains[k]) || {}; }
+  var FP = {
+    cftc_grains: function () { return ["corn", "wheat", "soybeans"].map(function (k) { var c = G(k).cftc || []; return c.length && c[c.length - 1].date; }); },
+    cftc_fx: function () { var c = DATA.fx.cftc || DATA.fx.cot || []; return c.length ? c[c.length - 1] : null; },
+    options: function () { return ["corn", "wheat", "soybeans"].map(function (k) { var g = G(k); return [g.near && g.near.rows, g.far && g.far.rows]; }); },
+    grains_settle: function () { return ["corn", "wheat", "soybeans"].map(function (k) { return G(k).fan && [G(k).fan.anchor, G(k).fan.settle_date]; }); },
+    exports: function () { return DATA.exports; }, wasde: function () { return DATA.wasde; }, canada: function () { return DATA.canada; },
+    sd_hist: function () { return DATA.sd_hist; }, inputs: function () { var I = DATA.inputs && DATA.inputs.series; return I && Object.keys(I).map(function (k) { var x = I[k]; return x && (x.last || x.latest || x.value || (x.hist && x.hist[x.hist.length - 1]) || x); }); },
+    yields: function () { return DATA.fx.treasury; }, sentiment: function () { return DATA.fx.sentiment; }, fxopt: function () { return DATA.fx.fxopt || DATA.fx.options; },
+    releases: function () { return DATA.fx.releases; }, fx_closes: function () { return DATA.fx.closes || DATA.fx.history; }
+  };
+  /* sources whose as-of time is the moment new data landed (safe to replay today's refreshes on first load) */
+  var SEED = { options: 1, grains_settle: 1, cftc_grains: 1, cftc_fx: 1, fx_closes: 1 };
   var base = null;
   function snap() {
-    var s = { asof: Object.assign({}, DATA.meta.asof || {}), macro: {}, walls: {}, oi: {}, px: {}, gg: null, wa: {} };
+    var s = { asof: Object.assign({}, DATA.meta.asof || {}), fp: {}, macro: {}, walls: {}, oi: {}, px: {}, gg: null, wa: {} };
+    Object.keys(ASOF).forEach(function (k) { try { s.fp[k] = FP[k] ? fp(FP[k]()) : s.asof[k]; } catch (e) { s.fp[k] = s.asof[k]; } });
     (window.macroAll ? macroAll() : []).forEach(function (m) { s.macro[m.key] = m.period + "|" + m.value; });
     ["corn", "wheat", "soybeans"].forEach(function (k) { var g = DATA.grains && DATA.grains[k]; if (!g || !g.near) return;
       s.walls[k] = [g.near.call_wall && g.near.call_wall[0], g.near.put_wall && g.near.put_wall[0]];
@@ -209,13 +226,27 @@
     return s;
   }
   var GN = { corn: "Corn", wheat: "Wheat", soybeans: "Soybeans" };
+  function detail(k) {   /* one-line summary of what the refresh brought */
+    try {
+      if (k === "options") return "<br><small>" + ["corn", "wheat", "soybeans"].map(function (g) { var n = DATA.grains[g].near;
+        return GN[g] + " P/C " + n.pcr + " · walls " + sk(n.put_wall[0]) + "–" + sk(n.call_wall[0]); }).join(" · ") + " — " +
+        esc((DATA.grains.corn.near.oi_label || "").replace(/^.*OI as of /, "OI as of ")) + "</small>";
+      if (k === "grains_settle") return "<br><small>" + ["corn", "wheat", "soybeans"].map(function (g) { return GN[g] + " " + (+DATA.grains[g].fan.anchor).toFixed(4); }).join(" · ") + "</small>";
+      if (k === "cftc_grains") return "<br><small>" + ["corn", "wheat", "soybeans"].map(function (g) { var c = DATA.grains[g].cftc, l = c[c.length - 1]; return GN[g] + " MM " + (l.net >= 0 ? "+" : "") + Math.round(l.net / 1000) + "k"; }).join(" · ") + "</small>";
+    } catch (e) {}
+    return "";
+  }
   function sk(v) { return "$" + (+v).toFixed(2); }
   function diff() {
     if (!ready() || window.DESK_LOCKED) return;
-    var s = snap(); if (!base) { base = s; return; }
+    var s = snap(), first = !base, today = dayIso(Date.now());
     Object.keys(ASOF).forEach(function (k) {
-      if (s.asof[k] && s.asof[k] !== base.asof[k] && base.asof[k]) log("data", "<b>Updated</b> — " + esc(ASOF[k][0]), ASOF[k][1], "asof|" + k + "|" + s.asof[k]);
+      var v = s.asof[k]; if (!v) return;
+      /* on first load, today's earlier refreshes are added at the time they landed; afterwards, each new refresh as it arrives */
+      if (first ? SEED[k] && dayIso(Date.parse(v)) === today : (s.fp[k] !== base.fp[k] && base.fp[k] != null))
+        log("data", "<b>Updated</b> — " + esc(ASOF[k][0]) + detail(k), ASOF[k][1], "asof|" + k + "|" + v, first ? Date.parse(v) : 0);
     });
+    if (first) { base = s; return; }
     (window.macroAll ? macroAll() : []).forEach(function (m) {
       if (base.macro[m.key] && s.macro[m.key] !== base.macro[m.key]) {
         var u = m.unit === "K" ? "K" : m.unit || "";
@@ -296,6 +327,6 @@
     if (tick % 6 === 0) { paintBadge(); if (active()) repaintMain(); }
   }, 5000);
   window.addEventListener("desk:unlock", function () { base = null; setTimeout(function () { diff(); render(); paintBadge(); }, 800); });
-  window.EVENTS = { today: function () { return todayEvents(Date.now()); }, render: render, log: log, _feed: function () { return feed; } };
+  window.EVENTS = { today: function () { return todayEvents(Date.now()); }, render: render, log: log, _feed: function () { return feed; }, _diff: diff, _snap: snap, _base: function () { return base; } };
   if (ready()) { lastDay = dayIso(Date.now()); render(); paintBadge(); diff(); hookToast(); }
 })();

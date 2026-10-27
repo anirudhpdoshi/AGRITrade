@@ -799,6 +799,23 @@ body.xpand-on{overflow:hidden}
 .evfh{font-size:12.5px;color:#d4deea;line-height:1.45}.evfh b{color:#fff}.evfh small{color:var(--muted)}.evfs{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);margin-top:2px}.evfs a{color:#7dd8e6}
 .evft button{font-size:11px}
 @media (max-width:760px){.evh-r{flex-basis:100%;border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:10px}.evr{grid-template-columns:64px minmax(0,1fr);gap:8px}.evt{font-size:12px;white-space:nowrap}.evr-r{grid-column:2;flex-direction:row;justify-content:space-between;align-items:center;width:100%}.evf .evhi{margin-left:0}.ev-feed .evfb{max-height:none}}
+
+/* ---------- open interest: months, change view, hover read-out ---------- */
+.oi-ctl{display:flex;gap:8px;flex-wrap:wrap}
+.oi-mh{margin:12px 0 2px;font-size:12.5px;color:#fff}.oi-mh .h2note{font-size:11.5px}
+.oi-nochg{margin:6px 0 10px}
+.oi-hit{cursor:crosshair}.oi-hit:hover{fill:rgba(255,255,255,.06)}
+.oi-months{margin-top:12px;overflow-x:auto}.oi-mt{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+table.oi-mtab{width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px}
+table.oi-mtab th{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em;font-weight:600;text-align:right;padding:5px 8px;border-bottom:1px solid var(--line)}
+table.oi-mtab td{text-align:right;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.05);font-family:"IBM Plex Mono",monospace;vertical-align:top;line-height:1.45}
+table.oi-mtab th:first-child,table.oi-mtab td:first-child{text-align:left;font-family:inherit}table.oi-mtab td small{display:block;color:var(--faint);font-size:10.5px}
+table.oi-mtab td.oi-asof{font-family:inherit;font-size:11px;color:var(--muted);text-align:left}
+.oi-mv{display:block;font-family:inherit;font-size:10.5px;color:#e8b93d}
+@media (max-width:760px){table.oi-mtab{display:table!important;font-size:11.5px}table.oi-mtab thead{display:table-header-group!important}table.oi-mtab tbody{display:table-row-group!important}table.oi-mtab tr{display:table-row!important;padding:0}table.oi-mtab th,table.oi-mtab td{display:table-cell!important;padding:5px 6px}table.oi-mtab td:before{content:none!important}}
+#chartTip{position:fixed;z-index:9999;pointer-events:none;background:#0b1424;border:1px solid #3d5a80;border-radius:8px;padding:7px 10px;font:12px/1.5 "IBM Plex Mono",monospace;color:#dfe7f1;box-shadow:0 6px 20px rgba(0,0,0,.45);display:none;max-width:300px}
+#chartTip b{color:#fff;font-family:Inter,system-ui,sans-serif}
+.kasof{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);margin-top:6px;border-top:1px dashed var(--line);padding-top:4px}
 </style>
 </head>
 <body class="locked">
@@ -1587,7 +1604,7 @@ function fanSVG(g, meta){
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Settlement history and 10-day sigma fan for '+meta.name+'">'+s+'</svg>';
 }
 
-function oiSVG(rows, ds, cp){
+function oiSVG(rows, ds, cp, prev, lab){
   cp=cp||'both'; var shC=cp!=='put', shP=cp!=='call';
   var W=760,H=280,PL=46,PR=14,PT=22,PB=34, pw=W-PL-PR, ph=H-PT-PB;
   var max=0; rows.forEach(function(r){ max=Math.max(max,shC?r[1]:0,shP?r[2]:0); }); max=max||1;
@@ -1604,6 +1621,10 @@ function oiSVG(rows, ds, cp){
     if(shC&&r[1]>0) s+='<rect x="'+x.toFixed(1)+'" y="'+Y(r[1]).toFixed(1)+'" width="'+cw.toFixed(1)+'" height="'+(PT+ph-Y(r[1])).toFixed(1)+'" fill="'+(isCW?'#ffd27a':'#3fb97f')+'"/>';
     if(shP&&r[2]>0) s+='<rect x="'+(cp==='both'?x+cw+1:x).toFixed(1)+'" y="'+Y(r[2]).toFixed(1)+'" width="'+cw.toFixed(1)+'" height="'+(PT+ph-Y(r[2])).toFixed(1)+'" fill="'+(isPW?'#ff9d97':'#b34a44')+'"/>';
   });
+  var PV={}; if(prev&&prev.rows) prev.rows.forEach(function(r){ PV[r[0]]=r; });
+  rows.forEach(function(r,idx){ var q=PV[r[0]], tot=r[1]+r[2];
+    var tip=(lab?esc(lab)+' · ':'')+'strike '+r[0].toFixed(2)+'|Calls '+fmt(r[1])+(q?' ('+sgn(r[1]-q[1],0)+')':'')+'|Puts '+fmt(r[2])+(q?' ('+sgn(r[2]-q[2],0)+')':'')+'|P/C '+(r[1]?fmt(r[2]/r[1],2):'—')+' · total '+fmt(tot)+(q?'|change vs '+fmtShortDate(prev.date)+' close':'');
+    s+='<rect class="oi-hit" x="'+(PL+idx*bw).toFixed(1)+'" y="'+PT+'" width="'+bw.toFixed(1)+'" height="'+ph+'" fill="transparent" data-tip="'+tip+'"/>'; });
   /* wall markers + strike labels (every nth) */
   var step = n>110 ? 16 : n>70 ? 10 : 6;
   var lastLabeled=-step;
@@ -2007,24 +2028,73 @@ function daysToFnd(key){
   return t&&!isNaN(t)?Math.ceil((t-Date.now())/86400000):null;
 }
 function oiTileHTML(key){
-  var g=DATA.grains[key], meta=GMETA[key], side=grainState[key], st=OIV[key]||(OIV[key]={cp:'both',mon:'cur'});
-  var dF=daysToFnd(key), nextOn=dF!=null&&dF<=15&&side==='near'&&g.far&&g.far.rows&&g.far.rows.length;
-  var mon=(nextOn&&st.mon==='next')?'far':side, ds=g[mon], cp=st.cp||'both';
-  var monLab=mon==='near'?meta.chainNear:meta.chainFar;
-  function btn(attr,val,on,lab){ return '<button data-oiv="'+attr+'" data-v="'+val+'" data-k="'+key+'" aria-pressed="'+on+'">'+lab+'</button>'; }
-  var cpT='<span class="toggle" role="group" aria-label="Calls or puts">'+btn('cp','call',cp==='call','CALLS')+btn('cp','put',cp==='put','PUTS')+btn('cp','both',cp==='both','BOTH')+'</span>';
-  var mT=side!=='near'?'':nextOn
-    ? '<span class="toggle" role="group" aria-label="Option month">'+btn('mon','cur',mon==='near',meta.chainNear.toUpperCase())+btn('mon','next',mon==='far','NEXT · '+meta.chainFar.toUpperCase())+'</span>'
-    : '<span class="badge dim" title="The next option month switch appears 15 days before first notice day">Next month ('+meta.chainFar+') unlocks at FND−15</span>';
-  if(!nextOn&&side==='near'&&dF!=null) mT='<span class="badge dim" title="The next option month switch appears 15 days before first notice day">Next month '+meta.chainFar+' unlocks in '+(dF-15)+' days (FND−15)</span>';
-  var tot=cp==='call'?'Call OI '+fmt(ds.calls)+' · wall '+fmt(ds.call_wall[0],2):cp==='put'?'Put OI '+fmt(ds.puts)+' · wall '+fmt(ds.put_wall[0],2):'P/C '+fmt(ds.pcr,2);
-  var leg=(cp!=='put'?'<span><span class="sw" style="background:var(--call)"></span>Call OI</span><span><span class="sw" style="background:#ffd27a"></span>Call wall strike</span>':'')+
-          (cp!=='call'?'<span><span class="sw" style="background:var(--put)"></span>Put OI</span><span><span class="sw" style="background:#ff9d97"></span>Put wall strike</span>':'');
-  return '<div class="tile-head"><h2>Open interest by strike — <span class="h2note">'+monLab+(mon==='far'&&side==='near'?' (next month)':'')+' · '+esc(oiLabel(ds))+' · '+tot+'</span></h2>'+
-    '<div class="oi-ctl">'+cpT+mT+'</div></div>'+
-    (nextOn?'<p class="note" style="margin:4px 0 0">'+dF+' day'+(dF===1?'':'s')+' to first notice — next option month strikes available for roll planning.</p>':'')+
-    oiSVG(ds.rows, ds, cp)+'<div class="legend">'+leg+'</div>';
+  var g=DATA.grains[key], meta=GMETA[key], st=OIV[key]||(OIV[key]={cp:'both',mon:'near',view:'oi'});
+  if(st.mon==='cur') st.mon='near'; if(st.mon==='next') st.mon='far'; if(['near','far','both'].indexOf(st.mon)<0) st.mon=grainState[key]==='far'?'far':'near';
+  var cp=st.cp||'both', view=st.view||'oi', dF=daysToFnd(key), hasFar=g.far&&g.far.rows&&g.far.rows.length;
+  var mons=st.mon==='both'&&hasFar?['near','far']:[st.mon==='far'&&hasFar?'far':'near'];
+  function btn(attr,val,on,lab,tip){ return '<button data-oiv="'+attr+'" data-v="'+val+'" data-k="'+key+'" aria-pressed="'+on+'"'+(tip?' title="'+tip+'"':'')+'>'+lab+'</button>'; }
+  var ctl='<span class="toggle" role="group" aria-label="Option month">'+btn('mon','near',st.mon==='near','NEAR · '+meta.chainNear.toUpperCase())+(hasFar?btn('mon','far',st.mon==='far','FAR · '+meta.chainFar.toUpperCase())+btn('mon','both',st.mon==='both','BOTH'):'')+'</span>'+
+    '<span class="toggle" role="group" aria-label="Measure">'+btn('view','oi',view==='oi','OPEN INTEREST')+btn('view','chg',view==='chg','CHANGE IN OI','Change since the previous pull, by strike')+'</span>'+
+    '<span class="toggle" role="group" aria-label="Calls or puts">'+btn('cp','call',cp==='call','CALLS')+btn('cp','put',cp==='put','PUTS')+btn('cp','both',cp==='both','BOTH')+'</span>';
+  var charts=mons.map(function(m){
+    var ds=g[m], lab=m==='near'?meta.chainNear:meta.chainFar, prev=ds.rows_prev&&ds.rows_prev.rows?ds.rows_prev:null;
+    var head='<div class="oi-mh"><b>'+esc(lab)+'</b> <span class="h2note">'+(m==='near'?'near month':'far month')+' · '+esc(oiLabel(ds))+'</span></div>';
+    if(view==='chg') return head+(prev?oiDeltaSVG(ds, prev, cp, key, lab):'<p class="note oi-nochg">Change by strike for '+esc(lab)+' needs two pulls — the previous pull was not stored for this month yet. It appears after the next 8:23 ET options run.</p>');
+    return head+oiSVG(ds.rows, ds, cp, prev, lab);
+  }).join('');
+  var leg=view==='chg'?'<span><span class="sw" style="background:var(--call)"></span>Calls added</span><span><span class="sw" style="background:#1f7a52"></span>Calls closed</span><span><span class="sw" style="background:var(--put)"></span>Puts added</span><span><span class="sw" style="background:#7a2f2b"></span>Puts closed</span>':
+    (cp!=='put'?'<span><span class="sw" style="background:var(--call)"></span>Call OI</span><span><span class="sw" style="background:#ffd27a"></span>Call wall strike</span>':'')+(cp!=='call'?'<span><span class="sw" style="background:var(--put)"></span>Put OI</span><span><span class="sw" style="background:#ff9d97"></span>Put wall strike</span>':'');
+  return '<div class="tile-head"><h2>Open interest by strike <span class="h2note">— hover or tap a strike for its numbers</span></h2><div class="oi-ctl">'+ctl+'</div></div>'+
+    (dF!=null&&dF<=15?'<p class="note" style="margin:4px 0 0">'+dF+' day'+(dF===1?'':'s')+' to first notice on the front futures — compare both option months for roll planning.</p>':'')+
+    charts+'<div class="legend">'+leg+'</div>'+oiMonthsHTML(key)+
+    '<div class="stamp">Pulled '+esc(asofStamp('options'))+' · open interest is the prior session’s close; marked preliminary until CME’s final (~10:30 AM ET), confirmed by the 10:52 ET run · change = latest pull vs the previous stored pull for that month</div>';
 }
+/* one row per option month: totals, change vs previous pull, walls and wall moves */
+function oiMonthSum(ds){
+  var P=ds.rows_prev&&ds.rows_prev.rows, pc=0, pp=0, map={};
+  if(P){ P.forEach(function(r){ map[r[0]]=r; }); ds.rows.forEach(function(r){ var q=map[r[0]]; if(q){ pc+=q[1]; pp+=q[2]; } }); }
+  var cc=0, cpu=0; ds.rows.forEach(function(r){ if(!P||map[r[0]]){ cc+=r[1]; cpu+=r[2]; } });
+  var pw=null, cw=null, U=ds.wall_ref||ds.underlying;
+  if(P&&U){ P.forEach(function(r){ if(r[0]>=U-1e-9&&(!cw||r[1]>cw[1])) cw=r; if(r[0]<=U+1e-9&&(!pw||r[2]>pw[1])) pw=[r[0],r[2]]; }); }
+  return {dc:P?cc-pc:null, dp:P?cpu-pp:null, from:P?ds.rows_prev.date:null, cw0:cw, pw0:pw};
+}
+function oiMonthsHTML(key){
+  var g=DATA.grains[key], meta=GMETA[key];
+  var rows=['near','far'].filter(function(m){ return g[m]&&g[m].rows&&g[m].rows.length; }).map(function(m){
+    var ds=g[m], S=oiMonthSum(ds), lab=m==='near'?meta.chainNear:meta.chainFar;
+    function d(v){ return v==null?'<span class="neu">—</span>':'<span class="'+cls(v)+'">'+sgn(v,0)+'</span>'; }
+    var mv=function(old,now,word){ return old&&Math.abs(old[0]-now[0])>1e-6?' <span class="oi-mv">moved from '+fmt(old[0],2)+' — new '+word+'</span>':''; };
+    return '<tr><td><b>'+esc(lab)+'</b><small>'+(m==='near'?'near':'far')+'</small></td><td>'+fmt(ds.calls)+'<br>'+d(S.dc)+'</td><td>'+fmt(ds.puts)+'<br>'+d(S.dp)+'</td><td>'+fmt(ds.pcr,2)+'</td>'+
+      '<td>'+fmt(ds.call_wall[0],2)+' · '+fmt(ds.call_wall[1])+mv(S.cw0,ds.call_wall,'resistance')+'</td><td>'+fmt(ds.put_wall[0],2)+' · '+fmt(ds.put_wall[1])+mv(S.pw0,ds.put_wall,'support')+'</td>'+
+      '<td class="oi-asof">'+esc(oiLabel(ds).replace(/^.*OI as of /,'OI ').replace(' close (preliminary)',' close · prelim'))+(S.from?'<br>Δ vs '+esc(fmtShortDate(S.from))+' close':'<br>Δ from next pull')+'</td></tr>';
+  }).join('');
+  return '<div class="oi-months"><div class="oi-mt">What happened in each option month</div><table class="oi-mtab"><thead><tr><th>Month</th><th>Calls · Δ</th><th>Puts · Δ</th><th>P/C</th><th>Call wall</th><th>Put wall</th><th>Data</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+/* change in open interest by strike (bars above zero = contracts added, below = closed) */
+function oiDeltaSVG(ds, prev, cp, key, lab){
+  var shC=cp!=='put', shP=cp!=='call', P={}; prev.rows.forEach(function(r){ P[r[0]]=r; });
+  var rows=ds.rows.filter(function(r){ return P[r[0]]; }).map(function(r){ var q=P[r[0]]; return [r[0], r[1]-q[1], r[2]-q[2], r[1], r[2], q[1], q[2]]; });
+  if(!rows.length) return '<p class="note">No overlapping strikes between the two pulls.</p>';
+  var W=760,H=240,PL=50,PR=14,PT=14,PB=30, pw=W-PL-PR, ph=H-PT-PB, mx=0;
+  rows.forEach(function(r){ mx=Math.max(mx, shC?Math.abs(r[1]):0, shP?Math.abs(r[2]):0); }); mx=(mx||1)*1.1;
+  var n=rows.length, bw=pw/n, Z=PT+ph/2; function Y(v){ return Z-v/mx*ph/2; }
+  var s='<line x1="'+PL+'" y1="'+Z+'" x2="'+(PL+pw)+'" y2="'+Z+'" stroke="#3a4a60"/>';
+  [1,-1].forEach(function(k){ s+='<text x="'+(PL-6)+'" y="'+(Y(k*mx/1.1)+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+(k>0?'+':'−')+fmt(Math.round(mx/1.1))+'</text>'; });
+  s+='<text x="'+(PL-6)+'" y="'+(Z+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">0</text>';
+  var step=n>110?16:n>70?10:6;
+  rows.forEach(function(r,i){ var x=PL+i*bw, w=Math.max(1,bw*(cp==='both'?0.38:0.7));
+    if(shC&&r[1]) s+='<rect x="'+x.toFixed(1)+'" y="'+Math.min(Y(r[1]),Z).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+Math.abs(Y(r[1])-Z).toFixed(1)+'" fill="'+(r[1]>0?'#3fb97f':'#1f7a52')+'"/>';
+    if(shP&&r[2]) s+='<rect x="'+(cp==='both'?x+w+1:x).toFixed(1)+'" y="'+Math.min(Y(r[2]),Z).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+Math.abs(Y(r[2])-Z).toFixed(1)+'" fill="'+(r[2]>0?'#e0655f':'#7a2f2b')+'"/>';
+    if(i%step===0) s+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(PT+ph+16)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+r[0].toFixed(2)+'</text>';
+    var tip=esc(lab)+' · strike '+r[0].toFixed(2)+'|Calls '+fmt(r[3])+' ('+sgn(r[1],0)+' vs '+fmt(r[5])+')|Puts '+fmt(r[4])+' ('+sgn(r[2],0)+' vs '+fmt(r[6])+')|vs '+fmtShortDate(prev.date)+' close';
+    s+='<rect class="oi-hit" x="'+x.toFixed(1)+'" y="'+PT+'" width="'+bw.toFixed(1)+'" height="'+ph+'" fill="transparent" data-tip="'+tip+'"/>';
+  });
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Change in open interest by strike">'+s+'</svg>';
+}
+/* "Mon DD h:mm AM ET" for a data block's as-of time */
+function asofStamp(k){ var a=DATA.meta&&DATA.meta.asof&&DATA.meta.asof[k]; if(!a) return 'n/a';
+  return new Date(a).toLocaleString('en-US',{timeZone:'America/Toronto',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET'; }
+function kAsof(txt){ return '<div class="kasof">⏱ '+txt+'</div>'; }
 
 /* ---------------- grain dashboard pieces ---------------- */
 var USDA_WASDE=["2026-11-10","2026-12-10"];   /* 12:00 ET · confirmed 2026 schedule */
@@ -2626,21 +2696,22 @@ function fundPnl(key){
 function cockpitHTML(key){
   var g=DATA.grains[key], f=g.fan, U=optUnderlying(key), V=g.vol||{}, iv=(V.near&&V.near.iv)||g.near.iv, hv=V.near&&V.near.hv;
   var now=Date.now(), wev=usdaEvents(key, now, 60).filter(function(e){ return e.t>now && e.kind==='wasde'; })[0];
-  var cards=[];
+  var cards=[], ivAt0=V.src?esc(String(V.src).replace(/^IBKR snapshot,\s*/,'').replace(/ (\d{4}) /,' ')):asofStamp('options');
+  var oiAt=esc(oiLabel(g.near).replace(/^.*OI as of /,'').replace(' close (preliminary)',' close · prelim'));
   cards.push(kpi('ATM IV · '+esc(g.near.chain||g.near.contract), fmt(iv,1)+'<small>%</small>',
-    (hv!=null?'HV30 '+fmt(hv,1)+'% · IV−HV <span class="'+cls(iv-hv)+'">'+sgn(iv-hv,1,' pts')+'</span>':'')+(V.pct?'<br>IV pctile 52w <b>'+fmt(V.pct['52w'],0)+'</b> · 13w '+fmt(V.pct['13w'],0):'')));
+    (hv!=null?'HV30 '+fmt(hv,1)+'% · IV−HV <span class="'+cls(iv-hv)+'">'+sgn(iv-hv,1,' pts')+'</span>':'')+(V.pct?'<br>IV pctile 52w <b>'+fmt(V.pct['52w'],0)+'</b> · 13w '+fmt(V.pct['13w'],0):'')+kAsof('IV/HV pulled '+ivAt0)));
   if(wev){ var td=tradingDaysTo(wev.t), mv=U.F*iv/100*Math.sqrt(td/252), d1=U.F*iv/100/Math.sqrt(252);
-    cards.push(kpi('Implied move to WASDE', '±'+fmt(mv*100,1)+'<small>¢</small>', '±'+fmt(mv/U.F*100,1)+'% over '+td+' sessions · '+fmt(U.F-mv,2)+'–'+fmt(U.F+mv,2)+'<br>1-day ±'+fmt(d1*100,1)+'¢ · <span class="countdown" data-t="'+wev.t+'">'+cdText(wev.t-now)+'</span>')); }
+    cards.push(kpi('Implied move to WASDE', '±'+fmt(mv*100,1)+'<small>¢</small>', '±'+fmt(mv/U.F*100,1)+'% over '+td+' sessions · '+fmt(U.F-mv,2)+'–'+fmt(U.F+mv,2)+'<br>1-day ±'+fmt(d1*100,1)+'¢ · <span class="countdown" data-t="'+wev.t+'">'+cdText(wev.t-now)+'</span>'+kAsof('IV '+ivAt0+' · price live'))); }
   var cw=g.near.call_wall, pw=g.near.put_wall, sd=U.F*iv/100/Math.sqrt(252)*Math.sqrt(10);
-  cards.push(kpi('Put/call · walls', fmt(+g.near.pcr,2), 'Call wall <b>'+fmt(cw[0],2)+'</b> ('+sgn((cw[0]-U.F)*100,0,'¢')+', '+fmt(Math.abs(cw[0]-U.F)/sd,1)+'σ₁₀)<br>Put wall <b>'+fmt(pw[0],2)+'</b> ('+sgn((pw[0]-U.F)*100,0,'¢')+', '+fmt(Math.abs(pw[0]-U.F)/sd,1)+'σ₁₀)'));
+  cards.push(kpi('Put/call · walls', fmt(+g.near.pcr,2), 'Call wall <b>'+fmt(cw[0],2)+'</b> ('+sgn((cw[0]-U.F)*100,0,'¢')+', '+fmt(Math.abs(cw[0]-U.F)/sd,1)+'σ₁₀)<br>Put wall <b>'+fmt(pw[0],2)+'</b> ('+sgn((pw[0]-U.F)*100,0,'¢')+', '+fmt(Math.abs(pw[0]-U.F)/sd,1)+'σ₁₀)'+kAsof('OI '+oiAt+' · pulled '+asofStamp('options'))));
   var R=rollData(key), L=R.dailyN[R.dailyN.length-1];
-  cards.push(kpi('Roll '+R.front+'→'+R.def, fmt(L[3],1)+'<small>%</small>', esc(R.stats.state.replace(/^[A-Z \-]+\(/,'').replace(/\)$/,''))+' · pace '+esc(R.stats.pace.replace(' / last 5 sessions','/5d'))));
+  cards.push(kpi('Roll '+R.front+'→'+R.def, fmt(L[3],1)+'<small>%</small>', esc(R.stats.state.replace(/^[A-Z \-]+\(/,'').replace(/\)$/,''))+' · pace '+esc(R.stats.pace.replace(' / last 5 sessions','/5d'))+kAsof('futures OI through '+esc(R.lastLabel||''))));
   var C=fullCarry(key);
-  cards.push(kpi('Spread vs full carry', fmt(C.pct,0)+'<small>%</small>', fmt(C.sp,1)+'¢ vs full carry −'+fmt(C.fc,1)+'¢<br>'+(C.pct>=80?'near full carry — market pays to store':C.pct>=50?'moderate carry':'weak carry — nearby demand / tight stocks')));
+  cards.push(kpi('Spread vs full carry', fmt(C.pct,0)+'<small>%</small>', fmt(C.sp,1)+'¢ vs full carry −'+fmt(C.fc,1)+'¢<br>'+(C.pct>=80?'near full carry — market pays to store':C.pct>=50?'moderate carry':'weak carry — nearby demand / tight stocks')+kAsof('settles '+esc(R.lastLabel?R.lastLabel.replace(' (prelim)',''):'')+' · bill rate '+asofStamp('yields'))));
   var st=g.cftc_stats, P=fundPnl(key), last=g.cftc[g.cftc.length-1];
   cards.push(kpi('Managed money', sgn(Math.round(last.net/1000),0)+'<small>k</small>',
     (st&&st.p3y!=null?'3-yr pctile <b>'+fmt(st.p3y,0)+'</b>':'')+(st&&st.pct_oi!=null?' · '+fmt(st.pct_oi,1)+'% OI':'')+
-    (P?'<br>est. avg entry <b>$'+fmt(P.entry,4)+'</b> · <span class="'+cls(P.per)+'">'+(P.per>=0?'in profit':'underwater')+' '+sgn(P.tot/1e6,0,'M')+'</span>':'')));
+    (P?'<br>est. avg entry <b>$'+fmt(P.entry,4)+'</b> · <span class="'+cls(P.per)+'">'+(P.per>=0?'in profit':'underwater')+' '+sgn(P.tot/1e6,0,'M')+'</span>':'')+kAsof('CFTC positions as of '+esc(fmtShortDate(last.date))+' · weekly report, Fri 3:30 PM ET')));
   return '<div class="tile wide kpi-strip cockpit" data-src="options"><div class="cockpit-h">Derivatives cockpit · '+GMETA[key].name+' <span class="h2note">options on '+esc(U.c)+' @ '+fmt(U.F,4)+' ('+U.how+')</span></div>'+cards.join('')+
     '<div class="stamp" style="grid-column:1/-1">IV/HV/IV-percentile: '+esc(V.src||'chain data')+' · implied move = F × IV × √(sessions/252) · σ₁₀ = 10-session 1σ · full carry = days × (financing/360 × F + storage), storage 16.5/100¢/bu/day (CBOT corn rate; wheat VSR floor), financing = US 3M bill + 2% · fund entry = weekly net changes priced at that report week’s average settle</div></div>';
 }
@@ -4182,6 +4253,20 @@ renderAll();
   document.querySelectorAll('.tab-btn').forEach(function(b){ b.addEventListener('click', function(){
     var k=b.getAttribute('data-tab'); if(DIRTY[k]&&R[k]){ R[k](); delete DIRTY[k]; if(k!=='fx'&&typeof drawDestMaps==='function') drawDestMaps(); if(typeof paintAwaiting==='function') paintAwaiting(); if(window.MOTION) MOTION.scan(); }
   }); });
+})();
+</script>
+<script>
+/* hover / tap read-out for chart elements carrying data-tip="title|line|line" */
+(function(){
+  var tip=null;
+  function el(){ if(!tip){ tip=document.createElement('div'); tip.id='chartTip'; tip.setAttribute('role','tooltip'); document.body.appendChild(tip); } return tip; }
+  function show(t, x, y){ var a=t.getAttribute('data-tip').split('|'), d=el();
+    d.innerHTML='<b>'+a[0]+'</b>'+a.slice(1).map(function(l){ return '<div>'+l+'</div>'; }).join(''); d.style.display='block';
+    var w=d.offsetWidth, h=d.offsetHeight, X=x+14, Y=y+14; if(X+w>innerWidth-8) X=x-w-14; if(Y+h>innerHeight-8) Y=y-h-14; d.style.left=Math.max(8,X)+'px'; d.style.top=Math.max(8,Y)+'px'; }
+  function hide(){ if(tip) tip.style.display='none'; }
+  document.addEventListener('mousemove', function(e){ var t=e.target.closest&&e.target.closest('[data-tip]'); if(t) show(t,e.clientX,e.clientY); else hide(); });
+  document.addEventListener('click', function(e){ var t=e.target.closest&&e.target.closest('[data-tip]'); if(t) show(t,e.clientX,e.clientY); });
+  window.addEventListener('scroll', hide, {passive:true});
 })();
 </script>
 <script>
