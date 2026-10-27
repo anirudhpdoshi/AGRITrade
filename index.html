@@ -95,7 +95,9 @@ tr:last-child td{border-bottom:0}
 .news-list a{color:var(--ink);font-weight:600;font-size:14px;line-height:1.4;display:block;margin-top:2px}
 .news-list a:hover{color:var(--cyan);text-decoration:none}
 
-.roll-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:10px 28px;margin-top:16px}
+.roll-grid{display:grid;grid-template-columns:1fr;gap:14px 28px;margin-top:16px}
+.roll-grid>div:last-child{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px;align-content:start}.roll-grid>div:last-child>h3{grid-column:1/-1}
+@media (max-width:760px){.roll-grid>div:last-child{grid-template-columns:1fr}}
 .roll-grid h3,.beh-wrap h3{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 4px;font-weight:700}
 table.mini{font-size:12.5px}
 table.mini th,table.mini td{padding:5px 6px}
@@ -818,6 +820,12 @@ table.oi-mtab td.oi-asof{font-family:inherit;font-size:11px;color:var(--muted);t
 .kasof{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);margin-top:6px;border-top:1px dashed var(--line);padding-top:4px}
 .ver-bar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:10000;background:#132238;border:1px solid #e8b93d;border-radius:12px;padding:10px 14px;color:#e8eef4;font-size:13px;box-shadow:0 10px 28px rgba(0,0,0,.5);display:flex;gap:10px;align-items:center;flex-wrap:wrap;max-width:calc(100vw - 32px)}
 .ver-bar button{appearance:none;border:0;background:#e8b93d;color:#111;font-weight:700;border-radius:8px;padding:5px 12px;cursor:pointer}.ver-bar small{color:var(--muted)}
+.roll-next{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}
+.rn-c{background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px;padding:9px 12px}.rn-next{border-color:#2b8f61;box-shadow:inset 3px 0 0 #2b8f61}
+.rn-h{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}.rn-v{font-family:"IBM Plex Mono",monospace;font-size:20px;font-weight:600;color:#fff;margin:2px 0}
+.rn-s{font-size:11.5px;color:var(--muted);line-height:1.5}.rn-s span{font-family:"IBM Plex Mono",monospace}
+.roll-opt{margin-top:14px}.roll-opt h3{margin:0 0 6px}
+@media (max-width:760px){.roll-next{grid-template-columns:1fr}}
 </style>
 </head>
 <body class="locked">
@@ -1947,11 +1955,29 @@ function rollSpreadLine(R){
   return '<p class="spreadline">Spread '+R.front+' − '+R.def+': first '+a[4].toFixed(1)+'¢ ('+dl(a)+') → latest '+b[4].toFixed(1)+'¢ ('+dl(b)+') · roll % labels run vertically above each bar so neighbours never collide</p>';
 }
 
+/* next-month (deferred) futures: open interest and how it is changing, next to the front month */
+function rollNextHTML(key, R){
+  var N=R.dailyN, L=N[N.length-1], P=N[N.length-2], P5=N[Math.max(0,N.length-6)];
+  if(!L||!P) return '';
+  function c(v){ return '<span class="'+cls(v)+'">'+(v>0?'+':v<0?'−':'')+fmt(Math.abs(v))+'</span>'; }
+  function pct(a,b){ return b?' ('+(a>=b?'+':'−')+fmt(Math.abs(a/b-1)*100,1)+'%)':''; }
+  var lab=R.lastLabel, comb=L[1]+L[2], combP=P[1]+P[2];
+  return '<div class="roll-next">'+
+    '<div class="rn-c rn-next"><div class="rn-h">Next month · '+esc(R.def)+'</div><div class="rn-v">'+fmt(L[2])+'</div>'+
+      '<div class="rn-s">day '+c(L[2]-P[2])+pct(L[2],P[2])+' · 5 sessions '+c(L[2]-P5[2])+'</div><div class="rn-s">'+fmt(L[2]/comb*100,1)+'% of combined OI</div></div>'+
+    '<div class="rn-c"><div class="rn-h">Front month · '+esc(R.front)+'</div><div class="rn-v">'+fmt(L[1])+'</div>'+
+      '<div class="rn-s">day '+c(L[1]-P[1])+pct(L[1],P[1])+' · 5 sessions '+c(L[1]-P5[1])+'</div><div class="rn-s">'+fmt(L[1]/comb*100,1)+'% of combined OI</div></div>'+
+    '<div class="rn-c"><div class="rn-h">Combined · both months</div><div class="rn-v">'+fmt(comb)+'</div>'+
+      '<div class="rn-s">day '+c(comb-combP)+' · '+(L[2]-P[2]>=-(L[1]-P[1])*0.8?'front exits are moving into '+esc(R.def):'positions are closing, not rolling')+'</div><div class="rn-s">⏱ '+esc(lab)+'</div></div>'+
+  '</div>';
+}
 function rollTileHTML(key){
   var R=rollData(key), meta=GMETA[key], st=R.stats, lastT=R.dailyT[R.dailyT.length-1];
-  var dT=R.dailyT.slice(-10);
-  var dRows=dT.map(function(r,i){
-    return '<tr'+(i===dT.length-1?' class="hl"':'')+'><td class="lbl" data-l="">'+r[0]+'</td><td data-l="Front OI">'+r[1]+'</td><td data-l="Def OI">'+r[2]+'</td><td data-l="Net ΔOI">'+r[3]+'</td><td data-l="Roll %">'+r[4]+'</td><td data-l="Δ pp">'+r[5]+'</td><td data-l="Spread">'+r[6]+'</td><td data-l="Δ¢">'+r[7]+'</td></tr>';
+  var dT=R.dailyT.slice(-10), N=R.dailyN, off=N.length-R.dailyT.length;
+  function dd(i){ var a=N[i+off], b=N[i+off-1]; return a&&b?[a[1]-b[1], a[2]-b[2]]:null; }
+  function sg0(v){ return v==null?'—':'<span class="'+cls(v)+'">'+(v>0?'+':v<0?'−':'')+fmt(Math.abs(v))+'</span>'; }
+  var dRows=dT.map(function(r,i){ var D=dd(R.dailyT.length-dT.length+i);
+    return '<tr'+(i===dT.length-1?' class="hl"':'')+'><td class="lbl" data-l="">'+r[0]+'</td><td data-l="Front OI">'+r[1]+'</td><td data-l="Δ front">'+sg0(D&&D[0])+'</td><td data-l="Next OI">'+r[2]+'</td><td data-l="Δ next">'+sg0(D&&D[1])+'</td><td data-l="Net ΔOI">'+r[3]+'</td><td data-l="Roll %">'+r[4]+'</td><td data-l="Δ pp">'+r[5]+'</td><td data-l="Spread">'+r[6]+'</td><td data-l="Δ¢">'+r[7]+'</td></tr>';
   }).join("");
   var statRows=[
     ['Front month (futures)', meta.name+' '+R.front],
@@ -1978,13 +2004,14 @@ function rollTileHTML(key){
     stat('Roll progress · '+R.lastLabel, st.roll) + stat('Front OI · '+R.lastLabel, lastT[1]) +
     stat('Deferred OI · '+R.lastLabel, lastT[2]) + stat('Calendar spread', st.sp) +
     stat('Roll pace', st.pace) + stat('Delivery window', st.state) +
-    '</div>'+
+    '</div>'+rollNextHTML(key, R)+
     '<div class="flowwrap">'+rollSVG2(R).replace('<svg ','<svg class="flowchart" ')+'</div>'+
     rollBadges(R)+
     rollSpreadLine(R)+
     '<div class="legend"><span><span class="sw" style="background:#2f6db3"></span>Front OI ('+R.front+')</span><span><span class="sw" style="background:#2b8f61"></span>Deferred OI ('+R.def+')</span><span><span class="sw" style="background:#f5c542"></span>Calendar spread ¢/bu (right axis)</span><span>Bar labels: roll % = deferred OI ÷ (front + deferred OI)</span></div>'+
-    '<div class="roll-grid"><div><h3>Daily summary — last 10 sessions</h3><table class="mini"><thead><tr><th>Date</th><th>Front OI</th><th>Def OI</th><th>Net ΔOI</th><th>Roll %</th><th>Δ pp</th><th>Spread</th><th>Δ¢</th></tr></thead><tbody>'+dRows+'</tbody></table></div>'+
+    '<div class="roll-grid"><div><h3>Daily summary — last 10 sessions</h3><table class="mini"><thead><tr><th>Date</th><th>Front OI</th><th>Δ front</th><th>Next OI</th><th>Δ next</th><th>Net ΔOI</th><th>Roll %</th><th>Δ pp</th><th>Spread</th><th>Δ¢</th></tr></thead><tbody>'+dRows+'</tbody></table></div>'+
     '<div><h3>Roll statistics &amp; timing</h3>'+statRows+'</div></div>'+
+    '<div class="roll-opt"><h3>Options open interest by month — for roll planning</h3>'+oiMonthsHTML(key).replace('<div class="oi-mt">What happened in each option month</div>','')+'<p class="note" style="margin:6px 0 0">Strike-by-strike view and change chart: <a href="#" data-secjump="'+key+':opt">Options data → Open interest by strike</a> (NEAR · FAR · BOTH)</p></div>'+
     '<div class="beh-wrap"><h3>Trader behaviour — what each session\u2019s flow says · last 9 session deltas</h3>'+
     '<div class="beh-row beh-head"><span class="bd">Date</span><span class="bt">Front ('+R.front+') — unwinding</span><span class="bt">Deferred ('+R.def+') — adding</span></div>'+behRows+
     '<p class="decode">Decode: price↑+OI↑ = new longs · price↓+OI↑ = new shorts · price↑+OI↓ = short covering · price↓+OI↓ = long liquidation</p>'+
@@ -4269,6 +4296,10 @@ window.DESK_BUILD="dev";
   setTimeout(check, 15000); setInterval(check, 120000);
   document.addEventListener('visibilitychange', function(){ if(!document.hidden) check(); });
 })();
+</script>
+<script>
+document.addEventListener('click', function(e){ var a=e.target.closest&&e.target.closest('[data-secjump]'); if(!a) return; e.preventDefault();
+  var p=a.getAttribute('data-secjump').split(':'), b=document.querySelector('#panel-'+p[0]+' [data-sec-v="'+p[1]+'"]'); if(b){ b.click(); window.scrollTo({top:0,behavior:'smooth'}); } });
 </script>
 <script>
 /* hover / tap read-out for chart elements carrying data-tip="title|line|line" */
