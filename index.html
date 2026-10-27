@@ -826,6 +826,8 @@ table.oi-mtab td.oi-asof{font-family:inherit;font-size:11px;color:var(--muted);t
 .rn-s{font-size:11.5px;color:var(--muted);line-height:1.5}.rn-s span{font-family:"IBM Plex Mono",monospace}
 .roll-opt{margin-top:14px}.roll-opt h3{margin:0 0 6px}
 @media (max-width:760px){.roll-next{grid-template-columns:1fr}}
+.oi-lock{opacity:.45;cursor:not-allowed}.oi-gate{color:var(--muted)}.oi-gate.on{color:#7fdcae}.oi-gate b{color:#fff}
+.rn-gate{float:right;font-size:9.5px;letter-spacing:.06em;padding:1px 6px;border-radius:6px;border:1px solid #2b8f61;color:#7fdcae}.rn-locked{border-color:var(--line);box-shadow:none}.rn-locked .rn-gate{border-color:#6e5a2a;color:#e8b93d}
 </style>
 </head>
 <body class="locked">
@@ -1962,8 +1964,9 @@ function rollNextHTML(key, R){
   function c(v){ return '<span class="'+cls(v)+'">'+(v>0?'+':v<0?'−':'')+fmt(Math.abs(v))+'</span>'; }
   function pct(a,b){ return b?' ('+(a>=b?'+':'−')+fmt(Math.abs(a/b-1)*100,1)+'%)':''; }
   var lab=R.lastLabel, comb=L[1]+L[2], combP=P[1]+P[2];
+  var open=L[3]>=40;
   return '<div class="roll-next">'+
-    '<div class="rn-c rn-next"><div class="rn-h">Next month · '+esc(R.def)+'</div><div class="rn-v">'+fmt(L[2])+'</div>'+
+    '<div class="rn-c rn-next'+(open?'':' rn-locked')+'"><div class="rn-h">Next month · '+esc(R.def)+' <span class="rn-gate">'+(open?'✓ OPEN · ≥40%':'🔒 opens at 40%')+'</span></div><div class="rn-v">'+fmt(L[2])+'</div>'+
       '<div class="rn-s">day '+c(L[2]-P[2])+pct(L[2],P[2])+' · 5 sessions '+c(L[2]-P5[2])+'</div><div class="rn-s">'+fmt(L[2]/comb*100,1)+'% of combined OI</div></div>'+
     '<div class="rn-c"><div class="rn-h">Front month · '+esc(R.front)+'</div><div class="rn-v">'+fmt(L[1])+'</div>'+
       '<div class="rn-s">day '+c(L[1]-P[1])+pct(L[1],P[1])+' · 5 sessions '+c(L[1]-P5[1])+'</div><div class="rn-s">'+fmt(L[1]/comb*100,1)+'% of combined OI</div></div>'+
@@ -2056,13 +2059,24 @@ function daysToFnd(key){
   var st=(typeof ROLLS!=='undefined'&&ROLLS[key]&&ROLLS[key].stats)||{}, t=st.fnd?new Date(st.fnd.replace(/^[A-Za-z]+ /,'')+' 12:00'):null;
   return t&&!isNaN(t)?Math.ceil((t-Date.now())/86400000):null;
 }
+/* futures roll level for the 40% liquidity gate: deferred OI ÷ (front + deferred) on the latest session */
+function rollLevel(key){
+  var R=rollData(key), N=R.dailyN, L=N[N.length-1], P5=N[Math.max(0,N.length-6)], crossed=null;
+  for(var i=N.length-1;i>0;i--){ if(N[i][3]>=40&&N[i-1][3]<40){ crossed=MON3[N[i][0].slice(0,2)]+' '+N[i][0].slice(3); break; } }
+  if(!crossed&&N[0][3]>=40) crossed='before '+MON3[N[0][0].slice(0,2)]+' '+N[0][0].slice(3);
+  return {pct:L[3], open:L[3]>=40, front:R.front, def:R.def, crossed:crossed, pace:(L[3]-P5[3])/Math.max(1,N.length-1-Math.max(0,N.length-6))};
+}
 function oiTileHTML(key){
   var g=DATA.grains[key], meta=GMETA[key], st=OIV[key]||(OIV[key]={cp:'both',mon:'near',view:'oi'});
   if(st.mon==='cur') st.mon='near'; if(st.mon==='next') st.mon='far'; if(['near','far','both'].indexOf(st.mon)<0) st.mon=grainState[key]==='far'?'far':'near';
-  var cp=st.cp||'both', view=st.view||'oi', dF=daysToFnd(key), hasFar=g.far&&g.far.rows&&g.far.rows.length;
+  var cp=st.cp||'both', view=st.view||'oi', dF=daysToFnd(key), RL=rollLevel(key), unlocked=RL.open, hasFar=g.far&&g.far.rows&&g.far.rows.length&&unlocked;
+  /* the next option month opens once 40% of futures open interest has rolled; on first opening, show both months */
+  if(unlocked&&!st.seenOpen){ st.seenOpen=1; if(st.mon==='near') st.mon='both'; }
+  if(!unlocked) st.seenOpen=0;
   var mons=st.mon==='both'&&hasFar?['near','far']:[st.mon==='far'&&hasFar?'far':'near'];
   function btn(attr,val,on,lab,tip){ return '<button data-oiv="'+attr+'" data-v="'+val+'" data-k="'+key+'" aria-pressed="'+on+'"'+(tip?' title="'+tip+'"':'')+'>'+lab+'</button>'; }
-  var ctl='<span class="toggle" role="group" aria-label="Option month">'+btn('mon','near',st.mon==='near','NEAR · '+meta.chainNear.toUpperCase())+(hasFar?btn('mon','far',st.mon==='far','FAR · '+meta.chainFar.toUpperCase())+btn('mon','both',st.mon==='both','BOTH'):'')+'</span>'+
+  var ctl='<span class="toggle" role="group" aria-label="Option month">'+btn('mon','near',st.mon==='near'||!hasFar,'NEAR · '+meta.chainNear.toUpperCase())+(hasFar?btn('mon','far',st.mon==='far','FAR · '+meta.chainFar.toUpperCase())+btn('mon','both',st.mon==='both','BOTH'):
+      '<button disabled class="oi-lock" title="Opens when the futures roll passes 40% (now '+fmt(RL.pct,1)+'%)">🔒 FAR · '+meta.chainFar.toUpperCase()+'</button><button disabled class="oi-lock" title="Opens when the futures roll passes 40%">🔒 BOTH</button>')+'</span>'+
     '<span class="toggle" role="group" aria-label="Measure">'+btn('view','oi',view==='oi','OPEN INTEREST')+btn('view','chg',view==='chg','CHANGE IN OI','Change since the previous pull, by strike')+'</span>'+
     '<span class="toggle" role="group" aria-label="Calls or puts">'+btn('cp','call',cp==='call','CALLS')+btn('cp','put',cp==='put','PUTS')+btn('cp','both',cp==='both','BOTH')+'</span>';
   var charts=mons.map(function(m){
@@ -2074,7 +2088,9 @@ function oiTileHTML(key){
   var leg=view==='chg'?'<span><span class="sw" style="background:var(--call)"></span>Calls added</span><span><span class="sw" style="background:#1f7a52"></span>Calls closed</span><span><span class="sw" style="background:var(--put)"></span>Puts added</span><span><span class="sw" style="background:#7a2f2b"></span>Puts closed</span>':
     (cp!=='put'?'<span><span class="sw" style="background:var(--call)"></span>Call OI</span><span><span class="sw" style="background:#ffd27a"></span>Call wall strike</span>':'')+(cp!=='call'?'<span><span class="sw" style="background:var(--put)"></span>Put OI</span><span><span class="sw" style="background:#ff9d97"></span>Put wall strike</span>':'');
   return '<div class="tile-head"><h2>Open interest by strike <span class="h2note">— hover or tap a strike for its numbers</span></h2><div class="oi-ctl">'+ctl+'</div></div>'+
-    (dF!=null&&dF<=15?'<p class="note" style="margin:4px 0 0">'+dF+' day'+(dF===1?'':'s')+' to first notice on the front futures — compare both option months for roll planning.</p>':'')+
+    '<p class="note oi-gate'+(unlocked?' on':'')+'" style="margin:4px 0 0">'+(unlocked
+      ? '✓ Next month open — '+esc(RL.def)+' holds <b>'+fmt(RL.pct,1)+'%</b> of '+esc(RL.front)+'+'+esc(RL.def)+' open interest (≥ 40% liquidity threshold, crossed '+esc(RL.crossed||'')+')'+(dF!=null&&dF>0?' · '+dF+' day'+(dF===1?'':'s')+' to first notice':'')
+      : '🔒 Next option month opens when the futures roll passes <b>40%</b> — '+esc(RL.def)+' holds '+fmt(RL.pct,1)+'% of open interest ('+fmt(40-RL.pct,1)+' pp to go'+(RL.pace>0?', ~'+Math.ceil((40-RL.pct)/RL.pace)+' sessions at the current pace':'')+')')+'</p>'+
     charts+'<div class="legend">'+leg+'</div>'+oiMonthsHTML(key)+
     '<div class="stamp">Pulled '+esc(asofStamp('options'))+' · open interest is the prior session’s close; marked preliminary until CME’s final (~10:30 AM ET), confirmed by the 10:52 ET run · change = latest pull vs the previous stored pull for that month</div>';
 }

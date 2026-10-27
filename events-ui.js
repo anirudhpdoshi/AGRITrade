@@ -215,12 +215,13 @@
   var SEED = { options: 1, grains_settle: 1, cftc_grains: 1, cftc_fx: 1, fx_closes: 1 };
   var base = null;
   function snap() {
-    var s = { asof: Object.assign({}, DATA.meta.asof || {}), fp: {}, macro: {}, walls: {}, oi: {}, px: {}, gg: null, wa: {} };
+    var s = { asof: Object.assign({}, DATA.meta.asof || {}), fp: {}, roll: {}, macro: {}, walls: {}, oi: {}, px: {}, gg: null, wa: {} };
     Object.keys(ASOF).forEach(function (k) { try { s.fp[k] = FP[k] ? fp(FP[k]()) : s.asof[k]; } catch (e) { s.fp[k] = s.asof[k]; } });
     (window.macroAll ? macroAll() : []).forEach(function (m) { s.macro[m.key] = m.period + "|" + m.value; });
     ["corn", "wheat", "soybeans"].forEach(function (k) { var g = DATA.grains && DATA.grains[k]; if (!g || !g.near) return;
       s.walls[k] = [g.near.call_wall && g.near.call_wall[0], g.near.put_wall && g.near.put_wall[0]];
-      s.oi[k] = g.near.oi_label || ""; s.px[k] = g.fan && +g.fan.intraday[0]; });
+      s.oi[k] = g.near.oi_label || ""; s.px[k] = g.fan && +g.fan.intraday[0];
+      try { var RL = window.rollLevel && rollLevel(k); if (RL) s.roll[k] = RL; } catch (e) {} });
     try { var G = window.GG && GG._data && GG._data(); s.gg = G && (G.updated_at || G.generated_at) || null; } catch (e) {}
     try { var W = window.WORLD && WORLD._data(); (W && W.instruments || []).forEach(function (i) { if (i.w52) s.wa[i.id || i.name] = (i.w52.new_high ? "H" : "") + (i.w52.new_low ? "L" : ""); }); } catch (e) {}
     return s;
@@ -267,6 +268,11 @@
         if (cw != null && p0 < cw && p1 >= cw) log("level", "<b>" + GN[k] + "</b> trades up through the call wall " + sk(cw) + " (" + p1.toFixed(4) + ")", go);
         if (pw != null && p0 > pw && p1 <= pw) log("level", "<b>" + GN[k] + "</b> trades down through the put wall " + sk(pw) + " (" + p1.toFixed(4) + ")", go);
       }
+    });
+    Object.keys(s.roll).forEach(function (k) {   /* futures roll crossing the 40% liquidity threshold opens the next option month */
+      var a = base.roll[k], b = s.roll[k]; if (!a || !b) return;
+      if (a.pct < 40 && b.pct >= 40) log("oi", "<b>" + GN[k] + " roll passes 40%</b> — " + esc(b.def) + " now holds " + b.pct.toFixed(1) + "% of open interest · next option month window is open", k + ":deriv", "roll40|" + k + "|" + b.def);
+      if (a.pct >= 40 && b.pct < 40) log("oi", "<b>" + GN[k] + " roll back below 40%</b> (" + b.pct.toFixed(1) + "%) — next option month window locked", k + ":deriv", "roll40d|" + k + "|" + b.pct);
     });
     if (s.gg && base.gg && s.gg !== base.gg) log("data", "<b>Updated</b> — Brazil &amp; World fundamentals (CONAB · USDA · Comex)", "corn:fund", "gg|" + s.gg);
     Object.keys(s.wa).forEach(function (k) {
