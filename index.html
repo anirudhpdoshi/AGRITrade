@@ -766,6 +766,39 @@ body.xpand-on{overflow:hidden}
 .fanz:hover{border-color:var(--cyan);color:#fff}.fanz.on{background:#14263d;border-color:var(--cyan);color:#fff}
 .fz-info{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);margin-left:4px}.fz-tip{font-size:10.5px;color:var(--faint);margin-left:auto}
 @media (max-width:760px){.fz-tip{display:none}}
+
+/* ---------- Events desk ---------- */
+#panel-events{--sa:#e8b93d}
+.ev-head{display:flex;gap:18px;justify-content:space-between;align-items:stretch;flex-wrap:wrap;border-top:2px solid #e8b93d}
+.evh-l{flex:1 1 380px;min-width:0}.evh-d{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);margin:2px 0 10px}
+.evf{display:flex;gap:6px;flex-wrap:wrap}.evf button{appearance:none;border:1px solid var(--line2);background:var(--panel2,#0f1828);color:var(--muted);border-radius:14px;padding:4px 11px;font:inherit;font-size:12px;cursor:pointer}
+.evf button small{color:var(--faint);font-family:"IBM Plex Mono",monospace;margin-left:3px}.evf button[aria-pressed="true"]{border-color:#e8b93d;color:#fff;background:rgba(232,185,61,.14)}
+.evf .evhi{margin-left:auto}
+.evh-r{flex:0 0 250px;border-left:1px solid var(--line);padding-left:16px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.evn-l{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}.evn-t{font-weight:600;color:#fff;margin:3px 0;font-size:13px}
+.evh-r .hero-cd{font-size:26px}.evn-s{font-size:11.5px;color:var(--muted);margin-top:4px}.evn-s b{color:#fff}
+.evlist{display:flex;flex-direction:column}
+.evr{display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 6px;border-bottom:1px solid var(--line)}
+.evr:last-child{border-bottom:0}.evr.hi{background:linear-gradient(90deg,rgba(232,185,61,.07),transparent 60%)}
+.evr.soon{background:rgba(232,185,61,.10);box-shadow:inset 3px 0 0 #e8b93d}.evr.due{background:rgba(63,185,127,.12);box-shadow:inset 3px 0 0 #3fb97f}
+.evr.out{opacity:.62}
+.evt{font-family:"IBM Plex Mono",monospace;font-weight:600;color:#fff;font-size:13px}.evt small{display:block;font-size:9.5px;color:var(--faint);font-weight:500}
+.evl{font-size:13px;color:#e8eef4;line-height:1.4}.evx{font-size:11.5px;color:var(--muted);margin-top:2px}.evx b{color:#dfe7f1;font-family:"IBM Plex Mono",monospace;font-weight:600}
+.evc{font-size:9.5px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:6px;border:1px solid var(--ec);color:var(--ec);white-space:nowrap;vertical-align:1px}
+.evi{font-size:10px;font-weight:700;padding:0 5px;border-radius:5px}.evi.i-high{color:#ff9d97;background:rgba(255,120,110,.13)}.evi.i-medium{color:#e8b93d;background:rgba(232,185,61,.12)}.evi.i-low{color:var(--faint)}
+.evr-r{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right}.evr-r .countdown{font-size:13px}
+.evs{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600}.evs.out{color:var(--faint)}.evs.due{color:#5fd598}
+.evgo{appearance:none;border:0;background:none;color:#7dd8e6;font:inherit;font-size:11px;cursor:pointer;padding:0;white-space:nowrap}.evgo:hover{text-decoration:underline}
+.ev-empty{text-align:center;padding:34px 16px}.ev-empty.in{padding:20px 10px}.ev-empty h3{margin:4px 0 6px;font-size:18px;color:#fff}.ev-empty p{color:var(--muted);margin:4px 0}
+.eve-i{font-size:34px;color:#e8b93d}.eve-n b{color:#fff}
+.evbadge{display:inline-block;min-width:16px;padding:0 4px;margin-left:6px;border-radius:8px;background:#e8b93d;color:#111;font-size:10.5px;font-weight:700;line-height:16px;text-align:center}
+.ev-feed .evfb{max-height:calc(100vh - 230px);overflow:auto}
+.evfd{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:10px 0 2px}
+.evfi{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.evfk{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;background:color-mix(in srgb,var(--mc) 18%,transparent);color:var(--mc);border:1px solid var(--mc)}
+.evfh{font-size:12.5px;color:#d4deea;line-height:1.45}.evfh b{color:#fff}.evfh small{color:var(--muted)}.evfs{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);margin-top:2px}.evfs a{color:#7dd8e6}
+.evft button{font-size:11px}
+@media (max-width:760px){.evh-r{flex-basis:100%;border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:10px}.evr{grid-template-columns:64px minmax(0,1fr);gap:8px}.evt{font-size:12px;white-space:nowrap}.evr-r{grid-column:2;flex-direction:row;justify-content:space-between;align-items:center;width:100%}.evf .evhi{margin-left:0}.ev-feed .evfb{max-height:none}}
 </style>
 </head>
 <body class="locked">
@@ -867,6 +900,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
     <button class="tab-btn" role="tab" id="tabbtn-soybeans" aria-selected="false" aria-controls="panel-soybeans" data-tab="soybeans">Soybeans<span class="sym">ZSX26</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-fx" aria-selected="false" aria-controls="panel-fx" data-tab="fx">USD/CAD<span class="sym">Desk</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-world" aria-selected="false" aria-controls="panel-world" data-tab="world">World<span class="sym">Markets</span></button>
+    <button class="tab-btn" role="tab" id="tabbtn-events" aria-selected="false" aria-controls="panel-events" data-tab="events">Events<span class="sym">Today</span></button>
   </nav>
 
 <main>
@@ -875,6 +909,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
   <section class="tab-panel" id="panel-soybeans" role="tabpanel" aria-labelledby="tabbtn-soybeans"></section>
   <section class="tab-panel" id="panel-fx" role="tabpanel" aria-labelledby="tabbtn-fx"></section>
   <section class="tab-panel" id="panel-world" role="tabpanel" aria-labelledby="tabbtn-world"></section>
+  <section class="tab-panel" id="panel-events" role="tabpanel" aria-labelledby="tabbtn-events"></section>
 </main>
 
 <footer class="foot">
@@ -4192,6 +4227,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="fwd.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="world-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="gg-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
+<script>(function(){var f=document.createElement("script");f.src="events-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var s=document.createElement("script");s.src="live.js?v="+Date.now();document.body.appendChild(s);})();</script>
 </body>
 </html>

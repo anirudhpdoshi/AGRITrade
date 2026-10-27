@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "_site"
-FILES = ["index.html", "live.js", "direct.js", "motion.js", "fwd.js", "world-ui.js", "kb.js", "gg-ui.js", "world-paths.json", "data.json"]
+FILES = ["index.html", "live.js", "direct.js", "motion.js", "fwd.js", "world-ui.js", "kb.js", "gg-ui.js", "events-ui.js", "world-paths.json", "data.json"]
 
 
 def b64(b):
