@@ -31,14 +31,14 @@
      ],
      "near_expiry": "Dec-26",
      "intraday": [
-      4.5225,
-      "10:20am ET"
+      4.525,
+      "10:35am ET"
      ],
      "iv_10d_rel": 0.0362,
      "iv_chain_iv": 18.17,
      "iv_as_of": "2026-10-27",
      "iv_note": "IV and skew from IB midpoint, Oct 27 2026 8:49 AM ET",
-     "intraday_ts": "2026-10-27T10:20:00-04:00",
+     "intraday_ts": "2026-10-27T10:35:00-04:00",
      "ma50": "5.10",
      "ma100": "4.84",
      "intraday_src": "ZCZ26.CBT"
@@ -2751,14 +2751,14 @@
      ],
      "near_expiry": "Jan-27",
      "intraday": [
-      12.4475,
-      "10:20am ET"
+      12.4525,
+      "10:35am ET"
      ],
      "iv_10d_rel": 0.02847,
      "iv_chain_iv": 14.29,
      "iv_as_of": "2026-10-27",
      "iv_note": "IV and skew from IB midpoint, Oct 27 2026 8:49 AM ET",
-     "intraday_ts": "2026-10-27T10:20:00-04:00",
+     "intraday_ts": "2026-10-27T10:35:00-04:00",
      "ma50": "12.84",
      "ma100": "12.29",
      "intraday_src": "ZSX26.CBT"
@@ -5224,14 +5224,14 @@
      ],
      "near_expiry": "Dec-26",
      "intraday": [
-      6.1375,
-      "10:20am ET"
+      6.1525,
+      "10:35am ET"
      ],
      "iv_10d_rel": 0.04731,
      "iv_chain_iv": 23.75,
      "iv_as_of": "2026-10-27",
      "iv_note": "IV and skew from IB midpoint, Oct 27 2026 8:49 AM ET",
-     "intraday_ts": "2026-10-27T10:20:00-04:00",
+     "intraday_ts": "2026-10-27T10:35:00-04:00",
      "ma50": "7.02",
      "ma100": "6.75",
      "intraday_src": "ZWZ26.CBT"
@@ -8543,11 +8543,11 @@
     "6M": 4.35
    },
    "fxcross": {
-    "dxy": 102.199,
-    "dxy_chg": 0.234,
-    "eurusd": 1.1154,
-    "usdjpy": 157.78,
-    "usdcad_ref": 1.403
+    "dxy": 102.185,
+    "dxy_chg": 0.221,
+    "eurusd": 1.1148,
+    "usdjpy": 157.76,
+    "usdcad_ref": 1.4035
    },
    "closes": [
     [
@@ -8626,16 +8626,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 101.21,
-     "chg": -0.55,
-     "pct": -0.54,
+     "last": 100.13,
+     "chg": -1.63,
+     "pct": -1.6,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 110.42,
-     "chg": -5.39,
-     "pct": -4.65,
+     "last": 109.29,
+     "chg": -6.52,
+     "pct": -5.63,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -8647,9 +8647,9 @@
     }
    ],
    "wcs_diff": {
-    "value": 15.74,
+    "value": 14.66,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-27T14:20:00+00:00",
+    "obs_ts": "2026-10-27T14:35:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
@@ -10174,10 +10174,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.40291,
+    "mid": 1.4031,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-27T10:30:00-04:00",
+    "ts": "2026-10-27T10:45:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -10317,18 +10317,6 @@
     }
    ],
    "intraday": [
-    [
-     "2026-10-26T18:35+00:00",
-     1.4018
-    ],
-    [
-     "2026-10-26T18:40+00:00",
-     1.4017
-    ],
-    [
-     "2026-10-26T18:45+00:00",
-     1.40183
-    ],
     [
      "2026-10-26T18:50+00:00",
      1.40181
@@ -10827,7 +10815,7 @@
     ],
     [
      "2026-10-27T05:10+00:00",
-     1.40177
+     1.40181
     ],
     [
      "2026-10-27T05:15+00:00",
@@ -10979,7 +10967,7 @@
     ],
     [
      "2026-10-27T08:20+00:00",
-     1.40272
+     1.40269
     ],
     [
      "2026-10-27T08:25+00:00",
@@ -11027,7 +11015,7 @@
     ],
     [
      "2026-10-27T09:20+00:00",
-     1.40251
+     1.40249
     ],
     [
      "2026-10-27T09:25+00:00",
@@ -11059,7 +11047,7 @@
     ],
     [
      "2026-10-27T10:00+00:00",
-     1.40181
+     1.40176
     ],
     [
      "2026-10-27T10:05+00:00",
@@ -11131,7 +11119,7 @@
     ],
     [
      "2026-10-27T11:30+00:00",
-     1.40173
+     1.4014
     ],
     [
      "2026-10-27T11:35+00:00",
@@ -11272,6 +11260,22 @@
     [
      "2026-10-27T14:25+00:00",
      1.40298
+    ],
+    [
+     "2026-10-27T14:30+00:00",
+     1.40309
+    ],
+    [
+     "2026-10-27T14:35+00:00",
+     1.40306
+    ],
+    [
+     "2026-10-27T14:40+00:00",
+     1.40328
+    ],
+    [
+     "2026-10-27T14:45+00:00",
+     1.4031
     ]
    ],
    "fwd_inputs": {
@@ -11312,23 +11316,23 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-27T10:30:25-04:00",
+   "updated_at": "2026-10-27T10:45:26-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-27T10:30:00-04:00",
+    "fx_spot": "2026-10-27T10:45:00-04:00",
     "fx_closes": "2026-10-26T16:30:00-04:00",
     "yields": "2026-10-26T17:00:00-04:00",
-    "policy": "2026-10-27T09:30:26-04:00",
+    "policy": "2026-10-27T10:45:26-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
     "cftc_fx": "2026-10-20T15:30:00-04:00",
     "cftc_grains": "2026-10-20T15:30:00-04:00",
-    "energy": "2026-10-27T10:20:00-04:00",
-    "crosses": "2026-10-27T10:20:00-04:00",
+    "energy": "2026-10-27T10:35:00-04:00",
+    "crosses": "2026-10-27T10:35:00-04:00",
     "grains_settle": "2026-10-26T14:20:00-04:00",
-    "grains_quote": "2026-10-27T10:20:00-04:00",
+    "grains_quote": "2026-10-27T10:35:00-04:00",
     "options": "2026-10-27T09:09:52-04:00",
-    "news": "2026-10-27T10:30:25-04:00",
-    "calendar": "2026-10-27T09:30:26-04:00",
+    "news": "2026-10-27T10:45:26-04:00",
+    "calendar": "2026-10-27T10:45:26-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-27T09:15:20-04:00",
     "exports": "2026-10-27T07:30:26-04:00",
@@ -11338,7 +11342,7 @@
     "sd_hist": "2026-10-26T13:30:26-04:00",
     "inputs": "2026-10-27T01:20:08-04:00",
     "ext": "2026-10-27T07:00:27-04:00",
-    "ca_retail": "2026-10-27T09:30:26-04:00",
+    "ca_retail": "2026-10-27T10:45:26-04:00",
     "fxopt": "2026-10-16T16:00:00-04:00",
     "model": "2026-10-27T10:00:27-04:00"
    },
@@ -11375,7 +11379,7 @@
      "fx_model"
     ],
     "failed": [],
-    "at": "2026-10-27T10:30:25-04:00"
+    "at": "2026-10-27T10:45:26-04:00"
    },
    "releases_checked": "2026-10-27T10:00:27-04:00",
    "exports_checked": "2026-10-27T07:30:26-04:00",
@@ -11412,7 +11416,7 @@
    },
    "canada_checked": "2026-10-27T07:00:27-04:00",
    "ca_calendar_checked": "2026-10-27T07:30:26-04:00",
-   "canada_watch": "2026-10-27T10:30:25-04:00",
+   "canada_watch": "2026-10-27T10:45:26-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -11480,10 +11484,10 @@
      "thousands"
     ]
    },
-   "ca_retail_checked": "2026-10-27T09:30:26-04:00",
+   "ca_retail_checked": "2026-10-27T10:45:26-04:00",
    "ext_checked": "2026-10-27T07:00:27-04:00",
-   "calendar_checked": "2026-10-27T09:30:26-04:00",
-   "fedodds_checked": "2026-10-27T09:30:26-04:00",
+   "calendar_checked": "2026-10-27T10:45:26-04:00",
+   "fedodds_checked": "2026-10-27T10:45:26-04:00",
    "model_checked": "2026-10-27T10:00:27-04:00"
   },
   "macro": [
@@ -26704,6 +26708,12 @@
  "NEWS": {
   "corn": [
    [
+    "2026-10-27 14:38 UTC",
+    "www.agrolatam.com",
+    "Brazil's Weaker Real Adds Pressure to U.S. Soybean Prices as China Drives Demand",
+    "https://news.google.com/rss/articles/CBMitAFBVV95cUxNN1oteExvQnRVVFpYa3FCS09jQW9YWXB1RkhrdEp6OUZFV284UmxqU3ZVQlhSMTBUQ3RtRTRJM2lFWjFiNjBvOHYzQzhOel84Q0dxNGJnLTNhZnhDOXlBblRSRUtRd2VZRko2THlxYnYtQmtMNlJPa2pxSTA2M3JoMTktc2JmdFQzalFOUHpKbnFMbFNIdWM0TGZjMHFkTTc5NlQzZVVPWjRGMWoySG01dVpfQ1k?oc=5"
+   ],
+   [
     "2026-10-27 10:44 UTC",
     "ukragroconsult.com",
     "Wheat, corn and soybean futures fall in Chicago on Monday",
@@ -26744,12 +26754,6 @@
     "www.barchart.com",
     "Corn Holds Lower on Monday, with Spillover Pressure",
     "https://news.google.com/rss/articles/CBMimgFBVV95cUxOYWNZUDUtcWVESUc0VUttU2lVc29yeEh6OG5IbWRsUW1CYjdZLXZ2dnl2ODI0TVVtanQycmZpZXhndW1qcUxLUjdfbDJZZUZRaTlmZnF1Yms5eU9xOFJMLUdxaTZQTFVuZVVxUURDYmIzVlRPTHdoTER1Vm5sOHlPZWVPc042VVloYzZGOFhINkFnNUhXay10MUJB?oc=5"
-   ],
-   [
-    "2026-10-26 20:16 UTC",
-    "stjosephpost.com",
-    "Commodity markets daily recap",
-    "https://news.google.com/rss/articles/CBMidkFVX3lxTE9QQk9YMGpET2FlM0J3cEpaUmZNRnZDVkZnT3NlckNmMFVLZnFoZ3RQVnM3SXRMMXQ3b3kzazlyUndPZEtXZDE5TF9XbTBfRTh1YlJvdE1zSVVMRFNwcGY4TnFQWlVvcHF3MW9vQ0NFenBLT2hodVE?oc=5"
    ]
   ],
   "wheat": [
@@ -26804,10 +26808,10 @@
   ],
   "soybeans": [
    [
-    "2026-10-27 13:52 UTC",
-    "www.agriculture.com",
-    "Soybeans Attempting Rebound From Monday’s Losses | Tuesday, Oct. 27, 2026",
-    "https://news.google.com/rss/articles/CBMirAFBVV95cUxPazFmX2txWmNCcnUwSEpTbE1zaVgtS0N3M000blVleFR3NDAzSy1VM1BBUmZIZDNtVE51RTNVM2lwZGdXTG0wODRTeVF1ZXNGRnpSVDZNZnMzcXBBalZoQWNjdmZzVjJpYkdhcjJmZkJhanYzWlNMbzJfRktrTnFNVTl0R0ZoOGFyM2dQZDA4UGEzZ1kzNElhNldXOGZRWWdsZFBZaDVka0lFZkZi?oc=5"
+    "2026-10-27 14:38 UTC",
+    "www.agrolatam.com",
+    "Brazil's Weaker Real Adds Pressure to U.S. Soybean Prices as China Drives Demand",
+    "https://news.google.com/rss/articles/CBMitAFBVV95cUxNN1oteExvQnRVVFpYa3FCS09jQW9YWXB1RkhrdEp6OUZFV284UmxqU3ZVQlhSMTBUQ3RtRTRJM2lFWjFiNjBvOHYzQzhOel84Q0dxNGJnLTNhZnhDOXlBblRSRUtRd2VZRko2THlxYnYtQmtMNlJPa2pxSTA2M3JoMTktc2JmdFQzalFOUHpKbnFMbFNIdWM0TGZjMHFkTTc5NlQzZVVPWjRGMWoySG01dVpfQ1k?oc=5"
    ],
    [
     "2026-10-27 12:31 UTC",
@@ -26834,22 +26838,22 @@
     "https://news.google.com/rss/articles/CBMilAFBVV95cUxPVVJQMVNrYmJyN1VJZzdRLXlpX3VVZTN6b0c3VHFfYm1HOHplZk15cFNleGdBcEk2X3lvcU56bUR6WVJPNmlDanJQTnl5RUd0eENxSmtMcV93SU9CZVBqc2VWYnZiQjF2al93OUNLeThFdE10aURvUXEzNktuOEE1TFJsS2dLcWVRMlpoS0JySC0wa25R?oc=5"
    ],
    [
-    "2026-10-27 06:03 UTC",
-    "commodity-board.com",
-    "India soybean productivity mission and global soybean price outlook — CMB News",
-    "https://news.google.com/rss/articles/CBMikgFBVV95cUxPa0VIc3RzanN3anZxY2RFOEN5OUhhdG95SGtqZ1Vsb0hFa3VjbktDeVhvUGZlMk9WdEVneFFoRndwSld4dk5Ia2Rkcmk4SnpjWG1RQkE1NUp1di1aR2loYVJBSG5fcGdfNWpYelY1aGxHNGwxVmFvcGRXVXFXeVRSa0xzRXk1Tm9tc3VRS29DUEhVUQ?oc=5"
-   ],
-   [
-    "2026-10-27 06:02 UTC",
-    "commodity-board.com",
-    "Palm Oil Market Analysis: Exports Surge While Futures Ease — CMB News",
-    "https://news.google.com/rss/articles/CBMimwFBVV95cUxObHVIVUxxTmVneGU5UmV2MVFubjZrZW4tMlBSaldJWDhvZzhUQ3hWaXRXWThWYmdlcXB2OVNhRm5pTVBEeU40STN6LW1LcnhDQ0ZhaE55VUtIaUVXZURmNTFTN2RnRmNUYVJ6b1NKMUpRcU4xRW5XeXR6X0EzN3pxekI4RmdvN3lXLXYtV1BjU1lZX2paSVFaSHlkTQ?oc=5"
-   ],
-   [
     "2026-10-27 06:00 UTC",
     "www.farmweeknow.com",
     "Discolored soybeans raise export concerns",
     "https://news.google.com/rss/articles/CBMizgFBVV95cUxNQ2dOeEctSld3UjJObFNqMHR5aUkyUTFGRlVHZEhNVU9FRnJtbTZWb1BITDdZbGJyRXVsVUpXNmgtUER4ZmROVDVJUVB6QTVFbFRCMmFMYzdFbzNadWZXekJWVkx2dGRHSlB5TTZwTDlEWl9pVGFpbkpjaEN3ZVRxYmlZb3A5TXVibUpoY1JEbmRLOWMtS0FkSVA5LXJnWkRXZkFLYUN3Q1RRUElQLVdmVkh5bzlTQ01Da3ctbUt0ZElIYmlsUnNsbGlmUkI1dw?oc=5"
+   ],
+   [
+    "2026-10-27 02:38 UTC",
+    "www.mysteel.net",
+    "Mysteel soybean and relatives marke...",
+    "https://news.google.com/rss/articles/CBMizAFBVV95cUxOclpVX2lUYjJHbE9BdDZhdHhfeDIyVm5RSWZqcU5xOVI2SDQ0QWVXTGdMbVFZV3NUOENkYlp2Q291S3BoeFRJNTdJaDBzYmtYOEZtYzNxdG43QWxjbDdIVmVCa2RsclNlZVBTZ3lmaThtWEdyY1RTYXdDR1VadEMybHk4V0FyVnFqYUNtQkE4N0w0amgwQzdpZlE5MzlsYllRTy1LMXhqZEtuQm0zdUg3V3F0eWpVbWpkYmFjaHZoQXREbThFcFRINU0tMko?oc=5"
+   ],
+   [
+    "2026-10-27 00:16 UTC",
+    "brownfieldagnews.com",
+    "ASA president: China, other key markets continuing to buy US soybeans",
+    "https://news.google.com/rss/articles/CBMipAFBVV95cUxNcDZwbEJrUjBLd2JHdHRpTGUyT3NycnptdzhzeTFTMnZfUC1DNUJPMjRld1c4Q2toLXY2bXlwS3Q1NVFWZmJCZUNxd1VxLUtXUXhSLUM2blFoSFYwcElZaUlVbTRsSzYzNlZQby1pLVEzY21jUFRKR2dzcFlsSW5tc2pxdnVPSi1WbkU0RXpOdzV0YW5SU0l3YjlyMlBYNXBCc0RlYg?oc=5"
    ]
   ],
   "fx": [
@@ -26884,22 +26888,22 @@
     "https://news.google.com/rss/articles/CBMiiwFBVV95cUxNdHBVSXVPY1dQNkpGWnM0WG5Mbm5tZUdPaVFBOG1wZVg0UWhTTVFHamxwN1puTk5jOFlVZ3Y0X014RF9IM2Ztd1BlQngwYUVuZTd2czBhX2JUS1N5dm1KeF9BWW8wWWlpekNnV2hxYTZXSS1yb0JsYTdOUFpsWlpUakI1SjRJMFRSVUFV?oc=5"
    ],
    [
-    "2026-10-27 11:44 UTC",
-    "arabcanadanews.ca",
-    "Bank of Canada faces a decisive decision on Wednes...",
-    "https://news.google.com/rss/articles/CBMilAJBVV95cUxPUUZJN0h6SzZmYmt3NUlHQ3NXeV9uTTJILTlIQVA3RnVsQUxqZWhJYTd2S0xVc3NJcjFGQkVZV2FvRTJob3B1bUlJQzNhUmZ2MjRkTUY1WGRtS1otU0pLRlVKOGVoVTdPTHhtengzUHkxSklOTnJQRGl5d1dsb3IySEFwYWxpS2xlcW4zOE1Tc0tPOWp1WDhXeHlKVzNXMi1WZVBkdV80NUJLTVdQRkRwZ2VUdmhDYVcyUDZwdTBLN01HWnotcnRVTnRvU3lVbEdmNkJKcnNJZ0RzcTZkVGdnaUZ4YzNKVUJUTk9DMlZKdEVsLUpoSUNmUC1wY0ZkN3VzTDNKYUlsQXhlWWJJeDNJRXNCREQ?oc=5"
-   ],
-   [
     "2026-10-27 11:42 UTC",
     "crypto.news",
     "Canada will allow stablecoin rewards for spending, but not for holding",
     "https://news.google.com/rss/articles/CBMilAFBVV95cUxNYUhUaVNDMzQ0ZHNiaDdUaG1sMV9IdEl6YnRWMWNjNTQxZHRKaGVUUW5sOS03NUVQV0FJRXJ4Nk50LUJEMzVHTW8tM19YbFlDUURQQnMzMlFELTVaSDhZODFoS0QzYnlHbnpkWXBlb3ozNWhHbkhqTW9lclJ0OTR0cndMSEQ1eHJ1NDVzTVJQVlBBZU9s?oc=5"
    ],
    [
-    "2026-10-27 10:30 UTC",
-    "uk.finance.yahoo.com",
-    "Bank of Canada Seen Hiking as Oil Creates Stubborn Inflation: Decision Guide",
-    "https://news.google.com/rss/articles/CBMiggFBVV95cUxNWGpQLUZBakJ2aXVmSkR4ZzRKczFtY0duZjFJWnYtNHdhS2xwaWNSM1hLNlpKSkIyWFZ5ekotcmxiekJZRVVPcUVXbzNyNkxoel90b3NEVDBmcmx4VFYxOFJFRVJqT1p1SzhMWlBOMWkzVFlPLS1odThId2szX3otT1l3?oc=5"
+    "2026-10-27 07:04 UTC",
+    "www.fxstreet.com",
+    "Canadian Dollar: Cautious outlook into year-end – NBC",
+    "https://news.google.com/rss/articles/CBMimAFBVV95cUxPWjRPMXZPSGdobnJSblIxNmgxYTJNUTctUl9icmRBWVFqQm1oT0ltMTFPLUZCc0JibDB5SEoybFl0dW1YdjhyUEtPWTBQSzJYNVRZVU15eHZiZ3lkXzA4LTZ1eXh5S2RZVkxLN2d0dEMyNWlRWmI0RXdXSlZacXM1NE1XN2puZXU3ckVOekVSUmpZWDAxRlBkbw?oc=5"
+   ],
+   [
+    "2026-10-27 06:50 UTC",
+    "www.tradingpedia.com",
+    "Canadian Dollar Slips as Fed and BoC Decisions Loom",
+    "https://news.google.com/rss/articles/CBMilwFBVV95cUxQTXFGUWZxcC1iVVVsMy1HQmRRVGxzWkh4Y0pETEloVFZPTDg2LTRXZEdNODJub2s1YVdrM09Td2tNZ3BKWTlsZG9mdW9wUE5hOWlabWpaY2s0QjFlSDNBWFpWN0dlbThVaTFGY01tb2QzczlDT1BnbGxyQ1VjcEwwbVdKUkk4aHBTZWlILVVDLVo4RGx2ek53?oc=5"
    ]
   ],
   "geo": [
