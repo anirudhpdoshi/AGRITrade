@@ -2016,7 +2016,23 @@ def canada(D, N):
     return True
 
 
-BLOCKS = [("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
+
+def policy_watch(D, N):
+    """Central-bank decisions (BoC, Fed): adopt the fast lane's earliest sighting from live.json, then check the
+    official statement directly if a decision is in its 3-hour window."""
+    import policy_watch as PW
+    PW.TOR = TOR
+    try:
+        r_ = requests.get("https://raw.githubusercontent.com/anirudhpdoshi/AGRITrade/live/live.json", headers=UA, timeout=20)
+        if r_.ok:
+            pw = ((r_.json().get("rel") or {}).get("policy_watch") or {}).get("set", {}).get("policy_watch")
+            PW.merge(D, pw)
+    except Exception as e:
+        print("  live.json carry-over skipped:", e)
+    if PW.watch(D, NOW, TOR):
+        D["meta"]["asof"]["policy_watch"] = iso(NOW)
+
+BLOCKS = [("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("energy", energy),
           ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model)]
 

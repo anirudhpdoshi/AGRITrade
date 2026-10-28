@@ -14,6 +14,8 @@ from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import update_data as U  # noqa: E402
+import policy_watch as PW  # noqa: E402
+PW.TOR = U.TOR
 
 ROOT = U.ROOT
 WT = "/tmp/live-worktree"
@@ -120,6 +122,13 @@ def main():
     stop = time.time() + a.minutes * 60
     last_core = None
     rel_out, it = {}, 0
+    try:   # carry the earliest sighting of a central-bank decision across fast-lane runs
+        prev_live = json.loads(open(os.path.join(WT, "live.json")).read())
+        pw = ((prev_live.get("rel") or {}).get("policy_watch") or {}).get("set", {}).get("policy_watch")
+        if pw and PW.merge(D, pw):
+            rel_out["policy_watch"] = {"asof": prev_live["rel"]["policy_watch"]["asof"], "set": {"policy_watch": D["policy_watch"]}}
+    except Exception as e:
+        print("policy carry-over skipped:", e)
     while time.time() < stop:
         t0 = time.time()
         U.NOW = datetime.now(timezone.utc)
@@ -146,6 +155,12 @@ def main():
                     print(U.iso(U.NOW), "release not out yet:", name)
             except Exception as e:
                 print(f"[rel {name}] failed: {e}")
+        try:
+            if PW.watch(D, U.NOW, U.TOR):
+                D["meta"]["asof"]["policy_watch"] = U.iso(U.NOW)
+                rel_out["policy_watch"] = {"asof": U.iso(U.NOW), "set": {"policy_watch": D["policy_watch"]}}
+        except Exception as e:
+            print("[policy watch] failed:", e)
         core = payload(D)
         if rel_out:
             core["rel"] = rel_out
