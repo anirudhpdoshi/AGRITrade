@@ -2,9 +2,10 @@ name: Live feed (fast lane)
 
 on:
   schedule:
-    # Every 30 min, 12:00–22:30 UTC on weekdays ≈ 8am–6:30pm Toronto (EDT).
-    # Each run loops ~33 min refreshing every 60 s; the next run takes over.
-    - cron: "0,30 12-22 * * 1-5"
+    # Every 30 min at :20 and :50, 12:20–22:50 UTC on weekdays ≈ 8:20am–6:50pm Toronto (EDT).
+    # Each run loops ~33 min refreshing every 60 s; the next run takes over. The hand-over is kept off :00, :30 and :45
+    # so it never lands on a scheduled release (8:30 data, 9:45 BoC, 10:00 data, 2:00 pm FOMC).
+    - cron: "20,50 12-22 * * 1-5"
   workflow_dispatch: {}
 
 permissions:

@@ -133,6 +133,12 @@ def main():
         t0 = time.time()
         U.NOW = datetime.now(timezone.utc)
         ok = []
+        try:   # central-bank decision first, before the slower market blocks
+            if PW.watch(D, U.NOW, U.TOR):
+                D["meta"]["asof"]["policy_watch"] = U.iso(U.NOW)
+                rel_out["policy_watch"] = {"asof": U.iso(U.NOW), "set": {"policy_watch": D["policy_watch"]}}
+        except Exception as e:
+            print("[policy watch] failed:", e)
         for name, fn in FAST:
             try:
                 fn(D, {})
@@ -155,12 +161,6 @@ def main():
                     print(U.iso(U.NOW), "release not out yet:", name)
             except Exception as e:
                 print(f"[rel {name}] failed: {e}")
-        try:
-            if PW.watch(D, U.NOW, U.TOR):
-                D["meta"]["asof"]["policy_watch"] = U.iso(U.NOW)
-                rel_out["policy_watch"] = {"asof": U.iso(U.NOW), "set": {"policy_watch": D["policy_watch"]}}
-        except Exception as e:
-            print("[policy watch] failed:", e)
         core = payload(D)
         if rel_out:
             core["rel"] = rel_out
@@ -175,7 +175,11 @@ def main():
                 print("publish failed:", e.stderr[-300:])
         else:
             print(U.iso(U.NOW), "no change")
-        time.sleep(max(5, a.every - (time.time() - t0)))
+        # while a central-bank decision is due and not yet read, check every 15 s instead of every minute
+        hot = any(r.get("status") == "awaiting" and r.get("t_sched") and
+                  U.NOW - datetime.fromisoformat(r["t_sched"]) < timedelta(hours=3)
+                  for r in ((D.get("policy_watch") or {}).get(b) or {} for b in ("boc", "fed")))
+        time.sleep(max(5, (15 if hot else a.every) - (time.time() - t0)))
 
 
 if __name__ == "__main__":
