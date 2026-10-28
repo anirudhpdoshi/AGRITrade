@@ -8,7 +8,7 @@ name: Scheduler (keepalive)
 #   Refresh desk data   every 15 min, 11:00–22:45 UTC Mon–Fri, plus 00:30 UTC Tue–Sat (evening sweep)
 #   World markets       every 15 min, Sun–Fri (UTC), offset 7 min
 #   Global grains       12:20 and 17:20 UTC Mon–Fri
-#   Live feed           every 30 min, 12:00–22:30 UTC Mon–Fri (each run loops ~33 min itself)
+#   Live feed           every 30 min at :20/:50, 12:20–22:50 UTC Mon–Fri (each run loops ~33 min itself; hand-over kept off release minutes)
 #   Intelligence        hourly at :50, 10:50–22:50 UTC Mon–Fri
 on:
   schedule:
@@ -54,8 +54,8 @@ jobs:
               if [ "$m" -eq 20 ] && [ "$dow" -le 5 ] && { [ "$h" -eq 12 ] || [ "$h" -eq 17 ]; }; then fire global-grains.yml; fi
               # intel: :50 every hour, 10–22 UTC weekdays (institutional data + headlines)
               if [ "$m" -eq 50 ] && [ "$dow" -le 5 ] && [ "$h" -ge 10 ] && [ "$h" -le 22 ]; then fire intel.yml; fi
-              # live-feed: :00 and :30, 12–22 UTC weekdays
-              if [ $((m % 30)) -eq 0 ] && [ "$dow" -le 5 ] && [ "$h" -ge 12 ] && [ "$h" -le 22 ]; then fire live-feed.yml; fi
+              # live-feed: :20 and :50, 12–22 UTC weekdays (off :00/:30/:45 so a hand-over never lands on a release or a central-bank decision)
+              if [ $((m % 30)) -eq 20 ] && [ "$dow" -le 5 ] && [ "$h" -ge 12 ] && [ "$h" -le 22 ]; then fire live-feed.yml; fi
               last="$slot"
             fi
             sleep $(( 60 - $(date -u +%S | sed 's/^0//') + 1 ))
