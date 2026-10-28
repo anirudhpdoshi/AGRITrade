@@ -52,17 +52,62 @@ def _text(h):
     return re.sub(r"\s+", " ", t).strip()
 
 
+BROWSER = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",
+           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "Accept-Language": "en-CA,en;q=0.9"}
+PROBE = []   # what each URL returned on this check - stored with the 'awaiting' record so a silent miss is never silent
+
+
+def _short(u):
+    return re.sub(r"^https?://(www\.)?", "", u)[:90]
+
+
 def _get(url):
-    r = requests.get(url, headers=UA, timeout=20)
-    if r.status_code != 200:
+    """GET with the desk UA, then a browser UA if the site refuses bots (403/429/503 on busy announcement days).
+    Every outcome is recorded in PROBE."""
+    last = None
+    for hdr in (UA, BROWSER):
+        try:
+            r = requests.get(url, headers=hdr, timeout=20)
+        except Exception as e:
+            last = type(e).__name__
+            continue
+        last = r.status_code
+        if r.status_code == 200:
+            PROBE.append({"u": _short(url), "s": 200})
+            return r.text
+        if r.status_code == 404:
+            break                      # not published yet - no point retrying with another UA
+    PROBE.append({"u": _short(url), "s": last})
+    return None
+
+
+def _boc_valet(day):
+    """Fallback: the Bank's own policy-rate series (Valet V39079, target for the overnight rate). Used only when an observation
+    dated on or after the decision day exists - the statement text is then not read, so tone uses the decision alone."""
+    h = _get("https://www.bankofcanada.ca/valet/observations/V39079/json?recent=5")
+    if not h:
         return None
-    return r.text
+    import json as _j
+    obs = [(o["d"], o.get("V39079", {}).get("v")) for o in _j.loads(h).get("observations", [])]
+    obs = [(d, float(v)) for d, v in obs if v not in (None, "") and d >= day.isoformat()]
+    if not obs:
+        PROBE[-1]["note"] = "no observation for the decision day yet"
+        return None
+    d, v = sorted(obs)[-1]
+    return {"url": "https://www.bankofcanada.ca/rates/interest-rates/key-variable/", "rate": v, "verb": "", "text": "", "src": "valet " + d}
 
 
 def _boc(day):
     """Bank of Canada: fixed announcement URL first, then the press-release feed."""
     y, m, d = day.year, day.month, day.day
     urls = [f"https://www.bankofcanada.ca/{y}/{m:02d}/fad-press-release-{y}-{m:02d}-{d:02d}/"]
+    try:   # the press-release listing links the statement under whatever slug the Bank used that day
+        lst = _get("https://www.bankofcanada.ca/press/press-releases/") or ""
+        for u in re.findall(r'href="(https://www\.bankofcanada\.ca/%d/%02d/[^"]*%d-%02d-%02d/)"' % (y, m, y, m, d), lst):
+            if u not in urls and not re.search(r"fad-announcement|press-conference|mpr-\d", u):
+                urls.append(u)
+    except Exception:
+        pass
     try:
         feed = _get("https://www.bankofcanada.ca/content_type/press-releases/feed/") or ""
         for it in re.findall(r"(?s)<item>(.*?)</item>", feed)[:10]:
@@ -85,7 +130,10 @@ def _boc(day):
         rate = _num(mm.group(2))
         body = t[mm.start(): mm.start() + 6000]
         return {"url": u, "rate": rate, "verb": mm.group(1).lower(), "text": body}
-    return None
+    try:
+        return _boc_valet(day)
+    except Exception:
+        return None
 
 
 def _fed(day):
@@ -161,12 +209,14 @@ def watch(D, now=None, tor=None):
             if bank == "boc" and (D.get("fx") or {}).get("policy", {}).get("corra_now") is not None and prev is None:
                 prev = D["fx"]["policy"]["corra_now"]
             base = {"bank": bank, "date": t0.date().isoformat(), "t_sched": t0.isoformat(), "prev": prev, "fc": _fc(D, ccy, ev),
-                    "checks": (rec.get("checks") or 0) + 1, "t_first_check": rec.get("t_first_check") or now.isoformat()}
+                    "checks": (rec.get("checks") or 0) + 1, "t_first_check": rec.get("t_first_check") or now.isoformat(), "t_last_check": now.isoformat()}
+            del PROBE[:]
             try:
                 got = fn(t0.astimezone(tor).date())
             except Exception as e:
                 got = None
                 base["err"] = str(e)[:200]
+            base["probe"] = PROBE[-6:]
             if not got or got.get("rate") is None:
                 W[bank] = {**rec, **base, "status": "awaiting"}
                 changed = True
@@ -177,12 +227,17 @@ def watch(D, now=None, tor=None):
                 chg = -25
             if prev is None and re.match(r"rais|increas", got["verb"]):
                 chg = 25
+            if got.get("src", "").startswith("valet") and prev is not None and rate == prev and now < t0 + timedelta(minutes=20):
+                W[bank] = {**rec, **base, "status": "awaiting"}   # an unchanged Valet value this early can be yesterday's carried forward
+                changed = True
+                continue
             fc = base["fc"]
             sur = round((rate - fc) * 100) if fc is not None else None
             T = tone(got["text"], chg, sur)
             lag = (now - t0).total_seconds() / 60
             W[bank] = {**base, "status": "out", "rate": rate, "lo": got.get("lo"), "change_bp": chg, "decision": "HIKE" if chg > 0 else "CUT" if chg < 0 else "HOLD",
-                       "surprise_bp": sur, **T, "url": got["url"], "t_seen": now.isoformat(), "lag_min": round(lag, 1)}
+                       "surprise_bp": sur, **T, "url": got["url"], "t_seen": now.isoformat(), "lag_min": round(lag, 1),
+                       "read_from": "rate series (statement text not read)" if got.get("src", "").startswith("valet") else "official statement"}
             W["log"] = ([x for x in W.get("log", []) if not (x.get("bank") == bank and x.get("date") == base["date"])] +
                         [{"bank": bank, "date": base["date"], "t_sched": base["t_sched"], "t_seen": now.isoformat(), "lag_min": round(lag, 1),
                           "decision": W[bank]["decision"], "rate": rate, "tone": T["tone"]}])[-24:]
