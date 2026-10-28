@@ -288,6 +288,8 @@
     if (kc) { kc.textContent = (chg > 0 ? "+" : chg < 0 ? "\u2212" : "") + fmtN(Math.abs(chg), 2) + "%"; kc.className = chg > 0 ? "up" : chg < 0 ? "dn" : "neu"; }
     if (c) { c.textContent = (chg > 0 ? "+" : chg < 0 ? "−" : "") + fmtN(Math.abs(chg), 3) + "%"; c.className = chg > 0 ? "up" : chg < 0 ? "dn" : "neu"; }
     document.querySelectorAll('[data-live="usdcad"]').forEach(function (el) { el.textContent = fmtN(p, 5); });
+    if (window.QT) window.QT.set("usdcad", +p);                        /* rate-board tiles: flip + flash on each streamed tick */
+    document.querySelectorAll("[data-live-chg2]").forEach(function (el) { var d = p - fx.spot.ref; el.textContent = (d >= 0 ? "+" : "\u2212") + fmtN(Math.abs(d * 10000), 1) + " pips \u00b7 " + (chg >= 0 ? "+" : "\u2212") + fmtN(Math.abs(chg), 2) + "%"; el.className = chg > 0 ? "up" : chg < 0 ? "dn" : "neu"; });
     if (liveTickAt) document.querySelectorAll('[data-live-ts="usdcad"]').forEach(function (el) {   /* exact time of the rate shown, not of the page */
       el.textContent = new Date(liveTickAt).toLocaleTimeString("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit", second: "2-digit" }) + " ET";
       el.title = "USD/CAD " + (feedName || "reference rate"); });

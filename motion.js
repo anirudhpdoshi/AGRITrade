@@ -62,6 +62,35 @@
     setTimeout(function () { el.classList.remove("tk-up", "tk-dn"); }, 500);
   }
 
+  /* 7 rate-board quote tiles [data-qt]: the box flashes green / red for ~1 s on a real change, only the digits that changed
+       flip in (split-flap), and the last-tick arrow persists across re-renders until the next change. */
+  var QV = {}, QS = {}, QD = {};
+  function qtFmt(v, dec, pre) { var t = (pre || "") + v.toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec }), i = t.length - (dec >= 2 ? 2 : 1); return [t.slice(0, i), t.slice(i)]; }
+  function qtPaint(box, v, animate) {
+    var k = box.getAttribute("data-qt"), dec = +box.getAttribute("data-dec"), pre = box.getAttribute("data-pre") || "", p = QV[k], prevS = QS[k];
+    var parts = qtFmt(v, dec, pre), full = parts[0] + parts[1], vEl = box.querySelector(".qt-v");
+    if (animate && p != null && v !== p && !RM && box.offsetParent !== null) {
+      var up = v > p, html = "", n = 0;
+      [parts[0], parts[1]].forEach(function (seg, si) {
+        var h = "";
+        for (var i = 0; i < seg.length; i++, n++) { var ch = seg[i], was = prevS ? prevS[n] : null; h += (was !== ch && /\d/.test(ch)) ? '<span class="qf">' + ch + "</span>" : ch.replace(/&/g, "&amp;"); }
+        html += '<span class="' + (si ? "qt-pp" : "qt-bf") + '">' + h + "</span>";
+      });
+      if (vEl) vEl.innerHTML = html;
+      QD[k] = up ? "up" : "dn";
+      box.classList.remove("fl-up", "fl-dn"); void box.offsetWidth; box.classList.add(up ? "fl-up" : "fl-dn");
+      setTimeout(function () { box.classList.remove("fl-up", "fl-dn"); }, 160);   /* drop the class: the .9 s transition fades it out */
+    } else if (vEl && p != null && v !== p) {
+      vEl.innerHTML = '<span class="qt-bf">' + parts[0] + '</span><span class="qt-pp">' + parts[1] + "</span>";
+      QD[k] = v > p ? "up" : "dn";
+    }
+    box.classList.toggle("dir-up", QD[k] === "up"); box.classList.toggle("dir-dn", QD[k] === "dn");
+    box.setAttribute("data-v", v);
+    QV[k] = v; QS[k] = full;
+  }
+  function qtScan() { document.querySelectorAll("[data-qt]").forEach(function (b) { var v = parseFloat(b.getAttribute("data-v")); if (isFinite(v)) qtPaint(b, v, seeded); }); }
+  window.QT = { set: function (key, v) { document.querySelectorAll('[data-qt-live="' + key + '"]').forEach(function (b) { qtPaint(b, v, true); }); } };
+
   /* 5 signal tiles: key colour-state elements by tile title + position */
   var SIGNAL = /spread|curve|basis|volatility|cockpit|positioning|open interest|cftc|yield|policy|carry|roll/i;
   function stateOf(el) { return el.classList.contains("up") ? "up" : el.classList.contains("dn") ? "dn" : el.classList.contains("hot") ? "hot" : el.classList.contains("ok") ? "ok" : el.classList.contains("fl") ? "fl" : "neu"; }
@@ -80,6 +109,7 @@
       }
       LAST[k] = v; TXT[k] = t;
     });
+    qtScan();
     /* 5 gradual state change in signal tiles */
     document.querySelectorAll(".tile").forEach(function (tile) {
       var h = tile.querySelector("h2"); if (!h || !SIGNAL.test(h.textContent)) return;
