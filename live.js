@@ -201,7 +201,9 @@
           return;
         }
         if (now < t0) {
-          rows.push('<div class="pwb pre"><b class="pwb-tag">' + B.s + " DECISION</b><span>" + B.n + " at " + etHM(t0) + " ET · in <b>" + dur(t0 - now) + "</b> · current " + pct2(r && r.prev != null ? r.prev : null) +
+          var cur = r && r.prev != null ? r.prev : null;
+          if (cur == null) (DATA.macro || []).concat(DATA.macro_extra || []).forEach(function (m) { if (m.key === B.key && m.value != null) cur = +m.value; });
+          rows.push('<div class="pwb pre"><b class="pwb-tag">' + B.s + " DECISION</b><span>" + B.n + " at " + etHM(t0) + " ET · in <b>" + dur(t0 - now) + "</b> · current " + (b === "fed" && cur != null ? pct2(cur - 0.25) + "–" : "") + pct2(cur) +
             (fcOf(b) != null ? " · forecast " + pct2(fcOf(b)) : "") + "</span></div>");
           return;
         }
@@ -286,6 +288,9 @@
     if (kc) { kc.textContent = (chg > 0 ? "+" : chg < 0 ? "\u2212" : "") + fmtN(Math.abs(chg), 2) + "%"; kc.className = chg > 0 ? "up" : chg < 0 ? "dn" : "neu"; }
     if (c) { c.textContent = (chg > 0 ? "+" : chg < 0 ? "−" : "") + fmtN(Math.abs(chg), 3) + "%"; c.className = chg > 0 ? "up" : chg < 0 ? "dn" : "neu"; }
     document.querySelectorAll('[data-live="usdcad"]').forEach(function (el) { el.textContent = fmtN(p, 5); });
+    if (liveTickAt) document.querySelectorAll('[data-live-ts="usdcad"]').forEach(function (el) {   /* exact time of the rate shown, not of the page */
+      el.textContent = new Date(liveTickAt).toLocaleTimeString("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit", second: "2-digit" }) + " ET";
+      el.title = "USD/CAD " + (feedName || "reference rate"); });
     document.querySelectorAll('[data-live-chg]').forEach(function (el) { var u = chg >= 0; el.textContent = (u ? "\u25b2 +" : "\u25bc \u2212") + fmtN(Math.abs(chg), 2) + "%"; el.className = "live-chg " + (u ? "up" : "dn"); });
     if (typeof window.fxIntradaySVG === "function") document.querySelectorAll('[data-live-chart]').forEach(function (el) { el.innerHTML = window.fxIntradaySVG(window.fxIntradayPoints(ticks)); });
     var fresh = Date.now() - liveTickAt < 90000, chip = $("fx-spot-chip");
@@ -403,7 +408,8 @@
     var A = DATA.meta.asof, changed = false;
     if (newer(L.asof.fx_spot, A.fx_spot)) { DATA.fx.feed = L.fx.feed; DATA.fx.intraday = L.fx.intraday; A.fx_spot = L.asof.fx_spot; changed = true; }
     if (newer(L.asof.grains_quote, A.grains_quote)) {
-      Object.keys(L.grains).forEach(function (k) { if (DATA.grains[k]) { DATA.grains[k].fan.intraday = L.grains[k].intraday; DATA.grains[k].fan.intraday_ts = L.grains[k].intraday_ts; } });
+      Object.keys(L.grains).forEach(function (k) { if (DATA.grains[k]) { DATA.grains[k].fan.intraday = L.grains[k].intraday; DATA.grains[k].fan.intraday_ts = L.grains[k].intraday_ts;
+        if (L.grains[k].quotes && Object.keys(L.grains[k].quotes).length) DATA.grains[k].quotes = L.grains[k].quotes; } });
       A.grains_quote = L.asof.grains_quote; changed = true;
     }
     if (newer(L.asof.energy, A.energy)) { DATA.fx.energy = L.fx.energy; DATA.fx.wcs_diff = L.fx.wcs_diff; A.energy = L.asof.energy; changed = true; }

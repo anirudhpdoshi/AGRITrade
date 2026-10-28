@@ -93,7 +93,7 @@ def payload(D):
     return {
         "fx": {"feed": D["fx"]["feed"], "intraday": D["fx"].get("intraday", []),
                "energy": D["fx"]["energy"], "wcs_diff": D["fx"]["wcs_diff"], "fxcross": D["fx"]["fxcross"]},
-        "grains": {k: {"intraday": g["fan"]["intraday"], "intraday_ts": g["fan"].get("intraday_ts")} for k, g in D["grains"].items()},
+        "grains": {k: {"intraday": g["fan"]["intraday"], "intraday_ts": g["fan"].get("intraday_ts"), "quotes": g.get("quotes") or {}} for k, g in D["grains"].items()},
         "asof": {k: a.get(k) for k in ("fx_spot", "grains_quote", "energy", "crosses")},
     }
 

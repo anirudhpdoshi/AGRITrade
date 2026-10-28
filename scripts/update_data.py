@@ -752,8 +752,45 @@ def grains_quote(D, N):
         f["intraday"] = [round(px, 4), label]
         f["intraday_ts"] = iso(ts)
         newest = max(newest or ts, ts)
+        option_month_quotes(g)
     D["meta"]["asof"]["grains_quote"] = iso(newest)
     return True
+
+
+def option_month_quotes(g):
+    """Delayed quotes for the futures under the NEAR and FAR option months (e.g. soybeans: Jan-27 options on ZSF27, Mar-27
+    on ZSH27) plus the front contract, so every grain sub-tab can show them. One contract failing never fails the block:
+    it keeps its last quote, flagged stale, with the original time. Change is vs that contract's own prior settle."""
+    Q = g.setdefault("quotes", {})
+    roll = {r["contract"]: r for r in (g.get("roll") or []) if r.get("contract")}
+    want = []
+    for leg in ("near", "far"):
+        c = (g.get(leg) or {}).get("contract")
+        if c and c not in want:
+            want.append(c)
+    front = (g.get("roll") or [{}])[0].get("contract")
+    if front and front not in want:
+        want.insert(0, front)
+    for c in want:
+        try:
+            px, ts, prev = yahoo_last(f"{c}.CBT")
+            px /= 100.0
+            ref = (roll.get(c) or {}).get("settle")
+            if ref and not 0.5 * ref < px < 1.5 * ref:
+                raise RuntimeError(f"{c} {px} implausible vs settle {ref}")
+            settle = ref if ref else (round(prev / 100.0, 4) if prev else None)
+            Q[c] = {"px": round(px, 4), "ts": iso(ts), "label": ts.astimezone(TOR).strftime("%-I:%M%p").lower() + " ET",
+                    "settle": settle, "settle_date": (roll.get(c) or {}).get("settle_date"), "src": f"Yahoo {c}.CBT (delayed)"}
+        except Exception as e:
+            if c in Q:
+                Q[c]["stale"] = True
+                Q[c]["err"] = f"{type(e).__name__}: {str(e)[:80]}"
+            print(f"  {c}.CBT quote unavailable ({type(e).__name__}) - kept last copy" if c in Q else f"  {c}.CBT quote unavailable ({type(e).__name__})")
+        else:
+            Q[c].pop("stale", None)
+            Q[c].pop("err", None)
+    for c in [k for k in Q if k not in want]:   # drop contracts that left the near/far window after a roll
+        del Q[c]
 
 
 def energy(D, N):

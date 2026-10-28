@@ -435,6 +435,8 @@ table.cmp-tbl .ruler-col{background:rgba(232,163,61,.10)!important;box-shadow:in
 @media (max-width:760px){.cockpit{grid-template-columns:1fr 1fr!important}}
 .subnav-tile{padding:10px 12px}
 .subnav-live{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.7}
+.om-row{display:flex;flex-direction:column;gap:1px;margin-top:3px;padding-top:3px;border-top:1px dashed var(--line)}.om-leg{white-space:normal}.om-leg>.sl-k:first-child{display:inline-block;min-width:62px}
+.om-t{font-size:10px;font-weight:700;letter-spacing:.06em;border-radius:4px;padding:0 5px;border:1px solid}.om-t.ok{color:#5fd598;border-color:#2b6b4c}.om-t.warn{color:#f2c169;border-color:#6e5518}.om-t.cz{color:var(--muted);border-color:var(--line2)}
 .subnav-live b{color:var(--ink,#e8eef4)}.sl-k{color:var(--faint)}.sl-pill{font-size:10px;font-weight:700;letter-spacing:.1em;border:1px solid #2b6b4c;color:#5fd598;border-radius:5px;padding:1px 6px}
 .subnav{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
 .subbtn{appearance:none;text-align:left;cursor:pointer;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 12px;color:var(--muted);display:flex;flex-direction:column;gap:2px;min-width:0;font:inherit}
@@ -539,6 +541,7 @@ table.wt tr.wgh td{background:#122036;color:#9fd9e3;font-weight:600;font-size:11
 .wb.nrh{border:1px solid rgba(63,185,127,.55);color:#3fb97f}.wb.nrl{border:1px solid rgba(224,101,95,.55);color:#e0655f}
 .wq{font-size:10.5px;color:var(--muted)}.wq.aw{color:#e3b341}.wq.cz{color:var(--faint)}.wq b{color:#e3b341;font-size:9.5px;border:1px solid rgba(227,179,65,.5);border-radius:6px;padding:0 4px}
 svg.wsp{width:60px;height:18px;display:block}
+.wqt{margin-top:3px;line-height:1.35;white-space:normal;min-width:128px}.wqtm{color:var(--ink);font-weight:600}.wq.aw .wqtm{color:#e3b341}.wprov{color:var(--faint);font-size:10.5px}
 .sgrid{display:grid;grid-template-columns:minmax(150px,210px) 1fr 132px;gap:6px 12px;align-items:center}
 .shrs{position:relative;height:16px;font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--faint)}
 .shrs span{position:absolute;transform:translateX(-50%)}.shrs span:first-child{transform:none}.shrs span:last-child{transform:translateX(-100%)}
@@ -3817,11 +3820,45 @@ document.addEventListener('click', function(ev){
   var go=t.closest('[data-ask-go]'); if(go){ askClaude(go.getAttribute('data-ask-go')); }
 });
 
+/* near / far OPTION-MONTH quotes for the grain quote strip (shown on every sub-tab). Each leg says exactly where its price came
+   from and when: delayed quote (Yahoo, per contract) -> last delayed quote if the latest refresh failed -> futures price recorded
+   with the options chain pull -> prior settle. Never blank, never an unlabelled number. */
+function optLegQuote(g, leg){
+  var o=g[leg]||{}, c=o.contract, q=(g.quotes||{})[c], r=(g.roll||[]).filter(function(x){ return x.contract===c; })[0]||null;
+  var settle=q&&q.settle!=null?+q.settle:r?+r.settle:null, sdate=(q&&q.settle_date)||(r&&r.settle_date)||null;
+  var chainAt=DATA.meta&&DATA.meta.asof&&DATA.meta.asof.options;
+  if(q&&q.px!=null) return {c:c, px:+q.px, settle:settle, sdate:sdate, tier:q.stale?'last':'delayed', when:q.label||'', ts:q.ts, why:q.stale?(q.err||'latest refresh failed'):''};
+  if(o.underlying!=null) return {c:c, px:+o.underlying, settle:settle, sdate:sdate, tier:'chain', when:chainAt?omTime(Date.parse(chainAt)):'', ts:chainAt};
+  if(settle!=null) return {c:c, px:settle, settle:settle, sdate:sdate, tier:'settle', when:sdate?fmtShortDate(sdate):''};
+  return null;
+}
+function omTime(ms){ var o={timeZone:'America/Toronto'}, today=new Date(ms).toLocaleDateString('en-CA',o)===new Date().toLocaleDateString('en-CA',o);
+  return (today?'':new Date(ms).toLocaleDateString('en-US',{timeZone:'America/Toronto',month:'short',day:'numeric'})+' ')+new Date(ms).toLocaleTimeString('en-US',{timeZone:'America/Toronto',hour:'numeric',minute:'2-digit'}).replace(' ','').toLowerCase()+' ET'; }
+function optMonthsHTML(key){
+  var g=DATA.grains[key]; if(!g||!g.near||!g.near.contract) return '';
+  var TIER={delayed:['DELAYED','ok','Delayed quote for this contract'], last:['LAST QUOTE','warn','Latest refresh failed — last delayed quote shown'], chain:['CHAIN PULL','warn','Futures price recorded with the options chain pull'], settle:['SETTLE','cz','No intraday quote available — prior settle shown']};
+  var legs=[['near','Near opt'],['far','Far opt']].map(function(L){
+    var o=g[L[0]]||{}, Q=optLegQuote(g, L[0]); if(!Q) return '';
+    var v=g.vol&&g.vol[L[0]]&&g.vol[L[0]].contract===o.contract?g.vol[L[0]].iv:o.iv, exp=o.expires?Date.parse(o.expires+'T13:15:00-05:00'):null;
+    var dte=exp?Math.max(0,Math.ceil((exp-Date.now())/86400000)):null, ch=Q.settle!=null&&Q.tier!=='settle'?Q.px-Q.settle:null, T=TIER[Q.tier];
+    return '<span class="om-leg" title="'+esc(T[2]+(Q.why?' ('+Q.why+')':'')+(Q.settle!=null?' · change vs '+o.contract+' settle '+fmt(Q.settle,4)+(Q.sdate?' ('+fmtShortDate(Q.sdate)+')':''):''))+'">'+
+      '<span class="sl-k">'+L[1]+'</span> <b>'+esc(o.chain||'')+'</b> <span class="sl-k">'+esc(o.contract)+'</span> <b data-roll>$'+fmt(Q.px,4)+'</b>'+
+      (ch!=null?' <span class="'+cls(ch)+'">'+sgn(ch*100,2,'¢')+'</span>':'')+
+      (v!=null?' · <span class="sl-k">IV</span> '+fmt(+v,2)+'%':'')+
+      (dte!=null?' · <span class="sl-k">exp</span> '+fmtShortDate(o.expires)+' <span class="sl-k">('+dte+'d)</span>':'')+
+      ' <span class="om-t '+T[1]+'">'+T[0]+' '+esc(Q.when)+'</span></span>';
+  }).filter(Boolean);
+  return legs.length?'<div class="om-row">'+legs.join('')+'</div>':'';
+}
+function spotStamp(){
+  var f=DATA.fx&&DATA.fx.feed||{}, t=f.ts?Date.parse(f.ts):null;
+  return '<span class="sl-k" data-live-ts="usdcad" title="'+esc(f.source||'')+'">'+(t?new Date(t).toLocaleTimeString('en-US',{timeZone:'America/Toronto',hour:'numeric',minute:'2-digit'})+' ET':'')+'</span>';
+}
 function grainSubnavHTML(key){
   var now=Date.now(), us=usdaEvents(key, now, 120), ca=caEvents(now, 180), all=us.concat(ca).sort(function(a,b){ return a.t-b.t; });
   var geo=dstate(key).fgeo||'us', g=DATA.grains[key], f=g.fan, meta=GMETA[key], L=+f.intraday[0], A=+f.anchor, ch=L-A, fx=+DATA.fx.feed.mid;
   var live='<span class="sl-pill">'+(isAuto('grains_quote')?'LIVE · DELAYED':'SNAPSHOT')+'</span> <span class="sl-k">'+esc(meta.contract)+'</span> <b data-tick="strip-'+key+'" data-roll>$'+fmt(L,4)+'</b> <span class="'+cls(ch)+'">'+sgn(ch*100,2,'¢')+'</span> vs settle '+fmt(A,4)+
-    ' · <span class="sl-k">C$/t</span> <b>'+fmt(L*BU_PER_MT[key]*fx,2)+'</b> · <span class="sl-k">USD/CAD</span> <b data-live="usdcad" data-tick="usd-'+key+'" data-roll>'+fmt(fx,5)+'</b> · <span class="sl-k">quote</span> '+esc(f.intraday[1]||'');
+    ' · <span class="sl-k">C$/t</span> <b>'+fmt(L*BU_PER_MT[key]*fx,2)+'</b> · <span class="sl-k">USD/CAD</span> <b data-live="usdcad" data-tick="usd-'+key+'" data-roll>'+fmt(fx,5)+'</b> '+spotStamp()+' · <span class="sl-k">quote</span> '+esc(f.intraday[1]||'')+optMonthsHTML(key);
   return subnavHTML(key, [
     {id:'overview', label:'Overview', ev:nextOf(all, function(e){ return e.kind==='wasde'||e.kind==='contract'||e.kind==='ca'; })||nextOf(all)},
     {id:'deriv', label:'Derivatives', ev:nextOf(us, function(e){ return e.kind==='contract'||e.kind==='cftc'; })},
@@ -4206,7 +4243,8 @@ function fxSubnavHTML(){
   var ev=fxEvList(), cb=/Overnight Rate|Federal Funds Rate/;
   var cftc=usdaEvents('corn', Date.now(), 10).filter(function(e){ return e.kind==='cftc'; }).map(function(e){ return {t:e.t,label:'CFTC COT · CAD positioning'}; });
   var fx=DATA.fx, chg=(fx.feed.mid/fx.spot.ref-1)*100, w=fx.energy[0], R={}; fx.rates.forEach(function(r){ R[r.t]=r; });
-  var live='<span class="sl-pill">'+(isAuto('fx_spot')?'LIVE':'SNAPSHOT')+'</span> <span class="sl-k">USD/CAD</span> <b data-live="usdcad" data-tick="usd-fx" data-roll>'+fmt(fx.feed.mid,5)+'</b> <span class="'+cls(chg)+'">'+sgn(chg,2,'%')+'</span>'+
+  var live='<span class="sl-pill">'+(isAuto('fx_spot')?'LIVE':'SNAPSHOT')+'</span> <span class="sl-k">USD/CAD spot</span> <b data-live="usdcad" data-tick="usd-fx" data-roll>'+fmt(fx.feed.mid,5)+'</b> <span class="'+cls(chg)+'">'+sgn(chg,2,'%')+'</span> '+spotStamp()+
+    (fx.spot&&fx.spot.bid&&fx.spot.offer?' · <span class="sl-k">bid / offer</span> '+fmt(fx.spot.bid,5)+' / '+fmt(fx.spot.offer,5)+' <span class="sl-k">('+fmt(fx.spot.spread_pips,1)+' pips)</span>':'')+
     ' · <span class="sl-k">10Y US–CA</span> <b>'+fmt(R['10Y'].sp,1)+'</b> bps · <span class="sl-k">WTI</span> <b>$'+fmt(w.last,2)+'</b> <span class="'+cls(w.pct)+'">'+sgn(w.pct,2,'%')+'</span> · <span class="sl-k">DXY</span> <b>'+fmt(fx.fxcross.dxy,2)+'</b>';
   return subnavHTML('fx', [
     {id:'overview', label:'Overview', ev:nextOf(ev, function(e){ return e.impact==='High'; })},
