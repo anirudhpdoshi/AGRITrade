@@ -92,7 +92,7 @@ def payload(D):
     a = D["meta"]["asof"]
     return {
         "fx": {"feed": D["fx"]["feed"], "intraday": D["fx"].get("intraday", []),
-               "energy": D["fx"]["energy"], "wcs_diff": D["fx"]["wcs_diff"], "fxcross": D["fx"]["fxcross"], "yields_live": D["fx"].get("yields_live") or {}},
+               "energy": D["fx"]["energy"], "wcs_diff": D["fx"]["wcs_diff"], "fxcross": D["fx"]["fxcross"], "yields_live": D["fx"].get("yields_live") or {}, "yields_live_ca": D["fx"].get("yields_live_ca") or {}},
         "grains": {k: {"intraday": g["fan"]["intraday"], "intraday_ts": g["fan"].get("intraday_ts"), "quotes": g.get("quotes") or {}} for k, g in D["grains"].items()},
         "asof": {k: a.get(k) for k in ("fx_spot", "grains_quote", "yields_live", "energy", "crosses")},
     }
@@ -136,6 +136,11 @@ def main():
         try:   # central-bank decision first, published at once: slow market or release fetches must never hold it back
             if PW.watch(D, U.NOW, U.TOR):
                 D["meta"]["asof"]["policy_watch"] = U.iso(U.NOW)
+                PW.apply_decisions(D)
+                try:   # re-price the remaining meetings off the post-decision futures straight away
+                    U.fed_odds(D, {})
+                except Exception as e:
+                    print("[fed odds after decision] failed:", e)
                 PW.apply_decisions(D)
                 rel_out["policy_watch"] = {"asof": U.iso(U.NOW), "set": {"policy_watch": D["policy_watch"], "fx.policy": D["fx"]["policy"],
                                            "macro": D.get("macro"), "macro_extra": D.get("macro_extra")}}

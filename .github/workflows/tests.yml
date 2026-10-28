@@ -1,7 +1,7 @@
 name: Tests
 on:
   push:
-    paths: ["fwd.js", "scripts/world.py", "scripts/global_grains.py", "scripts/intel.py", "tests/**", ".github/workflows/tests.yml"]
+    paths: ["fwd.js", "scripts/world.py", "scripts/global_grains.py", "scripts/intel.py", "scripts/update_data.py", "scripts/policy_watch.py", "tests/**", ".github/workflows/tests.yml"]
   workflow_dispatch:
 jobs:
   unit:
@@ -16,3 +16,4 @@ jobs:
       - run: python tests/test_world.py
       - run: python tests/test_global_grains.py
       - run: python tests/test_intel.py
+      - run: pip install -q -r scripts/requirements.txt && python tests/test_yields.py

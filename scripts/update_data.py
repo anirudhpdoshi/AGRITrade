@@ -797,6 +797,84 @@ def option_month_quotes(g):
 YIELD_YF = {"3M": "^IRX", "5Y": "^FVX", "10Y": "^TNX", "30Y": "^TYX"}   # Yahoo/CBOE Treasury yield indexes, % (no 2Y index exists)
 
 
+# Tenors with no live yield index: the move is estimated from a live proxy (futures / federal-bond ETF) scaled by its
+# MEASURED sensitivity to that official yield (daily regression, refitted once a day) - never by an assumed duration.
+YIELD_PROXY = {("US", "2Y"): "ZT=F", ("CA", "2Y"): "ZFS.TO", ("CA", "5Y"): "ZFM.TO", ("CA", "10Y"): "ZFM.TO", ("CA", "30Y"): "ZFL.TO"}
+PROXY_MIN_R2, PROXY_MAX_BP = 0.5, 30.0
+
+
+def fit_sensitivity(px, yld, n=150):
+    """Slope b (bp of yield per 1% proxy return) and R^2 from consecutive common days of a proxy close series and an official
+    yield series ({date: value}). Pure, unit-tested. None when fewer than 40 day-pairs."""
+    ds = sorted(set(px) & set(yld))
+    pairs = [((px[b] / px[a] - 1) * 100, (yld[b] - yld[a]) * 100) for a, b in zip(ds, ds[1:]) if px[a] and px[b] is not None and yld[a] is not None and yld[b] is not None]
+    pairs = [p for p in pairs if abs(p[0]) < 5 and abs(p[1]) < 60][-n:]
+    if len(pairs) < 40:
+        return None
+    mx, my = sum(p[0] for p in pairs) / len(pairs), sum(p[1] for p in pairs) / len(pairs)
+    sxx = sum((p[0] - mx) ** 2 for p in pairs); sxy = sum((p[0] - mx) * (p[1] - my) for p in pairs); syy = sum((p[1] - my) ** 2 for p in pairs)
+    if sxx <= 0 or syy <= 0:
+        return None
+    b = sxy / sxx
+    return {"b": round(b, 3), "r2": round(sxy * sxy / (sxx * syy), 3), "n": len(pairs)}
+
+
+def _proxy_fits(D):
+    """Refit the proxy sensitivities at most once a day (cached in fx.yl_model)."""
+    fx = D["fx"]
+    M = fx.get("yl_model") or {}
+    today = NOW.astimezone(TOR).date().isoformat()
+    if M.get("date") == today and M.get("fit"):
+        return M["fit"]
+    us = us_curve()
+    j = valet("observations/group/bond_yields_benchmark/json?start_date=" + (NOW - timedelta(days=420)).date().isoformat())
+    codes = {}
+    for code in j.get("seriesDetail", {}):
+        m = re.search(r"\.(\d+)YR\.", code.upper())
+        if m:
+            codes[m.group(1) + "Y"] = code
+        elif "LONG" in code.upper():
+            codes["30Y"] = code
+    ca = {}
+    for o in j["observations"]:
+        for t, c in codes.items():
+            v = _num((o.get(c) or {}).get("v"))
+            if v is not None:
+                ca.setdefault(t, {})[o["d"]] = v
+    fit = {}
+    for (cty, t), sym in YIELD_PROXY.items():
+        try:
+            h = yf().Ticker(sym).history(period="1y", interval="1d")   # auto-adjusted: ETF distributions do not look like yield moves
+            px = {i.date().isoformat(): float(v) for i, v in zip(h.index, h["Close"])}
+            yl = {d: v[t] for d, v in us.items() if t in v} if cty == "US" else ca.get(t, {})
+            f = fit_sensitivity(px, yl)
+            if f:
+                fit[f"{cty}{t}"] = dict(f, sym=sym)
+        except Exception as e:
+            print(f"  proxy fit {cty} {t} ({sym}) failed: {type(e).__name__}: {str(e)[:80]}")
+    fx["yl_model"] = {"date": today, "fit": fit, "note": "bp of yield per 1% proxy return, OLS on up to 150 daily changes vs the official yield"}
+    print("  proxy fits:", {k: (v["b"], v["r2"]) for k, v in fit.items()})
+    return fit
+
+
+def _proxy_estimate(sym, fit, close, close_date):
+    """Live yield estimate = official close + b x proxy return since its prior close. None when the fit is weak, the move is
+    implausible, or the official close is already as new as the proxy's latest bar (no double counting after ~6 pm ET)."""
+    if not fit or fit["r2"] < PROXY_MIN_R2 or close is None:
+        return None
+    px, ts, prev = yahoo_last(sym)
+    if not prev:
+        return None
+    if close_date and ts.astimezone(TOR).date().isoformat() <= close_date:
+        return None
+    dy = fit["b"] * (px / prev - 1) * 100
+    if abs(dy) > PROXY_MAX_BP:
+        raise RuntimeError(f"{sym} implies {dy:.1f} bp - rejected (roll or bad print?)")
+    return {"y": round(close + dy / 100, 3), "ts": iso(ts), "label": ts.astimezone(TOR).strftime("%-I:%M%p").lower() + " ET", "close": close,
+            "close_date": close_date, "chg_bp": round(dy, 1), "method": "futures" if sym.endswith("=F") else "etf", "proxy": sym,
+            "fit": {"b": fit["b"], "r2": fit["r2"], "n": fit["n"]}, "src": f"estimated from {sym} (delayed) x fitted sensitivity"}
+
+
 def yields_live(D, N):
     """Delayed intraday US Treasury yields (Yahoo ^IRX/^FVX/^TNX/^TYX, ~10-15 min) on top of the official daily curve.
     Change is in bp vs the latest OFFICIAL close (US Treasury par curve), so the move matches the rest of the desk. A tenor
@@ -826,10 +904,53 @@ def yields_live(D, N):
             out[t].pop("stale", None)
     if newest is None:
         raise RuntimeError("no live Treasury yield returned")
-    ca10 = next((r.get("ca") for r in fx.get("rates", []) if r.get("t") == "10Y"), None)
-    if "10Y" in out and ca10 is not None:
-        out["10Y"]["sp_ca"] = round((out["10Y"]["y"] - ca10) * 100, 1)   # live US 10Y minus Canada 10Y official close
-        out["10Y"]["ca_close"] = ca10
+    for t in out:
+        out[t].setdefault("method", "index")
+    # ---- estimated tenors: US 2Y (2-year note futures), Canada 2Y/5Y/10Y/30Y (federal-bond ETFs); US 1Y / 20Y interpolated
+    try:
+        fits = _proxy_fits(D)
+    except Exception as e:
+        fits = (fx.get("yl_model") or {}).get("fit") or {}
+        print(f"  proxy fits unavailable ({type(e).__name__}: {str(e)[:80]}) - using cached: {list(fits)}")
+    R = {r["t"]: r for r in fx.get("rates", [])}
+    ca_out = dict(fx.get("yields_live_ca") or {})
+    for (cty, t), sym in YIELD_PROXY.items():
+        close = T.get(t) if cty == "US" else (R.get(t) or {}).get("ca")
+        cdate = close_date if cty == "US" else ((R.get(t) or {}).get("asof") or close_date)
+        tgt = out if cty == "US" else ca_out
+        try:
+            e = _proxy_estimate(sym, fits.get(f"{cty}{t}"), close, cdate)
+            if e:
+                tgt[t] = e
+                newest = max(newest, datetime.fromisoformat(e["ts"]))
+            elif t in tgt and tgt[t].get("method") in ("futures", "etf"):
+                del tgt[t]                       # weak fit / official close caught up: fall back to the close
+        except Exception as ex:
+            if t in tgt:
+                tgt[t]["stale"] = True
+            print(f"  {cty} {t} estimate from {sym} unavailable ({type(ex).__name__}: {str(ex)[:80]})")
+    def chg(t):
+        v = out.get(t)
+        if not v or v.get("stale"):
+            return None
+        return v["chg_bp"]
+    for t, (a_, b_, w) in {"1Y": ("3M", "2Y", (2 - 1) / (2 - 0.25)), "20Y": ("10Y", "30Y", 0.5)}.items():
+        ca_, cb_, close = chg(a_), chg(b_), T.get(t)
+        if ca_ is not None and cb_ is not None and close is not None:
+            dy = w * ca_ + (1 - w) * cb_
+            ref = out[a_] if out[a_]["ts"] < out[b_]["ts"] else out[b_]
+            out[t] = {"y": round(close + dy / 100, 3), "ts": ref["ts"], "label": ref["label"], "close": close, "close_date": close_date,
+                      "chg_bp": round(dy, 1), "method": "interp", "src": f"interpolated from the live {a_} and {b_} moves"}
+        elif out.get(t, {}).get("method") == "interp":
+            del out[t]
+    fx["yields_live_ca"] = ca_out
+    ca10 = (ca_out.get("10Y") or {}).get("y") if not (ca_out.get("10Y") or {}).get("stale") else None
+    ca10_close = (R.get("10Y") or {}).get("ca")
+    if "10Y" in out and (ca10 or ca10_close) is not None:
+        leg = ca10 if ca10 is not None else ca10_close
+        out["10Y"]["sp_ca"] = round((out["10Y"]["y"] - leg) * 100, 1)   # live US 10Y minus Canada 10Y (estimate, else close)
+        out["10Y"]["ca_close"] = ca10_close
+        out["10Y"]["ca_leg"] = "est" if ca10 is not None else "close"
     fx["yields_live"] = out
     D["meta"]["asof"]["yields_live"] = iso(newest)
     D["meta"].setdefault("sources", {})["yields_live"] = "Yahoo/CBOE Treasury yield indexes (delayed ~10-15 min); change vs US Treasury official close"
