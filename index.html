@@ -4377,7 +4377,12 @@ function renderFX(){
       (fx.fc.mae!=null&&fx.fc.zero_mae!=null?(fx.fc.mae<fx.fc.zero_mae?' \u00b7 beats a zero-return forecast in backtest':' \u00b7 <b>does not beat a zero-return forecast in backtest \u2014 treat as context, not signal</b>'):'')+
       ' \u00b7 bias = sign-weighted drivers (2Y/10Y spread moves, DXY, WTI, CFTC crowding'+(fx.bias.drivers&&fx.bias.drivers.some(function(d){ return /risk reversal/.test(d.name); })?', risk reversal':'; risk reversal left out while the FX-options read is stale')+') \u00b7 educational, not a trade recommendation</div></div>';
   /* policy expectations */
-  var fedRows=fx.policy.fed.map(function(mt){
+  function decRow(d, who){ if(!d) return ''; var dd=d.date?fmtShortDate(d.date):'';
+    var rate=who==='Fed'&&d.lo!=null?fmt(+d.lo,2)+'\u2013'+fmt(+d.rate,2)+'%':fmt(+d.rate,2)+'%';
+    return '<div class="kv pol-dec"><span class="kk">'+who+' \u00b7 '+dd+' <span class="om-t ok">DECIDED</span></span><span class="vv"><b class="'+(d.change_bp>0?'dn':d.change_bp<0?'up':'neu')+'">'+esc(d.decision||'')+(d.change_bp?' '+sgn(d.change_bp,0,' bp'):'')+'</b> \u2192 '+rate+(d.tone?' <span class="sl-k">\u00b7 '+esc(d.tone.toLowerCase())+'</span>':'')+'</span></div>'; }
+  var today=new Date().toLocaleDateString('en-CA',{timeZone:'America/Toronto'}), recent=function(d){ return d&&d.date&&(Date.parse(today)-Date.parse(d.date))<=14*86400000; };
+  var decRows=(recent(fx.policy.fed_decided)?decRow(fx.policy.fed_decided,'Fed'):'')+(recent(fx.policy.boc_decided)?decRow(fx.policy.boc_decided,'BoC'):'');
+  var fedRows=fx.policy.fed.filter(function(mt){ return !fx.policy.fed_decided||mt.meeting>fx.policy.fed_decided.date; }).map(function(mt){
     return '<div class="kv"><span class="kk">Fed · '+mt.meeting+'</span><span class="vv">Hold '+fmt(mt.no_change_pct,1)+'% · Hike '+fmt(mt.hike_pct,1)+'% · Ease '+fmt(mt.ease_pct,1)+'%</span></div>';
   }).join("");
   var corRows=fx.policy.corra.map(function(c){
@@ -4386,9 +4391,9 @@ function renderFX(){
   var upol=mget('us_policy'), cpol=mget('ca_policy'), polChart='';
   if(upol&&upol.long&&cpol&&cpol.long){ var cmap={}; cpol.long.forEach(function(x){ cmap[x[0].slice(0,7)]=x[1]; });
     var up24=upol.long.slice(-24); polChart=lineChartSVG({series:[{pts:up24,color:'#38b6c9',label:'Fed'},{pts:up24.map(function(x){ var v=cmap[x[0].slice(0,7)]; return [x[0], v==null?null:v]; }),color:'#e0655f',label:'BoC'}],yLabel:'Policy rate (%)',dec:2,H:190,aria:'Fed and BoC policy rates, last 24 months'}); }
-  T.policy='<div class="tile" data-src="policy"><h2>Policy expectations <span class="h2note">— futures-implied</span></h2>'+polChart+fedRows+
+  T.policy='<div class="tile" data-src="policy"><h2>Policy expectations <span class="h2note">— futures-implied</span></h2>'+polChart+decRows+fedRows+
     '<div class="kv"><span class="kk">Fed funds target</span><span class="vv">'+(function(){ var f=/(\d{3})-(\d{3})/.exec(fx.policy.fed_range||''); return f?fmt(f[1]/100,2)+'\u2013'+fmt(f[2]/100,2)+'%':esc(fx.policy.fed_range); })()+'</span></div>'+corRows+
-    '<div class="kv"><span class="kk">BoC overnight (current)</span><span class="vv">'+fmt(fx.policy.corra_now,2)+'%</span></div>'+
+    '<div class="kv"><span class="kk">BoC overnight (current)</span><span class="vv">'+fmt(fx.policy.corra_now,2)+'%'+(fx.policy.boc_decided&&fx.policy.corra_date===fx.policy.boc_decided.date?' <span class="sl-k">\u00b7 from the '+fmtShortDate(fx.policy.corra_date)+' statement</span>':'')+'</span></div>'+
     '<div class="stamp">Fed probabilities '+(fx.policy.fed_range&&/NY Fed/.test(fx.policy.fed_range)?'computed '+asOf('policy',true)+' from CBOT fed funds futures + NY Fed effective rate (FedWatch-style)':'pulled '+asOf('policy',true))+
       ' \u00b7 CORRA futures read '+(fx.policy.corra_asof?esc(fmtDate(fx.policy.corra_asof)):'date unknown')+' (Montreal Exchange \u2014 no free live feed, manual read) \u00b7 futures-implied, not forecasts</div></div>';
   /* positioning & sentiment */

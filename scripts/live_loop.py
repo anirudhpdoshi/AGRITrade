@@ -136,7 +136,9 @@ def main():
         try:   # central-bank decision first, published at once: slow market or release fetches must never hold it back
             if PW.watch(D, U.NOW, U.TOR):
                 D["meta"]["asof"]["policy_watch"] = U.iso(U.NOW)
-                rel_out["policy_watch"] = {"asof": U.iso(U.NOW), "set": {"policy_watch": D["policy_watch"]}}
+                PW.apply_decisions(D)
+                rel_out["policy_watch"] = {"asof": U.iso(U.NOW), "set": {"policy_watch": D["policy_watch"], "fx.policy": D["fx"]["policy"],
+                                           "macro": D.get("macro"), "macro_extra": D.get("macro_extra")}}
                 early = payload(D)
                 early["rel"] = rel_out
                 try:

@@ -271,3 +271,53 @@ def merge(D, other):
             seen[k] = x; ch = True
     W["log"] = sorted(seen.values(), key=lambda x: x["t_sched"])[-24:]
     return ch
+
+
+def apply_decisions(D):
+    """Once a decision has been read from the official statement, make it the CURRENT rate everywhere the desk uses one
+    (fx.policy, the macro policy-rate series and chart, the meeting list) until the official daily series catches up.
+    The Bank of Canada's V39079 and FRED's DFEDTARU only post the new rate later, so without this the desk keeps showing
+    the pre-decision rate for hours. Pure: returns True when it changed something. Never moves a rate backwards: a value
+    dated on or after the decision day from the official series always wins."""
+    W = D.get("policy_watch") or {}
+    fx = D.get("fx") or {}
+    P = fx.setdefault("policy", {})
+    macro = {m.get("key"): m for m in (D.get("macro") or []) + (D.get("macro_extra") or [])}
+    changed = False
+    for bank, key in (("boc", "ca_policy"), ("fed", "us_policy")):
+        r = W.get(bank) or {}
+        if r.get("status") != "out" or r.get("rate") is None or not r.get("date"):
+            continue
+        day, rate = r["date"], float(r["rate"])
+        m = macro.get(key)
+        if m and (m.get("obs_date") or "") < day:
+            m.update(prior=m.get("value"), value=rate, chg=round(rate - (m.get("value") or rate), 2), obs_date=day,
+                     period=datetime.fromisoformat(day).strftime("%b %-d"), src_live=f"{'Bank of Canada' if bank == 'boc' else 'FOMC'} statement {day} (read by the desk)")
+            lab = datetime.fromisoformat(day).strftime("%b %-d")
+            for k in ("history", "hist24"):
+                if isinstance(m.get(k), list) and (not m[k] or m[k][-1][0] != lab):
+                    m[k].append([lab, rate])
+            if isinstance(m.get("long"), list) and (not m["long"] or m["long"][-1][0] < day):
+                m["long"].append([day, rate])
+            changed = True
+        dec = {"date": day, "decision": r.get("decision"), "rate": rate, "lo": r.get("lo"), "prev": r.get("prev"), "change_bp": r.get("change_bp"),
+               "tone": r.get("tone"), "url": r.get("url"), "t_seen": r.get("t_seen")}
+        if bank == "boc":
+            if (P.get("corra_date") or "") < day and P.get("corra_now") != rate:
+                P["corra_now"], P["corra_date"], changed = rate, day, True
+            if P.get("boc_decided") != dec:
+                P["boc_decided"], changed = dec, True
+        else:
+            lo = float(r["lo"]) if r.get("lo") is not None else rate - 0.25
+            rng = f"{int(round(lo * 100))}-{int(round(rate * 100))}"
+            tail = (P.get("fed_range") or "").split(" · ", 1)[1:] if "·" in (P.get("fed_range") or "") else []
+            if not (P.get("fed_range") or "").startswith(rng):
+                P["fed_range"] = rng + f" (FOMC statement {day})" + (" · " + tail[0] if tail else "")
+                changed = True
+            done = [mt for mt in P.get("fed") or [] if mt.get("meeting", "") <= day]
+            if done:
+                P["fed"] = [mt for mt in P["fed"] if mt.get("meeting", "") > day]
+                changed = True
+            if P.get("fed_decided") != dec:
+                P["fed_decided"], changed = dec, True
+    return changed

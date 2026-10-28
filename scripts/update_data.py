@@ -234,9 +234,10 @@ def yields(D, N):
     except Exception as e:
         print("  forward-curve inputs skipped:", e)
     try:
-        v = valet("observations/V39079/json?recent=1")["observations"][-1]["V39079"]["v"]
-        if 0 < float(v) < 10:
-            fx["policy"]["corra_now"] = float(v)
+        o = valet("observations/V39079/json?recent=1")["observations"][-1]
+        v = o["V39079"]["v"]
+        if 0 < float(v) < 10 and (fx["policy"].get("corra_date") or "") <= o["d"]:   # never step back behind a decision already read
+            fx["policy"]["corra_now"], fx["policy"]["corra_date"] = float(v), o["d"]
     except Exception as e:
         print("  BoC target skipped:", e)
     return bool(changed)
@@ -2150,6 +2151,12 @@ def main():
             errors[name] = redact(f"{type(e).__name__}: {e}")[:1200]
             print(f"  FAILED: {redact(e)}")
             print(redact(traceback.format_exc(limit=1)))
+    try:   # a decision read from the official statement is the current rate until the daily series catch up
+        import policy_watch as PW
+        if PW.apply_decisions(D):
+            print("[policy decisions] current rates updated from the statements read today")
+    except Exception as e:
+        print("  policy decisions not applied:", e)
     if errors:
         D["meta"]["last_errors"] = errors  # no timestamp: a repeating failure won't commit every run
     else:
