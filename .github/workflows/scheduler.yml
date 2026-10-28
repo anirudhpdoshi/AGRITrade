@@ -9,6 +9,7 @@ name: Scheduler (keepalive)
 #   World markets       every 15 min, Sun–Fri (UTC), offset 7 min
 #   Global grains       12:20 and 17:20 UTC Mon–Fri
 #   Live feed           every 30 min, 12:00–22:30 UTC Mon–Fri (each run loops ~33 min itself)
+#   Intelligence        hourly at :50, 10:50–22:50 UTC Mon–Fri
 on:
   schedule:
     - cron: "41 * * * *"
@@ -51,6 +52,8 @@ jobs:
               if [ $((m % 15)) -eq 7 ] && { [ "$dow" -le 5 ] || [ "$dow" -eq 7 ]; }; then fire world-markets.yml; fi
               # global-grains: 12:20 and 17:20 UTC weekdays (after CONAB / USDA morning releases and the noon-ET WASDE)
               if [ "$m" -eq 20 ] && [ "$dow" -le 5 ] && { [ "$h" -eq 12 ] || [ "$h" -eq 17 ]; }; then fire global-grains.yml; fi
+              # intel: :50 every hour, 10–22 UTC weekdays (institutional data + headlines)
+              if [ "$m" -eq 50 ] && [ "$dow" -le 5 ] && [ "$h" -ge 10 ] && [ "$h" -le 22 ]; then fire intel.yml; fi
               # live-feed: :00 and :30, 12–22 UTC weekdays
               if [ $((m % 30)) -eq 0 ] && [ "$dow" -le 5 ] && [ "$h" -ge 12 ] && [ "$h" -le 22 ]; then fire live-feed.yml; fi
               last="$slot"

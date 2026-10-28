@@ -964,6 +964,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
     <button class="tab-btn" role="tab" id="tabbtn-fx" aria-selected="false" aria-controls="panel-fx" data-tab="fx">USD/CAD<span class="sym">Desk</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-world" aria-selected="false" aria-controls="panel-world" data-tab="world">World<span class="sym">Markets</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-events" aria-selected="false" aria-controls="panel-events" data-tab="events">Events<span class="sym">Today</span></button>
+    <button class="tab-btn" role="tab" id="tabbtn-intel" aria-selected="false" aria-controls="panel-intel" data-tab="intel">Intel<span class="sym">Global</span></button>
   </nav>
 
 <main>
@@ -973,6 +974,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
   <section class="tab-panel" id="panel-fx" role="tabpanel" aria-labelledby="tabbtn-fx"></section>
   <section class="tab-panel" id="panel-world" role="tabpanel" aria-labelledby="tabbtn-world"></section>
   <section class="tab-panel" id="panel-events" role="tabpanel" aria-labelledby="tabbtn-events"></section>
+  <section class="tab-panel" id="panel-intel" role="tabpanel" aria-labelledby="tabbtn-intel"></section>
 </main>
 
 <footer class="foot">
@@ -4580,6 +4582,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="world-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="gg-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="events-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
+<script>(function(){var f=document.createElement("script");f.src="intel-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var s=document.createElement("script");s.src="live.js?v="+Date.now();document.body.appendChild(s);})();</script>
 </body>
 </html>

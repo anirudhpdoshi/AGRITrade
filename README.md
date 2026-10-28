@@ -28,6 +28,26 @@ GitHub Action (every 15 min, weekdays)          browser
 | Grain delayed quotes (fan live anchor), WTI/Brent, DXY and crosses | Forecast, scenarios, bias, trade template, economic calendar |
 | News rails (Google News RSS) | |
 
+## Intel tab — Global Commodity Intelligence
+
+`scripts/intel.py` (hourly on weekdays, `intel.yml`) → `intel.json` on the `intel` branch → `intel-ui.js`.
+
+| Layer | Sources | Cadence |
+|---|---|---|
+| Official data (VERIFIED) | World Bank Pink Sheet monthly prices; IMF PCPS as backup + cross-check; FAO Food Price Index (cereals, veg oils) | monthly |
+| Publications | World Bank Commodity Markets Outlook (Apr/Oct), OECD–FAO Outlook (Jul), FAO / IMF / Pink Sheet release calendar | on publication |
+| Headlines (inference) | Google News RSS: World Bank, IMF, FAO, OECD–FAO, AMIS, export bans / weather, logistics, fertilizer, trade | hourly |
+
+Each item carries category (agriculture · energy & fertilizer · macro & trade · supply disruption · long-term outlook), crops, region,
+key change, per-crop read, confidence, evidence, and a "Why this matters to my market" panel that separates the verified fact from the
+inference and lists what to confirm (curve, WASDE, export sales, basis) before it becomes a trade. Reads are rule-based and shown with
+their evidence; nothing is a signal on its own.
+
+Fallback ladder: GitHub API → raw mirror → last good copy in the browser → "can't be reached". On the server each source fails
+independently and keeps its last good copy (flagged), and a World Bank series that fails is served from the IMF (labelled). Surprises are
+z-scores against each series' own 24-month history; revisions only against a value stored on an earlier run. Local debug without
+publishing: `INTEL_DRY=1 INTEL_OUT=/tmp/intel.json python scripts/intel.py`.
+
 ## Turning on the true streaming tick
 
 1. Get a free API key at https://finnhub.io.
