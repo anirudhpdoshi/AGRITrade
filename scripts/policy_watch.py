@@ -11,6 +11,7 @@ A lexicon read, not a forecast: the label shows the phrases it found so the read
 """
 import html as _html
 import re
+import time
 from datetime import datetime, timedelta, timezone
 
 import requests
@@ -54,6 +55,7 @@ def _text(h):
 
 BROWSER = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",
            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "Accept-Language": "en-CA,en;q=0.9"}
+DEADLINE = [float("inf")]   # per-check time budget so a slow bank site never stalls the 60-s fast lane
 PROBE = []   # what each URL returned on this check - stored with the 'awaiting' record so a silent miss is never silent
 
 
@@ -65,12 +67,15 @@ def _get(url):
     """GET with the desk UA, then a browser UA if the site refuses bots (403/429/503 on busy announcement days).
     Every outcome is recorded in PROBE."""
     last = None
+    if time.monotonic() > DEADLINE[0]:
+        PROBE.append({"u": _short(url), "s": "skipped (check budget used)"})
+        return None
     for hdr in (UA, BROWSER):
         try:
-            r = requests.get(url, headers=hdr, timeout=20)
+            r = requests.get(url, headers=hdr, timeout=(4, 8))
         except Exception as e:
             last = type(e).__name__
-            continue
+            break                      # a timeout will not be fixed by another user-agent; keep the fast lane fast
         last = r.status_code
         if r.status_code == 200:
             PROBE.append({"u": _short(url), "s": 200})
@@ -211,6 +216,7 @@ def watch(D, now=None, tor=None):
             base = {"bank": bank, "date": t0.date().isoformat(), "t_sched": t0.isoformat(), "prev": prev, "fc": _fc(D, ccy, ev),
                     "checks": (rec.get("checks") or 0) + 1, "t_first_check": rec.get("t_first_check") or now.isoformat(), "t_last_check": now.isoformat()}
             del PROBE[:]
+            DEADLINE[0] = time.monotonic() + 25
             try:
                 got = fn(t0.astimezone(tor).date())
             except Exception as e:
