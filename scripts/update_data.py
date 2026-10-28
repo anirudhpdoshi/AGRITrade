@@ -793,6 +793,45 @@ def option_month_quotes(g):
         del Q[c]
 
 
+YIELD_YF = {"3M": "^IRX", "5Y": "^FVX", "10Y": "^TNX", "30Y": "^TYX"}   # Yahoo/CBOE Treasury yield indexes, % (no 2Y index exists)
+
+
+def yields_live(D, N):
+    """Delayed intraday US Treasury yields (Yahoo ^IRX/^FVX/^TNX/^TYX, ~10-15 min) on top of the official daily curve.
+    Change is in bp vs the latest OFFICIAL close (US Treasury par curve), so the move matches the rest of the desk. A tenor
+    that fails, or disagrees with the official close by > 75 bp (wrong symbol / bad print), is left out - never guessed."""
+    fx = D["fx"]
+    T = fx.get("treasury") or {}
+    close_date = (D["meta"]["asof"].get("yields") or "")[:10] or None
+    out, newest = dict(fx.get("yields_live") or {}), None
+    for t, sym in YIELD_YF.items():
+        try:
+            y, ts, prev = yahoo_last(sym)
+            close = T.get(t)
+            if close is not None and abs(y - close) > 0.75:
+                raise RuntimeError(f"{sym} {y:.3f} vs official {close:.3f} - rejected")
+            out[t] = {"y": round(y, 3), "ts": iso(ts), "label": ts.astimezone(TOR).strftime("%-I:%M%p").lower() + " ET",
+                      "close": close, "close_date": close_date, "chg_bp": round((y - close) * 100, 1) if close is not None else None,
+                      "prev_yahoo": round(prev, 3) if prev else None, "src": f"Yahoo {sym} (CBOE yield index, delayed)"}
+            newest = max(newest or ts, ts)
+        except Exception as e:
+            if t in out:
+                out[t]["stale"] = True
+            print(f"  {sym} live yield unavailable ({type(e).__name__}: {str(e)[:80]})")
+        else:
+            out[t].pop("stale", None)
+    if newest is None:
+        raise RuntimeError("no live Treasury yield returned")
+    ca10 = next((r.get("ca") for r in fx.get("rates", []) if r.get("t") == "10Y"), None)
+    if "10Y" in out and ca10 is not None:
+        out["10Y"]["sp_ca"] = round((out["10Y"]["y"] - ca10) * 100, 1)   # live US 10Y minus Canada 10Y official close
+        out["10Y"]["ca_close"] = ca10
+    fx["yields_live"] = out
+    D["meta"]["asof"]["yields_live"] = iso(newest)
+    D["meta"].setdefault("sources", {})["yields_live"] = "Yahoo/CBOE Treasury yield indexes (delayed ~10-15 min); change vs US Treasury official close"
+    return True
+
+
 def energy(D, N):
     fx = D["fx"]
     for e in fx["energy"]:
@@ -2079,7 +2118,7 @@ def policy_watch(D, N):
         D["meta"]["asof"]["policy_watch"] = iso(NOW)
 
 BLOCKS = [("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
-          ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("energy", energy),
+          ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("yields_live", yields_live), ("energy", energy),
           ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model)]
 
 

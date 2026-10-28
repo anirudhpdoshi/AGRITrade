@@ -48,6 +48,7 @@ EXCHANGES = {
     "CME":   {"name": "CME Globex futures",  "city": "Chicago",   "cc": "us", "tz": "America/Chicago",  "sessions": [["17:00", "16:00"]], "globex": True},
     "CBOT":  {"name": "CBOT grains",         "city": "Chicago",   "cc": "us", "tz": "America/Chicago",  "sessions": [["19:00", "07:45"], ["08:30", "13:20"]], "grains": True},
     "ICE":   {"name": "ICE US softs",        "city": "New York",  "cc": "us", "tz": "America/New_York", "sessions": [["03:30", "13:00"]]},
+    "USTL":  {"name": "US Treasury yields (CBOE index, delayed)", "city": "Chicago", "cc": "us", "tz": "America/Chicago", "sessions": [["07:00", "15:00"]]},
     "UST":   {"name": "US Treasury (daily)", "city": "Washington","cc": "us", "tz": "America/New_York", "sessions": [["08:00", "17:00"]], "daily": True},
     "BOC":   {"name": "Bank of Canada (daily)","city": "Ottawa",  "cc": "ca", "tz": "America/Toronto",  "sessions": [["08:00", "17:00"]], "daily": True},
 }
@@ -106,7 +107,8 @@ UNIVERSE = [
     I("vix", "VIX (S&P 500 vol)", "Rates & Vol", "Americas", "us", "^VIX", "NYSE", "pts", 2),
 ]
 # official daily yields (not Yahoo): built in yields_official()
-YIELDS = [("us2y", "US 2Y Treasury", "us", "UST", "2Y"), ("us10y", "US 10Y Treasury", "us", "UST", "10Y"),
+YIELDS = [("us2y", "US 2Y Treasury", "us", "UST", "2Y"), ("us5y", "US 5Y Treasury", "us", "UST", "5Y"), ("us10y", "US 10Y Treasury", "us", "UST", "10Y"),
+          ("us30y", "US 30Y Treasury", "us", "UST", "30Y"),
           ("ca2y", "Canada 2Y", "ca", "BOC", "2Y"), ("ca10y", "Canada 10Y", "ca", "BOC", "10Y")]
 GAPS = [{"id": "bund10y", "name": "German 10Y Bund", "why": "no free daily source with a stable API (FRED carries monthly averages only)"},
         {"id": "gilt10y", "name": "UK 10Y gilt", "why": "no free daily source with a stable API (Bank of England data needs a scraper)"},
@@ -321,7 +323,7 @@ def yields_official(now_utc):
         us = {}
         for r in rows:
             d = datetime.strptime(r["Date"], "%m/%d/%Y").date().isoformat()
-            us[d] = {"2Y": float(r["2 Yr"]) if r.get("2 Yr") else None, "10Y": float(r["10 Yr"]) if r.get("10 Yr") else None}
+            us[d] = {t: (float(r[c]) if r.get(c) else None) for t, c in (("2Y", "2 Yr"), ("5Y", "5 Yr"), ("10Y", "10 Yr"), ("30Y", "30 Yr"))}
     except Exception as e:
         us = {}; failed.append({"id": "us2y/us10y", "sym": "US Treasury CSV", "error": type(e).__name__})
     try:
@@ -359,6 +361,58 @@ def yields_official(now_utc):
                                            "ts": datetime.fromisoformat(ser[-1][0]).replace(hour=21, tzinfo=timezone.utc).isoformat(), "session_date": ser[-1][0],
                                            "w52": week52(vals, vals, last, last, last), "spark": [v for _, v in ser[-30:]], "note": "difference of official closes"}
     return out, failed
+
+
+LIVE_YIELDS = {"us5y": "^FVX", "us10y": "^TNX", "us30y": "^TYX"}   # Yahoo / CBOE Treasury yield indexes, % (no 2Y index)
+
+
+def apply_live_yield(rec, bars, now_utc, max_gap=0.75):
+    """Overlay a delayed intraday yield on an official-close record (pure; unit-tested). bars = [(ts_utc, close), ...].
+    The official close becomes prev_close, so chg_bp is the move since the last official close. Kept official if there are
+    no bars, if the official close is newer than the last bar, or if the live value disagrees by > max_gap (bad print)."""
+    if not rec or not bars:
+        return rec
+    ts, y = bars[-1]
+    off_day = rec.get("session_date") or ""
+    if ts.astimezone(ZoneInfo("America/New_York")).date().isoformat() < off_day:
+        return rec
+    if abs(y - rec["last"]) > max_gap:
+        return dict(rec, live_note=f"live {y:.3f} rejected vs official {rec['last']:.3f}")
+    day = [v for t, v in bars if t.astimezone(ZoneInfo("America/New_York")).date() == ts.astimezone(ZoneInfo("America/New_York")).date()]
+    close = rec["last"]
+    out = dict(rec, last=y, prev_close=close, chg=y - close, chg_bp=round((y - close) * 100, 2), ts=ts.isoformat(),
+               session_date=ts.astimezone(ZoneInfo("America/New_York")).date().isoformat(), ex="USTL",
+               high=max(day) if day else None, low=min(day) if day else None, open=day[0] if day else None,
+               provider="Yahoo / CBOE yield index (delayed)", official_close=close, official_date=off_day,
+               note=f"live yield · change vs official close {close:.3f}% ({off_day})")
+    out["spark"] = (rec.get("spark") or [])[-29:] + [y]
+    return out
+
+
+def yields_live(recs, now_utc):
+    """Fetch the intraday yield indexes and overlay them; the US-Canada 10Y spread is then recomputed on the live US leg."""
+    failed = []
+    try:
+        intra = yf().download(list(LIVE_YIELDS.values()), period="2d", interval="5m", group_by="ticker", auto_adjust=False, progress=False, threads=True)
+    except Exception as e:
+        return [{"id": "us-live-yields", "sym": ",".join(LIVE_YIELDS.values()), "error": type(e).__name__}]
+    for id_, sym in LIVE_YIELDS.items():
+        try:
+            it = intra[sym].dropna(subset=["Close"])
+            bars = [(t.to_pydatetime().astimezone(timezone.utc), float(v)) for t, v in zip(it.index, it["Close"])]
+            if not bars:
+                raise RuntimeError("no bars")
+            recs[id_] = apply_live_yield(recs.get(id_), bars, now_utc)
+        except Exception as e:
+            failed.append({"id": id_ + " (live)", "sym": sym, "error": type(e).__name__})
+    a, b = recs.get("us10y"), recs.get("ca10y")
+    sp = recs.get("usca10y")
+    if a and b and sp and a.get("ex") == "USTL":
+        v = (a["last"] - b["last"]) * 100
+        recs["usca10y"] = dict(sp, last=v, prev_close=sp["last"], chg=v - sp["last"], chg_bp=v - sp["last"], ts=a["ts"], ex="USTL",
+                               session_date=a["session_date"], provider="live US 10Y − BoC 10Y official close",
+                               note=f"US leg live (delayed), Canada leg = BoC close {b['last']:.3f}% · change vs official-close spread")
+    return failed
 
 
 # ================================================================== publish / notify
@@ -431,6 +485,7 @@ def main():
     recs, failed = fetch_yahoo(UNIVERSE, now)
     yrec, yfail = yields_official(now)
     recs.update(yrec); failed += yfail
+    failed += yields_live(recs, now)
     state = prev.get("state", {}) or {}
     alerts = prev.get("alerts", []) or []
     closes = prev.get("closes", {}) or {}

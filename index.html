@@ -432,6 +432,7 @@ table.cmp-tbl .ruler-col{background:rgba(232,163,61,.10)!important;box-shadow:in
 .cockpit .kpi-s{line-height:1.55}
 .vol-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.vol-ct{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
 .vol-read{display:grid;grid-template-columns:max-content max-content minmax(0,1fr);gap:7px 16px;align-items:baseline;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:13px}
+.yl-tbl td:last-child,.yl-tbl th:last-child{text-align:left;white-space:normal;font-family:inherit}.yl-tbl td:last-child small{display:block;margin-top:2px}.yl-d{display:block;color:var(--faint);font-size:11px;font-weight:400}
 .vr-k{color:var(--muted);white-space:nowrap}.vr-v{font-family:"IBM Plex Mono",monospace;font-weight:700;white-space:nowrap;text-align:right;color:var(--ink)}.vr-r{color:var(--muted);line-height:1.45}.vr-r b{color:var(--ink);font-weight:600}
 @media (max-width:760px){.vol-read{grid-template-columns:max-content minmax(0,1fr);gap:2px 12px}.vr-r{grid-column:1/-1;margin-bottom:6px;font-size:12.5px}.vr-v{text-align:left}}
 .oi-row{display:grid;grid-template-columns:64px 1fr 1fr;gap:8px;align-items:center;font-family:"IBM Plex Mono",monospace;font-size:11.5px;margin:2px 0}
@@ -3887,13 +3888,31 @@ function grainTilesHTML(key){
   out.push(qtTile({k:'usdcad', name:'USD/CAD', sub:'spot mid', v:fx, dec:5, live:'usdcad', chg:fxChgHTML(), foot:spotStamp(), tag:isAuto('fx_spot')?'LIVE':'SNAPSHOT', tagc:isAuto('fx_spot')?'ok':'cz', title:(DATA.fx.feed.source||'')}));
   return '<div class="qt-grid">'+out.join('')+'</div>';
 }
+function ylLiveHTML(){
+  var fx=DATA.fx, YL=fx.yields_live||{}, T=fx.treasury||{}, cd=(DATA.meta.asof.yields||'').slice(0,10);
+  var rows=[['3M','13-week bill · discount basis','^IRX'],['2Y','2-year note',null],['5Y','5-year note','^FVX'],['10Y','10-year note','^TNX'],['30Y','30-year bond','^TYX']].map(function(r){
+    var y=YL[r[0]], c=T[r[0]];
+    if(y&&y.y!=null) return '<tr><td class="lbl"><b>US '+r[0]+'</b><small class="yl-d">'+r[1]+'</small></td><td data-l="Live"><b data-tick="yl-'+r[0]+'" data-roll>'+fmt(+y.y,3)+'%</b></td><td data-l="Change" class="'+cls(y.chg_bp)+'">'+(y.chg_bp!=null?sgn(y.chg_bp,1,' bp'):'—')+'</td><td data-l="Official close">'+(c!=null?fmt(+c,3)+'%':'—')+'</td><td data-l="Quote time">'+esc(y.label||'')+'</td><td data-l="Source"><span class="om-t '+(y.stale?'warn':'ok')+'">'+(y.stale?'LAST QUOTE':'DELAYED')+'</span> <small class="sl-k">'+r[2]+'</small></td></tr>';
+    return '<tr><td class="lbl"><b>US '+r[0]+'</b><small class="yl-d">'+r[1]+'</small></td><td data-l="Live">—</td><td data-l="Change">—</td><td data-l="Official close">'+(c!=null?fmt(+c,3)+'%':'—')+'</td><td data-l="Quote time">'+(cd?fmtShortDate(cd)+' close':'')+'</td><td data-l="Source"><span class="om-t cz">CLOSE ONLY</span> <small class="sl-k">'+(r[2]?'live quote unavailable':'no free intraday 2Y')+'</small></td></tr>';
+  }).join('');
+  var y10=YL['10Y'], R10=(fx.rates||[]).filter(function(r){ return r.t==='10Y'; })[0];
+  return '<div class="tile wide" data-src="yields_live"><h2>US Treasury yields — live <span class="h2note">— delayed ~10–15 min, refreshed every 60 s · change in bp vs the official close'+(cd?' of '+fmtShortDate(cd):'')+'</span></h2>'+
+    '<div style="overflow-x:auto"><table class="yl-tbl"><thead><tr><th>Tenor</th><th>Live</th><th>Change</th><th>Close</th><th>Quote</th><th>Source</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    (y10&&y10.sp_ca!=null&&R10?'<p class="read" style="margin-top:10px">US–Canada 10Y on the live US yield: <b>'+fmt(y10.sp_ca,1)+' bp</b> ('+sgn(y10.sp_ca-R10.sp,1,' bp')+' vs the '+fmt(R10.sp,1)+' bp official-close spread) — Canada leg is the Bank of Canada close '+fmt(+y10.ca_close,3)+'%, as there is no free intraday Canada yield.</p>':'')+
+    '<div class="stamp">Live: Yahoo / CBOE Treasury yield indexes (^IRX, ^FVX, ^TNX, ^TYX), delayed · Official: US Treasury daily par yield curve (posted ~6 pm ET) · the official close stays the reference for spreads history and forwards</div></div>';
+}
 function fxChgHTML(){ var fx=DATA.fx, c=(fx.feed.mid/fx.spot.ref-1)*100, d=fx.feed.mid-fx.spot.ref; return '<span class="'+cls(c)+'" data-live-chg2>'+sgn(d*10000,1,' pips')+' · '+sgn(c,2,'%')+'</span> <span class="sl-k">vs BoC '+fmt(fx.spot.ref,4)+'</span>'; }
 function fxTilesHTML(){
   var fx=DATA.fx, w=fx.energy[0], b=fx.energy[1], R={}; fx.rates.forEach(function(r){ R[r.t]=r; });
   var t=[qtTile({k:'usdcad', name:'USD/CAD', sub:'spot mid', v:+fx.feed.mid, dec:5, live:'usdcad', chg:fxChgHTML(), foot:spotStamp(), tag:isAuto('fx_spot')?'LIVE':'SNAPSHOT', tagc:isAuto('fx_spot')?'ok':'cz', title:fx.feed.source||''})];
   if(w&&w.last!=null) t.push(qtTile({k:'wti', name:'WTI', sub:'crude, front month', v:+w.last, dec:2, pre:'$', chg:'<span class="'+cls(w.pct)+'">'+sgn(w.chg||0,2)+' · '+sgn(w.pct||0,2,'%')+'</span>', foot:esc(w.delay||''), tag:isAuto('energy')?'DELAYED':'SNAPSHOT', tagc:isAuto('energy')?'ok':'cz'}));
   t.push(qtTile({k:'dxy', name:'DXY', sub:'US dollar index', v:+fx.fxcross.dxy, dec:2, chg:'<span class="'+cls(fx.fxcross.dxy_chg)+'">'+sgn(+fx.fxcross.dxy_chg||0,2,'%')+'</span>', foot:'Yahoo delayed', tag:isAuto('crosses')?'DELAYED':'SNAPSHOT', tagc:isAuto('crosses')?'ok':'cz'}));
-  if(R['10Y']) t.push(qtTile({k:'sp10', name:'US–CA 10Y', sub:'yield spread', v:+R['10Y'].sp, dec:1, chg:'<span class="sl-k">bps</span>', foot:'official closes', tag:'CLOSE', tagc:'cz'}));
+  var YL=fx.yields_live||{}, y10=YL['10Y'];
+  ['10Y','5Y','30Y'].forEach(function(tn){ var y=YL[tn], close=fx.treasury&&fx.treasury[tn];
+    if(y&&y.y!=null) t.push(qtTile({k:'ust'+tn, name:'US '+tn, sub:'Treasury yield %', v:+y.y, dec:3, chg:y.chg_bp!=null?'<span class="'+cls(y.chg_bp)+'">'+sgn(y.chg_bp,1,' bp')+'</span> <span class="sl-k">vs close '+fmt(+y.close,3)+'</span>':'', foot:'<span class="qt-t">'+esc(y.label||'')+'</span>', tag:y.stale?'LAST QUOTE':'DELAYED', tagc:y.stale?'warn':'ok', title:(y.src||'')+' · official close '+(y.close_date||'')}));
+    else if(close!=null) t.push(qtTile({k:'ust'+tn, name:'US '+tn, sub:'Treasury yield %', v:+close, dec:3, chg:'<span class="sl-k">official close</span>', foot:esc(DATA.meta.asof.yields?fmtShortDate(DATA.meta.asof.yields.slice(0,10)):''), tag:'CLOSE', tagc:'cz'})); });
+  if(y10&&y10.sp_ca!=null) t.push(qtTile({k:'sp10', name:'US–CA 10Y', sub:'US live − CA close', v:+y10.sp_ca, dec:1, chg:R['10Y']?'<span class="'+cls(y10.sp_ca-R['10Y'].sp)+'">'+sgn(y10.sp_ca-R['10Y'].sp,1,' bp')+'</span> <span class="sl-k">vs close '+fmt(R['10Y'].sp,1)+'</span>':'', foot:'<span class="qt-t">'+esc(y10.label||'')+'</span> · CA '+fmt(+y10.ca_close,3)+'% close', tag:'DELAYED', tagc:'ok', title:'Live US 10Y (Yahoo ^TNX) minus Canada 10Y official close — Canada has no free intraday yield'}));
+  else if(R['10Y']) t.push(qtTile({k:'sp10', name:'US–CA 10Y', sub:'yield spread', v:+R['10Y'].sp, dec:1, chg:'<span class="sl-k">bps</span>', foot:'official closes', tag:'CLOSE', tagc:'cz'}));
   return '<div class="qt-grid">'+t.join('')+'</div>';
 }
 function spotStamp(){
@@ -4400,7 +4419,7 @@ function renderFX(){
     subWrap('fx','overview', fxKpiHTML()+T.spot+T.closes+T.model+askTileHTML('fx'))+
     subWrap('fx','deriv', positioningKpiHTML('fx')+T.forwards+T.cftc+T.sentiment.replace('class="tile"','class="tile wide"'))+
     subWrap('fx','macro', liveFxHTML()+macroDashHTML()+tradeFiscalHTML()+fxMacroHTML()+T.releases)+
-    subWrap('fx','rates', T.yields+T.energy.replace('class="tile wide"','class="tile"')+T.policy);
+    subWrap('fx','rates', ylLiveHTML()+T.yields+T.energy.replace('class="tile wide"','class="tile"')+T.policy);
   html+='</div><aside class="rail">'+liveMonitorHTML()+fxAlertsHTML()+'</aside></div>';
   document.getElementById('panel-fx').innerHTML=html;
   if(window.FWD) FWD.mount();   /* rebuild the live forward-curve component inside the fresh tile */

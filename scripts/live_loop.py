@@ -19,7 +19,7 @@ PW.TOR = U.TOR
 
 ROOT = U.ROOT
 WT = "/tmp/live-worktree"
-FAST = [("fx_spot", U.fx_spot), ("grains_quote", U.grains_quote), ("energy", U.energy), ("crosses", U.crosses)]
+FAST = [("fx_spot", U.fx_spot), ("grains_quote", U.grains_quote), ("yields_live", U.yields_live), ("energy", U.energy), ("crosses", U.crosses)]
 
 # Release watch: for 3 h after a scheduled release, the block that carries it is re-fetched
 # here (every loop for CFTC/exports/WASDE, every 2nd loop for the ~25-series macro block)
@@ -92,9 +92,9 @@ def payload(D):
     a = D["meta"]["asof"]
     return {
         "fx": {"feed": D["fx"]["feed"], "intraday": D["fx"].get("intraday", []),
-               "energy": D["fx"]["energy"], "wcs_diff": D["fx"]["wcs_diff"], "fxcross": D["fx"]["fxcross"]},
+               "energy": D["fx"]["energy"], "wcs_diff": D["fx"]["wcs_diff"], "fxcross": D["fx"]["fxcross"], "yields_live": D["fx"].get("yields_live") or {}},
         "grains": {k: {"intraday": g["fan"]["intraday"], "intraday_ts": g["fan"].get("intraday_ts"), "quotes": g.get("quotes") or {}} for k, g in D["grains"].items()},
-        "asof": {k: a.get(k) for k in ("fx_spot", "grains_quote", "energy", "crosses")},
+        "asof": {k: a.get(k) for k in ("fx_spot", "grains_quote", "yields_live", "energy", "crosses")},
     }
 
 

@@ -416,6 +416,7 @@
     }
     if (newer(L.asof.energy, A.energy)) { DATA.fx.energy = L.fx.energy; DATA.fx.wcs_diff = L.fx.wcs_diff; A.energy = L.asof.energy; changed = true; }
     if (newer(L.asof.crosses, A.crosses)) { DATA.fx.fxcross = L.fx.fxcross; A.crosses = L.asof.crosses; changed = true; }
+    if (L.asof.yields_live && newer(L.asof.yields_live, A.yields_live) && L.fx.yields_live) { DATA.fx.yields_live = L.fx.yields_live; A.yields_live = L.asof.yields_live; changed = true; }
     if (L.rel) Object.keys(L.rel).forEach(function (b) {       /* released data fetched by the fast lane */
       var R = L.rel[b];
       if (!R || !R.set || !newer(R.asof, A[b])) return;

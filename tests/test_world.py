@@ -94,4 +94,17 @@ t("FX open Sunday 18:00 ET", lambda: W.session_status(W.EXCHANGES["FX"], datetim
 t("FX closed Saturday", lambda: W.session_status(W.EXCHANGES["FX"], datetime(2026, 10, 24, 15, 0, tzinfo=timezone.utc))["state"] == "closed" or (_ for _ in ()).throw(AssertionError()))
 t("Globex daily break 16:30 CT", lambda: W.session_status(W.EXCHANGES["CME"], datetime(2026, 10, 26, 21, 30, tzinfo=timezone.utc))["state"] == "break" or (_ for _ in ()).throw(AssertionError()))
 t("ASX open 11:00 Sydney (AEDT)", lambda: W.session_status(W.EXCHANGES["ASX"], datetime(2026, 10, 26, 0, 0, tzinfo=timezone.utc))["state"] == "open" or (_ for _ in ()).throw(AssertionError()))
+
+print("live Treasury yields over official closes")
+OFF = {"id": "us10y", "last": 4.99, "prev_close": 4.99, "session_date": "2026-10-27", "spark": [4.9, 4.99], "ex": "UST", "kind": "yield"}
+NOWY = datetime(2026, 10, 28, 18, 0, tzinfo=timezone.utc)
+BARS = [(datetime(2026, 10, 28, 13, 30, tzinfo=timezone.utc), 5.00), (datetime(2026, 10, 28, 17, 50, tzinfo=timezone.utc), 5.03)]
+def ly_ok():
+    r = W.apply_live_yield(OFF, BARS, NOWY)
+    assert r["last"] == 5.03 and r["prev_close"] == 4.99 and abs(r["chg_bp"] - 4.0) < 1e-9 and r["ex"] == "USTL", r
+    assert r["high"] == 5.03 and r["low"] == 5.00 and r["official_close"] == 4.99, r
+t("live yield overlays the official close; change in bp vs that close", ly_ok)
+t("no bars -> official record unchanged", lambda: W.apply_live_yield(OFF, [], NOWY) is OFF or (_ for _ in ()).throw(AssertionError()))
+t("official close newer than the last bar -> keep official", lambda: W.apply_live_yield(dict(OFF, session_date="2026-10-29"), BARS, NOWY)["ex"] == "UST" or (_ for _ in ()).throw(AssertionError()))
+t("live print 2 pts away -> rejected, official kept", lambda: W.apply_live_yield(OFF, [(BARS[-1][0], 7.2)], NOWY)["last"] == 4.99 or (_ for _ in ()).throw(AssertionError()))
 print(f"\n{n - fail}/{n} passed"); sys.exit(1 if fail else 0)
