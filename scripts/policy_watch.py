@@ -95,7 +95,7 @@ def _fed(day):
     try:
         feed = _get("https://www.federalreserve.gov/feeds/press_monetary.xml") or ""
         for it in re.findall(r"(?s)<item>(.*?)</item>", feed)[:10]:
-            lk = re.search(r"<link>(.*?)</link>", it); title = re.search(r"<title>(.*?)</title>", it)
+            lk = re.search(r"<link>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</link>", it); title = re.search(r"<title>(.*?)</title>", it)
             if lk and title and "FOMC statement" in title.group(1) and ds in lk.group(1):
                 urls.insert(0, lk.group(1).strip())
     except Exception:

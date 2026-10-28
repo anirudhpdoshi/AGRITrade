@@ -115,11 +115,69 @@
     var right = st === "out" ? '<span class="evs out">Out · ' + hm(e.t) + "</span>"
       : st === "due" ? '<span class="evs due">Due now</span>'
       : '<span class="countdown" data-t="' + e.t + '" data-fmt="hms">' + hms(d) + "</span>";
+    var pr = null; Object.keys(BANK).forEach(function (b) { var r = pw()[b]; if (r && r.status === "out" && r.date === dayIso(e.t) && BANK[b].ev.test(e.label)) pr = r; });
+    if (pr) right = '<span class="pw-tone sm ' + toneCls(pr.tone) + '">' + pr.decision + " " + rateTxt(pr.rate) + " · " + pr.tone + "</span>";
     var meta = [e.impact ? '<span class="evi i-' + esc(e.impact).toLowerCase() + '">' + esc(e.impact) + "</span>" : "",
       e.fc ? "fc <b>" + esc(e.fc) + "</b>" : "", e.prev ? "prev <b>" + esc(e.prev) + "</b>" : ""].filter(Boolean).join(" · ");
     return '<div class="evr ' + st + (e.high ? " hi" : "") + '"><div class="evt">' + hm(e.t) + '<small>ET</small></div>' +
       '<div class="evm"><div class="evl">' + flagOf(e) + esc(e.label) + " " + chip(e) + "</div>" + (meta ? '<div class="evx">' + meta + "</div>" : "") + "</div>" +
       '<div class="evr-r">' + right + (e.go ? '<button class="evgo" data-evgo="' + e.go + '" title="Open ' + esc(deskName(e.go)) + '">' + esc(deskName(e.go)) + " →</button>" : "") + "</div></div>";
+  }
+
+  /* ---------- central-bank decisions: outcome, tone and how fast the desk had it ---------- */
+  var BANK = { boc: { n: "Bank of Canada", cc: "ca", key: "ca_policy", ev: /^CAD (Overnight Rate|BOC Rate Statement|BOC Monetary Policy Report)/ },
+               fed: { n: "Federal Reserve", cc: "us", key: "us_policy", ev: /^USD (Federal Funds Rate|FOMC Statement)/ } };
+  function pw() { return (window.DATA && DATA.policy_watch) || {}; }
+  function rateTxt(r) { return r == null ? "—" : (+r).toFixed(2) + "%"; }
+  function screenSeen(b, rec) { var k = "desk.pwseen." + b + "." + rec.date, v = store.get(k); if (!v && rec.status === "out") { v = Date.now(); store.set(k, v); } return v; }
+  function lagTxt(min) { if (min == null || isNaN(min)) return "—"; return min < 1 ? Math.round(min * 60) + " s" : min < 60 ? min.toFixed(1) + " min" : Math.floor(min / 60) + " h " + Math.round(min % 60) + " min"; }
+  function toneCls(t) { return /HAWK/.test(t || "") ? "hawk" : /DOV/.test(t || "") ? "dove" : "neu"; }
+  function curRate(b) { var m = window.mfind && mfind(BANK[b].key); return m ? m.value : null; }
+  function fcRate(b) { var ev = b === "boc" ? "Overnight Rate" : "Federal Funds Rate", c = b === "boc" ? "CAD" : "USD", f = null;
+    ((DATA.fx && DATA.fx.events) || []).forEach(function (e) { if (e.ccy === c && e.event === ev && e.fc && e.date === dayIso(Date.now())) f = parseFloat(e.fc); }); return f; }
+  function todaysDecisions(now) {
+    var cal = (DATA && DATA.release_cal) || {}, out = [], today = dayIso(now);
+    Object.keys(BANK).forEach(function (b) { ((cal[BANK[b].key] || {}).dates || []).forEach(function (d) { if (d.slice(0, 10) === today) out.push({ b: b, t: zms(d.slice(0, 10), +d.slice(11, 13), +d.slice(14, 16)) }); }); });
+    return out.sort(function (a, b) { return a.t - b.t; });
+  }
+  function policyHTML(now) {
+    var list = todaysDecisions(now); if (!list.length) return "";
+    var W = pw();
+    return '<div class="tile wide pw-tile"><h2>Central-bank decisions today <span class="h2note">— read straight from the official statement · rate, surprise vs forecast, tone and how fast the desk had it</span></h2><div class="pw-grid">' +
+      list.map(function (x) {
+        var B = BANK[x.b], r = W[x.b], has = r && r.date === dayIso(x.t), out = has && r.status === "out";
+        var head = '<div class="pw-h">' + (window.flag ? flag(B.cc, 15) : "") + " <b>" + B.n + "</b> · " + hm(x.t) + " ET</div>";
+        if (!out) {
+          var waiting = now >= x.t;
+          return '<div class="pw-c">' + head + '<div class="pw-st">' + (waiting ? 'Awaiting the statement — checked ' + ((has && r.checks) || 0) + ' time' + ((has && r.checks) === 1 ? "" : "s") + ' · ' + lagTxt((now - x.t) / MIN) + ' since the scheduled time' :
+            'Decision in <span class="countdown" data-t="' + x.t + '" data-fmt="hms">' + hms(x.t - now) + "</span>") + "</div>" +
+            '<div class="pw-s">Current ' + rateTxt(has && r.prev != null ? r.prev : curRate(x.b)) + (fcRate(x.b) != null ? " · forecast " + rateTxt(fcRate(x.b)) : "") + " · the desk reads the statement from the bank’s site every minute from 2 min before</div></div>";
+        }
+        var seen = screenSeen(x.b, r), scr = seen ? (seen - x.t) / MIN : null;
+        return '<div class="pw-c ' + toneCls(r.tone) + '">' + head +
+          '<div class="pw-dec"><span class="pw-d">' + r.decision + (r.change_bp ? " " + (r.change_bp > 0 ? "+" : "") + r.change_bp + " bp" : "") + '</span><span class="pw-r">' + rateTxt(r.prev) + " → <b>" + rateTxt(r.rate) + "</b>" + (r.lo != null ? ' <small>(range ' + (+r.lo).toFixed(2) + "–" + (+r.rate).toFixed(2) + "%)</small>" : "") + "</span>" +
+          '<span class="pw-tone ' + toneCls(r.tone) + '">' + r.tone + '</span></div>' +
+          '<div class="pw-s">' + (r.surprise_bp == null ? "no forecast on file" : r.surprise_bp === 0 ? "as forecast (" + rateTxt(r.fc) + ")" : (r.surprise_bp > 0 ? "hawkish surprise +" : "dovish surprise ") + r.surprise_bp + " bp vs forecast " + rateTxt(r.fc)) +
+            " · tone score " + (r.score > 0 ? "+" : "") + r.score + " (decision " + r.parts.decision + ", surprise " + r.parts.surprise + ", language " + r.parts.language + ")</div>" +
+          ((r.hawk || []).length ? '<div class="pw-ph"><b class="hawk">Hawkish lines</b> ' + r.hawk.map(function (p) { return "“" + esc(p) + "”"; }).join(" · ") + "</div>" : "") +
+          ((r.dove || []).length ? '<div class="pw-ph"><b class="dove">Dovish lines</b> ' + r.dove.map(function (p) { return "“" + esc(p) + "”"; }).join(" · ") + "</div>" : "") +
+          '<div class="pw-lag"><span>⏱ On the desk <b>' + new Date(Date.parse(r.t_seen)).toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit", second: "2-digit" }) + " ET</b> — <b>" + lagTxt(r.lag_min) + "</b> after the scheduled time</span>" +
+            (scr != null ? "<span>on this screen " + lagTxt(scr) + " after</span>" : "") + (r.url && /^https:\/\/www\.(bankofcanada\.ca|federalreserve\.gov)\//.test(r.url) ? '<a href="' + esc(r.url) + '" target="_blank" rel="noopener noreferrer">Official statement ↗</a>' : "") + "</div></div>";
+      }).join("") + "</div>" + lagTableHTML(now) + '<div class="stamp">Tone = decision (hike +2 / cut −2) + surprise vs the consensus forecast (±1 per 25 bp) + statement language (hawkish minus dovish phrases, capped ±2): ≥ +2 hawkish, ≤ −2 dovish. A phrase-based read of the statement — the lines it matched are shown so you can judge. Press-conference remarks come later and are not scored.</div></div>';
+  }
+  /* publication lag for every timed release today: scheduled time vs when the desk first had the new number */
+  function lagTableHTML(now) {
+    var today = dayIso(now), rows = [], cal = DATA.release_cal || {}, W = pw();
+    (W.log || []).filter(function (x) { return x.date === today; }).forEach(function (x) { rows.push([Date.parse(x.t_sched), BANK[x.bank].n + " decision", Date.parse(x.t_seen), x.lag_min, x.decision + " · " + x.tone]); });
+    var M = {}; (window.macroAll ? macroAll() : []).forEach(function (m) { M[m.key] = m; });
+    Object.keys(cal).forEach(function (k) { if (k === "ca_policy" || k === "us_policy") return; ((cal[k] || {}).dates || []).forEach(function (d) {
+      if (d.slice(0, 10) !== today) return; var t = zms(d.slice(0, 10), +d.slice(11, 13), +d.slice(14, 16)); if (t > now) return;
+      var m = M[k], sa = m && m.seen_at ? Date.parse(m.seen_at) : null;
+      rows.push([t, (m ? (m.group === "ca" ? "Canada " : "US ") + m.name : k), sa && sa >= t - 5 * MIN ? sa : null, sa && sa >= t - 5 * MIN ? (sa - t) / MIN : null, m ? m.period + " " + (window.mval ? mval(m, m.value) : m.value) : ""]); }); });
+    if (!rows.length) return "";
+    rows.sort(function (a, b) { return a[0] - b[0]; });
+    return '<div class="pw-lagt"><h3>Publication lag — today</h3><table class="oi-mtab"><thead><tr><th>Release</th><th>Scheduled</th><th>On the desk</th><th>Lag</th><th>Result</th></tr></thead><tbody>' +
+      rows.map(function (r) { return "<tr><td>" + esc(r[1]) + "</td><td>" + hm(r[0]) + "</td><td>" + (r[2] ? new Date(r[2]).toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit", second: "2-digit" }) : '<span class="neu">waiting</span>') + '</td><td class="' + (r[3] == null ? "neu" : r[3] <= 5 ? "up" : r[3] <= 20 ? "neu" : "dn") + '">' + lagTxt(r[3]) + "</td><td>" + esc(r[4]) + "</td></tr>"; }).join("") + "</tbody></table></div>";
   }
   var lastDay = "";
   function mainHTML(now) {
@@ -145,7 +203,7 @@
           : '<div class="ev-empty in"><h3>No more events today</h3><p>Everything scheduled for today is out.' + (function () { var nx = nextAfterToday(now); return nx ? ' Next: <b>' + flagOf(nx) + esc(nx.label) + "</b> · " + esc(shortDay(nx.t)) + " " + hm(nx.t) + ' ET · in <span class="countdown" data-t="' + nx.t + '" data-fmt="hms">' + hms(nx.t - now) + "</span>" : ""; })() + "</p></div>") + "</div>" +
         (done.length ? '<div class="tile wide ev-done"><h2>Already out today <span class="h2note">— ' + done.length + "</span></h2><div class=\"evlist\">" + done.slice().reverse().map(function (e) { return row(e, now); }).join("") + "</div></div>" : "");
     }
-    return head + body + '<div class="tile wide"><div class="stamp">Sources combined here: USDA weekly reports and WASDE, CFTC, CBOT contract dates and sessions, Canada (AAFC / StatCan), the US + Canada macro calendar, official release calendars, EIA energy reports and the desk’s own data runs. The list resets at midnight Toronto time. Holiday closures follow the source calendars; CBOT session times assume a normal trading day.</div></div>';
+    return head + policyHTML(now) + body + '<div class="tile wide"><div class="stamp">Sources combined here: USDA weekly reports and WASDE, CFTC, CBOT contract dates and sessions, Canada (AAFC / StatCan), the US + Canada macro calendar, official release calendars, EIA energy reports and the desk’s own data runs. The list resets at midnight Toronto time. Holiday closures follow the source calendars; CBOT session times assume a normal trading day.</div></div>';
   }
 
   /* ---------- milestone feed (right rail) ---------- */
@@ -215,7 +273,8 @@
   var SEED = { options: 1, grains_settle: 1, cftc_grains: 1, cftc_fx: 1, fx_closes: 1 };
   var base = null;
   function snap() {
-    var s = { asof: Object.assign({}, DATA.meta.asof || {}), fp: {}, roll: {}, flow: {}, macro: {}, walls: {}, oi: {}, px: {}, gg: null, wa: {} };
+    var s = { asof: Object.assign({}, DATA.meta.asof || {}), fp: {}, roll: {}, flow: {}, pw: {}, macro: {}, walls: {}, oi: {}, px: {}, gg: null, wa: {} };
+    ["boc", "fed"].forEach(function (b) { var r = pw()[b]; if (r) s.pw[b] = r.date + "|" + r.status + "|" + (r.t_seen || ""); });
     Object.keys(ASOF).forEach(function (k) { try { s.fp[k] = FP[k] ? fp(FP[k]()) : s.asof[k]; } catch (e) { s.fp[k] = s.asof[k]; } });
     (window.macroAll ? macroAll() : []).forEach(function (m) { s.macro[m.key] = m.period + "|" + m.value; });
     ["corn", "wheat", "soybeans"].forEach(function (k) { var g = DATA.grains && DATA.grains[k]; if (!g || !g.near) return;
@@ -275,6 +334,15 @@
       if (a.pct < 40 && b.pct >= 40) log("oi", "<b>" + GN[k] + " roll passes 40%</b> — " + esc(b.def) + " now holds " + b.pct.toFixed(1) + "% of open interest · next option month window is open", k + ":deriv", "roll40|" + k + "|" + b.def);
       if (a.pct >= 40 && b.pct < 40) log("oi", "<b>" + GN[k] + " roll back below 40%</b> (" + b.pct.toFixed(1) + "%) — next option month window locked", k + ":deriv", "roll40d|" + k + "|" + b.pct);
     });
+    ["boc", "fed"].forEach(function (b) {   /* central-bank decision landed: feed + on-screen notification */
+      var r = pw()[b]; if (!r || r.status !== "out" || s.pw[b] === base.pw[b] || r.date !== dayIso(Date.now())) return;
+      var msg = "<b>" + BANK[b].n + ": " + r.decision + (r.change_bp ? " " + (r.change_bp > 0 ? "+" : "") + r.change_bp + " bp" : "") + " to " + rateTxt(r.rate) + " — " + r.tone + "</b> (score " + (r.score > 0 ? "+" : "") + r.score + ")" +
+        (r.surprise_bp ? " · " + (r.surprise_bp > 0 ? "+" : "") + r.surprise_bp + " bp vs forecast" : "") + "<br><small>on the desk " + lagTxt(r.lag_min) + " after the scheduled time</small>";
+      log("release", msg, "fx:macro", "pw|" + b + "|" + r.date, Date.parse(r.t_seen));
+      if (window.DESK_LIVE && DESK_LIVE.toast) { window.__evNoLog = 1; try { DESK_LIVE.toast(msg); } finally { window.__evNoLog = 0; } }
+      try { if (localStorage.getItem("desk.worldNotify") === "1" && "Notification" in window && Notification.permission === "granted") new Notification(BANK[b].n + " — " + r.decision + " " + rateTxt(r.rate) + " · " + r.tone, { body: "On the desk " + lagTxt(r.lag_min) + " after the scheduled time" }); } catch (e) {}
+      screenSeen(b, r); if (active()) repaintMain();
+    });
     Object.keys(s.flow).forEach(function (k) {   /* 10-session position-flow signal changing category */
       var a = base.flow[k], b = s.flow[k]; if (!a || !b || a.b === b.b) return;
       log("oi", "<b>" + GN[k] + " position flow: " + esc(b.b.toLowerCase()) + "</b> (was " + esc(a.b.toLowerCase()) + ") — 10-session score " + (b.sc > 0 ? "+" : "") + b.sc + " through " + esc(b.d), k + ":deriv", "flow|" + k + "|" + b.b + "|" + b.d);
@@ -303,7 +371,7 @@
     var L = window.DESK_LIVE; if (!L || !L.toast || L.toast._ev) return;
     var orig = L.toast;
     L.toast = function (html) {
-      try {
+      try { if (window.__evNoLog) return orig.apply(this, arguments);
         var txt = String(html), k = /World alert/.test(txt) ? "world" : /USD\/CAD/.test(txt) && /crossed/.test(txt) ? "level" : "release";
         log(k, txt.replace(/<(?!\/?b>|br>)[^>]*>/g, ""), k === "world" ? "" : k === "level" ? "fx:overview" : "", "toast|" + txt + "|" + Math.round(Date.now() / 60000));
       } catch (e) {}
