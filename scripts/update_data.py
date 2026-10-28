@@ -919,6 +919,8 @@ MACRO = [
     ("us_policy",   "Fed funds target (upper)", "us", "fred", "DFEDTARU",   "level", "%",  2, "heat", (0, 10)),
     ("ca_policy",   "BoC overnight target", "ca", "valet", "V39079",        "level", "%",  2, "heat", (0, 10)),
 ]
+# Valet series that are StatCan vectors re-published by the BoC: if Valet fails, read the vector from StatCan WDS directly
+VALET_TO_STATCAN = {"V41690973": 41690973}   # CPI all-items, 2002=100, NSA (StatCan 18-10-0004-01)
 MACRO_LONG = {"us_cpi", "ca_cpi", "us_core_cpi", "us_ur", "ca_ur", "us_gdp", "ca_gdpq", "us_policy", "ca_policy"}
 
 
@@ -1117,7 +1119,14 @@ def macro(D, N):
     out, errs = [], {}
     for key, name, group, src, sid, how, unit, dec, good, (lo, hi) in MACRO:
         try:
-            raw = (_fred(sid, start) if src == "fred" else _valet_series(sid, 0, start) if src == "valet" else _statcan(sid, 90))
+            if src == "valet" and sid in VALET_TO_STATCAN:
+                try:
+                    raw = _valet_series(sid, 0, start)
+                except Exception as e_valet:   # BoC Valet down (e.g. decision-day load): same series straight from StatCan WDS
+                    print(f"  {key}: Valet failed ({e_valet}); falling back to StatCan v{VALET_TO_STATCAN[sid]}")
+                    raw = _statcan(VALET_TO_STATCAN[sid], 90)
+            else:
+                raw = (_fred(sid, start) if src == "fred" else _valet_series(sid, 0, start) if src == "valet" else _statcan(sid, 90))
             if len(raw) < 3:
                 raise RuntimeError("too few points")
             if not all(lo <= v <= hi for _, v in raw[-6:]):
