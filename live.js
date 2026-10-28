@@ -163,8 +163,74 @@
       '<span class="ss-item"><span class="dot ' + (fx.open ? "on" : "off") + '"></span>' + fx.label + '</span>' +
       '<span class="ss-item"><span class="dot ' + gr.state + '"></span>' + gr.label + '</span>' +
       (nx ? '<span class="ss-item">Next high-impact: ' + nx.names + ' in <span class="countdown">' + dur(nx.t - now) + '</span></span>' : '') +
-      '</div>';
+      '</div>' + policyBanner(now.getTime());
   }
+
+  /* ------------------------------------------------------ central-bank decision banner (every tab)
+     pre      15 min before: countdown, current vs forecast
+     awaiting scheduled time passed, statement not read yet: when the server last checked + what the bank's site returned
+     stale    the server has not checked for > 5 min inside the window: says so plainly
+     out      red BREAKING banner (decision, bp, rate, tone, surprise, how fast) until 4 h after, or until dismissed
+     Refresh re-reads the server copies now (live.json + data.json); it cannot make the bank publish sooner. */
+  var PWB = { boc: { n: "Bank of Canada", s: "BoC", key: "ca_policy", url: "https://www.bankofcanada.ca/press/press-releases/" },
+              fed: { n: "Federal Reserve", s: "Fed", key: "us_policy", url: "https://www.federalreserve.gov/newsevents/pressreleases.htm" } };
+  var pwRefreshing = false, pwHidden = {};
+  try { pwHidden = JSON.parse(localStorage.getItem("desk.pwBannerHidden") || "{}"); } catch (e) {}
+  function etHM(ms) { return new Date(ms).toLocaleTimeString("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit" }); }
+  function pct2(v) { return v == null || isNaN(v) ? "—" : (+v).toFixed(2) + "%"; }
+  function bannerEsc(x) { return String(x == null ? "" : x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
+  function fcOf(b) { var c = b === "boc" ? "CAD" : "USD", ev = b === "boc" ? "Overnight Rate" : "Federal Funds Rate", f = null;
+    ((DATA.fx && DATA.fx.events) || []).forEach(function (e) { if (e.ccy === c && e.event === ev && e.fc) f = parseFloat(e.fc); }); return f; }
+  function policyBanner(now) {
+    if (!window.DATA || typeof window.zonedMs !== "function") return "";
+    var cal = DATA.release_cal || {}, W = DATA.policy_watch || {}, rows = [];
+    Object.keys(PWB).forEach(function (b) {
+      ((cal[PWB[b].key] || {}).dates || []).forEach(function (d) {
+        var t0 = window.zonedMs(+d.slice(0, 4), +d.slice(5, 7), +d.slice(8, 10), +d.slice(11, 13), +d.slice(14, 16), "America/Toronto");
+        if (now < t0 - 15 * 60000 || now > t0 + 4 * 3600000) return;
+        var r = W[b] && W[b].date === d.slice(0, 10) ? W[b] : null, B = PWB[b], id = b + d.slice(0, 10);
+        var refresh = '<button type="button" class="pwb-btn" data-pw-refresh' + (pwRefreshing ? " disabled" : "") + '>' + (pwRefreshing ? "Refreshing…" : "↻ Refresh") + "</button>";
+        if (r && r.status === "out") {
+          if (pwHidden[id]) return;
+          var sur = r.surprise_bp == null ? "" : r.surprise_bp === 0 ? " · as forecast" : " · " + (r.surprise_bp > 0 ? "+" : "") + r.surprise_bp + " bp vs forecast";
+          rows.push('<div class="pwb out" role="alert"><b class="pwb-tag">BREAKING</b><span><b>' + B.n + " " + bannerEsc(r.decision) + (r.change_bp ? " " + (r.change_bp > 0 ? "+" : "") + r.change_bp + " bp" : "") +
+            "</b> · " + pct2(r.prev) + " → <b>" + pct2(r.rate) + "</b>" + sur + " · <b>" + bannerEsc(r.tone) + "</b>" + (r.read_from && /series/.test(r.read_from) ? " (rate series; statement text not read)" : "") +
+            " · on the desk " + etHM(Date.parse(r.t_seen)) + " ET (" + (r.lag_min != null ? (+r.lag_min).toFixed(1) + " min after" : "") + ")</span>" +
+            (r.url ? '<a class="pwb-btn" href="' + bannerEsc(r.url) + '" target="_blank" rel="noopener noreferrer">Statement ↗</a>' : "") +
+            '<button type="button" class="pwb-x" data-pw-hide="' + id + '" aria-label="Dismiss">✕</button></div>');
+          return;
+        }
+        if (now < t0) {
+          rows.push('<div class="pwb pre"><b class="pwb-tag">' + B.s + " DECISION</b><span>" + B.n + " at " + etHM(t0) + " ET · in <b>" + dur(t0 - now) + "</b> · current " + pct2(r && r.prev != null ? r.prev : null) +
+            (fcOf(b) != null ? " · forecast " + pct2(fcOf(b)) : "") + "</span></div>");
+          return;
+        }
+        var last = r && (r.t_last_check || r.t_first_check), lastMs = last ? Date.parse(last) : null;
+        var stale = !lastMs || now - lastMs > 5 * 60000;
+        var probe = r && r.probe && r.probe.length ? r.probe.map(function (p) { return (p.s === 200 ? "" : "HTTP " + p.s + " ") + (p.u.split("/").filter(Boolean).pop() || p.u); }).filter(function (x) { return /HTTP/.test(x); }).slice(0, 3) : [];
+        rows.push('<div class="pwb ' + (stale ? "stale" : "wait") + '"><b class="pwb-tag">' + (stale ? "DATA STALE" : "AWAITING RELEASE") + "</b><span>" + B.n + " decision was due " + etHM(t0) + " ET (" + dur(now - t0) + " ago) · " +
+          (stale ? (lastMs ? "the server last checked the statement at " + etHM(lastMs) + " ET — no check for " + dur(now - lastMs) : "no server check on record yet") :
+            "not published / not read yet — checked " + (r.checks || 0) + "× · last " + etHM(lastMs) + " ET") +
+          (probe.length ? ' · <span title="What the bank’s site returned on the last check">site said: ' + bannerEsc(probe.join(", ")) + "</span>" : "") +
+          "</span>" + refresh + '<a class="pwb-btn" href="' + B.url + '" target="_blank" rel="noopener noreferrer">Bank site ↗</a></div>');
+      });
+    });
+    return rows.join("");
+  }
+  document.addEventListener("click", function (ev) {
+    var t = ev.target.closest ? ev.target : null; if (!t) return;
+    var h = t.closest("[data-pw-hide]");
+    if (h) { pwHidden[h.getAttribute("data-pw-hide")] = 1; try { localStorage.setItem("desk.pwBannerHidden", JSON.stringify(pwHidden)); } catch (e) {} paintStrip(); syncStripHeight(); return; }
+    if (!t.closest("[data-pw-refresh]") || pwRefreshing) return;
+    pwRefreshing = true; liveEtag = ""; paintStrip();
+    var before = JSON.stringify((DATA && DATA.policy_watch) || {});
+    Promise.all([pollLive(true), pollData(true)]).then(function (res) {
+      pwRefreshing = false; paintStrip(); syncStripHeight();
+      var failed = res.indexOf("err") >= 0, same = JSON.stringify((DATA && DATA.policy_watch) || {}) === before;
+      toast(failed ? "<b>Refresh failed</b> — the server copy could not be reached; showing what the desk had. Retrying automatically."
+        : same ? "<b>Refreshed</b> — no new decision data yet. The server re-checks the bank’s site every minute." : "<b>Refreshed</b> — decision data updated.");
+    });
+  });
 
   /* ------------------------------------------------------ toasts */
   function toast(html) {
@@ -392,6 +458,14 @@
     "#live-toasts{position:fixed;right:14px;bottom:14px;z-index:80;display:flex;flex-direction:column;gap:8px;max-width:min(360px,calc(100vw - 28px))}" +
     ".live-toast{background:#132235;border:1px solid #3d5a80;border-left:3px solid var(--amber);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--ink);box-shadow:0 6px 24px rgba(0,0,0,.45);transition:opacity .6s,transform .6s}" +
     ".live-toast.out{opacity:0;transform:translateY(8px)}" +
+    ".pwb{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:6px auto 0;max-width:1280px;padding:7px 12px;border-radius:8px;font-size:13px;line-height:1.45;text-align:left}" +
+    ".pwb span{flex:1 1 320px;min-width:0}.pwb-tag{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;padding:2px 8px;border-radius:4px;white-space:nowrap}" +
+    ".pwb.out{background:#DC2626;color:#fff}.pwb.out .pwb-tag{background:#fff;color:#DC2626}" +
+    ".pwb.wait{background:#3a2a10;color:#f6d38f;border:1px solid #8a6a1f}.pwb.wait .pwb-tag{background:#e8a33d;color:#1a1206}" +
+    ".pwb.stale{background:#3d1a18;color:#ffb3ad;border:1px solid #8e3a33}.pwb.stale .pwb-tag{background:#e0655f;color:#1a0806}" +
+    ".pwb.pre{background:#12283a;color:#bfe3ec;border:1px solid #2f6a80}.pwb.pre .pwb-tag{background:#38b6c9;color:#06161c}" +
+    ".pwb-btn{appearance:none;font:inherit;font-size:12px;font-weight:600;padding:3px 10px;border-radius:6px;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;text-decoration:none;white-space:nowrap}" +
+    ".pwb-btn[disabled]{opacity:.6;cursor:wait}.pwb-x{appearance:none;border:0;background:transparent;color:inherit;font-size:15px;cursor:pointer;padding:0 4px}" +
     ".tile.just-updated{animation:tupd 2.6s ease-out}" +
     "@keyframes tupd{0%{box-shadow:0 0 0 2px rgba(56,182,201,.9)}100%{box-shadow:0 0 0 2px rgba(56,182,201,0)}}" +
     "@media (prefers-reduced-motion:reduce){.tile.just-updated{animation:none}}";
