@@ -121,7 +121,7 @@ def main():
     first = not os.path.exists(os.path.join(WT, "live.json"))
     stop = time.time() + a.minutes * 60
     last_core = None
-    rel_out, it = {}, 0
+    rel_out, it, last_pub = {}, 0, 0.0
     try:   # carry the earliest sighting of a central-bank decision across fast-lane runs
         prev_live = json.loads(open(os.path.join(WT, "live.json")).read())
         pw = ((prev_live.get("rel") or {}).get("policy_watch") or {}).get("set", {}).get("policy_watch")
@@ -132,36 +132,34 @@ def main():
     while time.time() < stop:
         t0 = time.time()
         U.NOW = datetime.now(timezone.utc)
-        ok = []
-        try:   # central-bank decision first, before the slower market blocks
+        ok, errs = [], {}
+        try:   # central-bank decision first, published at once: slow market or release fetches must never hold it back
             if PW.watch(D, U.NOW, U.TOR):
                 D["meta"]["asof"]["policy_watch"] = U.iso(U.NOW)
                 rel_out["policy_watch"] = {"asof": U.iso(U.NOW), "set": {"policy_watch": D["policy_watch"]}}
+                early = payload(D)
+                early["rel"] = rel_out
+                try:
+                    publish({**early, "updated_at": U.iso(U.NOW), "ok": [], "failed": {}}, first)
+                    first = False
+                    last_pub = time.time()
+                    print(U.iso(U.NOW), "published policy watch", {b: (D["policy_watch"].get(b) or {}).get("status") for b in ("boc", "fed")})
+                except subprocess.CalledProcessError as e:
+                    print("publish failed:", e.stderr[-300:])
         except Exception as e:
+            errs["policy_watch"] = str(e)[:160]
             print("[policy watch] failed:", e)
         for name, fn in FAST:
+            t1 = time.time()
             try:
                 fn(D, {})
                 ok.append(name)
             except Exception as e:
+                errs[name] = str(e)[:160]
                 print(f"[{name}] failed: {e}")
+            if time.time() - t1 > 20:
+                errs[name + "_slow"] = f"{time.time() - t1:.0f} s"
         it += 1
-        # central-bank decision first, and published at once: a slow release fetch below must never hold it back
-        try:
-            if PW.watch(D, U.NOW, U.TOR):
-                D["meta"]["asof"]["policy_watch"] = U.iso(U.NOW)
-                rel_out["policy_watch"] = {"asof": U.iso(U.NOW), "set": {"policy_watch": D["policy_watch"]}}
-                if ok:
-                    early = payload(D)
-                    early["rel"] = rel_out
-                    try:
-                        publish({**early, "updated_at": U.iso(U.NOW), "ok": ok}, first)
-                        first = False
-                        print(U.iso(U.NOW), "published policy watch", D["policy_watch"].get("boc", {}).get("status"), D["policy_watch"].get("fed", {}).get("status"))
-                    except subprocess.CalledProcessError as e:
-                        print("publish failed:", e.stderr[-300:])
-        except Exception as e:
-            print("[policy watch] failed:", e)
         for name, (kind, fn, paths) in REL.items():
             if not U.recent_release(D, kind) or rel_done(D, name):
                 continue
@@ -180,13 +178,16 @@ def main():
         core = payload(D)
         if rel_out:
             core["rel"] = rel_out
-        if ok and core != last_core:
-            body = {**core, "updated_at": U.iso(U.NOW), "ok": ok}
+        # publish on change, plus a heartbeat at least every 5 min even if every fast source failed, so the page can show
+        # 'data stale' with the reason instead of the feed going silent
+        if (ok and core != last_core) or time.time() - last_pub > 300:
+            body = {**core, "updated_at": U.iso(U.NOW), "ok": ok, "failed": errs}
             try:
                 publish(body, first)
                 first = False
                 last_core = core
-                print(U.iso(U.NOW), "published", ok)
+                last_pub = time.time()
+                print(U.iso(U.NOW), "published", ok, "failed", list(errs))
             except subprocess.CalledProcessError as e:
                 print("publish failed:", e.stderr[-300:])
         else:
