@@ -808,10 +808,13 @@ def yields_live(D, N):
         try:
             y, ts, prev = yahoo_last(sym)
             close = T.get(t)
+            basis = "official close"
+            if t == "3M" and prev:   # ^IRX is a discount-basis bill rate; Treasury's 3M is bond-equivalent - compare like with like
+                close, basis = prev, "prior ^IRX close (discount basis)"
             if close is not None and abs(y - close) > 0.75:
                 raise RuntimeError(f"{sym} {y:.3f} vs official {close:.3f} - rejected")
             out[t] = {"y": round(y, 3), "ts": iso(ts), "label": ts.astimezone(TOR).strftime("%-I:%M%p").lower() + " ET",
-                      "close": close, "close_date": close_date, "chg_bp": round((y - close) * 100, 1) if close is not None else None,
+                      "close": close, "close_date": close_date if basis == "official close" else None, "basis": basis, "chg_bp": round((y - close) * 100, 1) if close is not None else None,
                       "prev_yahoo": round(prev, 3) if prev else None, "src": f"Yahoo {sym} (CBOE yield index, delayed)"}
             newest = max(newest or ts, ts)
         except Exception as e:
