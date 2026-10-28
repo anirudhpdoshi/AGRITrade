@@ -355,7 +355,7 @@ table.fwd-in td.fi-src{text-align:left;color:var(--faint);font-size:10.5px;white
 .pop-x{position:absolute;top:4px;right:6px;background:transparent;border:0;color:#c9d6e6;font-size:20px;line-height:1;cursor:pointer;padding:2px 6px}
 #btpop .bt-h{padding-right:22px}
 .bt-math{white-space:normal;word-break:break-word;margin-top:6px;padding:5px 8px;background:#0d1626;border-radius:6px;font-family:"IBM Plex Mono",monospace;font-size:12px;color:#e8b93d}.btip:hover .bbar,.btip.act .bbar{filter:brightness(1.35);stroke:#e8b93d;stroke-width:1.2}
-#btpop{position:absolute;z-index:9500;display:none;background:#13213a;border:1px solid #38b6c9;border-radius:10px;padding:11px 13px;box-shadow:0 12px 34px rgba(0,0,0,.55);font-size:12.5px;color:#c9d6e6}
+#btpop{position:absolute;z-index:10050;display:none;background:#13213a;border:1px solid #38b6c9;border-radius:10px;padding:11px 13px;box-shadow:0 12px 34px rgba(0,0,0,.55);font-size:12.5px;color:#c9d6e6}
 #btpop.on{display:block}.bt-h{font-weight:800;color:#fff;margin-bottom:6px}
 .bt-row{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-family:"IBM Plex Mono",monospace;font-size:12px;padding:2px 0}.bt-row b{color:#fff}.bt-row small{grid-column:1/-1;color:#8494ab;font-size:10.5px;margin-top:-2px}
 .bt-strong{border-top:1px solid #2b3e5c;margin-top:2px;padding-top:4px}.bt-sub{color:#e8b93d;font-size:11px;margin:7px 0 2px;text-transform:uppercase;letter-spacing:.06em}
@@ -430,7 +430,10 @@ table.cmp-tbl tbody tr:hover td{background:rgba(56,182,201,.09)}
 table.cmp-tbl .ruler-col{background:rgba(232,163,61,.10)!important;box-shadow:inset 1px 0 0 rgba(232,163,61,.45),inset -1px 0 0 rgba(232,163,61,.45)}table.cmp-tbl td.cmp-na{color:var(--faint)}
 .cockpit{grid-template-columns:repeat(3,1fr)!important}.cockpit .kpi-s,.cockpit .kpi-k{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}.cockpit .kpi{border-bottom:1px solid var(--line)}.cockpit-h{grid-column:1/-1;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);padding:2px 4px 6px}
 .cockpit .kpi-s{line-height:1.55}
-.vol-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.vol-grid .mini-kv span:first-child{min-width:112px}
+.vol-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.vol-ct{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+.vol-read{display:grid;grid-template-columns:max-content max-content minmax(0,1fr);gap:7px 16px;align-items:baseline;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:13px}
+.vr-k{color:var(--muted);white-space:nowrap}.vr-v{font-family:"IBM Plex Mono",monospace;font-weight:700;white-space:nowrap;text-align:right;color:var(--ink)}.vr-r{color:var(--muted);line-height:1.45}.vr-r b{color:var(--ink);font-weight:600}
+@media (max-width:760px){.vol-read{grid-template-columns:max-content minmax(0,1fr);gap:2px 12px}.vr-r{grid-column:1/-1;margin-bottom:6px;font-size:12.5px}.vr-v{text-align:left}}
 .oi-row{display:grid;grid-template-columns:64px 1fr 1fr;gap:8px;align-items:center;font-family:"IBM Plex Mono",monospace;font-size:11.5px;margin:2px 0}
 .oi-cell{position:relative;height:16px;background:rgba(255,255,255,.03);border-radius:3px}.oi-bar{position:absolute;left:0;top:2px;height:12px;border-radius:2px}.oi-bar.pos{background:#3fb97f}.oi-bar.neg{background:#e0655f}.oi-v{position:absolute;left:6px;top:0;line-height:16px;color:#e8eef4}
 @media (max-width:1020px){.cockpit{grid-template-columns:repeat(2,1fr)!important}.vol-grid{grid-template-columns:1fr}}
@@ -831,7 +834,7 @@ table.oi-mtab th:first-child,table.oi-mtab td:first-child{text-align:left;font-f
 table.oi-mtab td.oi-asof{font-family:inherit;font-size:11px;color:var(--muted);text-align:left}
 .oi-mv{display:block;font-family:inherit;font-size:10.5px;color:#e8b93d}
 @media (max-width:760px){table.oi-mtab{display:table!important;font-size:11.5px}table.oi-mtab thead{display:table-header-group!important}table.oi-mtab tbody{display:table-row-group!important}table.oi-mtab tr{display:table-row!important;padding:0}table.oi-mtab th,table.oi-mtab td{display:table-cell!important;padding:5px 6px}table.oi-mtab td:before{content:none!important}}
-#chartTip{position:fixed;z-index:9999;pointer-events:none;background:#0b1424;border:1px solid #3d5a80;border-radius:8px;padding:7px 10px;font:12px/1.5 "IBM Plex Mono",monospace;color:#dfe7f1;box-shadow:0 6px 20px rgba(0,0,0,.45);display:none;max-width:300px}
+#chartTip{position:fixed;z-index:10060;pointer-events:none;background:#0b1424;border:1px solid #3d5a80;border-radius:8px;padding:7px 10px;font:12px/1.5 "IBM Plex Mono",monospace;color:#dfe7f1;box-shadow:0 6px 20px rgba(0,0,0,.45);display:none;max-width:300px}
 #chartTip b{color:#fff;font-family:Inter,system-ui,sans-serif}
 .kasof{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);margin-top:6px;border-top:1px dashed var(--line);padding-top:4px}
 .ver-bar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:10000;background:#132238;border:1px solid #e8b93d;border-radius:12px;padding:10px 14px;color:#e8eef4;font-size:13px;box-shadow:0 10px 28px rgba(0,0,0,.5);display:flex;gap:10px;align-items:center;flex-wrap:wrap;max-width:calc(100vw - 32px)}
@@ -2805,8 +2808,12 @@ function lineChartSVG(o){
   var s='', labs=[];
   niceTicks(lo,hi,4).forEach(function(v){ s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="#1e2a3a"/><text x="'+(PL-6)+'" y="'+(Y(v)+3.5).toFixed(1)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end">'+fmt(v,Math.abs(hi-lo)<4?1:0)+'</text>'; });
   if(lo<0&&hi>0) s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(0)+'" y2="'+Y(0)+'" stroke="#3a4a61"/>';
-  var every=Math.max(1,Math.ceil(n/7));
-  xs.forEach(function(x,i){ if((n-1-i)%every===0) s+='<text x="'+X(i).toFixed(1)+'" y="'+(H-10)+'" fill="#5b6b82" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+(x.length>=7?mLabel(x):esc(x))+'</text>'; });
+  var every=Math.max(1,Math.ceil(n/7)), daily=xs[0].length>=10&&(Date.parse(xs[n-1].slice(0,10))-Date.parse(xs[0].slice(0,10)))<150*86400000;
+  function xLab(x){ return x.length>=10&&daily?fmtShortDate(x.slice(0,10)):x.length>=7?mLabel(x):esc(x); }
+  xs.forEach(function(x,i){ if((n-1-i)%every===0) s+='<text x="'+X(i).toFixed(1)+'" y="'+(H-10)+'" fill="#8494ab" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+xLab(x)+'</text>'; });
+  if(n<=400) xs.forEach(function(x,i){ var x0=i?(X(i-1)+X(i))/2:PL, x1=i<n-1?(X(i)+X(i+1))/2:PL+pw;     /* hover / tap label for every point (works in the zoom view too) */
+    var tip=(x.length>=10?fmtDate(x.slice(0,10)):esc(x))+'|'+o.series.map(function(sr){ var pt=sr.pts.filter(function(p){ return p[0]===x; })[0]; return esc(sr.label)+': '+(pt&&pt[1]!=null?fmt(pt[1],dec):'—'); }).join('|');
+    s+='<rect class="oi-hit" x="'+x0.toFixed(1)+'" y="'+PT+'" width="'+Math.max(1,x1-x0).toFixed(1)+'" height="'+ph+'" fill="transparent" data-tip="'+tip+'"/>'; });
   var placed=[];
   (o.events||[]).forEach(function(e){ var i=-1; for(var k=0;k<n;k++){ if(xs[k]>=e.date){ i=k; break; } } if(i<0) return;
     var exn=X(i), lvl=0; placed.forEach(function(p){ if(Math.abs(p[0]-exn)<15) lvl=Math.max(lvl,p[1]+1); }); placed.push([exn,lvl]);
@@ -2839,11 +2846,11 @@ function barChartSVG(o){
     if(tid) s+='<g class="btip" data-tid="'+tid+'" data-i="'+i+'" tabindex="0"><rect x="'+(PL+i*bw).toFixed(1)+'" y="'+PT+'" width="'+bw.toFixed(1)+'" height="'+ph+'" fill="transparent"/>';
     s+='<rect class="bbar" x="'+x.toFixed(1)+'" y="'+top.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="'+col+'"/>';
     if(tid) s+='</g>';
-    if(n<=14) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(b[1]<0?top+h+11:top-4).toFixed(1)+'" fill="#c9d6e6" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+fmt(b[1],dec)+'</text>';
+    if(n<=14) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(b[1]<0?top+h+11:top-4).toFixed(1)+'" fill="#dbe4f0" font-size="11" font-weight="600" font-family="IBM Plex Mono" text-anchor="middle">'+fmt(b[1],dec)+'</text>';
     if(o.months){ var ym=o.months[i]||'', mo=+ym.slice(5,7);
       if((n-1-i)%step===0) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(PT+ph+14)+'" fill="#8494ab" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+(MN[mo-1]||'')+'</text>';
       if(mo===1||i===0){ s+='<text x="'+(PL+i*bw+2).toFixed(1)+'" y="'+(PT+ph+30)+'" fill="#c9d6e6" font-size="10.5" font-weight="700" font-family="IBM Plex Mono">'+ym.slice(0,4)+'</text>'+(i>0?'<line x1="'+(PL+i*bw).toFixed(1)+'" x2="'+(PL+i*bw).toFixed(1)+'" y1="'+PT+'" y2="'+(PT+ph+32)+'" stroke="#2b3e5c" stroke-dasharray="2 3"/>':''); } }
-    else if(n<=14||i%2===(n-1)%2) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(H-9)+'" fill="#5b6b82" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+esc(b[0])+'</text>'; });
+    else if(n<=14||i%2===(n-1)%2) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(H-9)+'" fill="#8494ab" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">'+esc(b[0])+'</text>'; });
   if(lo<0) s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(0)+'" y2="'+Y(0)+'" stroke="#3a4a61"/>';
   if(o.line&&o.line.length){ var d='', st=false; o.line.forEach(function(l,i){ if(l[1]==null){ st=false; return; } d+=(st?'L':'M')+(PL+i*bw+bw/2).toFixed(1)+' '+Y(l[1]).toFixed(1); st=true; });
     s+='<path d="'+d+'" fill="none" stroke="#e8a33d" stroke-width="1.6" stroke-dasharray="5 4"/>';
@@ -2986,17 +2993,20 @@ function cockpitHTML(key){
 function volTermHTML(key){
   var g=DATA.grains[key], V=g.vol, H=g.vol_hist||[], S=skewMetrics(key);
   if(!V) return '';
-  var bars=barChartSVG({bars:[[V.near.contract+' IV',V.near.iv,true],[V.far.contract+' IV',V.far.iv,false],[V.near.contract+' HV30',V.near.hv,false],[V.far.contract+' HV30',V.far.hv,false]],yLabel:'Volatility (%)',dec:1,H:190,floor:0});
-  var hist=H.length>=5?lineChartSVG({series:[{pts:H.map(function(x){ return [x[0],x[1]]; }),color:'#38b6c9',label:'Near IV'},{pts:H.map(function(x){ return [x[0],x[2]]; }),color:'#c084fc',label:'Far IV'},{pts:H.map(function(x){ return [x[0],x[3]]; }),color:'#e8a33d',label:'HV30'}],yLabel:'Vol (%)',dec:1,H:190}):
+  var bars=barChartSVG({bars:[[V.near.contract+' IV',V.near.iv,true],[V.far.contract+' IV',V.far.iv,false],[V.near.contract+' HV30',V.near.hv,false],[V.far.contract+' HV30',V.far.hv,false]],yLabel:'Volatility (%)',dec:1,W:380,H:200,floor:0});
+  var hist=H.length>=5?lineChartSVG({series:[{pts:H.map(function(x){ return [x[0],x[1]]; }),color:'#38b6c9',label:'Near IV'},{pts:H.map(function(x){ return [x[0],x[2]]; }),color:'#c084fc',label:'Far IV'},{pts:H.map(function(x){ return [x[0],x[3]]; }),color:'#e8a33d',label:'HV30'}],yLabel:'Vol (%)',dec:1,W:400,H:210}):
     '<p class="note">Daily IV history starts '+esc(H.length?H[0][0]:'today')+' and builds with each 10:52 ET options run ('+H.length+' of 5 sessions needed for the line chart).</p>';
-  var term=V.far.iv-V.near.iv;
-  var rrz=S&&Math.abs(S.rr)<0.05;
-  var sk=S?'<div class="mini-kv"><span>Risk reversal</span><b class="'+(rrz?'neu':cls(S.rr))+'">'+(rrz?'0.0 pts':sgn(S.rr,2,' pts'))+'</b> '+(rrz?'balanced \u2014 puts and calls priced alike':S.rr>0?'calls richer \u2014 upside priced':'puts richer \u2014 downside protection bid')+'</div>'+
-    '<div class="mini-kv"><span>Butterfly</span><b>'+sgn(S.bf,2,' pts')+'</b> '+(S.bf>1?'wings rich — big moves priced':'wings modest')+'</div>'+
-    '<div class="dsub">±1σ strikes to expiry: put '+fmt(S.kp,2)+' @ '+fmt(S.put,1)+'% · call '+fmt(S.kc,2)+' @ '+fmt(S.call,1)+'% vs ATM '+fmt(S.atm,1)+'%'+(S.clamp?' (edge of pulled strikes)':'')+'</div>':'';
+  var term=V.far.iv-V.near.iv, ivhv=V.near.iv-V.near.hv, rrz=S&&Math.abs(S.rr)<0.05;
+  function row(k, v, c, read, tip){ return '<div class="vr-k"'+(tip?' title="'+esc(tip)+'"':'')+'>'+k+'</div><div class="vr-v '+(c||'')+'">'+v+'</div><div class="vr-r">'+read+'</div>'; }
+  var R=row('Term structure', sgn(term,1,' pts'), cls(term), 'far ('+esc(V.far.contract)+') vs near ('+esc(V.near.contract)+') — '+(term<0?'<b>inverted</b>: near-term event risk is priced':'<b>normal</b>: longer-dated vol higher'), 'Far-month IV minus near-month IV')+
+    row('IV − HV30', sgn(ivhv,1,' pts'), cls(ivhv), ivhv<0?'options <b>cheap</b> vs realized moves':'options <b>rich</b> vs realized moves', 'Near-month implied vol minus 30-day historical vol');
+  if(S) R+=row('Risk reversal', rrz?'0.0 pts':sgn(S.rr,2,' pts'), rrz?'neu':cls(S.rr), rrz?'balanced — puts and calls priced alike':S.rr>0?'calls richer — <b>upside</b> priced':'puts richer — <b>downside</b> protection bid', '±1σ call IV minus put IV')+
+    row('Butterfly', sgn(S.bf,2,' pts'), '', S.bf>1?'wings rich — big moves priced':'wings modest', 'Average of ±1σ wing IVs minus ATM IV')+
+    row('±1σ strikes', fmt(S.atm,1)+'% ATM', '', 'put '+fmt(S.kp,2)+' @ '+fmt(S.put,1)+'% · call '+fmt(S.kc,2)+' @ '+fmt(S.call,1)+'%'+(S.clamp?' <span class="neu">(edge of pulled strikes)</span>':''), 'Strikes one standard deviation from futures, to option expiry');
   return '<div class="tile wide" data-src="options"><h2>Volatility — term structure, realized vs implied, skew <span class="h2note">— '+esc(V.src)+'</span></h2>'+
-    '<div class="vol-grid"><div>'+bars+'<div class="mini-kv"><span>Term structure</span><b class="'+cls(term)+'">'+sgn(term,1,' pts')+'</b> far vs near '+(term<0?'(inverted — near-term event risk priced)':'(normal upward)')+'</div>'+
-    '<div class="mini-kv"><span>IV − HV</span><b class="'+cls(V.near.iv-V.near.hv)+'">'+sgn(V.near.iv-V.near.hv,1,' pts')+'</b> '+(V.near.iv<V.near.hv?'options cheap vs realized':'options rich vs realized')+'</div>'+sk+'</div><div>'+hist+'</div></div></div>';
+    '<div class="vol-grid"><div class="vol-c"><div class="vol-ct">Implied vs 30-day realized, by contract</div>'+bars+'</div><div class="vol-c"><div class="vol-ct">Daily history — hover a day for its values</div>'+hist+'</div></div>'+
+    '<div class="vol-read">'+R+'</div>'+
+    '<div class="stamp">IV from the '+esc(V.src||'options snapshot')+' · HV30 = annualised standard deviation of the last 30 daily settle changes · pts = volatility points · double-click a chart to enlarge it</div></div>';
 }
 function oiChangeHTML(key){
   var n=DATA.grains[key].near, prev=n.rows_prev;
