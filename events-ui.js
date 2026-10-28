@@ -215,13 +215,14 @@
   var SEED = { options: 1, grains_settle: 1, cftc_grains: 1, cftc_fx: 1, fx_closes: 1 };
   var base = null;
   function snap() {
-    var s = { asof: Object.assign({}, DATA.meta.asof || {}), fp: {}, roll: {}, macro: {}, walls: {}, oi: {}, px: {}, gg: null, wa: {} };
+    var s = { asof: Object.assign({}, DATA.meta.asof || {}), fp: {}, roll: {}, flow: {}, macro: {}, walls: {}, oi: {}, px: {}, gg: null, wa: {} };
     Object.keys(ASOF).forEach(function (k) { try { s.fp[k] = FP[k] ? fp(FP[k]()) : s.asof[k]; } catch (e) { s.fp[k] = s.asof[k]; } });
     (window.macroAll ? macroAll() : []).forEach(function (m) { s.macro[m.key] = m.period + "|" + m.value; });
     ["corn", "wheat", "soybeans"].forEach(function (k) { var g = DATA.grains && DATA.grains[k]; if (!g || !g.near) return;
       s.walls[k] = [g.near.call_wall && g.near.call_wall[0], g.near.put_wall && g.near.put_wall[0]];
       s.oi[k] = g.near.oi_label || ""; s.px[k] = g.fan && +g.fan.intraday[0];
-      try { var RL = window.rollLevel && rollLevel(k); if (RL) s.roll[k] = RL; } catch (e) {} });
+      try { var RL = window.rollLevel && rollLevel(k); if (RL) s.roll[k] = RL; } catch (e) {}
+      try { var FS = window.flowStats && flowStats(k, 10); if (FS) s.flow[k] = { b: flowBias(FS.score)[0], sc: FS.score, d: FS.last.lab }; } catch (e) {} });
     try { var G = window.GG && GG._data && GG._data(); s.gg = G && (G.updated_at || G.generated_at) || null; } catch (e) {}
     try { var W = window.WORLD && WORLD._data(); (W && W.instruments || []).forEach(function (i) { if (i.w52) s.wa[i.id || i.name] = (i.w52.new_high ? "H" : "") + (i.w52.new_low ? "L" : ""); }); } catch (e) {}
     return s;
@@ -273,6 +274,10 @@
       var a = base.roll[k], b = s.roll[k]; if (!a || !b) return;
       if (a.pct < 40 && b.pct >= 40) log("oi", "<b>" + GN[k] + " roll passes 40%</b> — " + esc(b.def) + " now holds " + b.pct.toFixed(1) + "% of open interest · next option month window is open", k + ":deriv", "roll40|" + k + "|" + b.def);
       if (a.pct >= 40 && b.pct < 40) log("oi", "<b>" + GN[k] + " roll back below 40%</b> (" + b.pct.toFixed(1) + "%) — next option month window locked", k + ":deriv", "roll40d|" + k + "|" + b.pct);
+    });
+    Object.keys(s.flow).forEach(function (k) {   /* 10-session position-flow signal changing category */
+      var a = base.flow[k], b = s.flow[k]; if (!a || !b || a.b === b.b) return;
+      log("oi", "<b>" + GN[k] + " position flow: " + esc(b.b.toLowerCase()) + "</b> (was " + esc(a.b.toLowerCase()) + ") — 10-session score " + (b.sc > 0 ? "+" : "") + b.sc + " through " + esc(b.d), k + ":deriv", "flow|" + k + "|" + b.b + "|" + b.d);
     });
     if (s.gg && base.gg && s.gg !== base.gg) log("data", "<b>Updated</b> — Brazil &amp; World fundamentals (CONAB · USDA · Comex)", "corn:fund", "gg|" + s.gg);
     Object.keys(s.wa).forEach(function (k) {
