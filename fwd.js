@@ -72,7 +72,8 @@
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   var SHOW = { "1M": 1, "3M": 1, "6M": 1, "1Y": 1, "18M": 1, "2Y": 1 };
   var W = 760, H = 290, PL = 60, PR = 22, PT = 26, PB = 50, pw = W - PL - PR, ph = H - PT - PB;
-  var S = { built: null, geom: null, res: null, inKey: null, inputs: null, spot: null, pending: null, timer: null, lastRun: 0, raf: 0, tid: null, cause: "", causeAt: 0 };
+  var S = { built: null, geom: null, res: null, inKey: null, inputs: null, spot: null, pending: null, timer: null, lastRun: 0, raf: 0, tid: null, cause: "", causeAt: 0, sel: "6M", sort: "date", hist1: null };
+  try { S.sel = localStorage.getItem("desk.fwdSel") || "6M"; S.sort = localStorage.getItem("desk.fwdSort") || "date"; S.all = localStorage.getItem("desk.fwdAll") === "1"; } catch (e) {}
   var NS = "http://www.w3.org/2000/svg";
   function f5(v) { return v == null ? "—" : v.toFixed(5); }
   function sg(v, d, u) { return v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d) + (u || ""); }
@@ -131,9 +132,14 @@
   function build(box) {
     box.innerHTML =
       '<div class="fwd-status"><span class="fwd-chip"></span><span class="fwd-stxt"></span></div>' +
-      '<div class="fwd-inputs"></div><div class="fwd-chart"></div>' +
+      '<div class="fl-head"></div>' +
+      '<div class="fl-lab">Select maturity <small>· 1M – 24M · tap a tile</small></div><div class="fl-tiles qt-grid"></div>' +
+      '<div class="fl-sel"></div>' +
+      '<div class="fl-lab" style="margin-top:14px">Curve comparison <small>· forward points by tenor — today vs the last official closes</small></div><div class="fl-cmp"></div>' +
+      '<div class="fl-lab" style="margin-top:14px">Broker ladder <small>· every value date · sort</small> <span class="fl-sort"><button type="button" data-flsort="date" aria-pressed="true">by date</button><button type="button" data-flsort="pts" aria-pressed="false">by points</button><button type="button" data-flsort="out" aria-pressed="false">by outright</button></span></div>' +
       '<div class="fwd-cause" aria-live="polite"></div>' +
-      '<table class="fwd-t"><thead><tr><th>Value date</th><th>Tenor</th><th>Outright</th><th>Fwd pts <small>(pips)</small></th><th>Δ pts</th><th>Annualised</th></tr></thead><tbody></tbody></table>' +
+      '<div style="overflow-x:auto"><table class="fwd-t"><thead><tr><th>Value date</th><th>Tenor</th><th>Outright</th><th>Fwd pts <small>(pips)</small></th><th>Δ pts <small>tick</small></th><th>Δ 1D</th><th>Annualised</th></tr></thead><tbody></tbody></table></div>' +
+      '<details class="fl-more"><summary>Rate inputs and the CIP chart</summary><div class="fwd-inputs"></div><div class="fwd-chart"></div></details>' +
       '<p class="read fwd-read" style="font-size:13px"></p>';
     var svg = el("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": "USD/CAD CIP forward curve by value date" });
     box.querySelector(".fwd-chart").appendChild(svg);
@@ -162,15 +168,16 @@
     foot.textContent = "VALUE DATE (√days) · WHITE = OUTRIGHT · RED = FWD POINTS (pips) · HOVER ANY DOT";
     var tb = box.querySelector("tbody"), sr = document.createElement("tr");
     sr.className = "fwd-spot";
-    sr.innerHTML = '<td><span class="fd"></span> <small class="ft-in">SPOT</small></td><td class="ft">SPOT</td><td><b class="fo"></b></td><td><span class="fp">0.0</span></td><td class="fdl"></td><td class="fa">T+1</td>';
+    sr.innerHTML = '<td><span class="fd"></span> <small class="ft-in">SPOT</small></td><td class="ft">SPOT</td><td><b class="fo"></b></td><td><span class="fp">0.0</span></td><td class="fdl"></td><td class="f1d"></td><td class="fa">T+1</td>';
     tb.appendChild(sr);
     g.spotRow = { tr: sr, d: sr.querySelector(".fd"), o: sr.querySelector(".fo") };
     g.rows = TENORS.map(function (t) {
       var tr = document.createElement("tr");
       tr.innerHTML = '<td><span class="fd"></span> <small class="ft-in">' + t[0] + '</small></td><td class="ft">' + t[0] + '</td>' +
-        '<td><b class="fo" data-tick="fwdF-' + t[0] + '" data-roll></b></td><td class="neg"><span class="fp" data-tick="fwdP-' + t[0] + '" data-roll></span></td><td class="fdl"></td><td class="fa"></td>';
+        '<td><b class="fo" data-tick="fwdF-' + t[0] + '" data-roll></b></td><td class="neg"><span class="fp" data-tick="fwdP-' + t[0] + '" data-roll></span></td><td class="fdl"></td><td class="f1d"></td><td class="fa"></td>';
+      tr.setAttribute("data-flsel", t[0]); tr.style.cursor = "pointer";
       tb.appendChild(tr);
-      return { tr: tr, d: tr.querySelector(".fd"), o: tr.querySelector(".fo"), p: tr.querySelector(".fp"), dl: tr.querySelector(".fdl"), a: tr.querySelector(".fa") };
+      return { t: t[0], tr: tr, d: tr.querySelector(".fd"), o: tr.querySelector(".fo"), p: tr.querySelector(".fp"), dl: tr.querySelector(".fdl"), d1: tr.querySelector(".f1d"), a: tr.querySelector(".fa") };
     });
     if (window.BTIPS) { S.tid = "fwd" + Math.random().toString(36).slice(2, 7); g.legs.forEach(function (o) { o.hit.setAttribute("data-tid", S.tid); }); }
     g.box = box; return g;
@@ -254,7 +261,14 @@
       var dd = (l.F != null && p && p.F != null) ? l.pts - p.pts : null;
       r.dl.textContent = dd == null || Math.abs(dd) < 0.05 ? "" : sg(dd, 1);
       r.dl.className = "fdl " + (dd == null ? "" : dd > 0 ? "up" : dd < 0 ? "dn" : "");
+      var y = S.hist1 && S.hist1.by[l.t], d1 = (l.F != null && y && y.F != null) ? l.pts - y.pts : null;
+      r.d1.textContent = d1 == null ? "—" : sg(d1, 1); r.d1.className = "f1d " + (d1 == null ? "neu" : d1 > 0 ? "up" : d1 < 0 ? "dn" : "neu");
+      r.tr.classList.toggle("fl-on", l.t === S.sel);
     });
+    var tb = S.built.box.querySelector(".fwd-t tbody"), rows = S.built.rows.slice(), idx = {};
+    res.legs.forEach(function (l, i) { idx[l.t] = l; });
+    if (S.sort !== "date") rows.sort(function (a, b) { var A = idx[a.t], B = idx[b.t]; if (!A || A.F == null) return 1; if (!B || B.F == null) return -1; return S.sort === "pts" ? A.pts - B.pts : A.F - B.F; });
+    rows.forEach(function (r) { tb.appendChild(r.tr); });
     if (window.BTIPS && S.tid) window.BTIPS[S.tid] = res.legs.map(function (l) {
       if (l.F == null) return '<div class="bt-h">' + l.t + ' forward</div><div>Unavailable — ' + (res.reason || "rate input missing for this tenor") + '.</div>';
       return '<div class="bt-h">' + lab(l.vd) + ' <span style="color:#8494ab;font-weight:400">· ' + l.t + ' · ' + l.days + ' days</span></div>' +
@@ -265,6 +279,101 @@
           : f5(res.spot) + ' × (1 + ' + l.rUSD.toFixed(3) + '%/2)^(−2×' + l.T.toFixed(3) + ') ÷ (1 + ' + l.rCAD.toFixed(3) + '%/2)^(−2×' + l.T.toFixed(3) + ')') + ' = ' + f5(l.F) + '</div>';
     });
   }
+  /* ---------- rate ladder: head, maturity tiles, selected maturity, curve comparison ---------- */
+  var TILE = TENORS.filter(function (t) { return t[1] === "M"; }).map(function (t) { return t[0]; });   /* 1M … 24M */
+  function tl(t) { return t === "1Y" ? "12M" : t === "2Y" ? "24M" : t; }
+  function px5(v) { return v.toFixed(5); }
+  function hist(back) {                                /* price an earlier official close with its own inputs + its own trade date */
+    var H = window.DATA && window.DATA.fx.fwd_hist; if (!H || !H.length) return null;
+    var today = tradeDateET().toISOString().slice(0, 10), past = H.filter(function (h) { return h.date < today; });
+    var h = past[past.length - back]; if (!h) return null;
+    var p = h.date.split("-"), r = price({ spot: h.spot, us: h.us, ca: h.ca, trade: utc(+p[0], +p[1], +p[2]) }), by = {};
+    r.legs.forEach(function (l) { by[l.t] = l; });
+    return { date: h.date, spot: h.spot, res: r, by: by };
+  }
+  function headHTML(res, st) {
+    var y2 = res.legs[res.legs.length - 1];
+    return '<div class="fl-h"><div><b>USD / CAD</b><small>24-month forward monitor · covered-interest-parity outrights · theoretical, not dealer quotes</small></div></div>' +
+      '<div class="fl-kv"><div><span>Spot reference</span><b class="qt-box" data-qt="flspot" data-v="' + res.spot + '" data-dec="5"><span class="qt-ar" aria-hidden="true"></span><span class="qt-v"><span class="qt-bf">' + px5(res.spot).slice(0, -2) + '</span><span class="qt-pp">' + px5(res.spot).slice(-2) + "</span></span></b><small>" + (st.spotT ? clock(st.spotT) + " ET · " : "") + esc(st.chip.toLowerCase()) + "</small></div>" +
+      '<div><span>24M forward</span><b class="qt-box" data-qt="fl24" data-v="' + (y2.F || 0) + '" data-dec="5"><span class="qt-ar" aria-hidden="true"></span><span class="qt-v">' + (y2.F == null ? "—" : '<span class="qt-bf">' + px5(y2.F).slice(0, -2) + '</span><span class="qt-pp">' + px5(y2.F).slice(-2) + "</span>") + '</span></b><small>' + (y2.F == null ? "" : sg(y2.pts, 1) + " pips · " + lab(y2.vd)) + "</small></div></div>";
+  }
+  function tilesHTML(res) {
+    var by = {}; res.legs.forEach(function (l) { by[l.t] = l; });
+    var KEY = { "1M": 1, "2M": 1, "3M": 1, "6M": 1, "9M": 1, "1Y": 1, "18M": 1, "2Y": 1 };
+    return TILE.filter(function (t) { return S.all || KEY[t] || t === S.sel; }).map(function (t) {
+      var l = by[t], y = S.hist1 && S.hist1.by[t], d1 = l && l.F != null && y && y.F != null ? l.pts - y.pts : null, on = t === S.sel;
+      if (!l || l.F == null) return '<button type="button" class="qt fl-t" data-flsel="' + t + '"><div class="qt-h"><b>' + tl(t) + '</b></div><div class="qt-c neu">unavailable</div></button>';
+      return '<button type="button" class="qt fl-t' + (on ? " on" : "") + '" data-flsel="' + t + '" aria-pressed="' + on + '"><div class="qt-h"><b>' + tl(t) + "</b>" + (on ? '<span class="fl-ck">✓</span>' : '<span class="qt-sub">' + lab(l.vd, true) + "</span>") + "</div>" +
+        '<div class="qt-box" data-qt="fl-' + t + '" data-v="' + l.F + '" data-dec="5"><span class="qt-ar" aria-hidden="true"></span><span class="qt-v"><span class="qt-bf">' + px5(l.F).slice(0, -2) + '</span><span class="qt-pp">' + px5(l.F).slice(-2) + "</span></span></div>" +
+        '<div class="qt-c"><span class="' + (l.pts < 0 ? "dn" : "up") + '">Points ' + sg(l.pts, 1) + "</span>" + (d1 != null ? ' <span class="sl-k">· 1D</span> <span class="' + (d1 > 0 ? "up" : d1 < 0 ? "dn" : "neu") + '">' + sg(d1, 1) + "</span>" : "") + "</div>" +
+        '<div class="qt-f">' + lab(l.vd) + "</div></button>";
+    }).join("") + '<button type="button" class="fl-all" data-flall aria-pressed="' + !!S.all + '">' + (S.all ? "Show key maturities" : "All 24 months") + "</button>";
+  }
+  function selHTML(res) {
+    var l = res.legs.filter(function (x) { return x.t === S.sel; })[0]; if (!l || l.F == null) return "";
+    var y = S.hist1 && S.hist1.by[l.t], d1 = y && y.F != null ? l.pts - y.pts : null;
+    var math = l.T < 1 ? px5(res.spot) + " × (1 + " + l.rCAD.toFixed(3) + "% × " + l.days + "/365) ÷ (1 + " + l.rUSD.toFixed(3) + "% × " + l.days + "/365)"
+      : px5(res.spot) + " × (1 + " + l.rUSD.toFixed(3) + "%/2)^(−2×" + l.T.toFixed(3) + ") ÷ (1 + " + l.rCAD.toFixed(3) + "%/2)^(−2×" + l.T.toFixed(3) + ")";
+    return '<div class="fl-selbox"><div class="fl-st">Selected maturity</div><div class="fl-sn">' + tl(l.t) + " forward</div>" +
+      '<div class="fl-grid"><span>Value date</span><b>' + lab(l.vd) + ' <small>(' + l.days + ' days)</small></b><span>Forward outright</span><b class="fl-big">' + px5(l.F) + "</b>" +
+      "<span>Forward points</span><b class=\"" + (l.pts < 0 ? "dn" : "up") + "\">" + sg(l.pts, 1) + " pips</b><span>Change vs " + (S.hist1 ? lab(new Date(S.hist1.date + "T00:00:00Z")) : "prior close") + "</span><b class=\"" + (d1 == null ? "neu" : d1 > 0 ? "up" : "dn") + "\">" + (d1 == null ? "—" : sg(d1, 1) + " pips") + "</b>" +
+      "<span>Annualised carry</span><b>" + sg(l.ann, 2, "%") + "</b><span>USD · CAD rate</span><b>" + l.rUSD.toFixed(3) + "% · " + l.rCAD.toFixed(3) + "%</b></div>" +
+      '<div class="bt-math">' + math + " = " + px5(l.F) + "</div></div>";
+  }
+  function cmpSVG(res) {
+    var sets = [{ n: "Today (live spot)", c: "#e8a33d", r: res }];
+    var h1 = S.hist1, h5 = hist(5);
+    if (h1) sets.push({ n: lab(new Date(h1.date + "T00:00:00Z")) + " close", c: "#38b6c9", r: h1.res, dash: "" });
+    if (h5) sets.push({ n: lab(new Date(h5.date + "T00:00:00Z")) + " close", c: "#9aa8bb", r: h5.res, dash: "4 4" });
+    var Wc = 760, Hc = 230, L = 58, R = 150, T = 16, B = 34, pw2 = Wc - L - R, ph2 = Hc - T - B;
+    var all = []; sets.forEach(function (st) { st.pts = TILE.map(function (t) { var l = st.r.legs.filter(function (x) { return x.t === t; })[0]; return l && l.F != null ? l.pts : null; }); all = all.concat(st.pts.filter(function (v) { return v != null; })); });
+    if (!all.length) return '<p class="note">No forward curve to compare yet.</p>';
+    var mn = Math.min.apply(null, all.concat([0])), mx = Math.max.apply(null, all.concat([0])), pad = (mx - mn) * 0.08 || 5; mn -= pad; mx += pad;
+    var X = function (i) { return L + pw2 * i / (TILE.length - 1); }, Y = function (v) { return T + ph2 * (1 - (v - mn) / (mx - mn)); }, g = "";
+    for (var k = 0; k <= 4; k++) { var v = mn + (mx - mn) * k / 4; g += '<line x1="' + L + '" x2="' + (L + pw2) + '" y1="' + Y(v).toFixed(1) + '" y2="' + Y(v).toFixed(1) + '" stroke="#1e2a3a"/><text x="' + (L - 6) + '" y="' + (Y(v) + 3.5).toFixed(1) + '" fill="#8494ab" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">' + v.toFixed(0) + "</text>"; }
+    [0, 2, 5, 8, 11, 14, 17, 20, 23].forEach(function (i) { g += '<text x="' + X(i).toFixed(1) + '" y="' + (Hc - 12) + '" fill="#8494ab" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">' + tl(TILE[i]) + "</text>"; });
+    var labs = [];
+    sets.forEach(function (st) { var d = ""; st.pts.forEach(function (v, i) { if (v != null) d += (d ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); });
+      g += '<path d="' + d + '" fill="none" stroke="' + st.c + '" stroke-width="' + (st === sets[0] ? 2.4 : 1.7) + '"' + (st.dash ? ' stroke-dasharray="' + st.dash + '"' : "") + "/>";
+      var lv = st.pts[st.pts.length - 1]; if (lv != null) labs.push({ y: Y(lv), t: st.n + " " + sg(lv, 0), c: st.c }); });
+    labs.sort(function (a, b) { return a.y - b.y; }); for (var i = 1; i < labs.length; i++) if (labs[i].y - labs[i - 1].y < 13) labs[i].y = labs[i - 1].y + 13;
+    labs.forEach(function (l) { g += '<text x="' + (L + pw2 + 6) + '" y="' + (l.y + 3.5).toFixed(1) + '" fill="' + l.c + '" font-size="10.5" font-weight="700" font-family="IBM Plex Mono">' + esc(l.t) + "</text>"; });
+    TILE.forEach(function (t, i) {                   /* hover: every curve's points at that tenor */
+      var x0 = i ? (X(i - 1) + X(i)) / 2 : L, x1 = i < TILE.length - 1 ? (X(i) + X(i + 1)) / 2 : L + pw2;
+      g += '<rect class="oi-hit" x="' + x0.toFixed(1) + '" y="' + T + '" width="' + (x1 - x0).toFixed(1) + '" height="' + ph2 + '" fill="transparent" data-tip="' + tl(t) + " forward points|" + sets.map(function (st) { return esc(st.n) + ": " + (st.pts[i] == null ? "—" : sg(st.pts[i], 1) + " pips"); }).join("|") + '"/>'; });
+    g += '<text x="12" y="' + (T + ph2 / 2) + '" transform="rotate(-90 12 ' + (T + ph2 / 2) + ')" fill="#8494ab" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">forward points (pips)</text>';
+    var shift = h1 ? res.legs.filter(function (l) { return l.t === "1Y"; })[0].pts - h1.by["1Y"].pts : null;
+    return '<svg class="chart-svg" viewBox="0 0 ' + Wc + " " + Hc + '" role="img" aria-label="Forward points by tenor, today vs earlier closes">' + g + "</svg>" +
+      '<p class="fl-cr">' + (shift == null ? "History builds from the next official close." : "At 12M the forward discount is " + (Math.abs(shift) < 0.5 ? "<b>unchanged</b>" : (shift < 0 ? "<b>deeper</b> by " : "<b>shallower</b> by ") + Math.abs(shift).toFixed(1) + " pips") + " versus the " + lab(new Date(h1.date + "T00:00:00Z")) + " close. Forward points move with the USD−CAD rate gap and, in proportion, with spot." + (h5 ? "" : " The 5-day comparison appears once the server has a week of closes stored.")) + "</p>";
+  }
+  function ladder(res) {
+    var b = S.built.box, st = feedState();
+    S.hist1 = hist(1);
+    var hd = b.querySelector(".fl-head"), y2 = res.legs[res.legs.length - 1];
+    if (!hd.querySelector("[data-qt=flspot]")) hd.innerHTML = headHTML(res, st);
+    else { hd.querySelector("[data-qt=flspot]").setAttribute("data-v", res.spot); if (y2.F != null) hd.querySelector("[data-qt=fl24]").setAttribute("data-v", y2.F);
+      var sm = hd.querySelectorAll(".fl-kv small"); sm[0].textContent = (st.spotT ? clock(st.spotT) + " ET · " : "") + st.chip.toLowerCase(); if (y2.F != null) sm[1].textContent = sg(y2.pts, 1) + " pips · " + lab(y2.vd);
+    }
+    var tw = b.querySelector(".fl-tiles");
+    var tk = S.sel + "|" + !!S.all + "|" + (S.hist1 && S.hist1.date);
+    if (tw.getAttribute("data-k") !== tk || !tw.children.length) { tw.innerHTML = tilesHTML(res); tw.setAttribute("data-k", tk); }
+    else res.legs.forEach(function (l) {             /* tick: update values in place so motion.js flips the digits and flashes the box */
+      var box = tw.querySelector('[data-qt="fl-' + l.t + '"]'); if (!box || l.F == null) return; box.setAttribute("data-v", l.F);
+      var c = box.parentNode.querySelector(".qt-c"), y = S.hist1 && S.hist1.by[l.t], d1 = y && y.F != null ? l.pts - y.pts : null;
+      if (c) c.innerHTML = '<span class="' + (l.pts < 0 ? "dn" : "up") + '">Points ' + sg(l.pts, 1) + "</span>" + (d1 != null ? ' <span class="sl-k">· 1D</span> <span class="' + (d1 > 0 ? "up" : d1 < 0 ? "dn" : "neu") + '">' + sg(d1, 1) + "</span>" : "");
+    });
+    b.querySelector(".fl-sel").innerHTML = selHTML(res);
+    b.querySelector(".fl-cmp").innerHTML = cmpSVG(res);
+  }
+  document.addEventListener("click", function (ev) {
+    var t = ev.target.closest && ev.target.closest("#fx-fwd [data-flsel]");
+    if (t) { S.sel = t.getAttribute("data-flsel"); try { localStorage.setItem("desk.fwdSel", S.sel); } catch (e) {} if (S.res) { ladder(S.res); table(S.res, null); } return; }
+    var a = ev.target.closest && ev.target.closest("#fx-fwd [data-flall]");
+    if (a) { S.all = !S.all; try { localStorage.setItem("desk.fwdAll", S.all ? "1" : "0"); } catch (e) {} if (S.res) ladder(S.res); return; }
+    var o = ev.target.closest && ev.target.closest("#fx-fwd [data-flsort]");
+    if (o) { S.sort = o.getAttribute("data-flsort"); try { localStorage.setItem("desk.fwdSort", S.sort); } catch (e) {}
+      S.built.box.querySelectorAll("[data-flsort]").forEach(function (x) { x.setAttribute("aria-pressed", x === o); }); if (S.res) table(S.res, null); }
+  });
   function bizDaysOld(iso) { if (!iso) return 99; var d = Date.parse(iso + "T12:00:00Z"), n = 0; for (var t = d + DAY; t <= Date.now(); t += DAY) { var w = new Date(t).getUTCDay(); if (w && w !== 6) n++; } return n; }
   function inputsHTML(I) {
     var K = ["1M", "3M", "6M", "1Y", "2Y"], cell = function (o, k) { return o[k] != null ? (+o[k]).toFixed(2) + "%" : "—"; };
@@ -316,7 +425,10 @@
     if (!S.inputs || k !== S.inKey) S.built.box.querySelector(".fwd-inputs").innerHTML = inputsHTML(I);
     var G = geometry(res);
     if (G) { labels(res); animate(S.geom, G, res); }
+    S.hist1 = hist(1);
     table(res, S.res);
+    ladder(res);
+    S.built.box.querySelectorAll("[data-flsort]").forEach(function (x) { x.setAttribute("aria-pressed", x.getAttribute("data-flsort") === S.sort); });
     S.built.box.querySelector(".fwd-read").innerHTML = readText(res);
     S.res = res; S.spot = spot; S.inputs = I; S.inKey = k; S.pending = null;
     paintStatus();

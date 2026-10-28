@@ -231,6 +231,29 @@ def yields(D, N):
             if row["t"] == "1Y" and "1Y" in us[d0]:
                 row.update(us=round(us[d0]["1Y"], 3), ca=round(bills["1Y"], 3), sp=round((us[d0]["1Y"] - bills["1Y"]) * 100, 1), asof=d0, ca_src="BoC 1Y T-bill")
         print("  fwd inputs:", fx["fwd_inputs"]["us"]["nodes"], fx["fwd_inputs"]["ca"]["nodes"])
+        # forward-curve history: the same inputs as they stood at each of the last official closes (spot = BoC close that day),
+        # so the page can reprice yesterday's and last week's curves and show where forward pricing moved
+        try:
+            byd = {}
+            for o in sorted(obs, key=lambda o: o["d"]):
+                row = dict(byd[max(byd)]) if byd else {}          # 1Y bill is not quoted daily: carry the last print forward
+                for t, c in ids.items():
+                    v = _num((o.get(c) or {}).get("v"))
+                    if v is not None and 0 <= v < 15:
+                        row[t] = v
+                byd[o["d"]] = row
+            closes = {d: v for d, v in (fx.get("closes") or [])}
+            hist = []
+            for d in sorted(set(us) & set(ca) & set(byd) & set(closes))[-8:]:
+                if len(byd[d]) < 3:
+                    continue
+                hist.append({"date": d, "spot": closes[d],
+                             "us": {k: us[d][k] for k in ("1M", "2M", "3M", "4M", "6M", "1Y", "2Y", "5Y") if k in us[d]},
+                             "ca": {**byd[d], **{k: ca[d][k] for k in ("2Y", "5Y") if k in ca[d]}}})
+            fx["fwd_hist"] = hist
+            print("  fwd history:", [h["date"] for h in hist])
+        except Exception as e:
+            print("  forward history skipped:", e)
     except Exception as e:
         print("  forward-curve inputs skipped:", e)
     try:
