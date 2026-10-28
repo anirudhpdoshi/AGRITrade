@@ -136,7 +136,7 @@ KW_OTHER = {"rice": r"\brice\b", "veg oils": r"\b(palm oil|vegetable oils?|sunfl
             "fertilizer": r"\b(fertili[sz]er|urea|potash|phosphate|nitrogen|ammonia)\b",
             "energy": r"\b(crude|oil prices?|brent|wti|diesel|natural gas|energy)\b", "freight": r"\b(freight|shipping|barge|vessel|port|canal)\b"}
 KW_CAT = [
-    ("disruption", r"\b(drought|flood\w*|frost|heat ?wave|crop failure|pest|disease|war|attack\w*|strike|port clos\w*|blockade|canal|river level|low water|export ban|export restriction\w*|halt\w*)\b"),
+    ("disruption", r"\b(drought|flood\w*|frost|heat ?wave|crop failure|pest|disease|war|attack\w*|strike|port clos\w*|blockade|canal|river level|low water|export ban|export restriction\w*|halt\w*|missile\w*|drone\w*|strait|hormuz|deadl\w*|shipping route|suspen\w*|el ni[nñ]o|la ni[nñ]a)\b"),
     ("energy_fert", r"\b(fertili[sz]er|urea|potash|phosphate|ammonia|natural gas|crude|oil price|diesel|biofuel|ethanol|biodiesel|freight)\b"),
     ("macro_trade", r"\b(tariff\w*|trade (?:deal|war|talks)|export (?:tax|quota)|currency|devalu\w*|dollar|interest rate|inflation|growth|gdp|recession|sanction\w*)\b"),
     ("outlook", r"\b(outlook|projection\w*|long[- ]term|medium[- ]term|2030|2035|decade)\b"),
@@ -151,11 +151,23 @@ REGIONS = [("Black Sea", r"\b(black sea|ukrain\w*|russia\w*|odesa|novorossiysk)\
 BULL = [r"export ban", r"export restriction\w*", r"restrict\w* exports", r"export (?:tax|quota)", r"drought", r"frost", r"heat ?wave", r"crop failure",
         r"(?:cut|cuts|lower\w*|reduc\w*|slash\w*|downgrad\w*) (?:\w+ ){0,2}(?:forecast|estimate|output|production|crop|harvest)", r"(?:output|production|harvest|crop) (?:falls?|drops?|declines?|shrinks?)",
         r"smallest", r"lowest stocks", r"tight\w* (?:\w+ )?(?:supply|supplies|stocks)", r"port (?:closure|closed|attack\w*)", r"attack\w* on (?:port|grain)", r"halt\w* (?:exports|shipments)",
-        r"prices? (?:rise|rises|rose|jump\w*|surge\w*|soar\w*|climb\w*|spike\w*)", r"strong (?:demand|buying|imports)", r"china (?:buys|purchases|books)", r"higher (?:prices|costs)"]
+        r"(?:prices?|futures|market) (?:\w+ ){0,3}(?:rise|rises|rose|jump\w*|surge\w*|soar\w*|climb\w*|spike\w*|rall\w*|leap\w*)", r"prices? up\b", r"\bleap in (?:\w+ ){0,2}prices",
+        r"hit\w* (?:new |fresh |record |\d+-\w+ )?highs?", r"strong (?:demand|buying|imports)", r"china (?:buys|purchases|books)", r"higher (?:prices|costs)",
+        r"suspen\w* (?:\w+ )?(?:production|output|exports|shipments)", r"supply (?:\w+ )?(?:restrict\w*|disrupt\w*|shortage\w*|squeez\w*)", r"shortage\w*", r"risk premium (?:\w+ )?(?:ris\w*|build\w*|return\w*)",
+        r"increase\w* (?:\w+ ){0,3}(?:purchases|buying|imports)", r"bounce\w*", r"china buying", r"(?:plantings?|acreage|area|sowings?) (?:\w+ ){0,3}(?:\w+-\w+ )?low",
+        r"high (?:\w+ )?prices (?:\w+ ){0,2}linger"]
 BEAR = [r"record (?:\w+ ){0,2}(?:crop|harvest|output|production|exports?)", r"bumper", r"(?:raise\w*|lift\w*|increase\w*|upgrad\w*|boost\w*) (?:\w+ ){0,2}(?:forecast|estimate|output|production|crop)",
         r"(?:output|production|harvest|crop) (?:rises?|jumps?|grows?|climbs?)", r"ample (?:supply|supplies|stocks)", r"(?:lift\w*|end\w*|scrap\w*|remov\w*) (?:the )?export ban",
-        r"resum\w* (?:exports|shipments)", r"glut", r"surplus", r"prices? (?:fall|falls|fell|drop\w*|slump\w*|declin\w*|eas\w*|slid\w*|tumbl\w*|six-year low|lowest)",
-        r"weak (?:demand|buying|imports)", r"cancel\w* (?:purchases|cargoes|orders)", r"lower (?:prices|costs)"]
+        r"resum\w* (?:exports|shipments)", r"glut", r"surplus",
+        r"(?:prices?|futures|market) (?:\w+ ){0,3}(?:fall|falls|fell|drop\w*|slump\w*|declin\w*|eas\w*|slid\w*|tumbl\w*|soften\w*|weaken\w*|sag\w*|six-year low|lowest)", r"prices? down\b",
+        r"hit\w* (?:new |fresh |multi-\w+ |\d+-\w+ )?lows?", r"weak (?:demand|buying|imports)", r"weaker (?:currency|real|peso)", r"pressures? (?:\w+ ){0,3}prices",
+        r"cancel\w* (?:purchases|cargoes|orders)", r"lower (?:prices|costs)", r"increase\w* in (?:\w+ ){0,3}(?:production|output|forecast)", r"risk premium (?:\w+ )?(?:deflat\w*|eas\w*|fad\w*|evaporat\w*)",
+        r"supplies stabili[sz]e\w*", r"(?:production|output|crop|harvest) (?:\w+ ){0,3}(?:to rise|to grow|seen higher)",
+        r"(?:prices?|grain|grains|futures|wheat|corn|soybeans?) (?:\w+ ){0,3}\w+-(?:week|month|year) low", r"(?:lift|lifts|lifted|end|ends|ended) (?:\w+ ){0,2}ban"]
+# a headline must mention a commodity, price, food or farm-economy term to enter the feed (filters off-topic matches)
+RELEVANT = r"\b(commodit\w*|food|price\w*|grain\w*|cereal\w*|wheat|corn|maize|soy\w*|fertili[sz]er\w*|urea|potash|phosphate|crude|oil|energy|crop\w*|harvest\w*|agricultur\w*|outlook|inflation|freight|shipping|export\w*|import\w*|tariff\w*|drought|planting|yield\w*|biofuel\w*|ethanol)\b"
+PER_QUERY = 25             # newest headlines kept per query per run
+
 CONFIRM = {
     "corn": "CBOT corn curve (Z26/H27 spread), WASDE balance sheet, weekly export sales, Ontario/US Gulf basis",
     "soybeans": "CBOT soybeans and board crush (oil share), Brazil–US FOB spread, weekly export sales to China",
@@ -294,6 +306,7 @@ def classify_headline(title):
     regions = [r for r, rx in REGIONS if re.search(rx, low)] or ["Global"]
     bull = [m.group(0) for rx in BULL for m in [re.search(rx, low)] if m]
     bear = [m.group(0) for rx in BEAR for m in [re.search(rx, low)] if m]
+    bear = [x for x in bear if not re.search(r"planting|acreage|sowing|\barea\b", x)]   # 'plantings at a 7-year low' is a supply cut, not a price low
     score = len(bull) - len(bear)
     # an 'export ban lifted' style phrase must beat the bare 'export ban' match it contains
     if any("export ban" in b for b in bear) and "export ban" in bull:
@@ -400,7 +413,8 @@ def get(S, url, tries=3, **kw):
 
 
 def find_links(html, pattern, base):
-    return [urljoin(base, h) for h in re.findall(r'href=["\']([^"\']+)["\']', html or "", re.I) if re.search(pattern, h, re.I)]
+    import html as _h
+    return [urljoin(base, _h.unescape(h)) for h in re.findall(r'href=["\']([^"\']+)["\']', html or "", re.I) if re.search(pattern, h, re.I)]
 
 
 def parse_pinksheet(rows):
@@ -437,8 +451,10 @@ def worldbank_block(S):
         page_ok = True
         links = find_links(html, r"CMO-Historical-Data-Monthly\.xlsx", WB_PAGE)
         xlsx_url = links[0] if links else None
-        for u in find_links(html, r"CMO-(?:April|October)-\d{4}\.pdf", WB_PAGE):
-            m = re.search(r"CMO-(April|October)-(\d{4})", u)
+        for u in find_links(html, r"CMO[-_ ]?(?:April|October)[-_ ]?\d{4}|commodity-markets-outlook", WB_PAGE):
+            m = re.search(r"(April|October)[-_ ]?(\d{4})", u, re.I)
+            if not m:
+                continue
             pubs.append({"edition": f"{m.group(1)} {m.group(2)}", "url": u})
     except Exception:
         pass
@@ -583,7 +599,8 @@ def rss(S, q, days=7):
         except Exception:
             continue
         out.append({"ts": when.isoformat(), "title": title.strip(), "url": link, "outlet": pub or dom, "domain": dom.replace("www.", "")})
-    return out
+    out.sort(key=lambda r: r["ts"], reverse=True)
+    return out[:PER_QUERY]
 
 
 # ------------------------------------------------------------------ item builders
@@ -634,6 +651,8 @@ def headline_items(raw, prior_log):
         clusters.append(dict(r, also=[]))
     items, now = [], now_utc().isoformat()
     for c in clusters:
+        if not re.search(RELEVANT, c["title"].lower()):
+            continue   # off-topic (e.g. a World Bank infrastructure loan)
         cls = classify_headline(c["title"])
         if c["q"] in ("worldbank", "imf", "fao", "oecd", "amis") and cls["cat"] in ("ag", "macro_trade") and re.search(r"outlook|projection|long[- ]term", c["title"], re.I):
             cls["cat"] = "outlook"
@@ -812,5 +831,33 @@ def main():
         print(f"::warning title=intel::{f['part']}: {f['error']}")
 
 
+def diag_imf():
+    """Print what the IMF PCPS API actually exposes (dimensions, a few codes, one query) so the series map can be checked."""
+    import imfp
+    print("imfp", getattr(imfp, "__version__", "?"))
+    for fn, args in (("imf_get_datastructure", ("PCPS",)),):
+        try:
+            print(fn, "->", str(getattr(imfp, fn)(*args))[:1500])
+        except Exception as e:
+            print(fn, "FAILED", repr(e)[:300])
+    try:
+        cl = imfp.imf_get_codelists(["INDICATOR"], "PCPS")
+        txt = str(cl)
+        print("codelists ->", txt[:800])
+        for w in ("MAIZ", "WHEA", "SOY", "UREA", "OIL", "FOOD"):
+            print("  lines with", w, ":", [l for l in txt.splitlines() if w in l.upper()][:6])
+    except Exception as e:
+        print("codelists FAILED", repr(e)[:300])
+    for kw in ({"indicator": "PMAIZMT", "frequency": "M"}, {"indicator": "PMAIZMT"}):
+        try:
+            d = imfp.imf_get("PCPS", **kw)
+            print("imf_get", kw, "->", None if d is None else (list(d.columns), d.tail(3).to_dict("records")))
+        except Exception as e:
+            print("imf_get", kw, "FAILED", repr(e)[:300])
+
+
 if __name__ == "__main__":
-    main()
+    if "--diag-imf" in sys.argv:
+        diag_imf()
+    else:
+        main()

@@ -6,6 +6,11 @@ on:
   schedule:
     - cron: "50 11-22/3 * * 1-5"
   workflow_dispatch:
+    inputs:
+      diag_imf:
+        description: "Only print what the IMF PCPS API exposes (no publish)"
+        type: boolean
+        default: false
 permissions:
   contents: write
 concurrency:
@@ -24,7 +29,11 @@ jobs:
           cache: pip
           cache-dependency-path: scripts/requirements.txt
       - run: pip install -r scripts/requirements.txt imfp
+      - name: IMF API diagnostics
+        if: ${{ inputs.diag_imf }}
+        run: python scripts/intel.py --diag-imf
       - name: Unit tests (parsers, surprises, transmission rules, headline classifier)
         run: python tests/test_intel.py
       - name: Fetch, classify, publish intel.json
+        if: ${{ !inputs.diag_imf }}
         run: python scripts/intel.py
