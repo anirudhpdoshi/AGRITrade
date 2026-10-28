@@ -292,7 +292,7 @@
     document.querySelectorAll("[data-live-chg2]").forEach(function (el) { var d = p - fx.spot.ref; el.textContent = (d >= 0 ? "+" : "\u2212") + fmtN(Math.abs(d * 10000), 1) + " pips \u00b7 " + (chg >= 0 ? "+" : "\u2212") + fmtN(Math.abs(chg), 2) + "%"; el.className = chg > 0 ? "up" : chg < 0 ? "dn" : "neu"; });
     if (liveTickAt) document.querySelectorAll('[data-live-ts="usdcad"]').forEach(function (el) {   /* exact time of the rate shown, not of the page */
       el.textContent = new Date(liveTickAt).toLocaleTimeString("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit", second: "2-digit" }) + " ET";
-      el.title = "USD/CAD " + (feedName || "reference rate"); });
+    });
     document.querySelectorAll('[data-live-chg]').forEach(function (el) { var u = chg >= 0; el.textContent = (u ? "\u25b2 +" : "\u25bc \u2212") + fmtN(Math.abs(chg), 2) + "%"; el.className = "live-chg " + (u ? "up" : "dn"); });
     if (typeof window.fxIntradaySVG === "function") document.querySelectorAll('[data-live-chart]').forEach(function (el) { el.innerHTML = window.fxIntradaySVG(window.fxIntradayPoints(ticks)); });
     var fresh = Date.now() - liveTickAt < 90000, chip = $("fx-spot-chip");

@@ -150,7 +150,7 @@
       when = /end-of-day/.test(q) ? "close " + d : (sameDay ? "" : d + " ") + tClock(i.ts) + " ET";
     }
     var lab = /end-of-day/.test(q) ? "official" : q.replace(" · contract roll", "");
-    return '<span class="wq ' + c + '" title="' + esc(i.provider + " · source bar time " + tDate(i.ts) + " ET" + (i.delay_min != null ? " · " + nf(i.delay_min, 0) + " min old at the last server run" : "")) + '">' +
+    return '<span class="wq ' + c + '" title="' + esc("source bar time " + tDate(i.ts) + " ET") + '">' +
       esc(lab) + (when ? ' · <span class="wqtm">' + esc(when) + "</span>" : "") + (ms != null && !/end-of-day/.test(q) ? " · " + ago(ms) : "") + (i.roll ? ' <b title="' + esc(i.roll.note) + '">ROLL</b>' : "") + "</span>";
   }
   function spark(a) {
@@ -178,7 +178,7 @@
       '<td class="r">' + (i.kind === "price" ? '<span class="' + cl(i.chg) + '">' + sg(i.chg, i.dec) + "</span>" : "") + "</td>" +
       '<td class="r">' + chgCell(i) + "</td>" +
       '<td class="r">' + (i.high != null ? nf(i.high, i.dec) : "—") + "</td><td class=\"r\">" + (i.low != null ? nf(i.low, i.dec) : "—") + "</td>" +
-      "<td>" + range52(i) + '<div class="wbs">' + badges(i) + "</div></td><td>" + spark(i.spark) + '</td><td><small class="wprov">' + esc(String(i.provider || "").replace(" (delayed)", " · delayed")) + "</small></td></tr>";
+      "<td>" + range52(i) + '<div class="wbs">' + badges(i) + "</div></td><td>" + spark(i.spark) + "</td></tr>";
   }
   var GROUPS = ["Indices", "FX", "Metals", "Energy", "Industrial & Ags", "Rates & Vol"];
   function marketsHTML() {
@@ -193,11 +193,11 @@
       var rows = list.filter(function (i) { return i.group === g; });
       if (g === "Indices") rows.sort(function (a, b) { return ["Asia-Pacific", "Europe", "Americas"].indexOf(a.region) - ["Asia-Pacific", "Europe", "Americas"].indexOf(b.region); });
       if (!rows.length) return "";
-      return '<tr class="wgh"><td colspan="10">' + ({ Indices: "Equity indices", FX: "Currencies" }[g] || g) + " " + asOf(rows) + "</td></tr>" + rows.map(rowHTML).join("");
+      return '<tr class="wgh"><td colspan="9">' + ({ Indices: "Equity indices", FX: "Currencies" }[g] || g) + " " + asOf(rows) + "</td></tr>" + rows.map(rowHTML).join("");
     }).join("");
     return '<div class="tile wide"><h2>All markets <span class="h2note">— last price, change, today’s range, 52-week position · exact source time (Toronto) and age under each status</span></h2>' + asOf(list, "blk") + filt +
-      '<div class="wtw"><table class="wt"><thead><tr><th>Market</th><th>Status · source time</th><th class="r">LTP</th><th class="r">Chg</th><th class="r">% Chg</th><th class="r">High</th><th class="r">Low</th><th>52-week range</th><th>30d</th><th>Provider</th></tr></thead><tbody>' +
-      (body || '<tr><td colspan="10" class="neu">No markets match the filter.</td></tr>') + "</tbody></table></div>" +
+      '<div class="wtw"><table class="wt"><thead><tr><th>Market</th><th>Status · source time</th><th class="r">LTP</th><th class="r">Chg</th><th class="r">% Chg</th><th class="r">High</th><th class="r">Low</th><th>52-week range</th><th>30d</th></tr></thead><tbody>' +
+      (body || '<tr><td colspan="9" class="neu">No markets match the filter.</td></tr>') + "</tbody></table></div>" +
       '<div class="stamp">LTP = last traded/quoted price · % change vs the previous official close (yields and spreads in basis points) · high/low = current session · 52-week range from daily highs/lows · badges: NEW 52W HIGH/LOW when today’s range breaks the prior 52-week extreme, “% from” when within 5% · ROLL = continuous futures symbol switched contracts; change measured against that contract’s own previous close</div></div>';
   }
   function sessionsHTML() {
@@ -286,7 +286,7 @@
       '<div class="stat"><div class="k">Coverage</div><div class="v">' + H.ok + " / " + H.expected + '</div><div class="s">instruments returned</div></div>' +
       '<div class="stat"><div class="k">Page poll</div><div class="v">' + (lastOk ? ago(Date.now() - lastOk) + " ago" : "—") + '</div><div class="s">checks every 2 min while open</div></div>' +
       '<div class="stat"><div class="k">Alert delivery</div><div class="v">' + esc(H.webhook || "—") + '</div><div class="s">webhook (server)</div></div></div>' +
-      '<p class="note">' + esc(W.provider || "") + "</p>" +
+
       (H.failed && H.failed.length ? "<h3 class=\"mp-h\">Not returned by the provider this run</h3>" + H.failed.map(function (f) { return '<div class="kv"><span class="kk">' + esc(f.id) + " (" + esc(f.sym) + ')</span><span class="vv">' + esc(f.error) + "</span></div>"; }).join("") : "") +
       (H.gaps && H.gaps.length ? "<h3 class=\"mp-h\">Known coverage gaps</h3>" + H.gaps.map(function (g) { return '<div class="kv"><span class="kk">' + esc(g.name) + '</span><span class="vv">' + esc(g.why) + "</span></div>"; }).join("") : "") +
       '<div class="stamp">Source-data age and polling time are shown separately: “delayed · 14m” means the last bar (by the source’s own timestamp; 5-min bars are stamped at the bar’s start) is 14 minutes old right now, not that the page polled 14 minutes ago · the server runs every 15 min Sun–Fri (UTC) · a market open longer than ' + ((W.thresholds || {}).stale_after_min_when_open || 45) + " min without a new bar is marked stale and never alerts</div></div>";
