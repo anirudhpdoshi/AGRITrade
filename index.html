@@ -848,6 +848,9 @@ table.oi-mtab td.oi-asof{font-family:inherit;font-size:11px;color:var(--muted);t
 table.fl-tab small{color:var(--faint);font-size:10px}
 @media (max-width:1020px){.fl-top,.fl-body{grid-template-columns:1fr}}
 @media (max-width:760px){.fl-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.fl-ck{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px}.fl-ck>div{display:grid;grid-template-columns:18px minmax(0,1fr);gap:2px 6px;font-size:12.5px}.fl-ck>div>span{grid-row:span 2;font-weight:700}.fl-ck small{grid-column:2;color:var(--muted);font-size:11px}
+.fl-read h3{margin-top:10px}
+@media (max-width:760px){.fl-ck{grid-template-columns:1fr}}
 </style>
 </head>
 <body class="locked">
@@ -1991,10 +1994,13 @@ function flowSessions(key){
   var R=rollData(key), N=R.dailyN, g=DATA.grains[key], hist={}; (g.history||[]).forEach(function(h){ hist[h.d.slice(5,10)]=h.s; });
   var L=N[N.length-1], useDef=L[3]>=40, dF=daysToFnd(key);
   function px(r){ var f=r[5]!=null?r[5]:hist[r[0]]; if(f==null) return null; return useDef?(r[6]!=null?r[6]:f-r[4]/100):f; }
-  var out=[];
+  var out=[], FV=(DATA.flow_vol&&DATA.flow_vol[key])||{}, vf=FV[R.front]||{}, vd=FV[R.def]||{};
   for(var i=1;i<N.length;i++){ var a=N[i-1], b=N[i], pa=px(a), pb=px(b); if(pa==null||pb==null) continue;
     var dOI=(b[1]+b[2])-(a[1]+a[2]), dP=(pb-pa)*100, q=Math.abs(dP)<0.25?'FL':dP>0?(dOI>0?'NL':'SC'):(dOI>0?'NS':'LL');
-    out.push({d:b[0], lab:MON3[b[0].slice(0,2)]+' '+b[0].slice(3), P:pb, dP:dP, dOI:dOI, dF:b[1]-a[1], dD:b[2]-a[2], q:q, prelim:/^P/.test(R.src[b[0]]||'')}); }
+    out.push({d:b[0], lab:MON3[b[0].slice(0,2)]+' '+b[0].slice(3), P:pb, dP:dP, dOI:dOI, dF:b[1]-a[1], dD:b[2]-a[2], q:q, prelim:/^P/.test(R.src[b[0]]||''), vol:(vf[b[0]]!=null||vd[b[0]]!=null)?(vf[b[0]]||0)+(vd[b[0]]||0):null}); }
+  /* relative volume: session volume ÷ median of up to 20 prior sessions (needs at least 5) */
+  out.forEach(function(x,i){ if(x.vol==null) return; var prev=out.slice(Math.max(0,i-20),i).filter(function(y){ return y.vol!=null; }).map(function(y){ return y.vol; });
+    if(prev.length>=5) x.rv=x.vol/pfMedian(prev); });
   /* delivery window: the last 10 sessions before first notice — falling OI there is partly delivery avoidance */
   if(dF!=null){ var lastIdx=out.length-1; out.forEach(function(x,i){ x.dw=(dF+(lastIdx-i))<=14 && x.dOI<0; }); }
   return {ses:out, ref:useDef?R.def:R.front, front:R.front, def:R.def, R:R};
@@ -2004,7 +2010,7 @@ function flowStats(key, n){
   var F=flowSessions(key), all=F.ses, w=all.slice(-n); if(w.length<3) return null;
   var mo=pfMedian(all.map(function(x){ return Math.abs(x.dOI); }))||1, mp=pfMedian(all.map(function(x){ return Math.abs(x.dP); }))||1;
   var num=0, den=0, mix={NL:0,SC:0,NS:0,LL:0,FL:0};
-  w.forEach(function(x,i){ var k=Math.sqrt(Math.min(3,Math.abs(x.dOI)/mo)*Math.min(3,Math.abs(x.dP)/mp))*(x.dw?0.5:1), r=0.5+0.5*(i+1)/w.length;
+  w.forEach(function(x,i){ var k=Math.sqrt(Math.min(3,Math.abs(x.dOI)/mo)*Math.min(3,Math.abs(x.dP)/mp))*(x.dw?0.5:1)*(x.rv?Math.sqrt(Math.max(0.6,Math.min(1.6,x.rv))):1), r=0.5+0.5*(i+1)/w.length;
     x.k=k; num+=FLOWQ[x.q].w*k*r; den+=k*r; mix[x.q]+=k*r; });
   var score=den?Math.round(100*num/den):0, tot=den||1; Object.keys(mix).forEach(function(q){ mix[q]=mix[q]/tot*100; });
   function avg(q){ var L=w.filter(function(x){ return x.q===q; }), s=0, sp=0; L.forEach(function(x){ s+=Math.abs(x.dOI); sp+=Math.abs(x.dOI)*x.P; }); return L.length?{n:L.length, oi:s, px:sp/s}:null; }
@@ -2012,8 +2018,41 @@ function flowStats(key, n){
   var sameSign=1; for(var j=w.length-2;j>=0&&Math.sign(FLOWQ[w[j].q].w)===Math.sign(FLOWQ[last.q].w)&&FLOWQ[last.q].w!==0;j--) sameSign++;
   var P0=w[0].P-w[0].dP/100, dOIsum=w.reduce(function(a,x){ return a+x.dOI; },0);
   return {key:key, n:w.length, w:w, all:all, ref:F.ref, front:F.front, def:F.def, score:score, mix:mix, ns:avg('NS'), nl:avg('NL'), last:last, streak:streak, sameSign:sameSign,
-    P:last.P, chg:(last.P-P0)*100, dOI:dOIsum, dw:w.some(function(x){ return x.dw; })};
+    P:last.P, chg:(last.P-P0)*100, dOI:dOIsum, dw:w.some(function(x){ return x.dw; }),
+    vconf:(function(){ var b=w.filter(function(x){ return (x.q==='NL'||x.q==='NS')&&x.rv; }); if(!b.length) return null; var hi=b.filter(function(x){ return x.rv>=1; }); return {n:b.length, hi:hi.length}; })(),
+    climax:w.slice(-3).filter(function(x){ return x.rv&&x.rv>=1.8; })[0]||null, hasVol:w.some(function(x){ return x.rv; })};
 }
+/* WHO is behind the flow: CFTC weekly (managed money = trend-following funds, producer/merchant = commercial hedgers),
+   fund crowding (3-year percentile) and the harvest-hedging season */
+function flowWho(key, S){
+  var g=DATA.grains[key], K=g.cftc_stats&&g.cftc_stats.kpi; if(!K) return null;
+  var m=+new Date().toLocaleDateString('en-CA',{timeZone:'America/Toronto'}).slice(5,7), harvest=key==='wheat'?(m>=6&&m<=8):(m>=9&&m<=11);
+  var mm=K.d1, cm=K.comm_d1, pct=K.cot3, out=[];
+  if(mm!=null&&cm!=null){
+    if(mm<0&&cm>0) out.push('Funds (managed money) <b>sold '+fmt(-mm)+'</b> net in the week to '+esc(fmtShortDate(K.date))+' while commercial hedgers <b>bought back '+fmt(cm)+'</b> — the selling is speculative and commercials are taking the other side, which tends to cushion declines.');
+    else if(mm>0&&cm<0) out.push('Funds <b>bought '+fmt(mm)+'</b> net in the week to '+esc(fmtShortDate(K.date))+' while commercials <b>sold '+fmt(-cm)+'</b> into it — a fund-led move with hedgers selling the rally.');
+    else if(mm<0&&cm<0) out.push('Both funds ('+sgn(mm,0)+') and commercials ('+sgn(cm,0)+') added to the sell side in the week to '+esc(fmtShortDate(K.date))+' — broad selling'+(harvest?', including harvest hedging':'')+'.');
+    else out.push('Both funds ('+sgn(mm,0)+') and commercials ('+sgn(cm,0)+') bought in the week to '+esc(fmtShortDate(K.date))+'.');
+  }
+  if(harvest&&S.mix.NS>=25&&cm!=null&&cm<0) out.push('<span class="neu">Harvest season: part of the new shorts is likely farmer/elevator hedging (commercials sold), which is price-insensitive and not a bearish bet in itself.</span>');
+  if(pct!=null){ if(pct>=85) out.push('Funds are <b>crowded long</b> ('+ordn(pct)+' percentile of 3 years) — further long liquidation is the main downside risk.');
+    else if(pct<=15) out.push('Funds are <b>crowded short</b> ('+ordn(pct)+' percentile of 3 years) — the market is vulnerable to short covering.');
+    else out.push('Fund positioning is mid-range ('+ordn(pct)+' percentile of 3 years) — not crowded either way.'); }
+  return {lines:out, mm:mm, cm:cm, pct:pct, date:K.date, harvest:harvest};
+}
+function flowChecks(key, S, W, multi){
+  var dir=Math.sign(S.score), c=[];
+  var agree=multi.length>1&&multi.every(function(m){ return Math.sign(m[1])===dir&&Math.abs(m[1])>=15; });
+  c.push(['Windows agree', agree?1:multi.filter(function(m){ return Math.sign(m[1])===dir; }).length>=multi.length-1?0.5:0, multi.map(function(m){ return m[0]+'d '+(m[1]>0?'+':'')+m[1]; }).join(' · ')]);
+  if(S.vconf) c.push(['Volume confirms new positions', S.vconf.hi/S.vconf.n>=0.6?1:S.vconf.hi/S.vconf.n>=0.4?0.5:0, S.vconf.hi+' of '+S.vconf.n+' position-building sessions on above-average volume']);
+  else c.push(['Volume confirms new positions', null, S.hasVol?'no position-building sessions in window':'volume history building']);
+  if(W&&W.mm!=null) c.push(['Funds (CFTC) agree', Math.sign(W.mm)===dir?1:0, 'managed money '+sgn(W.mm,0)+' w/w to '+fmtShortDate(W.date)]);
+  if(W&&W.pct!=null){ var crowdedWith=(dir<0&&W.pct<=15)||(dir>0&&W.pct>=85); c.push(['Not crowded in the signal’s direction', crowdedWith?0:1, 'funds at '+ordn(W.pct)+' percentile (3y)']); }
+  var got=c.filter(function(x){ return x[1]!=null; }), sc=got.reduce(function(a,x){ return a+x[1]; },0), mx=got.length;
+  var conf=Math.abs(S.score)<15?'Low':sc>=mx-0.5?(Math.abs(S.score)>=35?'High':'Medium'):sc>=mx/2?'Medium':'Low';
+  return {list:c, conf:conf, sc:sc, mx:mx};
+}
+function ordn(n){ n=Math.round(n); var t=n%100, u=n%10; return n+(t>=11&&t<=13?'th':u===1?'st':u===2?'nd':u===3?'rd':'th'); }
 function flowBias(sc){ return sc>=35?['BULLISH','up']:sc>=15?['LEANING BULLISH','up']:sc<=-35?['BEARISH','dn']:sc<=-15?['LEANING BEARISH','dn']:['NEUTRAL','neu']; }
 function pflowRead(key, S){
   var g=DATA.grains[key], P=S.P, out=[], B=flowBias(S.score), dom=Object.keys(S.mix).filter(function(q){ return q!=='FL'; }).sort(function(a,b){ return S.mix[b]-S.mix[a]; })[0];
@@ -2037,7 +2076,13 @@ function pflowRead(key, S){
   var lw=S.w.slice(-3), early=S.w.slice(0,-3), avgK=function(L){ return L.length?L.reduce(function(a,x){ return a+x.k; },0)/L.length:0; };
   if(early.length&&avgK(lw)<0.6*avgK(early)&&S.sameSign>=3) out.push('The last 3 sessions are <b>weaker</b> than the window average — the move may be tiring.');
   if(early.length&&avgK(lw)>1.4*avgK(early)) out.push('The last 3 sessions are <b>stronger</b> than the window average — the flow is accelerating.');
+  var l2=S.w.slice(-2), avgAbs=S.w.reduce(function(a,x){ return a+Math.abs(x.dOI); },0)/S.w.length;
+  if(dom==='LL'&&l2.length===2&&l2.every(function(x){ return Math.abs(x.dOI)<0.35*avgAbs; })) out.push('Open interest has <b>stopped falling</b> in the last 2 sessions — classic sign the liquidation is ending and a base can form.');
+  if(S.chg>0&&S.w.slice(-3).reduce(function(a,x){ return a+x.dOI; },0)<=0&&S.w.length>=6) out.push('Price is up but open interest has <b>flattened or fallen</b> over the last 3 sessions — a warning that the rally is losing new buyers.');
+  if(S.climax) out.push('<b>Volume spike</b> on '+S.climax.lab+' ('+fmt(S.climax.rv,1)+'× normal) during '+FLOWQ[S.climax.q].l.toLowerCase()+' — volume usually peaks at turning points; watch the next sessions for a reversal.');
   if(S.dw) out.push('<span class="neu">Delivery window: falling open interest near first notice is partly longs avoiding delivery or rolling past '+esc(S.def)+' — counted at half strength.</span>');
+  if(pw&&P<pw) out.push('Price ('+fmt(P,4)+') is <b>below the put wall '+fmt(pw,2)+'</b> — the strike with the most put open interest has given way as support; dealer hedging can add to selling until price recovers it.');
+  if(cw&&P>cw) out.push('Price ('+fmt(P,4)+') is <b>above the call wall '+fmt(cw,2)+'</b> — the main call-OI resistance has given way.');
   /* where price is likely to be tested next */
   var lv=[];
   if(B[1]==='dn'){ lv.push('downside reference '+fmt(P-s5,2)+' (5-session 1σ from IV)'); if(pw&&pw<P) lv.push('put wall '+fmt(pw,2)); if(S.ns) lv.push('bias stays down while below '+fmt(S.ns.px,2)); }
@@ -2064,7 +2109,7 @@ function flowSVG(S, key){
     s+='<rect x="'+(cx-bw2/2).toFixed(1)+'" y="'+(x.dOI>=0?z-h:z).toFixed(1)+'" width="'+bw2.toFixed(1)+'" height="'+Math.max(1,h).toFixed(1)+'" fill="'+q.c+'"'+(x.dw?' opacity=".55"':'')+'/>';
     s+='<circle cx="'+cx.toFixed(1)+'" cy="'+Y(x.P).toFixed(1)+'" r="4.2" fill="'+q.c+'" stroke="#0b1220" stroke-width="1.2"/>';
     if(i%Math.ceil(n/10)===0||i===n-1) s+='<text x="'+cx.toFixed(1)+'" y="'+(H-8)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+x.lab+'</text>';
-    var tip=x.lab+(x.prelim?' (prelim)':'')+' · '+q.l+'|'+esc(S.ref)+' '+x.P.toFixed(4)+' ('+sgn(x.dP,1,'¢')+')|Open interest '+sgn(x.dOI,0)+' (front '+sgn(x.dF,0)+' · next '+sgn(x.dD,0)+')'+(x.dw?'|delivery window — half weight':'');
+    var tip=x.lab+(x.prelim?' (prelim)':'')+' · '+q.l+'|'+esc(S.ref)+' '+x.P.toFixed(4)+' ('+sgn(x.dP,1,'¢')+')|Open interest '+sgn(x.dOI,0)+' (front '+sgn(x.dF,0)+' · next '+sgn(x.dD,0)+')'+(x.vol!=null?'|Volume '+fmt(x.vol)+(x.rv?' ('+fmt(x.rv,1)+'× normal)':''):'')+(x.dw?'|delivery window — half weight':'');
     s+='<rect class="oi-hit" x="'+(PL+i*bw).toFixed(1)+'" y="'+PT+'" width="'+bw.toFixed(1)+'" height="'+(H-PB-PT)+'" fill="transparent" data-tip="'+tip+'"/>'; });
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Price and open-interest flow by session">'+s+'</svg>';
 }
@@ -2072,14 +2117,13 @@ function flowTileHTML(key){
   var n=FLOWN[key]||10, S=flowStats(key, n); if(!S) return '<div class="tile wide"><h2>Position flow signal</h2><p class="note">Needs at least 3 sessions of open-interest data.</p></div>';
   var avail=S.all.length, R=pflowRead(key, S), B=R.bias, wins=[5,10,15,20].filter(function(x){ return x<=avail; });
   var multi=wins.map(function(x){ var T=flowStats(key,x); return [x,T.score]; });
-  var agree=multi.every(function(m){ return Math.sign(m[1])===Math.sign(S.score)&&Math.abs(m[1])>=15; });
-  var conf=Math.abs(S.score)>=35&&agree?'High':Math.abs(S.score)>=15&&(agree||multi.filter(function(m){ return Math.sign(m[1])===Math.sign(S.score); }).length>=multi.length-1)?'Medium':'Low';
+  var Who=flowWho(key, S), CK=flowChecks(key, S, Who, multi), conf=CK.conf;
   var turn=multi.length>=2&&Math.sign(multi[0][1])!==Math.sign(multi[multi.length-1][1])&&Math.abs(multi[0][1])>=15;
   function btn(v){ return '<button data-flown="'+v+'" data-k="'+key+'" aria-pressed="'+(n===v)+'">'+v+' SESSIONS</button>'; }
   var mixBar='<div class="fl-mix">'+['NL','SC','LL','NS'].map(function(q){ return S.mix[q]>0.5?'<span style="width:'+S.mix[q].toFixed(1)+'%;background:'+FLOWQ[q].c+'" title="'+FLOWQ[q].l+' '+fmt(S.mix[q],0)+'%"></span>':''; }).join('')+'</div>'+
     '<div class="fl-mixl">'+['NL','SC','LL','NS'].map(function(q){ return '<span><i style="background:'+FLOWQ[q].c+'"></i>'+FLOWQ[q].l+' '+fmt(S.mix[q],0)+'%</span>'; }).join('')+'</div>';
   var rows=S.w.slice().reverse().map(function(x){ var q=FLOWQ[x.q];
-    return '<tr><td>'+x.lab+(x.prelim?' <small>prelim</small>':'')+'</td><td>'+x.P.toFixed(4)+'</td><td class="'+cls(x.dP)+'">'+sgn(x.dP,1,'¢')+'</td><td class="'+cls(x.dOI)+'">'+sgn(x.dOI,0)+'</td><td class="fl-sm">'+sgn(x.dF,0)+' / '+sgn(x.dD,0)+'</td><td><span class="fl-q" style="--qc:'+q.c+'">'+q.l+'</span>'+(x.dw?' <small>½ wt</small>':'')+'</td></tr>'; }).join('');
+    return '<tr><td>'+x.lab+(x.prelim?' <small>prelim</small>':'')+'</td><td>'+x.P.toFixed(4)+'</td><td class="'+cls(x.dP)+'">'+sgn(x.dP,1,'¢')+'</td><td class="'+cls(x.dOI)+'">'+sgn(x.dOI,0)+'</td><td class="fl-sm">'+sgn(x.dF,0)+' / '+sgn(x.dD,0)+'</td><td class="fl-sm">'+(x.vol!=null?fmt(x.vol)+(x.rv?' <small>'+fmt(x.rv,1)+'×</small>':''):'—')+'</td><td><span class="fl-q" style="--qc:'+q.c+'">'+q.l+'</span>'+(x.dw?' <small>½ wt</small>':'')+'</td></tr>'; }).join('');
   var cf=DATA.grains[key].cftc||[], c1=cf[cf.length-1], c0=cf[cf.length-2], mmD=c1&&c0?c1.net-c0.net:null;
   var mmAgree=mmD==null?'':(Math.sign(mmD)===Math.sign(S.score)?'agrees':'disagrees');
   return '<div class="tile wide fl-tile" data-src="options"><div class="tile-head"><h2>Position flow signal <span class="h2note">— who is building positions, at what price, and which way it points · '+esc(GMETA[key].name)+'</span></h2>'+
@@ -2096,9 +2140,12 @@ function flowTileHTML(key){
     '</div></div>'+mixBar+
     '<div class="fl-body"><div class="fl-chart">'+flowSVG(S,key)+'<div class="legend">'+['NL','SC','LL','NS'].map(function(q){ return '<span><span class="sw" style="background:'+FLOWQ[q].c+'"></span>'+FLOWQ[q].l+'</span>'; }).join('')+'<span>dots = '+esc(S.ref)+' settle · dashed = average price where the window’s new shorts / longs were built</span></div></div>'+
     '<div class="fl-read"><h3>What the flow is saying</h3><ul>'+R.lines.map(function(l){ return '<li>'+l+'</li>'; }).join('')+'</ul>'+
+      (Who?'<h3>Who is behind it <span class="h2note">— CFTC weekly</span></h3><ul>'+Who.lines.map(function(l){ return '<li>'+l+'</li>'; }).join('')+'</ul>':'')+
+      '<h3>Confirmation checklist <span class="h2note">— confidence '+conf+' ('+fmt(CK.sc,1)+' of '+CK.mx+')</span></h3><div class="fl-ck">'+CK.list.map(function(x){ var ic=x[1]==null?'○':x[1]>=1?'✓':x[1]>0?'◐':'✗', c=x[1]==null?'neu':x[1]>=1?'up':x[1]>0?'neu':'dn';
+        return '<div><span class="'+c+'">'+ic+'</span><b>'+x[0]+'</b><small>'+esc(x[2])+'</small></div>'; }).join('')+'</div>'+
       '<div class="fl-lv"><b>Levels to watch:</b> '+R.levels.join(' · ')+'</div></div></div>'+
-    '<details class="fl-det"><summary>Session by session ('+S.n+')</summary><table class="oi-mtab fl-tab"><thead><tr><th>Date</th><th>'+esc(S.ref)+'</th><th>Δ price</th><th>Δ OI</th><th>front / next</th><th>Read</th></tr></thead><tbody>'+rows+'</tbody></table></details>'+
-    '<div class="stamp">How it works: each session is classed by price change × change in combined front + next-month open interest (price↑OI↑ new longs, price↓OI↑ new shorts, price↑OI↓ short covering, price↓OI↓ long liquidation). Combined OI cancels pure rolling; price is one contract ('+esc(S.ref)+(S.ref===S.def?', the next month, because the roll is past 40%':', the front month')+') so it never jumps by the spread. Score = direction weight (new positions ±1, exits ±½) × size of the OI change and price move vs their 20-session medians, recent sessions weighted more; ±35 = clear signal. Shorts/longs “built at” = OI-weighted average settle on the days those positions were added. Through '+esc(S.last.lab)+(S.last.prelim?' (preliminary OI)':'')+' · a reading of positioning, not a forecast or trading advice.</div></div>';
+    '<details class="fl-det"><summary>Session by session ('+S.n+')</summary><table class="oi-mtab fl-tab"><thead><tr><th>Date</th><th>'+esc(S.ref)+'</th><th>Δ price</th><th>Δ OI</th><th>front / next</th><th>Volume</th><th>Read</th></tr></thead><tbody>'+rows+'</tbody></table></details>'+
+    '<div class="stamp">How it works: each session is classed by price change × change in combined front + next-month open interest (price↑OI↑ new longs, price↓OI↑ new shorts, price↑OI↓ short covering, price↓OI↓ long liquidation). Combined OI cancels pure rolling; price is one contract ('+esc(S.ref)+(S.ref===S.def?', the next month, because the roll is past 40%':', the front month')+') so it never jumps by the spread. Every contract has a buyer and a seller, so rising OI is never “longs” alone — the price direction shows which side opened the new positions aggressively. Score = direction weight (new positions ±1, exits ±½) × size of the OI change and price move vs their medians × relative volume (front + next, IB daily bars), recent sessions weighted more; ±35 = clear signal. Confidence comes from the checklist: windows agreeing, volume confirming, CFTC funds agreeing, and not being crowded in the signal’s direction. Shorts/longs “built at” = OI-weighted average settle on the days those positions were added. Through '+esc(S.last.lab)+(S.last.prelim?' (preliminary OI)':'')+' · a reading of positioning, not a forecast or trading advice.</div></div>';
 }
 document.addEventListener('click', function(e){ var b=e.target.closest&&e.target.closest('[data-flown]'); if(!b) return; var k=b.getAttribute('data-k'); FLOWN[k]=+b.getAttribute('data-flown');
   try{ localStorage.setItem('desk.flown', JSON.stringify(FLOWN)); }catch(x){} var t=b.closest('.fl-tile'); if(t) t.outerHTML=flowTileHTML(k); });
@@ -2263,7 +2310,9 @@ function oiMonthsHTML(key){
 /* change in open interest by strike (bars above zero = contracts added, below = closed) */
 function oiDeltaSVG(ds, prev, cp, key, lab){
   var shC=cp!=='put', shP=cp!=='call', P={}; prev.rows.forEach(function(r){ P[r[0]]=r; });
-  var rows=ds.rows.filter(function(r){ return P[r[0]]; }).map(function(r){ var q=P[r[0]]; return [r[0], r[1]-q[1], r[2]-q[2], r[1], r[2], q[1], q[2]]; });
+  var rows=ds.rows.filter(function(r){ return P[r[0]]; }).map(function(r){ var q=P[r[0]]; return [r[0], r[1]-q[1], r[2]-q[2], r[1], r[2], q[1], q[2], (r[3]!=null&&q[3]!=null)?r[3]-q[3]:null, (r[4]!=null&&q[4]!=null)?r[4]-q[4]:null]; });
+  /* option OI never shows who bought or wrote: OI up with that strike's IV up = buyers paying up (bought); OI up with IV down = sellers (written) */
+  function side(dOI, dIV){ if(dIV==null||Math.abs(dOI)<50) return ''; if(dOI>0) return dIV>0.2?' · likely bought (IV '+sgn(dIV,1)+')':dIV<-0.2?' · likely written (IV '+sgn(dIV,1)+')':' · IV flat'; return dIV<-0.2?' · closing, IV '+sgn(dIV,1):''; }
   if(!rows.length) return '<p class="note">No overlapping strikes between the two pulls.</p>';
   var W=760,H=240,PL=50,PR=14,PT=14,PB=30, pw=W-PL-PR, ph=H-PT-PB, mx=0;
   rows.forEach(function(r){ mx=Math.max(mx, shC?Math.abs(r[1]):0, shP?Math.abs(r[2]):0); }); mx=(mx||1)*1.1;
@@ -2276,7 +2325,7 @@ function oiDeltaSVG(ds, prev, cp, key, lab){
     if(shC&&r[1]) s+='<rect x="'+x.toFixed(1)+'" y="'+Math.min(Y(r[1]),Z).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+Math.abs(Y(r[1])-Z).toFixed(1)+'" fill="'+(r[1]>0?'#3fb97f':'#1f7a52')+'"/>';
     if(shP&&r[2]) s+='<rect x="'+(cp==='both'?x+w+1:x).toFixed(1)+'" y="'+Math.min(Y(r[2]),Z).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+Math.abs(Y(r[2])-Z).toFixed(1)+'" fill="'+(r[2]>0?'#e0655f':'#7a2f2b')+'"/>';
     if(i%step===0) s+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(PT+ph+16)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+r[0].toFixed(2)+'</text>';
-    var tip=esc(lab)+' · strike '+r[0].toFixed(2)+'|Calls '+fmt(r[3])+' ('+sgn(r[1],0)+' vs '+fmt(r[5])+')|Puts '+fmt(r[4])+' ('+sgn(r[2],0)+' vs '+fmt(r[6])+')|vs '+fmtShortDate(prev.date)+' close';
+    var tip=esc(lab)+' · strike '+r[0].toFixed(2)+'|Calls '+fmt(r[3])+' ('+sgn(r[1],0)+' vs '+fmt(r[5])+')'+side(r[1],r[7])+'|Puts '+fmt(r[4])+' ('+sgn(r[2],0)+' vs '+fmt(r[6])+')'+side(r[2],r[8])+'|vs '+fmtShortDate(prev.date)+' close';
     s+='<rect class="oi-hit" x="'+x.toFixed(1)+'" y="'+PT+'" width="'+bw.toFixed(1)+'" height="'+ph+'" fill="transparent" data-tip="'+tip+'"/>';
   });
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Change in open interest by strike">'+s+'</svg>';
