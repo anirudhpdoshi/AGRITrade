@@ -248,7 +248,7 @@
     var L = inst(), px = L.filter(function (i) { return i.kind === "price" && i.pct != null && !/^vix/.test(i.id); });
     var up = px.slice().sort(function (a, b) { return b.pct - a.pct; }), dn = px.slice().sort(function (a, b) { return a.pct - b.pct; });
     var idx = L.filter(function (i) { return i.group === "Indices" && i.pct != null; }), adv = idx.filter(function (i) { return i.pct > 0; }).length;
-    var g = function (id) { return L.filter(function (i) { return i.id === id; })[0]; }, k = function (id, lab) { var i = g(id); return i ? '<div class="kpi"><div class="kpi-k">' + lab + '</div><div class="kpi-v">' + last(i) + '</div><div class="kpi-s">' + chgCell(i) + " · " + age(i) + "</div></div>" : ""; };
+    var g = function (id) { return L.filter(function (i) { return i.id === id; })[0]; }, k = function (id, lab) { var i = g(id); return i ? '<div class="kpi"><div class="kpi-k">' + lab + '</div><div class="kpi-v">' + last(i) + '</div><div class="kpi-s">' + chgCell(i) + '</div><div class="kpi-t">' + age(i) + "</div></div>" : ""; };
     var regs = ["Asia-Pacific", "Europe", "Americas"].map(function (r) {
       var xs = idx.filter(function (i) { return i.region === r; }), av = xs.length ? xs.reduce(function (s, i) { return s + i.pct; }, 0) / xs.length : null;
       return '<div class="reg"><div class="regh">' + r + ' <span class="' + cl(av) + '">' + sg(av, 2, "%") + "</span></div>" + '<div class="regts">' + asOf(xs) + "</div>" + xs.map(moverRow).join("") + "</div>";
@@ -401,7 +401,7 @@
   });
   function active() { var P = document.getElementById("panel-world"); return P && P.classList.contains("active"); }
   setInterval(function () { if (!window.DESK_LOCKED && (active() || Date.now() - lastTry > 600000)) poll(); }, 30000);
-  setInterval(function () { if (active()) { paintHead(); var cx = document.getElementById("wCtx"); if (cx) cx.innerHTML = ctxHTML(); if (W && Date.now() > nextRun(Date.parse(W.updated_at) + 60000) + LAND_MS) poll(true); if (V.sub === "sessions" && W) render(); } }, 60000);
+  setInterval(function () { if (active()) { paintHead(); var cx = document.getElementById("wCtx"); if (cx) cx.innerHTML = ctxHTML(); if (W && Date.now() > nextRun(Date.parse(W.updated_at) + 60000) + LAND_MS) poll(true); if (W && (V.sub === "sessions" || ((V.sub === "overview" || V.sub === "markets") && !(document.activeElement && document.activeElement.matches && document.activeElement.matches("[data-wq]"))))) render(); } }, 60000);   /* keep source-time ages current */
   window.addEventListener("desk:unlock", function () { poll(true); });
   document.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("#tabbtn-world"); if (b) { render(); poll(); } });
   window.WORLD = { poll: poll, render: render, status: status, flag: fl, _data: function () { return W; } };
