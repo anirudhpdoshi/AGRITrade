@@ -146,6 +146,22 @@ def main():
             except Exception as e:
                 print(f"[{name}] failed: {e}")
         it += 1
+        # central-bank decision first, and published at once: a slow release fetch below must never hold it back
+        try:
+            if PW.watch(D, U.NOW, U.TOR):
+                D["meta"]["asof"]["policy_watch"] = U.iso(U.NOW)
+                rel_out["policy_watch"] = {"asof": U.iso(U.NOW), "set": {"policy_watch": D["policy_watch"]}}
+                if ok:
+                    early = payload(D)
+                    early["rel"] = rel_out
+                    try:
+                        publish({**early, "updated_at": U.iso(U.NOW), "ok": ok}, first)
+                        first = False
+                        print(U.iso(U.NOW), "published policy watch", D["policy_watch"].get("boc", {}).get("status"), D["policy_watch"].get("fed", {}).get("status"))
+                    except subprocess.CalledProcessError as e:
+                        print("publish failed:", e.stderr[-300:])
+        except Exception as e:
+            print("[policy watch] failed:", e)
         for name, (kind, fn, paths) in REL.items():
             if not U.recent_release(D, kind) or rel_done(D, name):
                 continue
