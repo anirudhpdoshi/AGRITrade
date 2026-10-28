@@ -1,0 +1,20 @@
+name: Symbol check
+# Manual diagnostic: which Yahoo symbols return fresh intraday data from a GitHub runner (prints only; publishes nothing).
+on:
+  workflow_dispatch:
+    inputs:
+      symbols:
+        description: "Space-separated symbols (blank = the built-in candidate list)"
+        required: false
+        default: ""
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip, cache-dependency-path: scripts/requirements.txt }
+      - run: pip install -r scripts/requirements.txt
+      - run: python scripts/diag_symbols.py ${{ inputs.symbols }} | tee -a "$GITHUB_STEP_SUMMARY"
