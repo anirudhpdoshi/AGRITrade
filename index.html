@@ -938,6 +938,9 @@ table.pi-tab td{vertical-align:top}table.pi-tab small{display:block;color:var(--
 .pi-tv{font-family:"IBM Plex Mono",monospace;text-align:right}.pi-prev{margin-top:10px}.pi-prev summary{cursor:pointer;color:#7dd8e6;font-size:12.5px}
 @media (max-width:1020px){.pi-strip{grid-template-columns:repeat(3,minmax(0,1fr))}.pi-3,.pi-2{grid-template-columns:1fr}}
 @media (max-width:760px){.pi-strip{grid-template-columns:repeat(2,minmax(0,1fr))}table.pi-tab{display:table!important}table.pi-tab thead{display:table-header-group!important}table.pi-tab tbody{display:table-row-group!important}table.pi-tab tr{display:table-row!important}table.pi-tab th,table.pi-tab td{display:table-cell!important}table.pi-tab td:before{content:none!important}}
+.oi-itm{font-size:12px;color:#e8d9a8;background:rgba(232,185,61,.08);border-left:3px solid #e8b93d;padding:5px 9px;margin:4px 0 2px;border-radius:4px}.oi-itm b{color:#fff}
+.oi-wk{margin-top:12px}.oi-wkr{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:6px 8px;border-bottom:1px dashed var(--line);font-size:12px;color:var(--muted)}.oi-wkr b{color:#fff}
+.oi-wkr.hot{background:rgba(232,185,61,.08);border-left:3px solid #e8b93d}.oi-hot{color:#e8b93d;font-weight:700}
 </style>
 </head>
 <body class="locked">
@@ -1258,12 +1261,18 @@ function applyWalls(k){
   ['near','far'].forEach(function(side){
     var n=g[side]; if(!n||!n.rows||!n.rows.length) return;
     if(!n.call_wall_any){ n.call_wall_any=n.call_wall; n.put_wall_any=n.put_wall; }
+    if(!n.wall_pull) n.wall_pull={cw:n.call_wall, pw:n.put_wall, U:n.underlying};   /* walls as stored by the morning pull — the tracking point */
     var rc=R.filter(function(r){ return r.contract===n.contract; })[0], U=L, src='live delayed quote';
     if(rc&&fr&&rc.contract!==fr.contract&&rc.settle!=null&&fr.settle!=null){ U=L+(rc.settle-fr.settle); src='live front price + '+rc.contract+'/'+fr.contract+' settled spread'; }
     if(!(U>0)) return;
     var cw=null, pw=null;
     n.rows.forEach(function(r){ if(r[0]>=U-1e-9&&(!cw||r[1]>cw[1])) cw=[r[0],r[1]]; if(r[0]<=U+1e-9&&(!pw||r[2]>pw[1])) pw=[r[0],r[2]]; });
     n.call_wall=cw||n.call_wall_any; n.put_wall=pw||n.put_wall_any; n.wall_ref=U; n.wall_ref_src=src;
+    /* wall shift since the morning pull: why it moved (price traded through the old wall, or open interest changed) */
+    var W0=n.wall_pull, sh={};
+    if(W0&&W0.pw&&Math.abs(W0.pw[0]-n.put_wall[0])>1e-6) sh.put={from:W0.pw[0], to:n.put_wall[0], why:U<W0.pw[0]-1e-9?'price broke below '+money2(W0.pw[0])+' — support moves down':'price rose — the nearest heavy put strike below is now higher'};
+    if(W0&&W0.cw&&Math.abs(W0.cw[0]-n.call_wall[0])>1e-6) sh.call={from:W0.cw[0], to:n.call_wall[0], why:U>W0.cw[0]+1e-9?'price broke above '+money2(W0.cw[0])+' — resistance moves up':'price fell — the nearest heavy call strike above is now lower'};
+    n.wall_shift=(sh.put||sh.call)?sh:null;
     if(side==='near'){ g.fan.call_wall=[n.call_wall[0], fmt(n.call_wall[1])]; g.fan.put_wall=[n.put_wall[0], fmt(n.put_wall[1])]; if(n.pcr!=null) g.fan.pcr=(+n.pcr).toFixed(2); }
   });
   g.oishift=oiShift(g);
@@ -1299,7 +1308,7 @@ function oiShiftHTML(g){
 function fanLevels(g, meta){
   var f=g.fan, L=f.intraday[0], w10=f.sig*Math.sqrt(10), ivH=L*f.iv_10d_rel;
   var lastH=g.history[g.history.length-1];
-  var cw=g.near.call_wall, pwl=g.near.put_wall, cl=meta.chainNear;
+  var cw=g.near.call_wall, pwl=g.near.put_wall, cl=meta.chainNear, WS=g.near.wall_shift;
   var E="#e8eef4", C99="#ff9d9d", CY="#38b6c9";
   var levels=[
     {key:"p3", name:"+3σ", label:"+3σ "+money2(L+3*w10), value:L+3*w10, color:E},
@@ -1316,11 +1325,14 @@ function fanLevels(g, meta){
     {key:"ci99m", name:"99% CI −", label:"99% CI "+money2(L-2.58*w10), value:L-2.58*w10, color:C99},
     {key:"m3", name:"−3σ", label:"−3σ "+money2(L-3*w10), value:L-3*w10, color:E},
     {key:"callwall", name:money2(cw[0])+" call wall", value:cw[0], color:"#b18cff",
-      lines:[cl+" "+money2(cw[0])+" call wall"+(g.oishift&&g.oishift.cwMoved?" (new)":""), fmt(cw[1])+" OI"]},
+      lines:[cl+" "+money2(cw[0])+" call wall"+(WS&&WS.call?" (shifted from "+money2(WS.call.from)+")":g.oishift&&g.oishift.cwMoved?" (new — OI moved)":""), fmt(cw[1])+" OI"]},
     {key:"putwall", name:money2(pwl[0])+" put wall", value:pwl[0], color:"#b18cff",
-      lines:[cl+" "+money2(pwl[0])+" put wall"+(g.oishift&&g.oishift.pwMoved?" (new)":""), fmt(pwl[1])+" OI"]},
+      lines:[cl+" "+money2(pwl[0])+" put wall"+(WS&&WS.put?" (shifted from "+money2(WS.put.from)+")":g.oishift&&g.oishift.pwMoved?" (new — OI moved)":""), fmt(pwl[1])+" OI"]},
     {key:"market", name:"market", label:"MARKET (delayed) "+money2(L), value:L, color:"#ff6b6b", bold:true}
   ];
+  /* tracking points: where the walls stood at the morning pull, while they have shifted */
+  if(WS&&WS.put) levels.push({key:"putwall_was", name:"old put wall "+money2(WS.put.from)+(L<WS.put.from?" (broken — now resistance)":""), value:WS.put.from, color:"#8a7aa8", lines:["put wall was "+money2(WS.put.from)+" → "+money2(WS.put.to), WS.put.why]});
+  if(WS&&WS.call) levels.push({key:"callwall_was", name:"old call wall "+money2(WS.call.from)+(L>WS.call.from?" (broken — now support)":""), value:WS.call.from, color:"#8a7aa8", lines:["call wall was "+money2(WS.call.from)+" → "+money2(WS.call.to), WS.call.why]});
   /* one-line market position read — only from the labeled levels above
      and the same frozen quote that draws the marker */
   var others=levels.filter(function(l){ return l.key!=="market"; });
@@ -1372,7 +1384,7 @@ document.addEventListener('wheel', function(ev){
   fanZoomDo(t.closest('.tile[data-grain]').getAttribute('data-grain'), ev.deltaY<0?'in':'out');
 }, {passive:false});
 /* ---------- fan chart: level groups the user can switch on/off, merged near-identical labels, distance to market ---------- */
-var FANG={p1:'sig',m1:'sig',p2:'sig',m2:'sig',p3:'sig3',m3:'sig3',ci99p:'ci',ci99m:'ci',ivp:'iv',ivm:'iv',ma20:'ma',ma50:'ma',callwall:'walls',putwall:'walls',ctr:'anchor',market:'market'};
+var FANG={p1:'sig',m1:'sig',p2:'sig',m2:'sig',p3:'sig3',m3:'sig3',ci99p:'ci',ci99m:'ci',ivp:'iv',ivm:'iv',ma20:'ma',ma50:'ma',callwall:'walls',putwall:'walls',putwall_was:'walls',callwall_was:'walls',ctr:'anchor',market:'market'};
 var FANV=(function(){ var d={sig:true,sig3:false,ci:false,iv:true,ma:true,walls:true,anchor:false}; try{ var x=JSON.parse(localStorage.getItem('desk.fanv')||'{}'); Object.keys(d).forEach(function(k){ if(typeof x[k]==='boolean') d[k]=x[k]; }); }catch(e){} return d; })();
 function fanOn(key){ var g=FANG[key]; return !g||g==='market'||FANV[g]!==false; }
 function fanChipsHTML(key){
@@ -1462,6 +1474,9 @@ function fanSVG2(g, meta, FL){
   if(FANV.walls!==false&&g.near.call_wall[0]<=hi&&g.near.call_wall[0]>=lo){
   s+='<line x1="'+PL+'" y1="'+Y(g.near.call_wall[0])+'" x2="'+(PL+pw)+'" y2="'+Y(g.near.call_wall[0])+'" stroke="#b18cff" stroke-width="1" stroke-dasharray="2 3" opacity="0.75"/>';
   }
+  var WSf=g.near.wall_shift;
+  if(FANV.walls!==false&&WSf) ['put','call'].forEach(function(sd){ var w=WSf[sd]; if(!w||w.from>hi||w.from<lo) return;
+    s+='<line x1="'+PL+'" y1="'+Y(w.from)+'" x2="'+(PL+pw)+'" y2="'+Y(w.from)+'" stroke="#8a7aa8" stroke-width="1" stroke-dasharray="1 4" opacity="0.8"/>'; });
   if(FANV.walls!==false&&g.near.put_wall[0]<=hi&&g.near.put_wall[0]>=lo){
   s+='<line x1="'+PL+'" y1="'+Y(g.near.put_wall[0])+'" x2="'+(PL+pw)+'" y2="'+Y(g.near.put_wall[0])+'" stroke="#b18cff" stroke-width="1" stroke-dasharray="2 3" opacity="0.75"/>'; }
   /* IV-implied band edges (live fan, day-10 width held across the fan) */
@@ -1744,8 +1759,9 @@ function oiSVG(rows, ds, cp, prev, lab){
   rows.forEach(function(r,idx){
     var x=PL+idx*bw, cw=Math.max(1,bw*(cp==='both'?0.38:0.7));
     var isCW = Math.abs(r[0]-ds.call_wall[0])<0.001, isPW = Math.abs(r[0]-ds.put_wall[0])<0.001;
-    if(shC&&r[1]>0) s+='<rect x="'+x.toFixed(1)+'" y="'+Y(r[1]).toFixed(1)+'" width="'+cw.toFixed(1)+'" height="'+(PT+ph-Y(r[1])).toFixed(1)+'" fill="'+(isCW?'#ffd27a':'#3fb97f')+'"/>';
-    if(shP&&r[2]>0) s+='<rect x="'+(cp==='both'?x+cw+1:x).toFixed(1)+'" y="'+Y(r[2]).toFixed(1)+'" width="'+cw.toFixed(1)+'" height="'+(PT+ph-Y(r[2])).toFixed(1)+'" fill="'+(isPW?'#ff9d97':'#b34a44')+'"/>';
+    var Uq=ds.wall_ref||ds.underlying, itmC=Uq&&r[0]<Uq-1e-9, itmP=Uq&&r[0]>Uq+1e-9;   /* in-the-money strikes are faded: they are positions from when price was elsewhere, not levels ahead */
+    if(shC&&r[1]>0) s+='<rect x="'+x.toFixed(1)+'" y="'+Y(r[1]).toFixed(1)+'" width="'+cw.toFixed(1)+'" height="'+(PT+ph-Y(r[1])).toFixed(1)+'" fill="'+(isCW?'#ffd27a':'#3fb97f')+'"'+(itmC?' opacity=".35"':'')+'/>';
+    if(shP&&r[2]>0) s+='<rect x="'+(cp==='both'?x+cw+1:x).toFixed(1)+'" y="'+Y(r[2]).toFixed(1)+'" width="'+cw.toFixed(1)+'" height="'+(PT+ph-Y(r[2])).toFixed(1)+'" fill="'+(isPW?'#ff9d97':'#b34a44')+'"'+(itmP?' opacity=".35"':'')+'/>';
   });
   var PV={}; if(prev&&prev.rows) prev.rows.forEach(function(r){ PV[r[0]]=r; });
   rows.forEach(function(r,idx){ var q=PV[r[0]], tot=r[1]+r[2];
@@ -1778,6 +1794,9 @@ function oiSVG(rows, ds, cp, prev, lab){
                ('PUT WALL '+ds.put_wall[0].toFixed(2)+' \u00b7 '+fmt(ds.put_wall[1])).length)*3.3+4;
     if(xc!=null && xp!=null && Math.abs(xc-xp)<needW){ if(xc<xp){ cMode='left'; pMode='right'; } else { cMode='right'; pMode='left'; } }
   }
+  var Ux=ds.wall_ref||ds.underlying;
+  if(Ux){ var xi=null; for(var q=0;q<rows.length-1;q++){ if(rows[q][0]<=Ux&&Ux<=rows[q+1][0]){ xi=PL+(q+(Ux-rows[q][0])/((rows[q+1][0]-rows[q][0])||1))*bw+bw/2; break; } }
+    if(xi!=null) s+='<line x1="'+xi.toFixed(1)+'" y1="'+(PT+8)+'" x2="'+xi.toFixed(1)+'" y2="'+(PT+ph)+'" stroke="#e8eef4" stroke-width="1.6"/><rect x="'+(xi-44).toFixed(1)+'" y="'+(PT+ph-22)+'" width="88" height="16" rx="4" fill="#0b1220" stroke="#e8eef4" stroke-width=".8"/><text x="'+xi.toFixed(1)+'" y="'+(PT+ph-10)+'" fill="#fff" font-size="10.5" font-weight="700" font-family="IBM Plex Mono" text-anchor="middle">PRICE '+(+Ux).toFixed(4)+'</text>'; }
   if(shC) s+=wallMark(ds.call_wall[0], ds.call_wall[1], 'CALL WALL', '#ffd27a', cMode);
   if(shP) s+=wallMark(ds.put_wall[0], ds.put_wall[1], 'PUT WALL', '#ff9d97', pMode);
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Open interest by strike">'+s+'</svg>';
@@ -2364,7 +2383,11 @@ function oiTileHTML(key){
     '<span class="toggle" role="group" aria-label="Calls or puts">'+btn('cp','call',cp==='call','CALLS')+btn('cp','put',cp==='put','PUTS')+btn('cp','both',cp==='both','BOTH')+'</span>';
   var charts=mons.map(function(m){
     var ds=g[m], lab=m==='near'?meta.chainNear:meta.chainFar, prev=ds.rows_prev&&ds.rows_prev.rows?ds.rows_prev:null;
-    var head='<div class="oi-mh"><b>'+esc(lab)+'</b> <span class="h2note">'+(m==='near'?'near month':'far month')+' · '+esc(oiLabel(ds))+'</span></div>';
+    var ex=ds.expires?new Date(ds.expires+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}):'';
+    var Uh=ds.wall_ref||ds.underlying, bp=ds.rows.reduce(function(a,r){ return r[2]>a[2]?r:a; },ds.rows[0]), bc=ds.rows.reduce(function(a,r){ return r[1]>a[1]?r:a; },ds.rows[0]);
+    var itmNote=Uh?((bp[0]>Uh+1e-9&&cp!=='call'?'<div class="oi-itm">Largest put open interest is at <b>'+fmt(bp[0],2)+'</b> ('+fmt(bp[2])+') — that strike is <b>in the money</b> with price at '+fmt(Uh,4)+': protection bought when the market was higher, not support below today’s price. The put wall below price is <b>'+fmt(ds.put_wall[0],2)+'</b>.</div>':'')+
+      (bc[0]<Uh-1e-9&&cp!=='put'?'<div class="oi-itm">Largest call open interest is at <b>'+fmt(bc[0],2)+'</b> ('+fmt(bc[1])+') — <b>in the money</b> with price at '+fmt(Uh,4)+'. The call wall above price is <b>'+fmt(ds.call_wall[0],2)+'</b>.</div>':'')):'';
+    var head='<div class="oi-mh"><b>'+esc(lab)+' monthly options</b> on '+esc(ds.contract||'')+' <span class="h2note">· standard monthly expiry'+(ex?' <b>'+esc(ex)+'</b>':'')+' (weeklies listed below) · '+(m==='near'?'near month':'far month')+' · '+esc(oiLabel(ds))+'</span></div>'+itmNote;
     if(view==='chg') return head+(prev?oiDeltaSVG(ds, prev, cp, key, lab):'<p class="note oi-nochg">Change by strike for '+esc(lab)+' needs two pulls — the previous pull was not stored for this month yet. It appears after the next 8:23 ET options run.</p>');
     return head+oiSVG(ds.rows, ds, cp, prev, lab);
   }).join('');
@@ -2374,8 +2397,22 @@ function oiTileHTML(key){
     '<p class="note oi-gate'+(unlocked?' on':'')+'" style="margin:4px 0 0">'+(unlocked
       ? '✓ Next month open — '+esc(RL.def)+' holds <b>'+fmt(RL.pct,1)+'%</b> of '+esc(RL.front)+'+'+esc(RL.def)+' open interest (≥ 40% liquidity threshold, crossed '+esc(RL.crossed||'')+')'+(dF!=null&&dF>0?' · '+dF+' day'+(dF===1?'':'s')+' to first notice':'')
       : '🔒 Next option month opens when the futures roll passes <b>40%</b> — '+esc(RL.def)+' holds '+fmt(RL.pct,1)+'% of open interest ('+fmt(40-RL.pct,1)+' pp to go'+(RL.pace>0?', ~'+Math.ceil((40-RL.pct)/RL.pace)+' sessions at the current pace':'')+')')+'</p>'+
-    charts+'<div class="legend">'+leg+'</div>'+oiMonthsHTML(key)+
+    charts+'<div class="legend">'+leg+(view==='chg'?'':'<span>faded bars = in the money · white line = live price</span>')+'</div>'+oiMonthsHTML(key)+oiWeekliesHTML(key)+
     '<div class="stamp">Pulled '+esc(asofStamp('options'))+' · open interest is the prior session’s close; marked preliminary until CME’s final (~10:30 AM ET), confirmed by the 10:52 ET run · change = latest pull vs the previous stored pull for that month</div>';
+}
+/* weekly / short-dated option expiries (pulled by the morning run): totals, biggest strikes, and any strike whose open
+   interest is large next to the monthly chain's biggest strike gets highlighted */
+function oiWeekliesHTML(key){
+  var g=DATA.grains[key], W=g.weeklies;
+  if(!W||!W.length) return '<div class="oi-wk"><div class="oi-mt">Weekly &amp; short-dated expiries</div><p class="note" style="margin:2px 0">Not pulled yet — the 8:23 ET run adds the next two weekly expiries for each grain from tomorrow.</p></div>';
+  var mx=Math.max.apply(null,(g.near.rows||[]).map(function(r){ return Math.max(r[1],r[2]); }))||1, U=g.near.wall_ref||g.near.underlying;
+  return '<div class="oi-wk"><div class="oi-mt">Weekly &amp; short-dated expiries <span class="h2note">— ±6 strikes around the money · highlighted when a strike holds ≥ 20% of the monthly chain’s biggest strike</span></div>'+
+    W.map(function(w){ var big=(w.rows||[]).filter(function(r){ return Math.max(r[1],r[2])>=0.2*mx; });
+      var top=(w.rows||[]).slice().sort(function(a,b){ return Math.max(b[1],b[2])-Math.max(a[1],a[2]); }).slice(0,3);
+      return '<div class="oi-wkr'+(big.length?' hot':'')+'"><b>'+esc(w.label||w.expiry)+'</b> <small>'+esc(w.class||'')+' · expires '+esc(w.expiry)+' · on '+esc(w.contract||'')+'</small>'+
+        '<span>calls '+fmt(w.calls||0)+' · puts '+fmt(w.puts||0)+'</span><span>top: '+top.map(function(r){ var c=r[1]>=r[2]; return fmt(r[0],2)+(c?' C ':' P ')+fmt(Math.max(r[1],r[2]))+(U?(c?(r[0]<U?' (ITM)':''):(r[0]>U?' (ITM)':'')):''); }).join(' · ')+'</span>'+
+        (big.length?'<span class="oi-hot">⚑ large OI at '+big.map(function(r){ return fmt(r[0],2); }).join(', ')+'</span>':'')+'</div>'; }).join('')+
+    '<div class="stamp">'+esc(W[0].asof||'')+' · weeklies expire on Fridays; daily (Mon–Wed) and new-crop short-dated classes are not pulled</div></div>';
 }
 /* one row per option month: totals, change vs previous pull, walls and wall moves */
 function oiMonthSum(ds){
@@ -3043,7 +3080,7 @@ function cockpitHTML(key){
   if(wev){ var td=tradingDaysTo(wev.t), mv=U.F*iv/100*Math.sqrt(td/252), d1=U.F*iv/100/Math.sqrt(252);
     cards.push(kpi('Implied move to WASDE', '±'+fmt(mv*100,1)+'<small>¢</small>', '±'+fmt(mv/U.F*100,1)+'% over '+td+' sessions · '+fmt(U.F-mv,2)+'–'+fmt(U.F+mv,2)+'<br>1-day ±'+fmt(d1*100,1)+'¢ · <span class="countdown" data-t="'+wev.t+'">'+cdText(wev.t-now)+'</span>'+kAsof('IV '+ivAt0+' · price live'))); }
   var cw=g.near.call_wall, pw=g.near.put_wall, sd=U.F*iv/100/Math.sqrt(252)*Math.sqrt(10);
-  cards.push(kpi('Put/call · walls', fmt(+g.near.pcr,2), 'Call wall <b>'+fmt(cw[0],2)+'</b> ('+sgn((cw[0]-U.F)*100,0,'¢')+', '+fmt(Math.abs(cw[0]-U.F)/sd,1)+'σ₁₀)<br>Put wall <b>'+fmt(pw[0],2)+'</b> ('+sgn((pw[0]-U.F)*100,0,'¢')+', '+fmt(Math.abs(pw[0]-U.F)/sd,1)+'σ₁₀)'+kAsof('OI '+oiAt+' · pulled '+asofStamp('options'))));
+  cards.push(kpi('Put/call · walls', fmt(+g.near.pcr,2), 'Call wall <b>'+fmt(cw[0],2)+'</b> ('+sgn((cw[0]-U.F)*100,0,'¢')+', '+fmt(Math.abs(cw[0]-U.F)/sd,1)+'σ₁₀)<br>Put wall <b>'+fmt(pw[0],2)+'</b> ('+sgn((pw[0]-U.F)*100,0,'¢')+', '+fmt(Math.abs(pw[0]-U.F)/sd,1)+'σ₁₀)'+(g.near.wall_shift?'<br><span class="oi-mv">'+(g.near.wall_shift.put?'put wall shifted from '+fmt(g.near.wall_shift.put.from,2):'')+(g.near.wall_shift.put&&g.near.wall_shift.call?' · ':'')+(g.near.wall_shift.call?'call wall shifted from '+fmt(g.near.wall_shift.call.from,2):'')+' since the pull</span>':'')+kAsof('OI '+oiAt+' · pulled '+asofStamp('options'))));
   var R=rollData(key), L=R.dailyN[R.dailyN.length-1];
   cards.push(kpi('Roll '+R.front+'→'+R.def, fmt(L[3],1)+'<small>%</small>', esc(R.stats.state.replace(/^[A-Z \-]+\(/,'').replace(/\)$/,''))+' · pace '+esc(R.stats.pace.replace(' / last 5 sessions','/5d'))+kAsof('futures OI through '+esc(R.lastLabel||''))));
   var C=fullCarry(key);
