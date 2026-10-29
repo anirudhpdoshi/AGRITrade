@@ -73,7 +73,7 @@ HAWK = [
     (r"resilient|tight(?:ness)?|strong hiring|wage (?:growth|pressure)s? (?:remains?|is|are) (?:strong|elevated|high)|labou?r shortages?", "employment"),
     (r"above (?:potential|capacity)|excess demand|robust|strong (?:demand|consumption|growth)|overheat", "growth"),
     (r"too (?:loose|accommodative)|insufficient(?:ly)? restrict|eased? too much|financial conditions have eased", "financial"),
-    (r"(?:raise|increase|tighten)\w*|further (?:increases?|tightening|hikes?)|cuts? (?:would be|are|is) premature|higher for longer|remain restrictive for (?:some time|longer)|not (?:yet )?(?:time|appropriate) to (?:cut|ease|lower)", "guidance"),
+    (r"(?:raise|increase|tighten)\w*|further (?:increases?|tightening|hikes?)|cuts? (?:would be|are|is) premature|(?:rates?|policy)[^.]{0,20}higher for longer|remain restrictive for (?:some time|longer)|not (?:yet )?(?:time|appropriate) to (?:cut|ease|lower)", "guidance"),
 ]
 DOVE = [
     (r"disinflation|eas(?:ed|ing) (?:price|inflation)|moderat(?:ed|ing)|declin(?:ed|ing) inflation|below (?:our |the )?target|fading|returned to target|close to (?:our |the )?target", "inflation"),
@@ -82,6 +82,9 @@ DOVE = [
     (r"tighter (?:financing|financial|credit)|credit stress|financial (?:instability|stress)|strains?", "financial"),
     (r"(?:lower|reduce|cut)\w* (?:the |our )?(?:policy |interest |bank )?rates?|further (?:easing|cuts?|reductions?)|less restrictive|room to (?:ease|cut)|easing (?:may|could|would) be (?:warranted|appropriate)", "guidance"),
 ]
+AV = 2   # analysis version: stored items scored by an older version are re-read
+FOREIGN = re.compile(r"\b(?:In the United States|U\.S\. economy|China|Chinese|euro area|Europe(?:an)? economy|Japan(?:ese)? economy|global (?:growth|economy|activity)|emerging market|other countries|abroad)\b", re.I)
+DISSENT = re.compile(r"voting against|dissent|preferred (?:instead )?to (?:raise|lower|cut|reduce|increase|hold|maintain|leave|keep)|voted (?:in favour|in favor|for) (?:a |an )?(?:increase|reduction|cut|hike)|(?:\d+|one|two|three|four)[–-](?:\d+|one|two|three|four) vote|(?:majority|minority) of", re.I)
 NEG = re.compile(r"\b(?:not|no longer|nor|never|without|unlikely)\b")
 COND = re.compile(r"\b(?:could|may|might|if|would|should|possib|conditional|depend|one meeting at a time|data[- ]dependent)\w*")
 GUIDE_T = re.compile(r"(?:need|necessary|prepared|appropriate)[^.]{0,40}(?:raise|increase|tighten)|further (?:increases?|tightening|hikes?)|raise (?:the )?(?:policy )?rate (?:further|again)", re.I)
@@ -93,7 +96,14 @@ def sentences(text):
     paras = [p.strip() for p in re.split(r"\n\s*\n|\n", text) if len(p.strip()) > 24]
     out = []
     for i, p in enumerate(paras):
-        for s in re.split(r"(?<=[.!?])\s+(?=[A-Z“\"])", p):
+        parts = re.split(r"(?<=[.!?])\s+(?=[A-Z“\"])", p)
+        merged = []
+        for x in parts:   # keep initials / abbreviations ("Beth M. Hammack", "U.S. economy") inside one sentence
+            if merged and re.search(r"(?:\b[A-Z]|\bU\.S|\bNo|\bvs|\bMr|\bMs|\bDr|\bSt)\.$", merged[-1]):
+                merged[-1] += " " + x
+            else:
+                merged.append(x)
+        for s in merged:
             s = s.strip()
             if 24 <= len(s) <= 600:
                 out.append((i + 1, s))
@@ -110,12 +120,13 @@ def analyse(text):
             continue
         w = 0.5 if COND.search(sl) else 1.0
         neg = bool(NEG.search(sl))
+        foreign = bool(FOREIGN.search(s))
         hits = []   # a phrase only counts inside its own theme ("uncertainty remains elevated" is not inflation)
         for pat, theme in HAWK:
-            if re.search(THEMES[theme], sl) and re.search(pat, sl):
+            if re.search(THEMES[theme], sl) and re.search(pat, sl) and not (foreign and theme in ("growth", "employment")):
                 hits.append((+1, theme))
         for pat, theme in DOVE:
-            if re.search(THEMES[theme], sl) and re.search(pat, sl):
+            if re.search(THEMES[theme], sl) and re.search(pat, sl) and not (foreign and theme in ("growth", "employment")):
                 hits.append((-1, theme))
         if not hits:
             continue
@@ -131,7 +142,7 @@ def analyse(text):
         if net:
             ev.append({"q": s, "para": para, "dir": "hawk" if net > 0 else "dove", "w": round(abs(net), 2),
                        "theme": max(set(t for _, t in hits), key=lambda t: abs(th[t])), "cond": w < 1})
-    score = round(10 * (H - D) / (H + D + 3), 1)
+    score = round(10 * (H - D) / (H + D + 6), 1)   # +6 damps short texts: a few phrases cannot make an extreme score
     lab = "HAWKISH" if score >= 5 else "LEANING HAWKISH" if score >= 2 else "DOVISH" if score <= -5 else "LEANING DOVISH" if score <= -2 else "NEUTRAL"
     t = text
     g_dir = "tighten" if GUIDE_T.search(t) else "ease" if GUIDE_E.search(t) else "hold" if GUIDE_H.search(t) else "none"
@@ -148,8 +159,9 @@ def analyse(text):
            ("ease", False): "Easing signalled",
            ("hold", True): "Hold, with the door open either way", ("hold", False): "Hold signalled"}.get((g_dir, g_cond), "No explicit forward guidance")
     ev.sort(key=lambda e: -e["w"])
+    dissent = [{"q": s, "para": p} for p, s in sentences(text) if DISSENT.search(s)][:4]
     rel = sum(1 for _, s in sentences(text) if re.search(THEMES["inflation"] + "|" + THEMES["guidance"], s.lower()))
-    return {"relevance": rel, "policy_relevant": rel >= 4, "score": score, "label": lab, "themes": {k: round(v, 1) for k, v in th.items()}, "hawk_n": round(H, 1), "dove_n": round(D, 1),
+    return {"av": AV, "dissent": dissent, "relevance": rel, "policy_relevant": rel >= 4, "score": score, "label": lab, "themes": {k: round(v, 1) for k, v in th.items()}, "hawk_n": round(H, 1), "dove_n": round(D, 1),
             "guidance": {"direction": g_dir, "conditional": g_cond, "quote": g_sent, "next_action": nxt},
             "evidence": [e for e in ev if e["dir"] == "hawk"][:4] + [e for e in ev if e["dir"] == "dove"][:4]}
 
@@ -204,8 +216,8 @@ def parse_date(s):
     return None
 
 
-TYPES = [("statement", r"fomc statement|monetary policy decision|policy rate|interest rate decision|bank rate (?:maintained|increased|reduced|cut|raised)|statement on monetary policy|maintains|lowers|raises|holds"),
-         ("minutes", r"minutes|account of the monetary|summary of (?:deliberations|opinions)|monetary policy summary"),
+TYPES = [("statement", r"monetary policy summary|statement on monetary policy|fomc statement|monetary policy decision|policy rate|interest rate decision|bank rate (?:maintained|increased|reduced|cut|raised)|statement on monetary policy|maintains|lowers|raises|holds"),
+         ("minutes", r"minutes|account of the monetary|summary of (?:deliberations|opinions)"),
          ("press_conference", r"press conference|opening statement"),
          ("testimony", r"testimony|before the committee"),
          ("speech", r"speech|remarks|lecture|address|keynote|fireside|panel"),
@@ -357,7 +369,7 @@ def main():
         status[bank] = {"checked_at": NOW.isoformat(), "found": len(found), "sources": dict(DIAG)}
         for it in found:
             did = hashlib.sha1(it["link"].encode()).hexdigest()[:12]
-            if did in docs and docs[did].get("hash") and "relevance" in docs[did] and (NOW - dt.datetime.fromisoformat(docs[did]["fetched_at"])) < dt.timedelta(days=2):
+            if did in docs and docs[did].get("hash") and docs[did].get("av") == AV and (NOW - dt.datetime.fromisoformat(docs[did]["fetched_at"])) < dt.timedelta(days=2):
                 continue      # re-read recent items for revisions; older items are kept as stored
             if new >= cap:
                 break         # per-bank, per-run budget: be gentle with the banks' sites
@@ -377,7 +389,7 @@ def main():
                 continue
             hsh = hashlib.sha256(text.encode()).hexdigest()[:16]
             old = docs.get(did)
-            if old and old.get("hash") == hsh:
+            if old and old.get("hash") == hsh and old.get("av") == AV:
                 old["fetched_at"] = NOW.isoformat(); continue
             a = analyse(text)
             d = {"id": did, "bank": bank, "title": it["title"][:200], "type": it["type"], "url": it.get("link_full") or it["link"], "page": it["link"], "published_at": it.get("published_at"),
@@ -385,7 +397,7 @@ def main():
                  "source_type": "official", "transcript_status": "official", "speaker": speaker_of(it["title"], text, it["type"]),
                  "voting_status": "NOT_APPLICABLE" if it["type"] in ("statement", "minutes") and bank != "boc" else VOTE.get(bank, "UNKNOWN"),
                  **a}
-            if old and old.get("hash") != hsh:
+            if old and old.get("hash") and old.get("hash") != hsh:
                 d["revised_from"] = {"hash": old["hash"], "fetched_at": old["fetched_at"], "score": old["score"]}
             docs[did] = d
             new += 1
