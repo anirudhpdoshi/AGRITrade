@@ -4387,7 +4387,7 @@ function renderFX(){
     '<div class="kv"><span class="kk">Fed funds target</span><span class="vv">'+(function(){ var f=/(\d{3})-(\d{3})/.exec(fx.policy.fed_range||''); return f?fmt(f[1]/100,2)+'\u2013'+fmt(f[2]/100,2)+'%':esc(fx.policy.fed_range); })()+'</span></div>'+corRows+
     '<div class="kv"><span class="kk">BoC overnight (current)</span><span class="vv">'+fmt(fx.policy.corra_now,2)+'%'+(fx.policy.boc_decided&&fx.policy.corra_date===fx.policy.boc_decided.date?' <span class="sl-k">\u00b7 from the '+fmtShortDate(fx.policy.corra_date)+' statement</span>':'')+'</span></div>'+
     '<div class="stamp">Fed probabilities '+(fx.policy.fed_range&&/NY Fed/.test(fx.policy.fed_range)?'computed '+asOf('policy',true)+' from CBOT fed funds futures + NY Fed effective rate (FedWatch-style)':'pulled '+asOf('policy',true))+
-      ' \u00b7 CORRA futures read '+(fx.policy.corra_asof?esc(fmtDate(fx.policy.corra_asof)):'date unknown')+' (Montreal Exchange \u2014 no free live feed, manual read) \u00b7 futures-implied, not forecasts</div></div>';
+      ' \u00b7 CORRA futures (3-month, Montreal Exchange) '+(fx.policy.corra_asof?'as of '+esc(fmtDate(fx.policy.corra_asof))+(fx.policy.corra_asof.length>10?' '+tHM(fx.policy.corra_asof):''):'date unknown')+(fx.policy.corra_asof?'<span class="qt-age" data-age="'+esc(fx.policy.corra_asof)+'" data-age-max="30000"></span>':'')+' \u00b7 delayed quote, refreshed by the desk at 9:05 am, 12:05 and 3:05 pm ET \u00b7 implied rate = 100 \u2212 price \u00b7 futures-implied, not forecasts</div></div>';
   /* positioning & sentiment */
   T.cftc=fxCftcHTML();
   T.sentiment='<div class="tile" data-src="sentiment"><h2>Retail sentiment &amp; FX options</h2>'+

@@ -108,7 +108,7 @@ async def main():
             feed = await pg.evaluate("EVENTS._feed().map(m=>m.h.replace(/<[^>]+>/g,'')).join(' || ')")
             check(f"[{tag}] central-bank decision is logged with its tone", "Federal Reserve: HOLD" in feed and "NEUTRAL" in feed, feed[:300])
             # option wall shift is tracked against the morning pull
-            await pg.evaluate("DATA.grains.corn.fan.intraday[0]=Math.min(DATA.grains.corn.near.put_wall[0]-0.12, DATA.grains.corn.fan.intraday[0]-0.12); renderGrain('corn'); 0")
+            await pg.evaluate("var n=DATA.grains.corn.near, w=(n.wall_pull&&n.wall_pull.pw||n.put_wall)[0]; DATA.grains.corn.fan.intraday[0]=Math.min(w, n.put_wall[0], DATA.grains.corn.fan.intraday[0])-0.12; renderGrain('corn'); 0")   # below the morning wall, whatever today's data
             ws = await pg.evaluate("JSON.stringify(DATA.grains.corn.near.wall_shift)")
             check(f"[{tag}] put wall shift is detected when price breaks the old wall", ws and '"put"' in ws, ws)
             # every tab renders without broken values or script errors

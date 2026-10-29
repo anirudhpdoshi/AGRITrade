@@ -11062,20 +11062,36 @@
     "corra": [
      {
       "month": "2026-12",
-      "implied_rate_pct": 2.73,
-      "settlement": 97.27,
-      "oi": 304951,
-      "role": "forward BoC path"
+      "implied_rate_pct": 2.76,
+      "settlement": 97.24,
+      "role": "forward BoC path",
+      "last": 97.24,
+      "oi": 304951
      },
      {
       "month": "2027-03",
-      "implied_rate_pct": 3.02,
-      "settlement": 96.98,
-      "oi": 327524,
-      "role": "forward BoC path"
+      "implied_rate_pct": 3.015,
+      "settlement": 96.985,
+      "role": "forward BoC path",
+      "last": 96.985,
+      "oi": 327524
+     },
+     {
+      "month": "2027-06",
+      "implied_rate_pct": 3.21,
+      "settlement": 96.79,
+      "role": "forward BoC path",
+      "last": 96.79
+     },
+     {
+      "month": "2027-09",
+      "implied_rate_pct": 3.35,
+      "settlement": 96.65,
+      "role": "forward BoC path",
+      "last": 96.65
      }
     ],
-    "corra_asof": "2026-10-21",
+    "corra_asof": "2026-10-29T15:04:05-04:00",
     "corra_date": "2026-10-28",
     "boc_decided": {
      "date": "2026-10-28",
@@ -11098,7 +11114,8 @@
      "tone": "NEUTRAL",
      "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20261028a.htm",
      "t_seen": "2026-10-28T18:00:21.575986+00:00"
-    }
+    },
+    "corra_src": "delayed futures quote"
    },
    "fc": {
     "h5_reason": "backtest: OLS 5D MAE 62.17 bps loses to zero-return 57.33 and is net-negative after costs (hit 46.8%)",
