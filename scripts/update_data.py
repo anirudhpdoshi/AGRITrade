@@ -23,7 +23,7 @@ FX options, forecast/scenarios/bias, trade template, calendar.
 
 Usage:  python scripts/update_data.py [--only fx_spot,news] [--dry-run]
 """
-import argparse, csv, io, json, re, statistics, sys, time, traceback
+import argparse, csv, io, json, os, re, statistics, sys, time, traceback
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
@@ -44,7 +44,7 @@ def iso(dt):
     return dt.astimezone(TOR).isoformat(timespec="seconds")
 
 
-SECRET_ENV = ("FAS_API_KEY", "ALPHAVANTAGE_API_KEY", "FINNHUB_API_KEY", "DESK_PASSCODE")
+SECRET_ENV = ("FAS_API_KEY", "ALPHAVANTAGE_API_KEY", "FINNHUB_API_KEY", "DESK_PASSCODE", "BEA_API_KEY")
 
 
 def redact(text):
@@ -55,7 +55,7 @@ def redact(text):
         v = os.environ.get(n, "").strip()
         if v:
             text = text.replace(v, "***")
-    return re.sub(r"(?i)(apikey|api_key|token|key)=[^&\s'\"]+", r"\1=***", text)
+    return re.sub(r"(?i)(apikey|api_key|token|key|userid)=[^&\s'\"]+", r"\1=***", text)
 
 
 def get(url, headers=None, **kw):
@@ -1154,6 +1154,51 @@ def _fred(sid, start):
     return [(r[0], float(r[1])) for r in rows[1:] if len(r) > 1 and _num(r[1]) is not None]
 
 
+# Direct BEA read for the BEA-published series. FRED re-posts these with a lag (today: GDP +45 min), while BEA's own
+# API carries them the minute the release goes out. The key lives only in the BEA_API_KEY secret: it is sent as a
+# request parameter, never printed, and every error raised from here is scrubbed of the URL.
+BEA_KEY = os.environ.get("BEA_API_KEY", "").strip()
+BEA_SRC = {   # macro key -> (NIPA table, frequency, line description)
+    "us_gdp": ("T10101", "Q", "Gross domestic product"),
+    "us_core_pce": ("T20804", "M", "PCE excluding food and energy"),
+}
+
+
+def _bea(table, freq, line, years=8):
+    yrs = ",".join(str(NOW.year - i) for i in range(years))
+    try:
+        r = requests.get("https://apps.bea.gov/api/data", headers=UA, timeout=20,
+                         params={"UserID": BEA_KEY, "method": "GetData", "datasetname": "NIPA", "TableName": table,
+                                 "Frequency": freq, "Year": yrs, "ResultFormat": "JSON"})
+        r.raise_for_status()
+        res = r.json()["BEAAPI"]
+        res = res.get("Results", res)
+        res = res[0] if isinstance(res, list) else res
+        rows = res["Data"]
+    except Exception as e:
+        raise RuntimeError(f"BEA {table} unavailable ({type(e).__name__})") from None   # no URL / key in the message
+    want = line.lower()
+    lines = [x for x in rows if x.get("LineDescription", "").strip().lower() == want]
+    if not lines:
+        raise RuntimeError(f"BEA {table}: line '{line}' not found")
+    ln = min(int(x["LineNumber"]) for x in lines)
+    out = []
+    for x in lines:
+        if int(x["LineNumber"]) != ln:
+            continue
+        tp, v = x["TimePeriod"], _num(str(x.get("DataValue", "")).replace(",", ""))
+        if v is None:
+            continue
+        if "Q" in tp:
+            y, q = tp.split("Q"); d = f"{y}-{(int(q) - 1) * 3 + 1:02d}-01"
+        elif "M" in tp:
+            y, m = tp.split("M"); d = f"{y}-{int(m):02d}-01"
+        else:
+            continue
+        out.append((d, v))
+    return sorted(out)
+
+
 def _valet_series(sid, n, start=None):
     j = valet(f"observations/{sid}/json?" + (f"start_date={start}" if start else f"recent={n}"))
     return sorted((o["d"], _num(o.get(sid, {}).get("v"))) for o in j["observations"] if _num(o.get(sid, {}).get("v")) is not None)
@@ -1332,24 +1377,37 @@ def recent_release(D, kind, hours=3):
     return any(NOW - timedelta(hours=hours) <= t <= NOW for t in _release_times(D, kind))
 
 
-def macro(D, N):
+def macro(D, N, only=None):
+    """only = set of keys: re-read just those (the fast lane, minutes after a release); the rest are kept as they are."""
     meta = D["meta"]
     last = meta.get("macro_checked")
-    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=2) and not recent_release(D, "macro"):
+    if not only and last and NOW - datetime.fromisoformat(last) < timedelta(hours=2) and not recent_release(D, "macro"):
         print("  checked <2h ago — skipping")
         return False
     old = {m["key"]: m for m in D.get("macro", [])}
     start = (NOW - timedelta(days=2650)).date().isoformat()   # ~7 years: 5-yr averages of y/y series
     out, errs = [], {}
     for key, name, group, src, sid, how, unit, dec, good, (lo, hi) in MACRO:
+        if only and key not in only:
+            if key in old:
+                out.append(old[key])
+            continue
+        label = {"fred": "FRED", "valet": "Bank of Canada Valet", "statcan": "Statistics Canada"}[src] + f" {sid}"
         try:
-            if src == "valet" and sid in VALET_TO_STATCAN:
+            raw = None
+            if key in BEA_SRC and BEA_KEY:
+                try:
+                    raw = _bea(*BEA_SRC[key]) or None
+                    label = f"BEA {BEA_SRC[key][0]}"
+                except Exception as e_bea:
+                    print(f"  {key}: {e_bea}; using {label}")
+            if raw is None and src == "valet" and sid in VALET_TO_STATCAN:
                 try:
                     raw = _valet_series(sid, 0, start)
                 except Exception as e_valet:   # BoC Valet down (e.g. decision-day load): same series straight from StatCan WDS
                     print(f"  {key}: Valet failed ({e_valet}); falling back to StatCan v{VALET_TO_STATCAN[sid]}")
                     raw = _statcan(VALET_TO_STATCAN[sid], 90)
-            else:
+            elif raw is None:
                 raw = (_fred(sid, start) if src == "fred" else _valet_series(sid, 0, start) if src == "valet" else _statcan(sid, 90))
             if len(raw) < 3:
                 raise RuntimeError("too few points")
@@ -1381,7 +1439,7 @@ def macro(D, N):
                         "period": _label(pts[-1][0], fq), "obs_date": pts[-1][0],
                         "value": round(val, dec + 1), "prior": round(prv, dec + 1), "chg": round(val - prv, dec + 1),
                         "history": [[_label(d, fq), round(v, dec + 1)] for d, v in pts],
-                        "src": {"fred": "FRED", "valet": "Bank of Canada Valet", "statcan": "Statistics Canada"}[src] + f" {sid}"})
+                        "src": label})
             if longp:
                 out[-1]["long"] = longp
             _track(out[-1], old.get(key), pts_all)
@@ -1394,6 +1452,10 @@ def macro(D, N):
     if not out:
         raise RuntimeError(f"all macro series failed: {errs}")
     D["macro"] = out
+    if only:
+        meta["asof"]["macro"] = iso(NOW)
+        print(f"  macro (fast, {sorted(only)}): {len(only) - len(errs)} fresh, failed {list(errs)}")
+        return True
     # a failed chart series retries on the next 15-min run instead of waiting the full 2 h
     meta["macro_checked"] = iso(NOW - timedelta(minutes=105)) if any(k in MACRO_LONG for k in errs) else iso(NOW)
     meta["asof"]["macro"] = iso(NOW)

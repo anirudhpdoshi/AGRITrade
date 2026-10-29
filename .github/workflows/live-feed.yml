@@ -37,3 +37,4 @@ jobs:
         run: python scripts/live_loop.py --minutes 33 --every 60
         env:
           FAS_API_KEY: ${{ secrets.FAS_API_KEY }}
+          BEA_API_KEY: ${{ secrets.BEA_API_KEY }}

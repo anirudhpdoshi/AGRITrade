@@ -22,7 +22,7 @@ WT = "/tmp/live-worktree"
 FAST = [("fx_spot", U.fx_spot), ("grains_quote", U.grains_quote), ("yields_live", U.yields_live), ("energy", U.energy), ("crosses", U.crosses)]
 
 # Release watch: for 3 h after a scheduled release, the block that carries it is re-fetched
-# here (every loop for CFTC/exports/WASDE, every 2nd loop for the ~25-series macro block)
+# here (every loop for CFTC/exports/WASDE, every loop for just the macro series still awaited)
 # until the new numbers are in, and the changed sub-trees ride along in live.json ("rel"),
 # so an open page sees them within a minute instead of waiting for the 15-min job + Pages build.
 REL = {
@@ -55,16 +55,22 @@ def rel_done(D, name):
         lab = max(d for d in U.WASDE_DATES if d <= et.date().isoformat())
         return (D.get("wasde") or {}).get("corn", {}).get("report") == datetime.fromisoformat(lab).strftime("%b %Y")
     if name == "macro":
-        seen = {m["key"]: m.get("seen_at") for m in D.get("macro", [])}
-        for k, v in (D.get("release_cal") or {}).items():
-            ts = [datetime.fromisoformat(x).replace(tzinfo=U.TOR) for x in v.get("dates", [])]
-            if v.get("rule") == "thu0830":
-                ts += [t for t in U._release_times(D, "macro") if t.weekday() == 3 and t.hour == 8]
-            for t in ts:
-                if U.NOW - timedelta(hours=3) <= t <= U.NOW and k in seen and (not seen[k] or datetime.fromisoformat(seen[k]) < t):
-                    return False
-        return True
+        return not macro_due(D)
     return True
+
+
+def macro_due(D):
+    """Macro keys whose scheduled release fell in the last 3 h and whose new reading is not on the desk yet."""
+    due = set()
+    seen = {m["key"]: m.get("seen_at") for m in D.get("macro", [])}
+    for k, v in (D.get("release_cal") or {}).items():
+        ts = [datetime.fromisoformat(x).replace(tzinfo=U.TOR) for x in v.get("dates", [])]
+        if v.get("rule") == "thu0830":
+            ts += [t for t in U._release_times(D, "macro") if t.weekday() == 3 and t.hour == 8]
+        for t in ts:
+            if U.NOW - timedelta(hours=3) <= t <= U.NOW and k in seen and (not seen[k] or datetime.fromisoformat(seen[k]) < t):
+                due.add(k)
+    return due
 
 
 def sh(*a, cwd=ROOT, check=True):
@@ -170,11 +176,12 @@ def main():
         for name, (kind, fn, paths) in REL.items():
             if not U.recent_release(D, kind) or rel_done(D, name):
                 continue
-            if name == "macro" and it % 2:
-                continue
             try:
                 D["meta"].pop({"macro": "macro_checked", "exports": "exports_checked", "wasde": "wasde_checked"}.get(name, "_"), None)
-                fn(D, {})
+                if name == "macro":   # only the series still awaited (2-3 requests), every loop, BEA first for GDP/PCE
+                    U.macro(D, {}, only=macro_due(D))
+                else:
+                    fn(D, {})
                 if rel_done(D, name):
                     rel_out[name] = {"asof": D["meta"]["asof"].get(name) or U.iso(U.NOW), "set": {p: _get(D, p) for p in paths(D)}}
                     print(U.iso(U.NOW), "release landed:", name)
