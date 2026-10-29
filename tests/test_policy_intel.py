@@ -1,0 +1,26 @@
+"""Scoring, forward-guidance and parsing checks for scripts/policy_intel.py (no network)."""
+import os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scripts"))
+import policy_intel as P
+
+n = 0
+def ok(c, m):
+    global n
+    assert c, m
+    n += 1
+
+a = P.analyse("There could be a need to raise the policy rate further, but we will proceed carefully. Inflation remains elevated.")
+ok(a["score"] > 0 and a["guidance"]["direction"] == "tighten" and a["guidance"]["conditional"], "conditional tightening is hawkish but conditional")
+ok("not a commitment" in a["guidance"]["next_action"], "conditional tightening is not a predicted hike")
+b = P.analyse("Inflation has moderated and is close to the target. Unemployment has risen. Further easing may be warranted.")
+ok(b["score"] <= -2 and b["guidance"]["direction"] == "ease", "dovish text scores dovish")
+c = P.analyse("Inflation is no longer elevated.")
+ok(c["score"] < 0, "negation flips a hawkish phrase")
+ok(all(e["q"] in "Inflation has moderated and is close to the target. Unemployment has risen. Further easing may be warranted." for e in b["evidence"]), "evidence is exact text")
+ok(P.classify("Federal Reserve issues FOMC statement") == "statement", "statement type")
+ok(P.classify("Speech by Governor Waller on the outlook") == "speech", "speech type")
+ok(P.classify("Agencies announce enforcement action") is None, "non-policy items skipped")
+ok(P.speaker_of("Speech by Governor Waller on the outlook", "", "speech") == "Waller", "speaker surname")
+ok(P.speaker_of("x", "", "statement") == "Committee", "statements are committee documents")
+ok(P.parse_date("Wed, 28 Oct 2026 18:00:00 GMT").startswith("2026-10-28T18:00"), "RSS date")
+print(f"{n}/{n} passed")

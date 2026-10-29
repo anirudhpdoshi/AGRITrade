@@ -1,0 +1,30 @@
+name: Central bank policy intelligence
+# Fed, ECB, BoE, BoC, BoJ official statements / minutes / speeches -> policy.json on the `policyintel` branch (read by the
+# Policy tab). Every 15 min on policy-event days, hourly otherwise (the script skips quarter-hours on ordinary days).
+# A failure here never touches the rest of the desk.
+on:
+  schedule:
+    - cron: "4,19,34,49 11-22 * * 1-5"
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency:
+  group: policyintel
+  cancel-in-progress: false
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+      - run: pip install -r scripts/requirements.txt
+      - name: Unit tests (scoring, guidance, speaker parsing)
+        run: python tests/test_policy_intel.py
+      - name: Collect, score, publish policy.json
+        run: python scripts/policy_intel.py ${{ github.event_name == 'schedule' && '--if-due' || '' }}
