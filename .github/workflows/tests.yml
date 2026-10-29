@@ -1,7 +1,7 @@
 name: Tests
 on:
   push:
-    paths: ["fwd.js", "scripts/world.py", "scripts/global_grains.py", "scripts/intel.py", "scripts/update_data.py", "scripts/policy_watch.py", "tests/**", ".github/workflows/tests.yml"]
+    paths: ["index.html", "events-ui.js", "policy-ui.js", "live.js", "fwd.js", "scripts/world.py", "scripts/global_grains.py", "scripts/intel.py", "scripts/update_data.py", "scripts/policy_watch.py", "tests/**", ".github/workflows/tests.yml"]
   workflow_dispatch:
 jobs:
   unit:
@@ -17,3 +17,14 @@ jobs:
       - run: python tests/test_global_grains.py
       - run: python tests/test_intel.py
       - run: pip install -q -r scripts/requirements.txt && python tests/test_yields.py
+  e2e:
+    # the release flow end to end in a real browser: landed / awaiting / calendar-only rows, "See it" jump, NEW tabs and
+    # cards, Milestones feed for macro, options and central-bank releases, wall shifts, and no NaN/undefined on any tab
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -q playwright && python -m playwright install --with-deps chromium
+      - run: python tests/e2e_release_flow.py

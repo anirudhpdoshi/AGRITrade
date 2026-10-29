@@ -941,6 +941,20 @@ table.pi-tab td{vertical-align:top}table.pi-tab small{display:block;color:var(--
 .oi-itm{font-size:12px;color:#e8d9a8;background:rgba(232,185,61,.08);border-left:3px solid #e8b93d;padding:5px 9px;margin:4px 0 2px;border-radius:4px}.oi-itm b{color:#fff}
 .oi-wk{margin-top:12px}.oi-wkr{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:6px 8px;border-bottom:1px dashed var(--line);font-size:12px;color:var(--muted)}.oi-wkr b{color:#fff}
 .oi-wkr.hot{background:rgba(232,185,61,.08);border-left:3px solid #e8b93d}.oi-hot{color:#e8b93d;font-weight:700}
+
+/* ---------- today's releases: coloured tabs, NEW ribbons, "see it" jump ---------- */
+.tab-btn.tab-today{border-color:#e8b93d!important;box-shadow:inset 0 -3px 0 #e8b93d}
+.tab-btn.tab-today:after{content:"NEW";margin-left:7px;font-size:9.5px;font-weight:800;letter-spacing:.06em;color:#111;background:#e8b93d;border-radius:5px;padding:1px 5px;vertical-align:1px}
+.upd-today{position:relative;outline:1px solid rgba(232,185,61,.75);outline-offset:-1px}
+.upd-today:after{content:attr(data-upd);position:absolute;top:-9px;right:10px;font:700 9.5px/1.6 "IBM Plex Mono",monospace;letter-spacing:.04em;color:#111;background:#e8b93d;border-radius:5px;padding:0 6px;z-index:3;pointer-events:none;white-space:nowrap}
+@keyframes flashfind{0%{box-shadow:0 0 0 0 rgba(232,185,61,.9)}100%{box-shadow:0 0 0 14px rgba(232,185,61,0)}}
+.flash-find{animation:flashfind 1.2s ease-out 2}
+.evs.land{color:#5fd598}.evs.land small{color:var(--muted);font-weight:500}.evs.val{display:block;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:#e8eef4;margin-top:1px}
+.evgo.see{color:#e8b93d;font-weight:600}
+.tab-btn.tab-today:after{margin-left:5px;font-size:8.5px;padding:0 4px}
+@media (min-width:761px){.tab-btn{padding-left:13px;padding-right:13px}.tab-btn .sym{margin-left:5px;font-size:11px}}
+.mk-click.upd-today,.mkc.upd-today{outline:0;border-left:3px solid #e8b93d;padding-left:6px;background:rgba(232,185,61,.06)}
+.mk-click.upd-today:after,.mkc.upd-today:after{position:static;display:inline-block;margin-top:3px;border-radius:5px}
 </style>
 </head>
 <body class="locked">
@@ -1198,15 +1212,6 @@ document.addEventListener('click', function(ev){
   var el=document.getElementById('newsb-'+k); if(el) el.innerHTML=newsBodyHTML(k);
 });
 
-function grainAlertsHTML(key){
-  var g=DATA.grains[key], meta=GMETA[key], FL=fanLevels(g, meta), L=g.fan.intraday[0];
-  var body='<div class="checkline"><b>Level check (frozen):</b> '+esc(FL.read)+'.</div>'+
-    '<div class="checkline">No price-cross alert was recorded in the frozen feed at build time. Crossings are logged only when a delayed quote is observed on both sides of a labeled level between consecutive checks — never from a single reading.</div>'+
-    '<div class="stamp">Alerts &amp; level checks against the delayed quote of '+esc(g.fan.intraday[1])+' · levels are the fan tile\u2019s labeled day-10 stack (walls, expected MAs, \u03c3 bands)</div>';
-  return railCard('Alerts &amp; level checks',
-    'Latest check: market '+money2(L)+' vs the labeled fan levels · '+g.fan.intraday[1]+' · frozen', body);
-}
-
 function fxAlertsHTML(){
   var fx=DATA.fx, hits=fx.rates.filter(function(r){ return r.dod!=null && Math.abs(r.dod)>=5; })
     .sort(function(x,y){ return Math.abs(y.dod)-Math.abs(x.dod); });
@@ -1224,27 +1229,6 @@ function fxAlertsHTML(){
   var latest=hits.length?'<b>'+hits[0].t+' US–Canada spread '+sgn(hits[0].dod,1)+' bps</b> · '+fmt(hits[0].sp,1)+' vs '+fmt(hits[0].sp-hits[0].dod,1)+' · closes '+asOf('yields')
     : 'No spread alert · largest move '+(function(){ var m=fx.rates.filter(function(r){return r.dod!=null;}).sort(function(x,y){return Math.abs(y.dod)-Math.abs(x.dod);})[0]; return m?m.t+' '+sgn(m.dod,1)+' bps':'n/a'; })();
   return railCard('Alerts', latest, body);
-}
-
-function fxCalendarHTML(){
-  var fx=DATA.fx, now=Date.now();
-  var evs=fx.events.map(function(e){ return {e:e, t:evEpoch(e)}; }).sort(function(x,y){ return x.t-y.t; });
-  var rows=evs.map(function(o){
-    var e=o.e, past=o.t<now;
-    return '<div class="kv'+(past?' ev-past':'')+'"><span class="kk">'+etLabel(o.t,true)+' · '+e.ccy+' — '+esc(e.event)+(e.impact==='High'?' <span class="chip miss">HIGH</span>':'')+(past?' <span class="chip inline">OUT</span>':'')+'</span>'+
-      '<span class="vv">'+(e.fc?('fc '+esc(e.fc)):'')+(e.prev?(' · prev '+esc(e.prev)):'')+'</span></div>';
-  }).join("");
-  var nx=evs.filter(function(o){ return o.e.impact==='High' && o.t>now; })[0], cluster='', latest='No upcoming high-impact event in the stored calendar';
-  if(nx){
-    var day=nx.e.date, names=evs.filter(function(o){ return o.e.impact==='High' && o.e.date===day; }).map(function(o){ return o.e.ccy+' '+o.e.event; });
-    cluster='<p class="read" style="font-size:13px">Next high-impact: <b>'+etLabel(nx.t,true)+' ET</b> — '+esc(names.join(' · '))+'.</p>';
-    latest='Next high-impact: <b>'+etLabel(nx.t,true)+' ET</b> — '+esc(names.slice(0,3).join(' · '))+(names.length>3?' …':'');
-  }
-  var sc=fx.season&&fx.season.cur;
-  var season=sc?'<p class="read" style="font-size:13px">Seasonality ('+esc(sc.month_full)+'): average '+sgn(sc.avg_pct,2,'%')+' with '+fmt(sc.pct_positive,1)+'% of years positive — '+esc(sc.label.toLowerCase())+'.</p>':'';
-  var body=rows+cluster+season+
-    '<div class="stamp">Times converted to Toronto (ET) · calendar list as pulled '+asOf('calendar',true)+' · released numbers appear in the Macro monitor and Latest releases tiles</div>';
-  return railCard('Economic calendar', latest, body);
 }
 
 /* ---------------- fan levels: live-re-anchored stack, as the app renders it ----------------
@@ -1662,89 +1646,6 @@ function exportTileHTML(key){
 }
 
 /* ---------------- SVG chart builders ---------------- */
-function fanSVG(g, meta){
-  var f = g.fan, hist = g.history, A = f.anchor, sig = f.sig, tail = g.tail50;
-  var W=760,H=320,PL=46,PR=118,PT=16,PB=30, pw=W-PL-PR, ph=H-PT-PB;
-  var NH=hist.length, FD=10, span=NH-1+FD;
-  var lo=Infinity, hi=-Infinity, i, d, v;
-  for(i=0;i<NH;i++){ lo=Math.min(lo,hist[i].s); hi=Math.max(hi,hist[i].s); }
-  lo=Math.min(lo, f.r10_99[0]); hi=Math.max(hi, f.r10_99[1]);
-  var pad=(hi-lo)*0.06; lo-=pad; hi+=pad;
-  function X(x){ return PL + pw*(x/span); }
-  function Y(y){ return PT + ph*(1-(y-lo)/(hi-lo)); }
-  var s='';
-  /* gridlines: 4 horizontal */
-  for(i=0;i<=4;i++){ var gy=PT+ph*i/4, gv=hi-(hi-lo)*i/4;
-    s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a" stroke-width="1"/>';
-    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+gv.toFixed(2)+'</text>'; }
-  function cone(mult, fill){
-    var top='', bot='';
-    for(d=0;d<=FD;d++){ var off=mult*sig*Math.sqrt(d);
-      top+='L'+X(NH-1+d).toFixed(1)+' '+Y(A+off).toFixed(1);
-      bot='L'+X(NH-1+d).toFixed(1)+' '+Y(A-off).toFixed(1)+bot; }
-    return '<path d="M'+X(NH-1)+' '+Y(A)+top+bot.replace(/^L/,'L')+'Z" fill="'+fill+'" stroke="none"/>';
-  }
-  /* build cone path properly: forward along top, backward along bottom */
-  function conePath(mult){
-    var pts=[], ptsB=[], dd;
-    for(dd=0;dd<=FD;dd++){ var off=mult*sig*Math.sqrt(dd); pts.push([X(NH-1+dd),Y(A+off)]); ptsB.push([X(NH-1+dd),Y(A-off)]); }
-    ptsB.reverse();
-    var all=pts.concat(ptsB), p='M'+all[0][0].toFixed(1)+' '+all[0][1].toFixed(1);
-    for(var j=1;j<all.length;j++) p+='L'+all[j][0].toFixed(1)+' '+all[j][1].toFixed(1);
-    return p+'Z';
-  }
-  s+='<path d="'+conePath(2.576)+'" fill="'+meta.accent+'" opacity="0.07"/>';
-  s+='<path d="'+conePath(1.96)+'" fill="'+meta.accent+'" opacity="0.13"/>';
-  s+='<path d="'+conePath(1.0)+'" fill="'+meta.accent+'" opacity="0.16"/>';
-  /* divider between history and forecast */
-  s+='<line x1="'+X(NH-1)+'" y1="'+PT+'" x2="'+X(NH-1)+'" y2="'+(PT+ph)+'" stroke="#3d5a80" stroke-width="1" stroke-dasharray="3 3"/>';
-  s+='<text x="'+(X(NH-1)-5)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">HISTORY · '+NH+' SETTLES</text>';
-  s+='<text x="'+(X(NH-1)+6)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono">10-DAY FAN</text>';
-  /* expected MA extensions (zero-drift: future closes = anchor) */
-  function expMA(w){
-    var pts=[];
-    for(d=1;d<=FD;d++){
-      var win = tail.slice(tail.length-(w-d)).concat(Array(d).fill(A));
-      var m = win.reduce(function(a,b){return a+b;},0)/w;
-      pts.push([X(NH-1+d), Y(m)]);
-    }
-    var last = hist[NH-1][ w===20 ? 'ma20':'ma50'];
-    var p='M'+X(NH-1)+' '+Y(last);
-    pts.forEach(function(q){ p+='L'+q[0].toFixed(1)+' '+q[1].toFixed(1); });
-    return {path:p, end:pts[FD-1][1], val:(tail.slice(tail.length-(w-FD)).concat(Array(FD).fill(A)).reduce(function(a,b){return a+b;},0)/w)};
-  }
-  var e20=expMA(20), e50=expMA(50);
-  /* MA history lines */
-  function maLine(key, color){
-    var p='';
-    hist.forEach(function(hh,idx){ if(hh[key]==null) return; p+=(p?'L':'M')+X(idx).toFixed(1)+' '+Y(hh[key]).toFixed(1); });
-    return '<path d="'+p+'" fill="none" stroke="'+color+'" stroke-width="1.8"/>';
-  }
-  s+=maLine('ma20','#e8a33d')+maLine('ma50','#9d7bd8');
-  s+='<path d="'+e20.path+'" fill="none" stroke="#e8a33d" stroke-width="1.6" stroke-dasharray="2 3"/>';
-  s+='<path d="'+e50.path+'" fill="none" stroke="#9d7bd8" stroke-width="1.6" stroke-dasharray="2 3"/>';
-  /* settlements line */
-  var sp=''; hist.forEach(function(hh,idx){ sp+=(sp?'L':'M')+X(idx).toFixed(1)+' '+Y(hh.s).toFixed(1); });
-  s+='<path d="'+sp+'" fill="none" stroke="#dbe4f0" stroke-width="2"/>';
-  s+='<circle cx="'+X(NH-1)+'" cy="'+Y(A)+'" r="3.6" fill="#fff"/>';
-  /* anchor dashed center */
-  s+='<line x1="'+X(NH-1)+'" y1="'+Y(A)+'" x2="'+X(span)+'" y2="'+Y(A)+'" stroke="#8494ab" stroke-width="1" stroke-dasharray="5 4"/>';
-  /* right edge labels */
-  var rx=PL+pw+8;
-  s+='<text x="'+rx+'" y="'+(Y(f.r10_99[1])+4)+'" fill="#8494ab" font-size="11" font-family="IBM Plex Mono">99% '+f.r10_99[1].toFixed(2)+'</text>';
-  s+='<text x="'+rx+'" y="'+(Y(f.r10[1])+4)+'" fill="#c8d4e6" font-size="11" font-family="IBM Plex Mono">95% '+f.r10[1].toFixed(2)+'</text>';
-  s+='<text x="'+rx+'" y="'+(Y(A)+4)+'" fill="#fff" font-size="11.5" font-weight="600" font-family="IBM Plex Mono">'+A.toFixed(2)+'</text>';
-  s+='<text x="'+rx+'" y="'+(Y(f.r10[0])+4)+'" fill="#c8d4e6" font-size="11" font-family="IBM Plex Mono">95% '+f.r10[0].toFixed(2)+'</text>';
-  s+='<text x="'+rx+'" y="'+(Y(f.r10_99[0])+4)+'" fill="#8494ab" font-size="11" font-family="IBM Plex Mono">99% '+f.r10_99[0].toFixed(2)+'</text>';
-  var y20l=e20.end-6, y50l=e50.end+14;
-  if (y50l-y20l<17){ var midl=(y20l+y50l)/2; y20l=midl-10; y50l=midl+10; }
-  s+='<text x="'+rx+'" y="'+y20l+'" fill="#e8a33d" font-size="10.5" font-family="IBM Plex Mono">exp MA20 '+e20.val.toFixed(2)+'</text>';
-  s+='<text x="'+rx+'" y="'+y50l+'" fill="#9d7bd8" font-size="10.5" font-family="IBM Plex Mono">exp MA50 '+e50.val.toFixed(2)+'</text>';
-  /* date labels */
-  s+='<text x="'+PL+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono">'+hist[0].d.slice(0,10)+'</text>';
-  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Settlement history and 10-day sigma fan for '+meta.name+'">'+s+'</svg>';
-}
-
 function oiSVG(rows, ds, cp, prev, lab){
   cp=cp||'both'; var shC=cp!=='put', shP=cp!=='call';
   var W=760,H=280,PL=46,PR=14,PT=22,PB=34, pw=W-PL-PR, ph=H-PT-PB;
@@ -1945,43 +1846,6 @@ function cftcPriceRead(series, opt){
 
 /* ---------------- rollover (same drop-in series as the per-commodity rollover cards) ---------------- */
 var ROLLS = {"corn":{"front":"ZCZ26","def":"ZCH27","dailyN":[["09-25",926030,392452,29.8,-13.75],["09-28",926746,395855,29.9,-13.5],["09-29",913756,395423,30.2,-14.0],["09-30",919540,396542,30.1,-14.75],["10-05",894052,403490,31.1,-14.25],["10-06",896602,409553,31.4,-14.25],["10-07",894150,419031,31.9,-15.0],["10-08",887521,430359,32.7,-15.0],["10-09",866535,435516,33.4,-14.5],["10-12",848216,431070,33.7,-14.25],["10-13",845756,427047,33.6,-13.75],["10-14",843697,428278,33.7,-13.5],["10-15",835215,427717,33.9,-13.0],["10-16",839199,426342,33.7,-12.25],["10-19",823888,425970,34.1,-13.5],["10-20",810759,431897,34.8,-14.0]],"dailyT":[["Sep 25","926,030","392,452","—","29.8%","—","-13.8¢","—"],["Sep 28","926,746","395,855","+4,119","29.9%","+0.2","-13.5¢","+0.3"],["Sep 29","913,756","395,423","-13,422","30.2%","+0.3","-14.0¢","-0.5"],["Sep 30","919,540","396,542","+6,903","30.1%","-0.1","-14.7¢","-0.7"],["Oct 05","894,052","403,490","-18,540","31.1%","+1.0","-14.3¢","+0.5"],["Oct 06","896,602","409,553","+8,613","31.4%","+0.3","-14.3¢","+0.0"],["Oct 07","894,150","419,031","+7,026","31.9%","+0.6","-15.0¢","-0.8"],["Oct 08","887,521","430,359","+4,699","32.7%","+0.7","-15.0¢","+0.0"],["Oct 09","866,535","435,516","-15,829","33.4%","+0.8","-14.5¢","+0.5"],["Oct 12","848,216","431,070","-22,765","33.7%","+0.2","-14.3¢","+0.2"],["Oct 13","845,756","427,047","-6,483","33.6%","-0.1","-13.8¢","+0.5"],["Oct 14","843,697","428,278","-828","33.7%","+0.1","-13.5¢","+0.3"],["Oct 15","835,215","427,717","-9,043","33.9%","+0.2","-13.0¢","+0.5"],["Oct 16","839,199","426,342","+2,609","33.7%","-0.2","-12.3¢","+0.7"],["Oct 19","823,888","425,970","-15,683","34.1%","+0.4","-13.5¢","-1.2"],["Oct 20","810,759","431,897","-7,202","34.8%","+0.7","-14.0¢","-0.5"]],"beh":[["Sep 28","+716 OI / -5.2¢ → new shorts","+3,403 OI / -5.5¢ → new shorts"],["Sep 29","-12,990 OI / -1.0¢ → long liquidation","-432 OI / -0.5¢ → steady"],["Sep 30","+5,784 OI / -21.2¢ → new shorts","+1,119 OI / -20.5¢ → new shorts"],["Oct 05","-25,488 OI / -3.5¢ → long liquidation","+6,948 OI / -4.0¢ → new shorts"],["Oct 06","+2,550 OI / +10.7¢ → new longs","+6,063 OI / +10.7¢ → new longs"],["Oct 07","-2,452 OI / -6.0¢ → long liquidation","+9,478 OI / -5.3¢ → new shorts"],["Oct 08","-6,629 OI / -1.7¢ → long liquidation","+11,328 OI / -1.8¢ → new shorts"],["Oct 09","-20,986 OI / -20.5¢ → long liquidation","+5,157 OI / -21.0¢ → new shorts"],["Oct 12","-18,319 OI / +3.2¢ → short covering","-4,446 OI / +3.0¢ → short covering"],["Oct 13","-2,460 OI / -0.3¢ → long liquidation","-4,023 OI / -0.8¢ → long liquidation"],["Oct 14","-2,059 OI / -2.0¢ → long liquidation","+1,231 OI / -2.2¢ → steady"],["Oct 15","-8,482 OI / -2.7¢ → long liquidation","-561 OI / -3.2¢ → steady"],["Oct 16","+3,984 OI / -3.8¢ → new shorts","-1,375 OI / -4.5¢ → steady"],["Oct 19","-15,311 OI / -7.2¢ → long liquidation","-372 OI / -6.0¢ → long liquidation"],["Oct 20","-13,129 OI / -5.0¢ → long liquidation","+5,927 OI / -4.5¢ → new shorts"]],"stats":{"roll":"34.8%","fnet":"-115,271","dnet":"+39,445","cnet":"-75,826","pace":"+1.4 pp/wk","thr":"not crossed","sp":"-14.0¢ contango","mm":"+246,425 (COT 2026-10-13)","fnd":"Mon Nov 30, 2026","hard":"Fri Nov 27, 2026","state":"PRE-ROLL (39 days to FND)","plan":"Monitor carry & liquidity; core roll window T-10 to T-5"}},"soybeans":{"front":"ZSX26","def":"ZSF27","dailyN":[["09-25",458563,214979,31.9,-13.5],["09-28",441623,203318,31.5,-14.75],["09-29",436210,205120,32.0,-15.0],["09-30",428759,212123,33.1,-16.25],["10-05",427316,222563,34.2,-16.75],["10-06",430283,226570,34.5,-16.25],["10-07",409691,238441,36.8,-17.0],["10-08",378062,236646,38.5,-16.75],["10-09",350258,246303,41.3,-16.75],["10-12",333261,256676,43.5,-17.0],["10-13",313504,277593,47.0,-16.25],["10-14",301636,278885,48.0,-14.75],["10-15",295219,284638,49.1,-14.75],["10-16",289307,294024,50.4,-14.5],["10-19",269046,306739,53.3,-15.25],["10-20",254438,323480,56.0,-15.25]],"dailyT":[["Sep 25","458,563","214,979","—","31.9%","—","-13.5¢","—"],["Sep 28","441,623","203,318","-28,601","31.5%","-0.4","-14.7¢","-1.2"],["Sep 29","436,210","205,120","-3,611","32.0%","+0.5","-15.0¢","-0.3"],["Sep 30","428,759","212,123","-448","33.1%","+1.1","-16.2¢","-1.2"],["Oct 05","427,316","222,563","+8,997","34.2%","+1.1","-16.8¢","-0.5"],["Oct 06","430,283","226,570","+6,974","34.5%","+0.2","-16.3¢","+0.5"],["Oct 07","409,691","238,441","-8,721","36.8%","+2.3","-17.0¢","-0.7"],["Oct 08","378,062","236,646","-33,424","38.5%","+1.7","-16.8¢","+0.2"],["Oct 09","350,258","246,303","-18,147","41.3%","+2.8","-16.8¢","+0.0"],["Oct 12","333,261","256,676","-6,624","43.5%","+2.2","-17.0¢","-0.2"],["Oct 13","313,504","277,593","+1,160","47.0%","+3.5","-16.2¢","+0.8"],["Oct 14","301,636","278,885","-10,576","48.0%","+1.1","-14.7¢","+1.5"],["Oct 15","295,219","284,638","-664","49.1%","+1.0","-14.7¢","+0.0"],["Oct 16","289,307","294,024","+3,474","50.4%","+1.3","-14.5¢","+0.2"],["Oct 19","269,046","306,739","-7,546","53.3%","+2.9","-15.2¢","-0.8"],["Oct 20","254,438","323,480","+2,133","56.0%","+2.7","-15.2¢","+0.0"]],"beh":[["Sep 28","-16,940 OI / -30.7¢ → long liquidation","-11,661 OI / -29.5¢ → long liquidation"],["Sep 29","-5,413 OI / +9.5¢ → short covering","+1,802 OI / +9.8¢ → new longs"],["Sep 30","-7,451 OI / -4.7¢ → long liquidation","+7,003 OI / -3.5¢ → new shorts"],["Oct 05","-1,443 OI / -12.3¢ → long liquidation","+10,440 OI / -11.7¢ → new shorts"],["Oct 06","+2,967 OI / +22.3¢ → new longs","+4,007 OI / +21.8¢ → new longs"],["Oct 07","-20,592 OI / -5.5¢ → long liquidation","+11,871 OI / -4.8¢ → new shorts"],["Oct 08","-31,629 OI / -10.0¢ → long liquidation","-1,795 OI / -10.2¢ → long liquidation"],["Oct 09","-27,804 OI / +4.5¢ → short covering","+9,657 OI / +4.5¢ → new longs"],["Oct 12","-16,997 OI / -4.3¢ → long liquidation","+10,373 OI / -4.0¢ → new shorts"],["Oct 13","-19,757 OI / -4.0¢ → long liquidation","+20,917 OI / -4.7¢ → new shorts"],["Oct 14","-11,868 OI / -6.5¢ → long liquidation","+1,292 OI / -8.0¢ → new shorts"],["Oct 15","-6,417 OI / -14.3¢ → long liquidation","+5,753 OI / -14.3¢ → new shorts"],["Oct 16","-5,912 OI / -1.8¢ → long liquidation","+9,386 OI / -2.0¢ → new shorts"],["Oct 19","-20,261 OI / -7.8¢ → long liquidation","+12,715 OI / -7.0¢ → new shorts"],["Oct 20","-14,608 OI / -5.3¢ → long liquidation","+16,741 OI / -5.3¢ → new shorts"]],"stats":{"roll":"56.0%","fnet":"-204,125","dnet":"+108,501","cnet":"-95,624","pace":"+6.7 pp/wk","thr":"crossed","sp":"-15.2¢ contango","mm":"+249,807 (COT 2026-10-13)","fnd":"Fri Oct 30, 2026","hard":"Thu Oct 29, 2026","state":"ROLL WINDOW OPEN (8 days to FND)","plan":"Execute core roll now; zero longs by FND-1"}},"wheat":{"front":"ZWZ26","def":"ZWH27","dailyN":[["09-25",255623,106916,29.5,-15.0],["09-28",253338,107818,29.9,-14.75],["09-29",252789,107707,29.9,-14.25],["09-30",258584,113583,30.5,-15.0],["10-05",251979,112087,30.8,-14.0],["10-06",254587,114566,31.0,-13.25],["10-07",254554,115676,31.2,-14.5],["10-08",251400,117122,31.8,-14.5],["10-09",252568,120762,32.3,-14.25],["10-12",251302,122686,32.8,-13.75],["10-13",249549,123281,33.1,-14.0],["10-14",252366,125669,33.2,-13.25],["10-16",246446,133371,35.1,-14.5],["10-19",244814,133969,35.4,-14.75],["10-20",246598,132481,34.9,-15.25]],"dailyT":[["Sep 25","255,623","106,916","—","29.5%","—","-15.0¢","—"],["Sep 28","253,338","107,818","-1,383","29.9%","+0.4","-14.7¢","+0.3"],["Sep 29","252,789","107,707","-660","29.9%","+0.0","-14.3¢","+0.5"],["Sep 30","258,584","113,583","+11,671","30.5%","+0.6","-15.0¢","-0.7"],["Oct 05","251,979","112,087","-8,101","30.8%","+0.3","-14.0¢","+1.0"],["Oct 06","254,587","114,566","+5,087","31.0%","+0.2","-13.2¢","+0.8"],["Oct 07","254,554","115,676","+1,077","31.2%","+0.2","-14.5¢","-1.3"],["Oct 08","251,400","117,122","-1,708","31.8%","+0.5","-14.5¢","-0.0"],["Oct 09","252,568","120,762","+4,808","32.3%","+0.6","-14.3¢","+0.3"],["Oct 12","251,302","122,686","+658","32.8%","+0.5","-13.8¢","+0.5"],["Oct 13","249,549","123,281","-1,158","33.1%","+0.3","-14.0¢","-0.2"],["Oct 14","252,366","125,669","+5,205","33.2%","+0.2","-13.3¢","+0.7"],["Oct 16","246,446","133,371","+1,782","35.1%","+1.9","-14.5¢","-1.2"],["Oct 19","244,814","133,969","-1,034","35.4%","+0.3","-14.7¢","-0.3"],["Oct 20","246,598","132,481","+296","34.9%","-0.4","-15.2¢","-0.5"]],"beh":[["Sep 28","-2,285 OI / -14.5¢ → long liquidation","+902 OI / -14.7¢ → new shorts"],["Sep 29","-549 OI / +4.0¢ → steady","-111 OI / +3.5¢ → steady"],["Sep 30","+5,795 OI / -17.0¢ → new shorts","+5,876 OI / -16.3¢ → new shorts"],["Oct 05","-6,605 OI / +16.5¢ → short covering","-1,496 OI / +15.5¢ → short covering"],["Oct 06","+2,608 OI / +12.0¢ → new longs","+2,479 OI / +11.2¢ → new longs"],["Oct 07","-33 OI / -17.8¢ → long liquidation","+1,110 OI / -16.5¢ → new shorts"],["Oct 08","-3,154 OI / -3.3¢ → long liquidation","+1,446 OI / -3.2¢ → steady"],["Oct 09","+1,168 OI / -12.2¢ → new shorts","+3,640 OI / -12.5¢ → new shorts"],["Oct 12","-1,266 OI / +1.3¢ → steady","+1,924 OI / +0.8¢ → steady"],["Oct 13","-1,753 OI / -3.0¢ → steady","+595 OI / -2.8¢ → steady"],["Oct 14","+2,817 OI / +4.0¢ → new longs","+2,388 OI / +3.3¢ → new longs"],["Oct 16","-5,920 OI / -12.7¢ → long liquidation","+7,702 OI / -11.5¢ → new shorts"],["Oct 19","-1,632 OI / -5.3¢ → long liquidation","+598 OI / -5.0¢ → steady"],["Oct 20","+1,784 OI / -12.0¢ → new shorts","-1,488 OI / -11.5¢ → long liquidation"]],"stats":{"roll":"34.9%","fnet":"-9,025","dnet":"+25,565","cnet":"+16,540","pace":"+1.5 pp/wk","thr":"not crossed","sp":"-15.2¢ contango","mm":"-32,555 (COT 2026-10-13)","fnd":"Mon Nov 30, 2026","hard":"Fri Nov 27, 2026","state":"PRE-ROLL (39 days to FND)","plan":"Monitor carry & liquidity; core roll window T-10 to T-5"}}};
-
-function rollSVG(R){
-  var rows=R.dailyN, n=rows.length;
-  var W=760,H=300,PL=48,PR=48,PT=30,PB=28, pw=W-PL-PR, ph=H-PT-PB;
-  var maxOI=0, spMin=0, i, r;
-  rows.forEach(function(r){ maxOI=Math.max(maxOI,r[1]+r[2]); spMin=Math.min(spMin,r[4]); });
-  var yMax=maxOI*1.22, spLo=spMin*1.18;
-  var gw=pw/n, bw=Math.max(3,Math.min(15,gw*0.36));
-  function Y(v){ return PT+ph*(1-v/yMax); }
-  function YS(v){ return PT+ph*(1-(v-spLo)/(0-spLo)); }
-  function X(i){ return PL+gw*i+gw/2; }
-  var s='';
-  for(i=0;i<=4;i++){ var gy=PT+ph*i/4, gv=yMax*(1-i/4), gs=spLo*(i/4);
-    s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
-    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+Math.round(gv/1000)+'k</text>';
-    s+='<text x="'+(PL+pw+6)+'" y="'+(gy+4)+'" fill="#a8894a" font-size="10.5" font-family="IBM Plex Mono">'+gs.toFixed(0)+'¢</text>'; }
-  rows.forEach(function(r,i){
-    var cx=X(i);
-    s+='<rect x="'+(cx-bw-1).toFixed(1)+'" y="'+Y(r[1]).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(PT+ph-Y(r[1])).toFixed(1)+'" fill="#2f6db3"/>';
-    s+='<rect x="'+(cx+1).toFixed(1)+'" y="'+Y(r[2]).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(PT+ph-Y(r[2])).toFixed(1)+'" fill="#2b8f61"/>';
-  });
-  s+='<line x1="'+PL+'" y1="'+YS(0)+'" x2="'+(PL+pw)+'" y2="'+YS(0)+'" stroke="#28374e"/>';
-  var lp=''; rows.forEach(function(r,i){ lp+=(lp?'L':'M')+X(i).toFixed(1)+' '+YS(r[4]).toFixed(1); });
-  s+='<path d="'+lp+'" fill="none" stroke="#f5c542" stroke-width="1.8"/>';
-  rows.forEach(function(r,i){ s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+YS(r[4]).toFixed(1)+'" r="2.6" fill="#f5c542"/>'; });
-  rows.forEach(function(r,i){
-    if(i%2!==0 && i!==n-1) return;
-    var top=Math.max(r[1],r[2]), off=(i%4===2)?24:10;
-    s+='<text x="'+X(i).toFixed(1)+'" y="'+(Y(top)-off).toFixed(1)+'" fill="#f5c542" font-size="10.5" font-weight="600" font-family="IBM Plex Mono" text-anchor="middle">'+r[3].toFixed(1)+'%</text>';
-  });
-  var MN=MON3;
-  rows.forEach(function(r,i){
-    if(i%3!==0 && i!==n-1) return;
-    s+='<text x="'+X(i).toFixed(1)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">'+MN[r[0].slice(0,2)]+' '+r[0].slice(3)+'</text>';
-  });
-  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Open interest migration front versus deferred with calendar spread">'+s+'</svg>';
-}
 
 function rollSVG2(R){
   var rows=R.dailyN, n=rows.length;
@@ -3110,16 +2974,6 @@ function volTermHTML(key){
     '<div class="vol-read">'+R+'</div>'+
     '<div class="stamp">IV from the options snapshot · HV30 = annualised standard deviation of the last 30 daily settle changes · pts = volatility points · double-click a chart to enlarge it</div></div>';
 }
-function oiChangeHTML(key){
-  var n=DATA.grains[key].near, prev=n.rows_prev;
-  if(!prev||!prev.rows) return '<div class="tile wide" data-src="options"><h2>Open-interest change by strike <span class="h2note">— '+esc(n.chain||'')+'</span></h2><p class="note">Day-over-day change needs two option pulls; the first comparison appears after the next 10:52 ET run stores today’s strikes as the baseline. The rollover card already shows daily futures OI change.</p></div>';
-  var P={}; prev.rows.forEach(function(r){ P[r[0]]=r; });
-  var rows=n.rows.filter(function(r){ return P[r[0]]; }).map(function(r){ return [r[0], r[1]-P[r[0]][1], r[2]-P[r[0]][2]]; }).filter(function(r){ return r[1]||r[2]; });
-  var mx=Math.max.apply(null,rows.map(function(r){ return Math.max(Math.abs(r[1]),Math.abs(r[2])); }))||1;
-  var body=rows.map(function(r){ var wc=Math.abs(r[1])/mx*50, wp=Math.abs(r[2])/mx*50;
-    return '<div class="oi-row"><span class="db-l">'+fmt(r[0],2)+'</span><span class="oi-cell"><span class="oi-bar '+(r[1]>=0?'pos':'neg')+'" style="width:'+wc.toFixed(1)+'%"></span><span class="oi-v">C '+sgn(r[1],0)+'</span></span><span class="oi-cell"><span class="oi-bar put '+(r[2]>=0?'pos':'neg')+'" style="width:'+wp.toFixed(1)+'%"></span><span class="oi-v">P '+sgn(r[2],0)+'</span></span></div>'; }).join('');
-  return '<div class="tile wide" data-src="options"><h2>Open-interest change by strike <span class="h2note">— '+esc(n.chain||'')+' · '+esc(prev.date)+' → latest</span></h2>'+body+'<div class="stamp">Green = contracts added, red = closed · new OI near a wall reinforces it</div></div>';
-}
 
 
 /* ---------- full-screen expand for wide comparison cards (crop-year comparison, export comparison) ----------
@@ -4062,7 +3916,7 @@ function renderGrain(key){
   /* OI chart (toggle target) */
   DV+='<div class="tile wide" data-src="options" id="oi-'+key+'">'+oiTileHTML(key)+'</div>';
   /* rollover — full card replication */
-  DV+=flowTileHTML(key)+oiChangeHTML(key)+rollTileHTML(key);
+  DV+=flowTileHTML(key)+rollTileHTML(key);
   /* skew */
   DV+='<div class="tile wide"><h2>IV skew <span class="h2note">— liquid side · ±2σ window</span></h2>'+ skewSVG(g, meta)+
     '<div class="legend"><span><span class="sw" style="background:var(--put)"></span>Puts below futures</span><span><span class="sw" style="background:var(--call)"></span>Calls at/above futures</span></div>'+

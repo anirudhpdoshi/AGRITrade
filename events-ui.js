@@ -123,16 +123,70 @@
   function deskName(go) { var a = (go || "").split(":"); if (a[0] === "policy") return "Policy · " + (a[1] ? "evidence" : "calendar"); return ({ corn: "Corn", wheat: "Wheat", soybeans: "Soybeans", fx: "USD/CAD" })[a[0]] + " · " + ({ overview: "Overview", deriv: "Derivatives", fund: "Fundamentals", inputs: "Input costs", macro: "Macro" })[a[1]]; }
   function row(e, now) {
     var d = e.t - now, st = d > 15 * MIN ? "up" : d > 0 ? "soon" : d > -10 * MIN ? "due" : "out";
-    var right = st === "out" ? '<span class="evs out">Out · ' + hm(e.t) + "</span>"
-      : st === "due" ? '<span class="evs due">Due now</span>'
+    var LD = st === "out" || st === "due" ? landed(e) : null;
+    var right = LD && LD.at ? '<span class="evs land">✓ On the desk ' + hm(LD.at) + " <small>(" + lagTxt2(LD.at - e.t) + ")</small></span>" + (LD.txt ? '<span class="evs val">' + esc(LD.txt) + "</span>" : "")
+      : st === "out" ? '<span class="evs out">' + (LD && LD.pending ? "Released " + hm(e.t) + " · awaiting desk" : LD && LD.none ? "Out · " + hm(e.t) : "Out · " + hm(e.t) + " · calendar only") + "</span>"
+      : st === "due" ? '<span class="evs due">Due now' + (LD && LD.pending ? " — desk checking the source" : "") + "</span>"
       : '<span class="countdown" data-t="' + e.t + '" data-fmt="hms">' + hms(d) + "</span>";
-    var pr = null; Object.keys(BANK).forEach(function (b) { var r = pw()[b]; if (r && r.status === "out" && r.date === dayIso(e.t) && BANK[b].ev.test(e.label)) pr = r; });
-    if (pr) right = '<span class="pw-tone sm ' + toneCls(pr.tone) + '">' + pr.decision + " " + rateTxt(pr.rate) + " · " + pr.tone + "</span>";
     var meta = [e.impact ? '<span class="evi i-' + esc(e.impact).toLowerCase() + '">' + esc(e.impact) + "</span>" : "",
       e.fc ? "fc <b>" + esc(e.fc) + "</b>" : "", e.prev ? "prev <b>" + esc(e.prev) + "</b>" : ""].filter(Boolean).join(" · ");
     return '<div class="evr ' + st + (e.high ? " hi" : "") + '"><div class="evt">' + hm(e.t) + '<small>ET</small></div>' +
       '<div class="evm"><div class="evl">' + flagOf(e) + esc(e.label) + " " + chip(e) + "</div>" + (meta ? '<div class="evx">' + meta + "</div>" : "") + "</div>" +
-      '<div class="evr-r">' + right + (e.go ? '<button class="evgo" data-evgo="' + e.go + '" title="Open ' + esc(deskName(e.go)) + '">' + esc(deskName(e.go)) + " →</button>" : "") + "</div></div>";
+      '<div class="evr-r">' + right + (LD && LD.at && LD.go ? '<button class="evgo see" data-evgo="' + esc(LD.go) + '" data-evsel="' + esc(LD.sel || "") + '" title="Go to where this number is shown">See it: ' + esc(LD.where) + " →</button>"
+        : e.go ? '<button class="evgo" data-evgo="' + e.go + '" title="Open ' + esc(deskName(e.go)) + '">' + esc(deskName(e.go)) + " →</button>" : "") + "</div></div>";
+  }
+
+
+  /* ---------- release → desk link: did the number land, when, and exactly where to look ---------- */
+  var MAPU = [[/^(Advance|Prelim|Final) GDP q\/q|^GDP q\/q/, "us_gdp"], [/Core PCE/, "us_core_pce"], [/^Unemployment Claims/, "us_claims"], [/^Core CPI/, "us_core_cpi"], [/^CPI (y\/y|m\/m)/, "us_cpi"],
+    [/Non-?Farm|Nonfarm/i, "us_nfp"], [/^Unemployment Rate/, "us_ur"], [/Average Hourly Earnings/, "us_ahe"], [/^Retail Sales m\/m/, "us_retail"], [/UoM|Michigan/, "us_umich"], [/Federal Funds Rate|FOMC Statement/, "us_policy"]];
+  var MAPC = [[/Trimmed|CPI-?trim/i, "ca_trim"], [/Median CPI|CPI-?median/i, "ca_median"], [/^CPI m\/m|^CPI y\/y/, "ca_cpi"], [/Employment Change/, "ca_emp"], [/^Unemployment Rate/, "ca_ur"], [/^GDP m\/m/, "ca_gdp"],
+    [/^Core Retail Sales/, "ca_retail_ex"], [/^Retail Sales m\/m/, "ca_retail"], [/Overnight Rate|BOC Rate Statement/, "ca_policy"]];
+  function relKey(e) {
+    if (e.kind === "macro") { var name = e.label.replace(/^(USD|CAD) /, ""), M = /^CAD /.test(e.label) ? MAPC : MAPU;
+      for (var i = 0; i < M.length; i++) if (M[i][0].test(name)) return { macro: M[i][1] }; return null; }
+    if (e.kind === "usda" && /Export sales/.test(e.label)) return { asof: "exports" };
+    if (e.kind === "wasde") return { asof: "wasde" };
+    if (e.kind === "cftc") return { asof: "cftc_grains" };
+    if (e.kind === "market" && /close · settlement/.test(e.label)) return { asof: "grains_settle" };
+    if (e.kind === "desk" && /Options OI/.test(e.label)) return { asof: "options" };
+    if (e.kind === "desk" && /Final open-interest/.test(e.label)) return { asof: "options" };
+    if (e.kind === "cb") return { cb: 1 };
+    return null;
+  }
+  var WHERE = { exports: ["corn:fund", '[data-src="exports"]', "Fundamentals · export sales"], wasde: ["corn:fund", '[data-src="wasde"]', "Fundamentals · WASDE"],
+    cftc_grains: ["corn:deriv", '[data-src="cftc_grains"]', "Derivatives · CFTC managed money"], grains_settle: ["corn:overview", '[data-src="grains_settle"]', "Overview · settles & fan"],
+    options: ["corn:deriv", '[id^="oi-"]', "Derivatives · open interest by strike"] };
+  function landed(e) {
+    var k = relKey(e); if (!k) return null;
+    var A = (DATA.meta && DATA.meta.asof) || {};
+    if (k.macro) { var m = window.mfind && mfind(k.macro); if (!m) return { none: 1 };
+      if (k.macro === "us_policy" || k.macro === "ca_policy") { var r = pw()[k.macro === "us_policy" ? "fed" : "boc"];
+        if (r && r.status === "out" && r.date === dayIso(e.t)) return { at: Date.parse(r.t_seen), txt: r.decision + " " + rateTxt(r.rate) + " · " + r.tone, go: "events:", sel: ".pw-tile", where: "Events · central-bank card", tab: "fx" }; }
+      var seen = m.seen_at ? Date.parse(m.seen_at) : 0;
+      if (seen && seen >= e.t - 5 * MIN) return { at: seen, txt: m.name + " " + m.period + ": " + (window.mval ? mval(m, m.value) : m.value) + (e.fc ? " (fc " + e.fc + ")" : ""), go: "fx:macro", sel: '[data-mkey="' + k.macro + '"]', where: "USD/CAD · Macro · " + m.name, tab: "fx" };
+      return { pending: 1, where: "USD/CAD · Macro · " + m.name }; }
+    if (k.asof) { var w = WHERE[k.asof], at = A[k.asof] ? Date.parse(A[k.asof]) : 0, ok = at >= e.t - 5 * MIN;
+      if (k.asof === "cftc_grains") { var c = DATA.grains.corn.cftc, lastD = c[c.length - 1].date; ok = lastD >= new Date(e.t - 4 * 86400000).toISOString().slice(0, 10); at = ok ? e.t : 0; }
+      if (k.asof === "exports") { var E = (DATA.exports && DATA.exports.corn && DATA.exports.corn.weeks) || [], wk = E.length ? E[E.length - 1][1] : ""; ok = wk >= new Date(e.t - 8 * 86400000).toISOString().slice(0, 10); }
+      return ok ? { at: at, txt: "", go: w[0], sel: w[1], where: w[2], tab: w[0].split(":")[0] } : { pending: 1, where: w[2] }; }
+    if (k.cb) { var PJ = window.POLICY && POLICY._data(), bk = null;
+      ((PJ && PJ.banks) ? Object.keys(PJ.banks) : []).forEach(function (b) { if (e.label.indexOf(PJ.banks[b].name) === 0) bk = b; });
+      var d = bk && (PJ.docs || []).filter(function (x) { return x.bank === bk && x.published_at && Date.parse(x.published_at) >= e.t - 6 * H; })[0];
+      return d ? { at: Date.parse(d.published_at), txt: (d.label || "").toLowerCase() + " (" + (d.score > 0 ? "+" : "") + d.score + ")", go: "policy:" + d.id, sel: ".pi-doc", where: "Policy · evidence", tab: "policy" } : { pending: 1, where: "Policy tab" }; }
+    return null;
+  }
+  function lagTxt2(ms) { var m = Math.round(ms / MIN); return m <= 0 ? "on time" : m < 60 ? "+" + m + " min" : "+" + Math.floor(m / 60) + " h " + (m % 60) + " min"; }
+  /* tabs and cards that received a scheduled release today get a colour and a "NEW today" ribbon until midnight */
+  function decorate() {
+    if (!ready()) return;
+    var now = Date.now(), tabs = {}, today = todayEvents(now).filter(function (e) { return e.t <= now; });
+    today.forEach(function (e) { var L = landed(e); if (!L || !L.at || !L.tab) return; (tabs[L.tab] = tabs[L.tab] || []).push(e.label.replace(/^(USD|CAD) /, "") + " " + hm(L.at));
+      if (L.sel && L.tab !== "events") [].forEach.call(document.querySelectorAll("#panel-" + L.tab + " " + L.sel), function (el) {
+        var c = el.closest(".tile, .mcard, .dash-card, .mk-click") || el; c.classList.add("upd-today"); c.setAttribute("data-upd", "NEW today · " + hm(L.at)); }); });
+    if (tabs.fx || tabs.corn) ["corn", "wheat", "soybeans"].forEach(function (g) { if (tabs.corn && g !== "corn") tabs[g] = tabs.corn; });
+    [].forEach.call(document.querySelectorAll(".tab-btn"), function (b) { var k = b.getAttribute("data-tab"), L = tabs[k];
+      b.classList.toggle("tab-today", !!L); if (L) b.title = "Updated today: " + L.join(" · "); else b.removeAttribute("title"); });
   }
 
   /* ---------- central-bank decisions: outcome, tone and how fast the desk had it ---------- */
@@ -418,15 +472,20 @@
   }
 
   /* ---------- wiring ---------- */
-  function go(spec) {
+  function go(spec, sel) {
     var a = (spec || "").split(":"), b = document.getElementById("tabbtn-" + a[0]); if (!b) return;
     b.click();
+    if (sel) setTimeout(function () { decorate();
+      var el = [].filter.call(document.querySelectorAll("#panel-" + a[0] + " " + sel), function (x) { return x.offsetParent !== null; })[0];   /* the visible copy */
+      if (el) { var c = el.closest(".mk-click, .mcard, .tile, .dash-card") || el;
+        var y = c.getBoundingClientRect().top + window.scrollY - window.innerHeight / 3; window.scrollTo({ top: Math.max(0, y), behavior: "auto" });
+        c.classList.remove("flash-find"); void c.offsetWidth; c.classList.add("flash-find"); } }, 320);
     if (a[0] === "policy") { if (a[1] && window.POLICY && POLICY.open) POLICY.open(a[1]); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
-    if (a[1] && window.setSub) setTimeout(function () { window.setSub(a[0], a[1]); window.scrollTo({ top: 0, behavior: "smooth" }); }, 30);
+    if (a[1] && window.setSub) setTimeout(function () { window.setSub(a[0], a[1]); if (!sel) window.scrollTo({ top: 0, behavior: "smooth" }); }, 30);
   }
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t) return;
-    var g = t.closest("[data-evgo]"); if (g) { ev.preventDefault(); go(g.getAttribute("data-evgo")); return; }
+    var g = t.closest("[data-evgo]"); if (g) { ev.preventDefault(); go(g.getAttribute("data-evgo"), g.getAttribute("data-evsel")); return; }
     if (!t.closest("#panel-events")) { if (t.closest("#tabbtn-events")) { unseen = 0; render(); paintBadge(); } return; }
     var b = t.closest("[data-evgrp]"); if (b) { V.grp = b.getAttribute("data-evgrp"); saveV(); repaintMain(); return; }
     if (t.closest("[data-evhigh]")) { V.high = !V.high; saveV(); repaintMain(); return; }
@@ -440,10 +499,13 @@
     var now = Date.now(); tick++;
     if (dayIso(now) !== lastDay && lastDay) { log("day", "<b>New day</b> — " + esc(dayLabel(now)), "", "day|" + dayIso(now)); if (active()) render(); }
     dueTick(now);
-    if (tick % 3 === 0) diff();
+    if (tick % 3 === 0) { diff(); decorate(); }
     if (tick % 6 === 0) { paintBadge(); if (active()) repaintMain(); }
   }, 5000);
+  /* every redraw of a desk rebuilds its cards — put the NEW-today marks back straight after */
+  (function () { var ra = window.renderAll; if (ra && !ra._ev) { window.renderAll = function () { var r = ra.apply(this, arguments); try { decorate(); } catch (e) {} return r; }; window.renderAll._ev = 1; } })();
+  document.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest(".tab-btn, [data-sub], [data-sec-v]")) setTimeout(function () { try { decorate(); } catch (e) {} }, 60); });
   window.addEventListener("desk:unlock", function () { base = null; setTimeout(function () { diff(); render(); paintBadge(); }, 800); });
-  window.EVENTS = { today: function () { return todayEvents(Date.now()); }, render: render, log: log, _feed: function () { return feed; }, _diff: diff, _snap: snap, _base: function () { return base; } };
+  window.EVENTS = { today: function () { return todayEvents(Date.now()); }, landed: landed, decorate: decorate, render: render, log: log, _feed: function () { return feed; }, _diff: diff, _snap: snap, _base: function () { return base; } };
   if (ready()) { lastDay = dayIso(Date.now()); render(); paintBadge(); diff(); hookToast(); }
 })();
