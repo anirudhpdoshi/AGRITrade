@@ -900,6 +900,17 @@ table.fl-tab small{color:var(--faint);font-size:10px}
 .pw-ph{font-size:12px;color:#d4deea;margin-top:5px;line-height:1.5}.pw-ph b.hawk{color:#ff9d97}.pw-ph b.dove{color:#5fd598}
 .pw-lag{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;padding-top:7px;border-top:1px dashed var(--line);font-size:12px;color:var(--muted)}.pw-lag b{color:#fff}.pw-lag a{color:#7dd8e6;margin-left:auto}
 .pw-lagt{margin-top:12px}.pw-lagt h3{margin:0 0 6px}
+
+/* macro KPI cards: country line, value + change, next release — each on its own line so nothing is clipped */
+.mkc{padding:6px 0;border-top:1px dashed var(--line);cursor:pointer}.mkc:first-of-type{border-top:0}
+.mkc-h{font-size:11px;color:var(--muted);white-space:nowrap}.mkc-h b{color:#dfe7f1}.mkc-h span{font-family:"IBM Plex Mono",monospace}
+.mkc-v{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;margin-top:1px}.mkc-v>b{font-family:"IBM Plex Mono",monospace;font-size:17px;color:#fff}
+.mkc-c{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;white-space:nowrap}
+.mkc .mnext{white-space:normal}
+/* country comparison: interpretation wraps instead of running off the card */
+table.cmp-macro tr.cmp-read td{text-align:left!important;font-size:12px;color:#b9c7da;padding-top:0;white-space:normal}
+table.cmp-macro tr:not(.cmp-read) td{border-bottom:0}
+@media (max-width:760px){table.cmp-macro tr.cmp-read td{display:block!important}table.cmp-macro tr.cmp-read td:before{content:none!important}}
 </style>
 </head>
 <body class="locked">
@@ -2853,7 +2864,9 @@ function lineChartSVG(o){
 var BTIPS={}, BTN=0;
 function barChartSVG(o){
   var tid=o.tips?('b'+(++BTN)):null; if(tid) BTIPS[tid]=o.tips;
-  var W=o.W||480, H=o.H||210, PL=44, PR=o.lineLabel?84:12, PT=18, PB=o.months?40:28, pw=W-PL-PR, ph=H-PT-PB, dec=o.dec==null?1:o.dec, n=o.bars.length; if(!n) return '';
+  var W=o.W||480, H=o.H||210, PL=44, PR=o.lineLabel?84:12, PT=18, PB=o.months?40:28, pw=W-PL-PR, dec=o.dec==null?1:o.dec, n=o.bars.length; if(!n) return '';
+  /* category labels too wide for their bar ("Q3 '23") wrap onto two lines instead of running into each other */
+  var two=!o.months&&o.bars.some(function(b){ return /\s/.test(String(b[0]))&&String(b[0]).length*6.4>pw/n*0.95; }); if(two) PB+=12; var ph=H-PT-PB;
   var vals=o.bars.map(function(b){ return b[1]; }).concat((o.line||[]).map(function(l){ return l[1]; })).filter(function(v){ return v!=null; });
   var lo=Math.min(0,Math.min.apply(null,vals)), hi=Math.max(0,Math.max.apply(null,vals)); if(o.floor!=null) lo=o.floor; var pad=(hi-lo)*0.12||1; hi+=pad; if(lo<0) lo-=pad*0.6;
   function Y(v){ return PT+ph*(1-(v-lo)/(hi-lo)); } var bw=pw/n, s='';
@@ -2869,7 +2882,9 @@ function barChartSVG(o){
     if(o.months){ var ym=o.months[i]||'', mo=+ym.slice(5,7);
       if((n-1-i)%step===0) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(PT+ph+14)+'" fill="#8494ab" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+(MN[mo-1]||'')+'</text>';
       if(mo===1||i===0){ s+='<text x="'+(PL+i*bw+2).toFixed(1)+'" y="'+(PT+ph+30)+'" fill="#c9d6e6" font-size="10.5" font-weight="700" font-family="IBM Plex Mono">'+ym.slice(0,4)+'</text>'+(i>0?'<line x1="'+(PL+i*bw).toFixed(1)+'" x2="'+(PL+i*bw).toFixed(1)+'" y1="'+PT+'" y2="'+(PT+ph+32)+'" stroke="#2b3e5c" stroke-dasharray="2 3"/>':''); } }
-    else if(n<=14||i%2===(n-1)%2) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(H-9)+'" fill="#8494ab" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">'+esc(b[0])+'</text>'; });
+    else if(n<=14||i%2===(n-1)%2){ var lb=String(b[0]), sp=two?lb.indexOf(' '):-1;
+      s+=sp>0?'<text x="'+(x+w/2).toFixed(1)+'" y="'+(H-21)+'" fill="#8494ab" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">'+esc(lb.slice(0,sp))+'<tspan x="'+(x+w/2).toFixed(1)+'" dy="12" fill="#5b6b82">'+esc(lb.slice(sp+1))+'</tspan></text>'
+        :'<text x="'+(x+w/2).toFixed(1)+'" y="'+(H-9)+'" fill="#8494ab" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">'+esc(lb)+'</text>'; } });
   if(lo<0) s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(0)+'" y2="'+Y(0)+'" stroke="#3a4a61"/>';
   if(o.line&&o.line.length){ var d='', st=false; o.line.forEach(function(l,i){ if(l[1]==null){ st=false; return; } d+=(st?'L':'M')+(PL+i*bw+bw/2).toFixed(1)+' '+Y(l[1]).toFixed(1); st=true; });
     s+='<path d="'+d+'" fill="none" stroke="#e8a33d" stroke-width="1.6" stroke-dasharray="5 4"/>';
@@ -2898,7 +2913,9 @@ function macroLinePanel(m, opt){
     nextReleaseHTML(m.key)+'<div class="stamp">'+esc(m.direct||m.src)+' · latest '+esc(m.period)+' · dashed = trailing 2/3/5-yr averages'+(opt.target!=null?' · dotted = 2% target':'')+'</div></div>';
 }
 function macroKpiCard(title, us, ca, dec, unit){
-  function row(flag, m){ if(!m) return ''; var ch=m.chg; return '<div class="mini-kv mk-click" data-mkey="'+m.key+'" title="Click for the full breakdown"><span>'+flagCcy(m.group,12)+' '+flag+' '+esc(m.period)+'</span><b>'+fmt(m.value,dec)+unit+'</b> <span class="'+(Math.abs(ch)<Math.pow(10,-dec)/2?'neu':cls(ch))+'">'+(Math.abs(ch)<Math.pow(10,-dec)/2?'unch.':sgn(ch,dec,unit==='%'?' pp':''))+'</span></div>'+nextReleaseHTML(m.key,true); }
+  function row(flag, m){ if(!m) return ''; var ch=m.chg, flat=Math.abs(ch)<Math.pow(10,-dec)/2;
+    return '<div class="mkc mk-click" data-mkey="'+m.key+'" title="Click for the full breakdown"><div class="mkc-h">'+flagCcy(m.group,12)+' <b>'+flag+'</b> <span>'+esc(m.period)+'</span></div>'+
+      '<div class="mkc-v"><b>'+fmt(m.value,dec)+unit+'</b><span class="mkc-c '+(flat?'neu':cls(ch))+'">'+(flat?'unch.':sgn(ch,dec,unit==='%'?' pp':''))+'</span></div>'+nextReleaseHTML(m.key,true)+'</div>'; }
   return '<div class="dash-card"><div class="dk">'+title+'</div>'+(MGEO!=='ca'?row('US',us):'')+(MGEO!=='us'?row('CA',ca):'')+'</div>';
 }
 function macroCompareHTML(){
@@ -2908,8 +2925,8 @@ function macroCompareHTML(){
     ['Real GDP (q/q ann.)','us_gdp','ca_gdpq',1,'%',function(g){ return g>0?'US growth outpacing Canada → USD-supportive':'Canada growth outpacing → CAD-supportive'; }]];
   var rows=R.map(function(r){ var u=mget(r[1]), c=mget(r[2]); if(!u||!c) return '';
     var g=u.value-c.value; return '<tr><td class="lbl" data-l="">'+r[0]+'</td><td data-l="US latest"><b>'+fmt(u.value,r[3])+r[4]+'</b> <small class="h2note">'+esc(u.period)+'</small></td><td data-l="US prior">'+fmt(u.prior,r[3])+r[4]+'</td>'+
-      '<td data-l="Canada latest"><b>'+fmt(c.value,r[3])+r[4]+'</b> <small class="h2note">'+esc(c.period)+'</small></td><td data-l="Canada prior">'+fmt(c.prior,r[3])+r[4]+'</td><td data-l="Gap US−CA"><b>'+sgn(g,r[3],' pp')+'</b></td><td data-l="Read" class="read-cell">'+r[5](g)+'</td></tr>'; }).join('');
-  return '<table class="sd-tbl"><thead><tr><th>Indicator</th><th>US latest</th><th>US prior</th><th>Canada latest</th><th>Canada prior</th><th>Gap</th><th>Interpretation</th></tr></thead><tbody>'+rows+'</tbody></table>';
+      '<td data-l="Canada latest"><b>'+fmt(c.value,r[3])+r[4]+'</b> <small class="h2note">'+esc(c.period)+'</small></td><td data-l="Canada prior">'+fmt(c.prior,r[3])+r[4]+'</td><td data-l="Gap US−CA"><b>'+sgn(g,r[3],' pp')+'</b></td></tr><tr class="cmp-read"><td colspan="6">→ '+r[5](g)+'</td></tr>'; }).join('');
+  return '<div class="tbl-scroll"><table class="sd-tbl cmp-macro"><thead><tr><th>Indicator</th><th>US latest</th><th>US prior</th><th>Canada latest</th><th>Canada prior</th><th>Gap</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 function macroDashHTML(){
   var b=function(v,l){ return '<button data-mgeo="'+v+'" aria-pressed="'+(MGEO===v)+'">'+l+'</button>'; };

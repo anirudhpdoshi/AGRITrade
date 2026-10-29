@@ -179,17 +179,28 @@
     return '<div class="pw-lagt"><h3>Publication lag — today</h3><table class="oi-mtab"><thead><tr><th>Release</th><th>Scheduled</th><th>On the desk</th><th>Lag</th><th>Result</th></tr></thead><tbody>' +
       rows.map(function (r) { return "<tr><td>" + esc(r[1]) + "</td><td>" + hm(r[0]) + "</td><td>" + (r[2] ? new Date(r[2]).toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit", second: "2-digit" }) : '<span class="neu">waiting</span>') + '</td><td class="' + (r[3] == null ? "neu" : r[3] <= 5 ? "up" : r[3] <= 20 ? "neu" : "dn") + '">' + lagTxt(r[3]) + "</td><td>" + esc(r[4]) + "</td></tr>"; }).join("") + "</tbody></table></div>";
   }
+  /* the next trading day's releases, so tomorrow-morning data (e.g. 8:30 GDP) is visible the evening before */
+  function tomorrowHTML(now) {
+    var t = now, nd = null;
+    for (var i = 1; i <= 4 && !nd; i++) { var L = todayEvents(now + i * 86400000).filter(pass).filter(function (e) { return e.kind !== "desk" && e.kind !== "market"; }); if (L.length) { nd = L; t = now + i * 86400000; } }
+    if (!nd) return "";
+    var key = nd.filter(function (e) { return e.high || e.impact === "High" || e.impact === "Medium" || /^(usda|wasde|cftc|contract|ca)$/.test(e.kind); });
+    var rest = nd.length - key.length;
+    return '<div class="tile wide ev-tom"><h2>Coming up ' + (dayIso(t) === dayIso(now + 86400000) ? "tomorrow" : "next") + ' · ' + esc(shortDay(t)) + ' <span class="h2note">— ' + nd.length + ' scheduled' + (rest ? " · showing the " + key.length + " high/medium-impact and agri releases" : "") + '</span></h2>' +
+      '<div class="evlist">' + (key.length ? key : nd).map(function (e) { return row(e, now); }).join("") + "</div></div>";
+  }
   var lastDay = "";
   function mainHTML(now) {
     var all = todayEvents(now), list = all.filter(pass), up = list.filter(function (e) { return e.t > now - 10 * MIN; }), done = list.filter(function (e) { return e.t <= now - 10 * MIN; });
-    var nxt = up.filter(function (e) { return e.t > now; })[0];
+    var nxt = up.filter(function (e) { return e.t > now; })[0], nxtLater = !nxt && nextAfterToday(now);
+    if (nxtLater) nxt = nxtLater;
     var cnt = {}; all.forEach(function (e) { var g = groupOf(e); cnt[g] = (cnt[g] || 0) + 1; });
     var head = '<div class="tile wide ev-head"><div class="evh-l"><h2>Today’s events <span class="h2note">— everything scheduled to land on the desk today, in one place</span></h2>' +
       '<div class="evh-d">' + esc(dayLabel(now)) + ' · Toronto time</div>' +
       '<div class="evf">' + GROUPS.map(function (g) { var n = g[0] === "all" ? all.length : cnt[g[0]] || 0;
         return '<button data-evgrp="' + g[0] + '" aria-pressed="' + (V.grp === g[0]) + '">' + g[1] + " <small>" + n + "</small></button>"; }).join("") +
       '<button class="evhi" data-evhigh aria-pressed="' + !!V.high + '">High impact only</button></div></div>' +
-      '<div class="evh-r">' + (nxt ? '<div class="evn-l">Next up · ' + hm(nxt.t) + ' ET</div><div class="evn-t">' + flagOf(nxt) + esc(nxt.label) + '</div><div class="hero-cd countdown" data-t="' + nxt.t + '" data-fmt="hms">' + hms(nxt.t - now) + "</div>"
+      '<div class="evh-r">' + (nxt ? '<div class="evn-l">Next up · ' + (nxtLater ? esc(shortDay(nxt.t)) + " " : "") + hm(nxt.t) + ' ET</div><div class="evn-t">' + flagOf(nxt) + esc(nxt.label) + '</div><div class="hero-cd countdown" data-t="' + nxt.t + '" data-fmt="hms">' + hms(nxt.t - now) + "</div>"
         : '<div class="evn-l">Next up</div><div class="evn-t">Nothing left today</div>') +
       '<div class="evn-s"><b>' + up.length + "</b> to come · <b>" + done.length + "</b> out</div></div></div>";
     var body;
@@ -203,7 +214,7 @@
           : '<div class="ev-empty in"><h3>No more events today</h3><p>Everything scheduled for today is out.' + (function () { var nx = nextAfterToday(now); return nx ? ' Next: <b>' + flagOf(nx) + esc(nx.label) + "</b> · " + esc(shortDay(nx.t)) + " " + hm(nx.t) + ' ET · in <span class="countdown" data-t="' + nx.t + '" data-fmt="hms">' + hms(nx.t - now) + "</span>" : ""; })() + "</p></div>") + "</div>" +
         (done.length ? '<div class="tile wide ev-done"><h2>Already out today <span class="h2note">— ' + done.length + "</span></h2><div class=\"evlist\">" + done.slice().reverse().map(function (e) { return row(e, now); }).join("") + "</div></div>" : "");
     }
-    return head + policyHTML(now) + body + '<div class="tile wide"><div class="stamp">Sources combined here: USDA weekly reports and WASDE, CFTC, CBOT contract dates and sessions, Canada (AAFC / StatCan), the US + Canada macro calendar, official release calendars, EIA energy reports and the desk’s own data runs. The list resets at midnight Toronto time. Holiday closures follow the source calendars; CBOT session times assume a normal trading day.</div></div>';
+    return head + policyHTML(now) + body + tomorrowHTML(now) + '<div class="tile wide"><div class="stamp">Sources combined here: USDA weekly reports and WASDE, CFTC, CBOT contract dates and sessions, Canada (AAFC / StatCan), the US + Canada macro calendar, official release calendars, EIA energy reports and the desk’s own data runs. The list resets at midnight Toronto time. Holiday closures follow the source calendars; CBOT session times assume a normal trading day.</div></div>';
   }
 
   /* ---------- milestone feed (right rail) ---------- */
