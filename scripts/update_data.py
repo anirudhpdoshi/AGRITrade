@@ -2345,11 +2345,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", help="comma-separated block names")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--force", action="store_true", help="ignore the 'checked recently' throttle for the --only blocks")
     a = ap.parse_args()
     doc = json.loads(DATA_PATH.read_text(encoding="utf-8"))
     D, N = doc["DATA"], doc["NEWS"]
     before = json.dumps(doc, sort_keys=True)
     only = set(a.only.split(",")) if a.only else None
+    if a.force and only:
+        for name in only:
+            D["meta"].pop(f"{name}_checked", None)
     ok, failed, errors = [], [], {}
     for name, fn in BLOCKS:
         if only and name not in only:

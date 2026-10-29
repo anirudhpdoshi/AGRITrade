@@ -7,7 +7,12 @@ on:
     - cron: "*/15 11-22 * * 1-5"
     # One evening sweep for BoC daily rate, Treasury/BoC yield closes and Friday's CFTC.
     - cron: "30 0 * * 2-6"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "re-read these blocks now, ignoring the throttle (comma-separated, e.g. macro)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -33,10 +38,11 @@ jobs:
         run: pip install -r scripts/requirements.txt
 
       - name: Update data.json
-        run: python scripts/update_data.py
+        run: python scripts/update_data.py ${FORCE:+--only "$FORCE" --force}
         env:
           FAS_API_KEY: ${{ secrets.FAS_API_KEY }}
           BEA_API_KEY: ${{ secrets.BEA_API_KEY }}
+          FORCE: ${{ github.event.inputs.force }}
           ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
 
       - name: Commit if changed
