@@ -9944,11 +9944,11 @@
     "6M": 4.32
    },
    "fxcross": {
-    "dxy": 101.932,
-    "dxy_chg": -0.252,
-    "eurusd": 1.1178,
-    "usdjpy": 157.66,
-    "usdcad_ref": 1.399
+    "dxy": 101.916,
+    "dxy_chg": -0.268,
+    "eurusd": 1.1181,
+    "usdjpy": 157.64,
+    "usdcad_ref": 1.3991
    },
    "closes": [
     [
@@ -11615,10 +11615,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.39906,
+    "mid": 1.399,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-29T17:45:00-04:00",
+    "ts": "2026-10-29T17:55:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -11758,14 +11758,6 @@
     }
    ],
    "intraday": [
-    [
-     "2026-10-29T01:50+00:00",
-     1.3971
-    ],
-    [
-     "2026-10-29T01:55+00:00",
-     1.39736
-    ],
     [
      "2026-10-29T02:00+00:00",
      1.39736
@@ -12716,7 +12708,15 @@
     ],
     [
      "2026-10-29T21:45+00:00",
-     1.39906
+     1.3991
+    ],
+    [
+     "2026-10-29T21:50+00:00",
+     1.399
+    ],
+    [
+     "2026-10-29T21:55+00:00",
+     1.399
     ]
    ],
    "fwd_inputs": {
@@ -13126,10 +13126,10 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-29T17:45:25-04:00",
+   "updated_at": "2026-10-29T17:55:22-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-29T17:45:00-04:00",
+    "fx_spot": "2026-10-29T17:55:00-04:00",
     "fx_closes": "2026-10-29T16:30:00-04:00",
     "yields": "2026-10-28T17:00:00-04:00",
     "policy": "2026-10-29T17:00:27-04:00",
@@ -13137,11 +13137,11 @@
     "cftc_fx": "2026-10-20T15:30:00-04:00",
     "cftc_grains": "2026-10-20T15:30:00-04:00",
     "energy": "2026-10-29T16:55:00-04:00",
-    "crosses": "2026-10-29T17:35:00-04:00",
+    "crosses": "2026-10-29T17:45:00-04:00",
     "grains_settle": "2026-10-29T14:20:00-04:00",
     "grains_quote": "2026-10-29T14:15:00-04:00",
     "options": "2026-10-29T11:39:41-04:00",
-    "news": "2026-10-29T17:45:25-04:00",
+    "news": "2026-10-29T17:55:22-04:00",
     "calendar": "2026-10-29T17:00:27-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-29T17:45:25-04:00",
@@ -13194,7 +13194,7 @@
      "fx_model"
     ],
     "failed": [],
-    "at": "2026-10-29T17:45:25-04:00"
+    "at": "2026-10-29T17:55:22-04:00"
    },
    "releases_checked": "2026-10-29T16:15:21-04:00",
    "exports_checked": "2026-10-29T17:30:23-04:00",
@@ -13231,7 +13231,7 @@
    },
    "canada_checked": "2026-10-29T07:00:20-04:00",
    "ca_calendar_checked": "2026-10-29T13:00:28-04:00",
-   "canada_watch": "2026-10-29T17:45:25-04:00",
+   "canada_watch": "2026-10-29T17:55:22-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -28932,6 +28932,12 @@
   ],
   "wheat": [
    [
+    "2026-10-29 21:47 UTC",
+    "www.marketscreener.com",
+    "CME : Wheat futures bounce from oversold levels on strong export demand.",
+    "https://news.google.com/rss/articles/CBMivwFBVV95cUxPUUotWk90dkN1NER2NkJQWTNMMmZVNmZ1bEpXLUY5MDNxalJ4cGl3Nzd4UFlMN0E1RFFWdEZiTWgwalVKeE1UOWZ5WThBWEtMMU1pTUpNODhJOVRoUHNZam90RE91eFBKZVYyaVhDaVV5LXpmanNOX3JpVjJKM3ZuQUYxNnRDOU41TnYtTm5sSUl5WjB3dVBsNXE1OExEWk1lS2pkUHJKQ01TcnkyOXRkR1ZGMVdhMjRmS3VfN3Z0bw?oc=5"
+   ],
+   [
     "2026-10-29 20:06 UTC",
     "www.tradingview.com",
     "CBOT wheat ends higher on China talk, strong weekly US export sales",
@@ -28968,16 +28974,10 @@
     "https://news.google.com/rss/articles/CBMimgFBVV95cUxOV1p0ZnU3X0NjWlZlQ1dxMlVxZW1saGxNVXVvRWVXcjZISk1CRHJLejRoTVZ3bGlYbDhmRzFWRlpTN0p4enlFdXZ5cU1RaUlWS1hmUkN2ZWI5ZDl6QUFYMkRLOW9mazExZXpmLVMtc0d5dWxCSURVSUJyd1l5OEtrZUJvVDRhNmt4TGtDZC10dmJWcXpBdFlnNHdR?oc=5"
    ],
    [
-    "2026-10-29 13:01 UTC",
-    "www.tradingview.com",
-    "Wheat firms after near four-month low with Black Sea exports in focus",
-    "https://news.google.com/rss/articles/CBMi1gFBVV95cUxPcjhrcU5xTEkyZXktc2tTQmNQYWhpQ1JCVF9aVlJmeW1ENExOdHJqcVlodGxWUXBvTldhb0FYY2VoTnhzSnFOb1BZUmF3UmtuVDBfOTZTUERwZzF3cHh4QjhaZ01VZWFVRlp6U3dIVkdPNlZlc05tUk1wLUJ6R0N5SE52NnNFTV9kdUNkSmo5bXNSUmtnRGdnZWJySUxUREdFM2RTNkswY1Jid1h5ZkFlUjlvV1hKblRCM1hOdk1hY3UxbzBZMnA4NUstNTlDck82TGpmaTln?oc=5"
-   ],
-   [
-    "2026-10-29 12:30 UTC",
-    "kchanews.com",
-    "Soybean Export Inspections Climb While Corn and Wheat Decline",
-    "https://news.google.com/rss/articles/CBMimgFBVV95cUxOajlqTEVzTEtiX3dUZ2pDamNYeXQ3VHh4S0ZqSGVWb2RaUUZ4eEhoY2FuSnBxZHRVUW5HeUxGZ0czaXA4WmcwektfakxUZy16Vkw0ZS01Y0dtSU9ZVFR3OUQ2bjJpSHJaSlhaRUJxZWZMajI3VlBVdDRuVEdqLWppbzhUM3U3Z1NyNVJoUHgtTGtiWEEtSzh0cDV3?oc=5"
+    "2026-10-29 14:05 UTC",
+    "ukragroconsult.com",
+    "Turkey’s wheat imports could fall 56% amid Black Sea supply disruptions",
+    "https://news.google.com/rss/articles/CBMiqAFBVV95cUxOMmpmY1hnQlFkYU1tcVZxSG9QZHlpTHRXU041aTFIRFZzZVc4M1NqREhNdzhCS1htTWlhQjd0NFdBSTJwV3ZYZmE3MGJWZ0RQLWVaUm1tWmR2VU1sQ0d0SWNESld4eGxDRmZlVzJYRjNoT2ExWTdSYTZuYUF4S3dNbnRtUy1YdTJWY3l1OTNSeW9IUjU4SDkxTU1ONDFfTm5Ua0pNNURVNmU?oc=5"
    ]
   ],
   "soybeans": [
@@ -29124,10 +29124,10 @@
     "https://news.google.com/rss/articles/CBMimgFBVV95cUxNOTREM0NFZHBoVjA1UU5tOU1iUzNFWGw5dlJFS2o3MUUwOTZTazFxakdDbWpVV2VoeDVKbzZzb1NsWlkwU0JkMGVVMDZkek83ZTVjbkZsTnM3T29pSTREcW0tQkhiMGp5ZzZGcFR2S3VHbWlyaGhUa2RpcWZFOERJVE1oWkZ3djlxanNiNXljdkpJOGJMdG0zcldR0gGYAUFVX3lxTFB0aWFMSkd6R2pSa3VZa0VEZXM3MENmYlFoWXc2YXNYeHVjTDgxLUl5SWFTQWRlSjVjckxTT0JDaHVDZEJfYXdaSGNqMnpiT0NIUlRnb0J4NkJ3bDFaVzlNUnFYbGcxYUx2Ui1PbU5WU2M0MjhlVzE0TVZfdDgxNi0xa2RNTkEtZnhNR3BtWDFhajRMelBDZVVN?oc=5"
    ],
    [
-    "2026-10-29 14:04 UTC",
-    "babel.ua",
-    "Russia exports grain through World War II-era Arctic port of Murmansk for the first time",
-    "https://news.google.com/rss/articles/CBMivAFBVV95cUxQT042VktWY1NMWEhFaXlFSl9OSlJPakgxaVRha2V0bC01SFlDY0RaMkJTME5sN21ia0hKbHJrOV9vcG9IbWFGLUdPZHNYS1Bra0lSQUd4ZmU5a3lBVjZUY2hfczNTLWozY1NaN1NBLVM2Wk8yV3VZdUxUU3Exdy0ySVZmRWhqSHBwaWhGVExseDZuTGl0d0lrdHJVc2pkeGk0cXVsNTZDSUZ4YzBTQ2ExLXdhNnp6djNiU2FtctIBwgFBVV95cUxNYnh1b3d5TERZcVRJN3kyYzA1eWhFNTR3c2RWZG03SjBMd29SWVBNMGpHRjRUY1pVdkhuVDl3ZDU0UFR1Ql9kdzJOQlNaSmNoU0ZLN3d3d2QxOFR1Z1BzbVB1ZHowZUp3ZExlUHJjVDE1cExhT3UxY3JxczhMWE9hSGdWdUlockFVb0ZWaEw4eE9OY3VNT2lnejdBbnFSYnprWUloS1c0N255NlpxNTZJRUZEXzdGSzVsbXFfVmkxLXFBdw?oc=5"
+    "2026-10-29 13:39 UTC",
+    "www.ctvnews.ca",
+    "Ship sinks off Bulgaria's Black Sea coast after being hit by drones",
+    "https://news.google.com/rss/articles/CBMiwAFBVV95cUxPdTBwX3Uxel9VMWdCM3pUMTBtUWU5TUVtamVNNFQ4Q2ktM0UtS2tFTmx4QWhQV3ZLLTlmUksxYVpjaGl3OTFNbUJlb1ZMZzNMSURWak5Talg4MWZCYWlicG54azBBV0ZvbEFabjVVN19iWkhPZEw0dldCTzNfOGlIb3dVemJpbEU4MHFrR3c0c3FaWW5ZMWttQ09JVGRIOUhmVzMxLUV4bkdBYXZHOGRGXzBQWVlyTm9DVFNTeW9tOFo?oc=5"
    ]
   ],
   "macro": [
