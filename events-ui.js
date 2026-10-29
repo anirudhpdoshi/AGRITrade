@@ -32,10 +32,11 @@
     macro:  { l: "MACRO",    c: "#6ea8ff" },
     energy: { l: "ENERGY",   c: "#f0a35e" },
     market: { l: "MARKET",   c: "#38b6c9" },
-    desk:   { l: "DESK DATA",c: "#9aa8bb" }
+    desk:   { l: "DESK DATA",c: "#9aa8bb" },
+    cb:     { l: "CENTRAL BANK", c: "#6ea8ff" }
   };
   var GROUPS = [["all", "All"], ["agri", "Agri"], ["macro", "Macro"], ["market", "Markets"], ["desk", "Desk data"]];
-  function groupOf(e) { return e.kind === "macro" || e.kind === "energy" ? "macro" : e.kind === "market" ? "market" : e.kind === "desk" ? "desk" : "agri"; }
+  function groupOf(e) { return e.kind === "macro" || e.kind === "cb" || e.kind === "energy" ? "macro" : e.kind === "market" ? "market" : e.kind === "desk" ? "desk" : "agri"; }
   var V = store.get("desk.eventsView") || { grp: "all", high: false };
   function saveV() { store.set("desk.eventsView", V); }
 
@@ -75,6 +76,16 @@
         add({ t: t, label: ccy + " " + (m ? m.name : k.replace(/^(us|ca)_/, "").toUpperCase()), kind: "macro", cc: ccy === "CAD" ? "ca" : "us", impact: "High", high: true, go: "fx:macro" });
       });
     });
+    try {
+      var PJ = window.POLICY && POLICY._data();
+      ((PJ && PJ.calendar) || []).forEach(function (c) {
+        if ((c.bank === "fed" || c.bank === "boc") && c.kind === "decision") return;
+        var p = c.date.split("-"), tz = c.tz === "Europe/Frankfurt" ? "Europe/Berlin" : c.tz, hm2 = (c.time || "12:00").split(":"), t;
+        try { t = window.zonedMs(+p[0], +p[1], +p[2], +hm2[0], +hm2[1], tz); } catch (x) { return; }
+        var B = (PJ.banks || {})[c.bank] || {};
+        add({ t: t, label: (B.name || c.bank.toUpperCase()) + ": " + c.what + (c.time ? "" : " (time TBA)"), kind: "cb", cc: B.cc, high: c.kind === "decision", go: "policy" });
+      });
+    } catch (x) {}
     var wd = wdOf(now), weekday = ["Mon", "Tue", "Wed", "Thu", "Fri"].indexOf(wd) >= 0;
     /* EIA weekly reports used on the Input costs view (skipped when the macro calendar already lists them) */
     var hasE = out.some(function (e) { return e.kind === "energy"; });
@@ -109,7 +120,7 @@
   /* ---------- rendering ---------- */
   function flagOf(e) { return e.cc && window.flag ? window.flag(e.cc, 13) + " " : ""; }
   function chip(e) { var c = CAT[e.kind] || CAT.desk; return '<span class="evc" style="--ec:' + c.c + '">' + c.l + "</span>"; }
-  function deskName(go) { var a = (go || "").split(":"); return ({ corn: "Corn", wheat: "Wheat", soybeans: "Soybeans", fx: "USD/CAD" })[a[0]] + " · " + ({ overview: "Overview", deriv: "Derivatives", fund: "Fundamentals", inputs: "Input costs", macro: "Macro" })[a[1]]; }
+  function deskName(go) { var a = (go || "").split(":"); if (a[0] === "policy") return "Policy · " + (a[1] ? "evidence" : "calendar"); return ({ corn: "Corn", wheat: "Wheat", soybeans: "Soybeans", fx: "USD/CAD" })[a[0]] + " · " + ({ overview: "Overview", deriv: "Derivatives", fund: "Fundamentals", inputs: "Input costs", macro: "Macro" })[a[1]]; }
   function row(e, now) {
     var d = e.t - now, st = d > 15 * MIN ? "up" : d > 0 ? "soon" : d > -10 * MIN ? "due" : "out";
     var right = st === "out" ? '<span class="evs out">Out · ' + hm(e.t) + "</span>"
@@ -228,12 +239,12 @@
     if (!active()) unseen++;
     paintBadge(); if (active()) paintFeed();
   }
-  var MK = { data: ["◆", "#38b6c9"], release: ["✓", "#3fb97f"], due: ["⏱", "#e8b93d"], world: ["🌐", "#ff8a84"], oi: ["⚡", "#c9a3ff"], level: ["↕", "#6ea8ff"], day: ["☀", "#9aa8bb"] };
+  var MK = { policy: ["🏦", "#6ea8ff"], data: ["◆", "#38b6c9"], release: ["✓", "#3fb97f"], due: ["⏱", "#e8b93d"], world: ["🌐", "#ff8a84"], oi: ["⚡", "#c9a3ff"], level: ["↕", "#6ea8ff"], day: ["☀", "#9aa8bb"] };
   var FV = "all";
   function feedHTML() {
     var now = Date.now(), list = feed.filter(function (m) { return FV === "all" || m.k === FV || (FV === "release" && m.k === "data"); });
     var head = '<div class="rail-card ev-feed"><div class="mon-head"><div class="rail-title"><span>Milestones</span><span class="hint">live · ' + feed.length + "</span></div>" +
-      '<div class="mon-tabs evft">' + [["all", "All"], ["release", "Data"], ["oi", "Options"], ["world", "World"], ["level", "Levels"]].map(function (t) {
+      '<div class="mon-tabs evft">' + [["all", "All"], ["policy", "Central banks"], ["release", "Data"], ["oi", "Options"], ["world", "World"], ["level", "Levels"]].map(function (t) {
         return '<button data-evfeed="' + t[0] + '" aria-selected="' + (FV === t[0]) + '">' + t[1] + "</button>"; }).join("") + "</div></div>";
     var day = "", body = list.length ? list.map(function (m) {
       var d = dayIso(m.t), sep = d !== day ? '<div class="evfd">' + (d === dayIso(now) ? "Today" : esc(shortDay(m.t))) + "</div>" : ""; day = d;
@@ -285,6 +296,7 @@
   var base = null;
   function snap() {
     var s = { asof: Object.assign({}, DATA.meta.asof || {}), fp: {}, roll: {}, flow: {}, pw: {}, macro: {}, walls: {}, oi: {}, px: {}, gg: null, wa: {} };
+    try { var PJ2 = window.POLICY && POLICY._data(); if (PJ2) { s.pol = {}; (PJ2.docs || []).forEach(function (d) { if (d.policy_relevant !== false) s.pol[d.id] = d; }); } } catch (x) {}
     ["boc", "fed"].forEach(function (b) { var r = pw()[b]; if (r) s.pw[b] = r.date + "|" + r.status + "|" + (r.t_seen || ""); });
     Object.keys(ASOF).forEach(function (k) { try { s.fp[k] = FP[k] ? fp(FP[k]()) : s.asof[k]; } catch (e) { s.fp[k] = s.asof[k]; } });
     (window.macroAll ? macroAll() : []).forEach(function (m) { s.macro[m.key] = m.period + "|" + m.value; });
@@ -318,7 +330,7 @@
       if (first ? SEED[k] && dayIso(Date.parse(v)) === today : (s.fp[k] !== base.fp[k] && base.fp[k] != null))
         log("data", "<b>Updated</b> — " + esc(ASOF[k][0]) + detail(k), ASOF[k][1], "asof|" + k + "|" + v, first ? Date.parse(v) : 0);
     });
-    if (first) { base = s; return; }
+    if (first) { delete s.pol; base = s; return; }   /* policy items are seeded on the next pass */
     (window.macroAll ? macroAll() : []).forEach(function (m) {
       if (base.macro[m.key] && s.macro[m.key] !== base.macro[m.key]) {
         var u = m.unit === "K" ? "K" : m.unit || "";
@@ -345,6 +357,20 @@
       if (a.pct < 40 && b.pct >= 40) log("oi", "<b>" + GN[k] + " roll passes 40%</b> — " + esc(b.def) + " now holds " + b.pct.toFixed(1) + "% of open interest · next option month window is open", k + ":deriv", "roll40|" + k + "|" + b.def);
       if (a.pct >= 40 && b.pct < 40) log("oi", "<b>" + GN[k] + " roll back below 40%</b> (" + b.pct.toFixed(1) + "%) — next option month window locked", k + ":deriv", "roll40d|" + k + "|" + b.pct);
     });
+    /* central-bank statements, minutes and speeches read by the Policy engine (all five banks) */
+    if (s.pol) {
+      var PJ3 = POLICY._data(), TY = { statement: "statement", minutes: "minutes", press_conference: "press conference", speech: "speech", testimony: "testimony", interview: "interview" };
+      Object.keys(s.pol).forEach(function (id) {
+        var d = s.pol[id], seenBefore = base.pol && base.pol[id], fresh = d.published_at && Date.now() - Date.parse(d.published_at) < 36 * H;
+        if (seenBefore || !fresh) return;   /* first load: today's and yesterday's items; afterwards: anything new */
+        var B = (PJ3.banks || {})[d.bank] || {}, top = (d.evidence || [])[0];
+        var msg = (window.flag && B.cc && (B.cc === "us" || B.cc === "ca") ? flag(B.cc, 11) + " " : "") + "<b>" + esc(B.name || d.bank) + " — " + esc(TY[d.type] || d.type) + (d.speaker && d.speaker !== "Committee" ? " · " + esc(d.speaker) : "") + ": " +
+          esc((d.label || "").toLowerCase()) + " (" + (d.score > 0 ? "+" : "") + d.score + ")</b>" + (d.guidance && d.guidance.direction !== "none" ? "<br><small>" + esc(d.guidance.next_action) + "</small>" : "") +
+          (d.dissent && d.dissent.length ? "<br><small>disagreement on record</small>" : "") + (top ? "<br><small>“" + esc(top.q.slice(0, 140)) + (top.q.length > 140 ? "…" : "") + "”</small>" : "");
+        log("policy", msg, "policy:" + d.id, "pol|" + d.id + "|" + (d.version || 1), Date.parse(d.published_at));
+        if (base.pol && (d.type === "statement" || d.type === "press_conference") && window.DESK_LIVE && DESK_LIVE.toast) { window.__evNoLog = 1; try { DESK_LIVE.toast(msg); } finally { window.__evNoLog = 0; } }
+      });
+    }
     ["boc", "fed"].forEach(function (b) {   /* central-bank decision landed: feed + on-screen notification */
       var r = pw()[b]; if (!r || r.status !== "out" || s.pw[b] === base.pw[b] || r.date !== dayIso(Date.now())) return;
       var msg = "<b>" + BANK[b].n + ": " + r.decision + (r.change_bp ? " " + (r.change_bp > 0 ? "+" : "") + r.change_bp + " bp" : "") + " to " + rateTxt(r.rate) + " — " + r.tone + "</b> (score " + (r.score > 0 ? "+" : "") + r.score + ")" +
@@ -395,6 +421,7 @@
   function go(spec) {
     var a = (spec || "").split(":"), b = document.getElementById("tabbtn-" + a[0]); if (!b) return;
     b.click();
+    if (a[0] === "policy") { if (a[1] && window.POLICY && POLICY.open) POLICY.open(a[1]); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
     if (a[1] && window.setSub) setTimeout(function () { window.setSub(a[0], a[1]); window.scrollTo({ top: 0, behavior: "smooth" }); }, 30);
   }
   document.addEventListener("click", function (ev) {

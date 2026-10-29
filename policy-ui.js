@@ -136,8 +136,10 @@
   });
   P.addEventListener("change", function (ev) { var s = ev.target.closest && ev.target.closest("[data-pisel]"); if (s) { V.doc = s.value; save(); render(); } });
   document.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("#tabbtn-policy")) { render(); poll(true); } });
-  setInterval(function () { if (P.classList.contains("active")) poll(); }, 60000);
+  /* every minute while the tab is open; every 5 minutes in the background so new statements reach the Events feed */
+  setInterval(function () { if (P.classList.contains("active") || Date.now() - lastTry > 300000) poll(); }, 60000);
   window.addEventListener("desk:unlock", function () { poll(true); });
-  window.POLICY = { render: render, poll: poll, _data: function () { return J; } };
+  window.POLICY = { render: render, poll: poll, _data: function () { return J; },
+    open: function (id) { V.doc = id; V.sub = "transcript"; save(); render(); } };
   render(); if (window.DESK_LOCKED === false) poll(true);
 })();

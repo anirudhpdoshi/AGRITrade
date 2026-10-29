@@ -350,14 +350,25 @@ def publish(body):
     print("published")
 
 
+def event_near(hours):
+    """True when a scheduled decision / minutes release is within `hours` (BoJ and ECB publish outside Toronto hours)."""
+    from zoneinfo import ZoneInfo
+    for c in CALENDAR:
+        h, m = (c[2] or "12:00").split(":")
+        t = dt.datetime.fromisoformat(c[1]).replace(hour=int(h), minute=int(m), tzinfo=ZoneInfo(c[3]))
+        if abs((t - NOW).total_seconds()) <= hours * 3600:
+            return True
+    return False
+
+
 def event_day():
     today = NOW.date().isoformat()
     return any(c[1] == today for c in CALENDAR)
 
 
 def main():
-    if "--if-due" in sys.argv and not event_day() and NOW.minute >= 15:
-        print("ordinary day - hourly cadence; skipping this quarter-hour"); return
+    if "--if-due" in sys.argv and not (11 <= NOW.hour <= 22) and not event_near(8):
+        print("overnight with no central-bank event within 8 h - skipping"); return
     prev = load_prev()
     docs = {d["id"]: d for d in prev.get("docs", [])}
     status = {}

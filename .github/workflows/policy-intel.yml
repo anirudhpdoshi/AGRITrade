@@ -1,10 +1,11 @@
 name: Central bank policy intelligence
 # Fed, ECB, BoE, BoC, BoJ official statements / minutes / speeches -> policy.json on the `policyintel` branch (read by the
-# Policy tab). Every 15 min on policy-event days, hourly otherwise (the script skips quarter-hours on ordinary days).
+# Policy tab and the Events feed). Every 15 min 7am–6pm Toronto on weekdays, and overnight / Sunday evening whenever a
+# decision or minutes release is within 8 h (BoJ, ECB). The script skips the other overnight runs.
 # A failure here never touches the rest of the desk.
 on:
   schedule:
-    - cron: "4,19,34,49 11-22 * * 1-5"
+    - cron: "4,19,34,49 * * * 0-5"
   workflow_dispatch:
     inputs:
       backfill:
