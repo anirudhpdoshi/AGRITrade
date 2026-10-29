@@ -103,7 +103,7 @@
          · Yahoo CAD=X (server: ~60 s fast lane on weekdays, else 15 min) - each with its own staleness limit
        market closed always wins; three failed browser polls with nothing fresh = FEED UNAVAILABLE */
   var LIMIT = { ref: 90e3, alpha: 45 * 60e3, yahoo: 20 * 60e3 };
-  function ago(ms) { var m = Math.round(ms / 60000); return m < 1 ? "<1 min old" : m < 120 ? m + " min old" : Math.round(m / 60) + " h old"; }
+  function ago(ms) { var m = Math.round(ms / 60000), s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? s + " s old" : m < 120 ? m + " min old" : Math.round(m / 60) + " h old"; }
   function feedState() {
     var L = window.DESK_LIVE && window.DESK_LIVE.feedState ? window.DESK_LIVE.feedState() : null, now = Date.now(), D = window.DATA;
     var c = [];
@@ -117,7 +117,7 @@
     var tail = " · " + (best.t ? clock(best.t) + " ET · " + ago(age) : "no price yet");
     var st;
     if (L && !L.session.open) st = { k: "closed", chip: "FX MARKET CLOSED", txt: "weekend close · reopens Sun 5 pm ET · priced off the last spot: " + NAME[best.k] + tail };
-    else if (live) st = { k: "live", chip: "LIVE STREAM", txt: "live stream · last tick " + clock(best.t) + " ET" };
+    else if (live) st = { k: "live", chip: "LIVE STREAM", txt: "live stream · last tick " + clock(best.t) + " ET · " + ago(age) };
     else if (best.k === "ref" && age < LIMIT.ref) st = { k: "ref", chip: "REFERENCE RATE", txt: "reference rate (~30 s) · indicative mid, not an executable quote" + tail };
     else if (best.k === "alpha" && age < LIMIT.alpha) st = { k: "delayed", chip: "DELAYED", txt: "delayed rate · checked every 30 min" + tail };
     else if (best.k === "yahoo" && age < LIMIT.yahoo) st = { k: "delayed", chip: "DELAYED", txt: "delayed mid" + tail };
@@ -440,7 +440,7 @@
     S.timer = setTimeout(run, Math.max(0, Math.min(500, 500 - (performance.now() - S.lastRun))));
   }
   function mount() { cancelAnimationFrame(S.raf); S.built = null; S.geom = null; update(); }
-  setInterval(paintStatus, 5000);
+  setInterval(paintStatus, 1000);
   window.FWD = Object.assign({ update: update, mount: mount, state: feedState, _S: S }, core);
   if (document.getElementById("fx-fwd")) mount();
 })(this);

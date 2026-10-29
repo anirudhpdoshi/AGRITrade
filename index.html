@@ -466,7 +466,7 @@ table.cmp-tbl .ruler-col{background:rgba(232,163,61,.10)!important;box-shadow:in
 .qt-ar{position:absolute;left:2px;top:50%;transform:translateY(-50%);font-size:8.5px}.qt-box.dir-up .qt-ar:before{content:"▲";color:var(--green)}.qt-box.dir-dn .qt-ar:before{content:"▼";color:var(--red)}
 .qt-box.fl-up{background:rgba(63,185,127,.55);transition:none}.qt-box.fl-dn{background:rgba(224,101,95,.55);transition:none}
 .qf{display:inline-block;transform-origin:50% 60%;animation:qflip .42s cubic-bezier(.3,.7,.3,1)}@keyframes qflip{0%{transform:rotateX(90deg);opacity:.2}60%{transform:rotateX(-12deg);opacity:1}100%{transform:none}}
-.qt-c{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qt-f{font-size:9.5px;color:var(--faint);margin-top:1px;line-height:1.45;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden}.qt-t{color:var(--faint)}
+.qt-c{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qt-f{font-size:9.5px;color:var(--faint);margin-top:1px;line-height:1.45;display:flex;flex-wrap:wrap;align-items:center;gap:0 5px;white-space:nowrap;overflow:hidden}.qt-t{color:var(--faint)}
 .qt-f .om-t{font-size:8.5px;padding:0 4px;letter-spacing:.05em;margin-left:auto}
 @media (max-width:760px){.qt-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.qt-pp{font-size:18px}.qt-bf{font-size:12.5px}}
 @media (prefers-reduced-motion:reduce){.qf{animation:none}.qt-box,.qt-box.fl-up,.qt-box.fl-dn{transition:none}}
@@ -955,6 +955,8 @@ table.pi-tab td{vertical-align:top}table.pi-tab small{display:block;color:var(--
 @media (min-width:761px){.tab-btn{padding-left:13px;padding-right:13px}.tab-btn .sym{margin-left:5px;font-size:11px}}
 .mk-click.upd-today,.mkc.upd-today{outline:0;border-left:3px solid #e8b93d;padding-left:6px;background:rgba(232,185,61,.06)}
 .mk-click.upd-today:after,.mkc.upd-today:after{position:static;display:inline-block;margin-top:3px;border-radius:5px}
+.qt-age{color:var(--muted,#8a9bb0);font-size:.92em;white-space:nowrap}.qt-age.old,[data-age-src].old{color:var(--amber,#e8a33d)}
+.qt-chk{font-size:12px;color:var(--muted,#8a9bb0);margin:6px 2px 0;font-family:'IBM Plex Mono',monospace}.qt-chk b{color:var(--ink,#dbe4ee);font-weight:600}
 </style>
 </head>
 <body class="locked">
@@ -3819,7 +3821,7 @@ function qtPx(v, dec, pre){ var t=(pre||'')+fmt(v,dec), n=dec>=4?2:dec>=2?2:1, i
 function qtTile(o){
   return '<div class="qt" data-qtk="'+o.k+'"'+(o.title?' title="'+esc(o.title)+'"':'')+'><div class="qt-h"><b>'+o.name+'</b><span class="qt-sub">'+(o.sub||'')+'</span></div>'+
     '<div class="qt-box" data-qt="'+o.k+'" data-v="'+o.v+'" data-dec="'+o.dec+'" data-pre="'+(o.pre||'')+'"'+(o.live?' data-qt-live="'+o.live+'"':'')+'><span class="qt-ar" aria-hidden="true"></span><span class="qt-v">'+qtPx(o.v,o.dec,o.pre)+'</span></div>'+
-    '<div class="qt-c">'+(o.chg||'')+'</div><div class="qt-f">'+(o.foot||'')+(o.tag?' <span class="om-t '+o.tagc+'">'+o.tag+'</span>':'')+'</div></div>';
+    '<div class="qt-c">'+(o.chg||'')+'</div><div class="qt-f">'+(o.foot||'')+(o.ts?'<span class="qt-age" data-age="'+esc(o.ts)+'" data-age-max="'+(o.max||1500)+'"></span>':'')+(o.tag?' <span class="om-t '+o.tagc+'">'+o.tag+'</span>':'')+'</div></div>';
 }
 var QT_TIER={delayed:['DELAYED','ok'], last:['LAST QUOTE','warn'], chain:['CHAIN PULL','warn'], settle:['SETTLE','cz']};
 function grainTilesHTML(key){
@@ -3831,7 +3833,7 @@ function grainTilesHTML(key){
   /* front futures: the strip's own delayed quote (same price as the fan and KPIs) */
   var L=+f.intraday[0], A=+f.anchor, nearSame=legs.near.contract===front;
   out.push(qtTile({k:'fut-'+key, name:esc(front), sub:nearSame?optSub(legs.near):'front', v:L, dec:4, pre:'$', chg:chg(L,A),
-    foot:'<span class="qt-t">'+esc(f.intraday[1]||'')+'</span>', tag:isAuto('grains_quote')?'DELAYED':'SNAPSHOT', tagc:isAuto('grains_quote')?'ok':'cz',
+    foot:'<span class="qt-t">'+esc(f.intraday[1]||'')+'</span>', ts:f.intraday_ts, tag:isAuto('grains_quote')?'DELAYED':'SNAPSHOT', tagc:isAuto('grains_quote')?'ok':'cz',
     title:'Change vs '+front+' settle '+fmt(A,4)+(f.settle_date?' ('+fmtShortDate(f.settle_date)+')':'')}));
   ['near','far'].forEach(function(leg){
     var o=legs[leg]; if(!o.contract||(leg==='near'&&nearSame)) return;
@@ -3839,9 +3841,9 @@ function grainTilesHTML(key){
     out.push(qtTile({k:leg+'-'+key, name:esc(o.contract), sub:optSub(o), v:Q.px, dec:4, pre:'$', chg:(Q.tier==='settle'?'<span class="neu">settle</span>':chg(Q.px,Q.settle)),
       foot:'<span class="qt-t">'+esc(Q.when)+'</span>', tag:T[0]==='LAST QUOTE'?'LAST':T[0], tagc:T[1], title:(Q.why?'Latest refresh failed — ':'')+'Futures under the '+o.chain+' options'}));
   });
-  out.push(qtTile({k:'cad-'+key, name:'C$/t', sub:'cash equiv.', title:'Front futures × '+fmt(BU_PER_MT[key],3)+' bu/t × USD/CAD — no basis', v:L*BU_PER_MT[key]*fx, dec:2, chg:'', foot:'<span class="qt-t">'+esc(f.intraday[1]||'')+'</span>'}));
+  out.push(qtTile({k:'cad-'+key, name:'C$/t', sub:'cash equiv.', title:'Front futures × '+fmt(BU_PER_MT[key],3)+' bu/t × USD/CAD — no basis', v:L*BU_PER_MT[key]*fx, dec:2, chg:'', foot:'<span class="qt-t">'+esc(f.intraday[1]||'')+'</span>', ts:f.intraday_ts}));
   out.push(qtTile({k:'usdcad', name:'USD/CAD', sub:'spot', v:fx, dec:5, live:'usdcad', chg:fxChgHTML(), foot:spotStamp(), tag:isAuto('fx_spot')?'LIVE':'SNAPSHOT', tagc:isAuto('fx_spot')?'ok':'cz'}));
-  return '<div class="qt-grid">'+out.join('')+'</div>';
+  return '<div class="qt-grid">'+out.join('')+'</div>'+'<div class="qt-chk" title="The desk re-checks every source about once a minute; each tile shows its own quote time and how old it is">Feed checked <b data-clock-src="live_at"></b> · <span data-age-src="live_at"></span> · prices refresh on their own cycle</div>';
 }
 function ylLiveHTML(){
   var fx=DATA.fx, YL=fx.yields_live||{}, T=fx.treasury||{}, cd=(DATA.meta.asof.yields||'').slice(0,10);
@@ -3859,22 +3861,32 @@ function ylLiveHTML(){
 }
 function fxChgHTML(){ var fx=DATA.fx, c=(fx.feed.mid/fx.spot.ref-1)*100, d=fx.feed.mid-fx.spot.ref; return '<span class="'+cls(c)+'" data-live-chg2>'+sgn(d*10000,1,' pips')+' · '+sgn(c,2,'%')+'</span>'; }
 function tHM(iso){ if(!iso) return ''; var t=Date.parse(iso); return isFinite(t)?new Date(t).toLocaleTimeString('en-US',{timeZone:'America/Toronto',hour:'numeric',minute:'2-digit'}).replace(' ','').toLowerCase()+' ET':''; }
+/* live age on every stamped quote: the clock ticks every second even when the price itself only refreshes on its own cycle */
+function ageTxt(ms){ var s=Math.max(0,Math.round(ms/1000)); return s<60?s+'s ago':s<3600?Math.floor(s/60)+'m '+(s%60<10?'0':'')+(s%60)+'s ago':Math.floor(s/3600)+'h '+Math.floor(s%3600/60)+'m ago'; }
+function ageTick(){
+  var now=Date.now(), la=window.DATA&&DATA.meta&&DATA.meta.live_at;
+  document.querySelectorAll('[data-age]').forEach(function(el){ var t=Date.parse(el.getAttribute('data-age')); if(!isFinite(t)) return;
+    var a=now-t, mx=(+el.getAttribute('data-age-max')||1500)*1000; el.textContent='· '+ageTxt(a).replace(' ago',''); el.classList.toggle('old',a>mx); });
+  document.querySelectorAll('[data-clock-src="live_at"]').forEach(function(el){ el.textContent=la?new Date(Date.parse(la)).toLocaleTimeString('en-US',{timeZone:'America/Toronto',hour:'numeric',minute:'2-digit',second:'2-digit'})+' ET':'—'; });
+  document.querySelectorAll('[data-age-src="live_at"]').forEach(function(el){ var t=la?Date.parse(la):NaN; el.textContent=isFinite(t)?ageTxt(now-t):'waiting for the first check'; el.classList.toggle('old',isFinite(t)&&now-t>180000); });
+}
+setInterval(ageTick,1000);
 function fxTilesHTML(){
   var fx=DATA.fx, w=fx.energy[0], b=fx.energy[1], R={}; fx.rates.forEach(function(r){ R[r.t]=r; });
   var t=[qtTile({k:'usdcad', name:'USD/CAD', sub:'spot', v:+fx.feed.mid, dec:5, live:'usdcad', chg:fxChgHTML(), foot:spotStamp(), tag:isAuto('fx_spot')?'LIVE':'SNAPSHOT', tagc:isAuto('fx_spot')?'ok':'cz'})];
-  if(w&&w.last!=null) t.push(qtTile({k:'wti', name:'WTI', sub:'front', v:+w.last, dec:2, pre:'$', chg:'<span class="'+cls(w.pct)+'">'+sgn(w.chg||0,2)+' · '+sgn(w.pct||0,2,'%')+'</span>', foot:'<span class="qt-t">'+tHM(DATA.meta.asof.energy)+'</span>', tag:isAuto('energy')?'DELAYED':'SNAPSHOT', tagc:isAuto('energy')?'ok':'cz'}));
-  t.push(qtTile({k:'dxy', name:'DXY', sub:'', v:+fx.fxcross.dxy, dec:2, chg:'<span class="'+cls(fx.fxcross.dxy_chg)+'">'+sgn(+fx.fxcross.dxy_chg||0,2,'%')+'</span>', foot:'<span class="qt-t">'+tHM(DATA.meta.asof.crosses)+'</span>', tag:isAuto('crosses')?'DELAYED':'SNAPSHOT', tagc:isAuto('crosses')?'ok':'cz'}));
+  if(w&&w.last!=null) t.push(qtTile({k:'wti', name:'WTI', sub:'front', v:+w.last, dec:2, pre:'$', chg:'<span class="'+cls(w.pct)+'">'+sgn(w.chg||0,2)+' · '+sgn(w.pct||0,2,'%')+'</span>', foot:'<span class="qt-t">'+tHM(DATA.meta.asof.energy)+'</span>', ts:DATA.meta.asof.energy, tag:isAuto('energy')?'DELAYED':'SNAPSHOT', tagc:isAuto('energy')?'ok':'cz'}));
+  t.push(qtTile({k:'dxy', name:'DXY', sub:'', v:+fx.fxcross.dxy, dec:2, chg:'<span class="'+cls(fx.fxcross.dxy_chg)+'">'+sgn(+fx.fxcross.dxy_chg||0,2,'%')+'</span>', foot:'<span class="qt-t">'+tHM(DATA.meta.asof.crosses)+'</span>', ts:DATA.meta.asof.crosses, tag:isAuto('crosses')?'DELAYED':'SNAPSHOT', tagc:isAuto('crosses')?'ok':'cz'}));
   var YL=fx.yields_live||{}, y10=YL['10Y'];
   ['10Y','5Y','30Y'].forEach(function(tn){ var y=YL[tn], close=fx.treasury&&fx.treasury[tn];
-    if(y&&y.y!=null) t.push(qtTile({k:'ust'+tn, name:'US '+tn, sub:'yield', v:+y.y, dec:3, chg:y.chg_bp!=null?'<span class="'+cls(y.chg_bp)+'">'+sgn(y.chg_bp,1,' bp')+'</span>':'', foot:'<span class="qt-t">'+esc(y.label||'')+'</span>', tag:y.stale?'LAST':'DELAYED', tagc:y.stale?'warn':'ok', title:'change vs the official close '+fmt(+y.close,3)+'%'}));
+    if(y&&y.y!=null) t.push(qtTile({k:'ust'+tn, name:'US '+tn, sub:'yield', v:+y.y, dec:3, chg:y.chg_bp!=null?'<span class="'+cls(y.chg_bp)+'">'+sgn(y.chg_bp,1,' bp')+'</span>':'', foot:'<span class="qt-t">'+esc(y.label||'')+'</span>', ts:y.ts, tag:y.stale?'LAST':'DELAYED', tagc:y.stale?'warn':'ok', title:'change vs the official close '+fmt(+y.close,3)+'%'}));
     else if(close!=null) t.push(qtTile({k:'ust'+tn, name:'US '+tn, sub:'yield', v:+close, dec:3, chg:'', foot:'<span class="qt-t">'+esc(DATA.meta.asof.yields?fmtShortDate(DATA.meta.asof.yields.slice(0,10)):'')+'</span>', tag:'CLOSE', tagc:'cz'})); });
-  if(y10&&y10.sp_ca!=null) t.push(qtTile({k:'sp10', name:'US–CA 10Y', sub:'bp', v:+y10.sp_ca, dec:1, chg:R['10Y']?'<span class="'+cls(y10.sp_ca-R['10Y'].sp)+'">'+sgn(y10.sp_ca-R['10Y'].sp,1,' bp')+'</span>':'', foot:'<span class="qt-t">'+esc(y10.label||'')+'</span>', tag:y10.ca_leg==='est'?'EST':'DELAYED', tagc:y10.ca_leg==='est'?'warn':'ok', title:'Live US 10Y (^TNX) minus Canada 10Y '+(y10.ca_leg==='est'?'estimated from the ZFM.TO federal-bond ETF':'official close')}));
+  if(y10&&y10.sp_ca!=null) t.push(qtTile({k:'sp10', name:'US–CA 10Y', sub:'bp', v:+y10.sp_ca, dec:1, chg:R['10Y']?'<span class="'+cls(y10.sp_ca-R['10Y'].sp)+'">'+sgn(y10.sp_ca-R['10Y'].sp,1,' bp')+'</span>':'', foot:'<span class="qt-t">'+esc(y10.label||'')+'</span>', ts:y10.ts, tag:y10.ca_leg==='est'?'EST':'DELAYED', tagc:y10.ca_leg==='est'?'warn':'ok', title:'Live US 10Y (^TNX) minus Canada 10Y '+(y10.ca_leg==='est'?'estimated from the ZFM.TO federal-bond ETF':'official close')}));
   else if(R['10Y']) t.push(qtTile({k:'sp10', name:'US–CA 10Y', sub:'bp', v:+R['10Y'].sp, dec:1, chg:'', foot:'<span class="qt-t">'+esc(DATA.meta.asof.yields?fmtShortDate(DATA.meta.asof.yields.slice(0,10)):'')+'</span>', tag:'CLOSE', tagc:'cz'}));
-  return '<div class="qt-grid">'+t.join('')+'</div>';
+  return '<div class="qt-grid">'+t.join('')+'</div>'+'<div class="qt-chk" title="The desk re-checks every source about once a minute; each tile shows its own quote time and how old it is">Feed checked <b data-clock-src="live_at"></b> · <span data-age-src="live_at"></span> · prices refresh on their own cycle</div>';
 }
 function spotStamp(){
   var f=DATA.fx&&DATA.fx.feed||{}, t=f.ts?Date.parse(f.ts):null;
-  return '<span class="sl-k" data-live-ts="usdcad">'+(t?new Date(t).toLocaleTimeString('en-US',{timeZone:'America/Toronto',hour:'numeric',minute:'2-digit'})+' ET':'')+'</span>';
+  return '<span class="sl-k" data-live-ts="usdcad">'+(t?new Date(t).toLocaleTimeString('en-US',{timeZone:'America/Toronto',hour:'numeric',minute:'2-digit'})+' ET':'')+'</span>'+(t?'<span class="qt-age" data-age-k="usdcad" data-age="'+new Date(t).toISOString()+'" data-age-max="120"></span>':'');
 }
 function grainSubnavHTML(key){
   var now=Date.now(), us=usdaEvents(key, now, 120), ca=caEvents(now, 180), all=us.concat(ca).sort(function(a,b){ return a.t-b.t; });

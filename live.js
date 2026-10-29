@@ -293,6 +293,7 @@
     if (liveTickAt) document.querySelectorAll('[data-live-ts="usdcad"]').forEach(function (el) {   /* exact time of the rate shown, not of the page */
       el.textContent = new Date(liveTickAt).toLocaleTimeString("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit", second: "2-digit" }) + " ET";
     });
+    if (liveTickAt) document.querySelectorAll('[data-age-k="usdcad"]').forEach(function (el) { el.setAttribute("data-age", new Date(liveTickAt).toISOString()); });
     document.querySelectorAll('[data-live-chg]').forEach(function (el) { var u = chg >= 0; el.textContent = (u ? "\u25b2 +" : "\u25bc \u2212") + fmtN(Math.abs(chg), 2) + "%"; el.className = "live-chg " + (u ? "up" : "dn"); });
     if (typeof window.fxIntradaySVG === "function") document.querySelectorAll('[data-live-chart]').forEach(function (el) { el.innerHTML = window.fxIntradaySVG(window.fxIntradayPoints(ticks)); });
     var fresh = Date.now() - liveTickAt < 90000, chip = $("fx-spot-chip");
@@ -355,7 +356,7 @@
   var refFails = 0, refLastOk = 0;
   function pollRef() {
     if (document.hidden || window.DESK_LOCKED) return;
-    if (ws && Date.now() - liveTickAt < 90000) return;   // stream healthy
+    if (ws && Date.now() - liveTickAt < 45000) return;   // stream healthy (quiet > 45 s -> reference rate fills in)
     fetch("https://api.coinbase.com/v2/exchange-rates?currency=USD", { cache: "no-store" })
       .then(function (r) { if (!r.ok) throw r.status; return r.json(); })
       .then(function (j) { var v = j && j.data && j.data.rates && +j.data.rates.CAD;
