@@ -1486,8 +1486,8 @@ def _yahoo_settles(sym, period="9mo"):
     out = []
     for idx, row in h.iterrows():
         d = idx.date()
-        if d > now.date() or (d == now.date() and not (15 <= now.hour < 20)):
-            continue  # today's bar: settle final only 3pm-8pm ET; after 8pm it is the overnight session
+        if d > now.date() or (d == now.date() and not (17 <= now.hour < 20)):
+            continue  # today's bar: only 5pm-8pm ET (at 3pm the bar can still be the last trade, not the settlement); after 8pm it is the overnight session
         out.append((d.isoformat(), round(float(row["Close"]) / 100.0, 4)))  # cents -> $/bu
     return out
 
@@ -1513,35 +1513,43 @@ def _fan_from(settles):
 
 
 def settles(D, N):
-    done = []
+    done, errs = [], {}
     for k, g in D["grains"].items():
-        front = g["roll"][0]["contract"]
-        st_ = _yahoo_settles(front)
-        if len(st_) < 76:
-            raise RuntimeError(f"{front}: only {len(st_)} settles")
-        # verify the source against the desk's verified settles before trusting it
-        mine = {h["d"][:10]: h["s"] for h in g["history"]}
-        both = [(mine[d], v) for d, v in st_ if d in mine]
-        if len(both) < 5:
-            raise RuntimeError(f"{front}: only {len(both)} dates overlap the verified history")
-        worst = max(abs(a - b) for a, b in both)
-        if worst > 0.0101:
-            raise RuntimeError(f"{front}: source differs from verified settles by up to {worst:.4f} — not used")
-        if st_[-1][0] <= g["fan"]["settle_date"] and g["fan"].get("ma50"):
-            continue  # nothing new
-        fan, hist, tail = _fan_from(st_)
-        g["fan"].update(fan)
-        g["history"], g["tail50"] = hist, tail
-        # curve: front + next two contracts
-        for leg in g["roll"]:
-            try:
-                ls = _yahoo_settles(leg["contract"], "1mo")
-                if ls:
-                    leg["prev"] = ls[-2][1] if len(ls) > 1 else leg.get("settle")
-                    leg["settle"], leg["settle_date"] = round(ls[-1][1], 4), ls[-1][0]
-            except Exception as e:
-                print(f"  curve leg {leg['contract']} skipped: {e}")
-        done.append(f"{k} {fan['settle_date']} {fan['anchor']}")
+        try:   # one grain's bad source must not hold the other two back
+            front = g["roll"][0]["contract"]
+            st_ = _yahoo_settles(front)
+            if len(st_) < 76:
+                raise RuntimeError(f"{front}: only {len(st_)} settles")
+            # verify the source against the desk's verified settles before trusting it
+            # the newest stored day may have been captured before the settlement was final -> it is re-read, not used as proof
+            mine = {h["d"][:10]: h["s"] for h in g["history"]}
+            newest = max(mine) if mine else ""
+            both = [(mine[d], v) for d, v in st_ if d in mine and d != newest]
+            if len(both) < 5:
+                raise RuntimeError(f"{front}: only {len(both)} dates overlap the verified history")
+            worst = max(abs(a - b) for a, b in both)
+            if worst > 0.0101:
+                raise RuntimeError(f"{front}: source differs from verified settles by up to {worst:.4f} — not used")
+            if st_[-1][0] <= g["fan"]["settle_date"] and g["fan"].get("ma50") and abs(dict(st_).get(newest, mine.get(newest, 0)) - mine.get(newest, 0)) < 1e-9:
+                continue  # nothing new
+            fan, hist, tail = _fan_from(st_)
+            g["fan"].update(fan)
+            g["history"], g["tail50"] = hist, tail
+            # curve: front + next two contracts
+            for leg in g["roll"]:
+                try:
+                    ls = _yahoo_settles(leg["contract"], "1mo")
+                    if ls:
+                        leg["prev"] = ls[-2][1] if len(ls) > 1 else leg.get("settle")
+                        leg["settle"], leg["settle_date"] = round(ls[-1][1], 4), ls[-1][0]
+                except Exception as e:
+                    print(f"  curve leg {leg['contract']} skipped: {e}")
+            done.append(f"{k} {fan['settle_date']} {fan['anchor']}")
+        except Exception as e:
+            errs[k] = str(e)[:200]
+            print(f"  settles {k}: {e}")
+    if errs and not done:
+        raise RuntimeError("; ".join(errs.values()))
     if not done:
         return False
     last_settle = max(g["fan"]["settle_date"] for g in D["grains"].values())
