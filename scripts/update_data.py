@@ -1170,7 +1170,7 @@ def _bea(table, freq, line, years=8):
         r = requests.get("https://apps.bea.gov/api/data", headers=UA, timeout=20,
                          params={"UserID": BEA_KEY, "method": "GetData", "datasetname": "NIPA", "TableName": table,
                                  "Frequency": freq, "Year": yrs, "ResultFormat": "JSON"})
-        code = r.status_code
+        code = getattr(r, "status_code", 200)
         res = r.json()["BEAAPI"]
         res = res.get("Results", res)
         res = res[0] if isinstance(res, list) else res
