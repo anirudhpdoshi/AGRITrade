@@ -9944,10 +9944,10 @@
     "6M": 4.32
    },
    "fxcross": {
-    "dxy": 101.933,
-    "dxy_chg": -0.251,
-    "eurusd": 1.1179,
-    "usdjpy": 157.65,
+    "dxy": 101.932,
+    "dxy_chg": -0.252,
+    "eurusd": 1.1178,
+    "usdjpy": 157.66,
     "usdcad_ref": 1.399
    },
    "closes": [
@@ -11615,10 +11615,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.3988,
+    "mid": 1.39906,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-29T17:30:00-04:00",
+    "ts": "2026-10-29T17:45:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -11758,18 +11758,6 @@
     }
    ],
    "intraday": [
-    [
-     "2026-10-29T01:35+00:00",
-     1.39777
-    ],
-    [
-     "2026-10-29T01:40+00:00",
-     1.39794
-    ],
-    [
-     "2026-10-29T01:45+00:00",
-     1.39796
-    ],
     [
      "2026-10-29T01:50+00:00",
      1.3971
@@ -12717,6 +12705,18 @@
     [
      "2026-10-29T21:30+00:00",
      1.3988
+    ],
+    [
+     "2026-10-29T21:35+00:00",
+     1.3988
+    ],
+    [
+     "2026-10-29T21:40+00:00",
+     1.399
+    ],
+    [
+     "2026-10-29T21:45+00:00",
+     1.39906
     ]
    ],
    "fwd_inputs": {
@@ -13126,10 +13126,10 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-29T17:30:23-04:00",
+   "updated_at": "2026-10-29T17:45:25-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-29T17:30:00-04:00",
+    "fx_spot": "2026-10-29T17:45:00-04:00",
     "fx_closes": "2026-10-29T16:30:00-04:00",
     "yields": "2026-10-28T17:00:00-04:00",
     "policy": "2026-10-29T17:00:27-04:00",
@@ -13137,14 +13137,14 @@
     "cftc_fx": "2026-10-20T15:30:00-04:00",
     "cftc_grains": "2026-10-20T15:30:00-04:00",
     "energy": "2026-10-29T16:55:00-04:00",
-    "crosses": "2026-10-29T17:20:00-04:00",
+    "crosses": "2026-10-29T17:35:00-04:00",
     "grains_settle": "2026-10-29T14:20:00-04:00",
     "grains_quote": "2026-10-29T14:15:00-04:00",
     "options": "2026-10-29T11:39:41-04:00",
-    "news": "2026-10-29T17:30:23-04:00",
+    "news": "2026-10-29T17:45:25-04:00",
     "calendar": "2026-10-29T17:00:27-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
-    "macro": "2026-10-29T15:45:24-04:00",
+    "macro": "2026-10-29T17:45:25-04:00",
     "exports": "2026-10-29T17:30:23-04:00",
     "wasde": "2026-10-29T13:00:28-04:00",
     "canada": "2026-10-29T07:00:20-04:00",
@@ -13194,7 +13194,7 @@
      "fx_model"
     ],
     "failed": [],
-    "at": "2026-10-29T17:30:23-04:00"
+    "at": "2026-10-29T17:45:25-04:00"
    },
    "releases_checked": "2026-10-29T16:15:21-04:00",
    "exports_checked": "2026-10-29T17:30:23-04:00",
@@ -13231,7 +13231,7 @@
    },
    "canada_checked": "2026-10-29T07:00:20-04:00",
    "ca_calendar_checked": "2026-10-29T13:00:28-04:00",
-   "canada_watch": "2026-10-29T17:30:23-04:00",
+   "canada_watch": "2026-10-29T17:45:25-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -13305,9 +13305,9 @@
    "model_checked": "2026-10-29T16:15:21-04:00",
    "bea_status": {
     "ok": true,
-    "at": "2026-10-29T15:45:24-04:00"
+    "at": "2026-10-29T17:45:25-04:00"
    },
-   "macro_checked": "2026-10-29T15:45:24-04:00"
+   "macro_checked": "2026-10-29T17:45:25-04:00"
   },
   "macro": [
    {
@@ -29025,23 +29025,29 @@
    ],
    [
     "2026-10-28 12:30 UTC",
-    "fr.tradingview.com",
+    "www.barchart.com",
     "Soybean Bulls Trying to Battle Back on Wednesday AM Trade",
-    "https://news.google.com/rss/articles/CBMitgFBVV95cUxQdEhqQUFENS13MDZLc3FyRDBqWTNjS2VIVnlORVJ6YXFTSE1PZDlTZVlZRnVLeE90d29YUjhuOXp2aW1ybUFqb2RSZmdja1I1dC1ZZlJJX0c2ZkFmWUNaZUtSQWdYSWZZOXExUXR6SGdTV1BjZk1kZzk1RGxQXzB2RVBmaEI2Y0lXamZGTE5PT0hHdWVWWlVJUE1JUW56QXVFdjdIbXlXVkVYUjZzbk53Q3NvM3BwZw?oc=5"
+    "https://news.google.com/rss/articles/CBMiowFBVV95cUxQNF9KQlA4YnFBVWFwWWo2akJkN0FCUXVsRHNRVDZOOWdKM05MZWJ1NENFdFp3SEZKcnV3VmRpTjVITFM5YjJ1eDR2eE9lOUVIMGJxUTJrSTFUSkhCR3E5eUo4eDNHSXpETlhnMkxwWS1lQ1h5azJyQXZtWENENmpoSFMtWXZ0WnI0WVlqR3FNczVIUThQS0I4YnhOYXBQeGk1eDNz?oc=5"
    ]
   ],
   "fx": [
    [
-    "2026-10-29 20:39 UTC",
-    "www.albertafarmexpress.ca",
+    "2026-10-29 20:34 UTC",
+    "www.country-guide.ca",
     "Canadian Financial Close: Loonie rises to highest close since September",
-    "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNaFFrRXlUWEoxSGZyNE1mNEJVTkl6WWhaUmtvVlRoZDloUkxZRUlLb1I0YzZfcDEyVWZ1RE9kUlFISFp0dm5tRXhtaDZmYU12Zm50NjFZY0xYOFdWVHk5ajAxYlN2Y1BwRi1neE54Q3VQeHJTUXZjZzNfMzhvWjhWWGxTOVZrRHRYRlJERjJpeEx4a0p6Q3Z0WTUzeDYxeVM1SjNLeC1naWxGMGVncUg0M3VIcS11bVBmZ3JZ?oc=5"
+    "https://news.google.com/rss/articles/CBMitAFBVV95cUxPN054ZjFSRGpkNUt2U010Y1BDbUtNMG82Rmk2SjJJM1dWbGNpd2NIazJZMlVLa202YjVLUWtJNGRfNFVxdk5GU0pvY1dSMXg0T1VQSjdJYjI1bjRlUlBHSk5BVW43QTNoazdHeTM0bDBPQ0ZUOUoxaWRFaGI5T2xFMGE0aFh4amx3RDd0RlpXbDhtNy1waWpjMnVtVmhTS1VXdGh0QlZTYnNrMVp1Mk5PbU5fb3Y?oc=5"
    ],
    [
     "2026-10-29 20:14 UTC",
     "globalnews.ca",
     "Variable mortgage rates rise following interest rate increase by the Bank of Canada",
     "https://news.google.com/rss/articles/CBMivgFBVV95cUxNQU8zTmF1U2RpMjV2ZnA5YnJmWFNDeDBZLWNhRXdHV3lWcDNPbmdrdGZnLWtjWHNXQUs1NGwtOUpkUHJGLUtiem9fanJIQ2Y1dmdrX1FlbXhEODkzaFVyMXVwajgyVjVEcUI0bXJuTGlCeFVRdEZ4UVdOM0dEVHdnOEF0RmdQRVEzT3Y2aEhTQnZ1bGt2cTlLcW1RTld0SGZ4RkxsU2szcGxCbHlsbUxKVG42Nm1uTEFfb1BGeHdn?oc=5"
+   ],
+   [
+    "2026-10-29 19:49 UTC",
+    "simplywall.st",
+    "Did Restated Segment Reporting Just Shift National Bank Of Canada Stock Investment Narrative?",
+    "https://news.google.com/rss/articles/CBMi2AFBVV95cUxOemk4bjg1RXlhUllpN0ZZWWRKNVJ6OU5ZZV9fa1EzNHk5WkdUbzFKTlJXcUc4Qkc4eEw1LVZ6LWpCaTZpT1J2V3RMNGJtU01PVDNLcG90ci1BU2ZZendEMG1jS1V2cTMxOUVsdXVael82Y1VWMlYzQ1pIazdxcVRYY0o0a0pHNFVObU1zazM4V05tallWTmlIc2M0U1RSSTBXUUw5cUlVU3FZN0FHeV82QW8wOS1uWHNXa3BBaEVVLUpsRXhHREkxYVEwMy10TVhoNWlvYXZxOUnSAd4BQVVfeXFMUGx4V2tHTy1iNXUxSUdoUVc3OXFvVFJucXZtWUdJbDJrSDFSUHlOc3hfYmhsOTMzakVtVnlyek1NQlRJbmlhRUJaMDV0NEdER0lnRExmOFVmUUZ2UmJPQndmYkdWdlVvalpNTl9LdVhLNVBKeVZ2OW95eDlmQkM5SGtvV3JNYTctcUhLcEx2dDBFZGFsOEowRzNhbnRTRzNjOXdEd2Z5N0hqVnJ5dXBVamlrVFZQamExM2tjOE8yRC01NzN3Rk9ncFZwMklHVjI5QUt1b3FiNUh1cXl1V0FB?oc=5"
    ],
    [
     "2026-10-29 19:38 UTC",
@@ -29072,12 +29078,6 @@
     "www.producer.com",
     "Bank of Canada interest rate hike could signal tough 2027 says economist",
     "https://news.google.com/rss/articles/CBMipwFBVV95cUxNajFUZzk3b2JfaFRWeHBpcEVGeUIzSVIxbTdJaGQzcERWSTlTN0Z6UjdZbU9zaGw0QUxST2hsVTNaZkstRE5yMldWMUNMMTY4M0hLZjFzZUhsN2l1ZDFGcFhWNjNZS1A3M1l4OGItMlFLdmNIaTBmWUZ2UTFCUXhyRGZYNXEybVNSUld1Z01kTk1ZajZYeFE4eHcwYkUxYmZWRVJIZHdLUQ?oc=5"
-   ],
-   [
-    "2026-10-29 16:08 UTC",
-    "ca.investing.com",
-    "Canadian dollar strengthens as traders assess BoC hike, await US data",
-    "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPZ3pPdlBuMFVhUHdNOS1yX2M2dkY1TGRHMEd6YTZsYlZJU1RfWVlrODFsQVRselBmX2gxeDZUOWVNQktmbEZNUTh1NU5jbE1uTlVHdVJfTDlhZVVCTEs3ZWV0d3Z2MUtQZ3JRWEtVNmFieUFvc25hVVVTSHA5VXFydnVPMzhhYWJYRndoaDBqOVc1cFM4Y1k0VzhvZjRtZFhCamJCdzN4aDV3Z1h2ZVZLZFh5TVBKVUVN?oc=5"
    ]
   ],
   "geo": [
@@ -29150,10 +29150,10 @@
     "https://news.google.com/rss/articles/CBMi1wFBVV95cUxPVlh3M2lIRndjNDBuSVQ4cW9XT2dGU1BRLXNPWTdyWmh1N1N0aEVzTkpKT0p0YTNrbzl1Q3pMSk1vMnZOZktFQUFrVGM2ZEhmOW9vdEFMeVFKd29mb1BKUFcxOGtXc1EyUzNRU1U3NmptdWtzOVpUVVR2X1pob0FMZlhGTld0bDM0MjItWmFPeGUzNld6OXVpbUExcV9RSndXNllOZjFzcXZLNXNQUjlweUdSZU0yQmR2T0prSVBYbmRCNnpVMGhfWnh4bHozSzJSb0NmWGF4UQ?oc=5"
    ],
    [
-    "2026-10-29 19:22 UTC",
-    "kpic.com",
+    "2026-10-29 19:23 UTC",
+    "abc6onyourside.com",
     "Preliminary GDP report shows strong 3.4% growth for US economy",
-    "https://news.google.com/rss/articles/CBMitAFBVV95cUxNSXZOb0tMSWpyZGVxTENIaVh1bXBCWTluMkFleHRmbDZHZ3pXcllRZkxWRG9paWJ2SVpDZWtlbzNCbFRha0RMdTQ3dWRDY0RZc2s0OC1JME9VNnZpaGkzMEhfV2tKcnlmTUI4OXBxYlhrMDhkY3VvM3Nha21NYTQ5MXUxWldOdzNGYkhLMERJQTV1RzFkOXk3VUZrVGRRSDRSUXN4VGRvajBYeExUWkFKTWFjb1E?oc=5"
+    "https://news.google.com/rss/articles/CBMiwgFBVV95cUxOUWdFM2NmX3ZKdkg3QWMzYmlydnI1eEZtSWM1OVB1elc1Z2RTbnVOdlJCMFo1ZFhDY09rTVllYTBSWkhTb1FMbDFVSHMxYUFSbWt4VGFrdTBwWXlXVjZmR2Q5bTJBb1BZS0c4THhwRTZkdVlLdXg5SjYxejZ1VmxCOVlnVUZJNnNZVlJhWjQwZFhRbzlJN2JFTXlGYTRWazRLZlY4STg4NU55SU1SM21QTlJNTzZyS0J5QkRRZkJvWHdpUQ?oc=5"
    ],
    [
     "2026-10-29 18:44 UTC",
@@ -29162,22 +29162,22 @@
     "https://news.google.com/rss/articles/CBMipwFBVV95cUxOZDZJVk9jZFJ6TEN2aWhXT2tLYVdBUHZyS0FLRkd6QjQ5N3FVaDN5RDZjX3J2ZmFsSVdGamlzYjJQdFZ0ZzhpcmFoN0NqNHRpcWJDVW5yQ0ZOekt3WFpac3Z0dTkzdW4zZHQ5Zy1TSHV5YVBwR3JhT0RtVFNyb1ZQUGxScTE4djRHd0RQR3Bnekl2VWtHNElvRFZWU0t1cG1LUmllRVhJUQ?oc=5"
    ],
    [
-    "2026-10-29 18:16 UTC",
-    "www.koreatimes.co.kr",
-    "US economy posts strong growth, inflation stubbornly high in challenge to Trump",
-    "https://news.google.com/rss/articles/CBMixAFBVV95cUxQS1pXRlYwTW1ab1NIc3YySnpiODZDXzFJckpvTEVtOWd1WG1xd282WlNmNkJieUFPVGQ5cFdITkVzRHRWUVBPbThSZjBiaDNpWmdvLUxqV2hfZlVOV2pnVXdkOVBpSFNxWXFBVFpZNUQyNC1aZEtnUFc0RWRBSVBuQlZXWlJWSDdIVWp3TUc0UjJhcGZPYi00aXc1Yy1aWloyd2ttTnA2aDBYN1pFSEpYLTh1Nk95ZVdmUUNMRms3aEtCMkFH0gHEAUFVX3lxTFBLWldGVjBNbVpvU0hzdjJKemI4NkNfMUlySm9MRW05Z3VYbXF3bzZaU2Y2QmJ5QU9UZDlwV0hORXNEdFZRUE9tOFJmMGJoM2laZ28tTGpXaF9mVU5XamdVd2Q5UGlIU3FZcUFUWlk1RDI0LVpkS2dQVzRFZEFJUG5CVldaUlZIN0hVandNRzRSMmFwZk9iLTRpdzVjLVpaWjJ3a21OcDZoMFg3WkVISlgtOHU2T3llV2ZRQ0xGazdoS0IyQUc?oc=5"
+    "2026-10-29 16:23 UTC",
+    "www.gulf-times.com",
+    "Robust consumer spending, AI-related investment power US economy in third quarter | Gulf Times",
+    "https://news.google.com/rss/articles/CBMiywFBVV95cUxNSFljbWJHOWlXTTlHYjAzdkxsZXJwNkVxRGNmdkR6NFQ2UDg2RTdEbHd4ZVFlWWUzRFZvblVtVnNEdkd6T1lKaXkwV3o4QmRWa29OMHd5LS1mZmNIRnlhajJVY3RUX3NoNkhIWVpRWFRyRGdIS3FIMjc2amRSaHIxQVRlN2k2M1dKekVERzg5S1MzRFg1N2NUa2EzcDRpZlZNd3ZWSXlodEFqdTZuLVJyUkxSUVRJdG9JbXI2LVpsRnVGQ3hpeGNBUE8wd9IB0AFBVV95cUxQZC1sLXp4VzhLRkVCY0hHcWFTVjBNQTVHM0lMb1dYMTMwbWd6NUVOZnp1V2w5LTlPY29fUlZDN2NBNERaQk41Wl9lT2JveG9lX2JIOGhBeGdxbHhQazRuemkwZ3dKYWJzNEtTaDZJSU5tamw2SENDZXRYaklvUzRZaHV1X09TTml5Y2NGVEhVMjE0ZVE5cjhCd1U4M3Y1R0d3TnNwYUNGMV9UYkxzdUQyc0VLckRkeXlGVHp5blhodWJTMVpyeGlhdUdjcEZOZ25k?oc=5"
    ],
    [
-    "2026-10-29 17:48 UTC",
-    "www.thecentersquare.com",
-    "Economist: Strong GDP growth, inflation complicate Fed's decisions",
-    "https://news.google.com/rss/articles/CBMilAFBVV95cUxNV2FrUzUzdWZvVE9BbUlUNkh1QWxkMEFjM1Q2UjYzUW5OS1VmUmRkRGd2WmtoaHFZV0E2XzctX0xvM0pHa0JNbjRTUFA2SXhxcFowV3BTcnFvZm0tRUpxQjJneUhxV0VmODk0YkJ2NHZscHdRWFJSdWhaaUtXaElEQm42czdvaGZhd0Y2ZVhtY0lqQkVl0gGaAUFVX3lxTE5aWEgyZnBOd1pqcjc0eGcxd2hITldHdnZwWHBHdWZFY1NNQ2N3dlNTRjFHUG4zVHh5WEJlbkh0dTItcjB1ZktoeVM5UTdDc3BQUTR6S29UcmZ1M3NIcWdPUjRNMGhpLTU5T0JjZGpRaW9iWXZpOXZaRnVKWXNiNFphV0htdFE1Q25mTk4yLURLbnJPNWtWSXlNdkE?oc=5"
+    "2026-10-29 15:37 UTC",
+    "think.ing.com",
+    "Robust US growth, but momentum is cooling",
+    "https://news.google.com/rss/articles/CBMifEFVX3lxTFBjZjhXbnRaWlpoM3JQTXRGVVFhWjhjUEJ5Wjd4WE5BNkNEcUxiNmlkdEpDV19rOUttZGtkOHN6ZUNtQndTYUI0UThPeURwWVZ2Sm5CUTFxTy1nY3NRZ3EtZVp4N1N5TGtDY0FZRURZZ2w5VUVHQlJlcm9GQlI?oc=5"
    ],
    [
-    "2026-10-29 16:33 UTC",
-    "wkzo.com",
-    "IMF says Federal Reserve is ‘appropriately’ keeping close eye on data",
-    "https://news.google.com/rss/articles/CBMinAFBVV95cUxQYUMtaWVZTnpHRzlJZGRHLVhHc21rblg5YWd4d050aDl2UnJCWkIxTTl6RHVQdlhuRUl2SndXeEltU3dVYjNreldqN1dCNGlEZG1YMHRNRGZGN3RBV1Q0Y2p0R3JOWmdzOGZuS0RhV0JnNHpGWTIxeEVwUkFjMzEwRzJzNEVkSEhpVjl3MWVFRGZQS19lQ0pBVlIxNF8?oc=5"
+    "2026-10-29 15:28 UTC",
+    "www.theguardian.com",
+    "US economy grows faster than expected but inflation rises to 3.7%",
+    "https://news.google.com/rss/articles/CBMigwFBVV95cUxOVjl0SzVBY2NCaVlfTFh0R2ItSTFHUERrR1M0ZU9BQWRmb0l1VVBfZFVmMThzYXNuVi1PMXphS2pWZ3ZiMHR1Q012Nms4MHJpMmtRb3BrejdnYXNZb3ZSYXB0Vnl1ZEdMWWkxUENaWExZRWRPWVVIY0xKZUZwV0h4YTdNMA?oc=5"
    ]
   ]
  }
