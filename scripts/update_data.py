@@ -1170,13 +1170,20 @@ def _bea(table, freq, line, years=8):
         r = requests.get("https://apps.bea.gov/api/data", headers=UA, timeout=20,
                          params={"UserID": BEA_KEY, "method": "GetData", "datasetname": "NIPA", "TableName": table,
                                  "Frequency": freq, "Year": yrs, "ResultFormat": "JSON"})
-        r.raise_for_status()
+        code = r.status_code
         res = r.json()["BEAAPI"]
         res = res.get("Results", res)
         res = res[0] if isinstance(res, list) else res
+        err = res.get("Error") or (r.json()["BEAAPI"].get("Error") if isinstance(r.json()["BEAAPI"], dict) else None)
+        if err:
+            err = err[0] if isinstance(err, list) else err
+            raise RuntimeError("API: " + str(err.get("APIErrorDescription") or err.get("ErrorDetail") or err)[:160])
         rows = res["Data"]
     except Exception as e:
-        raise RuntimeError(f"BEA {table} unavailable ({type(e).__name__})") from None   # no URL / key in the message
+        why = str(e) if str(e).startswith("API: ") else type(e).__name__
+        if "code" in locals() and code != 200:
+            why = f"HTTP {code}"
+        raise RuntimeError(redact(f"BEA {table} unavailable ({why})")) from None   # no URL / key in the message
     want = line.lower()
     lines = [x for x in rows if x.get("LineDescription", "").strip().lower() == want]
     if not lines:
@@ -1399,8 +1406,10 @@ def macro(D, N, only=None):
                 try:
                     raw = _bea(*BEA_SRC[key]) or None
                     label = f"BEA {BEA_SRC[key][0]}"
+                    meta["bea_status"] = {"ok": True, "at": iso(NOW)}
                 except Exception as e_bea:
                     print(f"  {key}: {e_bea}; using {label}")
+                    meta["bea_status"] = {"ok": False, "at": iso(NOW), "why": str(e_bea)[:200]}
             if raw is None and src == "valet" and sid in VALET_TO_STATCAN:
                 try:
                     raw = _valet_series(sid, 0, start)
