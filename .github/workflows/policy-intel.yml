@@ -5,7 +5,12 @@ name: Central bank policy intelligence
 on:
   schedule:
     - cron: "4,19,34,49 11-22 * * 1-5"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      backfill:
+        description: "Read up to 15 items per bank (first build)"
+        type: boolean
+        default: false
 permissions:
   contents: write
 concurrency:
@@ -27,4 +32,4 @@ jobs:
       - name: Unit tests (scoring, guidance, speaker parsing)
         run: python tests/test_policy_intel.py
       - name: Collect, score, publish policy.json
-        run: python scripts/policy_intel.py ${{ github.event_name == 'schedule' && '--if-due' || '' }}
+        run: python scripts/policy_intel.py ${{ github.event_name == 'schedule' && '--if-due' || '' }} ${{ inputs.backfill && '--backfill' || '' }}

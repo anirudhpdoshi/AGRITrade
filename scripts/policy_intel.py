@@ -47,7 +47,7 @@ BANKS = {
 
 # Published schedule (official calendars, as of Oct 29 2026 ET). Rechecked by hand / by the next build; shown with that date.
 CALENDAR = [
-    ("ecb", "2026-10-29", "14:15", "Europe/Frankfurt", "Policy decision + press conference", "decision"),
+    ("ecb", "2026-10-29", "14:15", "Europe/Berlin", "Policy decision + press conference", "decision"),
     ("boj", "2026-10-30", None, "Asia/Tokyo", "Policy statement + Outlook Report (meeting Oct 29–30)", "decision"),
     ("boe", "2026-11-05", "12:00", "Europe/London", "MPC decision, minutes + Monetary Policy Report", "decision"),
     ("boc", "2026-11-10", "13:30", "America/Toronto", "Summary of deliberations (Oct 28 decision)", "minutes"),
@@ -55,15 +55,15 @@ CALENDAR = [
     ("fed", "2026-11-18", "14:00", "America/New_York", "FOMC minutes (Oct 27–28 meeting)", "minutes"),
     ("fed", "2026-12-09", "14:00", "America/New_York", "FOMC decision + press conference (Dec 8–9)", "decision"),
     ("boc", "2026-12-09", "09:45", "America/Toronto", "Rate announcement", "decision"),
-    ("ecb", "2026-12-17", "14:15", "Europe/Frankfurt", "Policy decision + press conference (Dec 16–17)", "decision"),
+    ("ecb", "2026-12-17", "14:15", "Europe/Berlin", "Policy decision + press conference (Dec 16–17)", "decision"),
     ("boj", "2026-12-18", None, "Asia/Tokyo", "Policy statement (meeting Dec 17–18)", "decision"),
 ]
 CAL_ASOF = "2026-10-29"
 
 # ---------------------------------------------------------------- Layer A: themes and context
 THEMES = {
-    "inflation": r"inflation|price pressure|prices|cpi|core|wage-price|expectations",
-    "employment": r"labou?r market|employment|unemployment|jobs|hiring|wages?|payroll",
+    "inflation": r"inflation|price pressures?|price growth|cpi|core (?:inflation|measures|pce)|wage-price|inflation expectations",
+    "employment": r"labou?r market|employment|unemployment|jobs?\b|job gains|hiring|wages?|payroll",
     "growth": r"growth|gdp|demand|consumption|spending|activity|output|recession|economy",
     "financial": r"financial conditions|credit|lending|financial stability|bank(?:ing)? stress|liquidity|spreads",
     "guidance": r"policy rate|interest rates?|bank rate|federal funds|overnight rate|deposit facility|monetary policy|tighten|eas(?:e|ing)|hike|cut",
@@ -77,8 +77,8 @@ HAWK = [
 ]
 DOVE = [
     (r"disinflation|eas(?:ed|ing) (?:price|inflation)|moderat(?:ed|ing)|declin(?:ed|ing) inflation|below (?:our |the )?target|fading|returned to target|close to (?:our |the )?target", "inflation"),
-    (r"rising unemployment|unemployment (?:has )?(?:risen|rose|increased|edged up)|weak(?:er|ening) hiring|softening|cool(?:ed|ing)|slack|job losses|labou?r demand (?:has )?(?:weakened|eased)", "employment"),
-    (r"weak(?:er|ening)? (?:demand|growth|activity)|recession|slow(?:down|ing|er)|contract(?:ion|ed)|excess supply|deteriorat|subdued", "growth"),
+    (r"rising unemployment|unemployment(?: rate)? (?:has )?(?:risen|rose|increased|edged up|moved up)|job gains (?:have )?(?:slowed|weakened|moderated)|weak(?:er|ening) hiring|softening|cool(?:ed|ing)|slack|job losses|labou?r demand (?:has )?(?:weakened|eased)", "employment"),
+    (r"weak(?:er|ening)? (?:demand|growth|activity)|recession|slow(?:down|ing|er|ed)|contract(?:ion|ed)|excess supply|deteriorat|subdued", "growth"),
     (r"tighter (?:financing|financial|credit)|credit stress|financial (?:instability|stress)|strains?", "financial"),
     (r"(?:lower|reduce|cut)\w* (?:the |our )?(?:policy |interest |bank )?rates?|further (?:easing|cuts?|reductions?)|less restrictive|room to (?:ease|cut)|easing (?:may|could|would) be (?:warranted|appropriate)", "guidance"),
 ]
@@ -86,7 +86,7 @@ NEG = re.compile(r"\b(?:not|no longer|nor|never|without|unlikely)\b")
 COND = re.compile(r"\b(?:could|may|might|if|would|should|possib|conditional|depend|one meeting at a time|data[- ]dependent)\w*")
 GUIDE_T = re.compile(r"(?:need|necessary|prepared|appropriate)[^.]{0,40}(?:raise|increase|tighten)|further (?:increases?|tightening|hikes?)|raise (?:the )?(?:policy )?rate (?:further|again)", re.I)
 GUIDE_E = re.compile(r"(?:need|necessary|prepared|appropriate|room)[^.]{0,40}(?:lower|reduce|cut|ease)|further (?:easing|cuts?|reductions?)", re.I)
-GUIDE_H = re.compile(r"(?:maintain|keep|hold)\w*[^.]{0,30}(?:rate|policy)[^.]{0,30}(?:unchanged|steady|current level|on hold)|on hold|pause", re.I)
+GUIDE_H = re.compile(r"(?:maintain|keep|hold|left)\w*[^.]{0,40}(?:target range|policy rate|bank rate|interest rates?|overnight rate)\b|(?:rates?|policy)[^.]{0,30}(?:unchanged|steady|on hold)|\bpause\b", re.I)
 
 
 def sentences(text):
@@ -110,12 +110,12 @@ def analyse(text):
             continue
         w = 0.5 if COND.search(sl) else 1.0
         neg = bool(NEG.search(sl))
-        hits = []
+        hits = []   # a phrase only counts inside its own theme ("uncertainty remains elevated" is not inflation)
         for pat, theme in HAWK:
-            if re.search(pat, sl):
+            if re.search(THEMES[theme], sl) and re.search(pat, sl):
                 hits.append((+1, theme))
         for pat, theme in DOVE:
-            if re.search(pat, sl):
+            if re.search(THEMES[theme], sl) and re.search(pat, sl):
                 hits.append((-1, theme))
         if not hits:
             continue
@@ -148,7 +148,8 @@ def analyse(text):
            ("ease", False): "Easing signalled",
            ("hold", True): "Hold, with the door open either way", ("hold", False): "Hold signalled"}.get((g_dir, g_cond), "No explicit forward guidance")
     ev.sort(key=lambda e: -e["w"])
-    return {"score": score, "label": lab, "themes": {k: round(v, 1) for k, v in th.items()}, "hawk_n": round(H, 1), "dove_n": round(D, 1),
+    rel = sum(1 for _, s in sentences(text) if re.search(THEMES["inflation"] + "|" + THEMES["guidance"], s.lower()))
+    return {"relevance": rel, "policy_relevant": rel >= 4, "score": score, "label": lab, "themes": {k: round(v, 1) for k, v in th.items()}, "hawk_n": round(H, 1), "dove_n": round(D, 1),
             "guidance": {"direction": g_dir, "conditional": g_cond, "quote": g_sent, "next_action": nxt},
             "evidence": [e for e in ev if e["dir"] == "hawk"][:4] + [e for e in ev if e["dir"] == "dove"][:4]}
 
@@ -160,6 +161,8 @@ DIAG = {}
 def get(url, timeout=12):
     try:
         r = requests.get(url, headers=UA, timeout=(5, timeout))
+        if "charset" not in (r.headers.get("Content-Type") or "").lower():
+            r.encoding = "utf-8"
         DIAG[url[:120]] = r.status_code
         return r.text if r.status_code == 200 else None
     except Exception as e:
@@ -267,7 +270,7 @@ def collect(bank, cfg, known):
 
 # ---------------------------------------------------------------- baselines (Layer B) and confidence
 def baselines(doc, docs):
-    prior = [d for d in docs if d["bank"] == doc["bank"] and d["id"] != doc["id"] and (d.get("published_at") or "") < (doc.get("published_at") or "")]
+    prior = [d for d in docs if d["bank"] == doc["bank"] and d["id"] != doc["id"] and d.get("policy_relevant", True) and (d.get("published_at") or "") < (doc.get("published_at") or "")]
     sp = [d for d in prior if d["speaker"] == doc["speaker"] and d["speaker"] not in ("Committee", "Unattributed")]
     cut = (dt.datetime.fromisoformat(doc["published_at"]) - dt.timedelta(days=60)).isoformat() if doc.get("published_at") else ""
     sp60 = [d for d in sp if d.get("published_at", "") >= cut]
@@ -346,21 +349,29 @@ def main():
     prev = load_prev()
     docs = {d["id"]: d for d in prev.get("docs", [])}
     status = {}
-    new = 0
+    cap = 15 if "--backfill" in sys.argv else 5
     for bank, cfg in BANKS.items():
+        new = 0
         DIAG.clear()
         found = collect(bank, cfg, docs)
         status[bank] = {"checked_at": NOW.isoformat(), "found": len(found), "sources": dict(DIAG)}
         for it in found:
             did = hashlib.sha1(it["link"].encode()).hexdigest()[:12]
-            if did in docs and docs[did].get("hash") and (NOW - dt.datetime.fromisoformat(docs[did]["fetched_at"])) < dt.timedelta(days=2):
+            if did in docs and docs[did].get("hash") and "relevance" in docs[did] and (NOW - dt.datetime.fromisoformat(docs[did]["fetched_at"])) < dt.timedelta(days=2):
                 continue      # re-read recent items for revisions; older items are kept as stored
-            if new >= 12:
-                break         # per-run budget: be gentle with the banks' sites
+            if new >= cap:
+                break         # per-bank, per-run budget: be gentle with the banks' sites
             h = get(it["link"], 20)
             time.sleep(1)
             if not h:
                 continue
+            if it["type"] == "minutes":   # announcement pages link to the full minutes / account / summary
+                m = re.search(r'href="([^"]*(?:fomcminutes\d+\.htm|/press/accounts/\d{4}/html/[^"]+\.en\.html|summary-governing-council-deliberations[^"]*))"', h)
+                if m:
+                    u = m.group(1) if m.group(1).startswith("http") else re.match(r"https://[^/]+", it["link"]).group(0) + m.group(1)
+                    h2 = get(u, 25)
+                    if h2:
+                        h, it["link_full"] = h2, u
             text = page_text(h)
             if len(text) < 300:
                 continue
@@ -369,7 +380,7 @@ def main():
             if old and old.get("hash") == hsh:
                 old["fetched_at"] = NOW.isoformat(); continue
             a = analyse(text)
-            d = {"id": did, "bank": bank, "title": it["title"][:200], "type": it["type"], "url": it["link"], "published_at": it.get("published_at"),
+            d = {"id": did, "bank": bank, "title": it["title"][:200], "type": it["type"], "url": it.get("link_full") or it["link"], "page": it["link"], "published_at": it.get("published_at"),
                  "fetched_at": NOW.isoformat(), "hash": hsh, "version": (old or {}).get("version", 0) + 1, "words": len(text.split()),
                  "source_type": "official", "transcript_status": "official", "speaker": speaker_of(it["title"], text, it["type"]),
                  "voting_status": "NOT_APPLICABLE" if it["type"] in ("statement", "minutes") and bank != "boc" else VOTE.get(bank, "UNKNOWN"),
@@ -385,7 +396,7 @@ def main():
     # institutional stance per bank: latest committee document, plus the average of individual remarks since it
     stance = {}
     for bank in BANKS:
-        b = [d for d in allv if d["bank"] == bank]
+        b = [d for d in allv if d["bank"] == bank and d.get("policy_relevant", True)]
         st = next((d for d in b if d["type"] in ("statement", "press_conference")), None)
         since = [d for d in b if d["type"] in ("speech", "testimony", "interview") and (not st or (d.get("published_at") or "") > (st.get("published_at") or ""))]
         stance[bank] = {"statement": {k: st[k] for k in ("id", "title", "score", "label", "published_at")} if st else None,
@@ -396,7 +407,7 @@ def main():
             "status": status, "stance": stance, "docs": allv,
             "method": "Sentence-level theme lexicon, negation flips, conditional language at half weight; score = 10·(H−D)/(H+D+3), "
                       "labels ≥+5 hawkish, ≥+2 leaning hawkish, ≤−2 leaning dovish, ≤−5 dovish. Forward guidance read separately."}
-    print({k: (v["found"], v["sources"]) for k, v in status.items()}, "new/updated docs:", new)
+    print({k: (v["found"], v["sources"]) for k, v in status.items()})
     if "--dry-run" in sys.argv:
         print(json.dumps(allv[:2], indent=1)[:3000]); return
     publish(body)

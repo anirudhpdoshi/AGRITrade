@@ -911,6 +911,33 @@ table.fl-tab small{color:var(--faint);font-size:10px}
 table.cmp-macro tr.cmp-read td{text-align:left!important;font-size:12px;color:#b9c7da;padding-top:0;white-space:normal}
 table.cmp-macro tr:not(.cmp-read) td{border-bottom:0}
 @media (max-width:760px){table.cmp-macro tr.cmp-read td{display:block!important}table.cmp-macro tr.cmp-read td:before{content:none!important}}
+
+/* ---------- Policy tab (central bank policy intelligence) ---------- */
+#panel-policy .hawk{color:#ff9d97}#panel-policy .dove{color:#5fd598}#panel-policy .neu{color:var(--muted)}
+.pi-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:8px 0}
+.pi-card{appearance:none;text-align:left;border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:10px;padding:9px 11px;color:inherit;font:inherit;cursor:pointer;min-width:0}
+.pi-card.on{border-color:#6ea8ff;box-shadow:inset 0 0 0 1px #6ea8ff}.pi-ch{font-size:12px;font-weight:700;color:#e8eef4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pi-sc{font-family:"IBM Plex Mono",monospace;font-size:20px;font-weight:700;margin:3px 0}.pi-sc small{font-size:11px;font-weight:600}
+.pi-sub{font-size:11.5px;color:var(--muted);line-height:1.5}.pi-sub b{color:#dfe7f1}
+.pi-nav{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.pi-nav button{appearance:none;border:1px solid var(--line2);background:var(--panel2,#0f1828);color:var(--muted);border-radius:14px;padding:4px 12px;font:inherit;font-size:12px;cursor:pointer}
+.pi-nav button[aria-pressed="true"]{border-color:#6ea8ff;color:#fff;background:rgba(110,168,255,.14)}
+table.pi-tab td{vertical-align:top}table.pi-tab small{display:block;color:var(--faint);font-size:10.5px}.pi-t{max-width:260px;white-space:normal}
+.pi-row{cursor:pointer}.pi-row:hover td{background:rgba(110,168,255,.06)}.pi-past td{opacity:.55}
+.pi-sort{appearance:none;border:0;background:none;color:inherit;font:inherit;cursor:pointer;padding:0;text-transform:inherit;letter-spacing:inherit}.pi-sort.on{color:#fff}
+.pi-badge{font-family:"IBM Plex Mono",monospace;font-weight:700;padding:1px 7px;border-radius:7px;border:1px solid var(--line)}.pi-badge.hawk{border-color:#7a3a36;background:rgba(224,101,95,.12)}.pi-badge.dove{border-color:#2b8f61;background:rgba(63,185,127,.12)}
+.pi-sel{width:100%;background:var(--panel2,#0f1828);color:#e8eef4;border:1px solid var(--line2);border-radius:8px;padding:6px 8px;font:inherit;font-size:12.5px;margin:6px 0 10px}
+.pi-dh{font-size:14px;color:#fff;margin-bottom:8px}.pi-dh a{color:#7dd8e6}
+.pi-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:8px 0}.pi-3>div,.pi-mk{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.pi-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:8px}
+.pi-l{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}.pi-big{font-family:"IBM Plex Mono",monospace;font-size:26px;font-weight:800}.pi-big small{font-size:12px}
+.pi-q{margin:6px 0;padding:6px 10px;border-left:3px solid var(--line);font-size:12.5px;color:#d4deea;line-height:1.5;background:rgba(255,255,255,.02)}.pi-q span{display:block;font-size:10.5px;color:var(--faint);margin-bottom:2px}
+.pi-q.hawk{border-left-color:#e0655f}.pi-q.dove{border-left-color:#3fb97f}.pi-q.g{border-left-color:#6ea8ff}
+.pi-th{display:flex;flex-direction:column;gap:6px}.pi-tr{display:grid;grid-template-columns:90px minmax(0,1fr) 92px;gap:8px;align-items:center;font-size:12px}
+.pi-tk{color:var(--muted);text-transform:capitalize}.pi-track{position:relative;height:10px;background:#16233a;border-radius:5px}.pi-track:after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:#3a4a60}
+.pi-bar{position:absolute;top:0;bottom:0;border-radius:5px}.pi-bar.hawk{background:#e0655f}.pi-bar.dove{background:#3fb97f}.pi-bar.prev{background:transparent;border:1px dashed #9aa8bb;top:-1px;bottom:-1px}
+.pi-tv{font-family:"IBM Plex Mono",monospace;text-align:right}.pi-prev{margin-top:10px}.pi-prev summary{cursor:pointer;color:#7dd8e6;font-size:12.5px}
+@media (max-width:1020px){.pi-strip{grid-template-columns:repeat(3,minmax(0,1fr))}.pi-3,.pi-2{grid-template-columns:1fr}}
+@media (max-width:760px){.pi-strip{grid-template-columns:repeat(2,minmax(0,1fr))}table.pi-tab{display:table!important}table.pi-tab thead{display:table-header-group!important}table.pi-tab tbody{display:table-row-group!important}table.pi-tab tr{display:table-row!important}table.pi-tab th,table.pi-tab td{display:table-cell!important}table.pi-tab td:before{content:none!important}}
 </style>
 </head>
 <body class="locked">
@@ -1014,6 +1041,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
     <button class="tab-btn" role="tab" id="tabbtn-world" aria-selected="false" aria-controls="panel-world" data-tab="world">World<span class="sym">Markets</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-events" aria-selected="false" aria-controls="panel-events" data-tab="events">Events<span class="sym">Today</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-intel" aria-selected="false" aria-controls="panel-intel" data-tab="intel">Intel<span class="sym">Global</span></button>
+    <button class="tab-btn" role="tab" id="tabbtn-policy" aria-selected="false" aria-controls="panel-policy" data-tab="policy">Policy<span class="sym">CB intel</span></button>
   </nav>
 
 <main>
@@ -1024,6 +1052,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
   <section class="tab-panel" id="panel-world" role="tabpanel" aria-labelledby="tabbtn-world"></section>
   <section class="tab-panel" id="panel-events" role="tabpanel" aria-labelledby="tabbtn-events"></section>
   <section class="tab-panel" id="panel-intel" role="tabpanel" aria-labelledby="tabbtn-intel"></section>
+  <section class="tab-panel" id="panel-policy" role="tabpanel" aria-labelledby="tabbtn-policy"></section>
 </main>
 
 <footer class="foot">
@@ -4748,6 +4777,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="gg-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="events-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="intel-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
+<script>(function(){var f=document.createElement("script");f.src="policy-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var s=document.createElement("script");s.src="live.js?v="+Date.now();document.body.appendChild(s);})();</script>
 </body>
 </html>
