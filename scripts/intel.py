@@ -148,7 +148,10 @@ REGIONS = [("Black Sea", r"\b(black sea|ukrain\w*|russia\w*|odesa|novorossiysk)\
            ("India", r"\b(india\w*)\b"), ("EU", r"\b(eu|europe\w*|france|french|germany|euronext)\b"), ("Australia", r"\b(australia\w*)\b"),
            ("Middle East / N. Africa", r"\b(egypt\w*|morocco|algeria|saudi|iran|red sea|suez)\b")]
 # grain-price direction read from headline text (supply-side words; 'cut forecast' = less supply = supportive)
-BULL = [r"export ban", r"export restriction\w*", r"restrict\w* exports", r"export (?:tax|quota)", r"drought", r"frost", r"heat ?wave", r"crop failure",
+BULL = [r"export ban", r"export restriction\w*", r"restrict\w* exports", r"export (?:tax|quota)",
+        r"drought (?:\w+ ){0,2}(?:hit\w*|hurt\w*|damag\w*|cut\w*|threat\w*|stress\w*|worsen\w*|grip\w*|parch\w*|slash\w*|wither\w*|loss\w*)",
+        r"(?:hit|hurt|damaged|cut|parched|scorched|threatened|withered|ravaged) by (?:\w+ )?drought", r"drought-(?:hit|stricken|damaged|ravaged)",
+        r"frost (?:\w+ ){0,2}(?:damag\w*|hit\w*|threat\w*)", r"heat ?wave", r"crop failure",
         r"(?:cut|cuts|lower\w*|reduc\w*|slash\w*|downgrad\w*) (?:\w+ ){0,2}(?:forecast|estimate|output|production|crop|harvest)", r"(?:output|production|harvest|crop) (?:falls?|drops?|declines?|shrinks?)",
         r"smallest", r"lowest stocks", r"tight\w* (?:\w+ )?(?:supply|supplies|stocks)", r"port (?:closure|closed|attack\w*)", r"attack\w* on (?:port|grain)", r"halt\w* (?:exports|shipments)",
         r"(?:prices?|futures|market) (?:\w+ ){0,3}(?:rise|rises|rose|jump\w*|surge\w*|soar\w*|climb\w*|spike\w*|rall\w*|leap\w*)", r"prices? up\b", r"\bleap in (?:\w+ ){0,2}prices",
@@ -162,7 +165,8 @@ BEAR = [r"record (?:\w+ ){0,2}(?:crop|harvest|output|production|exports?)", r"bu
         r"(?:prices?|futures|market) (?:\w+ ){0,3}(?:fall|falls|fell|drop\w*|slump\w*|declin\w*|eas\w*|slid\w*|tumbl\w*|soften\w*|weaken\w*|sag\w*|six-year low|lowest)", r"prices? down\b",
         r"hit\w* (?:new |fresh |multi-\w+ |\d+-\w+ )?lows?", r"weak (?:demand|buying|imports)", r"weaker (?:currency|real|peso)", r"pressures? (?:\w+ ){0,3}prices",
         r"cancel\w* (?:purchases|cargoes|orders)", r"lower (?:prices|costs)", r"increase\w* in (?:\w+ ){0,3}(?:production|output|forecast)", r"risk premium (?:\w+ )?(?:deflat\w*|eas\w*|fad\w*|evaporat\w*)",
-        r"supplies stabili[sz]e\w*", r"(?:production|output|crop|harvest) (?:\w+ ){0,3}(?:to rise|to grow|seen higher)",
+        r"supplies stabili[sz]e\w*", r"(?:harvest|crop|yield\w*|output|production) (?:\w+ ){0,3}(?:exceed\w*|beat\w*|top\w*|above) (?:\w+ ){0,2}expectations",
+        r"better[- ]than[- ]expected (?:\w+ ){0,2}(?:harvest|crop|yield\w*|output)", r"imports? (?:\w+ ){0,3}(?:could |may |to |will |set to )?(?:fall|drop|declin\w*|plunge\w*|slump\w*|shrink\w*)", r"(?:production|output|crop|harvest) (?:\w+ ){0,3}(?:to rise|to grow|seen higher)",
         r"(?:prices?|grain|grains|futures|wheat|corn|soybeans?) (?:\w+ ){0,3}\w+-(?:week|month|year) low", r"(?:lift|lifts|lifted|end|ends|ended) (?:\w+ ){0,2}ban"]
 # a headline must mention a commodity, price, food or farm-economy term to enter the feed (filters off-topic matches)
 RELEVANT = r"\b(commodit\w*|food|price\w*|grain\w*|cereal\w*|wheat|corn|maize|soy\w*|fertili[sz]er\w*|urea|potash|phosphate|crude|oil|energy|crop\w*|harvest\w*|agricultur\w*|outlook|inflation|freight|shipping|export\w*|import\w*|tariff\w*|drought|planting|yield\w*|biofuel\w*|ethanol)\b"
@@ -305,6 +309,8 @@ def classify_headline(title):
     cat = next((c for c, rx in KW_CAT if re.search(rx, low)), "ag")
     regions = [r for r, rx in REGIONS if re.search(rx, low)] or ["Global"]
     bull = [m.group(0) for rx in BULL for m in [re.search(rx, low)] if m]
+    bull = [b for b in bull if not re.search(r"\b(?:despite|in spite of|despite the|shrugs? off|weathers?|tolerance|resistan\w*|insurance|buffer|relief)\b(?:\W+\w+){0,3}\W+" + re.escape(b.split()[0]), low)
+            and not re.search(re.escape(b.split()[-1]) + r"\W+(?:\w+\W+){0,1}(?:tolerance|resistan\w*|insurance|relief|buffer|eases?|easing|ends?|over)\b", low)]   # 'despite drought', 'drought tolerance' are not supply cuts
     bear = [m.group(0) for rx in BEAR for m in [re.search(rx, low)] if m]
     bear = [x for x in bear if not re.search(r"planting|acreage|sowing|\barea\b", x)]   # 'plantings at a 7-year low' is a supply cut, not a price low
     score = len(bull) - len(bear)

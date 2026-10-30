@@ -144,7 +144,7 @@
     var svg = el("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": "USD/CAD CIP forward curve by value date" });
     box.querySelector(".fwd-chart").appendChild(svg);
     var g = { svg: svg, grid: [], spotLine: el("line", { x1: PL, x2: W - PR, stroke: "#38b6c9", "stroke-dasharray": "4 4" }, svg) };
-    for (var i = 0; i <= 4; i++) g.grid.push([el("line", { x1: PL, x2: W - PR, stroke: "#1e2a3a" }, svg), el("text", { x: PL - 6, fill: "#5b6b82", "font-size": "10.5", "font-family": "IBM Plex Mono", "text-anchor": "end" }, svg)]);
+    for (var i = 0; i <= 4; i++) g.grid.push([el("line", { x1: PL, x2: W - PR, stroke: "#1e2a3a" }, svg), el("text", { x: PL - 6, fill: "#8f9db3", "font-size": "10.5", "font-family": "IBM Plex Mono", "text-anchor": "end" }, svg)]);
     svg.insertBefore(g.spotLine, null);
     g.spotTxt = el("text", { x: W - PR, fill: "#38b6c9", "font-size": "10.5", "font-family": "IBM Plex Mono", "text-anchor": "end" }, svg);
     g.area = el("path", { fill: "rgba(224,101,95,.12)" }, svg);
@@ -156,7 +156,7 @@
         o.out = el("text", Object.assign({ fill: "#e8eef4", "font-size": "10.5", "font-weight": "700" }, a), svg);
         o.pts = el("text", Object.assign({ fill: "#ff9d97", "font-size": "9.5", "font-weight": "600" }, a), svg);
         o.date = el("text", { fill: "#8494ab", "font-size": "10", "font-family": "IBM Plex Mono", y: H - PB + 15 }, svg);
-        o.ten = el("text", { fill: "#5b6b82", "font-size": "9", "font-family": "IBM Plex Mono", y: H - PB + 27 }, svg);
+        o.ten = el("text", { fill: "#8f9db3", "font-size": "9", "font-family": "IBM Plex Mono", y: H - PB + 27 }, svg);
         o.ten.textContent = t[0];
       }
       o.hit = el("g", { "class": "btip", "data-i": i }, svg);
@@ -164,7 +164,7 @@
       o.dot = el("circle", { r: o.show ? 3.8 : 2.6, fill: "#e8a33d", stroke: "#0f1825", "stroke-width": 1 }, o.hit);
       return o;
     });
-    var foot = el("text", { x: PL, y: H - 4, fill: "#5b6b82", "font-size": "9.5", "font-family": "IBM Plex Mono" }, svg);
+    var foot = el("text", { x: PL, y: H - 4, fill: "#8f9db3", "font-size": "9.5", "font-family": "IBM Plex Mono" }, svg);
     foot.textContent = "VALUE DATE (√days) · WHITE = OUTRIGHT · RED = FWD POINTS (pips) · HOVER ANY DOT";
     var tb = box.querySelector("tbody"), sr = document.createElement("tr");
     sr.className = "fwd-spot";

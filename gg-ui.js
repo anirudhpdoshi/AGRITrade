@@ -219,7 +219,7 @@
     if (months.length) {
       var mx = 0; months.forEach(function (ym) { ["us", "ca", "br"].forEach(function (o) { if ((M[ym][o] || 0) > mx) mx = M[ym][o]; }); });
       var Wd = 760, Hh = 170, pl = 40, bw = (Wd - pl - 10) / months.length, cols = { us: "#e8b93d", ca: "#e0655f", br: "#3fb97f" }, svg = "";
-      for (var gi = 0; gi <= 3; gi++) { var gy = 10 + (Hh - 34) * gi / 3, gv = mx * (1 - gi / 3); svg += '<line x1="' + pl + '" x2="' + Wd + '" y1="' + gy + '" y2="' + gy + '" stroke="#1e2a3a"/><text x="' + (pl - 4) + '" y="' + (gy + 3) + '" font-size="9" fill="#5b6b82" text-anchor="end" font-family="IBM Plex Mono">' + (gv / 1000).toFixed(1) + "</text>"; }
+      for (var gi = 0; gi <= 3; gi++) { var gy = 10 + (Hh - 34) * gi / 3, gv = mx * (1 - gi / 3); svg += '<line x1="' + pl + '" x2="' + Wd + '" y1="' + gy + '" y2="' + gy + '" stroke="#1e2a3a"/><text x="' + (pl - 4) + '" y="' + (gy + 3) + '" font-size="9" fill="#8f9db3" text-anchor="end" font-family="IBM Plex Mono">' + (gv / 1000).toFixed(1) + "</text>"; }
       months.forEach(function (ym, i) { ["us", "ca", "br"].forEach(function (o, j) { var v = M[ym][o]; if (v == null) return; var h = (Hh - 34) * v / (mx || 1), x = pl + i * bw + 4 + j * (bw - 8) / 3;
         svg += '<rect x="' + x.toFixed(1) + '" y="' + (10 + Hh - 34 - h).toFixed(1) + '" width="' + ((bw - 8) / 3 - 1).toFixed(1) + '" height="' + h.toFixed(1) + '" fill="' + cols[o] + '"><title>' + mlab(ym) + " · " + { us: "US", ca: "Canada", br: "Brazil" }[o] + ": " + mmt(v) + " MMT</title></rect>"; });
         svg += '<text x="' + (pl + i * bw + bw / 2).toFixed(1) + '" y="' + (Hh - 10) + '" font-size="9.5" fill="#8494ab" text-anchor="middle" font-family="IBM Plex Mono">' + mlab(ym) + "</text>"; });

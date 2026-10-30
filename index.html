@@ -24,7 +24,7 @@ u.searchParams.delete("fresh");history.replaceState(null,"",u.pathname+(u.search
 :root{
   color-scheme: dark;
   --bg:#0a0f16; --panel:#101825; --panel2:#0d141f; --line:#1e2a3a; --line2:#28374e;
-  --ink:#dbe4f0; --muted:#8494ab; --faint:#5b6b82;
+  --ink:#e4ebf5; --muted:#9eadc2; --faint:#8494ab;
   --amber:#e8a33d; --green:#3fb97f; --red:#e0655f; --cyan:#38b6c9;
   --call:#3fb97f; --put:#e0655f;
 }
@@ -38,10 +38,10 @@ a:hover{text-decoration:underline}
   font-family:"IBM Plex Mono",monospace;font-size:12.5px;letter-spacing:.02em;text-align:center;padding:9px 14px;line-height:1.5}
 .snapshot-banner b{color:#fff;font-weight:600}
 
-.topbar{max-width:1280px;margin:0 auto;padding:18px 16px 0}
+.topbar{max-width:1480px;margin:0 auto;padding:18px 16px 0}
 .topbar h1{font-size:21px;font-weight:800;margin:0;letter-spacing:.01em}
 .topbar .sub{color:var(--muted);font-size:13px;margin-top:3px}
-.tabs{display:flex;flex-wrap:wrap;gap:8px;max-width:1280px;margin:0 auto;padding:8px 16px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;max-width:1480px;margin:0 auto;padding:8px 16px}
 .tab-btn{appearance:none;border:1px solid var(--line2);background:var(--panel);color:var(--muted);
   font-family:inherit;font-size:14px;font-weight:700;padding:10px 18px;border-radius:8px;cursor:pointer;letter-spacing:.03em}
 .tab-btn .sym{font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:12px;color:var(--faint);margin-left:7px}
@@ -49,7 +49,7 @@ a:hover{text-decoration:underline}
 .tab-btn[aria-selected="true"] .sym{color:#9db8d8}
 .tab-btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 
-main{max-width:1280px;margin:0 auto;padding:14px 16px 30px}
+main{max-width:1480px;margin:0 auto;padding:14px 16px 30px}
 .tab-panel{display:none}
 .tab-panel.active{display:block}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
@@ -113,7 +113,7 @@ table.mini tr.hl td{color:var(--amber);font-weight:600}
 svg{display:block;width:100%;height:auto}
 .legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--muted);margin-top:8px}
 .legend .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
-.foot{max-width:1280px;margin:0 auto;padding:0 16px 34px;color:var(--faint);font-size:12.5px;line-height:1.6}
+.foot{max-width:1480px;margin:0 auto;padding:0 16px 34px;color:var(--faint);font-size:12.5px;line-height:1.6}
 .kv{display:flex;justify-content:space-between;gap:14px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13.5px}
 .kv:last-child{border-bottom:0}
 .kv .kk{color:var(--muted)} .kv .vv{font-family:"IBM Plex Mono",monospace;font-weight:600;text-align:right}
@@ -282,7 +282,7 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .nchip{font:inherit;font-size:11.5px;padding:3px 9px;border-radius:12px;border:1px solid var(--line);background:#101a2b;color:var(--muted);cursor:pointer}
 .nchip small{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--faint)}.nchip[aria-pressed="true"]{background:#14263d;border-color:#38b6c9;color:#fff}.nchip:disabled{opacity:.4;cursor:default}
 .nchip.hot{border-color:#7a3a36;color:#ff9d97}.nchip.hot[aria-pressed="true"]{background:#3a1a1a;border-color:#e0655f;color:#fff}
-.ncat{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:0 5px;border-radius:4px;margin-right:5px;border:1px solid}
+.ncat{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:0 5px;border-radius:4px;margin-right:5px;border:1px solid}
 .ncat.fx{color:#7fd3e0;border-color:#2a5d66}.ncat.agri{color:#e8c069;border-color:#6e5a2a}.ncat.geo{color:#c9a3ff;border-color:#4e3a72}.ncat.macro{color:#8fb6ff;border-color:#2f4a7a}.ncat.other{color:#9aa8bb;border-color:#34445a}.ncat.alert{color:#ff9d97;border-color:#7a3a36}
 li.n-desk b{color:#ffd0cc;font-size:12.5px}
 .ck-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;padding:8px 10px;background:var(--panel2);border:1px solid var(--line);border-radius:9px}
@@ -339,7 +339,7 @@ table.fwd-in td.fi-src{text-align:left;color:var(--faint);font-size:10.5px;white
 .gauge{margin:6px 0 4px}.g-track{position:relative;height:8px;border-radius:4px;background:linear-gradient(90deg,#e0655f 0%,#3a4a61 20%,#3a4a61 80%,#3fb97f 100%)}
 .g-mark{position:absolute;top:-2px;width:1px;height:12px;background:#c9d6e6;opacity:.6}
 .g-dot{position:absolute;top:-4px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:#fff;border:2px solid #0b1220;box-shadow:0 0 0 3px rgba(255,255,255,.15)}.g-dot.hot{background:#e8b93d}
-.g-lab{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--faint);margin-top:3px}
+.g-lab{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);margin-top:3px}
 .pk-alerts{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.pk-al{font-size:11.5px;padding:3px 9px;border-radius:12px;border:1px solid}
 .pk-al.ok{color:#5fd598;border-color:#2b6b4c}.pk-al.warn{color:#e8a33d;border-color:#7a5a24}.pk-al.hot{color:#ff9d97;border-color:#7a3a36}.pk-al.crit{color:#fff;background:#b8443f;border-color:#e0655f;font-weight:700}
 .ck-list{display:grid;gap:8px}.ck{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;padding:8px 10px;border-radius:8px;background:var(--panel2);border:1px solid var(--line)}
@@ -460,14 +460,14 @@ table.cmp-tbl .ruler-col{background:rgba(232,163,61,.10)!important;box-shadow:in
 .subnav-live{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.7}
 .qt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:6px;font-family:"IBM Plex Mono",monospace}
 .qt{background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:5px 8px 6px;min-width:0}
-.qt-h{display:flex;justify-content:space-between;gap:6px;align-items:baseline;font-size:10.5px;letter-spacing:.04em}.qt-h b{color:var(--muted);font-weight:600}.qt-sub{color:var(--faint);font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qt-h{display:flex;justify-content:space-between;gap:6px;align-items:baseline;font-size:10.5px;letter-spacing:.04em}.qt-h b{color:var(--muted);font-weight:600}.qt-sub{color:var(--faint);font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .qt-box{position:relative;margin:2px 0 1px;padding:1px 4px 1px 14px;border-radius:5px;background:transparent;color:var(--ink);transition:background-color .9s ease-out}
 .qt-v{display:inline-flex;align-items:baseline;line-height:1.15}.qt-bf{font-size:13px;font-weight:600}.qt-pp{font-size:19px;font-weight:700;letter-spacing:.01em}
-.qt-ar{position:absolute;left:2px;top:50%;transform:translateY(-50%);font-size:8.5px}.qt-box.dir-up .qt-ar:before{content:"▲";color:var(--green)}.qt-box.dir-dn .qt-ar:before{content:"▼";color:var(--red)}
+.qt-ar{position:absolute;left:2px;top:50%;transform:translateY(-50%);font-size:9.5px}.qt-box.dir-up .qt-ar:before{content:"▲";color:var(--green)}.qt-box.dir-dn .qt-ar:before{content:"▼";color:var(--red)}
 .qt-box.fl-up{background:rgba(63,185,127,.55);transition:none}.qt-box.fl-dn{background:rgba(224,101,95,.55);transition:none}
 .qf{display:inline-block;transform-origin:50% 60%;animation:qflip .42s cubic-bezier(.3,.7,.3,1)}@keyframes qflip{0%{transform:rotateX(90deg);opacity:.2}60%{transform:rotateX(-12deg);opacity:1}100%{transform:none}}
-.qt-c{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qt-f{font-size:9.5px;color:var(--faint);margin-top:1px;line-height:1.45;display:flex;flex-wrap:wrap;align-items:center;gap:0 5px;white-space:nowrap;overflow:hidden}.qt-t{color:var(--faint)}
-.qt-f .om-t{font-size:8.5px;padding:0 4px;letter-spacing:.05em;margin-left:auto}
+.qt-c{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qt-f{font-size:10.5px;color:var(--faint);margin-top:1px;line-height:1.45;display:flex;flex-wrap:wrap;align-items:center;gap:0 5px;white-space:nowrap;overflow:hidden}.qt-t{color:var(--faint)}
+.qt-f .om-t{font-size:9.5px;padding:0 4px;letter-spacing:.05em;margin-left:auto}
 @media (max-width:760px){.qt-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.qt-pp{font-size:18px}.qt-bf{font-size:12.5px}}
 @media (prefers-reduced-motion:reduce){.qf{animation:none}.qt-box,.qt-box.fl-up,.qt-box.fl-dn{transition:none}}
 .om-row{display:flex;flex-direction:column;gap:1px;margin-top:3px;padding-top:3px;border-top:1px dashed var(--line)}.om-leg{white-space:normal}.om-leg>.sl-k:first-child{display:inline-block;min-width:62px}
@@ -571,10 +571,10 @@ table.wt tr.wgh td{background:#122036;color:#9fd9e3;font-weight:600;font-size:11
 .w52t{position:relative;height:5px;border-radius:3px;background:linear-gradient(90deg,rgba(224,101,95,.55),rgba(255,255,255,.12) 50%,rgba(63,185,127,.55))}
 .w52t i{position:absolute;top:-3px;width:3px;height:11px;margin-left:-1.5px;border-radius:2px;background:#fff;box-shadow:0 0 0 1px #0b1220}
 .wbs{margin-top:3px;display:flex;gap:4px;flex-wrap:wrap}
-.wb{font-size:9.5px;font-weight:600;letter-spacing:.03em;padding:1px 6px;border-radius:8px;white-space:nowrap}
+.wb{font-size:10.5px;font-weight:600;letter-spacing:.03em;padding:1px 6px;border-radius:8px;white-space:nowrap}
 .wb.nh{background:#1d7a4f;color:#fff}.wb.nl{background:#a3322d;color:#fff}
 .wb.nrh{border:1px solid rgba(63,185,127,.55);color:#3fb97f}.wb.nrl{border:1px solid rgba(224,101,95,.55);color:#e0655f}
-.wq{font-size:10.5px;color:var(--muted)}.wq.aw{color:#e3b341}.wq.cz{color:var(--faint)}.wq b{color:#e3b341;font-size:9.5px;border:1px solid rgba(227,179,65,.5);border-radius:6px;padding:0 4px}
+.wq{font-size:10.5px;color:var(--muted)}.wq.aw{color:#e3b341}.wq.cz{color:var(--faint)}.wq b{color:#e3b341;font-size:10.5px;border:1px solid rgba(227,179,65,.5);border-radius:6px;padding:0 4px}
 svg.wsp{width:60px;height:18px;display:block}
 .wqt{margin-top:3px;line-height:1.35;white-space:normal;min-width:128px}.wqtm{color:var(--ink);font-weight:600}.wq.aw .wqtm{color:#e3b341}.wprov{color:var(--faint);font-size:10.5px}
 .sgrid{display:grid;grid-template-columns:minmax(150px,210px) 1fr 132px;gap:6px 12px;align-items:center}
@@ -757,7 +757,7 @@ html:not([data-theme="light"]) .theme-sw .ts-d,html[data-theme="light"] .theme-s
 /* ---- Brazil · CONAB / World · USDA ---- */
 .ggtg{flex-wrap:wrap}
 .ggstamp{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:#8a97ab;margin:2px 0 10px;line-height:1.6}.ggstamp a{color:var(--cyan)}.ggstamp .warn{color:#e3b341;font-weight:500}
-.ggtag{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:6px;border:1px solid}
+.ggtag{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:6px;border:1px solid}
 .ggtag.est{color:#e8b93d;border-color:#6e5a2a}.ggtag.fc{color:#c9a3ff;border-color:#4e3a72}.ggtag.obs{color:#5fd598;border-color:#2b6b4c}.ggtag.st{color:#ff9d97;border-color:#7a3a36}
 svg.ggmap{width:100%;height:auto;display:block;cursor:default}svg.ggmap path.ggc{cursor:pointer}svg.ggmap path.ggc:hover{stroke:#fff;stroke-width:1}
 .gglegend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11px;color:var(--muted);margin-top:6px}.gglegend i{display:inline-block;width:14px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}.gglegend em{margin-left:auto;color:var(--faint);font-style:normal}
@@ -768,7 +768,7 @@ table.ggt{width:100%;border-collapse:collapse;font-size:12.5px;margin:4px 0}tabl
 table.ggt td{padding:5px 6px;border-bottom:1px solid #18243a;text-align:right;font-family:"IBM Plex Mono",monospace;white-space:nowrap}table.ggt th:first-child,table.ggt td:first-child{text-align:left;font-family:inherit}
 table.ggt td small{color:var(--faint)}tr.ggrow{cursor:pointer}tr.ggrow:hover td{background:#14213a}
 .ggbar{display:inline-block;height:8px;border-radius:4px;background:#e8b93d;vertical-align:middle;margin-right:6px}.ggbar.bx{background:#38b6c9}
-.ggf{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--faint);border:1px solid var(--line);border-radius:3px;padding:0 3px}
+.ggf{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);border:1px solid var(--line);border-radius:3px;padding:0 3px}
 .ggcols{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
 .gghist{font-size:12px}.gghist b{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin:6px 0}
 .ghr{display:grid;grid-template-columns:62px 1fr 56px;gap:8px;align-items:center;margin:3px 0;font-family:"IBM Plex Mono",monospace;font-size:11px}.ghr i{display:block;height:9px;border-radius:3px;background:#e8b93d}.ghr em{font-style:normal;text-align:right;color:var(--muted)}
@@ -822,9 +822,9 @@ body.xpand-on{overflow:hidden}
 .evr:last-child{border-bottom:0}.evr.hi{background:linear-gradient(90deg,rgba(232,185,61,.07),transparent 60%)}
 .evr.soon{background:rgba(232,185,61,.10);box-shadow:inset 3px 0 0 #e8b93d}.evr.due{background:rgba(63,185,127,.12);box-shadow:inset 3px 0 0 #3fb97f}
 .evr.out{opacity:.62}
-.evt{font-family:"IBM Plex Mono",monospace;font-weight:600;color:#fff;font-size:13px}.evt small{display:block;font-size:9.5px;color:var(--faint);font-weight:500}
+.evt{font-family:"IBM Plex Mono",monospace;font-weight:600;color:#fff;font-size:13px}.evt small{display:block;font-size:10.5px;color:var(--faint);font-weight:500}
 .evl{font-size:13px;color:#e8eef4;line-height:1.4}.evx{font-size:11.5px;color:var(--muted);margin-top:2px}.evx b{color:#dfe7f1;font-family:"IBM Plex Mono",monospace;font-weight:600}
-.evc{font-size:9.5px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:6px;border:1px solid var(--ec);color:var(--ec);white-space:nowrap;vertical-align:1px}
+.evc{font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:6px;border:1px solid var(--ec);color:var(--ec);white-space:nowrap;vertical-align:1px}
 .evi{font-size:10px;font-weight:700;padding:0 5px;border-radius:5px}.evi.i-high{color:#ff9d97;background:rgba(255,120,110,.13)}.evi.i-medium{color:#e8b93d;background:rgba(232,185,61,.12)}.evi.i-low{color:var(--faint)}
 .evr-r{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right}.evr-r .countdown{font-size:13px}
 .evs{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600}.evs.out{color:var(--faint)}.evs.due{color:#5fd598}
@@ -865,7 +865,7 @@ table.oi-mtab td.oi-asof{font-family:inherit;font-size:11px;color:var(--muted);t
 .roll-opt{margin-top:14px}.roll-opt h3{margin:0 0 6px}
 @media (max-width:760px){.roll-next{grid-template-columns:1fr}}
 .oi-lock{opacity:.45;cursor:not-allowed}.oi-gate{color:var(--muted)}.oi-gate.on{color:#7fdcae}.oi-gate b{color:#fff}
-.rn-gate{float:right;font-size:9.5px;letter-spacing:.06em;padding:1px 6px;border-radius:6px;border:1px solid #2b8f61;color:#7fdcae}.rn-locked{border-color:var(--line);box-shadow:none}.rn-locked .rn-gate{border-color:#6e5a2a;color:#e8b93d}
+.rn-gate{float:right;font-size:10.5px;letter-spacing:.06em;padding:1px 6px;border-radius:6px;border:1px solid #2b8f61;color:#7fdcae}.rn-locked{border-color:var(--line);box-shadow:none}.rn-locked .rn-gate{border-color:#6e5a2a;color:#e8b93d}
 
 /* ---------- position flow signal ---------- */
 .fl-top{display:grid;grid-template-columns:240px minmax(0,1fr);gap:14px;margin-top:10px}
@@ -944,17 +944,21 @@ table.pi-tab td{vertical-align:top}table.pi-tab small{display:block;color:var(--
 
 /* ---------- today's releases: coloured tabs, NEW ribbons, "see it" jump ---------- */
 .tab-btn.tab-today{border-color:#e8b93d!important;box-shadow:inset 0 -3px 0 #e8b93d}
-.tab-btn.tab-today:after{content:"NEW";margin-left:7px;font-size:9.5px;font-weight:800;letter-spacing:.06em;color:#111;background:#e8b93d;border-radius:5px;padding:1px 5px;vertical-align:1px}
+.tab-btn.tab-today:after{content:"NEW";margin-left:7px;font-size:10.5px;font-weight:800;letter-spacing:.06em;color:#111;background:#e8b93d;border-radius:5px;padding:1px 5px;vertical-align:1px}
 .upd-today{position:relative;outline:1px solid rgba(232,185,61,.75);outline-offset:-1px}
 .upd-today:after{content:attr(data-upd);position:absolute;top:-9px;right:10px;font:700 9.5px/1.6 "IBM Plex Mono",monospace;letter-spacing:.04em;color:#111;background:#e8b93d;border-radius:5px;padding:0 6px;z-index:3;pointer-events:none;white-space:nowrap}
 @keyframes flashfind{0%{box-shadow:0 0 0 0 rgba(232,185,61,.9)}100%{box-shadow:0 0 0 14px rgba(232,185,61,0)}}
 .flash-find{animation:flashfind 1.2s ease-out 2}
 .evs.land{color:#5fd598}.evs.land small{color:var(--muted);font-weight:500}.evs.val{display:block;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:#e8eef4;margin-top:1px}
 .evgo.see{color:#e8b93d;font-weight:600}
-.tab-btn.tab-today:after{margin-left:5px;font-size:8.5px;padding:0 4px}
+.tab-btn.tab-today:after{margin-left:5px;font-size:9.5px;padding:0 4px}
 @media (min-width:761px){.tab-btn{padding-left:13px;padding-right:13px}.tab-btn .sym{margin-left:5px;font-size:11px}}
 .mk-click.upd-today,.mkc.upd-today{outline:0;border-left:3px solid #e8b93d;padding-left:6px;background:rgba(232,185,61,.06)}
 .mk-click.upd-today:after,.mkc.upd-today:after{position:static;display:inline-block;margin-top:3px;border-radius:5px}
+.today-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0 0 12px;padding:8px 12px;border:1px solid #6b4f1d;border-left:3px solid var(--amber);border-radius:8px;background:#1d1708}
+.today-bar .tb-k{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-right:4px}
+.tb-go{appearance:none;font:inherit;font-size:13px;color:#f3e3c3;background:transparent;border:1px solid #8a6a2a;border-radius:6px;padding:3px 10px;cursor:pointer}
+.tb-go small{color:#c9a96a;font-family:'IBM Plex Mono',monospace;font-size:11px}.tb-go:hover{background:#3a2c0e;border-color:var(--amber)}
 .qt-age{color:var(--muted,#8a9bb0);font-size:.92em;white-space:nowrap}.qt-age.old,[data-age-src].old{color:var(--amber,#e8a33d)}
 .qt-chk{font-size:12px;color:var(--muted,#8a9bb0);margin:6px 2px 0;font-family:'IBM Plex Mono',monospace}.qt-chk b{color:var(--ink,#dbe4ee);font-weight:600}
 </style>
@@ -1394,7 +1398,7 @@ function fanRulerHTML(g, FL){
   if(dn&&up) s+='<rect x="'+X(dn.value).toFixed(1)+'" y="25" width="'+(X(up.value)-X(dn.value)).toFixed(1)+'" height="10" fill="rgba(56,182,201,.18)" rx="2"/>';
   lv.forEach(function(l){ var x=X(l.value); s+='<line x1="'+x.toFixed(1)+'" y1="22" x2="'+x.toFixed(1)+'" y2="38" stroke="'+l.color+'" stroke-width="'+(l.lines?2.2:1.4)+'"><title>'+esc((l.lines?l.lines.join(' · '):l.label))+'</title></line>'; });
   var mx=X(L); s+='<path d="M'+mx.toFixed(1)+' 18 l-5 -8 h10z" fill="#ff6b6b"/><line x1="'+mx.toFixed(1)+'" y1="18" x2="'+mx.toFixed(1)+'" y2="42" stroke="#ff6b6b" stroke-width="2"/>';
-  s+='<text x="'+P+'" y="54" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">'+money2(lo+pad)+'</text><text x="'+(W-P)+'" y="54" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end">'+money2(hi-pad)+'</text>';
+  s+='<text x="'+P+'" y="54" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono">'+money2(lo+pad)+'</text><text x="'+(W-P)+'" y="54" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="end">'+money2(hi-pad)+'</text>';
   if(dn) s+='<text x="'+X(dn.value).toFixed(1)+'" y="54" fill="'+dn.color+'" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+money2(dn.value)+'</text>';
   if(up) s+='<text x="'+X(up.value).toFixed(1)+'" y="54" fill="'+up.color+'" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+money2(up.value)+'</text>';
   s+='<text x="'+mx.toFixed(1)+'" y="8" fill="#ff9d9d" font-size="10" font-weight="700" font-family="IBM Plex Mono" text-anchor="middle">'+money2(L)+'</text>';
@@ -1426,7 +1430,7 @@ function fanSVG2(g, meta, FL){
   var s='';
   for(i=0;i<=4;i++){ var gy=PT+ph*i/4, gv=hi-(hi-lo)*i/4;
     s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a" stroke-width="1"/>';
-    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+gv.toFixed(2)+'</text>'; }
+    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+gv.toFixed(2)+'</text>'; }
   s+='<clipPath id="fanclip-'+fk+'"><rect x="'+PL+'" y="'+PT+'" width="'+pw+'" height="'+ph+'"/></clipPath><g clip-path="url(#fanclip-'+fk+')">';
   function conePath(anchorVal, mult){
     var pts=[], ptsB=[], dd;
@@ -1443,8 +1447,8 @@ function fanSVG2(g, meta, FL){
   s+='<path d="'+conePath(L,2.0)+'" fill="#38b6c9" opacity="0.08"/>';
   s+='<path d="'+conePath(L,1.0)+'" fill="#38b6c9" opacity="0.15"/>';
   s+='<line x1="'+X(NH-1)+'" y1="'+PT+'" x2="'+X(NH-1)+'" y2="'+(PT+ph)+'" stroke="#3d5a80" stroke-width="1" stroke-dasharray="3 3"/>';
-  s+='<text x="'+(X(NH-1)-5)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">HISTORY · '+NH+' SETTLES</text>';
-  s+='<text x="'+(X(NH-1)+6)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono">10-DAY FAN</text>';
+  s+='<text x="'+(X(NH-1)-5)+'" y="'+(PT+ph+18)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">HISTORY · '+NH+' SETTLES</text>';
+  s+='<text x="'+(X(NH-1)+6)+'" y="'+(PT+ph+18)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono">10-DAY FAN</text>';
   function maLine(key, color){
     var p='';
     hist.forEach(function(hh,idx){ if(hh[key]==null) return; p+=(p?'L':'M')+X(idx).toFixed(1)+' '+Y(hh[key]).toFixed(1); });
@@ -1518,7 +1522,7 @@ function fanSVG2(g, meta, FL){
       s+='<text x="'+(rx+13)+'" y="'+(ly+3.5).toFixed(1)+'" fill="'+it.l.color+'" font-size="11.5" font-weight="'+(it.l.bold?700:500)+'" font-family="IBM Plex Mono">'+it.l.label+'</text>';
     }
   });
-  s+='<text x="'+PL+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono">'+hist[0].d.slice(0,10)+'</text>';
+  s+='<text x="'+PL+'" y="'+(PT+ph+18)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono">'+hist[0].d.slice(0,10)+'</text>';
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Settlement history with settle-anchored and live-re-anchored 10-day sigma fans for '+meta.name+', right-edge labeled levels at day 10, and the market marker frozen at the build-time delayed quote">'+s+'</svg>';
 }
 
@@ -1566,7 +1570,7 @@ function exportSVG(key){
   var s='', i;
   for(i=0;i<=4;i++){ var gv=ymax*i/4, gy=Y(gv);
     s+='<line x1="'+PL+'" y1="'+gy.toFixed(1)+'" x2="'+(PL+pw)+'" y2="'+gy.toFixed(1)+'" stroke="#1e2a3a"/>'+
-       '<text x="'+(PL-6)+'" y="'+(gy+4).toFixed(1)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+fmt(Math.round(gv/1000))+'k</text>'; }
+       '<text x="'+(PL-6)+'" y="'+(gy+4).toFixed(1)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+fmt(Math.round(gv/1000))+'k</text>'; }
   weeks.forEach(function(w,i){
     var v=esVerdict(w)||'NONE', isL=i===n-1, bwid=slot*0.52, x=CX(i)-bwid/2;
     /* consensus range band behind the bar */
@@ -1591,7 +1595,7 @@ function exportSVG(key){
        '<text x="'+CX(i).toFixed(1)+'" y="'+ly.toFixed(1)+'" fill="'+(isL?'#e8a33d':'#e8eef4')+'" font-size="11" font-weight="600" font-family="IBM Plex Mono" text-anchor="middle">'+txt+'</text>';
     s+='<text x="'+CX(i).toFixed(1)+'" y="'+(PT+ph+17)+'" fill="#8494ab" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">'+fmtShortDate(w[0])+'</text>';
   });
-  s+='<text x="'+PL+'" y="'+(H-4)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">WEEK ENDING · BAR = ACTUAL NET SALES · BAND = CONSENSUS RANGE · ◇ = CONSENSUS MIDPOINT</text>';
+  s+='<text x="'+PL+'" y="'+(H-4)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono">WEEK ENDING · BAR = ACTUAL NET SALES · BAND = CONSENSUS RANGE · ◇ = CONSENSUS MIDPOINT</text>';
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Weekly export net sales, last '+n+' releases, each bar labeled with its actual value, consensus range band and midpoint, dashed trendline">'+s+'</svg>';
 }
 function exportConsTable(key){
@@ -1658,7 +1662,7 @@ function oiSVG(rows, ds, cp, prev, lab){
   var s='';
   for(var i=0;i<=3;i++){ var gy=PT+ph*i/3, gv=max*(1-i/3);
     s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
-    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+Math.round(gv/1000)+'k</text>'; }
+    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+Math.round(gv/1000)+'k</text>'; }
   rows.forEach(function(r,idx){
     var x=PL+idx*bw, cw=Math.max(1,bw*(cp==='both'?0.38:0.7));
     var isCW = Math.abs(r[0]-ds.call_wall[0])<0.001, isPW = Math.abs(r[0]-ds.put_wall[0])<0.001;
@@ -1676,7 +1680,7 @@ function oiSVG(rows, ds, cp, prev, lab){
   rows.forEach(function(r,idx){
     if(idx%step===0 || (idx===n-1 && idx-lastLabeled>=Math.ceil(step/2))){
       if(idx%step===0) lastLabeled=idx;
-      s+='<text x="'+(PL+idx*bw+bw/2).toFixed(1)+'" y="'+(PT+ph+16)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+r[0].toFixed(2)+'</text>';
+      s+='<text x="'+(PL+idx*bw+bw/2).toFixed(1)+'" y="'+(PT+ph+16)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+r[0].toFixed(2)+'</text>';
     }
   });
   function wallMark(wall, oi, label, color, mode){
@@ -1715,7 +1719,7 @@ function skewSVG(g, meta){
   var s='';
   for(var i=0;i<=3;i++){ var gy=PT+ph*i/3, gv=y1-(y1-y0)*i/3;
     s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
-    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+gv.toFixed(0)+'%</text>'; }
+    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+gv.toFixed(0)+'%</text>'; }
   function seg(type, color){
     var pp=pts.filter(function(p){return p[2]===type;}); if(!pp.length) return '';
     var d=''; pp.forEach(function(p){ d+=(d?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1); });
@@ -1726,8 +1730,8 @@ function skewSVG(g, meta){
   s+=seg('P','#e0655f')+seg('C','#3fb97f');
   s+='<line x1="'+X(A)+'" y1="'+PT+'" x2="'+X(A)+'" y2="'+(PT+ph)+'" stroke="#3d5a80" stroke-dasharray="3 3"/>';
   s+='<text x="'+X(A)+'" y="'+(PT+ph+18)+'" fill="#8494ab" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">FUT '+A.toFixed(2)+'</text>';
-  s+='<text x="'+PL+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono">'+x0.toFixed(2)+'</text>';
-  s+='<text x="'+(PL+pw)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+x1.toFixed(2)+'</text>';
+  s+='<text x="'+PL+'" y="'+(PT+ph+18)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono">'+x0.toFixed(2)+'</text>';
+  s+='<text x="'+(PL+pw)+'" y="'+(PT+ph+18)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+x1.toFixed(2)+'</text>';
   s+='<line x1="'+PL+'" y1="'+Y(g.fan.iv_chain_iv)+'" x2="'+(PL+pw)+'" y2="'+Y(g.fan.iv_chain_iv)+'" stroke="#e8a33d" stroke-width="1" stroke-dasharray="5 4"/>';
   s+='<text x="'+(PL+pw)+'" y="'+(Y(g.fan.iv_chain_iv)-6)+'" fill="#e8a33d" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">CHAIN IV '+g.fan.iv_chain_iv.toFixed(2)+'%</text>';
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Implied volatility skew for '+meta.name+'">'+s+'</svg>';
@@ -1768,7 +1772,7 @@ function cftcSVG(series, opt){
   series.forEach(function(r,i){ s+='<g class="btip fcol" data-tid="'+tid+'" data-i="'+i+'" data-trk="'+CX(i).toFixed(1)+','+Y(r.net).toFixed(1)+','+(r.px!=null&&hasPx?PY0(r.px).toFixed(1):'')+'" tabindex="0"><rect class="colbg" x="'+(PL+slot*i).toFixed(1)+'" y="'+(PT-8)+'" width="'+slot.toFixed(1)+'" height="'+(ph+(hasPx?44:22))+'" rx="3" fill="transparent"/></g>'; });
   for(var gi=0;gi<=4;gi++){ var gy=PT+ph*gi/4, gv=mx-(mx-mn)*gi/4;
     s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
-    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+(gv>=0?'+':'\u2212')+fmt(Math.round(Math.abs(gv)/1000))+'k</text>'; }
+    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+(gv>=0?'+':'\u2212')+fmt(Math.round(Math.abs(gv)/1000))+'k</text>'; }
   if(mn<0) s+='<line x1="'+PL+'" y1="'+Y(0)+'" x2="'+(PL+pw)+'" y2="'+Y(0)+'" stroke="#3d5a80" stroke-width="1.2"/>';
   /* bars */
   series.forEach(function(r,i){
@@ -1811,7 +1815,7 @@ function cftcSVG(series, opt){
   series.forEach(function(r,i){
     s+='<text x="'+CX(i).toFixed(1)+'" y="'+dateY+'" fill="#8494ab" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">'+fmtShortDate(r.date)+'</text>';
   });
-  s+='<text x="'+PL+'" y="'+(dateY+17)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">'+(hasPx?'REPORT DATES \u00b7 WHITE = NET TREND':'WEEKLY REPORT DATES \u00b7 WHITE LINE = TREND ACROSS THE '+series.length+' WEEKLY NETS')+(hasPx?' \u00b7 AMBER = '+(useMean?'REPORT-WEEK AVG':'PRICE')+' (RIGHT)':'')+(hasPx&&opt.basis&&opt.basis.avg_entry?' \u00b7 PURPLE = FUNDS EST. AVG ENTRY '+(opt.pfmt||function(v){ return '$'+v.toFixed(2); })(opt.basis.avg_entry):'')+'</text>';
+  s+='<text x="'+PL+'" y="'+(dateY+17)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono">'+(hasPx?'REPORT DATES \u00b7 WHITE = NET TREND':'WEEKLY REPORT DATES \u00b7 WHITE LINE = TREND ACROSS THE '+series.length+' WEEKLY NETS')+(hasPx?' \u00b7 AMBER = '+(useMean?'REPORT-WEEK AVG':'PRICE')+' (RIGHT)':'')+(hasPx&&opt.basis&&opt.basis.avg_entry?' \u00b7 PURPLE = FUNDS EST. AVG ENTRY '+(opt.pfmt||function(v){ return '$'+v.toFixed(2); })(opt.basis.avg_entry):'')+'</text>';
   s+=trkSVG(['#e8eef4','#e8a33d'], PT, PT+ph);
   return '<svg viewBox="0 0 '+W+' '+H+'" class="flowchart" role="img" aria-label="Managed money net position by week, every bar labeled with its net value and report date, with a trend line connecting the weekly nets">'+s+'</svg>';
 }
@@ -1880,7 +1884,7 @@ function rollSVG2(R){
   rows.forEach(function(r,i){ s+='<g class="btip fcol" data-tid="'+tid+'" data-i="'+i+'" data-trk="'+X(i).toFixed(1)+','+YS(r[4]).toFixed(1)+','+Y(r[1]).toFixed(1)+','+Y(r[2]).toFixed(1)+'" tabindex="0"><rect class="colbg" x="'+(PL+gw*i).toFixed(1)+'" y="'+(PT-6)+'" width="'+gw.toFixed(1)+'" height="'+(ph+30)+'" rx="3" fill="transparent"/></g>'; });
   for(i=0;i<=4;i++){ var gy=PT+ph*i/4, gv=yMax*(1-i/4), gs=spLo*(i/4);
     s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
-    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+Math.round(gv/1000)+'k</text>';
+    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+Math.round(gv/1000)+'k</text>';
     s+='<text x="'+(PL+pw+6)+'" y="'+(gy+4)+'" fill="#a8894a" font-size="10.5" font-family="IBM Plex Mono">'+gs.toFixed(0)+'¢</text>'; }
   rows.forEach(function(r,i){
     var cx=X(i);
@@ -1902,7 +1906,7 @@ function rollSVG2(R){
   var MN=MON3;
   rows.forEach(function(r,i){
     if(i%3!==0 && i!==n-1) return;
-    s+='<text x="'+X(i).toFixed(1)+'" y="'+(PT+ph+18)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">'+MN[r[0].slice(0,2)]+' '+r[0].slice(3)+'</text>';
+    s+='<text x="'+X(i).toFixed(1)+'" y="'+(PT+ph+18)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">'+MN[r[0].slice(0,2)]+' '+r[0].slice(3)+'</text>';
   });
   s+=trkSVG(['#f5c542','#4f8fe0','#3fbf7f'], PT, PT+ph);
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Open interest migration front versus deferred with calendar spread, roll percent labels vertical, spread line labeled first and latest">'+s+'</svg>';
@@ -2073,18 +2077,18 @@ function flowSVG(S, key){
   function Y(p){ return PT+(mid-PT-14)*(1-(p-lo)/(hi-lo)); }
   var mx=Math.max.apply(null,w.map(function(x){ return Math.abs(x.dOI); }))||1, z=mid+(H-PB-mid)/2, bh=(H-PB-mid)/2-4;
   var s='';
-  for(var t=0;t<=3;t++){ var v=lo+(hi-lo)*t/3; s+='<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="#1e2a3a"/><text x="'+(PL-6)+'" y="'+(Y(v)+4).toFixed(1)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+v.toFixed(2)+'</text>'; }
+  for(var t=0;t<=3;t++){ var v=lo+(hi-lo)*t/3; s+='<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="#1e2a3a"/><text x="'+(PL-6)+'" y="'+(Y(v)+4).toFixed(1)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+v.toFixed(2)+'</text>'; }
   function hl(p, c, lab){ if(p==null) return ''; var y=Y(p).toFixed(1); return '<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+y+'" y2="'+y+'" stroke="'+c+'" stroke-dasharray="5 4" stroke-width="1.3"/><text x="'+(W-PR+4)+'" y="'+(+y+4)+'" fill="'+c+'" font-size="10" font-weight="600" font-family="IBM Plex Mono">'+lab+'</text>'; }
   s+=hl(S.ns&&S.ns.px,'#e0655f','SHORTS '+(S.ns?S.ns.px.toFixed(2):'')); s+=hl(S.nl&&S.nl.px,'#3fb97f','LONGS '+(S.nl?S.nl.px.toFixed(2):''));
   var path=''; w.forEach(function(x,i){ var cx=PL+i*bw+bw/2; path+=(i?'L':'M')+cx.toFixed(1)+' '+Y(x.P).toFixed(1); });
   s+='<path d="'+path+'" fill="none" stroke="#dfe7f1" stroke-width="1.6"/>';
-  s+='<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+z+'" y2="'+z+'" stroke="#3a4a60"/><text x="'+(PL-6)+'" y="'+(z+4)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end">0</text>';
-  s+='<text x="'+(PL-6)+'" y="'+(z-bh+4)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end">+'+Math.round(mx/1000)+'k</text><text x="'+(PL-6)+'" y="'+(z+bh+4)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end">−'+Math.round(mx/1000)+'k</text>';
-  s+='<text x="'+PL+'" y="'+(mid+2)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">Δ open interest (front + next)</text><text x="'+PL+'" y="'+(PT-4)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono">'+esc(S.ref)+' settle</text>';
+  s+='<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+z+'" y2="'+z+'" stroke="#3a4a60"/><text x="'+(PL-6)+'" y="'+(z+4)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="end">0</text>';
+  s+='<text x="'+(PL-6)+'" y="'+(z-bh+4)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="end">+'+Math.round(mx/1000)+'k</text><text x="'+(PL-6)+'" y="'+(z+bh+4)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="end">−'+Math.round(mx/1000)+'k</text>';
+  s+='<text x="'+PL+'" y="'+(mid+2)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono">Δ open interest (front + next)</text><text x="'+PL+'" y="'+(PT-4)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono">'+esc(S.ref)+' settle</text>';
   w.forEach(function(x,i){ var cx=PL+i*bw+bw/2, q=FLOWQ[x.q], h=Math.abs(x.dOI)/mx*bh, bw2=Math.max(3,bw*0.55);
     s+='<rect x="'+(cx-bw2/2).toFixed(1)+'" y="'+(x.dOI>=0?z-h:z).toFixed(1)+'" width="'+bw2.toFixed(1)+'" height="'+Math.max(1,h).toFixed(1)+'" fill="'+q.c+'"'+(x.dw?' opacity=".55"':'')+'/>';
     s+='<circle cx="'+cx.toFixed(1)+'" cy="'+Y(x.P).toFixed(1)+'" r="4.2" fill="'+q.c+'" stroke="#0b1220" stroke-width="1.2"/>';
-    if(i%Math.ceil(n/10)===0||i===n-1) s+='<text x="'+cx.toFixed(1)+'" y="'+(H-8)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+x.lab+'</text>';
+    if(i%Math.ceil(n/10)===0||i===n-1) s+='<text x="'+cx.toFixed(1)+'" y="'+(H-8)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+x.lab+'</text>';
     var tip=x.lab+(x.prelim?' (prelim)':'')+' · '+q.l+'|'+esc(S.ref)+' '+x.P.toFixed(4)+' ('+sgn(x.dP,1,'¢')+')|Open interest '+sgn(x.dOI,0)+' (front '+sgn(x.dF,0)+' · next '+sgn(x.dD,0)+')'+(x.vol!=null?'|Volume '+fmt(x.vol)+(x.rv?' ('+fmt(x.rv,1)+'× normal)':''):'')+(x.dw?'|delivery window — half weight':'');
     s+='<rect class="oi-hit" x="'+(PL+i*bw).toFixed(1)+'" y="'+PT+'" width="'+bw.toFixed(1)+'" height="'+(H-PB-PT)+'" fill="transparent" data-tip="'+tip+'"/>'; });
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Price and open-interest flow by session">'+s+'</svg>';
@@ -2312,13 +2316,13 @@ function oiDeltaSVG(ds, prev, cp, key, lab){
   rows.forEach(function(r){ mx=Math.max(mx, shC?Math.abs(r[1]):0, shP?Math.abs(r[2]):0); }); mx=(mx||1)*1.1;
   var n=rows.length, bw=pw/n, Z=PT+ph/2; function Y(v){ return Z-v/mx*ph/2; }
   var s='<line x1="'+PL+'" y1="'+Z+'" x2="'+(PL+pw)+'" y2="'+Z+'" stroke="#3a4a60"/>';
-  [1,-1].forEach(function(k){ s+='<text x="'+(PL-6)+'" y="'+(Y(k*mx/1.1)+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+(k>0?'+':'−')+fmt(Math.round(mx/1.1))+'</text>'; });
-  s+='<text x="'+(PL-6)+'" y="'+(Z+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">0</text>';
+  [1,-1].forEach(function(k){ s+='<text x="'+(PL-6)+'" y="'+(Y(k*mx/1.1)+4)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+(k>0?'+':'−')+fmt(Math.round(mx/1.1))+'</text>'; });
+  s+='<text x="'+(PL-6)+'" y="'+(Z+4)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">0</text>';
   var step=n>110?16:n>70?10:6;
   rows.forEach(function(r,i){ var x=PL+i*bw, w=Math.max(1,bw*(cp==='both'?0.38:0.7));
     if(shC&&r[1]) s+='<rect x="'+x.toFixed(1)+'" y="'+Math.min(Y(r[1]),Z).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+Math.abs(Y(r[1])-Z).toFixed(1)+'" fill="'+(r[1]>0?'#3fb97f':'#1f7a52')+'"/>';
     if(shP&&r[2]) s+='<rect x="'+(cp==='both'?x+w+1:x).toFixed(1)+'" y="'+Math.min(Y(r[2]),Z).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+Math.abs(Y(r[2])-Z).toFixed(1)+'" fill="'+(r[2]>0?'#e0655f':'#7a2f2b')+'"/>';
-    if(i%step===0) s+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(PT+ph+16)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+r[0].toFixed(2)+'</text>';
+    if(i%step===0) s+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(PT+ph+16)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+r[0].toFixed(2)+'</text>';
     var tip=esc(lab)+' · strike '+r[0].toFixed(2)+'|Calls '+fmt(r[3])+' ('+sgn(r[1],0)+' vs '+fmt(r[5])+')'+side(r[1],r[7])+'|Puts '+fmt(r[4])+' ('+sgn(r[2],0)+' vs '+fmt(r[6])+')'+side(r[2],r[8])+'|vs '+fmtShortDate(prev.date)+' close';
     s+='<rect class="oi-hit" x="'+x.toFixed(1)+'" y="'+PT+'" width="'+bw.toFixed(1)+'" height="'+ph+'" fill="transparent" data-tip="'+tip+'"/>';
   });
@@ -2768,7 +2772,7 @@ function lineChartSVG(o){
   var idx={}; xs.forEach(function(x,i){ idx[x]=i; });
   function X(i){ return PL+pw*i/(n-1); } function Y(v){ return PT+ph*(1-(v-lo)/(hi-lo)); }
   var s='', labs=[];
-  niceTicks(lo,hi,4).forEach(function(v){ s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="#1e2a3a"/><text x="'+(PL-6)+'" y="'+(Y(v)+3.5).toFixed(1)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end">'+fmt(v,Math.abs(hi-lo)<4?1:0)+'</text>'; });
+  niceTicks(lo,hi,4).forEach(function(v){ s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="#1e2a3a"/><text x="'+(PL-6)+'" y="'+(Y(v)+3.5).toFixed(1)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="end">'+fmt(v,Math.abs(hi-lo)<4?1:0)+'</text>'; });
   if(lo<0&&hi>0) s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(0)+'" y2="'+Y(0)+'" stroke="#3a4a61"/>';
   var every=Math.max(1,Math.ceil(n/7)), daily=xs[0].length>=10&&(Date.parse(xs[n-1].slice(0,10))-Date.parse(xs[0].slice(0,10)))<150*86400000;
   function xLab(x){ return x.length>=10&&daily?fmtShortDate(x.slice(0,10)):x.length>=7?mLabel(x):esc(x); }
@@ -2789,7 +2793,7 @@ function lineChartSVG(o){
   labs.sort(function(a,b){ return a.y-b.y; }); for(var i=1;i<labs.length;i++) if(labs[i].y-labs[i-1].y<12) labs[i].y=labs[i-1].y+12;
   var over=labs.length?labs[labs.length-1].y-(PT+ph):0; if(over>0) labs.forEach(function(l){ l.y-=over; });
   labs.forEach(function(l){ s+='<text x="'+(PL+pw+6)+'" y="'+(l.y+3.5).toFixed(1)+'" fill="'+l.c+'" font-size="10.5" font-weight="'+(l.b?700:500)+'" font-family="IBM Plex Mono">'+esc(l.t)+'</text>'; });
-  if(o.yLabel) s+='<text x="10" y="'+(PT+ph/2)+'" transform="rotate(-90 10 '+(PT+ph/2)+')" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+esc(o.yLabel)+'</text>';
+  if(o.yLabel) s+='<text x="10" y="'+(PT+ph/2)+'" transform="rotate(-90 10 '+(PT+ph/2)+')" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+esc(o.yLabel)+'</text>';
   return '<svg viewBox="0 0 '+W+' '+H+'" class="chart-svg" role="img" aria-label="'+esc(o.aria||o.yLabel||'chart')+'">'+s+'</svg>';
 }
 /* vertical bars: o={bars:[[label,v,hl]], line:[[label,v]] (optional dashed), lineLabel, yLabel, dec, W,H} */
@@ -2802,7 +2806,7 @@ function barChartSVG(o){
   var vals=o.bars.map(function(b){ return b[1]; }).concat((o.line||[]).map(function(l){ return l[1]; })).filter(function(v){ return v!=null; });
   var lo=Math.min(0,Math.min.apply(null,vals)), hi=Math.max(0,Math.max.apply(null,vals)); if(o.floor!=null) lo=o.floor; var pad=(hi-lo)*0.12||1; hi+=pad; if(lo<0) lo-=pad*0.6;
   function Y(v){ return PT+ph*(1-(v-lo)/(hi-lo)); } var bw=pw/n, s='';
-  niceTicks(lo,hi,4).forEach(function(v){ s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="#1e2a3a"/><text x="'+(PL-6)+'" y="'+(Y(v)+3.5).toFixed(1)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end">'+fmt(v,Math.abs(hi-lo)<6?1:0)+'</text>'; });
+  niceTicks(lo,hi,4).forEach(function(v){ s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="#1e2a3a"/><text x="'+(PL-6)+'" y="'+(Y(v)+3.5).toFixed(1)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="end">'+fmt(v,Math.abs(hi-lo)<6?1:0)+'</text>'; });
   var base=Y(Math.max(lo,0));
   var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], step=o.months?(n>18?3:n>12?2:1):1;
   o.bars.forEach(function(b,i){ if(b[1]==null) return; var x=PL+i*bw+bw*0.16, w=bw*0.68, y=Y(b[1]), top=Math.min(y,base), h=Math.max(1,Math.abs(base-y));
@@ -2815,13 +2819,13 @@ function barChartSVG(o){
       if((n-1-i)%step===0) s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(PT+ph+14)+'" fill="#8494ab" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+(MN[mo-1]||'')+'</text>';
       if(mo===1||i===0){ s+='<text x="'+(PL+i*bw+2).toFixed(1)+'" y="'+(PT+ph+30)+'" fill="#c9d6e6" font-size="10.5" font-weight="700" font-family="IBM Plex Mono">'+ym.slice(0,4)+'</text>'+(i>0?'<line x1="'+(PL+i*bw).toFixed(1)+'" x2="'+(PL+i*bw).toFixed(1)+'" y1="'+PT+'" y2="'+(PT+ph+32)+'" stroke="#2b3e5c" stroke-dasharray="2 3"/>':''); } }
     else if(n<=14||i%2===(n-1)%2){ var lb=String(b[0]), sp=two?lb.indexOf(' '):-1;
-      s+=sp>0?'<text x="'+(x+w/2).toFixed(1)+'" y="'+(H-21)+'" fill="#8494ab" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">'+esc(lb.slice(0,sp))+'<tspan x="'+(x+w/2).toFixed(1)+'" dy="12" fill="#5b6b82">'+esc(lb.slice(sp+1))+'</tspan></text>'
+      s+=sp>0?'<text x="'+(x+w/2).toFixed(1)+'" y="'+(H-21)+'" fill="#8494ab" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">'+esc(lb.slice(0,sp))+'<tspan x="'+(x+w/2).toFixed(1)+'" dy="12" fill="#8f9db3">'+esc(lb.slice(sp+1))+'</tspan></text>'
         :'<text x="'+(x+w/2).toFixed(1)+'" y="'+(H-9)+'" fill="#8494ab" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">'+esc(lb)+'</text>'; } });
   if(lo<0) s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+Y(0)+'" y2="'+Y(0)+'" stroke="#3a4a61"/>';
   if(o.line&&o.line.length){ var d='', st=false; o.line.forEach(function(l,i){ if(l[1]==null){ st=false; return; } d+=(st?'L':'M')+(PL+i*bw+bw/2).toFixed(1)+' '+Y(l[1]).toFixed(1); st=true; });
     s+='<path d="'+d+'" fill="none" stroke="#e8a33d" stroke-width="1.6" stroke-dasharray="5 4"/>';
     var ll=o.line.filter(function(l){ return l[1]!=null; }).pop(); if(ll) s+='<text x="'+(PL+pw+6)+'" y="'+(Y(ll[1])+3.5).toFixed(1)+'" fill="#e8a33d" font-size="10.5" font-family="IBM Plex Mono">'+esc(o.lineLabel)+' '+fmt(ll[1],dec)+'</text>'; }
-  if(o.yLabel) s+='<text x="10" y="'+(PT+ph/2)+'" transform="rotate(-90 10 '+(PT+ph/2)+')" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+esc(o.yLabel)+'</text>';
+  if(o.yLabel) s+='<text x="10" y="'+(PT+ph/2)+'" transform="rotate(-90 10 '+(PT+ph/2)+')" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+esc(o.yLabel)+'</text>';
   return '<svg viewBox="0 0 '+W+' '+H+'" class="chart-svg" role="img" aria-label="'+esc(o.aria||o.yLabel||'bar chart')+'">'+s+'</svg>';
 }
 /* horizontal diverging change bars (HTML) */
@@ -3275,8 +3279,8 @@ function flowComboSVG(o){
   /* panel titles + grids */
   s+='<text x="'+PL+'" y="'+(T1-10)+'" fill="#c9d6e6" font-size="11" font-weight="700" font-family="IBM Plex Mono">'+esc(o.inLab||'EXPORTS vs IMPORTS')+' ('+o.ccy+' B)</text>';
   s+='<text x="'+PL+'" y="'+(T2-8)+'" fill="#c9d6e6" font-size="11" font-weight="700" font-family="IBM Plex Mono">'+esc(o.balLab||'BALANCE')+' ('+o.ccy+' B)</text>';
-  niceTicks(lo,hi,4).forEach(function(v){ s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+YL(v).toFixed(1)+'" y2="'+YL(v).toFixed(1)+'" stroke="#1e2a3a" pointer-events="none"/><text x="'+(PL-6)+'" y="'+(YL(v)+3.5).toFixed(1)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end" pointer-events="none">'+fmt(v,0)+'</text>'; });
-  niceTicks(blo,bhi,3).forEach(function(v){ s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+YB(v).toFixed(1)+'" y2="'+YB(v).toFixed(1)+'" stroke="#1e2a3a" pointer-events="none"/><text x="'+(PL-6)+'" y="'+(YB(v)+3.5).toFixed(1)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end" pointer-events="none">'+fmt(v,Math.abs(bhi-blo)<12?1:0)+'</text>'; });
+  niceTicks(lo,hi,4).forEach(function(v){ s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+YL(v).toFixed(1)+'" y2="'+YL(v).toFixed(1)+'" stroke="#1e2a3a" pointer-events="none"/><text x="'+(PL-6)+'" y="'+(YL(v)+3.5).toFixed(1)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="end" pointer-events="none">'+fmt(v,0)+'</text>'; });
+  niceTicks(blo,bhi,3).forEach(function(v){ s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+YB(v).toFixed(1)+'" y2="'+YB(v).toFixed(1)+'" stroke="#1e2a3a" pointer-events="none"/><text x="'+(PL-6)+'" y="'+(YB(v)+3.5).toFixed(1)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="end" pointer-events="none">'+fmt(v,Math.abs(bhi-blo)<12?1:0)+'</text>'; });
   s+='<line x1="'+PL+'" x2="'+(PL+pw)+'" y1="'+YB(0)+'" y2="'+YB(0)+'" stroke="#3a4a61" pointer-events="none"/>';
   /* balance bars */
   o.bal.forEach(function(v,i){ if(v==null) return; var y=YB(v), b0=YB(0); s+='<rect class="bbar" data-bi="'+i+'" x="'+(PL+bw*i+bw*0.18).toFixed(1)+'" y="'+Math.min(y,b0).toFixed(1)+'" width="'+(bw*0.64).toFixed(1)+'" height="'+Math.max(1,Math.abs(b0-y)).toFixed(1)+'" rx="2" fill="'+(v<0?'#e0655f':(i===n-1?'#38b6c9':'#3fb97f'))+'" pointer-events="none"/>'; });
@@ -3819,6 +3823,7 @@ function omTime(ms){ var o={timeZone:'America/Toronto'}, today=new Date(ms).toLo
    flashes the box green / red on every real change, and keeps the last-tick arrow ---------- */
 function qtPx(v, dec, pre){ var t=(pre||'')+fmt(v,dec), n=dec>=4?2:dec>=2?2:1, i=t.length-n; return '<span class="qt-bf">'+t.slice(0,i)+'</span><span class="qt-pp">'+t.slice(i)+'</span>'; }
 function qtTile(o){
+  if(!window.__ageQ){ window.__ageQ=1; setTimeout(function(){ window.__ageQ=0; if(typeof ageTick==='function') ageTick(); },0); }   /* ages painted as soon as the tiles are in the page */
   return '<div class="qt" data-qtk="'+o.k+'"'+(o.title?' title="'+esc(o.title)+'"':'')+'><div class="qt-h"><b>'+o.name+'</b><span class="qt-sub">'+(o.sub||'')+'</span></div>'+
     '<div class="qt-box" data-qt="'+o.k+'" data-v="'+o.v+'" data-dec="'+o.dec+'" data-pre="'+(o.pre||'')+'"'+(o.live?' data-qt-live="'+o.live+'"':'')+'><span class="qt-ar" aria-hidden="true"></span><span class="qt-v">'+qtPx(o.v,o.dec,o.pre)+'</span></div>'+
     '<div class="qt-c">'+(o.chg||'')+'</div><div class="qt-f">'+(o.foot||'')+(o.ts?'<span class="qt-age" data-age="'+esc(o.ts)+'" data-age-max="'+(o.max||1500)+'"></span>':'')+(o.tag?' <span class="om-t '+o.tagc+'">'+o.tag+'</span>':'')+'</div></div>';
@@ -3965,7 +3970,7 @@ function fxClosesSVG(fx){
   var s='';
   for(var i=0;i<=4;i++){ var gy=PT+ph*i/4, gv=hi-(hi-lo)*i/4;
     s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
-    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+gv.toFixed(4)+'</text>'; }
+    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+gv.toFixed(4)+'</text>'; }
   var area='M'+X(0)+' '+Y(rows[0][1]); var line=area;
   rows.forEach(function(r,i){ if(i>0){ area+='L'+X(i).toFixed(1)+' '+Y(r[1]).toFixed(1); line+='L'+X(i).toFixed(1)+' '+Y(r[1]).toFixed(1); } });
   s+='<path d="'+area+'L'+X(rows.length-1)+' '+(PT+ph)+'L'+X(0)+' '+(PT+ph)+'Z" fill="#38b6c9" opacity="0.10"/>';
@@ -3989,7 +3994,7 @@ function fxClosesSVG(fx){
   /* full date axis — every bar dated, rotated so none overlap */
   rows.forEach(function(r,i){
     var cx=X(i), ay=PT+ph+10;
-    s+='<text x="'+cx.toFixed(1)+'" y="'+ay+'" transform="rotate(-38 '+cx.toFixed(1)+' '+ay+')" fill="#5b6b82" font-size="9.5" font-family="IBM Plex Mono" text-anchor="end">'+fmtShortDate(r[0])+'</text>';
+    s+='<text x="'+cx.toFixed(1)+'" y="'+ay+'" transform="rotate(-38 '+cx.toFixed(1)+' '+ay+')" fill="#8f9db3" font-size="9.5" font-family="IBM Plex Mono" text-anchor="end">'+fmtShortDate(r[0])+'</text>';
   });
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="USD/CAD daily closes, end of day, full date axis, period high and low marked with values and dates, last value labeled">'+s+'</svg>';
 }
@@ -4170,7 +4175,7 @@ function fxIntradaySVG(pts){
   var pad=(hi-lo)*0.12||0.0005; lo-=pad; hi+=pad;
   function X(t){ return PL+pw*(t-t0)/Math.max(1,t1-t0); } function Y(v){ return PT+ph*(1-(v-lo)/(hi-lo)); }
   var s='';
-  for(var i=0;i<=3;i++){ var gv=lo+(hi-lo)*i/3; s+='<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+Y(gv).toFixed(1)+'" y2="'+Y(gv).toFixed(1)+'" stroke="#1e2a3a"/><text x="'+(PL-6)+'" y="'+(Y(gv)+4).toFixed(1)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="end">'+gv.toFixed(4)+'</text>'; }
+  for(var i=0;i<=3;i++){ var gv=lo+(hi-lo)*i/3; s+='<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+Y(gv).toFixed(1)+'" y2="'+Y(gv).toFixed(1)+'" stroke="#1e2a3a"/><text x="'+(PL-6)+'" y="'+(Y(gv)+4).toFixed(1)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="end">'+gv.toFixed(4)+'</text>'; }
   function hline(v,label,col,dash){ if(v<lo||v>hi) return; s+='<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="'+col+'" stroke-dasharray="'+dash+'"/><text x="'+(W-PR+4)+'" y="'+(Y(v)+3).toFixed(1)+'" fill="'+col+'" font-size="9.5" font-family="IBM Plex Mono">'+label+'</text>'; }
   hline(ref,'PRIOR '+ref.toFixed(4),'#8494ab','4 4'); hline(L.pivot,'PIVOT','#b18cff','2 4'); hline(L.pivot_h,'PIV H','#5fd598','2 4'); hline(L.pivot_l,'PIV L','#ff9d97','2 4');
   var d=pts.map(function(p,i){ return (i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1); }).join('');
@@ -4185,7 +4190,7 @@ function fxIntradaySVG(pts){
   s+='<text x="'+X(hiP[0]).toFixed(1)+'" y="'+(Y(hiP[1])-5).toFixed(1)+'" fill="#5fd598" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">H '+hiP[1].toFixed(5)+'</text>';
   s+='<text x="'+X(loP[0]).toFixed(1)+'" y="'+(Y(loP[1])+12).toFixed(1)+'" fill="#ff9d97" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">L '+loP[1].toFixed(5)+'</text>';
   var span=t1-t0, step=span>8*3600e3?3*3600e3:span>3*3600e3?3600e3:span>3600e3?1800e3:600e3, first=Math.ceil(t0/step)*step;
-  for(var tt=first; tt<=t1; tt+=step){ s+='<text x="'+X(tt).toFixed(1)+'" y="'+(H-6)+'" fill="#5b6b82" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+new Date(tt).toLocaleTimeString("en-US",{timeZone:"America/Toronto",hour:"numeric",minute:"2-digit"})+'</text>'; }
+  for(var tt=first; tt<=t1; tt+=step){ s+='<text x="'+X(tt).toFixed(1)+'" y="'+(H-6)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+new Date(tt).toLocaleTimeString("en-US",{timeZone:"America/Toronto",hour:"numeric",minute:"2-digit"})+'</text>'; }
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="USD/CAD intraday, Toronto time, with prior close and pivot levels">'+s+'</svg>';
 }
 function fxIntradayPoints(extra){
@@ -4226,7 +4231,7 @@ function fxForwardSVG(spot, L){
   var s='';
   for(var g=0; g<=4; g++){ var gv=mn+(mx-mn)*g/4, gy=Y(gv);
     s+='<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+gy.toFixed(1)+'" y2="'+gy.toFixed(1)+'" stroke="#1e2a3a"/>'+
-       '<text x="'+(PL-6)+'" y="'+(gy+4).toFixed(1)+'" fill="#5b6b82" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+gv.toFixed(4)+'</text>'; }
+       '<text x="'+(PL-6)+'" y="'+(gy+4).toFixed(1)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+gv.toFixed(4)+'</text>'; }
   /* spot reference */
   s+='<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+Y(spot).toFixed(1)+'" y2="'+Y(spot).toFixed(1)+'" stroke="#38b6c9" stroke-dasharray="4 4"/>'+
      '<text x="'+(W-PR)+'" y="'+(Y(spot)-5).toFixed(1)+'" fill="#38b6c9" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">SPOT '+fmt(spot,5)+'</text>';
@@ -4246,11 +4251,11 @@ function fxForwardSVG(spot, L){
       s+='<text x="'+x.toFixed(1)+'" y="'+(y-9).toFixed(1)+'" fill="#e8eef4" font-size="10.5" font-weight="700" font-family="IBM Plex Mono" text-anchor="'+anc+'" paint-order="stroke" stroke="#0f1825" stroke-width="3">'+fmt(l.F,4)+'</text>';
       s+='<text x="'+x.toFixed(1)+'" y="'+(y+17).toFixed(1)+'" fill="#ff9d97" font-size="9.5" font-weight="600" font-family="IBM Plex Mono" text-anchor="'+anc+'" paint-order="stroke" stroke="#0f1825" stroke-width="3">'+sgn(l.pts,0)+'</text>';
       s+='<text x="'+x.toFixed(1)+'" y="'+(H-PB+15)+'" fill="#8494ab" font-size="10" font-family="IBM Plex Mono" text-anchor="'+anc+'">'+vdLab(l.vd,true)+'</text>';
-      s+='<text x="'+x.toFixed(1)+'" y="'+(H-PB+27)+'" fill="#5b6b82" font-size="9" font-family="IBM Plex Mono" text-anchor="'+anc+'">'+l.t+'</text>';
+      s+='<text x="'+x.toFixed(1)+'" y="'+(H-PB+27)+'" fill="#8f9db3" font-size="9" font-family="IBM Plex Mono" text-anchor="'+anc+'">'+l.t+'</text>';
     }
     s+='<g class="btip" data-tid="'+tid+'" data-i="'+i+'"><circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="11" fill="transparent"/><circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(show[l.t]?3.8:2.6)+'" fill="#e8a33d" stroke="#0f1825" stroke-width="1"/></g>';
   });
-  s+='<text x="'+PL+'" y="'+(H-4)+'" fill="#5b6b82" font-size="9.5" font-family="IBM Plex Mono">VALUE DATE (\u221adays scale) \u00b7 WHITE = OUTRIGHT \u00b7 RED = FWD POINTS \u00b7 HOVER ANY DOT</text>';
+  s+='<text x="'+PL+'" y="'+(H-4)+'" fill="#8f9db3" font-size="9.5" font-family="IBM Plex Mono">VALUE DATE (\u221adays scale) \u00b7 WHITE = OUTRIGHT \u00b7 RED = FWD POINTS \u00b7 HOVER ANY DOT</text>';
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="CIP forward curve: outright forward by tenor against spot">'+s+'</svg>';
 }
 function fxForwardsHTML(spot){

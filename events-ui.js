@@ -180,11 +180,21 @@
   /* tabs and cards that received a scheduled release today get a colour and a "NEW today" ribbon until midnight */
   function decorate() {
     if (!ready()) return;
-    var now = Date.now(), tabs = {}, today = todayEvents(now).filter(function (e) { return e.t <= now; });
-    today.forEach(function (e) { var L = landed(e); if (!L || !L.at || !L.tab) return; (tabs[L.tab] = tabs[L.tab] || []).push(e.label.replace(/^(USD|CAD) /, "") + " " + hm(L.at));
+    var now = Date.now(), tabs = {}, jumps = {}, today = todayEvents(now).filter(function (e) { return e.t <= now; });
+    today.forEach(function (e) { var L = landed(e); if (!L || !L.at || !L.tab) return; var nm = e.label.replace(/^(USD|CAD) /, "");
+      (tabs[L.tab] = tabs[L.tab] || []).push(nm + " " + hm(L.at));
+      if (L.tab !== "events" && L.go) (jumps[L.tab] = jumps[L.tab] || []).push({ n: nm, at: L.at, go: L.go, sel: L.sel || "", where: L.where || "" });
       if (L.sel && L.tab !== "events") [].forEach.call(document.querySelectorAll("#panel-" + L.tab + " " + L.sel), function (el) {
         var c = el.closest(".tile, .mcard, .dash-card, .mk-click") || el; c.classList.add("upd-today"); c.setAttribute("data-upd", "NEW today · " + hm(L.at)); }); });
     if (tabs.fx || tabs.corn) ["corn", "wheat", "soybeans"].forEach(function (g) { if (tabs.corn && g !== "corn") tabs[g] = tabs.corn; });
+    if (jumps.corn) ["wheat", "soybeans"].forEach(function (g) { jumps[g] = jumps.corn.map(function (j) { return { n: j.n, at: j.at, go: j.go.replace(/^corn/, g), sel: j.sel, where: j.where.replace(/^Corn/, g[0].toUpperCase() + g.slice(1)) }; }); });
+    /* a strip at the top of each tab: what landed here today, each a button that jumps to the exact card */
+    [].forEach.call(document.querySelectorAll(".tab-btn"), function (b) { var k = b.getAttribute("data-tab"), P = document.getElementById("panel-" + k); if (!P || k === "events") return;
+      var bar = P.querySelector(":scope > .today-bar"), J = jumps[k];
+      if (!J || !J.length) { if (bar) bar.remove(); return; }
+      if (!bar) { bar = document.createElement("div"); bar.className = "today-bar"; P.insertBefore(bar, P.firstChild); }
+      var h = '<span class="tb-k">Updated today</span>' + J.map(function (j) { return '<button class="tb-go" data-evgo="' + esc(j.go) + '" data-evsel="' + esc(j.sel) + '" title="Go to ' + esc(j.where) + '">' + esc(j.n) + ' <small>' + hm(j.at) + '</small> →</button>'; }).join("");
+      if (bar.innerHTML !== h) bar.innerHTML = h; });
     [].forEach.call(document.querySelectorAll(".tab-btn"), function (b) { var k = b.getAttribute("data-tab"), L = tabs[k];
       b.classList.toggle("tab-today", !!L); if (L) b.title = "Updated today: " + L.join(" · "); else b.removeAttribute("title"); });
   }
