@@ -742,6 +742,62 @@ def cftc_grains(D, N):
 GRAIN_YF = {"corn": "ZC=F", "wheat": "ZW=F", "soybeans": "ZS=F"}
 
 
+# ------------------------------------------------------------------ desk roll rule
+# CBOT grains: first notice day = last business day of the month before the contract month; the desk exits the front one
+# business day earlier (hard exit). From the day after the hard exit the contract is gone from the desk: the next month
+# becomes the front everywhere (quotes, fan, curve, tiles) and the curve gets the following listed month.
+MCODE = "FGHJKMNQUVXZ"
+GRAIN_MONTHS = {"corn": "HKNUZ", "wheat": "HKNUZ", "soybeans": "FHKNQUX"}
+US_HOL = {"2026-11-26", "2026-12-25", "2027-01-01", "2027-01-18", "2027-02-15", "2027-04-02", "2027-05-31", "2027-06-18",
+          "2027-07-05", "2027-09-06", "2027-11-25", "2027-12-24"}
+
+
+def _bday(d):
+    return d.weekday() < 5 and d.isoformat() not in US_HOL
+
+
+def contract_dates(code):
+    """('ZSX26') -> (first notice day, hard exit day) as dates."""
+    m, y = MCODE.index(code[-3]) + 1, 2000 + int(code[-2:])
+    first = datetime(y, m, 1).date()
+    d = first - timedelta(days=1)
+    while not _bday(d):
+        d -= timedelta(days=1)
+    fnd = d
+    d -= timedelta(days=1)
+    while not _bday(d):
+        d -= timedelta(days=1)
+    return fnd, d
+
+
+def next_contract(code, grain):
+    root, m, y = code[:-3], code[-3], int(code[-2:])
+    ms = GRAIN_MONTHS[grain]
+    i = ms.index(m)
+    return root + (ms[i + 1] + f"{y:02d}" if i + 1 < len(ms) else ms[0] + f"{y + 1:02d}")
+
+
+def roll_fronts(D, today=None):
+    """Drop fronts past the desk's hard exit; returns [(grain, old, new)]."""
+    today = today or NOW.astimezone(TOR).date()
+    done = []
+    for k, g in D["grains"].items():
+        R = g.get("roll") or []
+        while len(R) > 1 and today > contract_dates(R[0]["contract"])[1]:
+            old = R.pop(0)
+            nxt = next_contract(R[-1]["contract"], k)
+            R.append({"contract": nxt, "expiry": datetime(2000 + int(nxt[-2:]), MCODE.index(nxt[-3]) + 1, 1).strftime("%b-%y"),
+                      "settle": None, "prev": None, "oi_pct": 0.0})
+            (g.get("quotes") or {}).pop(old["contract"], None)
+            g["fan"]["settle_date"] = "2000-01-01"   # forces the fan/history rebuild on the new front
+            g["fan"].pop("front", None)
+            done.append((k, old["contract"], R[0]["contract"]))
+        g["roll"] = R
+        fnd, hard = contract_dates(R[0]["contract"])
+        g["front_dates"] = {"contract": R[0]["contract"], "fnd": fnd.isoformat(), "hard_exit": hard.isoformat()}
+    return done
+
+
 def grains_quote(D, N):
     """Delayed quote of the desk's FRONT contract (e.g. ZSX26), not Yahoo's continuous symbol: ZS=F rolls to the next
     month before the desk does (it showed the January price under ZSX26). Continuous is a fallback only, and only when
@@ -1522,18 +1578,19 @@ def settles(D, N):
                 raise RuntimeError(f"{front}: only {len(st_)} settles")
             # verify the source against the desk's verified settles before trusting it
             # the newest stored day may have been captured before the settlement was final -> it is re-read, not used as proof
-            mine = {h["d"][:10]: h["s"] for h in g["history"]}
+            mine = {h["d"][:10]: h["s"] for h in g["history"]} if g["fan"].get("front", front) == front else {}
             newest = max(mine) if mine else ""
             both = [(mine[d], v) for d, v in st_ if d in mine and d != newest]
-            if len(both) < 5:
+            if mine and len(both) < 5:
                 raise RuntimeError(f"{front}: only {len(both)} dates overlap the verified history")
-            worst = max(abs(a - b) for a, b in both)
+            worst = max((abs(a - b) for a, b in both), default=0)
             if worst > 0.0101:
                 raise RuntimeError(f"{front}: source differs from verified settles by up to {worst:.4f} — not used")
             if st_[-1][0] <= g["fan"]["settle_date"] and g["fan"].get("ma50") and abs(dict(st_).get(newest, mine.get(newest, 0)) - mine.get(newest, 0)) < 1e-9:
                 continue  # nothing new
             fan, hist, tail = _fan_from(st_)
             g["fan"].update(fan)
+            g["fan"]["front"] = front
             g["history"], g["tail50"] = hist, tail
             # curve: front + next two contracts
             for leg in g["roll"]:
@@ -2363,6 +2420,8 @@ def main():
         for name in only:
             D["meta"].pop(f"{name}_checked", None)
     ok, failed, errors = [], [], {}
+    for k_, old_, new_ in roll_fronts(D):
+        print(f"[roll] {k_}: {old_} past its hard exit -> front is now {new_}")
     for name, fn in BLOCKS:
         if only and name not in only:
             continue

@@ -16,7 +16,7 @@ jobs:
       - run: python tests/test_world.py
       - run: python tests/test_global_grains.py
       - run: python tests/test_intel.py
-      - run: pip install -q -r scripts/requirements.txt && python tests/test_bea_fastlane.py
+      - run: pip install -q -r scripts/requirements.txt && python tests/test_bea_fastlane.py && python tests/test_roll.py
       - run: pip install -q -r scripts/requirements.txt && python tests/test_yields.py
   e2e:
     # the release flow end to end in a real browser: landed / awaiting / calendar-only rows, "See it" jump, NEW tabs and

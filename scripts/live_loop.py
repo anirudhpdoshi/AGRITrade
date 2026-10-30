@@ -123,6 +123,7 @@ def main():
     ap.add_argument("--every", type=float, default=60)
     a = ap.parse_args()
     D = json.loads((ROOT / "data.json").read_text(encoding="utf-8"))["DATA"]
+    U.roll_fronts(D)
     setup_worktree()
     first = not os.path.exists(os.path.join(WT, "live.json"))
     stop = time.time() + a.minutes * 60

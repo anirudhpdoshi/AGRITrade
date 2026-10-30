@@ -4593,7 +4593,11 @@ document.addEventListener('click', function(ev){
   setSub=function(p,id){ _ss(p,id); buildSecNav(p); };
 })();
 
-function renderAll(){ renderGrain('corn'); renderGrain('wheat'); renderGrain('soybeans'); renderFX(); drawDestMaps(); if(typeof paintAwaiting==='function') paintAwaiting(); }
+/* desk roll rule: the front is whatever the data's curve starts with (the server drops a contract the day after its hard exit,
+   FND − 1 business day) — names on tabs, titles, tiles and charts follow it */
+function syncFronts(){ ['corn','wheat','soybeans'].forEach(function(k){ var g=DATA.grains&&DATA.grains[k], R=g&&g.roll, c=R&&R[0]&&R[0].contract; if(!c||!GMETA[k]) return;
+  GTITLE[k]=GMETA[k].name+' · '+c; var b=document.querySelector('#tabbtn-'+k+' .sym'); if(b&&b.textContent!==c) b.textContent=c; }); }
+function renderAll(){ syncFronts(); renderGrain('corn'); renderGrain('wheat'); renderGrain('soybeans'); renderFX(); drawDestMaps(); if(typeof paintAwaiting==='function') paintAwaiting(); }
 renderAll();
 /* speed: after the first full paint, a data refresh repaints only the tab on screen (~0.1 s instead of ~0.5 s);
    hidden desks are marked stale and repaint the moment they are opened */
