@@ -2272,19 +2272,6 @@
     ],
     "cftc": [
      {
-      "date": "2026-08-18",
-      "long": 321475,
-      "short": 139783,
-      "net": 181692,
-      "oi": 1728003,
-      "px": 4.6325,
-      "px_date": "2026-08-18",
-      "px_chg": null,
-      "px_mean": 4.5845,
-      "px_n": 5,
-      "px_mean_chg": null
-     },
-     {
       "date": "2026-08-25",
       "long": 411762,
       "short": 94314,
@@ -2292,10 +2279,10 @@
       "oi": 1707706,
       "px": 5.005,
       "px_date": "2026-08-25",
-      "px_chg": 0.3725,
+      "px_chg": null,
       "px_mean": 4.855,
       "px_n": 5,
-      "px_mean_chg": 0.2705
+      "px_mean_chg": null
      },
      {
       "date": "2026-09-01",
@@ -2400,6 +2387,19 @@
       "px_mean": 4.724,
       "px_n": 5,
       "px_mean_chg": -0.1715
+     },
+     {
+      "date": "2026-10-27",
+      "long": 249351,
+      "short": 168238,
+      "net": 81113,
+      "oi": 1859085,
+      "px": 4.4875,
+      "px_date": "2026-10-27",
+      "px_chg": -0.1325,
+      "px_mean": 4.567,
+      "px_n": 5,
+      "px_mean_chg": -0.157
      }
     ],
     "roll": [
@@ -2489,33 +2489,29 @@
      ]
     ],
     "cftc_stats": {
-     "p1y": 61.5,
-     "p3y": 80.0,
+     "p1y": 50.0,
+     "p3y": 69.4,
      "weeks_hist": 160,
-     "pct_oi": 9.0,
+     "pct_oi": 4.4,
      "max3y": 414460,
      "min3y": -356415,
      "basis": {
       "avg_entry": 4.78537,
-      "net": 164423,
+      "net": 81113,
       "weeks": 160,
-      "since": "2023-10-03"
+      "since": "2023-10-10"
      },
      "kpi": {
-      "date": "2026-10-20",
-      "net": 164423.0,
-      "oi": 1835658.0,
-      "z52": 0.31,
-      "cot3": 67.6,
-      "d1": -82002.0,
-      "vel_pct_oi": -4.47,
-      "streak": -5,
-      "doi_pct": -0.52,
+      "date": "2026-10-27",
+      "net": 81113.0,
+      "oi": 1859085.0,
+      "z52": -0.23,
+      "cot3": 56.8,
+      "d1": -83310.0,
+      "vel_pct_oi": -4.48,
+      "streak": -6,
+      "doi_pct": 1.28,
       "z_hist": [
-       [
-        "2026-04-28",
-        2.38
-       ],
        [
         "2026-05-05",
         2.73
@@ -2615,13 +2611,13 @@
        [
         "2026-10-20",
         0.31
+       ],
+       [
+        "2026-10-27",
+        -0.23
        ]
       ],
       "cot_hist": [
-       [
-        "2026-04-28",
-        86.6
-       ],
        [
         "2026-05-05",
         97.6
@@ -2721,13 +2717,13 @@
        [
         "2026-10-20",
         67.6
+       ],
+       [
+        "2026-10-27",
+        56.8
        ]
       ],
       "net_hist": [
-       [
-        "2025-10-28",
-        -82925.0
-       ],
        [
         "2025-11-04",
         -66241.0
@@ -2931,13 +2927,13 @@
        [
         "2026-10-20",
         164423.0
+       ],
+       [
+        "2026-10-27",
+        81113.0
        ]
       ],
       "oi_hist": [
-       [
-        "2026-04-28",
-        1802419.0
-       ],
        [
         "2026-05-05",
         1911273.0
@@ -3037,22 +3033,22 @@
        [
         "2026-10-20",
         1835658.0
+       ],
+       [
+        "2026-10-27",
+        1859085.0
        ]
       ],
       "fields": {
        "comm_long": "prod_merc_positions_long",
        "comm_short": "prod_merc_positions_short"
       },
-      "comm_net": -528744,
-      "comm_d1": 71745,
-      "spread": 693167.0,
-      "spread_idx": 67.9,
-      "spread_z": 0.37,
+      "comm_net": -462345,
+      "comm_d1": 66399,
+      "spread": 543458.0,
+      "spread_idx": 58.4,
+      "spread_z": -0.1,
       "comm_hist": [
-       [
-        "2025-10-28",
-        -194301
-       ],
        [
         "2025-11-04",
         -218600
@@ -3256,9 +3252,13 @@
        [
         "2026-10-20",
         -528744
+       ],
+       [
+        "2026-10-27",
+        -462345
        ]
       ],
-      "px_chg_pct": -3.5
+      "px_chg_pct": -3.32
      }
     },
     "quotes": {
@@ -5030,19 +5030,6 @@
     ],
     "cftc": [
      {
-      "date": "2026-08-18",
-      "long": 197446,
-      "short": 45664,
-      "net": 151782,
-      "oi": 989729,
-      "px": 12.0075,
-      "px_date": "2026-08-18",
-      "px_chg": null,
-      "px_mean": 11.817,
-      "px_n": 5,
-      "px_mean_chg": null
-     },
-     {
       "date": "2026-08-25",
       "long": 239335,
       "short": 38656,
@@ -5050,10 +5037,10 @@
       "oi": 972531,
       "px": 12.28,
       "px_date": "2026-08-25",
-      "px_chg": 0.2725,
+      "px_chg": null,
       "px_mean": 12.224,
       "px_n": 5,
-      "px_mean_chg": 0.407
+      "px_mean_chg": null
      },
      {
       "date": "2026-09-01",
@@ -5158,6 +5145,19 @@
       "px_mean": 12.6065,
       "px_n": 5,
       "px_mean_chg": -0.2905
+     },
+     {
+      "date": "2026-10-27",
+      "long": 226215,
+      "short": 32434,
+      "net": 193781,
+      "oi": 979414,
+      "px": 12.2925,
+      "px_date": "2026-10-27",
+      "px_chg": -0.19,
+      "px_mean": 12.4505,
+      "px_n": 5,
+      "px_mean_chg": -0.156
      }
     ],
     "roll": [
@@ -5246,33 +5246,29 @@
      ]
     ],
     "cftc_stats": {
-     "p1y": 80.8,
-     "p3y": 93.8,
+     "p1y": 63.5,
+     "p3y": 88.1,
      "weeks_hist": 160,
-     "pct_oi": 20.2,
+     "pct_oi": 19.8,
      "max3y": 265159,
      "min3y": -183145,
      "basis": {
       "avg_entry": 12.26097,
-      "net": 221325,
+      "net": 193781,
       "weeks": 160,
-      "since": "2023-10-03"
+      "since": "2023-10-10"
      },
      "kpi": {
-      "date": "2026-10-20",
-      "net": 221325.0,
-      "oi": 1093612.0,
-      "z52": 0.89,
-      "cot3": 90.2,
-      "d1": -28482.0,
-      "vel_pct_oi": -2.6,
-      "streak": -2,
-      "doi_pct": 1.99,
+      "date": "2026-10-27",
+      "net": 193781.0,
+      "oi": 979414.0,
+      "z52": 0.48,
+      "cot3": 84.1,
+      "d1": -27544.0,
+      "vel_pct_oi": -2.81,
+      "streak": -3,
+      "doi_pct": -10.44,
       "z_hist": [
-       [
-        "2026-04-28",
-        1.08
-       ],
        [
         "2026-05-05",
         1.44
@@ -5372,13 +5368,13 @@
        [
         "2026-10-20",
         0.89
+       ],
+       [
+        "2026-10-27",
+        0.48
        ]
       ],
       "cot_hist": [
-       [
-        "2026-04-28",
-        86.4
-       ],
        [
         "2026-05-05",
         95.2
@@ -5478,13 +5474,13 @@
        [
         "2026-10-20",
         90.2
+       ],
+       [
+        "2026-10-27",
+        84.1
        ]
       ],
       "net_hist": [
-       [
-        "2025-10-28",
-        120019.0
-       ],
        [
         "2025-11-04",
         185066.0
@@ -5688,13 +5684,13 @@
        [
         "2026-10-20",
         221325.0
+       ],
+       [
+        "2026-10-27",
+        193781.0
        ]
       ],
       "oi_hist": [
-       [
-        "2026-04-28",
-        907541.0
-       ],
        [
         "2026-05-05",
         975385.0
@@ -5794,22 +5790,22 @@
        [
         "2026-10-20",
         1093612.0
+       ],
+       [
+        "2026-10-27",
+        979414.0
        ]
       ],
       "fields": {
        "comm_long": "prod_merc_positions_long",
        "comm_short": "prod_merc_positions_short"
       },
-      "comm_net": -287435,
-      "comm_d1": 15543,
-      "spread": 508760.0,
-      "spread_idx": 89.2,
-      "spread_z": 0.65,
+      "comm_net": -255393,
+      "comm_d1": 32042,
+      "spread": 449174.0,
+      "spread_idx": 82.2,
+      "spread_z": 0.14,
       "comm_hist": [
-       [
-        "2025-10-28",
-        -253026
-       ],
        [
         "2025-11-04",
         -309901
@@ -6013,9 +6009,13 @@
        [
         "2026-10-20",
         -287435
+       ],
+       [
+        "2026-10-27",
+        -255393
        ]
       ],
-      "px_chg_pct": -2.25
+      "px_chg_pct": -1.24
      }
     },
     "quotes": {
@@ -8963,19 +8963,6 @@
     ],
     "cftc": [
      {
-      "date": "2026-08-18",
-      "long": 78911,
-      "short": 104239,
-      "net": -25328,
-      "oi": 457148,
-      "px": 6.645,
-      "px_date": "2026-08-18",
-      "px_chg": null,
-      "px_mean": 6.639,
-      "px_n": 5,
-      "px_mean_chg": null
-     },
-     {
       "date": "2026-08-25",
       "long": 87501,
       "short": 101098,
@@ -8983,10 +8970,10 @@
       "oi": 443531,
       "px": 6.855,
       "px_date": "2026-08-25",
-      "px_chg": 0.21,
+      "px_chg": null,
       "px_mean": 6.8235,
       "px_n": 5,
-      "px_mean_chg": 0.1845
+      "px_mean_chg": null
      },
      {
       "date": "2026-09-01",
@@ -9091,6 +9078,19 @@
       "px_mean": 6.6045,
       "px_n": 5,
       "px_mean_chg": -0.16
+     },
+     {
+      "date": "2026-10-27",
+      "long": 79627,
+      "short": 154233,
+      "net": -74606,
+      "oi": 525558,
+      "px": 6.1025,
+      "px_date": "2026-10-27",
+      "px_chg": -0.33,
+      "px_mean": 6.2085,
+      "px_n": 5,
+      "px_mean_chg": -0.396
      }
     ],
     "roll": [
@@ -9180,33 +9180,29 @@
      ]
     ],
     "cftc_stats": {
-     "p1y": 40.4,
-     "p3y": 68.8,
+     "p1y": 19.2,
+     "p3y": 39.4,
      "weeks_hist": 160,
-     "pct_oi": -10.1,
+     "pct_oi": -14.2,
      "max3y": 14904,
      "min3y": -124067,
      "basis": {
-      "avg_entry": 6.86738,
-      "net": -52005,
+      "avg_entry": 6.66778,
+      "net": -74606,
       "weeks": 160,
-      "since": "2023-10-03"
+      "since": "2023-10-10"
      },
      "kpi": {
-      "date": "2026-10-20",
-      "net": -52005.0,
-      "oi": 516379.0,
-      "z52": -0.31,
-      "cot3": 51.9,
-      "d1": -19450.0,
-      "vel_pct_oi": -3.77,
-      "streak": -7,
-      "doi_pct": 1.9,
+      "date": "2026-10-27",
+      "net": -74606.0,
+      "oi": 525558.0,
+      "z52": -0.96,
+      "cot3": 35.6,
+      "d1": -22601.0,
+      "vel_pct_oi": -4.3,
+      "streak": -8,
+      "doi_pct": 1.78,
       "z_hist": [
-       [
-        "2026-04-28",
-        2.29
-       ],
        [
         "2026-05-05",
         1.63
@@ -9306,13 +9302,13 @@
        [
         "2026-10-20",
         -0.31
+       ],
+       [
+        "2026-10-27",
+        -0.96
        ]
       ],
       "cot_hist": [
-       [
-        "2026-04-28",
-        100.0
-       ],
        [
         "2026-05-05",
         84.7
@@ -9412,13 +9408,13 @@
        [
         "2026-10-20",
         51.9
+       ],
+       [
+        "2026-10-27",
+        35.6
        ]
       ],
       "net_hist": [
-       [
-        "2025-10-28",
-        -73331.0
-       ],
        [
         "2025-11-04",
         -68740.0
@@ -9622,13 +9618,13 @@
        [
         "2026-10-20",
         -52005.0
+       ],
+       [
+        "2026-10-27",
+        -74606.0
        ]
       ],
       "oi_hist": [
-       [
-        "2026-04-28",
-        423571.0
-       ],
        [
         "2026-05-05",
         433831.0
@@ -9728,22 +9724,22 @@
        [
         "2026-10-20",
         516379.0
+       ],
+       [
+        "2026-10-27",
+        525558.0
        ]
       ],
       "fields": {
        "comm_long": "prod_merc_positions_long",
        "comm_short": "prod_merc_positions_short"
       },
-      "comm_net": -40646,
-      "comm_d1": 14379,
-      "spread": -11359.0,
-      "spread_idx": 54.8,
-      "spread_z": -0.11,
+      "comm_net": -18361,
+      "comm_d1": 22285,
+      "spread": -56245.0,
+      "spread_idx": 39.0,
+      "spread_z": -0.81,
       "comm_hist": [
-       [
-        "2025-10-28",
-        1573
-       ],
        [
         "2025-11-04",
         7874
@@ -9947,9 +9943,13 @@
        [
         "2026-10-20",
         -40646
+       ],
+       [
+        "2026-10-27",
+        -18361
        ]
       ],
-      "px_chg_pct": -2.37
+      "px_chg_pct": -6.0
      }
     },
     "quotes": {
@@ -10065,11 +10065,11 @@
     "6M": 4.28
    },
    "fxcross": {
-    "dxy": 101.876,
-    "dxy_chg": -0.161,
+    "dxy": 101.872,
+    "dxy_chg": -0.165,
     "eurusd": 1.1171,
-    "usdjpy": 157.47,
-    "usdcad_ref": 1.3955
+    "usdjpy": 157.51,
+    "usdcad_ref": 1.3964
    },
    "closes": [
     [
@@ -10148,16 +10148,16 @@
    "energy": [
     {
      "name": "WTI Crude",
-     "last": 103.98,
-     "chg": 1.98,
-     "pct": 1.94,
+     "last": 103.64,
+     "chg": 1.64,
+     "pct": 1.61,
      "delay": "Yahoo, ~10-min delay"
     },
     {
      "name": "Brent Crude",
-     "last": 113.31,
-     "chg": -1.57,
-     "pct": -1.37,
+     "last": 112.95,
+     "chg": -1.93,
+     "pct": -1.68,
      "delay": "Yahoo, ~10-min delay"
     },
     {
@@ -10169,36 +10169,24 @@
     }
    ],
    "wcs_diff": {
-    "value": 18.51,
+    "value": 18.17,
     "source": "computed: WTI last minus WCS last (same stored run)",
-    "obs_ts": "2026-10-30T19:05:00+00:00",
+    "obs_ts": "2026-10-30T19:20:00+00:00",
     "pub_ts": "2026-10-22T02:20:55+00:00",
     "stale_flag": false,
     "note": "WTI leg refreshed from Yahoo; WCS leg is the last stored read (different delay)"
    },
    "pos": {
-    "net": -91113,
-    "long": 28341,
-    "short": 119454,
-    "oi": 383635,
-    "pct_oi": -23.7,
-    "wow": -3001,
+    "net": -96747,
+    "long": 22424,
+    "short": 119171,
+    "oi": 360941,
+    "pct_oi": -26.8,
+    "wow": -5634,
     "label": "Extreme Crowded Short (High short-squeeze risk)",
-    "p1y": 11.5,
-    "p3y": 7.1,
+    "p1y": 7.7,
+    "p3y": 4.5,
     "series": [
-     {
-      "date": "2026-08-18",
-      "long": 26172,
-      "short": 115069,
-      "net": -88897,
-      "px": 1.38697,
-      "px_date": "2026-08-18",
-      "px_chg": null,
-      "px_mean": 1.39057,
-      "px_n": 5,
-      "px_mean_chg": null
-     },
      {
       "date": "2026-08-25",
       "long": 27384,
@@ -10206,10 +10194,10 @@
       "net": -72092,
       "px": 1.38408,
       "px_date": "2026-08-25",
-      "px_chg": -0.00289,
+      "px_chg": null,
       "px_mean": 1.38247,
       "px_n": 5,
-      "px_mean_chg": -0.0081
+      "px_mean_chg": null
      },
      {
       "date": "2026-09-01",
@@ -10306,29 +10294,37 @@
       "px_mean": 1.41695,
       "px_n": 5,
       "px_mean_chg": -0.00771
+     },
+     {
+      "date": "2026-10-27",
+      "long": 22424,
+      "short": 119171,
+      "net": -96747,
+      "px": 1.40126,
+      "px_date": "2026-10-27",
+      "px_chg": -0.00927,
+      "px_mean": 1.40272,
+      "px_n": 5,
+      "px_mean_chg": -0.01423
      }
     ],
     "basis": {
-     "avg_entry": 1.40687,
-     "net": -91113,
+     "avg_entry": 1.40663,
+     "net": -96747,
      "weeks": 160,
-     "since": "2023-10-03"
+     "since": "2023-10-10"
     },
     "kpi": {
-     "date": "2026-10-20",
-     "net": -91113.0,
-     "oi": 383635.0,
-     "z52": -1.43,
-     "cot3": 13.3,
-     "d1": -3001.0,
-     "vel_pct_oi": -0.78,
-     "streak": -5,
-     "doi_pct": 1.44,
+     "date": "2026-10-27",
+     "net": -96747.0,
+     "oi": 360941.0,
+     "z52": -1.64,
+     "cot3": 7.0,
+     "d1": -5634.0,
+     "vel_pct_oi": -1.56,
+     "streak": -6,
+     "doi_pct": -5.92,
      "z_hist": [
-      [
-       "2026-04-28",
-       -0.43
-      ],
       [
        "2026-05-05",
        0.02
@@ -10428,13 +10424,13 @@
       [
        "2026-10-20",
        -1.43
+      ],
+      [
+       "2026-10-27",
+       -1.64
       ]
      ],
      "cot_hist": [
-      [
-       "2026-04-28",
-       54.4
-      ],
       [
        "2026-05-05",
        61.1
@@ -10534,13 +10530,13 @@
       [
        "2026-10-20",
        13.3
+      ],
+      [
+       "2026-10-27",
+       7.0
       ]
      ],
      "net_hist": [
-      [
-       "2025-10-28",
-       -59008.0
-      ],
       [
        "2025-11-04",
        -72945.0
@@ -10744,13 +10740,13 @@
       [
        "2026-10-20",
        -91113.0
+      ],
+      [
+       "2026-10-27",
+       -96747.0
       ]
      ],
      "oi_hist": [
-      [
-       "2026-04-28",
-       252679.0
-      ],
       [
        "2026-05-05",
        243793.0
@@ -10850,22 +10846,22 @@
       [
        "2026-10-20",
        383635.0
+      ],
+      [
+       "2026-10-27",
+       360941.0
       ]
      ],
      "fields": {
       "comm_long": "dealer_positions_long_all",
       "comm_short": "dealer_positions_short_all"
      },
-     "comm_net": 100798,
-     "comm_d1": -20183,
-     "spread": -191911.0,
-     "spread_idx": 42.8,
-     "spread_z": -0.45,
+     "comm_net": 95809,
+     "comm_d1": -4989,
+     "spread": -192556.0,
+     "spread_idx": 42.6,
+     "spread_z": -0.46,
      "comm_hist": [
-      [
-       "2025-10-28",
-       165884
-      ],
       [
        "2025-11-04",
        177305
@@ -11069,6 +11065,10 @@
       [
        "2026-10-20",
        100798
+      ],
+      [
+       "2026-10-27",
+       95809
       ]
      ]
     }
@@ -11745,10 +11745,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.39574,
+    "mid": 1.3964,
     "bid": null,
     "ask": null,
-    "ts": "2026-10-30T15:15:00-04:00",
+    "ts": "2026-10-30T15:30:00-04:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -11888,18 +11888,6 @@
     }
    ],
    "intraday": [
-    [
-     "2026-10-29T23:20+00:00",
-     1.39844
-    ],
-    [
-     "2026-10-29T23:25+00:00",
-     1.3982
-    ],
-    [
-     "2026-10-29T23:30+00:00",
-     1.39848
-    ],
     [
      "2026-10-29T23:35+00:00",
      1.39856
@@ -12843,6 +12831,22 @@
     [
      "2026-10-30T19:10+00:00",
      1.39576
+    ],
+    [
+     "2026-10-30T19:15+00:00",
+     1.39599
+    ],
+    [
+     "2026-10-30T19:20+00:00",
+     1.3959
+    ],
+    [
+     "2026-10-30T19:25+00:00",
+     1.3961
+    ],
+    [
+     "2026-10-30T19:30+00:00",
+     1.3964
     ]
    ],
    "fwd_inputs": {
@@ -12921,24 +12925,24 @@
      "ca_leg": "est"
     },
     "30Y": {
-     "y": 5.308,
+     "y": 5.309,
      "ts": "2026-10-30T14:55:00-04:00",
      "label": "2:55pm ET",
      "close": 5.32,
      "close_date": "2026-10-29",
      "basis": "official close",
-     "chg_bp": -1.2,
+     "chg_bp": -1.1,
      "prev_yahoo": 5.329,
      "src": "Yahoo ^TYX (CBOE yield index, delayed)",
      "method": "index"
     },
     "2Y": {
-     "y": 4.531,
-     "ts": "2026-10-30T15:05:00-04:00",
-     "label": "3:05pm ET",
+     "y": 4.527,
+     "ts": "2026-10-30T15:20:00-04:00",
+     "label": "3:20pm ET",
      "close": 4.61,
      "close_date": "2026-10-29",
-     "chg_bp": -7.9,
+     "chg_bp": -8.3,
      "method": "futures",
      "proxy": "ZT=F",
      "fit": {
@@ -12949,17 +12953,17 @@
      "src": "estimated from ZT=F (delayed) x fitted sensitivity"
     },
     "1Y": {
-     "y": 4.372,
+     "y": 4.37,
      "ts": "2026-10-30T14:55:00-04:00",
      "label": "2:55pm ET",
      "close": 4.42,
      "close_date": "2026-10-29",
-     "chg_bp": -4.8,
+     "chg_bp": -5.0,
      "method": "interp",
      "src": "interpolated from the live 3M and 2Y moves"
     },
     "20Y": {
-     "y": 5.317,
+     "y": 5.318,
      "ts": "2026-10-30T14:55:00-04:00",
      "label": "2:55pm ET",
      "close": 5.35,
@@ -13252,22 +13256,22 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-30T15:15:25-04:00",
+   "updated_at": "2026-10-30T15:30:30-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-10-30T15:15:00-04:00",
+    "fx_spot": "2026-10-30T15:30:00-04:00",
     "fx_closes": "2026-10-29T16:30:00-04:00",
     "yields": "2026-10-29T17:00:00-04:00",
     "policy": "2026-10-30T15:00:18-04:00",
     "sentiment": "2026-10-21T07:05:00-04:00",
-    "cftc_fx": "2026-10-20T15:30:00-04:00",
-    "cftc_grains": "2026-10-20T15:30:00-04:00",
-    "energy": "2026-10-30T15:05:00-04:00",
-    "crosses": "2026-10-30T15:05:00-04:00",
+    "cftc_fx": "2026-10-27T15:30:00-04:00",
+    "cftc_grains": "2026-10-27T15:30:00-04:00",
+    "energy": "2026-10-30T15:20:00-04:00",
+    "crosses": "2026-10-30T15:20:00-04:00",
     "grains_settle": "2026-10-29T14:20:00-04:00",
     "grains_quote": "2026-10-30T14:15:00-04:00",
     "options": "2026-10-30T13:26:50-04:00",
-    "news": "2026-10-30T15:15:25-04:00",
+    "news": "2026-10-30T15:30:30-04:00",
     "calendar": "2026-10-30T15:00:18-04:00",
     "releases": "2026-10-19T08:30:00-04:00",
     "macro": "2026-10-30T13:45:24-04:00",
@@ -13282,7 +13286,7 @@
     "fxopt": "2026-10-16T16:00:00-04:00",
     "model": "2026-10-30T13:15:24-04:00",
     "policy_watch": "2026-10-28T14:00:21-04:00",
-    "yields_live": "2026-10-30T15:05:00-04:00"
+    "yields_live": "2026-10-30T15:20:00-04:00"
    },
    "sources": {
     "news": "Google News RSS search, refreshed every 15 min",
@@ -13320,7 +13324,7 @@
      "fx_model"
     ],
     "failed": [],
-    "at": "2026-10-30T15:15:25-04:00"
+    "at": "2026-10-30T15:30:30-04:00"
    },
    "releases_checked": "2026-10-30T13:15:24-04:00",
    "exports_checked": "2026-10-30T14:30:25-04:00",
@@ -13357,7 +13361,7 @@
    },
    "canada_checked": "2026-10-30T07:00:20-04:00",
    "ca_calendar_checked": "2026-10-30T13:00:24-04:00",
-   "canada_watch": "2026-10-30T15:15:25-04:00",
+   "canada_watch": "2026-10-30T15:30:30-04:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -29040,10 +29044,10 @@
     "https://news.google.com/rss/articles/CBMinwFBVV95cUxQNHk5d3FjWlZPV2o1NTJKYUptalROOEpQSmdRZjlJTUxUWk92TGdIWE9qb2dFSHQ0Q3JqbV9WT3lEZ1gwNmt1SWU1ckhHMHBGZHZQV0I4ZEpwRjhmSG5ETkFha2xDY0RmaEd3cnFoczA1N2tUX1dfZ2loVVBaeWhIVWFJX0REeC1sMHpDSzJVd2JrWmdmYnp3cm40RDVnbjQ?oc=5"
    ],
    [
-    "2026-10-29 19:58 UTC",
-    "www.country-guide.ca",
+    "2026-10-29 20:06 UTC",
+    "www.producer.com",
     "U.S. Grain/Oilseed Review: Soybeans, corn push lower",
-    "https://news.google.com/rss/articles/CBMimAFBVV95cUxQbktKX2o0Zjh1dWxDNnRiYWQyc09KQWFmeFNpY2tRM1NuZFRLdEJiMG5IQ2l2bjhHaVh6RzNKaWpERmpobTNJOXh2ZXo1U2RQVUpYbEdhc1N1N01JTzIxLVFlbmZDdDgzTXpuYU8wSWhBX3cwaHJXZzlqbEI1MnY3TF82d0JLdkx3TWgtd05NS0NsS3U2QURVRA?oc=5"
+    "https://news.google.com/rss/articles/CBMikwFBVV95cUxOWTlIajQ0T0drZnFWVktIVkhVU053WmFlU0dtTFJkZHpJTmNDR0ZLMkROWFlEa3NaaDJLNmwtVlZuRFUzVnhKNzVzajcyZi1LbnVSR0ZvS3dzOGdoUlhBZ29FeFFjY2N6ZnBnQ0YwX1BjM3dVWE1jbXVUUFRsRWNZQjJweHpaeVpncUhhejBpeUk3S1U?oc=5"
    ],
    [
     "2026-10-29 18:54 UTC",
@@ -29154,10 +29158,22 @@
   ],
   "fx": [
    [
-    "2026-10-30 19:05 UTC",
-    "www.kitco.com",
+    "2026-10-30 19:24 UTC",
+    "www.theglobeandmail.com",
     "Canadian dollar extends monthly gain as higher oil prices raise inflation risk",
-    "https://news.google.com/rss/articles/CBMivgFBVV95cUxQU1ZpdlVZZzVqYWRzV05Fb2RTeXBNNDNGclZmVDhPTk5mSnB6S3VnUS01OGRVc1dYSWRSTkNIcE1tdmoxT3YyTUI1Q0pBSEVVZlEyMVpaLWlESjcwYzFLV2FGVy1XYjB0dkVyaUhNZ1MzcWJpdm00ckdDbHB3OEJGZDV1TmVfQ2lyLXo2MnNsMmNCRy1BYzFiVmxPc2JKQkNVQ0g4OEVOSjVGMUpTOTVOUmFnck1RNm9CVlRDR1FR?oc=5"
+    "https://news.google.com/rss/articles/CBMitAFBVV95cUxORjQ5RmVFYkJWdTBSQ1BYV2hvSGtuN0Izbkl5bnBZRHJsdnNIWnlaanBTckZhbEk1T1FVbnlEYm5qa1VxNzNEVmk4U2JqNERPSXJzTXFNS29wLWctTHczSWkwS1hkNnRDYWtsNE9XVEUyME4xLTZ2ckp1OWgxSlF1TWF3VUhhcDJmMi1nMVlWQ0c1YXVGRDhTaG5qM2xHeXdWQmVkX1hlb2ZRSWYtWXJDRTBjNms?oc=5"
+   ],
+   [
+    "2026-10-30 19:23 UTC",
+    "www.marketscreener.com",
+    "CANADA FX DEBT-Canadian dollar extends monthly gain as higher oil prices raise inflation risk",
+    "https://news.google.com/rss/articles/CBMi3wFBVV95cUxNVkJ5M2ctTUNfOFhINmFselp6QVY0TGxmbFlwSXYyZ0toWkVndXEwenRsNmowSWxyMnFqT2h4SS1xV1BERVhpS19PNGNhbzZVMkRzZWtkRDg1dldlNFFFOGFnU29peWZLZFRvUFpFMHpYYXhENzY3dmpXTF9JaVpKY0dTYnVFRFpqSVhkS3dkb0s1WjNvcjlGSF9JOEJsNkVBWXdISm5BSXhpMHl1bnJYNFdxUlpOeE1jMDZXamFvTm4tX3lhcVBULWNoS0o0YlE4WFJkRkFUcWgtU0tXeXdz?oc=5"
+   ],
+   [
+    "2026-10-30 19:00 UTC",
+    "finimize.com",
+    "Oil Pops, And So Does The Canadian Dollar",
+    "https://news.google.com/rss/articles/CBMieEFVX3lxTE9YVVRyOVFxcUUzWk44cmlUTF9IV2FmRFluVEVCMnByLWdnc2xrcktlR0JkdU1Rek5wcmFJQkU5SmdQZnkyNHBCUF9JWVRRNmtYT3dhdmFMYkZlc0FjYm1mUkNhMkpmeHhveVFobGtZbDVNLWVWQklOdQ?oc=5"
    ],
    [
     "2026-10-30 18:06 UTC",
@@ -29188,26 +29204,38 @@
     "www.indexbox.io",
     "Canada GDP Flat in August, Q3 Growth at 1.3% vs BoC's 2% Forecast - News and Statistics",
     "https://news.google.com/rss/articles/CBMitgFBVV95cUxQQ0doeXZhQmVZUnU5RV9WcGc5M2VBM3lyUE9OMEtWRnQ2Um5VOXV0NF8tQ2Z5SlQ0VThxSzljVE8xMFktRkRpejlSQ1IwRi1rTjQtczNhZEtvVkwxU1pyVXg1TXI5VEhjNm5Ebi1QYlExTTk3eDNmSm9INjNCbS1XQzNhN2cwRkFraXVibHl0NEphelZrSlA2VDdEVjJXekxwUG1sLW0tY2VWTmNRYkNWWl9sbmV4UQ?oc=5"
-   ],
-   [
-    "2026-10-30 14:21 UTC",
-    "www.cbc.ca",
-    "Canadian economy stalled in August, points to September decline: StatsCan",
-    "https://news.google.com/rss/articles/CBMic0FVX3lxTFBFdjhqZ1dPMk5zTEtmZ09TTjRxMGFra2NaM3pmYUQzMHp6aWp4bGw1OUtMcEFNTmZPdEVDWnpfd0xnR3U0dV9mMHgwU2hUbnU4YkpHeldzcmNpdktEbFpCTWM3eUR3blAwLTVaaGxSNVZpQkE?oc=5"
-   ],
-   [
-    "2026-10-30 13:58 UTC",
-    "www.mpamag.com",
-    "Canada’s GDP stalls, clouding Bank of Canada’s December call",
-    "https://news.google.com/rss/articles/CBMiwgFBVV95cUxOTC1jZENzb1FlS0Mzc3gzeGNDVDZLQ3JtSktKUTRZOC01dHFuVm5UeTVEMHZCVHY3dW1WLTlNOHB2bnB6T2NLQ2N1OUktOGlBRnVSNTEzY0syYW5YeGdnQUF4a0JZT0VFRnlPa3RjZ2VsY3FUQWktQUQ1NEhKU0kyRndTSU5Bc3BtTnNacl9kcDdMTE1oaFFBUDh6RGZlNkhSd1dUTU1zOEM1WExrVF93UTRHNTJjWnF5NVpyRXhaUUdOUQ?oc=5"
    ]
   ],
   "geo": [
+   [
+    "2026-10-30 16:45 UTC",
+    "www.cbc.ca",
+    "Facing a potential $40M US tariff bill, this American importer is suing Trump to end some tariffs on Canada",
+    "https://news.google.com/rss/articles/CBMihwFBVV95cUxOTld1akFIX0huNjdBb3Q0WWE3SWNFRk8xbncyTmVTS09aMUVza3ZsMmVLUk9NVmlOdkRDTEozcVhoSzdJX3h2bjJVQ2dQeTh2VExtbm5hNFBnM2swSWRabG5iRzRUcllZTzVBdTdOVFBhUUdjbjlKN0t2aTNhcEdZS0l1eE4tUXM?oc=5"
+   ],
    [
     "2026-10-30 15:20 UTC",
     "www.turkiyetoday.com",
     "Zelenskyy to meet Erdogan in Istanbul on Black Sea security, Ukraine peace talks",
     "https://news.google.com/rss/articles/CBMiwAFBVV95cUxQYnA0c3Ayby02cU9Ka0lBOVBMdnpZQlljX09mSHg2ejFhODZqVkduZndQX1dYSHBZUmpEazJPRDdlMVJFenJvenRoNl9rZzhMMDFLcjN6VTNQVlBCcTVTRGVyazg4SkY4LXdzNU9yM1hUc284Rk1nTGh2dFBaZEJwaXRVUXJReDluLWZlb2kycVZoVEdaVHY3RUVFZDczcHpzZ1RpblF0a01xWHk3SUdjTXF6UzNwNnJCRE43LTI0azM?oc=5"
+   ],
+   [
+    "2026-10-30 15:17 UTC",
+    "toronto.citynews.ca",
+    "Ottawa inspired by NAFTA as it pursues a new Canada-EU alliance, Joly says",
+    "https://news.google.com/rss/articles/CBMiswFBVV95cUxOZjdfMDlOTzJhMFMwbTRCUjBZRGlIbTF3MjFCQzRwQWNlejBkRGtmQWhFeXE2eGlkOHBZQnBuQlc2d3hNaVRHdTRtb1MzbjRIM3lWRVQ1MDZPR3NNUm92c0laUkhNWm9abWNwOUgxWW1KM2QxNXF6Q3FyYVl0dk1idXY5NTAwUkVESk90aHl1TzJwbUhMbC1uUmpfQkVhTV9YMlh1aE1EX0VNMlo4M0c5QThnQQ?oc=5"
+   ],
+   [
+    "2026-10-30 13:57 UTC",
+    "energynow.ca",
+    "ECONOMIC FALLOUT: New U.S. Tariffs Take Effect on Canada - Here’s What You Need to Know",
+    "https://news.google.com/rss/articles/CBMif0FVX3lxTE45eE44am9ORWdwX0dVUUhWbkFrYmQ5b2hDS0JWOWFhVmJUdkNyZFB6MExYRnl4UXRueUZNb1VES19ENGtPZFVtMHNNM2RqWDNQblBwVjBpVTRBUUZrLWJxM25wd3hVRzdWMGs1VVUtdFlUYzFVN1FNLVh5NEtocm8?oc=5"
+   ],
+   [
+    "2026-10-30 12:22 UTC",
+    "www.rferl.org",
+    "Marriage Of Convenience: Russia And Iran Deepen Trade Ties, But Their Partnership Has Limits",
+    "https://news.google.com/rss/articles/CBMingFBVV95cUxNdzV3Ykh6eWw4Mmh1Vm9uaHhjTGpVOEg4S0VSWDRWeFdUc1RqbVl3NG42aE5uNG1EZnJWeW1JWTZfYUJiX3R3SFhVbnoydXNXZ0hxVEtILVJCRlBfeF9RT1NQazM3SG5PcktPTndIaUc4Sm16UV9LUVMzNFdPaHhUYmt6SHdwcGw4N1JDbjFfZEU3azhVbUoyazJXYzFQUdIBoAFBVV95cUxNZXFwR0NOUXhBVU5yVjVUZDVCSk5rNWhDWWZOVm42dHNmZmlUYVdsLUZVbVhhYkRIeDVQQk5sZWs3LXItV3BkU1pwV3RyOTZHbmV5ZTNLQ3lKaVFMV203S19DVG5ZN2Via2pUWVJGTEVOMGxfWHFWSGtyZ3pYOUVRX3l4eFBaYnB2VlpUT2NZM21TOVJTelJmXzl3S3BJa21T?oc=5"
    ],
    [
     "2026-10-30 12:02 UTC",
@@ -29226,30 +29254,6 @@
     "www.intellinews.com",
     "World Bank sees 23% commodity price jump as Russia-Ukraine war hits Black Sea trade",
     "https://news.google.com/rss/articles/CBMiugFBVV95cUxQS0F0cUYzLVRHc2hseDhMcVVIbEdSMVE3dThqMGwxVWdBb0Fkd0ZoMHUzUk5MMmUzelJmY2tFWF9XZlRzalBtU09UOE1HdFNyTXpGM0JtdmlpZ1MxYl9TamtaYzdrZVd5VXBQZElmdzZZMTQtQ1l5SjRZa1pBWFVockx1eEhWODVNR1NZN3lGWGZqeEhyeDBqdjR3WlNQZ0o4TFZITktCUFFsVjI1ckFmUHU5a3pSZ3hmUWc?oc=5"
-   ],
-   [
-    "2026-10-30 09:17 UTC",
-    "energynow.ca",
-    "COMMENTARY: Here’s How Canadian Policymakers Should Respond to Trump’s Tariffs - Fraser Institute",
-    "https://news.google.com/rss/articles/CBMivwFBVV95cUxPTGNJbmEyeEc1WndtLUxoMlZpZzlHSUdvaVhzUXZrZC14RVNnd2lKeUhGUTVCeFJ4ZEQzWkNUZUQ4ZDRmNTYwbEJsVDFGWVJDNHNSakpIcHdPempNaTRxVGh4TkJtSjQxNWtYRVUzamp2LTAtc051cXA5RFRBMzZINTBIN3RSZjBLZGlxNTAtSXJBVDRmeXNkQU94c3duX1Y1TGxKOW5sdGI5emduOUszMFBaZUVxUzdNZXNxRGVsSQ?oc=5"
-   ],
-   [
-    "2026-10-30 09:00 UTC",
-    "www.cnn.com",
-    "Canada’s economic break with the US in 5 charts",
-    "https://news.google.com/rss/articles/CBMidEFVX3lxTE52QzR2Z3ZWZjZITkhGVTR2QUxHVGFrTVByWXNhUGJWdi1oaXJQXzMtc0dlTW5DeUdLY3R6a0kyOHhQM2lWaWJXclM0Y3BhYlpKc1hsV2ZST1VIRk9QMUZYc2JpQTVHcDh5YUJQTVB0UWhxbm9U?oc=5"
-   ],
-   [
-    "2026-10-30 04:14 UTC",
-    "en.prothomalo.com",
-    "Russia's blockade of Ukraine is a threat to global food security — and Bangladesh should take note",
-    "https://news.google.com/rss/articles/CBMiV0FVX3lxTFBfVVc4YzdHaFNWZXFkUXkzUVYxRE9NaFlBQjEzdExqUnBIQ3JwYmV1RWdmenVYWExKMGtDNmJlY2ZteE9vRFRBeEZ5bTMxSVRMMEhWc2ZPONIBZEFVX3lxTE5fa1lLME13TnZ1YjNmSElqUkExOGVTQWpOTXZFR0M3N3NDNjNlTTY0ekpjaVRydVhxV0JuaGhwVlVGeFl0WlQ0WDJqb2RaZ3V1VzZ2ZW02MUpycTN6RjBZNFFpN3k?oc=5"
-   ],
-   [
-    "2026-10-30 01:06 UTC",
-    "www.dw.com",
-    "Ukraine's farmers struggle to sell harvest amid war, drought",
-    "https://news.google.com/rss/articles/CBMilgFBVV95cUxORHhTb1g1R2RIRzUybW9xc0dNb1RrSXdIaG5IV0Z2MlFfVFJVejdNX0dzR01ZbldSekw2eXdzaWNWcERvbF9DTjgwUGNWYjVKY0poQWlEeXduSUNkVGMydVNZQzdpZXpQUFVDLTdOY25jLVFVTFdtalBPMVQ4U0UxbHR0N1BFYV93V2p5a25Wc1MwRk9wVlHSAZYBQVVfeXFMUFRKWkxxcW5ua0xhTTBOLWt4S3dqdTZUUTIzbGJFT1RoLTUycDAwVG5uZ21SdFdVNlhkbC02azZOZ20wbkdvczE4UlpITDcwbGJ0dUllaVhXdDJISk9sb3JRTTZSTlduYkw3QUdYMHRvWTJnSjlTYVNuM0VaaHlhXzJyLUF1RWFKMTRHdG1jSXlERVZRMnZn?oc=5"
    ]
   ],
   "macro": [
