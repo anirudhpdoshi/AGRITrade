@@ -158,7 +158,8 @@ BULL = [r"export ban", r"export restriction\w*", r"restrict\w* exports", r"expor
         r"hit\w* (?:new |fresh |record |\d+-\w+ )?highs?", r"strong (?:demand|buying|imports)", r"china (?:buys|purchases|books)", r"higher (?:prices|costs)",
         r"suspen\w* (?:\w+ )?(?:production|output|exports|shipments)", r"supply (?:\w+ )?(?:restrict\w*|disrupt\w*|shortage\w*|squeez\w*)", r"shortage\w*", r"risk premium (?:\w+ )?(?:ris\w*|build\w*|return\w*)",
         r"increase\w* (?:\w+ ){0,3}(?:purchases|buying|imports)", r"bounce\w*", r"china buying", r"(?:plantings?|acreage|area|sowings?) (?:\w+ ){0,3}(?:\w+-\w+ )?low",
-        r"high (?:\w+ )?prices (?:\w+ ){0,2}linger"]
+        r"high (?:\w+ )?prices (?:\w+ ){0,2}linger", r"(?:harvest|crop|yield) loss\w*", r"(?:production|output|harvest|crop|yield\w*) (?:\w+ ){0,3}(?:near |to |at )?(?:a )?(?:historic|record|multi-year|\d+-year) low",
+        r"shortens? (?:\w+ )?(?:crops?|harvest)", r"drought (?:\w+ ){0,1}(?:pushes|drives|sends|shortens|reduces|reshap\w*)"]
 BEAR = [r"record (?:\w+ ){0,2}(?:crop|harvest|output|production|exports?)", r"bumper", r"(?:raise\w*|lift\w*|increase\w*|upgrad\w*|boost\w*) (?:\w+ ){0,2}(?:forecast|estimate|output|production|crop)",
         r"(?:output|production|harvest|crop) (?:rises?|jumps?|grows?|climbs?)", r"ample (?:supply|supplies|stocks)", r"(?:lift\w*|end\w*|scrap\w*|remov\w*) (?:the )?export ban",
         r"resum\w* (?:exports|shipments)", r"glut", r"surplus",
@@ -807,6 +808,17 @@ def main():
     by_id = {i["id"]: i for i in log}
     for i in items + heads:
         by_id[i["id"]] = i
+    for i in by_id.values():   # stored headlines are re-read with the current classifier, so a fix applies to history too
+        if i.get("kind") == "headline" and i.get("title"):
+            try:
+                cls = classify_headline(i["title"])
+                imp = headline_impact(cls)
+                i["impact"], i["bias"] = imp, overall_of(imp)
+                i["evidence"] = ([f"supportive phrase: “{p}”" for p in cls["bull"]] + [f"pressuring phrase: “{p}”" for p in cls["bear"]]
+                                 or ["no directional phrase in the headline — category and commodity only"])
+                i["alert"] = cls["cat"] == "disruption" and i["bias"] in ("bullish", "bearish") and bool(cls["crops"])
+            except Exception:
+                pass
     cutoff = (now_utc() - dt.timedelta(days=45)).isoformat()
     hist = sorted(by_id.values(), key=lambda i: i.get("ts") or i.get("seen") or "", reverse=True)
     hist = [i for i in hist if (i.get("ts") or "") >= cutoff or i["kind"] == "data"][:400]
