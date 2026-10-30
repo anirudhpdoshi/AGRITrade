@@ -152,7 +152,7 @@ BULL = [r"export ban", r"export restriction\w*", r"restrict\w* exports", r"expor
         r"drought (?:\w+ ){0,2}(?:hit\w*|hurt\w*|damag\w*|cut\w*|threat\w*|stress\w*|worsen\w*|grip\w*|parch\w*|slash\w*|wither\w*|loss\w*)",
         r"(?:hit|hurt|damaged|cut|parched|scorched|threatened|withered|ravaged) by (?:\w+ )?drought", r"drought-(?:hit|stricken|damaged|ravaged)",
         r"frost (?:\w+ ){0,2}(?:damag\w*|hit\w*|threat\w*)", r"heat ?wave", r"crop failure",
-        r"(?:cut|cuts|lower\w*|reduc\w*|slash\w*|downgrad\w*) (?:\w+ ){0,2}(?:forecast|estimate|output|production|crop|harvest)", r"(?:output|production|harvest|crop) (?:falls?|drops?|declines?|shrinks?)",
+        r"(?:cut|cuts|lowers|lowered|lowering|reduc\w*|slash\w*|downgrad\w*) (?:(?!as\b|on\b|amid\b)\w+ ){0,2}(?:forecast|estimate|output|production|crop|harvest)", r"(?:output|production|harvest|crop) (?:falls?|drops?|declines?|shrinks?)",
         r"smallest", r"lowest stocks", r"tight\w* (?:\w+ )?(?:supply|supplies|stocks)", r"port (?:closure|closed|attack\w*)", r"attack\w* on (?:port|grain)", r"halt\w* (?:exports|shipments)",
         r"(?:prices?|futures|market) (?:\w+ ){0,3}(?:rise|rises|rose|jump\w*|surge\w*|soar\w*|climb\w*|spike\w*|rall\w*|leap\w*)", r"prices? up\b", r"\bleap in (?:\w+ ){0,2}prices",
         r"hit\w* (?:new |fresh |record |\d+-\w+ )?highs?", r"strong (?:demand|buying|imports)", r"china (?:buys|purchases|books)", r"higher (?:prices|costs)",
@@ -160,7 +160,8 @@ BULL = [r"export ban", r"export restriction\w*", r"restrict\w* exports", r"expor
         r"increase\w* (?:\w+ ){0,3}(?:purchases|buying|imports)", r"bounce\w*", r"china buying", r"(?:plantings?|acreage|area|sowings?) (?:\w+ ){0,3}(?:\w+-\w+ )?low",
         r"high (?:\w+ )?prices (?:\w+ ){0,2}linger", r"(?:harvest|crop|yield) loss\w*", r"(?:production|output|harvest|crop|yield\w*) (?:\w+ ){0,3}(?:near |to |at )?(?:a )?(?:historic|record|multi-year|\d+-year) low",
         r"shortens? (?:\w+ )?(?:crops?|harvest)", r"drought (?:\w+ ){0,1}(?:pushes|drives|sends|shortens|reduces|reshap\w*)"]
-BEAR = [r"record (?:\w+ ){0,2}(?:crop|harvest|output|production|exports?)", r"bumper", r"(?:raise\w*|lift\w*|increase\w*|upgrad\w*|boost\w*) (?:\w+ ){0,2}(?:forecast|estimate|output|production|crop)",
+BEAR = [r"record (?:\w+ ){0,2}(?:crop|harvest|output|production|exports?)", r"(?:drift\w*|trad\w*|edg\w*|slip\w*|eas\w*|sink\w*|mov\w*|turn\w*|clos\w*|end\w*|open\w*|start\w*|finish\w*) lower", r"(?:futures|prices?|grains?|corn|wheat|soybeans?|beans) (?:are |were |)lower\b",
+        r"(?:grains?|corn|wheat|soybeans?|beans|soy) (?:(?!imports?\b|exports?\b|plantings?\b|acreage\b|output\b|production\b|stocks?\b)\w+ ){0,3}(?:fall|falls|fell|slip\w*|drop\w*|sink\w*|slump\w*|tumbl\w*|retreat\w*)", r"bumper", r"(?:raise\w*|lift\w*|increase\w*|upgrad\w*|boost\w*) (?:\w+ ){0,2}(?:forecast|estimate|output|production|crop)",
         r"(?:output|production|harvest|crop) (?:rises?|jumps?|grows?|climbs?)", r"ample (?:supply|supplies|stocks)", r"(?:lift\w*|end\w*|scrap\w*|remov\w*) (?:the )?export ban",
         r"resum\w* (?:exports|shipments)", r"glut", r"surplus",
         r"(?:prices?|futures|market) (?:\w+ ){0,3}(?:fall|falls|fell|drop\w*|slump\w*|declin\w*|eas\w*|slid\w*|tumbl\w*|soften\w*|weaken\w*|sag\w*|six-year low|lowest)", r"prices? down\b",
@@ -312,6 +313,10 @@ def classify_headline(title):
     bull = [m.group(0) for rx in BULL for m in [re.search(rx, low)] if m]
     bull = [b for b in bull if not re.search(r"\b(?:despite|in spite of|despite the|shrugs? off|weathers?|tolerance|resistan\w*|insurance|buffer|relief)\b(?:\W+\w+){0,3}\W+" + re.escape(b.split()[0]), low)
             and not re.search(re.escape(b.split()[-1]) + r"\W+(?:\w+\W+){0,1}(?:tolerance|resistan\w*|insurance|relief|buffer|eases?|easing|ends?|over)\b", low)]   # 'despite drought', 'drought tolerance' are not supply cuts
+    # a price rise that belongs to inputs (fertilizer, farm costs) is a cost story, not a grain-price signal
+    if re.search(r"\b(?:fertili[sz]er|input|farm|production) (?:prices?|costs?)\b", low):
+        bull = [b for b in bull if not re.search(r"\b(?:prices?|costs?)\b", b)]
+    bull = [b for b in bull if not (b == "bounce" and re.search(r"\b(?:try|tries|trying|attempt\w*|or bottom)\b", low))]   # 'try to bounce?' is not a bounce
     bear = [m.group(0) for rx in BEAR for m in [re.search(rx, low)] if m]
     bear = [x for x in bear if not re.search(r"planting|acreage|sowing|\barea\b", x)]   # 'plantings at a 7-year low' is a supply cut, not a price low
     score = len(bull) - len(bear)

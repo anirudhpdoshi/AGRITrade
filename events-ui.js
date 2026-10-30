@@ -120,7 +120,7 @@
   /* ---------- rendering ---------- */
   function flagOf(e) { return e.cc && window.flag ? window.flag(e.cc, 13) + " " : ""; }
   function chip(e) { var c = CAT[e.kind] || CAT.desk; return '<span class="evc" style="--ec:' + c.c + '">' + c.l + "</span>"; }
-  function deskName(go) { var a = (go || "").split(":"); if (a[0] === "policy") return "Policy · " + (a[1] ? "evidence" : "calendar"); return ({ corn: "Corn", wheat: "Wheat", soybeans: "Soybeans", fx: "USD/CAD" })[a[0]] + " · " + ({ overview: "Overview", deriv: "Derivatives", fund: "Fundamentals", inputs: "Input costs", macro: "Macro" })[a[1]]; }
+  function deskName(go) { var a = (go || "").split("@")[0].split(":"); if (a[0] === "world") return "World markets"; if (a[0] === "policy") return "Policy · " + (a[1] ? "evidence" : "calendar"); return ({ corn: "Corn", wheat: "Wheat", soybeans: "Soybeans", fx: "USD/CAD" })[a[0]] + " · " + ({ overview: "Overview", deriv: "Derivatives", fund: "Fundamentals", inputs: "Input costs", macro: "Macro" })[a[1]]; }
   function row(e, now) {
     var d = e.t - now, st = d > 15 * MIN ? "up" : d > 0 ? "soon" : d > -10 * MIN ? "due" : "out";
     var LD = st === "out" || st === "due" ? landed(e) : null;
@@ -313,8 +313,8 @@
     var day = "", body = list.length ? list.map(function (m) {
       var d = dayIso(m.t), sep = d !== day ? '<div class="evfd">' + (d === dayIso(now) ? "Today" : esc(shortDay(m.t))) + "</div>" : ""; day = d;
       var k = MK[m.k] || MK.data;
-      return sep + '<div class="evfi" style="--mc:' + k[1] + '"><span class="evfk">' + k[0] + '</span><div><div class="evfh">' + m.h + '</div><div class="evfs">' + hm(m.t) + " ET" +
-        (m.go ? ' · <a href="#" data-evgo="' + esc(m.go) + '">' + esc(deskName(m.go)) + " →</a>" : "") + "</div></div></div>"; }).join("")
+      return sep + '<div class="evfi' + (m.go ? " evfi-go" : "") + '" style="--mc:' + k[1] + '"' + (m.go ? ' data-evgo="' + esc(m.go) + '" role="link" tabindex="0" title="Open ' + esc(deskName(m.go)) + ' and highlight the updated card"' : "") + '><span class="evfk">' + k[0] + '</span><div><div class="evfh">' + m.h + '</div><div class="evfs">' + hm(m.t) + " ET" +
+        (m.go ? ' · <span class="evfo">Open ' + esc(deskName(m.go)) + " →</span>" : "") + "</div></div></div>"; }).join("")
       : '<div class="checkline">No milestones yet — data arrivals, open-interest shifts, wall moves, level crossings and world alerts appear here as they happen.</div>';
     return head + '<div class="rail-body mon-body evfb">' + body + '<div class="stamp">Recorded while the desk is open (kept 36 h on this browser) · newest first' + (feed.length ? ' · <a href="#" data-evclear>clear</a>' : "") + "</div></div></div>";
   }
@@ -392,17 +392,17 @@
       var v = s.asof[k]; if (!v) return;
       /* on first load, today's earlier refreshes are added at the time they landed; afterwards, each new refresh as it arrives */
       if (first ? SEED[k] && dayIso(Date.parse(v)) === today : (s.fp[k] !== base.fp[k] && base.fp[k] != null))
-        log("data", "<b>Updated</b> — " + esc(ASOF[k][0]) + detail(k), ASOF[k][1], "asof|" + k + "|" + v, first ? Date.parse(v) : 0);
+        log("data", "<b>Updated</b> — " + esc(ASOF[k][0]) + detail(k), ASOF[k][1] + "@" + (WHERE[k] ? WHERE[k][1] : '[data-src="' + k + '"]'), "asof|" + k + "|" + v, first ? Date.parse(v) : 0);
     });
     if (first) { delete s.pol; base = s; return; }   /* policy items are seeded on the next pass */
     (window.macroAll ? macroAll() : []).forEach(function (m) {
       if (base.macro[m.key] && s.macro[m.key] !== base.macro[m.key]) {
         var u = m.unit === "K" ? "K" : m.unit || "";
-        log("release", "<b>" + (m.group === "ca" ? "Canada" : "US") + " " + esc(m.name) + "</b> " + esc(m.period) + ": <b>" + esc(m.value) + esc(u) + "</b>" + (m.prior != null ? " (prior " + esc(m.prior) + esc(u) + ")" : ""), "fx:macro", "mac|" + m.key + "|" + s.macro[m.key]);
+        log("release", "<b>" + (m.group === "ca" ? "Canada" : "US") + " " + esc(m.name) + "</b> " + esc(m.period) + ": <b>" + esc(m.value) + esc(u) + "</b>" + (m.prior != null ? " (prior " + esc(m.prior) + esc(u) + ")" : ""), "fx:macro@[data-mkey=\"" + m.key + "\"]", "mac|" + m.key + "|" + s.macro[m.key]);
       }
     });
     Object.keys(s.walls).forEach(function (k) {
-      var a = base.walls[k], b = s.walls[k], go = k + ":deriv"; if (!a) return;
+      var a = base.walls[k], b = s.walls[k], go = k + ':deriv@[id^="oi-"]'; if (!a) return;
       if (a[0] != null && b[0] != null && a[0] !== b[0]) log("oi", "<b>" + GN[k] + " call wall</b> moves " + sk(a[0]) + " → <b>" + sk(b[0]) + "</b> (new resistance)", go, "cw|" + k + "|" + b[0] + "|" + Math.round(Date.now() / 600000));
       if (a[1] != null && b[1] != null && a[1] !== b[1]) log("oi", "<b>" + GN[k] + " put wall</b> moves " + sk(a[1]) + " → <b>" + sk(b[1]) + "</b> (new support)", go, "pw|" + k + "|" + b[1] + "|" + Math.round(Date.now() / 600000));
       if (base.oi[k] && s.oi[k] !== base.oi[k]) {
@@ -418,8 +418,8 @@
     });
     Object.keys(s.roll).forEach(function (k) {   /* futures roll crossing the 40% liquidity threshold opens the next option month */
       var a = base.roll[k], b = s.roll[k]; if (!a || !b) return;
-      if (a.pct < 40 && b.pct >= 40) log("oi", "<b>" + GN[k] + " roll passes 40%</b> — " + esc(b.def) + " now holds " + b.pct.toFixed(1) + "% of open interest · next option month window is open", k + ":deriv", "roll40|" + k + "|" + b.def);
-      if (a.pct >= 40 && b.pct < 40) log("oi", "<b>" + GN[k] + " roll back below 40%</b> (" + b.pct.toFixed(1) + "%) — next option month window locked", k + ":deriv", "roll40d|" + k + "|" + b.pct);
+      if (a.pct < 40 && b.pct >= 40) log("oi", "<b>" + GN[k] + " roll passes 40%</b> — " + esc(b.def) + " now holds " + b.pct.toFixed(1) + "% of open interest · next option month window is open", k + ":deriv@.roll-tile", "roll40|" + k + "|" + b.def);
+      if (a.pct >= 40 && b.pct < 40) log("oi", "<b>" + GN[k] + " roll back below 40%</b> (" + b.pct.toFixed(1) + "%) — next option month window locked", k + ":deriv@.roll-tile", "roll40d|" + k + "|" + b.pct);
     });
     /* central-bank statements, minutes and speeches read by the Policy engine (all five banks) */
     if (s.pol) {
@@ -446,13 +446,13 @@
     });
     Object.keys(s.flow).forEach(function (k) {   /* 10-session position-flow signal changing category */
       var a = base.flow[k], b = s.flow[k]; if (!a || !b || a.b === b.b) return;
-      log("oi", "<b>" + GN[k] + " position flow: " + esc(b.b.toLowerCase()) + "</b> (was " + esc(a.b.toLowerCase()) + ") — 10-session score " + (b.sc > 0 ? "+" : "") + b.sc + " through " + esc(b.d), k + ":deriv", "flow|" + k + "|" + b.b + "|" + b.d);
+      log("oi", "<b>" + GN[k] + " position flow: " + esc(b.b.toLowerCase()) + "</b> (was " + esc(a.b.toLowerCase()) + ") — 10-session score " + (b.sc > 0 ? "+" : "") + b.sc + " through " + esc(b.d), k + ":deriv@.fl-tile", "flow|" + k + "|" + b.b + "|" + b.d);
     });
-    if (s.gg && base.gg && s.gg !== base.gg) log("data", "<b>Updated</b> — Brazil &amp; World fundamentals (CONAB · USDA · Comex)", "corn:fund", "gg|" + s.gg);
+    if (s.gg && base.gg && s.gg !== base.gg) log("data", "<b>Updated</b> — Brazil &amp; World fundamentals (CONAB · USDA · Comex)", "corn:fund@[data-src=\"ext\"]", "gg|" + s.gg);
     Object.keys(s.wa).forEach(function (k) {
       if (base.wa[k] == null || s.wa[k] === base.wa[k] || !s.wa[k]) return;
       var W = WORLD._data(), i = (W.instruments || []).filter(function (x) { return (x.id || x.name) === k; })[0];
-      log("world", "<b>" + esc(i ? i.name : k) + "</b> sets a new 52-week " + (s.wa[k].indexOf("H") >= 0 ? "high" : "low"), "", "w52|" + k + "|" + s.wa[k] + "|" + dayIso(Date.now()));
+      log("world", "<b>" + esc(i ? i.name : k) + "</b> sets a new 52-week " + (s.wa[k].indexOf("H") >= 0 ? "high" : "low"), "world", "w52|" + k + "|" + s.wa[k] + "|" + dayIso(Date.now()));
     });
     base = s;
   }
@@ -483,6 +483,7 @@
 
   /* ---------- wiring ---------- */
   function go(spec, sel) {
+    var at = (spec || "").indexOf("@"); if (at >= 0) { sel = sel || spec.slice(at + 1); spec = spec.slice(0, at); }   /* "tab:section@card" */
     var a = (spec || "").split(":"), b = document.getElementById("tabbtn-" + a[0]); if (!b) return;
     b.click();
     if (sel) setTimeout(function () { decorate();
@@ -493,6 +494,7 @@
     if (a[0] === "policy") { if (a[1] && window.POLICY && POLICY.open) POLICY.open(a[1]); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
     if (a[1] && window.setSub) setTimeout(function () { window.setSub(a[0], a[1]); if (!sel) window.scrollTo({ top: 0, behavior: "smooth" }); }, 30);
   }
+  document.addEventListener("keydown", function (ev) { if (ev.key !== "Enter") return; var g = ev.target && ev.target.closest && ev.target.closest(".evfi-go"); if (g) { ev.preventDefault(); go(g.getAttribute("data-evgo")); } });
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t) return;
     var g = t.closest("[data-evgo]"); if (g) { ev.preventDefault(); go(g.getAttribute("data-evgo"), g.getAttribute("data-evsel")); return; }
