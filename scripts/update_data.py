@@ -1578,7 +1578,7 @@ def settles(D, N):
                 raise RuntimeError(f"{front}: only {len(st_)} settles")
             # verify the source against the desk's verified settles before trusting it
             # the newest stored day may have been captured before the settlement was final -> it is re-read, not used as proof
-            mine = {h["d"][:10]: h["s"] for h in g["history"]} if g["fan"].get("front", front) == front else {}
+            mine = {h["d"][:10]: h["s"] for h in g["history"]} if g["fan"].get("front", front) == front and g["fan"].get("settle_date") != "2000-01-01" else {}   # new front after a roll: nothing to verify against
             newest = max(mine) if mine else ""
             both = [(mine[d], v) for d, v in st_ if d in mine and d != newest]
             if mine and len(both) < 5:
