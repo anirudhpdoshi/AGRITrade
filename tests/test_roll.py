@@ -12,7 +12,7 @@ ok(U.contract_dates("ZSX26") == (date(2026, 10, 30), date(2026, 10, 29)), "ZSX26
 ok(U.contract_dates("ZCZ26") == (date(2026, 11, 30), date(2026, 11, 27)), "Dec corn: Thanksgiving skipped")
 ok(U.next_contract("ZSX26", "soybeans") == "ZSF27" and U.next_contract("ZCZ26", "corn") == "ZCH27", "next listed month")
 D = json.load(open(os.path.join(os.path.dirname(__file__), "..", "data.json")))["DATA"]
-D["grains"]["soybeans"]["roll"][0]["contract"] = "ZSX26"
+D["grains"]["soybeans"]["roll"] = [{"contract": c, "settle": None, "prev": None, "oi_pct": 0.0} for c in ("ZSX26", "ZSF27", "ZSH27")]
 ok(U.roll_fronts(D, date(2026, 10, 29)) == [], "still on the desk on the hard-exit day")
 ok(U.roll_fronts(D, date(2026, 10, 30)) == [("soybeans", "ZSX26", "ZSF27")], "gone the day after")
 ok([r["contract"] for r in D["grains"]["soybeans"]["roll"]] == ["ZSF27", "ZSH27", "ZSK27"], "curve refilled")
