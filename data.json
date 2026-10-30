@@ -3233,20 +3233,25 @@
       "src": "Yahoo ZCZ26.CBT (delayed)"
      },
      "ZCH27": {
-      "px": 4.6325,
+      "px": 4.6375,
       "ts": "2026-10-30T13:05:00-04:00",
       "label": "1:05pm ET",
       "settle": 4.645,
       "settle_date": "2026-10-29",
       "src": "Yahoo ZCH27.CBT (delayed)"
      }
+    },
+    "front_dates": {
+     "contract": "ZCZ26",
+     "fnd": "2026-11-30",
+     "hard_exit": "2026-11-27"
     }
    },
    "soybeans": {
     "fan": {
      "anchor": 12.1975,
      "sig": 0.10656537036448321,
-     "settle_date": "2026-10-29",
+     "settle_date": "2000-01-01",
      "r5": [
       11.73,
       12.66
@@ -3272,7 +3277,7 @@
      ],
      "near_expiry": "Jan-27",
      "intraday": [
-      12.27,
+      12.4075,
       "1:05pm ET"
      ],
      "iv_10d_rel": 0.02763,
@@ -3282,7 +3287,7 @@
      "intraday_ts": "2026-10-30T13:05:00-04:00",
      "ma50": "12.84",
      "ma100": "12.32",
-     "intraday_src": "ZSX26.CBT"
+     "intraday_src": "ZSF27.CBT"
     },
     "history": [
      {
@@ -5080,15 +5085,6 @@
     ],
     "roll": [
      {
-      "contract": "ZSX26",
-      "expiry": "Nov-26",
-      "settle": 12.1975,
-      "oi_oct19": 269046,
-      "oi_pct": 46.7,
-      "prev": 12.245,
-      "settle_date": "2026-10-29"
-     },
-     {
       "contract": "ZSF27",
       "expiry": "Jan-27",
       "settle": 12.3475,
@@ -5105,6 +5101,13 @@
       "oi_pct": 0.0,
       "prev": 12.46,
       "settle_date": "2026-10-29"
+     },
+     {
+      "contract": "ZSK27",
+      "expiry": "May-27",
+      "settle": null,
+      "prev": null,
+      "oi_pct": 0.0
      }
     ],
     "vol": {
@@ -5938,16 +5941,8 @@
      }
     },
     "quotes": {
-     "ZSX26": {
-      "px": 12.27,
-      "ts": "2026-10-30T13:05:00-04:00",
-      "label": "1:05pm ET",
-      "settle": 12.1975,
-      "settle_date": "2026-10-29",
-      "src": "Yahoo ZSX26.CBT (delayed)"
-     },
      "ZSF27": {
-      "px": 12.4025,
+      "px": 12.4075,
       "ts": "2026-10-30T13:05:00-04:00",
       "label": "1:05pm ET",
       "settle": 12.3475,
@@ -5955,13 +5950,18 @@
       "src": "Yahoo ZSF27.CBT (delayed)"
      },
      "ZSH27": {
-      "px": 12.4975,
+      "px": 12.5,
       "ts": "2026-10-30T13:05:00-04:00",
       "label": "1:05pm ET",
       "settle": 12.435,
       "settle_date": "2026-10-29",
       "src": "Yahoo ZSH27.CBT (delayed)"
      }
+    },
+    "front_dates": {
+     "contract": "ZSF27",
+     "fnd": "2026-12-31",
+     "hard_exit": "2026-12-30"
     }
    },
    "wheat": {
@@ -5994,7 +5994,7 @@
      ],
      "near_expiry": "Dec-26",
      "intraday": [
-      6.065,
+      6.0675,
       "1:05pm ET"
      ],
      "iv_10d_rel": 0.04693,
@@ -9838,7 +9838,7 @@
     },
     "quotes": {
      "ZWZ26": {
-      "px": 6.065,
+      "px": 6.0675,
       "ts": "2026-10-30T13:05:00-04:00",
       "label": "1:05pm ET",
       "settle": 6.0375,
@@ -9853,6 +9853,11 @@
       "settle_date": "2026-10-29",
       "src": "Yahoo ZWH27.CBT (delayed)"
      }
+    },
+    "front_dates": {
+     "contract": "ZWZ26",
+     "fnd": "2026-11-30",
+     "hard_exit": "2026-11-27"
     }
    }
   },
@@ -13126,7 +13131,7 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-30T13:15:24-04:00",
+   "updated_at": "2026-10-30T13:17:00-04:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
     "fx_spot": "2026-10-30T13:15:00-04:00",
@@ -13166,35 +13171,12 @@
    },
    "last_run": {
     "ok": [
-     "policy_watch",
-     "fx_spot",
-     "fx_alpha",
-     "fx_closes",
-     "yields",
-     "cftc_fx",
-     "cftc_grains",
-     "grains_quote",
-     "yields_live",
-     "energy",
-     "crosses",
-     "news",
-     "calendar",
-     "fed_odds",
-     "releases",
-     "macro",
-     "settles",
-     "exports",
-     "wasde",
-     "canada",
-     "ca_calendar",
-     "sd_hist",
-     "inputs",
-     "ext",
-     "ca_retail",
-     "fx_model"
+     "grains_quote"
     ],
-    "failed": [],
-    "at": "2026-10-30T13:15:24-04:00"
+    "failed": [
+     "settles"
+    ],
+    "at": "2026-10-30T13:17:00-04:00"
    },
    "releases_checked": "2026-10-30T13:15:24-04:00",
    "exports_checked": "2026-10-30T08:15:24-04:00",
@@ -13307,7 +13289,10 @@
     "ok": true,
     "at": "2026-10-30T11:30:24-04:00"
    },
-   "macro_checked": "2026-10-30T11:30:24-04:00"
+   "macro_checked": "2026-10-30T11:30:24-04:00",
+   "last_errors": {
+    "settles": "RuntimeError: ZSF27: source differs from verified settles by up to 0.1700 — not used"
+   }
   },
   "macro": [
    {
