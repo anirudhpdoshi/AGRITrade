@@ -1062,7 +1062,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
 <nav class="tabs" role="tablist" aria-label="Dashboard tabs">
     <button class="tab-btn" role="tab" id="tabbtn-corn" aria-selected="true" aria-controls="panel-corn" data-tab="corn">Corn<span class="sym">ZCZ26</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-wheat" aria-selected="false" aria-controls="panel-wheat" data-tab="wheat">Wheat<span class="sym">ZWZ26</span></button>
-    <button class="tab-btn" role="tab" id="tabbtn-soybeans" aria-selected="false" aria-controls="panel-soybeans" data-tab="soybeans">Soybeans<span class="sym">ZSX26</span></button>
+    <button class="tab-btn" role="tab" id="tabbtn-soybeans" aria-selected="false" aria-controls="panel-soybeans" data-tab="soybeans">Soybeans<span class="sym">ZSF27</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-fx" aria-selected="false" aria-controls="panel-fx" data-tab="fx">USD/CAD<span class="sym">Desk</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-world" aria-selected="false" aria-controls="panel-world" data-tab="world">World<span class="sym">Markets</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-events" aria-selected="false" aria-controls="panel-events" data-tab="events">Events<span class="sym">Today</span></button>
@@ -1132,9 +1132,9 @@ var GMETA = {
  wheat: { name:"Wheat", contract:"ZWZ26", chainNear:"Dec-26", chainFar:"Mar-27", accent:"#d97b4f",
    optExp:"Fri, Nov 20, 2026",
    dates:[["2026-11-20","Dec options expire"],["2026-11-27","ZWZ26 hard exit (desk rule)"],["2026-11-30","ZWZ26 first notice day"]] },
- soybeans: { name:"Soybeans", contract:"ZSX26", chainNear:"Jan-27", chainFar:"Mar-27", accent:"#3fb97f",
-   optExp:"Nov options expire Fri, Oct 23 (rolled) · Jan options Thu, Dec 24, 2026",
-   dates:[["2026-10-23","Nov options expire"],["2026-10-29","ZSX26 hard exit (desk rule)"],["2026-10-30","ZSX26 first notice day"],["2026-12-24","Jan options expire"]] }
+ soybeans: { name:"Soybeans", contract:"ZSF27", chainNear:"Jan-27", chainFar:"Mar-27", accent:"#3fb97f",
+   optExp:"Jan options expire Thu, Dec 24, 2026 · Mar options Fri, Feb 19, 2027",
+   dates:[["2026-12-24","Jan options expire"],["2026-12-30","ZSF27 hard exit (desk rule)"],["2026-12-31","ZSF27 first notice day"]] }
 };
 /* contract / chain labels follow the data (roll[0] = front futures, near/far.chain = options chains);
    the literals above are only fallbacks if a field is missing */
@@ -4465,7 +4465,7 @@ var SECG={
   }
 };
 var SUBTHEME={overview:'#38b6c9',deriv:'#a78bfa',macro:'#e8b93d',fund:'#e8b93d',rates:'#3fb97f',inputs:'#f08a5d'};
-var GTITLE={corn:'Corn · ZCZ26',wheat:'Wheat · ZWZ26',soybeans:'Soybeans · ZSX26',fx:'USD/CAD desk'};
+var GTITLE={corn:'Corn · ZCZ26',wheat:'Wheat · ZWZ26',soybeans:'Soybeans · ZSF27',fx:'USD/CAD desk'};
 
 /* ---------- left-panel collapse, knowledge bank, per-menu guide ---------- */
 var NAVSHUT={}, NAVMIN=false, KBON=false;
@@ -4606,6 +4606,7 @@ renderAll();
   function activeTab(){ var a=document.querySelector('.tab-panel.active'); return a?a.id.replace('panel-',''):''; }
   window.renderAllFull=full;
   window.renderAll=renderAll=function(){
+    syncFronts();   /* a data refresh can carry a roll: tab names, titles and charts follow the new front */
     var on=activeTab();
     Object.keys(R).forEach(function(k){ if(k===on){ R[k](); delete DIRTY[k]; } else DIRTY[k]=1; });
     if(on&&on!=='fx'&&typeof drawDestMaps==='function') drawDestMaps();
