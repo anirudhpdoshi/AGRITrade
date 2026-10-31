@@ -64,6 +64,12 @@ publishing: `INTEL_DRY=1 INTEL_OUT=/tmp/intel.json python scripts/intel.py`.
   (one call per symbol, quote not retried for 30 days). The tab's *FMP plan coverage* table shows each endpoint as in plan /
   some symbols / not in plan with the fallback in use; tick *Check which FMP endpoints my plan allows* on a run (~4 calls)
   to probe search-name, quote (AAPL), earnings-calendar and earnings.
+- **Terminal layout (phase 1, market side):** header strip (Dow, Nasdaq Composite, Russell 2000, VIX, ICE DXY as the
+  disclosed stand-in for Bloomberg BBDXY) read from `world.json` — no new fetch; ticker search + lock (the lock never freezes
+  market data or the feed, and a feed click never silently replaces a locked company); left section nav; right earnings feed
+  (released · awaiting · today · tomorrow · this week · next week) from the one daily earnings-calendar call; seasonality
+  heatmap from `scripts/us_market.py` (Yahoo month-end closes, price return, `market.json` on the `earnings` branch, no FMP).
+  Phase 2: SEC EDGAR company workspaces for a pre-built universe, rule-based interpretation.
 - Watchlist: `scripts/data/earnings_watchlist.json`.
 
 ## Turning on the true streaming tick

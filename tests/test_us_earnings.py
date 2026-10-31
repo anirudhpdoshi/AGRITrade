@@ -88,13 +88,14 @@ cal = {"fetched_at": E.iso(sat - timedelta(hours=2)), "rows": [{"symbol": "CF", 
 ok(not E.calendar_due(cal, sat)[0], "2 h old, nothing reported yet -> not due")
 ok(E.calendar_due(dict(cal, fetched_at=E.iso(sat - timedelta(hours=25))), sat)[0], "a day old -> due")
 wed = ny(2026, 11, 4, 17, 30)
-cal2 = {"fetched_at": E.iso(wed - timedelta(minutes=90)), "rows": [{"symbol": "CF", "date": "2026-11-04", "epsActual": None}]}
+cal2 = {"fetched_at": E.iso(wed - timedelta(minutes=90)), "rows": [{"symbol": "CF", "date": "2026-11-04", "epsActual": None, "w": True}]}
 ok(E.calendar_due(cal2, wed)[0] and "CF" in E.calendar_due(cal2, wed)[1], "report day without actuals -> hourly re-check")
 ok(not E.calendar_due(dict(cal2, fetched_at=E.iso(wed - timedelta(minutes=20))), wed)[0], "...but not more than hourly")
 ok(E.plan({"endpoints": {"earnings-calendar": {"status": "not_in_plan"}}}, [], [], sat) == [], "calendar out of plan -> never called")
 ok([c[0] for c in E.plan({}, [], [], sat)] == ["earnings-calendar"], "calendar is one call regardless of watchlist size")
 ok(E.surprise(1.1, 1.0) == 10.0 and E.surprise(-0.9, -1.0) == 10.0 and E.surprise(1, 0) is None, "surprise % vs |estimate|")
 sc = E.shape_calendar([{"symbol": "CF", "date": "2026-11-04", "epsActual": 1.2, "epsEstimated": 1.0}, {"symbol": "AAPL", "date": "2026-11-01"}], {"CF"}, "a", "b", sat)
-ok(sc["rows_total"] == 2 and sc["symbols_total"] == 2 and [r["symbol"] for r in sc["rows"]] == ["CF"] and sc["rows"][0]["eps_surprise_pct"] == 20.0, "calendar keeps watchlist rows + coverage counts")
+ok(sc["rows_total"] == 2 and sc["symbols_total"] == 2 and [r["symbol"] for r in sc["rows"] if r.get("w")] == ["CF"] and len(sc["rows"]) == 2 and sc["rows"][1]["eps_surprise_pct"] == 20.0, "calendar keeps every row, watchlist flagged")
+ok(not E.calendar_due({"fetched_at": E.iso(wed - timedelta(minutes=90)), "rows": [{"symbol": "AAPL", "date": "2026-11-04"}]}, wed)[0], "only watchlist reports trigger hourly re-checks")
 
 print(f"us_earnings: {n} checks passed")

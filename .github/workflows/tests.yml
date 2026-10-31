@@ -1,7 +1,7 @@
 name: Tests
 on:
   push:
-    paths: ["index.html", "events-ui.js", "policy-ui.js", "live.js", "fwd.js", "scripts/world.py", "scripts/global_grains.py", "scripts/intel.py", "scripts/update_data.py", "scripts/policy_watch.py", "scripts/live_loop.py", "scripts/us_earnings.py", "earnings-ui.js", "tests/**", ".github/workflows/tests.yml"]
+    paths: ["index.html", "events-ui.js", "policy-ui.js", "live.js", "fwd.js", "scripts/world.py", "scripts/global_grains.py", "scripts/intel.py", "scripts/update_data.py", "scripts/policy_watch.py", "scripts/live_loop.py", "scripts/us_earnings.py", "scripts/us_market.py", "earnings-ui.js", "tests/**", ".github/workflows/tests.yml"]
   workflow_dispatch:
 jobs:
   unit:
@@ -17,6 +17,7 @@ jobs:
       - run: python tests/test_global_grains.py
       - run: python tests/test_intel.py
       - run: python tests/test_us_earnings.py
+      - run: python tests/test_us_market.py
       - run: pip install -q -r scripts/requirements.txt && python tests/test_bea_fastlane.py && python tests/test_roll.py
       - run: pip install -q -r scripts/requirements.txt && python tests/test_yields.py
   e2e:

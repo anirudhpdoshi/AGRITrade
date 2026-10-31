@@ -36,8 +36,12 @@ jobs:
         with: { fetch-depth: 1 }
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - name: Unit tests (call planning and budget)
-        run: python tests/test_us_earnings.py
+      - name: Unit tests (call planning, budget, seasonality math)
+        run: python tests/test_us_earnings.py && python tests/test_us_market.py
+      - run: pip install -q yfinance
+      - name: Market seasonality (Yahoo, no FMP calls)
+        run: python scripts/us_market.py
+        continue-on-error: true
       - name: Fetch what is due, publish earnings.json
         run: python scripts/us_earnings.py ${{ inputs.force && '--force' || '' }} ${{ inputs.force_profile && '--force-profile' || '' }} ${{ inputs.check_plan && '--check-plan' || '' }} --add "$ADD"
         env:

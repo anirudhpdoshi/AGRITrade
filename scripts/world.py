@@ -61,6 +61,7 @@ UNIVERSE = [
     # equity indices
     I("spx", "S&P 500", "Indices", "Americas", "us", "^GSPC", "NYSE", "USD"),
     I("ndx", "Nasdaq-100", "Indices", "Americas", "us", "^NDX", "NYSE", "USD"),
+    I("ixic", "Nasdaq Composite", "Indices", "Americas", "us", "^IXIC", "NYSE", "USD"),
     I("dji", "Dow Jones Industrial", "Indices", "Americas", "us", "^DJI", "NYSE", "USD"),
     I("rut", "Russell 2000", "Indices", "Americas", "us", "^RUT", "NYSE", "USD"),
     I("tsx", "S&P/TSX Composite", "Indices", "Americas", "ca", "^GSPTSE", "TSX", "CAD"),

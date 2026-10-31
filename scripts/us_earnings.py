@@ -202,7 +202,7 @@ def calendar_due(cal, now, force=False):
     if age_h >= CAL_MAX_HOURS:
         return True, "calendar %d h old" % age_h
     today = now.astimezone(NY).date().isoformat()
-    pending = [r for r in cal.get("rows") or [] if r.get("date") and r["date"] <= today and r.get("epsActual") is None]
+    pending = [r for r in cal.get("rows") or [] if r.get("w") and r.get("date") and r["date"] <= today and r.get("epsActual") is None]
     if pending and age_h * 60 >= CAL_PENDING_MIN:
         return True, "%s reported, actuals not in yet" % ",".join(sorted({r["symbol"] for r in pending}))
     return False, "calendar %.0f h old, nothing pending" % age_h
@@ -216,14 +216,16 @@ def surprise(act, est):
 
 
 def shape_calendar(res, watch, frm, to, now):
-    """Keep the watchlist rows of a calendar response (plus coverage counts, so a thin plan is visible)."""
+    """Every row of a calendar response (the market-wide feed), watchlist rows flagged `w`, plus coverage counts."""
     res = res if isinstance(res, list) else []
     rows = []
-    for x in res:
-        if x.get("symbol") in watch:
+    for x in res[:1500]:
+        if x.get("symbol"):
             r = trim(x, ["symbol", "date", "epsActual", "epsEstimated", "revenueActual", "revenueEstimated", "time", "lastUpdated"])
             r["eps_surprise_pct"] = surprise(x.get("epsActual"), x.get("epsEstimated"))
             r["rev_surprise_pct"] = surprise(x.get("revenueActual"), x.get("revenueEstimated"))
+            if x["symbol"] in watch:
+                r["w"] = True
             rows.append(r)
     rows.sort(key=lambda r: (r.get("date") or "", r["symbol"]))
     return {"from": frm, "to": to, "fetched_at": iso(now), "rows_total": len(res),
