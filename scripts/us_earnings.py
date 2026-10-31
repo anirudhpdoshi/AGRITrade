@@ -380,6 +380,10 @@ def main():
         usage["total"] += 1
         time.sleep(0.25)
 
+    for sym, c in comps.items():   # known 402s from earlier runs count as refusals (no call needed)
+        if sym in symbols and quote_restricted(c, now) and sym not in ((eps.get("quote") or {}).get("blocked_syms") or []):
+            r = c.get("quote_restricted") or c.get("quote_error") or {}
+            note_endpoint(eps, "quote", "not_in_plan", sym, parse(r.get("at")) or now)
     body = {
         "updated_at": iso(now),
         "provider": "Financial Modeling Prep (stable API)",
