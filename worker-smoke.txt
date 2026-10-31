@@ -1,9 +1,12 @@
 == /health
-{"ok":true,"contact":"anirudh.p.doshi@gmail.com"}
+
+== status + headers for /search?q=adm
+HTTP/2 404 
+server: cloudflare
+cf-ray: a534279148e35616-SJC
+HTTP 404
+
 == /search?q=deere
-{"results":[{"cik":315189,"name":"DEERE & CO","ticker":"DE","exchange":"NYSE"}],"source":"SEC company_tickers_exchange.json"}
+
 == /company?t=ADM
-HTTP 200 · 76945 bytes · 0.219518s · CORS access-control-allow-origin: https://anirudhpdoshi.github.io
-name Archer-Daniels-Midland Co | sic 2070 | tags 404 | filings 57 | error None
-== /prices?t=ADM
-closes 251 last ['2026-10-30', 76.91000366210938] | spx 251
+HTTP 404 · 0 bytes · 0.123983s · CORS no CORS header
