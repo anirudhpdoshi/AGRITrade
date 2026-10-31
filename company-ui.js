@@ -18,7 +18,11 @@
   function pc(v, d) { if (v == null || !isFinite(v)) return "—"; var t = Math.abs(v).toFixed(d == null ? 1 : d); return (+t === 0 ? "" : v > 0 ? "+" : "−") + t + "%"; }
   function pp(v) { return v == null ? "—" : pc(v).replace("%", " pp"); }
   function sgc(v, txt) { return '<span class="' + (v == null || Math.abs(v) < 0.05 ? "neu" : v > 0 ? "up" : "dn") + '">' + txt + "</span>"; }
-  function money(v) { return v == null ? "—" : "$" + f$(v).replace("−", "−$").replace("$−$", "−$"); }
+  function money(v) { return v == null ? "—" : v < 0 ? "−$" + f$(-v) : "$" + f$(v); }
+  /* direction that is GOOD for each metric: +1 higher is better, −1 lower is better, 0 neutral (colour by sign is misleading) */
+  var GOOD = { gdebt: -1, ndebt: -1, dso: -1, dio: -1, ccc: -1, effcost: -1, cashcost: -1, nd_ebitda: -1, de: -1, da_r: -1, intburden: -1, sh_d: -1, cogs: -1,
+    capex: 0, sga: 0, rnd: 0, dpo: 0, da: 0, intexp: -1, tax: 0 };
+  function tone(k, v) { var base = String(k).replace(/_(yoy|qoq)$/, ""), g = GOOD[base]; return v == null ? null : g === 0 ? 0 : g === -1 ? -v : v; }
 
   /* ---------------- data ---------------- */
   function search(q) {
@@ -216,7 +220,7 @@
   var PCT = { effcost: 1, cashcost: 1, roe: 1, roa: 1, roic: 1, da_r: 1, intburden: 1, fcf_debt: 1, ebitm: 1, gm: 1, opm: 1, nm: 1, ebitdam: 1, fcfm: 1, etr: 1, capexint: 1, fcfconv: 1 };
   function fv(k, v) { if (v == null) return "—"; var g = /^(.*)_(yoy|qoq)$/.exec(k);
     if (g) { if (DAYS[g[1]]) return (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + " d"; if (XR[g[1]]) return (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "×"; return PCT[g[1]] ? pp(v) : pc(v); }
-    if (DAYS[k]) return v.toFixed(1) + " d"; if (XR[k]) return v.toFixed(2) + "×"; if (PCT[k]) return v.toFixed(1) + "%"; if (k === "eps_d") return "$" + v.toFixed(2); if (k === "cfoni") return v.toFixed(2) + "×"; if (k === "sh_d") return f$(v); return money(v); }
+    if (k === "nd_ebitda" && v < 0) return "net cash"; if (DAYS[k]) return v.toFixed(1) + " d"; if (XR[k]) return v.toFixed(2) + "×"; if (PCT[k]) return v.toFixed(1) + "%"; if (k === "eps_d") return "$" + v.toFixed(2); if (k === "cfoni") return v.toFixed(2) + "×"; if (k === "sh_d") return f$(v); return money(v); }
 
   /* ---------------- interpretation (rule-based, data-referenced; 9-part contract) ---------------- */
   function interp(M, k, extra) {
@@ -255,7 +259,7 @@
   function head(M, k, unit) {
     var q = L(M), m = q.m[k], y = q.m[k + "_yoy"], p = q.m[k + "_qoq"];
     return '<div class="cx-hd"><div><div class="lab">' + esc(nm(k)) + " · " + esc(q.fl.label) + " (" + esc(q.end) + ")</div><div class=\"big\">" + fv(k, m && m.v) + "</div></div>" +
-      '<div><div class="lab">YoY</div><div class="m">' + (y ? sgc(DAYS[k] || XR[k] ? -y.v * (k === "dpo" || /cov|cr|qr|cashr|turn|^at$/.test(k) ? -1 : 1) : y.v, fv(k + "_yoy", y.v)) : "—") + '</div></div><div><div class="lab">vs prior quarter</div><div class="m">' + (p ? sgc(DAYS[k] || XR[k] ? -p.v * (k === "dpo" || /cov|cr|qr|cashr|turn|^at$/.test(k) ? -1 : 1) : p.v, fv(k + "_qoq", p.v)) : "—") + "</div></div>" +
+      '<div><div class="lab">YoY</div><div class="m">' + (y ? sgc(tone(k, y.v), fv(k + "_yoy", y.v)) : "—") + '</div></div><div><div class="lab">vs prior quarter</div><div class="m">' + (p ? sgc(tone(k, p.v), fv(k + "_qoq", p.v)) : "—") + "</div></div>" +
       (!PCT[k] && !DAYS[k] && !XR[k] && ttmI(M, k) != null ? '<div><div class="lab">TTM</div><div class="m">' + fv(k, ttmI(M, k)) + "</div></div>" : "") +
       '<div><div class="lab">Status</div><div class="m">' + stB(m) + '</div></div><div><div class="lab">Unit</div><div class="m">' + (unit || (PCT[k] ? "%" : DAYS[k] ? "days" : XR[k] ? "times" : "USD")) + "</div></div></div>";
   }
@@ -304,7 +308,7 @@
           return '<div class="cx-part">' + p[0] + ' <span style="letter-spacing:0;text-transform:none;color:var(--faint)">— next phase: ' + p[1].map(function (c) { return esc(c[1]); }).join(" · ") + "</span></div>";
         return '<div class="cx-part">' + p[0] + '</div><div class="cx-grid">' + p[1].map(function (c) {
         var b = BUILT[c[0]], k = c[3] === "opm" && E.val(q, "opm") == null ? "ebitm" : c[3], kv = "", sp = "";
-        if (b && k) { var m = q.m[k], y = q.m[k + "_yoy"]; kv = '<div class="k">' + fv(k, m && m.v) + "</div>" + (y ? '<div class="n">' + sgc(DAYS[k] ? -y.v : y.v, fv(k + "_yoy", y.v)) + " YoY · " + esc(q.fl.label) + "</div>" : '<div class="n">' + esc(q.fl.label) + "</div>"); sp = spark(S(M, k)); }
+        if (b && k) { var m = q.m[k], y = q.m[k + "_yoy"]; kv = '<div class="k">' + fv(k, m && m.v) + "</div>" + (y ? '<div class="n">' + sgc(tone(k, y.v), fv(k + "_yoy", y.v)) + " YoY · " + esc(q.fl.label) + "</div>" : '<div class="n">' + esc(q.fl.label) + "</div>"); sp = spark(S(M, k)); }
         if (c[0] === "maturity") { var mt = E.maturities(M); kv = '<div class="k">' + (mt && mt.buckets[0] ? money(mt.buckets[0].v) : "—") + '</div><div class="n">due within 12 months' + (mt ? " · " + esc(mt.label) : " · not tagged") + "</div>"; }
         if (c[0] === "warn") { var WW = E.warnings(M), act = WW.filter(function (w) { return w.status === "ACTIVE"; });
           kv = '<div class="k">' + act.length + ' <small style="font-size:12px;color:var(--muted)">active of 12</small></div><div class="n">' + (act.length ? act.map(function (w) { return '<span class="cx-vd ' + (w.severity === "WATCH" ? "WEAK" : "NEGATIVE") + '" style="font-size:9px;padding:1px 5px">' + w.id + "</span>"; }).join(" ") : "none triggered") + "</div>"; }
@@ -322,7 +326,7 @@
     var q = L(M), co = M.co, rel = E.latestRelease(co), lastF = (co.filings || []).filter(function (f) { return /^10-[QK]/.test(f.form); })[0];
     var nxt = window.EARNINGS && EARNINGS._data && EARNINGS._data() && EARNINGS._data().calendar ? (EARNINGS._data().calendar.rows || []).filter(function (r) { return r.symbol === co.ticker && r.date >= new Date().toISOString().slice(0, 10); })[0] : null;
     function tile(k, label, extra) { var m = q.m[k], y = q.m[k + "_yoy"], p = q.m[k + "_qoq"];
-      return '<div class="cx-tile"><div class="l">' + label + '</div><div class="v">' + fv(k, m && m.v) + '</div><div class="s">' + (y ? sgc(y.v, (PCT[k] ? pp(y.v) : pc(y.v)) + " YoY") : "YoY —") + (p && !PCT[k] ? " · " + sgc(p.v, pc(p.v) + " QoQ") : "") + "</div>" + (extra || "") + spark(S(M, k), PCT[k] ? C2 : C1) + "</div>"; }
+      return '<div class="cx-tile"><div class="l">' + label + '</div><div class="v">' + fv(k, m && m.v) + '</div><div class="s">' + (y ? sgc(tone(k, y.v), (PCT[k] ? pp(y.v) : pc(y.v)) + " YoY") : "YoY —") + (p && !PCT[k] ? " · " + sgc(tone(k, p.v), pc(p.v) + " QoQ") : "") + "</div>" + (extra || "") + spark(S(M, k), PCT[k] ? C2 : C1) + "</div>"; }
     var hd = [["Exchange", co.exchange || (co.exchanges || [])[0] || "—"], ["Sector (SIC)", M.sector + " · " + (co.sicDescription || "")], ["Fiscal year-end", co.fiscalYearEnd ? co.fiscalYearEnd.slice(0, 2) + "/" + co.fiscalYearEnd.slice(2) : "—"], ["Reporting currency", "USD"],
       ["Latest quarter", q.fl.label + " (" + q.end + ")"], ["Latest 10-Q/10-K filed", lastF ? lastF.form + " · " + lastF.filed : "—"], ["Last earnings release", rel ? rel.filed + " (8-K 2.02)" : "—"], ["Next expected earnings", nxt ? nxt.date + " (FMP calendar)" : "UNAVAILABLE — not in the free calendar"]];
     var ttmTxt = function (k) { var t = ttmI(M, k); return t == null ? "" : '<div class="s">TTM ' + fv(k, t) + "</div>"; };

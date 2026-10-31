@@ -12,6 +12,7 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()
         for t in TICK:
+          try:
             pg = await b.new_page(viewport={"width": 1500, "height": 1000})
             pg.on("pageerror", lambda e: log.append(f"[{t}] pageerror: {e}"))
             pg.on("requestfailed", lambda r: log.append(f"[{t}] request failed: {r.url[:120]} {r.failure}") if "workers.dev" in r.url else None)
@@ -35,6 +36,10 @@ async def main():
                 await (await pg.query_selector(".ut-main")).screenshot(path=f"{OUT}/{t}_c_{c}.png")
                 await pg.click(".ut-main [data-cocard='']"); await pg.wait_for_timeout(300)
             await pg.close()
+          except Exception as e:
+            log.append(f"[{t}] FAILED: {str(e)[:300]}")
+            try: await pg.screenshot(path=f"{OUT}/{t}_ERROR.png", full_page=False); log.append(f"[{t}] search box / dropdown: " + str(await pg.evaluate("(()=>{var d=document.querySelector('.ut-dd');return d?d.innerText.slice(0,200):'no dropdown'})()")))
+            except Exception: pass
         await b.close()
     open(f"{OUT}/log.txt", "w").write("\n".join(log) + "\n")
     print("\n".join(log))
