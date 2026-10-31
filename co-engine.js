@@ -246,7 +246,7 @@
     var wc = (val(q, "d_ar") != null || val(q, "d_inv") != null || val(q, "d_ap") != null) ? -(val(q, "d_ar") || 0) - (val(q, "d_inv") || 0) + (val(q, "d_ap") || 0) : null;
     if (wc != null) setC(q, "wc_cf", wc, "−Δreceivables − Δinventory + Δpayables, from the cash-flow statement", ["d_ar", "d_inv", "d_ap"]);
     if (val(q, "capex") != null && val(q, "da")) setC(q, "capexda", val(q, "capex") / val(q, "da"), "capex ÷ D&A", ["capex", "da"]);
-    if (val(q, "fcf") != null) { var ret = (val(q, "div") || 0) + (val(q, "buyback") || 0); setC(q, "shret", ret, "dividends + buybacks", ["div", "buyback"]); setC(q, "retained", val(q, "fcf") - ret, "FCF − dividends − buybacks", ["fcf", "div", "buyback"]); }
+    if (val(q, "fcf") != null && (val(q, "div") != null || val(q, "buyback") != null)) { var ret = (val(q, "div") || 0) + (val(q, "buyback") || 0); setC(q, "shret", ret, "dividends + buybacks", ["div", "buyback"]); setC(q, "retained", val(q, "fcf") - ret, "FCF − dividends − buybacks", ["fcf", "div", "buyback"]); }
     var gd = av("gdebt");
     if (gd && val(q, "intexp") != null) setC(q, "effcost", val(q, "intexp") * 365 / dq / gd * 100, "annualised interest expense ÷ average gross debt (opening/closing average — an approximation; leases excluded)", ["intexp", "gdebt"]);
     if (gd && val(q, "intpaid") != null) setC(q, "cashcost", val(q, "intpaid") * 365 / dq / gd * 100, "annualised cash interest paid ÷ average gross debt (approximation)", ["intpaid", "gdebt"]);
@@ -289,9 +289,9 @@
     { id: 2, title: "Cash flow versus earnings divergence", metric: "cfoni_ttm", alt: "Working-capital build ahead of growth, tax timing or a large non-cash gain can open the gap temporarily.",
       test: function (q) { var c = v_(q, "cfoni_ttm"); if (c == null) return null; return { hit: c < 0.8, level: c < 0.5 ? 2 : 1, value: c, comp: "TTM net income", thr: "TTM CFO < 0.8× net income (critical < 0.5×)", text: "TTM operating cash flow " + c.toFixed(2) + "× net income" }; } },
     { id: 3, title: "Receivables growth exceeding revenue", metric: "ar_yoy", alt: "Acquisitions, longer contractual terms, a quarter-end sales spike or customer mix can lift receivables without collection problems.",
-      test: function (q) { var a = v_(q, "ar_yoy"), r = v_(q, "rev_yoy"); if (a == null || r == null) return null; var d = a - r; return { hit: d > 10, level: d > 25 ? 2 : 1, value: d, comp: "revenue growth " + r.toFixed(1) + "%", thr: "receivables growth − revenue growth > 10 pp (critical > 25 pp)", text: "Receivables " + a.toFixed(1) + "% YoY vs revenue " + r.toFixed(1) + "%" }; } },
+      test: function (q, M) { var a = v_(q, "ar_yoy"), r = v_(q, "rev_yoy"); if (a == null || r == null) return null; var d = a - r; return { hit: d > 10 && material(q, "ar", M), level: d > 25 ? 2 : 1, value: d, comp: "revenue growth " + r.toFixed(1) + "%", thr: "receivables growth − revenue growth > 10 pp (critical > 25 pp), receivables ≥ 2% of TTM revenue", text: "Receivables " + a.toFixed(1) + "% YoY vs revenue " + r.toFixed(1) + "%" }; } },
     { id: 4, title: "Inventory accumulation", metric: "inv_yoy", alt: "A planned seasonal build, a product launch, supply-chain buffering or commodity-price inflation in inventory value.",
-      test: function (q) { var a = v_(q, "inv_yoy"), r = v_(q, "rev_yoy"); if (a == null || r == null) return null; var d = a - r; return { hit: d > 10, level: d > 25 ? 2 : 1, value: d, comp: "revenue growth " + r.toFixed(1) + "%", thr: "inventory growth − revenue growth > 10 pp (critical > 25 pp)", text: "Inventory " + a.toFixed(1) + "% YoY vs revenue " + r.toFixed(1) + "%" }; } },
+      test: function (q, M) { var a = v_(q, "inv_yoy"), r = v_(q, "rev_yoy"); if (a == null || r == null) return null; var d = a - r; return { hit: d > 10 && material(q, "inv", M), level: d > 25 ? 2 : 1, value: d, comp: "revenue growth " + r.toFixed(1) + "%", thr: "inventory growth − revenue growth > 10 pp (critical > 25 pp), inventory ≥ 2% of TTM revenue", text: "Inventory " + a.toFixed(1) + "% YoY vs revenue " + r.toFixed(1) + "%" }; } },
     { id: 5, title: "Margin compression", metric: "opm_yoy", alt: "Mix shift, one-off charges, deliberate investment spending or input-cost spikes that pricing has not yet caught up with.",
       test: function (q) { var d = v_(q, "opm_yoy"), k = "operating"; if (d == null) { d = v_(q, "gm_yoy"); k = "gross"; } if (d == null) return null; return { hit: d < -2, level: d < -5 ? 2 : 1, value: d, comp: "same quarter last year", thr: k + " margin down > 2 pp YoY (critical > 5 pp)", text: k[0].toUpperCase() + k.slice(1) + " margin " + d.toFixed(1) + " pp YoY" }; } },
     { id: 6, title: "Guidance deterioration", metric: "guidance", unavailable: "Needs management guidance history — no free structured source; the earnings-release parser is a later phase." },
@@ -315,10 +315,16 @@
       test: function (q) { var n = Object.keys(q.m).filter(function (k) { return q.m[k] && q.m[k].src && q.m[k].src.restated; }); return { hit: n.length > 0, level: 1, value: n.length, comp: "originally filed values", thr: "any figure re-filed with a different value", text: n.length ? "Re-filed with changed values: " + n.slice(0, 5).join(", ") : "no re-filed values" }; },
       partial: "Non-GAAP adjustments themselves are in the earnings release text, not the structured filings — only restatements are checked." },
   ];
+  var FIN_NA = { 2: 1, 3: 1, 4: 1, 5: 1, 8: 1 };   /* operating-company rules that do not apply to banks / insurers */
+  function material(q, k, M) {   /* a working-capital balance under 2% of TTM revenue cannot carry a signal */
+    var i = M.quarters.indexOf(q), r4 = i >= 0 ? ttm(M.quarters, i, "rev") : null, b = v_(q, k);
+    return b == null || r4 == null || b >= 0.02 * r4;
+  }
   function warnings(M) {
-    var Q = M.quarters, W = Q.slice(-8);
+    var Q = M.quarters, W = Q.slice(-8), fin = M.model.kind === "financial" || M.model.kind === "insurer";
     return RULES.map(function (R) {
       var base = { id: R.id, title: R.title, metric: R.metric, alt: R.alt || "", partial: R.partial || "" };
+      if (fin && FIN_NA[R.id]) return Object.assign(base, { status: "UNAVAILABLE", severity: null, note: "Not applicable to this business model — " + M.model.note, history: W.map(function (q) { return { label: q.fl.label, st: "n/a" }; }) });
       if (R.unavailable) return Object.assign(base, { status: "UNAVAILABLE", severity: null, note: R.unavailable, history: W.map(function (q) { return { label: q.fl.label, st: "n/a" }; }) });
       var H = W.map(function (q) { var r = R.test(q, M); return { label: q.fl.label, end: q.end, r: r }; });
       var ev = H.filter(function (h) { return h.r; });

@@ -336,7 +336,9 @@
         : q && !V.lock ? '<div class="ut-dd"><div class="note" style="padding:10px">' + (liveErr ? esc(liveErr) : lv && liveQ !== q ? "Searching…" : "No match for “" + esc(q) + "”.") + "</div></div>" : "") + "</div>";
   }
   var CO_NAV = [["snap", "Company snapshot", 1], ["verdicts", "Four verdicts", 1], ["health", "Health history", 1], ["revenue", "Revenue", 1], ["gross", "Gross profit", 1], ["operating", "Operating profit", 1], ["eps", "Net income & EPS", 1],
-    ["cfo", "Operating cash flow", 1], ["fcf", "Free cash flow", 1], ["wc", "Working capital"], ["debt", "Debt & financing"], ["ratios", "Ratios & peers"], ["research", "Earnings research"]];
+    ["wc-ar", "Receivables", 1], ["wc-inv", "Inventory", 1], ["wc-ap", "Payables", 1], ["wc-ccc", "Cash conversion cycle", 1], ["cfo", "Operating cash flow", 1], ["fcf", "Free cash flow", 1], ["capex", "Capex", 1], ["alloc", "Capital allocation", 1],
+    ["debt", "Debt structure", 1], ["costdebt", "Cost of debt", 1], ["maturity", "Maturities", 1], ["service", "Debt servicing", 1], ["liq", "Liquidity", 1], ["returns", "Returns", 1], ["lev", "Leverage", 1], ["eff", "Efficiency", 1], ["warn", "Early warnings", 1],
+    ["peers", "Industry comparison"], ["research", "Earnings research"]];
   function nav() {
     function b(id, label, on, note) { return '<button data-utgo="' + id + '" aria-current="' + (V.view === id) + '"' + (on ? "" : " disabled") + ">" + label + (note ? "<small>" + note + "</small>" : "") + "</button>"; }
     var lk = V.lock && V.sel;

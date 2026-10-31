@@ -137,6 +137,25 @@
         '<text x="' + (x + w / 2).toFixed(1) + '" y="' + (H - 18) + '" text-anchor="middle" font-size="10" fill="var(--muted)">' + esc(b.s.name.split(" ")[0]) + '</text><text x="' + (x + w / 2).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10" fill="var(--muted)">' + esc(b.s.name.split(" ").slice(1).join(" ")) + "</text>"; });
     return out + "</svg>";
   }
+  function dfmt(v) { return v.toFixed(0) + "d"; }
+  function xfmt(v) { return v.toFixed(1) + "×"; }
+  function stack(Q, parts, o) {   /* stacked columns for composition (one axis) */
+    o = o || {}; var W = 640, H = o.h || 190, pl = 52, pr = 8, pt = 12, pb = 26, tot = Q.map(function (q) { return parts.reduce(function (a, p) { return a + (E.val(q, p[0]) || 0); }, 0); });
+    var mx = Math.max.apply(null, tot.concat([0])); if (!mx) return '<p class="note">No composition disclosed.</p>';
+    var A = axis(0, mx), y = function (v) { return pt + (1 - (v - A.lo) / (A.hi - A.lo)) * (H - pt - pb); }, bw = (W - pl - pr) / Q.length;
+    var out = '<div class="cx-leg">' + parts.map(function (p) { return '<span><i style="background:' + p[2] + '"></i>' + esc(p[1]) + "</span>"; }).join("") + '</div><svg viewBox="0 0 ' + W + " " + H + '" width="100%" role="img" aria-label="' + esc(o.label || "composition") + '">';
+    A.ticks.forEach(function (t) { out += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(t).toFixed(1) + '" y2="' + y(t).toFixed(1) + '" stroke="var(--line)" stroke-dasharray="2 4"/><text x="' + (pl - 6) + '" y="' + (y(t) + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--faint)" font-family="IBM Plex Mono,monospace">' + f$(t) + "</text>"; });
+    Q.forEach(function (q, i) { var x = pl + i * bw + bw * 0.2, w = bw * 0.6, base = 0;
+      parts.forEach(function (p) { var v = E.val(q, p[0]); if (!v || v < 0) return; var y1 = y(base + v), y0 = y(base);
+        out += '<rect x="' + x.toFixed(1) + '" y="' + y1.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + Math.max(0, y0 - y1 - 2).toFixed(1) + '" rx="2" fill="' + p[2] + '"><title>' + esc(q.fl.label + " " + p[1] + ": " + f$(v)) + "</title></rect>"; base += v; });
+      out += '<text x="' + (x + w / 2).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="var(--faint)">' + esc(q.fl.label) + "</text>"; });
+    return out + "</svg>";
+  }
+  function bars(items, o) {   /* labelled horizontal bars — maturity ladder, peer-style ranking */
+    o = o || {}; var mx = Math.max.apply(null, items.map(function (i) { return Math.abs(i.v || 0); }).concat([1]));
+    return '<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;font-size:12.5px">' + items.map(function (i) {
+      return "<span>" + esc(i.label) + '</span><span style="background:var(--line);border-radius:3px;height:14px;position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:' + (i.v == null ? 0 : Math.abs(i.v) / mx * 100).toFixed(1) + "%;background:" + (i.color || C1) + ';border-radius:3px"></span></span><span style="font-family:\'IBM Plex Mono\',monospace">' + (i.v == null ? '<span class="neu">not tagged</span>' : (o.fmt || money)(i.v)) + "</span>"; }).join("") + "</div>";
+  }
   function spark(S, col) {
     var v = S.map(function (s) { return s.v; }), ok = v.filter(function (x) { return x != null; }); if (ok.length < 2) return "";
     var lo = Math.min.apply(null, ok), hi = Math.max.apply(null, ok), r = hi - lo || 1, W = 120, H = 28;
@@ -166,23 +185,51 @@
     fcfconv: ["FCF conversion", "FCF ÷ net income; N/M when net income ≤ 0."], cfoni: ["Cash conversion", "Operating cash flow ÷ net income."],
     capexint: ["Capex intensity", "Capex ÷ revenue."], gdebt: ["Gross debt", "Short-term borrowings + commercial paper + current and non-current long-term debt (leases excluded)."],
     ndebt: ["Net debt", "Gross debt − cash − short-term investments."], cash: ["Cash", "Cash and cash equivalents."],
+    ar: ["Accounts receivable", "Trade receivables, net, at period end."], inv: ["Inventory", "Inventory, net, at period end."], ap: ["Accounts payable", "Trade payables at period end."],
+    dso: ["DSO", "Days sales outstanding: average receivables ÷ quarterly revenue × days in the quarter."], dio: ["DIO", "Days inventory outstanding: average inventory ÷ quarterly cost of revenue × days."],
+    dpo: ["DPO", "Days payables outstanding: average payables ÷ quarterly cost of revenue × days (cost of revenue proxies supplier purchases)."], ccc: ["Cash conversion cycle", "DSO + DIO − DPO."],
+    wc_cf: ["Working-capital cash effect", "−Δreceivables − Δinventory + Δpayables from the cash-flow statement; positive = cash released."],
+    allow: ["Doubtful-accounts allowance", "Allowance for credit losses on receivables."], ctrasset: ["Contract assets", "Unbilled revenue recognised ahead of invoicing."],
+    defrev: ["Deferred revenue", "Contract liabilities — cash received before revenue is earned."], accr: ["Accrued liabilities", "Accrued expenses at period end."],
+    inv_raw: ["Raw materials", "Raw-material inventory."], inv_wip: ["Work in progress", "Work-in-process inventory."], inv_fg: ["Finished goods", "Finished-goods inventory."], invwd: ["Inventory write-downs", "Inventory write-downs charged in the period."],
+    capexda: ["Capex ÷ D&A", "Capex relative to depreciation; above 1 = net investment in the asset base."],
+    div: ["Dividends", "Cash dividends paid."], buyback: ["Buybacks", "Cash paid to repurchase shares."], acq: ["Acquisitions", "Cash paid for businesses, net of cash acquired."],
+    dissue: ["Debt raised", "Proceeds from long-term debt issuance."], drepay: ["Debt repaid", "Repayments of long-term debt."], eqiss: ["Equity issued", "Proceeds from issuing common stock."],
+    shret: ["Shareholder return", "Dividends + buybacks."], retained: ["Cash retained", "FCF − dividends − buybacks."],
+    stb: ["Short-term borrowings", "Short-term borrowings."], cp: ["Commercial paper", "Commercial paper outstanding."], dcur: ["Current debt", "Debt due within a year."],
+    ltd_nc: ["Long-term debt", "Long-term debt, non-current."], oplease: ["Operating leases", "Operating lease liabilities — kept separate from debt."], finlease: ["Finance leases", "Finance lease liabilities — kept separate."],
+    effcost: ["Effective interest cost", "Annualised interest expense ÷ average gross debt (opening/closing average — an approximation)."],
+    cashcost: ["Cash borrowing cost", "Annualised cash interest paid ÷ average gross debt (approximation)."], intpaid: ["Cash interest paid", "Interest paid in cash."],
+    revolver: ["Undrawn credit facilities", "Remaining borrowing capacity under committed lines."],
+    int_cov: ["Interest coverage", "TTM EBIT ÷ TTM interest expense."], nd_ebitda: ["Net debt ÷ EBITDA", "Net debt ÷ TTM EBITDA."], ebitda_ttm: ["EBITDA (TTM)", "TTM EBIT + TTM D&A."],
+    intburden: ["Cash interest burden", "TTM cash interest ÷ TTM operating cash flow."], fcf_debt: ["FCF ÷ debt", "TTM FCF ÷ gross debt."], fcf_ttm: ["FCF (TTM)", "Sum of the last four quarters."],
+    ca: ["Current assets", "Current assets."], cl: ["Current liabilities", "Current liabilities."], wcap: ["Working capital", "Current assets − current liabilities."],
+    cr: ["Current ratio", "Current assets ÷ current liabilities."], qr: ["Quick ratio", "(Cash + short-term investments + receivables) ÷ current liabilities."], cashr: ["Cash ratio", "(Cash + short-term investments) ÷ current liabilities."],
+    roe: ["ROE", "TTM net income ÷ average equity."], roa: ["ROA", "TTM net income ÷ average total assets."], roic: ["ROIC", "TTM EBIT after tax ÷ (gross debt + equity − cash), period-end — approximate."],
+    de: ["Debt ÷ equity", "Gross debt ÷ shareholders’ equity."], da_r: ["Debt ÷ assets", "Gross debt ÷ total assets."], eq: ["Equity", "Shareholders’ equity."], assets: ["Total assets", "Total assets."],
+    at: ["Asset turnover", "TTM revenue ÷ average total assets."], invturn: ["Inventory turnover", "TTM cost of revenue ÷ average inventory."], arturn: ["Receivables turnover", "TTM revenue ÷ average receivables."], apturn: ["Payables turnover", "TTM cost of revenue ÷ average payables."],
+    rpo: ["Remaining performance obligations", "Contracted revenue not yet recognised (backlog)."], cfoni_ttm: ["Cash conversion (TTM)", "TTM CFO ÷ TTM net income."],
   };
+  var DAYS = { dso: 1, dio: 1, dpo: 1, ccc: 1 }, XR = { cr: 1, qr: 1, cashr: 1, de: 1, nd_ebitda: 1, int_cov: 1, at: 1, invturn: 1, arturn: 1, apturn: 1, capexda: 1, cfoni_ttm: 1 };
   function nm(k) { var m = /^(.*)_(yoy|qoq)$/.exec(k); if (m) return nm(m[1]) + (m[2] === "yoy" ? " — YoY" : " — vs prior quarter"); return (DEF[k] || [k])[0]; }
-  var PCT = { ebitm: 1, gm: 1, opm: 1, nm: 1, ebitdam: 1, fcfm: 1, etr: 1, capexint: 1, fcfconv: 1 };
-  function fv(k, v) { if (v == null) return "—"; var g = /^(.*)_(yoy|qoq)$/.exec(k); if (g) return PCT[g[1]] && g[2] === "yoy" ? pp(v) : pc(v); if (PCT[k]) return v.toFixed(1) + "%"; if (k === "eps_d") return "$" + v.toFixed(2); if (k === "cfoni") return v.toFixed(2) + "×"; if (k === "sh_d") return f$(v); return money(v); }
+  var PCT = { effcost: 1, cashcost: 1, roe: 1, roa: 1, roic: 1, da_r: 1, intburden: 1, fcf_debt: 1, ebitm: 1, gm: 1, opm: 1, nm: 1, ebitdam: 1, fcfm: 1, etr: 1, capexint: 1, fcfconv: 1 };
+  function fv(k, v) { if (v == null) return "—"; var g = /^(.*)_(yoy|qoq)$/.exec(k);
+    if (g) { if (DAYS[g[1]]) return (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + " d"; if (XR[g[1]]) return (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "×"; return PCT[g[1]] ? pp(v) : pc(v); }
+    if (DAYS[k]) return v.toFixed(1) + " d"; if (XR[k]) return v.toFixed(2) + "×"; if (PCT[k]) return v.toFixed(1) + "%"; if (k === "eps_d") return "$" + v.toFixed(2); if (k === "cfoni") return v.toFixed(2) + "×"; if (k === "sh_d") return f$(v); return money(v); }
 
   /* ---------------- interpretation (rule-based, data-referenced; 9-part contract) ---------------- */
   function interp(M, k, extra) {
     var Sx = S(M, k), T = E.trend(Sx), q = L(M), lab = nm(k), y = q.m[k + "_yoy"], p = q.m[k + "_qoq"], isPct = PCT[k];
     var out = { cur: "", hist: "", ind: "", pos: [], neg: [], why: [], impl: "", mon: [], gaps: [] };
     var cur = q.m[k];
-    out.cur = cur ? lab + " was " + fv(k, cur.v) + " in " + q.fl.label + (y ? " — " + (isPct ? pp(y.v) : pc(y.v)) + " versus " + y.how.replace(/^vs /, "") : "") + (p && !isPct ? ", " + pc(p.v) + " on the previous quarter" : "") + "." + (!isPct && ttmI(M, k) != null ? " Trailing twelve months: " + fv(k, ttmI(M, k)) + "." : "")
+    var unitless = isPct || DAYS[k] || XR[k];
+    out.cur = cur ? lab + " was " + fv(k, cur.v) + " in " + q.fl.label + (y ? " — " + fv(k + "_yoy", y.v) + " versus " + y.how.replace(/^(vs |change vs )/, "") : "") + (p ? ", " + fv(k + "_qoq", p.v) + " on the previous quarter" : "") + "." + (!unitless && ttmI(M, k) != null ? " Trailing twelve months: " + fv(k, ttmI(M, k)) + "." : "")
       : lab + " is not available for " + q.fl.label + ".";
     if (T.dir === "insufficient") out.hist = "Fewer than three quarters reported — no trend is drawn.";
     else out.hist = "Across " + T.n + " quarters " + lab.toLowerCase() + " has been " + (T.dir === "mixed" ? "uneven" : T.dir) + ": higher than the prior quarter " + T.up + " times, lower " + T.dn + " times. Range " + fv(k, T.lo) + " to " + fv(k, T.hi) +
       (T.atHigh ? " — the latest quarter is the high of the period." : T.atLow ? " — the latest quarter is the low of the period." : ".") + (T.turn ? " Most recent turning point: " + T.turn + "." : "");
     var yS = E.series(M, k + "_yoy", 8).filter(function (s) { return s.v != null; });
-    if (!isPct && yS.length >= 3) { var a = yS[yS.length - 1].v, b = yS[yS.length - 3].v;
+    if (!isPct && !DAYS[k] && !XR[k] && yS.length >= 3) { var a = yS[yS.length - 1].v, b = yS[yS.length - 3].v;
       out.hist += " Year-on-year growth " + (a > b + 1 ? "accelerated" : a < b - 1 ? "slowed" : "held steady") + ": " + pc(a) + " now against " + pc(b) + " two quarters earlier."; }
     out.ind = "No industry benchmark is shown yet. Peer medians and percentiles arrive with the industry-comparison phase; none is invented in the meantime.";
     (extra || function () {})(out, M, q);
@@ -207,9 +254,9 @@
   function head(M, k, unit) {
     var q = L(M), m = q.m[k], y = q.m[k + "_yoy"], p = q.m[k + "_qoq"];
     return '<div class="cx-hd"><div><div class="lab">' + esc(nm(k)) + " · " + esc(q.fl.label) + " (" + esc(q.end) + ")</div><div class=\"big\">" + fv(k, m && m.v) + "</div></div>" +
-      '<div><div class="lab">YoY</div><div class="m">' + (y ? sgc(y.v, PCT[k] ? pp(y.v) : pc(y.v)) : "—") + '</div></div><div><div class="lab">vs prior quarter</div><div class="m">' + (p ? sgc(p.v, pc(p.v)) : "—") + "</div></div>" +
-      (!PCT[k] && ttmI(M, k) != null ? '<div><div class="lab">TTM</div><div class="m">' + fv(k, ttmI(M, k)) + "</div></div>" : "") +
-      '<div><div class="lab">Status</div><div class="m">' + stB(m) + '</div></div><div><div class="lab">Unit</div><div class="m">' + (unit || (PCT[k] ? "%" : "USD")) + "</div></div></div>";
+      '<div><div class="lab">YoY</div><div class="m">' + (y ? sgc(DAYS[k] || XR[k] ? -y.v * (k === "dpo" || /cov|cr|qr|cashr|turn|^at$/.test(k) ? -1 : 1) : y.v, fv(k + "_yoy", y.v)) : "—") + '</div></div><div><div class="lab">vs prior quarter</div><div class="m">' + (p ? sgc(DAYS[k] || XR[k] ? -p.v * (k === "dpo" || /cov|cr|qr|cashr|turn|^at$/.test(k) ? -1 : 1) : p.v, fv(k + "_qoq", p.v)) : "—") + "</div></div>" +
+      (!PCT[k] && !DAYS[k] && !XR[k] && ttmI(M, k) != null ? '<div><div class="lab">TTM</div><div class="m">' + fv(k, ttmI(M, k)) + "</div></div>" : "") +
+      '<div><div class="lab">Status</div><div class="m">' + stB(m) + '</div></div><div><div class="lab">Unit</div><div class="m">' + (unit || (PCT[k] ? "%" : DAYS[k] ? "days" : XR[k] ? "times" : "USD")) + "</div></div></div>";
   }
   function table(M, keys) {
     var Q = M.quarters.slice(-8);
@@ -237,13 +284,14 @@
   var PARTS = [
     ["Company overview", [["snap", "Company snapshot", "Size, growth, profitability and financial structure at a glance.", "rev"], ["verdicts", "Four financial verdicts", "Earnings quality · outlook · resilience · market implication.", null], ["health", "Eight-quarter health history", "Consistently strong, weak, or changing?", null]]],
     ["Earnings & financial statements", [["revenue", "Revenue intelligence", "Is growth accelerating or slowing?", "rev"], ["gross", "Cost of revenue & gross profit", "Is the company keeping more of each dollar after direct costs?", "gm"], ["operating", "Operating profitability", "Is growth producing operating leverage?", "opm"], ["eps", "Net income & EPS", "Is earnings growth operating, tax, buyback or adjustment driven?", "eps_d"]]],
-    ["Working capital", [["wc-ar", "Receivables & collection", "Are customers taking longer to pay?"], ["wc-inv", "Inventory efficiency", "Is inventory building faster than demand?"], ["wc-ap", "Payables & supplier financing", "Better terms, or delayed payments?"], ["wc-ccc", "Cash conversion cycle", "How long is cash tied up?"]]],
-    ["Cash flow & capital allocation", [["cfo", "Operating cash flow", "Does accounting profit turn into cash?", "cfo"], ["fcf", "Free cash flow", "Cash left after investing in the asset base?", "fcf"], ["capex", "Capital expenditure", "Investing for growth or maintaining?"], ["alloc", "Capital allocation", "Where is the cash going?"]]],
-    ["Debt & financing", [["debt", "Debt structure"], ["costdebt", "Blended cost of debt"], ["maturity", "Maturities & refinancing"], ["service", "Debt servicing capacity"]]],
-    ["Ratios, peers & warnings", [["liq", "Liquidity"], ["returns", "Profitability & returns"], ["lev", "Leverage & solvency"], ["eff", "Efficiency"], ["peers", "Industry comparison"], ["warn", "Early-warning signals"]]],
+    ["Working capital", [["wc-ar", "Receivables & collection", "Are customers taking longer to pay?", "dso"], ["wc-inv", "Inventory efficiency", "Is inventory building faster than demand?", "dio"], ["wc-ap", "Payables & supplier financing", "Better terms, or delayed payments?", "dpo"], ["wc-ccc", "Cash conversion cycle", "How long is cash tied up in operations?", "ccc"]]],
+    ["Cash flow & capital allocation", [["cfo", "Operating cash flow", "Does accounting profit turn into cash?", "cfo"], ["fcf", "Free cash flow", "Cash left after investing in the asset base?", "fcf"], ["capex", "Capital expenditure", "Investing for growth or maintaining?", "capex"], ["alloc", "Capital allocation", "Where is the cash going?", "shret"]]],
+    ["Debt & financing", [["debt", "Debt structure", "How is the company financed?", "gdebt"], ["costdebt", "Blended cost of debt", "Is borrowing getting more expensive?", "effcost"], ["maturity", "Maturities & refinancing", "Is a large refinancing coming?", null], ["service", "Debt servicing capacity", "Can earnings and cash carry the debt?", "int_cov"]]],
+    ["Ratios & warnings", [["liq", "Liquidity", "Can it meet short-term obligations?", "cr"], ["returns", "Profitability & returns", "Better returns on the capital deployed?", "roe"], ["lev", "Leverage & solvency", "Is leverage rising faster than earnings?", "nd_ebitda"], ["eff", "Efficiency", "Is the asset base working harder?", "at"], ["warn", "Early-warning signals", "Twelve rules, with persistence and evidence.", null]]],
+    ["Industry comparison", [["peers", "Peer benchmarks", "Industry median, percentile and named competitors."]]],
     ["Earnings intelligence", [["street", "Street vs actual"], ["guide", "Guidance & revisions"], ["mgmt", "Management commentary"], ["aieco", "AI economics"]]],
   ];
-  var BUILT = { snap: 1, verdicts: 1, health: 1, revenue: 1, gross: 1, operating: 1, eps: 1, cfo: 1, fcf: 1 };
+  var BUILT = { snap: 1, verdicts: 1, health: 1, revenue: 1, gross: 1, operating: 1, eps: 1, cfo: 1, fcf: 1, "wc-ar": 1, "wc-inv": 1, "wc-ap": 1, "wc-ccc": 1, capex: 1, alloc: 1, debt: 1, costdebt: 1, maturity: 1, service: 1, liq: 1, returns: 1, lev: 1, eff: 1, warn: 1 };
   function cardTitle(id) { var t = ""; PARTS.forEach(function (p) { p[1].forEach(function (c) { if (c[0] === id) t = c[1]; }); }); return t; }
 
   function grid(M, VV) {
@@ -255,7 +303,10 @@
           return '<div class="cx-part">' + p[0] + ' <span style="letter-spacing:0;text-transform:none;color:var(--faint)">— next phase: ' + p[1].map(function (c) { return esc(c[1]); }).join(" · ") + "</span></div>";
         return '<div class="cx-part">' + p[0] + '</div><div class="cx-grid">' + p[1].map(function (c) {
         var b = BUILT[c[0]], k = c[3] === "opm" && E.val(q, "opm") == null ? "ebitm" : c[3], kv = "", sp = "";
-        if (b && k) { var m = q.m[k], y = q.m[k + "_yoy"]; kv = '<div class="k">' + fv(k, m && m.v) + "</div>" + (y ? '<div class="n">' + sgc(y.v, PCT[k] ? pp(y.v) : pc(y.v)) + " YoY · " + esc(q.fl.label) + "</div>" : '<div class="n">' + esc(q.fl.label) + "</div>"); sp = spark(S(M, k)); }
+        if (b && k) { var m = q.m[k], y = q.m[k + "_yoy"]; kv = '<div class="k">' + fv(k, m && m.v) + "</div>" + (y ? '<div class="n">' + sgc(DAYS[k] ? -y.v : y.v, fv(k + "_yoy", y.v)) + " YoY · " + esc(q.fl.label) + "</div>" : '<div class="n">' + esc(q.fl.label) + "</div>"); sp = spark(S(M, k)); }
+        if (c[0] === "maturity") { var mt = E.maturities(M); kv = '<div class="k">' + (mt && mt.buckets[0] ? money(mt.buckets[0].v) : "—") + '</div><div class="n">due within 12 months' + (mt ? " · " + esc(mt.label) : " · not tagged") + "</div>"; }
+        if (c[0] === "warn") { var WW = E.warnings(M), act = WW.filter(function (w) { return w.status === "ACTIVE"; });
+          kv = '<div class="k">' + act.length + ' <small style="font-size:12px;color:var(--muted)">active of 12</small></div><div class="n">' + (act.length ? act.map(function (w) { return '<span class="cx-vd ' + (w.severity === "WATCH" ? "WEAK" : "NEGATIVE") + '" style="font-size:9px;padding:1px 5px">' + w.id + "</span>"; }).join(" ") : "none triggered") + "</div>"; }
         if (c[0] === "verdicts") kv = '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">' + VV.verdicts.map(function (v) { return '<span class="cx-vd ' + v.verdict + '" title="' + esc(v.name) + '">' + v.name.split(" ").map(function (w) { return w[0]; }).join("") + " " + v.verdict + "</span>"; }).join("") + "</div>";
         if (c[0] === "health") { var st = E.streak(VV.history, "eq"); kv = '<div class="n" style="margin-top:6px">' + VV.history.map(function (h) { return '<span class="cx-vd ' + h.eq + '" style="padding:1px 4px;font-size:9px">' + h.eq[0] + "</span>"; }).join(" ") + "</div>" + (st.n ? '<div class="n">' + st.n + " quarter" + (st.n > 1 ? "s" : "") + " " + (st.dir > 0 ? "improving" : "deteriorating") + "</div>" : ""); }
         return '<button class="cx-card" data-cocard="' + c[0] + '"' + (b ? "" : " disabled") + '><span class="t">' + esc(c[1]) + "</span>" + kv + (sp ? "<div>" + sp + "</div>" : "") + '<span class="q">' + esc(c[2] || "") + (b ? "" : " · next phase") + "</span></button>"; }).join("") + "</div>"; }).join("") +
@@ -412,8 +463,222 @@
       }, ["cfo", "capex", "fcf", "fcfm", "fcfconv"]);
   }
 
+
+  /* ---------------- working capital ---------------- */
+  function dayChart(M, keys) { return lines(keys.map(function (k, i) { return { name: nm(k), color: [C1, C2, C3, C4][i], S: S(M, k) }; }), { fmt: dfmt, label: keys.map(nm).join(", ") }); }
+  function growthPair(M, a, b) { return lines([{ name: nm(a) + " YoY", color: C2, S: E.series(M, a + "_yoy", 8) }, { name: nm(b) + " YoY", color: C1, S: E.series(M, b + "_yoy", 8) }], { zero: true, label: nm(a) + " vs " + nm(b) + " growth" }); }
+  function arCard(M) {
+    return page(M, "wc-ar", "dso", '<div class="pi-l">Days sales outstanding</div>' + dayChart(M, ["dso"]) + '<div class="pi-l" style="margin-top:8px">Receivables growth vs revenue growth</div>' + growthPair(M, "ar", "rev"),
+      ["ar", "ar_yoy", "rev_yoy", "dso", "allow", "ctrasset"], null, function (o, M2, q) {
+        var a = E.val(q, "ar_yoy"), r = E.val(q, "rev_yoy"), dd = E.val(q, "dso_yoy");
+        if (a != null && r != null) (a - r > 10 ? o.neg : a - r < -5 ? o.pos : o.pos).push("Receivables " + pc(a) + " YoY against revenue " + pc(r) + " [ar_yoy, rev_yoy]" + (a - r > 10 ? " — a widening gap." : "."));
+        if (dd != null) (dd > 5 ? o.neg : dd < -3 ? o.pos : o.pos).push("DSO " + fv("dso_yoy", dd) + " versus a year ago [dso_yoy].");
+        o.why.push("Longer payment terms, a quarter-end sales spike, acquisitions, customer mix or slower collections.");
+        o.impl = dd == null ? "—" : dd > 5 ? "Customers are taking longer to pay — cash conversion may weaken unless this reverses." : "Collection speed is stable or improving.";
+        o.mon.push("DSO against the same quarter next year (seasonality-safe), and the doubtful-accounts allowance.");
+      }, ["ar", "dso", "allow", "ctrasset"]);
+  }
+  function invCard(M) {
+    var comp = [["inv_raw", "Raw materials", C1], ["inv_wip", "Work in progress", C2], ["inv_fg", "Finished goods", C3]], hasComp = M.quarters.slice(-8).some(function (q) { return comp.some(function (c) { return E.val(q, c[0]); }); });
+    return page(M, "wc-inv", "dio", '<div class="pi-l">Days inventory outstanding</div>' + dayChart(M, ["dio"]) + '<div class="pi-l" style="margin-top:8px">Inventory growth vs revenue growth</div>' + growthPair(M, "inv", "rev") +
+      (hasComp ? '<div class="pi-l" style="margin-top:8px">Inventory composition</div>' + stack(M.quarters.slice(-8), comp, { label: "Inventory composition" }) : '<p class="note">Inventory composition (raw / WIP / finished) is not tagged by this filer.</p>'),
+      ["inv", "inv_yoy", "rev_yoy", "dio", "inv_raw", "inv_wip", "inv_fg", "invwd"], null, function (o, M2, q) {
+        if (!E.val(q, "inv")) { o.gaps.unshift("No inventory on the balance sheet — this card does not apply to the business model."); return; }
+        var a = E.val(q, "inv_yoy"), r = E.val(q, "rev_yoy"), dd = E.val(q, "dio_yoy");
+        if (a != null && r != null) (a - r > 10 ? o.neg : o.pos).push("Inventory " + pc(a) + " YoY against revenue " + pc(r) + " [inv_yoy, rev_yoy].");
+        if (dd != null) (dd > 7 ? o.neg : o.pos).push("DIO " + fv("dio_yoy", dd) + " versus a year ago [dio_yoy].");
+        if (E.val(q, "invwd")) o.neg.push("Inventory write-downs of " + money(E.val(q, "invwd")) + " this quarter.");
+        o.why.push("A planned seasonal build, a product launch, supply-chain buffering, higher input prices carried in inventory value — or slowing sales.");
+        o.impl = dd == null ? "—" : dd > 7 ? "Inventory is turning more slowly — watch for discounting or write-downs." : "Inventory is moving at a steady or faster pace.";
+        o.mon.push("Whether DIO normalises next quarter, and any inventory write-downs.");
+      }, ["inv", "dio", "inv_raw", "inv_wip", "inv_fg"]);
+  }
+  function apCard(M) {
+    return page(M, "wc-ap", "dpo", '<div class="pi-l">Days payables outstanding</div>' + dayChart(M, ["dpo"]) + '<div class="pi-l" style="margin-top:8px">Payables growth vs cost-of-revenue growth</div>' + growthPair(M, "ap", "cogs"),
+      ["ap", "ap_yoy", "cogs_yoy", "dpo", "accr"], null, function (o, M2, q) {
+        var dd = E.val(q, "dpo_yoy"), a = E.val(q, "ap_yoy"), c = E.val(q, "cogs_yoy"), cfo = E.val(q, "cfo_yoy");
+        if (dd != null) o[dd > 10 && cfo != null && cfo < 0 ? "neg" : "pos"].push("DPO " + fv("dpo_yoy", dd) + " versus a year ago [dpo_yoy]" + (dd > 10 && cfo != null && cfo < 0 ? " while operating cash flow fell — payments may be stretched to protect cash." : "."));
+        if (a != null && c != null) o.pos.push("Payables " + pc(a) + " YoY vs cost of revenue " + pc(c) + ".");
+        o.gaps.unshift("DPO uses cost of revenue as a proxy for supplier purchases (≈). Supplier-finance programmes are disclosed in notes, not the structured data.");
+        o.why.push("Negotiated longer terms, supply-chain finance programmes, purchase timing — or delayed payments under cash pressure. Higher DPO is not automatically positive.");
+        o.impl = dd == null ? "—" : "DPO " + (dd > 0 ? "lengthened" : "shortened") + "; read it alongside operating cash flow and DSO before calling it good or bad.";
+        o.mon.push("DPO alongside cash flow: rising DPO with falling cash is the warning combination.");
+      }, ["ap", "dpo", "cogs", "accr"]);
+  }
+  function cccCard(M) {
+    var q = L(M), parts = ["dso", "dio", "dpo"].map(function (k) { return [k, E.val(q, k + "_yoy")]; });
+    return page(M, "wc-ccc", "ccc", '<div class="pi-l">DSO, DIO and DPO — days</div>' + dayChart(M, ["dso", "dio", "dpo"]) + '<div class="pi-l" style="margin-top:8px">Cash conversion cycle</div>' + cols(S(M, "ccc"), { fmt: dfmt, neg: "var(--green)", color: C3, label: "Cash conversion cycle" }) +
+      '<div class="pi-l" style="margin-top:8px">Working-capital cash effect (from the cash-flow statement)</div>' + cols(S(M, "wc_cf"), { neg: "var(--red)", color: "var(--green)", label: "Working capital cash effect" }),
+      ["dso", "dio", "dpo", "ccc", "ccc_yoy", "wc_cf"], null, function (o, M2, q2) {
+        var c = E.val(q2, "ccc_yoy");
+        if (c != null) { (c > 5 ? o.neg : c < -5 ? o.pos : o.pos).push("Cash conversion cycle " + fv("ccc_yoy", c) + " versus a year ago [ccc_yoy].");
+          var drv = parts.filter(function (x) { return x[1] != null; }).map(function (x) { return [x[0], x[0] === "dpo" ? -x[1] : x[1]]; }).sort(function (a, b) { return Math.abs(b[1]) - Math.abs(a[1]); })[0];
+          if (drv) o.pos.push("Largest driver: " + nm(drv[0]) + " (" + fv(drv[0] + "_yoy", E.val(q2, drv[0] + "_yoy")) + ")."); }
+        var w = E.val(q2, "wc_cf"); if (w != null) (w >= 0 ? o.pos : o.neg).push("Working capital " + (w >= 0 ? "released " : "absorbed ") + money(Math.abs(w)) + " of cash in " + q2.fl.label + ".");
+        o.impl = c == null ? "—" : c > 5 ? "More cash is tied up in operations than a year ago." : "Cash is cycling through operations as fast or faster than a year ago.";
+        o.mon.push("Compare against the same quarter last year — working capital is seasonal.");
+      }, ["dso", "dio", "dpo", "ccc", "wc_cf"]);
+  }
+  /* ---------------- capex & allocation ---------------- */
+  function capexCard(M) {
+    return page(M, "capex", "capex", '<div class="pi-l">Capex vs depreciation</div>' + lines([{ name: "Capex", color: C2, S: S(M, "capex") }, { name: "D&A", color: C1, S: S(M, "da") }], { fmt: f$, label: "Capex and D&A" }) +
+      '<div class="pi-l" style="margin-top:8px">Capex intensity — % of revenue</div>' + lines([{ name: "Capex ÷ revenue", color: C2, S: S(M, "capexint") }], { h: 150, label: "Capex intensity" }),
+      ["capex", "capex_yoy", "da", "capexda", "capexint", "rev_yoy"], ["capex"], function (o, M2, q) {
+        var cd = E.val(q, "capexda"), cy = E.val(q, "capex_yoy"), r = E.val(q, "rev_yoy");
+        if (cd != null) (cd > 1.2 ? o.pos : o.pos).push("Capex is " + cd.toFixed(2) + "× D&A [capexda] — " + (cd > 1.2 ? "net investment in the asset base." : cd < 0.8 ? "below the rate assets wear out." : "roughly maintaining the asset base."));
+        if (cy != null && r != null && cy > 30 && r < 3) o.neg.push("Capex up " + pc(cy) + " YoY while revenue grew " + pc(r) + " — returns not yet visible.");
+        o.gaps.unshift("Growth vs maintenance capex, capital commitments and capex guidance are not in the structured data — no split is inferred.");
+        o.impl = cd == null ? "—" : cd > 1.5 ? "An investment phase: judge it by revenue, margin and returns in the quarters ahead." : "Investment broadly in line with depreciation.";
+        o.mon.push("Revenue growth and ROIC over the next 4–8 quarters, to see whether the investment earns back.");
+      }, ["capex", "da", "capexda", "capexint"]);
+  }
+  function allocCard(M) {
+    var Q = M.quarters, i = Q.length - 1, t = function (k) { return E.ttm(Q, i, k); }, f4 = t("fcf");
+    var steps = f4 == null ? null : [{ name: "FCF (TTM)", v: f4, total: 1 }].concat(
+      [["div", "Dividends"], ["buyback", "Buybacks"], ["acq", "Acquisitions"]].filter(function (x) { return t(x[0]); }).map(function (x) { return { name: x[1], v: -t(x[0]) }; }),
+      (t("dissue") != null || t("drepay") != null) ? [{ name: "Net debt flows", v: (t("dissue") || 0) - (t("drepay") || 0) }] : []);
+    var gapsT = [["div", "dividends"], ["buyback", "buybacks"], ["acq", "acquisitions"]].filter(function (x) { return t(x[0]) == null && Q.slice(-4).some(function (q) { return E.val(q, x[0]) != null; }); }).map(function (x) { return x[1]; });
+    if (steps) steps.push({ name: "Cash left", v: steps.reduce(function (a, s) { return s.total ? s.v : a + s.v; }, 0), total: 1 });
+    return page(M, "alloc", "shret", '<div class="pi-l">Where the last twelve months of free cash flow went</div>' + (steps ? waterfall(steps) : '<p class="note">Needs four quarters of free cash flow.</p>') + (gapsT.length ? '<p class="note" style="color:var(--amber)">Not in the bridge: ' + gapsT.join(", ") + " — a quarter of the last four is not filed, so no TTM total is formed.</p>" : "") +
+      '<div class="pi-l" style="margin-top:8px">Shareholder returns by quarter</div>' + stack(Q.slice(-8), [["div", "Dividends", C1], ["buyback", "Buybacks", C2]], { label: "Dividends and buybacks" }),
+      ["fcf", "div", "buyback", "shret", "retained", "acq", "dissue", "drepay", "sbc", "sh_d"], null, function (o, M2, q) {
+        var d4 = t("div") || 0, b4 = t("buyback") || 0, sb = t("sbc"), sy = E.val(q, "sh_d_yoy");
+        if (f4 != null && f4 > 0) { var cov = (d4 + b4) / f4 * 100; (cov > 100 ? o.neg : o.pos).push("Dividends + buybacks were " + cov.toFixed(0) + "% of TTM FCF" + (cov > 100 ? " — funded partly by debt or cash balances." : ".")); }
+        if (sb != null && b4) o[b4 >= sb ? "pos" : "neg"].push("Buybacks (" + money(b4) + " TTM) " + (b4 >= sb ? "exceed" : "fall short of") + " stock-based compensation (" + money(sb) + ")" + (sy != null ? "; diluted shares " + pc(sy) + " YoY." : "."));
+        if (!b4) o.pos.push("No buybacks in the window — not a negative on its own.");
+        o.impl = f4 == null ? "—" : f4 > 0 && d4 + b4 <= f4 ? "Distributions are covered by free cash flow." : "Distributions exceed free cash flow — sustainable only with balance-sheet capacity.";
+        o.mon.push("FCF coverage of the dividend, and net share count.");
+      }, ["div", "buyback", "acq", "dissue", "drepay", "sbc"]);
+  }
+  /* ---------------- debt ---------------- */
+  function debtCard(M) {
+    return page(M, "debt", "gdebt", '<div class="pi-l">Gross and net debt</div>' + lines([{ name: "Gross debt", color: C2, S: S(M, "gdebt") }, { name: "Net debt", color: C3, S: S(M, "ndebt") }, { name: "Cash", color: C1, S: S(M, "cash") }], { fmt: f$, zero: true, label: "Debt and cash" }) +
+      '<div class="pi-l" style="margin-top:8px">Debt composition</div>' + stack(M.quarters.slice(-8), [["dcur", "Due within a year", C2], ["stb", "Short-term borrowings", C4], ["cp", "Commercial paper", C3], ["ltd_nc", "Long-term", C1]], { label: "Debt composition" }),
+      ["gdebt", "gdebt_yoy", "ndebt", "cash", "sti", "dcur", "stb", "cp", "ltd_nc", "oplease", "finlease"], null, function (o, M2, q) {
+        var g = E.val(q, "gdebt_yoy"), f = E.val(q, "fcf_yoy"), nd = E.val(q, "ndebt");
+        if (nd != null) (nd < 0 ? o.pos : o.pos).push(nd < 0 ? "Net cash of " + money(-nd) + "." : "Net debt " + money(nd) + ".");
+        if (g != null) (g > 15 ? o.neg : o.pos).push("Gross debt " + pc(g) + " YoY [gdebt_yoy]" + (f != null ? " against FCF " + pc(f) + "." : "."));
+        o.gaps.unshift("Leases are shown separately and excluded from debt. Fixed/floating mix, currency and secured/unsecured split are in the notes, not structured data.");
+        if (M2.model.kind !== "operating") o.gaps.unshift(M2.model.note);
+        o.impl = g == null ? "—" : g > 15 ? "Debt is rising quickly — check whether cash generation and coverage keep pace (servicing card)." : "Debt is broadly stable.";
+        o.mon.push("Debt growth against TTM free cash flow.");
+      }, ["gdebt", "ndebt", "cash", "sti", "dcur", "stb", "cp", "ltd_nc", "oplease"]);
+  }
+  function costCard(M) {
+    return page(M, "costdebt", "effcost", '<div class="pi-l">Borrowing cost — annualised, % of average gross debt</div>' + lines([{ name: "Effective interest cost", color: C2, S: S(M, "effcost") }, { name: "Cash borrowing cost", color: C1, S: S(M, "cashcost") }].filter(function (l) { return l.S.some(function (x) { return x.v != null; }); }), { label: "Borrowing cost" }) +
+      '<div class="ue-ph" style="margin-top:8px">Weighted-average coupon and new-issue yield: UNAVAILABLE — they sit in the debt footnote tables, not the structured data. No rate is inferred from the balance alone.</div>',
+      ["intexp", "intpaid", "gdebt", "effcost", "cashcost"], null, function (o, M2, q) {
+        var e = E.val(q, "effcost"), ey = E.val(q, "effcost_yoy");
+        if (ey != null) (ey > 0.5 ? o.neg : o.pos).push("Effective interest cost " + fv("effcost_yoy", ey) + " versus a year ago [effcost_yoy].");
+        if (e != null && (e > 15 || e < 0.3)) o.gaps.unshift("An implausible rate (" + e.toFixed(1) + "%) usually means interest includes items outside the debt measured here (e.g. a finance arm or deposits) — treat with caution.");
+        o.gaps.unshift("Average debt is the opening/closing average (≈); capitalised and lease interest are not separated in the structured data.");
+        o.why.push("Refinancing maturing low-coupon debt at higher rates, floating-rate exposure, or a change in debt mix.");
+        o.impl = ey == null ? "—" : ey > 0.5 ? "The financing burden is getting more expensive." : "Borrowing cost is stable or falling.";
+        o.mon.push("Interest expense against average debt next quarter, and any new bond issues.");
+      }, ["intexp", "intpaid", "gdebt", "effcost", "cashcost"]);
+  }
+  function maturityCard(M) {
+    var mt = E.maturities(M), q = L(M);
+    if (!mt) return shell(M, "maturity", '<div class="ue-ph">This filer does not tag its principal-maturity schedule in the structured data (it is in the debt footnote). No ladder is drawn rather than an estimated one.</div>');
+    var lab = ["Next 12 months", "Year 2", "Year 3", "Year 4", "Year 5", "After year 5"], liq = (mt.cash || 0) + (mt.sti || 0);
+    var m1 = mt.buckets[0] && mt.buckets[0].v, m23 = (mt.buckets[1] ? mt.buckets[1].v : 0) + (mt.buckets[2] ? mt.buckets[2].v : 0), tot = mt.buckets.reduce(function (a, b) { return a + (b ? b.v : 0); }, 0);
+    var o = { cur: "", hist: "", ind: "No peer benchmark yet.", pos: [], neg: [], why: [], impl: "", mon: [], gaps: [] };
+    o.cur = "As of " + mt.label + " (" + mt.end + "): " + money(m1) + " of principal due within 12 months, " + money(m23) + " in years 2–3, " + money(tot) + " scheduled in total.";
+    o.hist = "The schedule is disclosed once a year in the 10-K, so there is no quarterly history.";
+    if (m1 != null) (m1 <= liq ? o.pos : o.neg).push("Cash and short-term investments (" + money(liq) + ") " + (m1 <= liq ? "cover" : "do not cover") + " the next 12 months’ maturities.");
+    if (mt.revolver != null) o.pos.push("Undrawn committed facilities: " + money(mt.revolver) + ".");
+    else o.gaps.push("Undrawn credit capacity is not tagged — liquidity coverage counts cash only.");
+    if (tot && m1 / tot > 0.25) o.neg.push(((m1 / tot) * 100).toFixed(0) + "% of scheduled principal falls due within a year — a near-term concentration.");
+    o.impl = m1 == null ? "—" : m1 <= liq + (mt.revolver || 0) ? "Near-term maturities are covered by available liquidity." : "Near-term maturities exceed cash and undrawn facilities — refinancing access matters.";
+    o.mon.push("Refinancing announcements and the next 10-K schedule."); o.gaps.push("Fixed/floating mix and covenants are footnote-only.");
+    return shell(M, "maturity", '<div class="cx-hd"><div><div class="lab">Due within 12 months · ' + esc(mt.label) + '</div><div class="big">' + money(m1) + '</div></div><div><div class="lab">Cash + short-term investments</div><div class="m">' + money(liq) + '</div></div><div><div class="lab">Undrawn facilities</div><div class="m">' + money(mt.revolver) + "</div></div></div>" +
+      '<div class="pi-l">Principal maturity ladder</div>' + bars(mt.buckets.map(function (b, i) { return { label: lab[i], v: b ? b.v : null, color: i === 0 ? C2 : C1 }; }).concat([{ label: "Cash + ST investments", v: liq, color: "var(--green)" }])) +
+      '<div class="cx-sec"><div class="pi-l">Interpretation — rule-based, from the figures above</div>' + aiHTML(o) + "</div>" + evidence(M, ["cash", "sti", "revolver", "gdebt"]));
+  }
+  function serviceCard(M) {
+    return page(M, "service", "int_cov", '<div class="pi-l">Interest coverage — TTM EBIT ÷ interest</div>' + lines([{ name: "Interest coverage", color: C1, S: S(M, "int_cov") }], { fmt: xfmt, h: 160 }) +
+      '<div class="pi-l" style="margin-top:8px">Net debt ÷ TTM EBITDA</div>' + lines([{ name: "Net leverage", color: C2, S: S(M, "nd_ebitda") }], { fmt: xfmt, h: 160, zero: true }) +
+      '<div class="pi-l" style="margin-top:8px">Cash interest burden — % of TTM operating cash flow</div>' + lines([{ name: "Cash interest burden", color: C4, S: S(M, "intburden") }], { h: 150 }),
+      ["int_cov", "nd_ebitda", "intburden", "fcf_debt", "ebitda_ttm", "fcf_ttm"], null, function (o, M2, q) {
+        var c = E.val(q, "int_cov"), l = E.val(q, "nd_ebitda"), cy = E.val(q, "int_cov_yoy"), ly = E.val(q, "nd_ebitda_yoy");
+        if (M2.model.kind === "financial" || M2.model.kind === "insurer") o.gaps.unshift("EBITDA-based leverage is not meaningful for this business model.");
+        if (cy != null) (cy < 0 ? o.neg : o.pos).push("Interest coverage " + fv("int_cov_yoy", cy) + " versus a year ago.");
+        if (ly != null) (ly > 0.3 ? o.neg : o.pos).push("Net leverage " + fv("nd_ebitda_yoy", ly) + " versus a year ago.");
+        o.impl = c == null ? "—" : c > 8 ? "Earnings carry the interest bill comfortably." : c < 3 ? "Interest absorbs a large share of operating earnings." : "Coverage is adequate.";
+        o.mon.push("Debt growth against TTM FCF growth; coverage after the next quarter.");
+      }, ["int_cov", "nd_ebitda", "intburden", "fcf_debt", "ebitda_ttm"]);
+  }
+  /* ---------------- ratios ---------------- */
+  function liqCard(M) {
+    return page(M, "liq", "cr", '<div class="pi-l">Liquidity ratios</div>' + lines([{ name: "Current", color: C1, S: S(M, "cr") }, { name: "Quick", color: C2, S: S(M, "qr") }, { name: "Cash", color: C3, S: S(M, "cashr") }], { fmt: function (v) { return v.toFixed(1) + "×"; }, ref: 1, label: "Liquidity ratios" }) +
+      '<div class="stamp">Dashed line = 1.0×.</div><div class="pi-l" style="margin-top:8px">Current assets vs current liabilities</div>' + lines([{ name: "Current assets", color: C1, S: S(M, "ca") }, { name: "Current liabilities", color: C2, S: S(M, "cl") }], { fmt: f$ }),
+      ["cr", "qr", "cashr", "ca", "cl", "wcap", "dcur"], null, function (o, M2, q) {
+        var c = E.val(q, "cr"); if (c != null) (c >= 1.2 ? o.pos : c < 1 ? o.neg : o.pos).push("Current ratio " + c.toFixed(2) + "×.");
+        if (E.val(q, "revolver")) o.pos.push("Plus undrawn facilities of " + money(E.val(q, "revolver")) + ".");
+        o.impl = c == null ? "—" : c >= 1 ? "Short-term assets cover short-term obligations." : "Short-term obligations exceed short-term assets — reliance on operating cash or new borrowing.";
+        o.mon.push("Current ratio and debt due within a year.");
+      }, ["cr", "qr", "cashr", "ca", "cl"]);
+  }
+  function returnsCard(M) {
+    return page(M, "returns", "roe", '<div class="pi-l">Returns on capital — TTM</div>' + lines([{ name: "ROE", color: C1, S: S(M, "roe") }, { name: "ROA", color: C2, S: S(M, "roa") }, { name: "ROIC (≈)", color: C3, S: S(M, "roic") }].filter(function (l) { return l.S.some(function (x) { return x.v != null; }); }), { zero: true, label: "Returns" }) +
+      '<div class="pi-l" style="margin-top:8px">Margins</div>' + lines([{ name: "Gross", color: C1, S: S(M, "gm") }, { name: "Operating", color: C2, S: S(M, "opm") }, { name: "Net", color: C4, S: S(M, "nm") }].filter(function (l) { return l.S.some(function (x) { return x.v != null; }); }), { label: "Margins" }),
+      ["roe", "roa", "roic", "gm", "opm", "nm"], null, function (o, M2, q) {
+        var r = E.val(q, "roic"), ry = E.val(q, "roic_yoy"), e = E.val(q, "roe");
+        if (ry != null) (ry >= 0 ? o.pos : o.neg).push("ROIC " + fv("roic_yoy", ry) + " versus a year ago (approximate) [roic_yoy].");
+        if (e != null && r != null && e > r * 2.5) o.why.push("ROE well above ROIC points to leverage or buybacks shrinking equity rather than operating returns.");
+        o.gaps.unshift("ROIC uses period-end capital and the effective tax rate (≈). No cost-of-capital comparison yet.");
+        o.impl = r == null ? "—" : r > 15 ? "High returns on the capital deployed." : r < 6 ? "Returns are thin relative to typical capital costs." : "Moderate returns on capital.";
+        o.mon.push("Whether incremental capex lifts ROIC over the next year.");
+      }, ["roe", "roa", "roic", "eq", "assets"]);
+  }
+  function levCard(M) {
+    function one(k, t, f) { return '<div class="pi-l" style="margin-top:6px">' + t + "</div>" + lines([{ name: t, color: C2, S: S(M, k) }], { fmt: f, h: 130, zero: true }); }
+    return page(M, "lev", "nd_ebitda", one("nd_ebitda", "Net debt ÷ EBITDA", xfmt) + one("de", "Debt ÷ equity", xfmt) + one("int_cov", "Interest coverage", xfmt) + one("da_r", "Debt ÷ assets"),
+      ["nd_ebitda", "de", "da_r", "int_cov", "gdebt", "ndebt", "eq"], null, function (o, M2, q) {
+        var l = E.val(q, "nd_ebitda"), ly = E.val(q, "nd_ebitda_yoy");
+        if (ly != null) (ly > 0.3 ? o.neg : o.pos).push("Net leverage " + fv("nd_ebitda_yoy", ly) + " YoY.");
+        if (E.val(q, "eq") != null && E.val(q, "eq") < 0) o.gaps.unshift("Negative equity (often from buybacks) makes debt ÷ equity not meaningful.");
+        o.impl = l == null ? "—" : l > 3 ? "Leverage is elevated — earnings growth must keep pace with debt." : "Leverage is moderate.";
+        o.mon.push("Net leverage after the next quarter’s EBITDA.");
+      }, ["nd_ebitda", "de", "da_r", "int_cov"]);
+  }
+  function effCard(M) {
+    return page(M, "eff", "at", '<div class="pi-l">Turnover ratios — TTM</div>' + lines([{ name: "Inventory", color: C1, S: S(M, "invturn") }, { name: "Receivables", color: C2, S: S(M, "arturn") }, { name: "Payables", color: C3, S: S(M, "apturn") }].filter(function (l) { return l.S.some(function (x) { return x.v != null; }); }), { fmt: xfmt, label: "Turnover" }) +
+      '<div class="pi-l" style="margin-top:8px">Asset turnover</div>' + lines([{ name: "Asset turnover", color: C4, S: S(M, "at") }], { fmt: function (v) { return v.toFixed(2) + "×"; }, h: 140 }),
+      ["at", "invturn", "arturn", "apturn", "dso", "dio", "dpo", "ccc"], null, function (o, M2, q) {
+        var a = E.val(q, "at_yoy"); if (a != null) (a >= 0 ? o.pos : o.neg).push("Asset turnover " + fv("at_yoy", a) + " YoY.");
+        var c = E.val(q, "ccc_yoy"); if (c != null) (c <= 0 ? o.pos : o.neg).push("Cash conversion cycle " + fv("ccc_yoy", c) + " YoY.");
+        o.impl = a == null ? "—" : a >= 0 ? "The asset base is generating as much or more revenue." : "Revenue per dollar of assets is falling — new assets may not yet be productive.";
+        o.mon.push("Asset turnover as recent investment comes on line.");
+      }, ["at", "invturn", "arturn", "apturn"]);
+  }
+  /* ---------------- early-warning engine ---------------- */
+  function warnCard(M) {
+    var W = E.warnings(M), order = { ACTIVE: 0, RESOLVED: 1, STALE: 2, "NOT TRIGGERED": 3, UNAVAILABLE: 4 };
+    W.sort(function (a, b) { return (order[a.status] - order[b.status]) || ((b.severity ? E.SCALE.length : 0) - 0) || a.id - b.id; });
+    var cls = { INFORMATIONAL: "MIXED", WATCH: "WEAK", CRITICAL: "NEGATIVE", "CONFIRMED DETERIORATION": "NEGATIVE" };
+    function strip(h) { return '<div style="display:flex;gap:3px;margin:6px 0">' + h.map(function (x) { var bg = x.st === "C" ? "rgba(224,101,95,.65)" : x.st === "W" ? "rgba(232,163,61,.55)" : x.st === "ok" ? "rgba(63,185,127,.3)" : "transparent";
+      return '<span title="' + esc(x.label + ": " + (x.text || x.st)) + '" style="flex:1;height:14px;border-radius:3px;background:' + bg + (x.st === "n/a" ? ";border:1px dashed var(--line2)" : "") + '"></span>'; }).join("") + "</div>"; }
+    var act = W.filter(function (w) { return w.status === "ACTIVE"; }).length;
+    return shell(M, "warn", '<div class="cx-hd"><div><div class="lab">Active signals</div><div class="big">' + act + ' <small style="font-size:14px;color:var(--muted)">of 12 rules</small></div></div><div class="m" style="max-width:520px;font-family:inherit;font-size:12.5px;color:var(--muted)">Each rule is re-run on every one of the last eight quarters using year-on-year comparisons (seasonality-safe). A signal escalates only when it persists; one quarter can reach CRITICAL but never CONFIRMED DETERIORATION.</div></div>' +
+      W.map(function (w) {
+        var badge = w.status === "ACTIVE" ? '<span class="cx-vd ' + cls[w.severity] + '">' + esc(w.severity) + "</span>" : '<span class="cx-vd ' + (w.status === "RESOLVED" ? "SOLID" : w.status === "NOT TRIGGERED" ? "STRONG" : "UNAVAILABLE") + '">' + esc(w.status) + "</span>";
+        return '<details class="cx-evd" style="margin-top:8px"' + (w.status === "ACTIVE" ? " open" : "") + '><summary style="display:flex;justify-content:space-between;gap:10px;align-items:center"><span><b style="color:var(--ink)">' + w.id + ". " + esc(w.title) + "</b>" + (w.text ? ' <span style="color:var(--faint)">— ' + esc(w.text) + "</span>" : "") + "</span>" + badge + "</summary>" +
+          (w.history ? strip(w.history) + '<div class="stamp" style="margin-top:0;border:0;padding:0">' + w.history.map(function (h) { return esc(h.label); }).join(" · ") + " · orange = watch, red = critical, green = clear, dashed = no data</div>" : "") +
+          '<dl class="ue-dl" style="grid-template-columns:auto 1fr;margin:8px 0">' +
+          (w.status === "ACTIVE" ? "<dt>First observed</dt><dd style=\"text-align:left\">" + esc(w.first) + (w.first_ever !== w.first ? " (earlier episode " + esc(w.first_ever) + ")" : "") + "</dd><dt>Latest observed</dt><dd style=\"text-align:left\">" + esc(w.latest) + "</dd><dt>Persistence</dt><dd style=\"text-align:left\">" + w.persistence + " consecutive quarter" + (w.persistence > 1 ? "s" : "") + (w.escalated ? " — escalated for persistence" : "") + "</dd>" : "") +
+          (w.status === "RESOLVED" ? '<dt>Resolution</dt><dd style="text-align:left">Last fired ' + esc(w.resolved_after) + "; clear in " + esc(w.latest) + "</dd>" : "") +
+          (w.threshold ? '<dt>Threshold</dt><dd style="text-align:left">' + esc(w.threshold) + "</dd><dt>Comparison</dt><dd style=\"text-align:left\">" + esc(w.comp || "") + "</dd>" : "") +
+          (w.alt ? '<dt>Alternative explanations</dt><dd style="text-align:left;font-family:inherit">' + esc(w.alt) + "</dd>" : "") +
+          (w.note || w.partial ? '<dt>Data</dt><dd style="text-align:left;font-family:inherit">' + esc(w.note || w.partial) + "</dd>" : "") +
+          '<dt>Confidence</dt><dd style="text-align:left">' + esc(w.confidence || "—") + '</dd><dt>Last reviewed</dt><dd style="text-align:left">' + esc(new Date().toISOString().slice(0, 10)) + " (live)</dd></dl></details>"; }).join("") +
+      '<div class="stamp">Signals are recomputed from the filings on every visit; nothing is stored, so the audit trail is the eight-quarter strip rebuilt from what was filed at each quarter.</div>');
+  }
+
   /* ---------------- public ---------------- */
-  var CARDS = { snap: snapCard, verdicts: verdictCard, health: healthCard, revenue: revenueCard, gross: grossCard, operating: operatingCard, eps: epsCard, cfo: cfoCard, fcf: fcfCard };
+  var CARDS = { snap: snapCard, verdicts: verdictCard, health: healthCard, revenue: revenueCard, gross: grossCard, operating: operatingCard, eps: epsCard, cfo: cfoCard, fcf: fcfCard,
+    "wc-ar": arCard, "wc-inv": invCard, "wc-ap": apCard, "wc-ccc": cccCard, capex: capexCard, alloc: allocCard, debt: debtCard, costdebt: costCard, maturity: maturityCard, service: serviceCard,
+    liq: liqCard, returns: returnsCard, lev: levCard, eff: effCard, warn: warnCard };
   function html(t) {
     if (!worker()) return '<div class="tile"><h2>Company research</h2><div class="ue-ph">Live search needs the AGRITrade SEC Worker. Once it is deployed, open the desk once with <code>?worker=https://&lt;name&gt;.workers.dev</code> — the address is remembered in this browser.</div></div>';
     var D = MEM[t]; if (!D) { load(t); D = MEM[t]; }

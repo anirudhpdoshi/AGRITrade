@@ -148,4 +148,10 @@ ok(/for \(const tag of Object\.keys\(ug\)\)/.test(W) && !/const TAGS = \[/.test(
   ok(Wr.status === "RESOLVED" && Wr.resolved_after, "a signal that clears is RESOLVED, with the quarter it last fired");
 }
 
+{
+  const Wb = E.warnings(E.build(Object.assign(filer({ quarters: weak }), { sic: "6021" })));
+  ok([2, 3, 4, 5, 8].every((id) => Wb.find((w) => w.id === id).status === "UNAVAILABLE"), "bank: cash, working-capital, margin and capex rules are not applied");
+  const tiny = strong(2024, 11).map((x, k) => Object.assign({}, x, { inv: 0.1 * Math.pow(1.6, k) }));
+  ok(E.warnings(E.build(filer({ quarters: tiny }))).find((w) => w.id === 4).status !== "ACTIVE", "immaterial inventory (< 2% of revenue) cannot trigger accumulation");
+}
 console.log(`co_engine: ${n} checks passed`);
