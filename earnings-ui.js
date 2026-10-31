@@ -312,24 +312,37 @@
         (S ? '<button class="ue-btn" data-utgo="season" data-utidx="' + idxOpen + '">Open seasonality ›</button>' : "") + " <button class=\"ue-btn\" data-utix=\"" + idxOpen + "\">Close ✕</button></div></div></div>";
   }
   function universe() { return rows().map(function (r) { return { s: r.s, name: r.name, sector: r.sector, ind: r.ind, ex: r.p.exchange || r.q.exchange || "" }; }); }
-  function tickerBar() {
-    var sel = V.sel ? rows().filter(function (r) { return r.s === V.sel; })[0] : null, hits = [];
-    if (q && !V.lock) { var k = q.toLowerCase();
-      hits = universe().filter(function (u) { return u.s.toLowerCase().indexOf(k) === 0 || (u.name || "").toLowerCase().indexOf(k) >= 0; }).slice(0, 8); }
-    return '<div class="ut-bar"><input class="ut-q" data-utq type="search" autocomplete="off" spellcheck="false" placeholder="' + (V.lock ? "Ticker locked — unlock to switch company" : "Search ticker or company name (e.g. ADM, Deere, fert…)") + '" value="' + esc(q) + '"' + (V.lock ? " disabled" : "") + ' aria-label="Search ticker or company">' +
-      '<div class="ut-ctx">' + (sel ? "Researching <b>" + esc(sel.s) + "</b> " + esc(sel.name) : "No company selected — market view") + "</div>" +
-      (sel ? '<button class="ut-lock" data-utlock aria-pressed="' + !!V.lock + '" title="Lock keeps this company as the research context; market data and the earnings feed keep updating">' + (V.lock ? "🔒 Locked" : "🔓 Unlocked") + "</button>" : "") +
-      '<small class="ue-age" style="margin-left:auto">Search universe: ' + universe().length + " watchlist names · full universe in phase 2</small>" +
-      (hits.length ? '<div class="ut-dd" role="listbox">' + hits.map(function (u) { return '<button role="option" data-utpick="' + esc(u.s) + '"><b style="font-family:\'IBM Plex Mono\',monospace">' + esc(u.s) + "</b><span>" + esc(u.name || "") + "<br><small>" + esc(u.sector || "—") + " · " + esc(u.ind || "—") + "</small></span><small>" + esc(u.ex) + "</small></button>"; }).join("") + "</div>"
-        : q && !V.lock ? '<div class="ut-dd"><div class="note" style="padding:10px">No watchlist name matches “' + esc(q) + '”.</div></div>' : "") + "</div>";
+  /* ticker search: live over every SEC-listed company through the Worker (nothing stored); watchlist fallback without it.
+     Picking a result only makes it PENDING — nothing is fetched or shown until the ticker is locked. */
+  var live = null, liveQ = "", liveT = 0, liveErr = "";
+  function liveSearch() {
+    clearTimeout(liveT); if (!q || !window.COMPANY || !COMPANY.configured()) { live = null; return; }
+    var my = q; liveT = setTimeout(function () { COMPANY.search(my).then(function (r) { if (my !== q) return; live = r; liveQ = my; liveErr = ""; render(); })
+      .catch(function (e) { liveErr = "search unavailable — " + (e.message || e); render(); }); }, 220);
   }
-  var COMPANY_SECTIONS = [["co-overview", "Company overview", 1], ["stmts", "Earnings & statements"], ["wc", "Working capital"], ["fcf", "FCF & allocation"],
-    ["debt", "Debt & financing"], ["ratios", "Ratios & health"], ["seg", "Segments & industry"], ["research", "Earnings research"]];
+  function hitsNow() {
+    if (!q || V.lock) return [];
+    if (window.COMPANY && COMPANY.configured()) return (live || []).map(function (h) { return { s: h.ticker, name: h.name, ex: h.exchange || "", sector: "", ind: "" }; });
+    var k = q.toLowerCase();
+    return universe().filter(function (u) { return u.s.toLowerCase().indexOf(k) === 0 || (u.name || "").toLowerCase().indexOf(k) >= 0; }).slice(0, 8);
+  }
+  function tickerBar() {
+    var hits = hitsNow(), lv = window.COMPANY && COMPANY.configured(), pend = V.pend;
+    return '<div class="ut-bar"><input class="ut-q" data-utq type="search" autocomplete="off" spellcheck="false" placeholder="' + (V.lock ? "Ticker locked — unlock to switch company" : lv ? "Search any US-listed company — ticker or name (e.g. ADM, Deere, Microsoft)" : "Search the watchlist — ticker or name") + '" value="' + esc(q) + '"' + (V.lock ? " disabled" : "") + ' aria-label="Search ticker or company">' +
+      '<div class="ut-ctx">' + (V.lock && V.sel ? "Researching <b>" + esc(V.sel) + "</b> " + esc(pend && pend.s === V.sel ? pend.name : "") : pend ? "Selected <b>" + esc(pend.s) + "</b> " + esc(pend.name || "") + " — lock to open research" : "No company selected — market view") + "</div>" +
+      (pend || V.sel ? '<button class="ut-lock" data-utlock aria-pressed="' + !!V.lock + '" title="Locking opens the company research cards and keeps this company as the research context; market data and the earnings feed keep updating">' + (V.lock ? "🔒 Locked" : "🔓 Lock to open") + "</button>" : "") +
+      '<small class="ue-age" style="margin-left:auto">' + (lv ? "Live SEC search · nothing stored" : "Watchlist search · live search needs the SEC Worker") + "</small>" +
+      (hits.length ? '<div class="ut-dd" role="listbox">' + hits.map(function (u) { return '<button role="option" data-utpick="' + esc(u.s) + '" data-utname="' + esc(u.name || "") + '" data-utex="' + esc(u.ex || "") + '"><b style="font-family:\'IBM Plex Mono\',monospace">' + esc(u.s) + "</b><span>" + esc(u.name || "") + (u.sector ? "<br><small>" + esc(u.sector) + " · " + esc(u.ind || "—") + "</small>" : "") + "</span><small>" + esc(u.ex) + "</small></button>"; }).join("") + "</div>"
+        : q && !V.lock ? '<div class="ut-dd"><div class="note" style="padding:10px">' + (liveErr ? esc(liveErr) : lv && liveQ !== q ? "Searching…" : "No match for “" + esc(q) + "”.") + "</div></div>" : "") + "</div>";
+  }
+  var CO_NAV = [["snap", "Company snapshot", 1], ["verdicts", "Four verdicts", 1], ["health", "Health history", 1], ["revenue", "Revenue", 1], ["gross", "Gross profit", 1], ["operating", "Operating profit", 1], ["eps", "Net income & EPS", 1],
+    ["cfo", "Operating cash flow", 1], ["fcf", "Free cash flow", 1], ["wc", "Working capital"], ["debt", "Debt & financing"], ["ratios", "Ratios & peers"], ["research", "Earnings research"]];
   function nav() {
     function b(id, label, on, note) { return '<button data-utgo="' + id + '" aria-current="' + (V.view === id) + '"' + (on ? "" : " disabled") + ">" + label + (note ? "<small>" + note + "</small>" : "") + "</button>"; }
+    var lk = V.lock && V.sel;
     return '<nav class="ut-nav" aria-label="US earnings sections"><div class="g">Market</div>' + b("market", "Market overview", 1) + b("season", "Seasonality", 1) + b("plan", "Data &amp; plan coverage", 1) +
-      '<div class="g">Company' + (V.sel ? " · " + esc(V.sel) : "") + "</div>" +
-      COMPANY_SECTIONS.map(function (c) { return b(c[0], c[1], c[2] && V.sel, c[2] ? (V.sel ? "" : "pick") : "ph 2"); }).join("") + "</nav>";
+      '<div class="g">Company' + (lk ? " · " + esc(V.sel) : "") + "</div>" + (lk ? b("company", "All research cards", 1) : "") +
+      CO_NAV.map(function (c) { return '<button data-cocard="' + c[0] + '" data-utgo="company"' + (c[2] && lk ? "" : " disabled") + ">" + c[1] + "<small>" + (c[2] ? (lk ? "" : "lock") : "next") + "</small></button>"; }).join("") + "</nav>";
   }
   /* ---------- right: earnings intelligence feed (independent of the company lock) ---------- */
   function addDays(iso, n) { var d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
@@ -367,11 +380,11 @@
   function askBox(sym) {
     return '<div class="ut-ask">' + esc(V.sel) + " is locked as your research company. <button class=\"ue-btn\" data-utswitch=\"" + esc(sym) + '">Switch to ' + esc(sym) + '</button> <button class="ue-btn" data-utask="">Keep ' + esc(V.sel) + "</button></div>";
   }
-  function choose(sym) {   /* the one place the research company changes — a locked ticker is never overridden silently */
-    var inU = universe().some(function (u) { return u.s === sym; });
-    if (!inU) { ask = null; flash(sym + " is not in the research universe yet — it arrives with the phase-2 company build."); return; }
+  function choose(sym, name, ex) {   /* the one place the research company changes — a locked ticker is never overridden silently */
     if (V.lock && V.sel && V.sel !== sym) { ask = sym; render(); return; }
-    V.sel = sym; ask = null; q = ""; if (V.view === "market" || V.view === "season" || V.view === "plan") V.view = "co-overview"; save(); render();
+    if (V.lock && V.sel === sym) { V.view = "company"; save(); render(); return; }
+    var w = rows().filter(function (r) { return r.s === sym; })[0];
+    V.pend = { s: sym, name: name || (w && w.name) || "", ex: ex || "" }; ask = null; q = ""; live = null; save(); render();
   }
   var flashMsg = "", flashT = 0;
   function flash(m) { flashMsg = m; clearTimeout(flashT); flashT = setTimeout(function () { flashMsg = ""; render(); }, 4500); render(); }
@@ -446,10 +459,10 @@
         : '<p class="note">Loading…</p>') + "</div>";
       return;
     }
-    if (V.sel && !rows().some(function (r) { return r.s === V.sel; })) { V.sel = null; V.lock = false; }
-    if (!V.sel && /^(co-|stmts|wc|fcf|debt|ratios|seg|research)/.test(V.view)) V.view = "market";
+    if (!V.lock) V.sel = null;
+    if (!(V.lock && V.sel) && V.view === "company") V.view = "market";
     var centre = V.view === "season" ? seasonView() : V.view === "plan" ? '<div class="tile"><h2>Data &amp; plan coverage</h2>' + topStrip() + "</div>" + planTile() + footer()
-      : V.view === "co-overview" ? companyView() : '<div class="ue-grid" style="grid-template-columns:1fr;margin-top:0"><div>' + table() + earningsSlot() + "</div></div>";
+      : V.view === "company" && V.lock && V.sel && window.COMPANY ? COMPANY.html(V.sel) : '<div class="ue-grid" style="grid-template-columns:1fr;margin-top:0"><div>' + table() + earningsSlot() + "</div></div>";
     P.innerHTML = protoBar() + header() + indexDetail() + tickerBar() + (flashMsg ? '<div class="ut-ask" style="margin:-4px 0 10px">' + esc(flashMsg) + "</div>" : "") +
       '<div class="ut-shell">' + nav() + '<main class="ut-main" style="min-width:0">' + centre + "</main>" + feed() + "</div>";
     if (hadQ) { var i = P.querySelector("[data-utq]"); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch (e) {} } }
@@ -464,18 +477,21 @@
     b = t.closest("[data-utidx]"); if (b) { V.idx = b.getAttribute("data-utidx"); seaCell = null; save(); render(); return; }
     b = t.closest("[data-utcell]"); if (b) { var c = b.getAttribute("data-utcell"); seaCell = seaCell === c ? null : c; render(); return; }
     b = t.closest("[data-utf]"); if (b) { var f = b.getAttribute("data-utf").split(":"); V[f[0]] = f[1]; save(); render(); return; }
-    b = t.closest("[data-utlock]"); if (b) { V.lock = !V.lock; ask = null; save(); render(); return; }
-    b = t.closest("[data-utswitch]"); if (b) { V.lock = true; V.sel = b.getAttribute("data-utswitch"); ask = null; save(); render(); return; }
+    b = t.closest("[data-utlock]"); if (b) { if (V.lock) { V.lock = false; V.sel = null; if (V.view === "company") V.view = "market"; }
+      else if (V.pend) { V.lock = true; V.sel = V.pend.s; V.view = "company"; }
+      if (window.COMPANY) COMPANY.reset(); ask = null; save(); render(); return; }
+    b = t.closest("[data-utswitch]"); if (b) { var sw = b.getAttribute("data-utswitch"); V.pend = { s: sw, name: "", ex: "" }; V.lock = true; V.sel = sw; V.view = "company"; if (window.COMPANY) COMPANY.reset(); ask = null; save(); render(); return; }
     b = t.closest("[data-utask]"); if (b) { ask = null; render(); return; }
-    b = t.closest("[data-utpick]"); if (b) { choose(b.getAttribute("data-utpick")); return; }
+    b = t.closest("[data-utpick]"); if (b) { choose(b.getAttribute("data-utpick"), b.getAttribute("data-utname"), b.getAttribute("data-utex")); return; }
+    if (t.closest("[data-cocard]")) { if (V.lock && V.sel) { V.view = "company"; save(); } return; }
     b = t.closest("[data-utev]"); if (b) { choose(b.getAttribute("data-utev")); return; }
     b = t.closest("[data-uesym]"); if (b) { choose(b.getAttribute("data-uesym")); }
   });
-  P.addEventListener("input", function (ev) { if (ev.target.hasAttribute && ev.target.hasAttribute("data-utq")) { q = ev.target.value; render(); } });
+  P.addEventListener("input", function (ev) { if (ev.target.hasAttribute && ev.target.hasAttribute("data-utq")) { q = ev.target.value; liveSearch(); render(); } });
   P.addEventListener("keydown", function (ev) {
     if (!(ev.target.hasAttribute && ev.target.hasAttribute("data-utq"))) return;
     if (ev.key === "Escape") { q = ""; render(); }
-    if (ev.key === "Enter") { var f = P.querySelector("[data-utpick]"); if (f) choose(f.getAttribute("data-utpick")); }
+    if (ev.key === "Enter") { var f = P.querySelector("[data-utpick]"); if (f) choose(f.getAttribute("data-utpick"), f.getAttribute("data-utname"), f.getAttribute("data-utex")); }
     if (ev.key === "ArrowDown") { var g = P.querySelector("[data-utpick]"); if (g) { ev.preventDefault(); g.focus(); } }
   });
   /* header values come from the World feed (already polled by world-ui.js) — repaint it each minute while the tab is open, no extra fetch */

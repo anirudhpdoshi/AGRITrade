@@ -36,8 +36,8 @@
     ar: ["AccountsReceivableNetCurrent", "ReceivablesNetCurrent"], inv: ["InventoryNet"], ap: ["AccountsPayableCurrent", "AccountsPayableAndAccruedLiabilitiesCurrent"],
     ca: ["AssetsCurrent"], cl: ["LiabilitiesCurrent"], assets: ["Assets"], liab: ["Liabilities"],
     eq: ["StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"],
-    stb: ["ShortTermBorrowings"], cp: ["CommercialPaper"], dcur: ["DebtCurrent", "LongTermDebtCurrent"],
-    ltd_nc: ["LongTermDebtNoncurrent"], ltd: ["LongTermDebt"], oplease: ["OperatingLeaseLiability"],
+    stb: ["ShortTermBorrowings"], cp: ["CommercialPaper"], dcur: ["DebtCurrent", "LongTermDebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent"],
+    ltd_nc: ["LongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligations"], ltd: ["LongTermDebt", "DebtLongtermAndShorttermCombinedAmount"], oplease: ["OperatingLeaseLiability"],
   };
   var PER_SHARE = { eps_d: 1, eps_b: 1 }, SHARES = { sh_d: 1, sh_b: 1 };
 
@@ -134,7 +134,9 @@
     while (Q.length && !Q[0].m.ni && !Q[0].m.rev) Q.shift();
     Q.forEach(function (q, i) { derive(q, Q[i - 1], yoyOf(Q, i)); });
     var A = annual(F, co.fiscalYearEnd);
-    return { co: co, quarters: Q, annual: A, model: model(co), sector: sectorOf(co.sic) };
+    var mod = model(co);
+    if (Q.length && Q.length < 4 && mod.kind === "operating") mod = { kind: "operating", note: "Only " + Q.length + " quarter" + (Q.length > 1 ? "s" : "") + " filed under this registrant (CIK " + co.cik + ") — often a new holding company or a recent listing. A predecessor’s filings are not merged in." };
+    return { co: co, quarters: Q, annual: A, model: mod, sector: sectorOf(co.sic) };
   }
   function yoyOf(Q, i) { for (var j = i - 1; j >= 0; j--) { var d = days(Q[j].end, Q[i].end); if (d >= 350 && d <= 380) return Q[j]; if (d > 380) break; } return null; }
   function val(q, k) { return q && q.m[k] ? q.m[k].v : null; }
@@ -145,6 +147,10 @@
     if (rev) {
       [["gm", "gp"], ["opm", "opinc"], ["nm", "ni"]].forEach(function (x) { if (val(q, x[1]) != null) setC(q, x[0], val(q, x[1]) / rev * 100, x[1] + " ÷ revenue", [x[1], "rev"]); });
     }
+    if (val(q, "opinc") != null) q.m.ebit = { v: val(q, "opinc"), st: q.m.opinc.st, how: "operating income", inputs: ["opinc"] };
+    else if (val(q, "pretax") != null && val(q, "intexp") != null) setC(q, "ebit", val(q, "pretax") + val(q, "intexp"), "EBIT proxy: pretax income + interest expense (operating income is not tagged by this filer)", ["pretax", "intexp"]);
+    if (rev && q.m.ebit && val(q, "opinc") == null) setC(q, "ebitm", q.m.ebit.v / rev * 100, "EBIT proxy ÷ revenue", ["ebit", "rev"]);
+    if (val(q, "opinc") == null && q.m.ebit && val(q, "da") != null) { setC(q, "ebitda", q.m.ebit.v + val(q, "da"), "EBIT proxy + D&A", ["ebit", "da"]); if (rev) setC(q, "ebitdam", q.m.ebitda.v / rev * 100, "EBITDA ÷ revenue", ["ebitda", "rev"]); }
     if (val(q, "opinc") != null && val(q, "da") != null) { setC(q, "ebitda", val(q, "opinc") + val(q, "da"), "operating income + D&A", ["opinc", "da"]); if (rev) setC(q, "ebitdam", q.m.ebitda.v / rev * 100, "EBITDA ÷ revenue", ["ebitda", "rev"]); }
     if (val(q, "pretax") && val(q, "tax") != null) setC(q, "etr", val(q, "tax") / val(q, "pretax") * 100, "tax ÷ pretax income", ["tax", "pretax"]);
     if (val(q, "cfo") != null && val(q, "capex") != null) { setC(q, "fcf", val(q, "cfo") - val(q, "capex"), "operating cash flow − capital expenditure", ["cfo", "capex"]);
@@ -186,6 +192,7 @@
     var s = +co.sic || 0;
     if (s >= 6000 && s <= 6299) return { kind: "financial", note: "Bank / broker model: gross margin, FCF and EBITDA-based leverage are not meaningful — the bank template (NII, NIM, CET1, charge-offs) is not built yet." };
     if (s >= 6300 && s <= 6411) return { kind: "insurer", note: "Insurance model: underwriting metrics (combined ratio, loss ratio) are not built yet; FCF and gross margin are not meaningful." };
+    if (s >= 4900 && s <= 4991) return { kind: "utility", note: "Regulated utility: rate base, allowed ROE and regulatory recovery are the right lens and are not built yet; heavy capex usually makes FCF negative by design." };
     if (s === 6798) return { kind: "reit", note: "REIT: FFO / AFFO, occupancy and same-property NOI are the right lens and are not built yet; FCF is shown with that caveat." };
     if (co.ifrs) return { kind: "ifrs", note: "Files under IFRS (foreign private issuer) — US-GAAP tags are not available, so most cards will be empty." };
     return { kind: "operating", note: "" };
@@ -222,6 +229,8 @@
   function ev(sign, text, metric, period, value, w) { return { sign: sign, text: text, metric: metric, period: period, value: value, w: w || 1 }; }
 
   function earningsQuality(M, i) {
+    if (M.model.kind === "financial" || M.model.kind === "insurer")
+      return { name: "Earnings quality", q: "Is reported profit supported by genuine operating performance and cash generation?", verdict: "UNAVAILABLE", confidence: "NONE", pos: [], neg: [], evidence: [], note: M.model.note };
     var Q = M.quarters, q = Q[i], E = [], used = 0, need = 0, L = q.fl.label;
     function t(k) { return ttm(Q, i, k); }
     need++; var ni4 = t("ni"), cfo4 = t("cfo");
@@ -248,10 +257,11 @@
     var Q = M.quarters, q = Q[i], E = [], used = 0, need = 0, L = q.fl.label, fin = M.model.kind === "financial" || M.model.kind === "insurer";
     var nd = val(q, "ndebt"), gd = val(q, "gdebt"), cash = val(q, "cash");
     need++; if (nd != null) { used++; if (nd < 0) E.push(ev(1, "Net cash position of " + fmt(-nd), "ndebt", L, nd)); }
-    var oi4 = ttm(Q, i, "opinc"), da4 = ttm(Q, i, "da"), int4 = ttm(Q, i, "intexp");
+    var oi4 = ttm(Q, i, "ebit"), da4 = ttm(Q, i, "da"), int4 = ttm(Q, i, "intexp"), cap = M.model.kind === "utility" || M.model.kind === "reit";
+    var LV = cap ? [3, 5.5, 6.5] : [1, 3, 4.5];
     if (!fin) { need++; if (nd != null && oi4 != null && da4 != null) { used++; var eb = oi4 + da4, lev = eb > 0 ? nd / eb : null;
         if (lev == null) E.push(ev(-1, "TTM EBITDA is not positive — leverage cannot be covered by earnings", "ebitda_ttm", "TTM to " + L, eb, 1.5));
-        else if (nd > 0) E.push(lev < 1 ? ev(1, "Low leverage: net debt / EBITDA " + lev.toFixed(1) + "×", "nd_ebitda", "TTM to " + L, lev) : lev > 4.5 ? ev(-1, "High leverage: net debt / EBITDA " + lev.toFixed(1) + "×", "nd_ebitda", "TTM to " + L, lev, 1.5) : lev > 3 ? ev(-1, "Elevated leverage: net debt / EBITDA " + lev.toFixed(1) + "×", "nd_ebitda", "TTM to " + L, lev) : ev(0, "Moderate leverage: net debt / EBITDA " + lev.toFixed(1) + "×", "nd_ebitda", "TTM to " + L, lev)); } }
+        else if (nd > 0) E.push(lev < LV[0] ? ev(1, "Low leverage: net debt / EBITDA " + lev.toFixed(1) + "×", "nd_ebitda", "TTM to " + L, lev) : lev > LV[2] ? ev(-1, "High leverage: net debt / EBITDA " + lev.toFixed(1) + "×", "nd_ebitda", "TTM to " + L, lev, 1.5) : lev > LV[1] ? ev(-1, "Elevated leverage: net debt / EBITDA " + lev.toFixed(1) + "×", "nd_ebitda", "TTM to " + L, lev) : ev(0, "Moderate leverage: net debt / EBITDA " + lev.toFixed(1) + "×", "nd_ebitda", "TTM to " + L, lev)); } }
     need++; if (oi4 != null && int4) { used++; var cov = oi4 / int4;
       E.push(cov > 8 ? ev(1, "Interest is well covered: EBIT / interest " + cov.toFixed(1) + "×", "int_cov", "TTM to " + L, cov) : cov < 1.5 ? ev(-1, "Interest barely covered: EBIT / interest " + cov.toFixed(1) + "×", "int_cov", "TTM to " + L, cov, 1.5) : cov < 3 ? ev(-1, "Thin interest cover: EBIT / interest " + cov.toFixed(1) + "×", "int_cov", "TTM to " + L, cov) : ev(0, "Adequate interest cover: " + cov.toFixed(1) + "×", "int_cov", "TTM to " + L, cov)); }
     if (!fin) { need++; var cr = val(q, "cr"); if (cr != null) { used++; E.push(cr >= 1.5 ? ev(1, "Current ratio " + cr.toFixed(2) + "×", "cr", L, cr, 0.5) : cr < 1 ? ev(-1, "Current ratio below 1 (" + cr.toFixed(2) + "×)", "cr", L, cr) : ev(0, "Current ratio " + cr.toFixed(2) + "×", "cr", L, cr)); } }
@@ -259,8 +269,10 @@
     var dy = val(q, "gdebt_yoy"); if (dy != null && dy > 15) E.push(ev(-1, "Gross debt up " + dy.toFixed(0) + "% YoY", "gdebt_yoy", L, dy));
     var st = (val(q, "dcur") || 0) + (val(q, "stb") || 0) + (val(q, "cp") || 0);
     if (cash != null && st > 0) E.push(cash + (val(q, "sti") || 0) >= st ? ev(1, "Cash and short-term investments cover debt due within a year", "cash_vs_std", L, cash / st, 0.5) : ev(-1, "Debt due within a year exceeds cash and short-term investments", "cash_vs_std", L, cash / st));
+    if (cap) E.forEach(function (e) { if (e.metric === "nd_ebitda" || e.metric === "cash_vs_std") e.text += " (capital-intensive thresholds)"; });
     var r = finish("Financial resilience", "Can the company finance its operations, investment and debt without increasing financial stress?", E, used, need);
     if (fin) r.note = M.model.note;
+    if (cap) r.note = "Capital-intensive " + (M.model.kind === "reit" ? "REIT" : "regulated utility") + " model: leverage is judged on wider thresholds (net debt / EBITDA low < 3×, elevated > 5.5×, high > 6.5×) until the sector template and peer benchmarks arrive.";
     if (r.verdict === "WEAK" && E.some(function (e) { return e.metric === "nd_ebitda" && e.sign < 0; })) r.verdict = "STRETCHED";
     return r;
   }

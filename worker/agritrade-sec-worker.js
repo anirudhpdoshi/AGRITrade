@@ -45,7 +45,7 @@ const TAGS = [
   "AssetsCurrent", "LiabilitiesCurrent", "Assets", "Liabilities", "StockholdersEquity",
   "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
   "ShortTermBorrowings", "CommercialPaper", "DebtCurrent", "LongTermDebtCurrent", "LongTermDebtNoncurrent", "LongTermDebt",
-  "OperatingLeaseLiability", "FinanceLeaseLiability",
+  "OperatingLeaseLiability", "FinanceLeaseLiability", "LongTermDebtAndCapitalLeaseObligations", "LongTermDebtAndCapitalLeaseObligationsCurrent", "DebtLongtermAndShorttermCombinedAmount",
 ];
 const DEI = ["EntityCommonStockSharesOutstanding"];
 
