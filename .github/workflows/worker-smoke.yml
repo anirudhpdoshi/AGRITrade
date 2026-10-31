@@ -18,6 +18,7 @@ jobs:
           U="${{ inputs.url }}"; O="Origin: https://anirudhpdoshi.github.io"
           {
             echo "== /health"; curl -s -m 30 -H "$O" "$U/health"; echo
+            echo "== status + headers for /search?q=adm"; curl -s -m 30 -H "$O" -D - -o body.txt -w "HTTP %{http_code}\n" "$U/search?q=adm" | grep -iE "^HTTP|server|cf-ray|cf-mitigated|access-control|content-type" ; head -c 300 body.txt; echo
             echo "== /search?q=deere"; curl -s -m 30 -H "$O" "$U/search?q=deere" | head -c 700; echo
             echo "== /company?t=ADM"; curl -s -m 60 -H "$O" --compressed -o adm.json -w "HTTP %{http_code} · %{size_download} bytes · %{time_total}s · CORS " "$U/company?t=ADM"
             curl -s -m 60 -H "$O" -D - -o /dev/null "$U/company?t=ADM" | grep -i "access-control-allow-origin" || echo "no CORS header"
