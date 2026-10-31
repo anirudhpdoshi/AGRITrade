@@ -11,6 +11,8 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
@@ -18,4 +20,11 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "20" }
       - run: node tests/co_engine.test.js
-      - run: node scripts/sec_validate.js ${{ inputs.tickers }}
+      - name: Validate on live SEC data
+        run: node scripts/sec_validate.js ${{ inputs.tickers }} | tee /tmp/audit.txt; exit ${PIPESTATUS[0]}
+      - name: Keep the audit text on the sec-audit branch (developer check only)
+        if: always()
+        run: |
+          git config user.name desk-audit-bot; git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git checkout -q --orphan sec-audit && git rm -rqf . && cp /tmp/audit.txt audit.txt && git add audit.txt
+          git commit -qm "sec audit $(date -u +%FT%TZ)" && git push -qf origin HEAD:sec-audit
