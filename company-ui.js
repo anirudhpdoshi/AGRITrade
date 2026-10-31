@@ -8,8 +8,9 @@
   "use strict";
   var E = window.COENGINE; if (!E) return;
   var WK = "desk.secWorker";
-  try { var w = new URLSearchParams(location.search).get("worker"); if (w && /^https:\/\/[\w.-]+\.workers\.dev\/?$/.test(w)) localStorage.setItem(WK, w.replace(/\/$/, "")); if (w === "off") localStorage.removeItem(WK); } catch (e) {}
-  function worker() { try { return localStorage.getItem(WK) || ""; } catch (e) { return ""; } }
+  try { var w = new URLSearchParams(location.search).get("worker"); if (w && /^https:\/\/[\w.-]+\.workers\.dev\/?$/.test(w)) localStorage.setItem(WK, w.replace(/\/$/, "")); if (w === "off") localStorage.setItem(WK, "off"); } catch (e) {}
+  var DEFAULT_WORKER = "https://agritrade.anirudh-p-doshi.workers.dev";   /* deployed 31 Oct 2026; ?worker=… overrides, ?worker=off disables */
+  function worker() { try { var w = localStorage.getItem(WK); return w === "off" ? "" : w || DEFAULT_WORKER; } catch (e) { return DEFAULT_WORKER; } }
   var MEM = {}, card = null, rerender = function () { if (window.EARNINGS) EARNINGS.render(); };
   var C1 = "#1f9db3", C2 = "#c4842a", C3 = "#9468d6", C4 = "#d0607a";   /* validated categorical order (dark surface) */
   function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
