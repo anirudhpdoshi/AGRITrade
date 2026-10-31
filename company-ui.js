@@ -92,8 +92,7 @@
   function negZone(A, y, x0, x1) {
     if (!(A.lo < 0)) return "";
     var a = y(0), b = y(A.lo);
-    return '<rect x="' + x0 + '" y="' + a.toFixed(1) + '" width="' + (x1 - x0) + '" height="' + Math.max(0, b - a).toFixed(1) + '" fill="var(--red)" fill-opacity=".17"/>' +
-      '<text x="' + (x1 - 4) + '" y="' + (b - 4).toFixed(1) + '" text-anchor="end" font-size="9.5" fill="var(--red)" fill-opacity=".85">below zero</text>';
+    return '<rect x="' + x0 + '" y="' + a.toFixed(1) + '" width="' + (x1 - x0) + '" height="' + Math.max(0, b - a).toFixed(1) + '" fill="var(--red)" fill-opacity=".17"/>';
   }
   function cols(S, o) {
     o = o || {}; var W = 640, H = (o.h || 190) + 12, pl = 52, pr = 8, pt = 14, pb = 38, vals = S.map(function (s) { return s.v; }).filter(function (v) { return v != null; });
