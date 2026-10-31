@@ -26,4 +26,10 @@ ok(P.parse_date("Wed, 28 Oct 2026 18:00:00 GMT").startswith("2026-10-28T18:00"),
 j = P.analyse("Guideline for money market operations (an 8-1 majority vote). The Bank will encourage the uncollateralized overnight call rate to remain at around 1.25 percent. If the outlook is realized, the Bank will continue to raise the policy interest rate.")
 ok(j["relevance"] >= 2 and j["dissent"] and j["guidance"]["direction"] == "tighten" and j["guidance"]["conditional"], "BoJ wording: call-rate guideline, majority vote, conditional hikes")
 ok(P.page_text(P.PDF_MARK + "plain text") == "plain text", "PDF text passes through untouched")
+H = ('<tr><td><a href="/en/mopo/mpmdeci/mpr_2026/k261030a.pdf">Oct. 29 (Thurs.), 30 (Fri.) [PDF 172KB]</a></td><td><a href="/en/mopo/outlook/gor2610a.pdf">Oct. 30 (Fri.) [PDF 247KB]</a></td><td>Nov. 10 (Tues.)</td></tr>'
+     '<tr><td><a href="/en/mopo/mpmdeci/mpr_2026/k260918a.pdf">Sept. 17 (Thurs.), 18 (Fri.) [PDF 204KB]</a></td><td>-</td><td><a href="/en/mopo/mpmsche_minu/opinion_2026/opi260918.pdf">Oct. 1 (Thurs.) [PDF 227KB]</a></td></tr>')
+T = {i["link"].rsplit("/", 1)[1]: (i["title"], i["date"][:10]) for i in P.boj_table(H, "x")}
+ok(T == {"k261030a.pdf": ("Statement on Monetary Policy", "2026-10-30"), "gor2610a.pdf": ("Outlook for Economic Activity and Prices (The Bank's View)", "2026-10-30"),
+         "k260918a.pdf": ("Statement on Monetary Policy", "2026-09-18"), "opi260918.pdf": ("Summary of Opinions at the Monetary Policy Meeting", "2026-10-01")}, f"BoJ MPM table parsed: {T}")
+ok(P.classify("Outlook for Economic Activity and Prices (The Bank's View)") == "statement", "Outlook Report is a committee document")
 print(f"{n}/{n} passed")

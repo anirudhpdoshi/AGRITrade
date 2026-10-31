@@ -42,7 +42,8 @@ BANKS = {
     "boe": {"name": "Bank of England", "cc": "gb", "feeds": ["https://www.bankofengland.co.uk/rss/speeches", "https://www.bankofengland.co.uk/rss/news"]},
     "boc": {"name": "Bank of Canada", "cc": "ca", "feeds": ["https://www.bankofcanada.ca/content_type/speeches/feed/"],
             "lists": ["https://www.bankofcanada.ca/press/speeches/", "https://www.bankofcanada.ca/press/press-releases/"]},
-    "boj": {"name": "Bank of Japan", "cc": "jp", "feeds": ["https://www.boj.or.jp/en/rss/whatsnew.xml"]},
+    "boj": {"name": "Bank of Japan", "cc": "jp", "feeds": ["https://www.boj.or.jp/en/rss/whatsnew.xml"],
+            "lists": ["https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm"]},   # MPM table: statement, Outlook Report, Summary of Opinions, minutes
 }
 
 # Published schedule (official calendars, as of Oct 29 2026 ET). Rechecked by hand / by the next build; shown with that date.
@@ -239,7 +240,7 @@ def parse_date(s):
     return None
 
 
-TYPES = [("statement", r"monetary policy summary|statement on monetary policy|fomc statement|monetary policy decision|policy rate|interest rate decision|bank rate (?:maintained|increased|reduced|cut|raised)|statement on monetary policy|maintains|lowers|raises|holds"),
+TYPES = [("statement", r"outlook for economic activity and prices|monetary policy summary|statement on monetary policy|fomc statement|monetary policy decision|policy rate|interest rate decision|bank rate (?:maintained|increased|reduced|cut|raised)|statement on monetary policy|maintains|lowers|raises|holds"),
          ("minutes", r"minutes|account of the monetary|summary of (?:deliberations|opinions)"),
          ("press_conference", r"press conference|opening statement"),
          ("testimony", r"testimony|before the committee"),
@@ -277,14 +278,41 @@ def speaker_of(title, text, typ):
     return "Unattributed"
 
 
+MON = {m: i + 1 for i, m in enumerate(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"])}
+
+
+def boj_table(h, src):
+    """BoJ MPM schedule table -> statements (kYYMMDDa.pdf), Outlook Reports (gorYYMMa.pdf), Summaries of Opinions and minutes,
+    each dated from its own link text ('Oct. 30 (Fri.)'); rows whose document is not out yet have no link and are skipped."""
+    out = []
+    for href, txt in re.findall(r'<a[^>]+href="([^"]+/mopo/(?:mpmdeci/mpr_\d{4}/k\d{6}a?|outlook/gor\d{4}a?|mpmsche_minu/(?:opinion_\d{4}/opi\d{6}|minu_\d{4}/g\d{6}))\.pdf)"[^>]*>(.*?)</a>', h, re.S):
+        u = href if href.startswith("http") else "https://www.boj.or.jp" + href
+        t = _html.unescape(re.sub(r"<[^>]+>", " ", txt))
+        yr = re.search(r"_(\d{4})/|gor(\d{2})", u)
+        y = int(yr.group(1)) if yr.group(1) else 2000 + int(yr.group(2))
+        md = re.findall(r"([A-Z][a-z]{2})[a-z]*\.?\s+(\d{1,2})", t)
+        if not md:
+            continue
+        mo, dd = MON[md[0][0].lower()], int(re.findall(r"\b(\d{1,2})\b", t)[-1]) if "/mpmdeci/" in u else int(md[0][1])
+        title = ("Statement on Monetary Policy" if "/mpmdeci/" in u else "Outlook for Economic Activity and Prices (The Bank's View)" if "/outlook/" in u
+                 else "Summary of Opinions at the Monetary Policy Meeting" if "/opinion_" in u else "Minutes of the Monetary Policy Meeting")
+        out.append({"title": title, "link": u, "date": f"{y}-{mo:02d}-{dd:02d}T03:00:00+00:00", "src": src})
+    return out
+
+
 def collect(bank, cfg, known):
     items = []
     for f in cfg.get("feeds", []):
         items += [dict(i, src=f) for i in rss_items(get(f))]
     for lst in cfg.get("lists", []):
         h = get(lst) or ""
+        if "boj.or.jp" in lst:
+            items += boj_table(h, lst)
+            continue
         for href, title in re.findall(r'<a[^>]+href="(https://www\.bankofcanada\.ca/20\d\d/\d\d/[^"]+/)"[^>]*>\s*([^<]{12,160})</a>', h):
             items.append({"title": _html.unescape(title).strip(), "link": href, "date": "", "src": lst})
+    for it in items:
+        it["link"] = re.sub(r"^http://www\.boj\.or\.jp", "https://www.boj.or.jp", it.get("link") or "")
     seen, out = set(), []
     for it in items:
         if not it["link"] or it["link"] in seen:
@@ -393,7 +421,12 @@ def main():
     if "--if-due" in sys.argv and not (11 <= NOW.hour <= 22) and not event_near(8):
         print("overnight with no central-bank event within 8 h - skipping"); return
     prev = load_prev()
-    docs = {d["id"]: d for d in prev.get("docs", [])}
+    docs = {}
+    for d in prev.get("docs", []):   # BoJ links were stored as http:// — re-key them to their https id once
+        if (d.get("page") or "").startswith("http://www.boj.or.jp"):
+            d["page"] = d["page"].replace("http://", "https://", 1); d["url"] = (d.get("url") or "").replace("http://", "https://", 1)
+            d["id"] = hashlib.sha1(d["page"].encode()).hexdigest()[:12]
+        docs[d["id"]] = d
     status = {}
     cap = 15 if "--backfill" in sys.argv else 5
     for bank, cfg in BANKS.items():
