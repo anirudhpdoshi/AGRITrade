@@ -80,15 +80,31 @@
   /* ---------------- charts (SVG, one axis per chart) ---------------- */
   function axis(min, max) { if (min === max) { max += 1; min -= 1; } var span = max - min, st = Math.pow(10, Math.floor(Math.log10(span / 4))), m = [1, 2, 2.5, 5, 10].map(function (x) { return x * st; }).filter(function (x) { return span / x <= 5; })[0] || st * 10;
     var lo = Math.floor(min / m) * m, hi = Math.ceil(max / m) * m, t = []; for (var v = lo; v <= hi + m / 2; v += m) t.push(+v.toFixed(10)); return { lo: lo, hi: hi, ticks: t }; }
+  var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function mon(d) { if (!d) return ""; var p = String(d).split("-"); return MON[+p[1] - 1] + " " + p[0]; }
+  function dayl(d) { var p = String(d).split("-"); return +p[2] + " " + MON[+p[1] - 1] + " " + p[0]; }
+  /* two-line x label: fiscal quarter on top, calendar month of the period end below */
+  function xl(x, yb, top, end, col) {
+    return '<text x="' + x.toFixed(1) + '" y="' + yb + '" text-anchor="middle" font-size="10" fill="' + (col || "var(--muted)") + '">' + esc(top) +
+      (end ? '<tspan x="' + x.toFixed(1) + '" dy="12" fill="var(--faint)" font-size="9.5">' + esc(mon(end)) + "</tspan>" : "") + "</text>";
+  }
+  /* soft red zone below zero whenever the axis includes negative values */
+  function negZone(A, y, x0, x1) {
+    if (!(A.lo < 0)) return "";
+    var a = y(0), b = y(A.lo);
+    return '<rect x="' + x0 + '" y="' + a.toFixed(1) + '" width="' + (x1 - x0) + '" height="' + Math.max(0, b - a).toFixed(1) + '" fill="var(--red)" fill-opacity=".17"/>' +
+      '<text x="' + (x1 - 4) + '" y="' + (b - 4).toFixed(1) + '" text-anchor="end" font-size="9.5" fill="var(--red)" fill-opacity=".85">below zero</text>';
+  }
   function cols(S, o) {
-    o = o || {}; var W = 640, H = o.h || 190, pl = 52, pr = 8, pt = 14, pb = 26, vals = S.map(function (s) { return s.v; }).filter(function (v) { return v != null; });
+    o = o || {}; var W = 640, H = (o.h || 190) + 12, pl = 52, pr = 8, pt = 14, pb = 38, vals = S.map(function (s) { return s.v; }).filter(function (v) { return v != null; });
     if (!vals.length) return '<p class="note">No reported values for these quarters.</p>';
     var A = axis(Math.min(0, Math.min.apply(null, vals)), Math.max(0, Math.max.apply(null, vals))), y = function (v) { return pt + (1 - (v - A.lo) / (A.hi - A.lo)) * (H - pt - pb); };
     var bw = (W - pl - pr) / S.length, f = o.fmt || f$, out = '<svg viewBox="0 0 ' + W + " " + H + '" width="100%" role="img" aria-label="' + esc(o.label || "") + '">';
+    out += negZone(A, y, pl, W - pr);
     A.ticks.forEach(function (t) { out += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(t).toFixed(1) + '" y2="' + y(t).toFixed(1) + '" stroke="var(--line)" ' + (t === 0 ? 'stroke-width="1.4" stroke="var(--line2)"' : 'stroke-dasharray="2 4"') + '/><text x="' + (pl - 6) + '" y="' + (y(t) + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--faint)" font-family="IBM Plex Mono,monospace">' + f(t) + "</text>"; });
     var mxI = -1, mx = -Infinity; S.forEach(function (s, i) { if (s.v != null && s.v > mx) { mx = s.v; mxI = i; } });
     S.forEach(function (s, i) { var x = pl + i * bw + bw * 0.18, w = bw * 0.64;
-      out += '<text x="' + (x + w / 2).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="var(--faint)">' + esc(s.label) + "</text>";
+      out += xl(x + w / 2, H - 20, s.label, s.end);
       if (s.v == null) { out += '<text x="' + (x + w / 2).toFixed(1) + '" y="' + (y(0) - 4).toFixed(1) + '" text-anchor="middle" font-size="9.5" fill="var(--faint)">n/a</text>'; return; }
       var y0 = y(Math.max(0, s.v)), h = Math.max(1, Math.abs(y(s.v) - y(0))), col = s.v < 0 && o.neg ? o.neg : (o.color || C1), der = s.st === "CALCULATED";
       out += '<rect x="' + x.toFixed(1) + '" y="' + y0.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="3" fill="' + col + '"' + (der ? ' fill-opacity=".62" stroke="' + col + '" stroke-dasharray="3 2"' : "") + "><title>" + esc(s.label + ": " + f(s.v) + (der ? " (derived from year-to-date filings)" : " (as filed)")) + "</title></rect>";
@@ -96,14 +112,15 @@
     return out + "</svg>";
   }
   function lines(L, o) {
-    o = o || {}; var W = 640, H = o.h || 190, pl = 46, pr = 64, pt = 12, pb = 24, all = [];
+    o = o || {}; var W = 640, H = (o.h || 190) + 12, pl = 46, pr = 64, pt = 12, pb = 36, all = [];
     L.forEach(function (s) { s.S.forEach(function (p) { if (p.v != null) all.push(p.v); }); }); if (o.ref != null) all.push(o.ref);
     if (!all.length) return '<p class="note">No reported values for these quarters.</p>';
     var A = axis(Math.min.apply(null, all.concat(o.zero ? [0] : [])), Math.max.apply(null, all)), n = L[0].S.length, f = o.fmt || function (v) { return pc(v, 0).replace("+", ""); };
     var x = function (i) { return pl + (n === 1 ? 0.5 : i / (n - 1)) * (W - pl - pr); }, y = function (v) { return pt + (1 - (v - A.lo) / (A.hi - A.lo)) * (H - pt - pb); };
     var out = '<svg viewBox="0 0 ' + W + " " + H + '" width="100%" role="img" aria-label="' + esc(o.label || "") + '">';
+    out += negZone(A, y, pl, W - pr);
     A.ticks.forEach(function (t) { out += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(t).toFixed(1) + '" y2="' + y(t).toFixed(1) + '" stroke="var(--line)" ' + (t === 0 ? 'stroke="var(--line2)" stroke-width="1.4"' : 'stroke-dasharray="2 4"') + '/><text x="' + (pl - 6) + '" y="' + (y(t) + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--faint)" font-family="IBM Plex Mono,monospace">' + f(t) + "</text>"; });
-    L[0].S.forEach(function (p, i) { out += '<text x="' + x(i).toFixed(1) + '" y="' + (H - 7) + '" text-anchor="middle" font-size="10" fill="var(--faint)">' + esc(p.label) + "</text>"; });
+    L[0].S.forEach(function (p, i) { out += xl(x(i), H - 19, p.label, p.end); });
     L.forEach(function (s) { var pts = s.S.map(function (p, i) { return p.v == null ? null : [x(i), y(p.v), p]; }), seg = [], segs = [];
       pts.forEach(function (p) { if (p) seg.push(p); else if (seg.length) { segs.push(seg); seg = []; } }); if (seg.length) segs.push(seg);
       segs.forEach(function (g) { out += '<polyline fill="none" stroke="' + s.color + '" stroke-width="2" stroke-linejoin="round" points="' + g.map(function (p) { return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" ") + '"/>'; });
@@ -113,17 +130,18 @@
     return (L.length > 1 ? '<div class="cx-leg">' + L.map(function (s) { return '<span><i style="background:' + s.color + '"></i>' + esc(s.name) + "</span>"; }).join("") + "</div>" : "") + out + "</svg>";
   }
   function compo(cfo, capex, fcf) {
-    var W = 640, H = 210, pl = 52, pr = 8, pt = 12, pb = 26, all = [0];
+    var W = 640, H = 222, pl = 52, pr = 8, pt = 12, pb = 38, all = [0];
     cfo.forEach(function (p, i) { if (p.v != null) all.push(p.v); if (capex[i].v != null) all.push(-capex[i].v); if (fcf[i].v != null) all.push(fcf[i].v); });
     var A = axis(Math.min.apply(null, all), Math.max.apply(null, all)), y = function (v) { return pt + (1 - (v - A.lo) / (A.hi - A.lo)) * (H - pt - pb); }, bw = (W - pl - pr) / cfo.length;
     var out = '<div class="cx-leg"><span><i style="background:' + C1 + '"></i>Operating cash flow</span><span><i style="background:' + C2 + '"></i>Capex (shown below zero)</span><span><i style="background:' + C3 + ';border-radius:50%"></i>Free cash flow</span></div><svg viewBox="0 0 ' + W + " " + H + '" width="100%" role="img" aria-label="Operating cash flow, capex and free cash flow by quarter">';
+    out += negZone(A, y, pl, W - pr);
     A.ticks.forEach(function (t) { out += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(t).toFixed(1) + '" y2="' + y(t).toFixed(1) + '" stroke="var(--line)" ' + (t === 0 ? 'stroke="var(--line2)" stroke-width="1.4"' : 'stroke-dasharray="2 4"') + '/><text x="' + (pl - 6) + '" y="' + (y(t) + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--faint)" font-family="IBM Plex Mono,monospace">' + f$(t) + "</text>"; });
     var fp = [];
     cfo.forEach(function (p, i) { var x = pl + i * bw + bw * 0.2, w = bw * 0.6;
       if (p.v != null) out += '<rect x="' + x.toFixed(1) + '" y="' + y(Math.max(0, p.v)).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + Math.max(1, Math.abs(y(p.v) - y(0))).toFixed(1) + '" rx="3" fill="' + C1 + '"><title>' + esc(p.label + " operating cash flow " + f$(p.v)) + "</title></rect>";
       var c = capex[i].v; if (c != null) out += '<rect x="' + x.toFixed(1) + '" y="' + (y(0) + 2).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + Math.max(1, Math.abs(y(-c) - y(0))).toFixed(1) + '" rx="3" fill="' + C2 + '"><title>' + esc(p.label + " capex " + f$(c)) + "</title></rect>";
       if (fcf[i].v != null) fp.push([x + w / 2, y(fcf[i].v), fcf[i]]);
-      out += '<text x="' + (x + w / 2).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="var(--faint)">' + esc(p.label) + "</text>"; });
+      out += xl(x + w / 2, H - 20, p.label, p.end); });
     if (fp.length > 1) out += '<polyline fill="none" stroke="' + C3 + '" stroke-width="2" points="' + fp.map(function (p) { return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" ") + '"/>';
     fp.forEach(function (p, k) { out += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="5" fill="' + C3 + '" stroke="var(--panel)" stroke-width="2"><title>' + esc(p[2].label + " free cash flow " + f$(p[2].v)) + "</title></circle>" +
       (k === fp.length - 1 ? '<text x="' + (p[0] - 8).toFixed(1) + '" y="' + (p[1] - 9).toFixed(1) + '" text-anchor="end" font-size="10.5" fill="var(--ink)" font-family="IBM Plex Mono,monospace">FCF ' + money(p[2].v) + "</text>" : ""); });
@@ -135,6 +153,7 @@
     var all = [0]; bars.forEach(function (b) { all.push(b.a, b.b); });
     var A = axis(Math.min.apply(null, all), Math.max.apply(null, all)), y = function (v) { return pt + (1 - (v - A.lo) / (A.hi - A.lo)) * (H - pt - pb); }, bw = (W - pl - pr) / bars.length;
     var out = '<svg viewBox="0 0 ' + W + " " + H + '" width="100%" role="img" aria-label="Bridge from net income to operating cash flow">';
+    out += negZone(A, y, pl, W - pr);
     A.ticks.forEach(function (t) { out += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(t).toFixed(1) + '" y2="' + y(t).toFixed(1) + '" stroke="var(--line)" ' + (t === 0 ? 'stroke="var(--line2)" stroke-width="1.4"' : 'stroke-dasharray="2 4"') + '/><text x="' + (pl - 6) + '" y="' + (y(t) + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--faint)" font-family="IBM Plex Mono,monospace">' + f$(t) + "</text>"; });
     bars.forEach(function (b, i) { var x = pl + i * bw + bw * 0.16, w = bw * 0.68, top = y(Math.max(b.a, b.b)), h = Math.max(1, Math.abs(y(b.a) - y(b.b))), col = b.s.total ? C1 : b.s.v >= 0 ? "var(--green)" : "var(--red)";
       out += '<rect x="' + x.toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="3" fill="' + col + '"' + (b.s.total ? "" : ' fill-opacity=".85"') + "><title>" + esc(b.s.name + ": " + f$(b.s.v)) + "</title></rect>" +
@@ -145,15 +164,16 @@
   function dfmt(v) { return v.toFixed(0) + "d"; }
   function xfmt(v) { return v.toFixed(1) + "×"; }
   function stack(Q, parts, o) {   /* stacked columns for composition (one axis) */
-    o = o || {}; var W = 640, H = o.h || 190, pl = 52, pr = 8, pt = 12, pb = 26, tot = Q.map(function (q) { return parts.reduce(function (a, p) { return a + (E.val(q, p[0]) || 0); }, 0); });
+    o = o || {}; var W = 640, H = (o.h || 190) + 12, pl = 52, pr = 8, pt = 12, pb = 38, tot = Q.map(function (q) { return parts.reduce(function (a, p) { return a + (E.val(q, p[0]) || 0); }, 0); });
     var mx = Math.max.apply(null, tot.concat([0])); if (!mx) return '<p class="note">No composition disclosed.</p>';
     var A = axis(0, mx), y = function (v) { return pt + (1 - (v - A.lo) / (A.hi - A.lo)) * (H - pt - pb); }, bw = (W - pl - pr) / Q.length;
     var out = '<div class="cx-leg">' + parts.map(function (p) { return '<span><i style="background:' + p[2] + '"></i>' + esc(p[1]) + "</span>"; }).join("") + '</div><svg viewBox="0 0 ' + W + " " + H + '" width="100%" role="img" aria-label="' + esc(o.label || "composition") + '">';
+    out += negZone(A, y, pl, W - pr);
     A.ticks.forEach(function (t) { out += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(t).toFixed(1) + '" y2="' + y(t).toFixed(1) + '" stroke="var(--line)" stroke-dasharray="2 4"/><text x="' + (pl - 6) + '" y="' + (y(t) + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--faint)" font-family="IBM Plex Mono,monospace">' + f$(t) + "</text>"; });
     Q.forEach(function (q, i) { var x = pl + i * bw + bw * 0.2, w = bw * 0.6, base = 0;
       parts.forEach(function (p) { var v = E.val(q, p[0]); if (!v || v < 0) return; var y1 = y(base + v), y0 = y(base);
         out += '<rect x="' + x.toFixed(1) + '" y="' + y1.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + Math.max(0, y0 - y1 - 2).toFixed(1) + '" rx="2" fill="' + p[2] + '"><title>' + esc(q.fl.label + " " + p[1] + ": " + f$(v)) + "</title></rect>"; base += v; });
-      out += '<text x="' + (x + w / 2).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="var(--faint)">' + esc(q.fl.label) + "</text>"; });
+      out += xl(x + w / 2, H - 20, q.fl.label, q.end); });
     return out + "</svg>";
   }
   function bars(items, o) {   /* labelled horizontal bars — maturity ladder, peer-style ranking */
@@ -167,9 +187,10 @@
     var vals = items.map(function (i) { return i.v; }).filter(function (v) { return v != null; }).concat([0]); if (o.ref != null) vals.push(o.ref);
     var A = axis(Math.min.apply(null, vals), Math.max.apply(null, vals)), y = function (v) { return pt + (1 - (v - A.lo) / (A.hi - A.lo)) * (H - pt - pb); }, bw = (W - pl - pr) / items.length;
     var out = '<svg viewBox="0 0 ' + W + " " + H + '" width="100%" role="img" aria-label="' + esc(o.label || "") + '">';
+    out += negZone(A, y, pl, W - pr);
     A.ticks.forEach(function (t) { out += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(t).toFixed(1) + '" y2="' + y(t).toFixed(1) + '" stroke="var(--line)" ' + (t === 0 ? 'stroke="var(--line2)" stroke-width="1.4"' : 'stroke-dasharray="2 4"') + '/><text x="' + (pl - 6) + '" y="' + (y(t) + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--faint)" font-family="IBM Plex Mono,monospace">' + (o.axfmt || f)(t) + "</text>"; });
     items.forEach(function (it, i) { var x = pl + i * bw + bw * 0.18, w = bw * 0.64;
-      out += '<text x="' + (x + w / 2).toFixed(1) + '" y="' + (H - 10) + '" text-anchor="middle" font-size="11" fill="var(--muted)">' + esc(it.label) + "</text>";
+      out += '<text x="' + (x + w / 2).toFixed(1) + '" y="' + (H - 10) + '" text-anchor="middle" font-size="' + (items.length > 8 ? 9.5 : 11) + '" fill="var(--muted)">' + esc(it.label) + "</text>";
       if (it.v == null) return; var top = y(Math.max(0, it.v)), h = Math.max(1, Math.abs(y(it.v) - y(0)));
       out += '<rect x="' + x.toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="3" fill="' + (it.color || C1) + '"' + (it.dim ? ' fill-opacity=".45"' : "") + "><title>" + esc(it.label + ": " + (it.text || f(it.v))) + "</title></rect>" +
         '<text x="' + (x + w / 2).toFixed(1) + '" y="' + (it.v >= 0 ? top - 6 : top + h + 13).toFixed(1) + '" text-anchor="middle" font-size="11" fill="var(--ink)" font-family="IBM Plex Mono,monospace" font-weight="600">' + esc(it.text || f(it.v)) + "</text>"; });
@@ -178,16 +199,17 @@
   }
   /* grouped bars: categories × series, one axis */
   function gbars(cats, series, o) {
-    o = o || {}; var W = 640, H = o.h || 220, pl = 52, pr = 8, pt = 18, pb = 28, all = [0];
+    o = o || {}; var two = cats.some(function (c) { return String(c).indexOf("|") > 0; }), W = 640, H = (o.h || 220) + (two ? 12 : 0), pl = 52, pr = 8, pt = 18, pb = two ? 40 : 28, all = [0];
     series.forEach(function (s) { s.vals.forEach(function (v) { if (v != null) all.push(v); }); });
     var A = axis(Math.min.apply(null, all), Math.max.apply(null, all)), y = function (v) { return pt + (1 - (v - A.lo) / (A.hi - A.lo)) * (H - pt - pb); }, gw = (W - pl - pr) / cats.length, bw = gw * 0.72 / series.length;
     var out = '<div class="cx-leg">' + series.map(function (s) { return '<span><i style="background:' + s.color + '"></i>' + esc(s.name) + "</span>"; }).join("") + '</div><svg viewBox="0 0 ' + W + " " + H + '" width="100%" role="img" aria-label="' + esc(o.label || "") + '">';
+    out += negZone(A, y, pl, W - pr);
     A.ticks.forEach(function (t) { out += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(t).toFixed(1) + '" y2="' + y(t).toFixed(1) + '" stroke="var(--line)" ' + (t === 0 ? 'stroke="var(--line2)" stroke-width="1.4"' : 'stroke-dasharray="2 4"') + '/><text x="' + (pl - 6) + '" y="' + (y(t) + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--faint)" font-family="IBM Plex Mono,monospace">' + (o.fmt || f$)(t) + "</text>"; });
     cats.forEach(function (c, i) { var gx = pl + i * gw + gw * 0.14;
       series.forEach(function (s, j) { var v = s.vals[i]; if (v == null) return; var x = gx + j * bw, top = y(Math.max(0, v)), h = Math.max(1, Math.abs(y(v) - y(0)));
         out += '<rect x="' + (x + 1).toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + (bw - 2).toFixed(1) + '" height="' + h.toFixed(1) + '" rx="3" fill="' + s.color + '"><title>' + esc(c + " · " + s.name + ": " + (o.fmt || f$)(v)) + "</title></rect>" +
           (cats.length <= 6 ? '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (v >= 0 ? top - 4 : top + h + 11).toFixed(1) + '" text-anchor="middle" font-size="10" fill="var(--ink)" font-family="IBM Plex Mono,monospace">' + (o.lbl || o.fmt || f$)(v) + "</text>" : ""); });
-      out += '<text x="' + (gx + gw * 0.36).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10.5" fill="var(--muted)">' + esc(c) + "</text>"; });
+      var cc = String(c).split("|"); out += xl(gx + gw * 0.36, cc[1] ? H - 20 : H - 8, cc[0], cc[1]); });
     return out + "</svg>";
   }
   function spark(S, col) {
@@ -457,7 +479,7 @@
         '<div><div class="pi-l">Diluted EPS — GAAP</div>' + cols(S(M, "eps_d"), { fmt: function (v) { return "$" + v.toFixed(2); }, neg: "var(--red)", label: "Diluted EPS" }) +
         '<div class="ue-ph" style="margin-top:8px">Adjusted (non-GAAP) EPS: UNAVAILABLE — not in the structured filings. GAAP and adjusted are never combined.</div></div></div>' +
         (S(M, "core_eps").some(function (x) { return x.v != null; }) ? '<div class="pi-l" style="margin-top:10px">Reported vs core EPS — core excludes gains/losses on equity investments</div>' +
-          gbars(S(M, "eps_d").map(function (x) { return x.label; }), [{ name: "Reported diluted EPS", color: "#a9c1e8", vals: S(M, "eps_d").map(function (x) { return x.v; }) }, { name: "Core EPS (calculated)", color: WGT, vals: S(M, "core_eps").map(function (x) { return x.v; }) }],
+          gbars(S(M, "eps_d").map(function (x) { return x.label + "|" + x.end; }), [{ name: "Reported diluted EPS", color: "#a9c1e8", vals: S(M, "eps_d").map(function (x) { return x.v; }) }, { name: "Core EPS (calculated)", color: WGT, vals: S(M, "core_eps").map(function (x) { return x.v; }) }],
             { fmt: function (v) { return "$" + v.toFixed(2); }, label: "Reported vs core EPS" }) : ""),
       ["pretax", "tax", "etr", "ni", "nm", "eps_d", "core_eps", "invgain", "sh_d", "sbc"], ["ni", "eps_d"], function (o, M2, q) {
         var ig = E.val(q, "invgain"); if (ig != null && E.val(q, "ni") && Math.abs(ig) > Math.abs(E.val(q, "ni")) * 0.1) (ig > 0 ? o.neg : o.pos).push("Equity-investment " + (ig > 0 ? "gains" : "losses") + " of " + money(Math.abs(ig)) + " moved net income this quarter — core EPS $" + (E.val(q, "core_eps") != null ? E.val(q, "core_eps").toFixed(2) : "—") + " vs reported $" + (E.val(q, "eps_d") != null ? E.val(q, "eps_d").toFixed(2) : "—") + ".");
@@ -793,14 +815,14 @@
     if (!P || !P.ticker) return shell(M, "val-rx", '<div class="ue-ph">Price history did not load.</div>');
     var RA = E.reactions(P, M.co.filings), R = RA.slice(-12), bm = E.bigMoves(P.ticker.ts, 5), last = P.ticker.ts[P.ticker.ts.length - 1][0];
     var yrs = ((Date.parse(last) - Date.parse(P.ticker.ts[0][0])) / 3.156e10).toFixed(1);
-    var rxItems = R.map(function (r) { return { label: r.date.slice(2, 7), v: r.pct, color: r.pct >= 0 ? BULL : BEAR, text: pc(r.pct, 1) }; });
+    var rxItems = R.map(function (r) { return { label: mon(r.date), v: r.pct, color: r.pct >= 0 ? BULL : BEAR, text: pc(r.pct, 1) }; });
     var worst = bm.worst.slice().reverse().map(function (w) { var isRx = RA.some(function (r) { return Math.abs(Date.parse(r.date) - Date.parse(w.date)) <= 2 * 864e5; });
-      return { label: w.date, v: w.pct, color: isRx ? BEAR : "#7d8590", text: pc(w.pct, 1) }; });
+      return { label: dayl(w.date), v: w.pct, color: isRx ? BEAR : "#7d8590", text: pc(w.pct, 1) }; });
     var avgAbs = R.length ? R.reduce(function (a, r) { return a + Math.abs(r.pct); }, 0) / R.length : null, latest = R[R.length - 1];
     return shell(M, "val-rx", '<div class="pi-l">Two-day move around each earnings release (8-K Item 2.02)</div>' + (R.length ? vbars(rxItems, { fmt: function (v) { return pc(v, 1); }, axfmt: function (v) { return pc(v, 1); }, label: "Earnings-day reactions" }) : '<p class="note">No earnings releases inside the price window.</p>') +
-      '<div class="cx-vg" style="margin-top:6px"><div class="cx-v"><h3>Latest release</h3><div class="cx-ev">' + (latest ? esc(latest.date) + ": " + pc(latest.pct, 1) + (latest.rel != null ? " — " + pc(latest.rel, 1).replace("%", " pp") + " versus the S&P 500" : "") : "—") + "</div>" +
+      '<div class="cx-vg" style="margin-top:6px"><div class="cx-v"><h3>Latest release</h3><div class="cx-ev">' + (latest ? esc(dayl(latest.date)) + ": " + pc(latest.pct, 1) + (latest.rel != null ? " — " + pc(latest.rel, 1).replace("%", " pp") + " versus the S&P 500" : "") : "—") + "</div>" +
         (avgAbs != null ? '<div class="cx-ev">Average absolute reaction over ' + R.length + " reports: " + avgAbs.toFixed(1) + "% — " + (latest && Math.abs(latest.pct) > avgAbs * 1.8 ? "the latest move was unusually large." : "the latest move was within the usual range.") + "</div>" : "") + "</div>" +
-        '<div class="cx-v"><h3>Largest single-day drops (' + yrs + " years)</h3>" + bm.worst.map(function (w) { return '<div class="cx-ev n">' + esc(w.date) + ": " + pc(w.pct, 1) + "</div>"; }).join("") + "</div></div>" +
+        '<div class="cx-v"><h3>Largest single-day drops (' + yrs + " years)</h3>" + bm.worst.map(function (w) { return '<div class="cx-ev n">' + esc(dayl(w.date)) + ": " + pc(w.pct, 1) + "</div>"; }).join("") + "</div></div>" +
       '<div class="pi-l" style="margin-top:10px">Worst days in the window — red where it was an earnings reaction</div>' + vbars(worst, { fmt: function (v) { return pc(v, 1); }, axfmt: function (v) { return pc(v, 1); }, label: "Worst days", h: 200 }) +
       '<div class="stamp">Release timing (before/after the bell) is not in the filing index, so each reaction is the close before the filing date to the close one session after. Daily closes from Yahoo (delayed), ' + yrs + " years. History before the window is not shown rather than quoted from elsewhere.</div>");
   }
