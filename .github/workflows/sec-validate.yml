@@ -1,0 +1,21 @@
+name: SEC company engine validation
+# Runs co-engine.js against live SEC EDGAR filings for the spec's validation companies and prints an audit to the log.
+# Manual only; nothing is stored or published. SEC requires a contact in the User-Agent (set in the script).
+on:
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: "Tickers to validate"
+        type: string
+        default: "META GOOGL MSFT JPM ABBV XOM WMT CAT PLD NEE DOW ADM DE"
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: node tests/co_engine.test.js
+      - run: node scripts/sec_validate.js ${{ inputs.tickers }}
