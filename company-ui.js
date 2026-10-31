@@ -9,7 +9,7 @@
   var E = window.COENGINE; if (!E) return;
   var WK = "desk.secWorker";
   try { var w = new URLSearchParams(location.search).get("worker"); if (w && /^https:\/\/[\w.-]+\.workers\.dev\/?$/.test(w)) localStorage.setItem(WK, w.replace(/\/$/, "")); if (w === "off") localStorage.setItem(WK, "off"); } catch (e) {}
-  var DEFAULT_WORKER = "https://agritrade.anirudh-p-doshi.workers.dev";   /* deployed 31 Oct 2026; ?worker=… overrides, ?worker=off disables */
+  var DEFAULT_WORKER = "https://agritrade-sec.anirudh-p-doshi.workers.dev";   /* dedicated name so dashboard edits to the "agritrade" project cannot break it; deployed 31 Oct 2026; ?worker=… overrides, ?worker=off disables */
   function worker() { try { var w = localStorage.getItem(WK); return w === "off" ? "" : w || DEFAULT_WORKER; } catch (e) { return DEFAULT_WORKER; } }
   var MEM = {}, card = null, rerender = function () { if (window.EARNINGS) EARNINGS.render(); };
   var C1 = "#1f9db3", C2 = "#c4842a", C3 = "#9468d6", C4 = "#d0607a";   /* validated categorical order (dark surface) */
