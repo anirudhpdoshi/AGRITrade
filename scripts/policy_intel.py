@@ -82,7 +82,7 @@ DOVE = [
     (r"tighter (?:financing|financial|credit)|credit stress|financial (?:instability|stress)|strains?", "financial"),
     (r"(?:lower|reduce|cut)\w* (?:the |our )?(?:policy |interest |bank )?rates?|further (?:easing|cuts?|reductions?)|less restrictive|room to (?:ease|cut)|easing (?:may|could|would) be (?:warranted|appropriate)", "guidance"),
 ]
-AV = 3   # analysis version: stored items scored by an older version are re-read
+AV = 4   # analysis version: stored items scored by an older version are re-read
 FOREIGN = re.compile(r"\b(?:In the United States|U\.S\. economy|China|Chinese|euro area|Europe(?:an)? economy|Japan(?:ese)? economy|global (?:growth|economy|activity)|emerging market|other countries|abroad)\b", re.I)
 DISSENT = re.compile(r"voting against|dissent|preferred (?:instead )?to (?:raise|lower|cut|reduce|increase|hold|maintain|leave|keep)|voted (?:in favour|in favor|for) (?:a |an )?(?:increase|reduction|cut|hike)|(?:\d+|one|two|three|four)[–-](?:\d+|one|two|three|four) vote|(?:majority|minority) of", re.I)
 NEG = re.compile(r"\b(?:not|no longer|nor|never|without|unlikely)\b")
@@ -429,6 +429,7 @@ def main():
             d = {"id": did, "bank": bank, "title": it["title"][:200], "type": it["type"], "url": it.get("link_full") or it["link"], "page": it["link"], "published_at": it.get("published_at"),
                  "fetched_at": NOW.isoformat(), "hash": hsh, "version": (old or {}).get("version", 0) + 1, "words": len(text.split()),
                  "source_type": "official", "transcript_status": "official", "speaker": speaker_of(it["title"], text, it["type"]),
+                 "excerpt": re.sub(r"\s+", " ", text)[:600],
                  "voting_status": "NOT_APPLICABLE" if it["type"] in ("statement", "minutes") and bank != "boc" else VOTE.get(bank, "UNKNOWN"),
                  **a}
             if old and old.get("hash") and old.get("hash") != hsh:
