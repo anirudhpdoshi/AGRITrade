@@ -4,7 +4,7 @@ SEC Worker, locks it, opens each research card and saves screenshots + a log of 
 import asyncio, os, sys, json
 SITE = os.environ.get("SITE", "https://anirudhpdoshi.github.io/AGRITrade/?preview=earnings")
 TICK = os.environ.get("TICK", "GOOGL").split(",")
-CARDS = ["snap", "verdicts", "health", "revenue", "gross", "operating", "eps", "wc-ccc", "cfo", "fcf", "capex", "alloc", "debt", "maturity", "service", "returns", "warn"]
+CARDS = ["val-snap", "val-scn", "val-pe", "val-rx", "snap", "verdicts", "health", "revenue", "gross", "operating", "eps", "wc-ccc", "cfo", "fcf", "capex", "alloc", "debt", "maturity", "service", "returns", "warn"]
 OUT = "shots"; os.makedirs(OUT, exist_ok=True)
 from playwright.async_api import async_playwright
 async def main():

@@ -154,4 +154,30 @@ ok(/for \(const tag of Object\.keys\(ug\)\)/.test(W) && !/const TAGS = \[/.test(
   const tiny = strong(2024, 11).map((x, k) => Object.assign({}, x, { inv: 0.1 * Math.pow(1.6, k) }));
   ok(E.warnings(E.build(filer({ quarters: tiny }))).find((w) => w.id === 4).status !== "ACTIVE", "immaterial inventory (< 2% of revenue) cannot trigger accumulation");
 }
+/* ---------- core EPS & valuation ---------- */
+{
+  const cg = filer({ quarters: strong(2024, 11) });
+  cg.facts.EquitySecuritiesFvNiGainLoss = { USD: strong(2024, 11).filter((x) => x.q !== 4).map((x) => ({ s: x.s, e: x.e, v: 40, f: "10-Q", d: x.e.slice(0, 8) + "28" })) };
+  cg.facts.IncomeTaxExpenseBenefit = { USD: strong(2024, 11).filter((x) => x.q !== 4).map((x) => ({ s: x.s, e: x.e, v: 30, f: "10-Q", d: x.e.slice(0, 8) + "28" })) };
+  cg.facts.IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest = { USD: strong(2024, 11).filter((x) => x.q !== 4).map((x) => ({ s: x.s, e: x.e, v: 150, f: "10-Q", d: x.e.slice(0, 8) + "28" })) };
+  const Mg = E.build(cg), Lg = Mg.quarters[Mg.quarters.length - 1], c = strong(2024, 11)[10];
+  ok(near(Lg.m.core_ni.v, c.ni - 40 * (1 - 0.2)), "core net income strips investment gains after tax (ETR 20%)");
+  ok(near(Lg.m.core_eps.v, Lg.m.core_ni.v / c.sh) && Lg.m.core_eps.approx, "core EPS = core net income ÷ diluted shares, flagged approximate");
+  const ts = []; for (let d = 0; d < 400; d++) { const dt = new Date(Date.UTC(2025, 9, 1) + d * 864e5); if ([0, 6].includes(dt.getUTCDay())) continue; ts.push([dt.toISOString().slice(0, 10), 100]); }
+  ts[ts.length - 1][1] = 90;
+  const P = { ticker: { ts }, spx: { ts: ts.map((x) => [x[0], 100]) } };
+  cg.dei = { EntityCommonStockSharesOutstanding: [{ e: "2026-10-20", v: 100, d: "2026-10-28" }] };
+  const V = E.valuation(E.build(cg), P);
+  ok(V.price === 90 && V.mcap === 9000 && V.shares.st === "REPORTED", "price × cover-page shares = market cap");
+  ok(near(V.pe, 90 / [7, 8, 9, 10].reduce((a, i) => a + Mg.quarters[Mg.quarters.length - 4 + (i - 7)].m.eps_d.v, 0)), "P/E on TTM diluted EPS");
+  const S = E.scenarios(10, 100, [{ id: "bear", g: -10, pe: 15, p: 25 }, { id: "base", g: 10, pe: 20, p: 50 }, { id: "bull", g: 20, pe: 25, p: 25 }]);
+  ok(near(S.cases[1].value, 220) && near(S.cases[1].upside, 120) && near(S.weighted.value, 0.25 * 135 + 0.5 * 220 + 0.25 * 300), "scenario value = EPS × (1+g) × P/E; probability-weighted");
+  ok(near(E.scenarios(10, 100, [{ g: 0, pe: 10, p: 1 }, { g: 0, pe: 20, p: 3 }]).weighted.value, 175), "weights are normalised to their sum");
+  const Sn = E.sensitivity(11, 20, 230);
+  ok(Sn.rows.length === 9 && Sn.rows.find((r) => r.center).pe === 20 && near(Sn.perTurn, 11) && near(Sn.breakEvenPE, 230 / 11), "multiple sensitivity: each turn worth NTM EPS; break-even P/E");
+  const bm = E.bigMoves(ts, 3); ok(near(bm.worst[0].pct, -10) && bm.worst[0].date === ts[ts.length - 1][0], "largest single-day drop found");
+  const rx = E.reactions(P, [{ form: "8-K", items: "2.02", filed: ts[ts.length - 2][0] }]);
+  ok(rx.length === 1 && near(rx[0].pct, -10) && near(rx[0].rel, -10), "earnings-day reaction measured against the S&P 500");
+}
+
 console.log(`co_engine: ${n} checks passed`);

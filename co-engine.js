@@ -29,7 +29,7 @@
     div: ["PaymentsOfDividends", "PaymentsOfDividendsCommonStock"], buyback: ["PaymentsForRepurchaseOfCommonStock"],
     dissue: ["ProceedsFromIssuanceOfLongTermDebt"], drepay: ["RepaymentsOfLongTermDebt"],
     d_ar: ["IncreaseDecreaseInAccountsReceivable"], d_inv: ["IncreaseDecreaseInInventories"], d_ap: ["IncreaseDecreaseInAccountsPayable"],
-    acq: ["PaymentsToAcquireBusinessesNetOfCashAcquired"], eqiss: ["ProceedsFromIssuanceOfCommonStock"], invwd: ["InventoryWriteDown"],
+    acq: ["PaymentsToAcquireBusinessesNetOfCashAcquired"], invgain: ["EquitySecuritiesFvNiGainLoss", "EquitySecuritiesFvNiUnrealizedGainLoss"], eqiss: ["ProceedsFromIssuanceOfCommonStock"], invwd: ["InventoryWriteDown"],
   };
   var INST = {
     cash: ["CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"],
@@ -164,6 +164,11 @@
     if (val(q, "opinc") == null && q.m.ebit && val(q, "da") != null) { setC(q, "ebitda", q.m.ebit.v + val(q, "da"), "EBIT proxy + D&A", ["ebit", "da"]); if (rev) setC(q, "ebitdam", q.m.ebitda.v / rev * 100, "EBITDA ÷ revenue", ["ebitda", "rev"]); }
     if (val(q, "opinc") != null && val(q, "da") != null) { setC(q, "ebitda", val(q, "opinc") + val(q, "da"), "operating income + D&A", ["opinc", "da"]); if (rev) setC(q, "ebitdam", q.m.ebitda.v / rev * 100, "EBITDA ÷ revenue", ["ebitda", "rev"]); }
     if (val(q, "pretax") && val(q, "tax") != null) setC(q, "etr", val(q, "tax") / val(q, "pretax") * 100, "tax ÷ pretax income", ["tax", "pretax"]);
+    if (val(q, "invgain") != null && val(q, "ni") != null) {
+      var tr = val(q, "etr") != null ? Math.min(Math.max(val(q, "etr"), 0), 35) / 100 : 0.21;
+      setC(q, "core_ni", val(q, "ni") - val(q, "invgain") * (1 - tr), "net income − equity-investment gains/losses × (1 − tax rate " + (tr * 100).toFixed(0) + "%)", ["ni", "invgain", "etr"]);
+      if (val(q, "sh_d")) { setC(q, "core_eps", q.m.core_ni.v / val(q, "sh_d"), "core net income ÷ diluted shares", ["core_ni", "sh_d"]); q.m.core_eps.approx = true; }
+    }
     if (val(q, "cfo") != null && val(q, "capex") != null) { setC(q, "fcf", val(q, "cfo") - val(q, "capex"), "operating cash flow − capital expenditure", ["cfo", "capex"]);
       if (rev) setC(q, "fcfm", q.m.fcf.v / rev * 100, "FCF ÷ revenue", ["fcf", "rev"]); }
     var ni = val(q, "ni");
@@ -348,6 +353,53 @@
     });
   }
 
+  /* ---------------------------------------------------------------- valuation (market price × filed fundamentals) */
+  function lastPrice(P) { var t = P && P.ticker && P.ticker.ts; if (!t || !t.length) return null; var x = t[t.length - 1]; return { date: x[0], price: x[1] }; }
+  function sharesOut(M) {
+    var d = (M.co.dei && M.co.dei.EntityCommonStockSharesOutstanding) || [];
+    if (d.length) { var x = d.slice().sort(function (a, b) { return a.e < b.e ? 1 : -1; })[0]; return { v: x.v, how: "shares outstanding on the latest filing cover (" + x.e + ")", st: "REPORTED" }; }
+    var q = M.quarters[M.quarters.length - 1]; return val(q, "sh_d") ? { v: val(q, "sh_d"), how: "latest diluted weighted-average shares (proxy)", st: "CALCULATED" } : null;
+  }
+  function valuation(M, P) {
+    var Q = M.quarters, i = Q.length - 1, q = Q[i], lp = lastPrice(P), sh = sharesOut(M); if (!lp || !q) return null;
+    var t = function (k) { return ttm(Q, i, k); }, eps4 = t("eps_d"), ceps4 = t("core_eps"), mcap = sh ? lp.price * sh.v : null, ev = mcap != null && val(q, "ndebt") != null ? mcap + val(q, "ndebt") : null;
+    var out = { price: lp.price, date: lp.date, shares: sh, mcap: mcap, ev: ev, eps_ttm: eps4, core_eps_ttm: ceps4,
+      pe: eps4 > 0 ? lp.price / eps4 : null, pe_core: ceps4 > 0 ? lp.price / ceps4 : null,
+      ev_ebit: ev != null && t("ebit") > 0 ? ev / t("ebit") : null, fcf_yield: mcap && t("fcf") != null ? t("fcf") / mcap * 100 : null,
+      div_yield: mcap && t("div") != null ? t("div") / mcap * 100 : null, rpo: val(q, "rpo"), rpo_yoy: val(q, "rpo_yoy"),
+      liquidity: val(q, "cash") != null ? val(q, "cash") + (val(q, "sti") || 0) : null };
+    return out;
+  }
+  function clip(x, a, b) { return Math.max(a, Math.min(b, x)); }
+  /* starting assumptions only — every one is shown and editable; nothing here is a forecast */
+  function defaultScenarios(M, V) {
+    var q = M.quarters[M.quarters.length - 1], useCore = V.core_eps_ttm > 0, eps0 = useCore ? V.core_eps_ttm : V.eps_ttm;
+    var g = clip(val(q, "rev_yoy") != null ? val(q, "rev_yoy") : 5, -5, 25), pe = clip((useCore ? V.pe_core : V.pe) || 18, 8, 40);
+    return { eps0: eps0, basis: useCore ? "core TTM EPS (excludes equity-investment gains/losses)" : "reported TTM diluted EPS",
+      cases: [{ id: "bear", name: "Bear", g: Math.round(g - 10), pe: Math.round(pe * 0.8), p: 25 }, { id: "base", name: "Base", g: Math.round(g), pe: Math.round(pe), p: 50 }, { id: "bull", name: "Bull", g: Math.round(g + 10), pe: Math.round(pe * 1.15), p: 25 }],
+      seed: "Base growth = latest revenue growth (" + (val(q, "rev_yoy") != null ? val(q, "rev_yoy").toFixed(1) + "%" : "n/a") + ", capped −5% to 25%); base P/E = today’s P/E (capped 8–40×); bear −10 pp and 0.8×; bull +10 pp and 1.15×; weights 25/50/25." };
+  }
+  function scenarios(eps0, price, cases) {
+    var tp = cases.reduce(function (a, c) { return a + (+c.p || 0); }, 0) || 1, w = 0;
+    var R = cases.map(function (c) { var eps = eps0 * (1 + (+c.g || 0) / 100), v = eps * (+c.pe || 0); w += v * (+c.p || 0) / tp;
+      return { id: c.id, name: c.name, g: +c.g, pe: +c.pe, p: +c.p, eps: eps, value: v, upside: price ? (v / price - 1) * 100 : null }; });
+    return { cases: R, weighted: { value: w, upside: price ? (w / price - 1) * 100 : null, probs_sum: tp } };
+  }
+  function sensitivity(epsNtm, peCenter, price) {
+    var c = Math.round(peCenter), out = [];
+    for (var m = c - 5; m <= c + 3; m++) if (m > 0) out.push({ pe: m, value: epsNtm * m, above: price ? epsNtm * m >= price : null, center: m === c });
+    return { rows: out, perTurn: epsNtm, breakEvenPE: price && epsNtm > 0 ? price / epsNtm : null };
+  }
+  function dailyMoves(ts) { var o = []; for (var i = 1; i < (ts || []).length; i++) o.push({ date: ts[i][0], pct: (ts[i][1] / ts[i - 1][1] - 1) * 100 }); return o; }
+  function bigMoves(ts, n) { var d = dailyMoves(ts).sort(function (a, b) { return a.pct - b.pct; }); return { worst: d.slice(0, n || 5), best: d.slice(-(n || 5)).reverse() }; }
+  function reactions(P, filings) {
+    var ts = P && P.ticker && P.ticker.ts, sp = P && P.spx && P.spx.ts; if (!ts) return [];
+    return (filings || []).filter(function (f) { return f.form === "8-K" && /2\.02/.test(f.items); }).map(function (f) {
+      var r = reaction(ts, f.filed), m = sp ? reaction(sp, f.filed) : null;
+      return r == null ? null : { date: f.filed, pct: r, spx: m, rel: m == null ? null : r - m };
+    }).filter(Boolean).reverse();
+  }
+
   /* latest disclosed principal-maturity ladder (usually only in the 10-K) */
   function maturities(M) {
     var Q = M.quarters;
@@ -474,7 +526,7 @@
   function fmt(v) { if (v == null || !isFinite(v)) return "—"; var a = Math.abs(v), s = v < 0 ? "−" : "";
     return s + (a >= 1e12 ? (a / 1e12).toFixed(2) + "T" : a >= 1e9 ? (a / 1e9).toFixed(2) + "B" : a >= 1e6 ? (a / 1e6).toFixed(1) + "M" : a >= 1e3 ? (a / 1e3).toFixed(0) + "K" : a.toFixed(2)); }
 
-  root.COENGINE = { warnings: warnings, RULES: RULES, maturities: maturities, build: build, verdicts: verdicts, series: series, trend: trend, ttm: ttm, val: val, fmt: fmt, streak: streak, fiscalLabel: fiscalLabel,
+  root.COENGINE = { valuation: valuation, defaultScenarios: defaultScenarios, scenarios: scenarios, sensitivity: sensitivity, bigMoves: bigMoves, reactions: reactions, lastPrice: lastPrice, warnings: warnings, RULES: RULES, maturities: maturities, build: build, verdicts: verdicts, series: series, trend: trend, ttm: ttm, val: val, fmt: fmt, streak: streak, fiscalLabel: fiscalLabel,
     quarterFromTag: quarterFromTag, quarterEnds: quarterEnds, dedupe: dedupe, reaction: reaction, latestRelease: latestRelease, DUR: DUR, INST: INST, SCALE: SCALE };
   if (typeof module !== "undefined" && module.exports) module.exports = root.COENGINE;
 })(typeof window !== "undefined" ? window : globalThis);
