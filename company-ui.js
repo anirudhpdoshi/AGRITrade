@@ -126,7 +126,7 @@
       out += '<text x="' + (x + w / 2).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="var(--faint)">' + esc(p.label) + "</text>"; });
     if (fp.length > 1) out += '<polyline fill="none" stroke="' + C3 + '" stroke-width="2" points="' + fp.map(function (p) { return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" ") + '"/>';
     fp.forEach(function (p, k) { out += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="5" fill="' + C3 + '" stroke="var(--panel)" stroke-width="2"><title>' + esc(p[2].label + " free cash flow " + f$(p[2].v)) + "</title></circle>" +
-      (k === fp.length - 1 ? '<text x="' + (p[0] + 8).toFixed(1) + '" y="' + (p[1] - 6).toFixed(1) + '" font-size="10.5" fill="var(--ink)" font-family="IBM Plex Mono,monospace">FCF ' + f$(p[2].v) + "</text>" : ""); });
+      (k === fp.length - 1 ? '<text x="' + (p[0] - 8).toFixed(1) + '" y="' + (p[1] - 9).toFixed(1) + '" text-anchor="end" font-size="10.5" fill="var(--ink)" font-family="IBM Plex Mono,monospace">FCF ' + money(p[2].v) + "</text>" : ""); });
     return out + "</svg>";
   }
   function waterfall(steps) {
