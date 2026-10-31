@@ -43,7 +43,49 @@ QUOTE_KEEP = ["symbol", "name", "price", "change", "changePercentage", "volume",
               "yearLow", "yearHigh", "marketCap", "priceAvg50", "priceAvg200", "exchange", "timestamp"]
 
 
+# what each endpoint is for, and what the desk falls back to when the FMP plan does not include it
+ENDPOINTS = {
+    "search-name": ("Search by company name", "Add the ticker to scripts/data/earnings_watchlist.json by hand — tickers need no search."),
+    "quote": ("Real-time quote", "The profile call supplies price, change, % change and volume; day range and 50/200-day averages show “—”."),
+    "profile": ("Company profile", "Quote still gives price and volume; sector, CEO, description and logo go blank."),
+    "earnings-calendar": ("Earnings calendar (candidate 4th)", "Per-symbol earnings endpoint if that is in the plan; otherwise the earnings panel stays empty."),
+    "earnings": ("Earnings by symbol (candidate 4th)", "Earnings calendar filtered to the watchlist, if that is in the plan."),
+}
+# --check-plan: one cheap call per endpoint. AAPL is FMP's demo symbol, so a quote that works for AAPL but 402s for ADM
+# means the plan limits *symbols*, not the endpoint.
+def probes(now):
+    d0 = now.astimezone(NY).date()
+    return [("search-name", {"query": "Archer-Daniels"}), ("quote", {"symbol": "AAPL"}),
+            ("earnings-calendar", {"from": d0.isoformat(), "to": (d0 + timedelta(days=14)).isoformat()}),
+            ("earnings", {"symbol": "ADM", "limit": 4})]
+
+
 # ---------------------------------------------------------------- pure functions (unit-tested, no network)
+def outcome(err):
+    """Classify one call: None -> ok; HTTP 402 -> not_in_plan; anything else -> error."""
+    if err is None:
+        return "ok"
+    return "not_in_plan" if "402" in str(err) else "error"
+
+
+def note_endpoint(eps, ep, res, sym, now, detail=""):
+    """Fold one call's outcome into the endpoint register. A plan that serves some symbols and refuses others is 'partial'."""
+    e = dict(eps.get(ep) or {})
+    ok_s, bl_s = set(e.get("ok_syms") or []), set(e.get("blocked_syms") or [])
+    if res == "ok":
+        ok_s.add(sym or "*"); bl_s.discard(sym or "*")
+    elif res == "not_in_plan":
+        bl_s.add(sym or "*"); ok_s.discard(sym or "*")
+    if res == "error":
+        e.update(last_error={"at": iso(now), "msg": str(detail)[:160]})
+    st = ("partial" if ok_s and bl_s else "ok" if ok_s else "not_in_plan" if bl_s else e.get("status") or "error")
+    e.update(status=st, ok_syms=sorted(ok_s)[:25], blocked_syms=sorted(bl_s)[:25], checked_at=iso(now),
+             label=ENDPOINTS.get(ep, (ep, ""))[0], fallback=ENDPOINTS.get(ep, ("", ""))[1])
+    eps[ep] = e
+    return e
+
+
+
 def iso(t):
     return t.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
@@ -231,6 +273,7 @@ def main():
     ap.add_argument("--force", action="store_true", help="re-quote every symbol even if nothing can have changed")
     ap.add_argument("--force-profile", action="store_true", help="refresh every profile even if under 7 days old")
     ap.add_argument("--add", default="", help="comma-separated company names to resolve with search-name this run")
+    ap.add_argument("--check-plan", action="store_true", help="probe each endpoint once (~4 calls) to see what the FMP plan allows")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
     now = datetime.now(timezone.utc)
@@ -257,6 +300,33 @@ def main():
         sys.exit("FMP secret is not set — add a repository secret named FMP")
 
     made, skipped, errors, stopped = [], [], [], None
+    eps = state.get("endpoints") or {}
+    upcoming = state.get("upcoming") or {}
+    WL = set(symbols)
+    if a.check_plan:
+        for ep, params in probes(now):
+            if allowance(usage) <= 0 or stopped:
+                skipped.append({"endpoint": ep, "arg": "plan check", "reason": "budget" if not stopped else "run stopped"}); continue
+            err, res = None, None
+            try:
+                res = fmp(ep, params, key)
+            except Fatal as e:
+                stopped = str(e); errors.append(stopped); err = e
+            except Exception as e:
+                err = e
+            r = outcome(err)
+            note_endpoint(eps, ep, r, params.get("symbol") or ("*" if ep != "quote" else None), now, err or "")
+            if ep == "earnings-calendar" and r == "ok" and isinstance(res, list):
+                eps[ep]["sample_rows"] = len(res)
+                upcoming = {"from": params["from"], "to": params["to"], "fetched_at": iso(now),
+                            "rows": [trim(x, ["symbol", "date", "epsEstimated", "revenueEstimated", "time"]) for x in res if x.get("symbol") in WL][:40]}
+            if ep == "earnings" and r == "ok" and isinstance(res, list):
+                eps[ep]["sample_rows"] = len(res)
+            made.append({"endpoint": ep, "arg": "plan check", "reason": "plan check", **({"failed": True} if err else {})})
+            usage["calls"][ep] = usage["calls"].get(ep, 0) + 1; usage["total"] += 1
+            if err:
+                errors.append(f"plan check {ep}: {err}") if not isinstance(err, Fatal) else None
+            time.sleep(0.25)
     queue = list(calls)
     while queue:
         ep, arg, why = queue.pop(0)
@@ -289,6 +359,7 @@ def main():
                 else:
                     c[ep + "_error"] = {"at": iso(now), "msg": "empty response (symbol not covered?)"}
             made.append({"endpoint": ep, "arg": arg, "reason": why})
+            note_endpoint(eps, "search-name" if ep == "search" else ep, "ok", "*" if ep == "search" else arg, now)
         except Fatal as e:
             stopped = str(e); errors.append(stopped)
             usage["calls"][ep] = usage["calls"].get(ep, 0) + 1; usage["total"] += 1   # the refused call still counts
@@ -304,6 +375,7 @@ def main():
                 if not any(x[0] == "profile" and x[1] == arg for x in queue) and (c.get("profile") or {}).get("fetched_at") != iso(now):
                     queue.append(("profile", arg, "price via profile after quote 402"))
             made.append({"endpoint": ep, "arg": arg, "reason": why, "failed": True})
+            note_endpoint(eps, "search-name" if ep == "search" else ep, outcome(e), "*" if ep == "search" else arg, now, e)
         usage["calls"][ep] = usage["calls"].get(ep, 0) + 1
         usage["total"] += 1
         time.sleep(0.25)
@@ -316,6 +388,8 @@ def main():
         "companies": {s: comps[s] for s in symbols if s in comps},
         "resolved": resolved,
         "session": {"open": market_open(now), "last_close": iso(last_close(now))},
+        "endpoints": eps,
+        "upcoming": upcoming,
         "usage": usage,
         "last_run": {"at": iso(now), "trigger": os.environ.get("GITHUB_EVENT_NAME", "local"), "planned": len(calls),
                      "made": made, "skipped": skipped, "errors": errors, "stopped": stopped},

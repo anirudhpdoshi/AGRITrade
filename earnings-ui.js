@@ -60,6 +60,11 @@
     ".ue-ph{border:1px dashed var(--line2);border-radius:9px;padding:14px;color:var(--muted);font-size:13px}" +
     ".ue-btn{appearance:none;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);border-radius:7px;padding:5px 11px;font:inherit;font-size:12px;cursor:pointer;text-decoration:none;display:inline-block}" +
     ".ue-btn:hover{border-color:var(--cyan)}.ue-act{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}" +
+    ".ue-ep{width:100%;border-collapse:collapse;margin-top:6px}.ue-ep td,.ue-ep th{text-align:left;font-family:inherit;white-space:normal;vertical-align:top;font-size:12.5px}" +
+    ".ue-ep td:first-child{white-space:nowrap}.ue-ep code{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--faint)}" +
+    ".ue-st{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;border:1px solid;white-space:nowrap}" +
+    ".ue-st.ok{color:var(--green);border-color:rgba(63,185,127,.5)}.ue-st.partial{color:var(--amber);border-color:rgba(232,163,61,.5)}" +
+    ".ue-st.no{color:var(--red);border-color:rgba(224,101,95,.5)}.ue-st.unk{color:var(--faint);border-color:var(--line2)}" +
     ".ue-log{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--faint);line-height:1.6}" +
     "@media (max-width:1020px){.ue-grid{grid-template-columns:1fr}.ue-top{grid-template-columns:repeat(2,minmax(0,1fr))}}";
   document.head.appendChild(css);
@@ -128,6 +133,26 @@
       (lr.stopped ? '<div class="unreach" style="margin-top:10px">⚠ Last run stopped early <small>— ' + esc(lr.stopped) + "</small></div>" : "") +
       ((lr.errors || []).length && !lr.stopped ? '<div class="ue-log" style="margin-top:8px">' + lr.errors.map(function (e) { return "⚠ " + esc(e); }).join("<br>") + "</div>" : "");
   }
+  var EP_ORDER = ["quote", "profile", "search-name", "earnings-calendar", "earnings"];
+  var EP_LABEL = { quote: "Real-time quote", profile: "Company profile", "search-name": "Search by company name",
+    "earnings-calendar": "Earnings calendar (candidate 4th)", earnings: "Earnings by symbol (candidate 4th)" };
+  function stBadge(e) {
+    if (!e) return '<span class="ue-st unk">not checked</span>';
+    return { ok: '<span class="ue-st ok">✓ in plan</span>', partial: '<span class="ue-st partial">◐ some symbols</span>',
+      not_in_plan: '<span class="ue-st no">✕ not in plan</span>' }[e.status] || '<span class="ue-st unk">error</span>';
+  }
+  function planTile() {
+    var E = J.endpoints || {};
+    return '<div class="tile" style="margin-top:14px"><h2>FMP plan coverage <span class="h2note">— what your key can call, and what the desk uses instead when it can’t</span></h2>' +
+      '<div class="tbl-scroll"><table class="ue-ep"><thead><tr><th>Endpoint</th><th>Status</th><th>When it isn’t available</th><th>Checked</th></tr></thead><tbody>' +
+      EP_ORDER.map(function (k) { var e = E[k], use = e && (e.status === "not_in_plan" || e.status === "partial");
+        var who = e && e.status === "partial" ? '<br><code>works: ' + esc((e.ok_syms || []).join(", ")) + " · refused: " + esc((e.blocked_syms || []).join(", ")) + "</code>" : "";
+        return "<tr><td><b>" + esc((e && e.label) || EP_LABEL[k]) + "</b><br><code>/stable/" + esc(k) + "</code></td><td>" + stBadge(e) + who +
+          (e && e.last_error ? '<br><code style="color:var(--amber)">last error: ' + esc(e.last_error.msg) + "</code>" : "") + "</td>" +
+          "<td>" + (use ? '<b style="color:var(--amber)">In use → </b>' : "") + esc((e && e.fallback) || (k === "earnings-calendar" || k === "earnings" ? "Not wired in yet." : "")) + "</td>" +
+          '<td><span class="ue-age">' + esc(e ? ago(e.checked_at) : "—") + "</span></td></tr>"; }).join("") +
+      '</tbody></table></div><div class="stamp">Statuses update for free from every normal run; the two earnings rows only from a run with “Check which FMP endpoints my plan allows” ticked (~4 calls).</div></div>';
+  }
   function table() {
     var L = sorted();
     if (!V.sel || !L.some(function (r) { return r.s === V.sel; })) V.sel = L.length ? L[0].s : null;
@@ -160,6 +185,14 @@
       (short ? '<p class="ue-desc">' + esc(short) + "</p>" : "") + (site ? '<a class="ue-btn" href="' + esc(site) + '" target="_blank" rel="noopener noreferrer">Company site ↗</a>' : "") + "</div>";
   }
   function earningsSlot() {
+    var U = J.upcoming, E = J.endpoints || {}, ec = E["earnings-calendar"];
+    if (U && U.rows && ec && ec.status !== "not_in_plan")
+      return '<div class="tile" style="margin-top:14px"><h2>Upcoming reports <span class="h2note">— earnings calendar ' + esc(U.from) + " to " + esc(U.to) + ", watchlist names only · fetched " + esc(ago(U.fetched_at)) + "</span></h2>" +
+        (U.rows.length ? '<div class="tbl-scroll"><table class="ue-t"><thead><tr><th>Company</th><th>Date</th><th>When</th><th>EPS est.</th><th>Revenue est.</th></tr></thead><tbody>' +
+          U.rows.map(function (r) { return "<tr><td><span class=\"ue-sym\">" + esc(r.symbol) + "</span></td><td>" + esc(r.date) + "</td><td>" + esc(({ bmo: "before open", amc: "after close" })[r.time] || r.time || "—") +
+            "</td><td>" + num(r.epsEstimated, 2) + "</td><td>" + big(r.revenueEstimated) + "</td></tr>"; }).join("") + "</tbody></table></div>"
+          : '<p class="note">None of the watchlist names report in this window.</p>') +
+        '<div class="stamp">Preview of the candidate 4th endpoint from the plan check — not yet refreshed on normal runs.</div></div>';
     return '<div class="tile" style="margin-top:14px"><h2>Earnings dates &amp; results <span class="h2note">— waiting on the fourth endpoint</span></h2>' +
       '<div class="ue-ph">Report dates, EPS / revenue estimates vs actuals and surprise % will sit here once the earnings endpoint is wired in. ' +
       "Quotes and profiles above already work on their own.</div></div>";
@@ -180,7 +213,7 @@
       return;
     }
     P.innerHTML = '<div class="tile wide">' + protoBar() + '<h2>US earnings <span class="h2note">— grain &amp; ag-input names on US exchanges · Financial Modeling Prep</span></h2>' + topStrip() + "</div>" +
-      '<div class="ue-grid"><div>' + table() + earningsSlot() + "</div><div>" + profileCard() + "</div></div>" + footer();
+      '<div class="ue-grid"><div>' + table() + earningsSlot() + "</div><div>" + profileCard() + "</div></div>" + planTile() + footer();
   }
 
   P.addEventListener("click", function (ev) {

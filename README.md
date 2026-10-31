@@ -60,6 +60,10 @@ publishing: `INTEL_DRY=1 INTEL_OUT=/tmp/intel.json python scripts/intel.py`.
   predates the close), profiles cached 7 days, names searched once; 200/day and 40/run caps; stops at the first 401/403/429.
   The first run is ~20 calls for the 10-name watchlist; a weekend re-run is 0. Plan without calling:
   `EARN_NO_PREV=1 python scripts/us_earnings.py --dry-run`.
+- **Plan coverage:** quote returns HTTP 402 on this key for the watchlist, so price/change/volume come from `profile`
+  (one call per symbol, quote not retried for 30 days). The tab's *FMP plan coverage* table shows each endpoint as in plan /
+  some symbols / not in plan with the fallback in use; tick *Check which FMP endpoints my plan allows* on a run (~4 calls)
+  to probe search-name, quote (AAPL), earnings-calendar and earnings.
 - Watchlist: `scripts/data/earnings_watchlist.json`.
 
 ## Turning on the true streaming tick

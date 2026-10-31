@@ -10,6 +10,10 @@ on:
         description: "Company names to look up (comma-separated, uses search-name once each)"
         type: string
         default: ""
+      check_plan:
+        description: "Check which FMP endpoints my plan allows (about 4 extra calls)"
+        type: boolean
+        default: false
       force:
         description: "Re-quote every symbol even if nothing can have changed"
         type: boolean
@@ -35,7 +39,7 @@ jobs:
       - name: Unit tests (call planning and budget)
         run: python tests/test_us_earnings.py
       - name: Fetch what is due, publish earnings.json
-        run: python scripts/us_earnings.py ${{ inputs.force && '--force' || '' }} ${{ inputs.force_profile && '--force-profile' || '' }} --add "$ADD"
+        run: python scripts/us_earnings.py ${{ inputs.force && '--force' || '' }} ${{ inputs.force_profile && '--force-profile' || '' }} ${{ inputs.check_plan && '--check-plan' || '' }} --add "$ADD"
         env:
           FMP: ${{ secrets.FMP }}
           ADD: ${{ inputs.add }}

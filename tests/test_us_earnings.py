@@ -70,4 +70,16 @@ rq["companies"]["ADM"]["profile"] = {"fetched_at": E.iso(ny(2026, 10, 30, 17)), 
 ok(E.plan(rq, ["ADM"], [], sat) == [], "restricted symbol with a closing price stored -> weekend run costs 0")
 ok(not E.quote_restricted({"quote_restricted": {"at": E.iso(sat - timedelta(days=31))}}, sat), "restriction expires after 30 days")
 
+# endpoint register: what the plan allows and what we fall back to
+eps = {}
+E.note_endpoint(eps, "quote", "ok", "AAPL", sat)
+E.note_endpoint(eps, "quote", E.outcome(RuntimeError("HTTP 402 Payment Required")), "ADM", sat)
+ok(eps["quote"]["status"] == "partial" and eps["quote"]["blocked_syms"] == ["ADM"], "AAPL ok + ADM 402 -> partial (symbol-limited)")
+ok("profile" in eps["quote"]["fallback"], "quote's fallback is named")
+E.note_endpoint(eps, "earnings", E.outcome(RuntimeError("HTTP 402")), "ADM", sat)
+ok(eps["earnings"]["status"] == "not_in_plan", "402 only -> not in plan")
+E.note_endpoint(eps, "profile", "ok", "ADM", sat); E.note_endpoint(eps, "profile", "error", "BG", sat, "HTTP 500")
+ok(eps["profile"]["status"] == "ok" and eps["profile"]["last_error"]["msg"] == "HTTP 500", "a transient error does not mark an endpoint unavailable")
+ok([p[0] for p in E.probes(sat)] == ["search-name", "quote", "earnings-calendar", "earnings"], "plan check = 4 calls")
+
 print(f"us_earnings: {n} checks passed")
