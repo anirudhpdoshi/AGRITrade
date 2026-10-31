@@ -16,7 +16,7 @@
   var f$ = E.fmt;
   function pc(v, d) { if (v == null || !isFinite(v)) return "—"; var t = Math.abs(v).toFixed(d == null ? 1 : d); return (+t === 0 ? "" : v > 0 ? "+" : "−") + t + "%"; }
   function pp(v) { return v == null ? "—" : pc(v).replace("%", " pp"); }
-  function sgc(v, txt) { return '<span class="' + (v == null ? "neu" : v > 0 ? "up" : v < 0 ? "dn" : "neu") + '">' + txt + "</span>"; }
+  function sgc(v, txt) { return '<span class="' + (v == null || Math.abs(v) < 0.05 ? "neu" : v > 0 ? "up" : "dn") + '">' + txt + "</span>"; }
   function money(v) { return v == null ? "—" : "$" + f$(v).replace("−", "−$").replace("$−$", "−$"); }
 
   /* ---------------- data ---------------- */
@@ -42,7 +42,7 @@
     ".cx-part{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:16px 0 6px}" +
     ".cx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:10px}" +
     ".cx-card{appearance:none;text-align:left;font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:11px 13px;display:flex;flex-direction:column;gap:3px;min-height:132px;transition:border-color .12s,transform .12s}" +
-    ".cx-card:hover:not(:disabled){border-color:#3d5a80;transform:translateY(-1px)}.cx-card:disabled{cursor:default;opacity:.5}" +
+    ".cx-card:hover:not(:disabled){border-color:#3d5a80;transform:translateY(-1px)}.cx-card:disabled{cursor:default;opacity:.45;min-height:0;border-style:dashed}" +
     ".cx-card .t{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.cx-card .k{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600}" +
     ".cx-card .q{font-size:11.5px;color:var(--faint);line-height:1.35;margin-top:auto}.cx-card .n{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--faint)}" +
     ".cx-vd{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid;letter-spacing:.04em}" +
@@ -68,7 +68,7 @@
     "table.cx-t{width:100%;border-collapse:collapse}table.cx-t td:first-child,table.cx-t th:first-child{text-align:left;font-family:'Libre Franklin',sans-serif}" +
     "details.cx-evd{border:1px solid var(--line);border-radius:8px;padding:8px 11px;margin-top:14px}details.cx-evd summary{cursor:pointer;font-size:12.5px;color:var(--muted)}" +
     ".cx-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin:2px 0 4px}.cx-leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}" +
-    ".cx-2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}" +
+    ".cx-2{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}@media (min-width:1900px){.cx-2{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}}" +
     "@media (max-width:1100px){.cx-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}.cx-ai{grid-template-columns:1fr 1fr}}@media (max-width:760px){.cx-tiles,.cx-vg,.cx-2,.cx-ai{grid-template-columns:1fr 1fr}.cx-vg,.cx-2{grid-template-columns:1fr}}";
   document.head.appendChild(css);
 
@@ -167,9 +167,9 @@
     capexint: ["Capex intensity", "Capex ÷ revenue."], gdebt: ["Gross debt", "Short-term borrowings + commercial paper + current and non-current long-term debt (leases excluded)."],
     ndebt: ["Net debt", "Gross debt − cash − short-term investments."], cash: ["Cash", "Cash and cash equivalents."],
   };
-  function nm(k) { return (DEF[k] || [k])[0]; }
+  function nm(k) { var m = /^(.*)_(yoy|qoq)$/.exec(k); if (m) return nm(m[1]) + (m[2] === "yoy" ? " — YoY" : " — vs prior quarter"); return (DEF[k] || [k])[0]; }
   var PCT = { ebitm: 1, gm: 1, opm: 1, nm: 1, ebitdam: 1, fcfm: 1, etr: 1, capexint: 1, fcfconv: 1 };
-  function fv(k, v) { if (v == null) return "—"; if (PCT[k]) return v.toFixed(1) + "%"; if (k === "eps_d") return "$" + v.toFixed(2); if (k === "cfoni") return v.toFixed(2) + "×"; if (k === "sh_d") return f$(v); return money(v); }
+  function fv(k, v) { if (v == null) return "—"; var g = /^(.*)_(yoy|qoq)$/.exec(k); if (g) return PCT[g[1]] && g[2] === "yoy" ? pp(v) : pc(v); if (PCT[k]) return v.toFixed(1) + "%"; if (k === "eps_d") return "$" + v.toFixed(2); if (k === "cfoni") return v.toFixed(2) + "×"; if (k === "sh_d") return f$(v); return money(v); }
 
   /* ---------------- interpretation (rule-based, data-referenced; 9-part contract) ---------------- */
   function interp(M, k, extra) {
@@ -250,7 +250,10 @@
     var q = L(M), co = M.co;
     return '<div class="tile"><div class="cx-h"><h2>' + esc(co.ticker) + " · " + esc(co.name) + '</h2><span class="cx-sub">' + esc(M.sector) + " · " + esc(co.sicDescription || "") + " · latest quarter " + esc(q.fl.label) + " (" + esc(q.end) + ")</span></div>" +
       (M.model.note ? '<div class="ut-ask" style="margin:6px 0">' + esc(M.model.note) + "</div>" : "") +
-      PARTS.map(function (p) { return '<div class="cx-part">' + p[0] + '</div><div class="cx-grid">' + p[1].map(function (c) {
+      PARTS.map(function (p) {
+        if (!p[1].some(function (c) { return BUILT[c[0]]; }))
+          return '<div class="cx-part">' + p[0] + ' <span style="letter-spacing:0;text-transform:none;color:var(--faint)">— next phase: ' + p[1].map(function (c) { return esc(c[1]); }).join(" · ") + "</span></div>";
+        return '<div class="cx-part">' + p[0] + '</div><div class="cx-grid">' + p[1].map(function (c) {
         var b = BUILT[c[0]], k = c[3] === "opm" && E.val(q, "opm") == null ? "ebitm" : c[3], kv = "", sp = "";
         if (b && k) { var m = q.m[k], y = q.m[k + "_yoy"]; kv = '<div class="k">' + fv(k, m && m.v) + "</div>" + (y ? '<div class="n">' + sgc(y.v, PCT[k] ? pp(y.v) : pc(y.v)) + " YoY · " + esc(q.fl.label) + "</div>" : '<div class="n">' + esc(q.fl.label) + "</div>"); sp = spark(S(M, k)); }
         if (c[0] === "verdicts") kv = '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">' + VV.verdicts.map(function (v) { return '<span class="cx-vd ' + v.verdict + '" title="' + esc(v.name) + '">' + v.name.split(" ").map(function (w) { return w[0]; }).join("") + " " + v.verdict + "</span>"; }).join("") + "</div>";
