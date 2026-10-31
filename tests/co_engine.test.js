@@ -26,7 +26,7 @@ function filer(opt) {
     if (Q.q !== 4) add("WeightedAverageNumberOfDilutedSharesOutstanding", { s: Q.s, e: Q.e, v: Q.sh, f: form, d: filed }, "shares");
     else add("WeightedAverageNumberOfDilutedSharesOutstanding", { s: ys, e: Q.e, v: yr.reduce((a, x) => a + x.sh, 0) / yr.length, f: form, d: filed }, "shares");
     ["cfo", "capex"].forEach((k) => add(k === "cfo" ? "NetCashProvidedByUsedInOperatingActivities" : "PaymentsToAcquirePropertyPlantAndEquipment", { s: ys, e: Q.e, v: sum(k), f: form, d: filed }));
-    const inst = { cash: "CashAndCashEquivalentsAtCarryingValue", ar: "AccountsReceivableNetCurrent", inv: "InventoryNet", ap: "AccountsPayableCurrent", ca: "AssetsCurrent", cl: "LiabilitiesCurrent", assets: "Assets", debt: "LongTermDebtNoncurrent", dcur: "LongTermDebtCurrent" };
+    const inst = { eq: "StockholdersEquity", cash: "CashAndCashEquivalentsAtCarryingValue", ar: "AccountsReceivableNetCurrent", inv: "InventoryNet", ap: "AccountsPayableCurrent", ca: "AssetsCurrent", cl: "LiabilitiesCurrent", assets: "Assets", debt: "LongTermDebtNoncurrent", dcur: "LongTermDebtCurrent" };
     Object.keys(inst).forEach((k) => Q[k] != null && add(inst[k], { e: Q.e, v: Q[k], f: form, d: filed }));
   });
   return { ticker: opt.ticker || "TEST", name: "Test Co", fiscalYearEnd: opt.fye || "1231", sic: opt.sic || "2070", facts: F, filings: opt.filings || [] };
@@ -36,7 +36,7 @@ function strong(year0, nq) {
   const out = [];
   for (let k = 0; k < nq; k++) { const y = year0 + Math.floor(k / 4), i = k % 4, g = Math.pow(1.03, k);
     out.push(Object.assign(cal(y, i), { rev: 1000 * g, cogs: 600 * g, opinc: 200 * g * Math.pow(1.005, k), ni: 150 * g, cfo: 190 * g, capex: 40 * g, da: 30 * g, intexp: 8,
-      eps: 1.5 * g, sh: 100 - k * 0.3, cash: 500 + 20 * k, ar: 300 * g, inv: 200 * g, ap: 180 * g, ca: 1100, cl: 600, assets: 4000 + 30 * k, debt: 600, dcur: 50 })); }
+      eps: 1.5 * g, sh: 100 - k * 0.3, cash: 500 + 20 * k, eq: 2000 + 50 * k, ar: 300 * g, inv: 200 * g, ap: 180 * g, ca: 1100, cl: 600, assets: 4000 + 30 * k, debt: 600, dcur: 50 })); }
   return out;
 }
 
@@ -102,9 +102,50 @@ const coR = filer({ quarters: strong(2024, 11), filings: [{ form: "8-K", items: 
 const MR = E.verdicts(E.build(coR), { ticker: { ts }, spx: { ts: ts.map((x) => [x[0], 100]) } }).verdicts[3];
 ok(MR.verdict === "STRONG" && MR.confidence === "LOW", "relative +5% reaction -> STRONG, LOW confidence without consensus");
 
-/* ---------- worker trims to every tag the engine reads ---------- */
+/* ---------- worker passes every us-gaap tag through (no whitelist to fall out of step) ---------- */
 const W = fs.readFileSync(path.join(__dirname, "..", "worker", "agritrade-sec-worker.js"), "utf8");
-const missing = [].concat(...Object.values(E.DUR), ...Object.values(E.INST)).filter((t) => !W.includes('"' + t + '"'));
-ok(missing.length === 0, "worker TAGS include every engine tag (missing: " + missing.join(",") + ")");
+ok(/for \(const tag of Object\.keys\(ug\)\)/.test(W) && !/const TAGS = \[/.test(W), "worker forwards all us-gaap tags");
+
+/* ---------- working capital, debt cost, ratios ---------- */
+{
+  const L = M.quarters[M.quarters.length - 1], P = M.quarters[M.quarters.length - 2], x = strong(2024, 11), c = x[10], b = x[9];
+  ok(near(L.m.dso.v, (c.ar + b.ar) / 2 / c.rev * 92, 1e-9), "DSO = average receivables ÷ quarterly revenue × days in quarter");
+  ok(near(L.m.dio.v, (c.inv + b.inv) / 2 / c.cogs * 92, 1e-9) && L.m.dpo.approx, "DIO on cost of revenue; DPO flagged as a COGS proxy");
+  ok(near(L.m.ccc.v, L.m.dso.v + L.m.dio.v - L.m.dpo.v), "CCC = DSO + DIO − DPO");
+  ok(near(L.m.effcost.v, 8 * 365 / 92 / 650 * 100, 1e-9), "effective interest cost = annualised interest ÷ average gross debt");
+  const eb = [7, 8, 9, 10].reduce((a, i) => a + x[i].opinc, 0), da = [7, 8, 9, 10].reduce((a, i) => a + x[i].da, 0);
+  ok(near(L.m.nd_ebitda.v, L.m.ndebt.v / (eb + da)), "net debt ÷ TTM EBITDA");
+  ok(near(L.m.int_cov.v, eb / 32), "interest cover = TTM EBIT ÷ TTM interest");
+  ok(near(L.m.roe.v, [7, 8, 9, 10].reduce((a, i) => a + x[i].ni, 0) / ((c.eq + x[6].eq) / 2) * 100), "ROE = TTM net income ÷ average equity");
+  ok(L.m.roic && L.m.roic.approx, "ROIC is flagged approximate (period-end capital)");
+  ok(L.m.dso_yoy && L.m.ccc_qoq, "day-count metrics carry YoY and sequential changes");
+}
+{
+  const co5 = filer({ quarters: strong(2024, 11) });
+  const add = (tag, v) => (co5.facts[tag] = { USD: [{ e: "2025-12-31", v, f: "10-K", d: "2026-02-20" }] });
+  add("LongTermDebtMaturitiesRepaymentsOfPrincipalInNextTwelveMonths", 50); add("LongTermDebtMaturitiesRepaymentsOfPrincipalInYearTwo", 100);
+  add("LongTermDebtMaturitiesRepaymentsOfPrincipalAfterYearFive", 300);
+  const mt = E.maturities(E.build(co5));
+  ok(mt && mt.end === "2025-12-31" && mt.buckets[0].v === 50 && mt.buckets[5].v === 300 && !mt.buckets[2], "maturity ladder from the latest 10-K, missing buckets stay empty");
+}
+/* ---------- early-warning lifecycle ---------- */
+{
+  const Wk = E.warnings(E.build(filer({ quarters: weak })));
+  const r = (id) => Wk.find((w) => w.id === id);
+  ok(r(1).status === "ACTIVE" && r(1).persistence >= 3, "persistent revenue decline is ACTIVE with its persistence counted");
+  ok(r(11).status === "ACTIVE" && r(11).severity !== "INFORMATIONAL", "dilution flagged");
+  ok(r(6).status === "UNAVAILABLE" && r(10).status === "UNAVAILABLE", "guidance and concentration rules are honestly unavailable");
+  ok(Wk.every((w) => w.status !== "ACTIVE" || w.first), "every active signal records when it was first observed");
+  const Ws = E.warnings(M);
+  ok(Ws.filter((w) => w.status === "ACTIVE").length === 0, "a steadily growing, cash-backed company triggers no signal");
+  /* one bad quarter is never CONFIRMED */
+  const blip = strong(2024, 11); blip[10] = Object.assign({}, blip[10], { rev: blip[10].rev * 0.7, cogs: blip[10].cogs * 0.7 });
+  const Wb = E.warnings(E.build(filer({ quarters: blip }))).find((w) => w.id === 1);
+  ok(Wb.status === "ACTIVE" && Wb.persistence === 1 && Wb.severity !== "CONFIRMED DETERIORATION", "a single −27% quarter is CRITICAL at most, never confirmed");
+  /* recovery resolves */
+  const rec = strong(2024, 11); rec[8] = Object.assign({}, rec[8], { rev: rec[8].rev * 0.8 });
+  const Wr = E.warnings(E.build(filer({ quarters: rec }))).find((w) => w.id === 1);
+  ok(Wr.status === "RESOLVED" && Wr.resolved_after, "a signal that clears is RESOLVED, with the quarter it last fired");
+}
 
 console.log(`co_engine: ${n} checks passed`);

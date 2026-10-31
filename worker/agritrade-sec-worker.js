@@ -7,8 +7,8 @@
 
    Routes (GET only, JSON):
      /search?q=adm            ticker / company-name search over SEC's list of US-listed companies (top 12)
-     /company?t=ADM           SEC submissions (identity, SIC, fiscal year-end, filings) + XBRL facts trimmed to the
-                              tags the desk uses, last ~5 years
+     /company?t=ADM           SEC submissions (identity, SIC, fiscal year-end, filings) + all US-GAAP XBRL facts from
+                              10-Q/10-K filings, last ~5 years
      /prices?t=ADM            Yahoo daily closes, 1 year, for the ticker and the S&P 500 (price-reaction context)
      /health                  {ok:true}
 
@@ -22,31 +22,8 @@ const ALLOWED_ORIGINS = ["https://anirudhpdoshi.github.io", "http://127.0.0.1", 
 const YEARS = 5;
 const FORMS = new Set(["10-Q", "10-K", "10-Q/A", "10-K/A", "10-KT", "10-QT"]);
 
-/* XBRL tags the desk reads — keep in step with co-engine.js (a test checks every engine tag is listed here). */
-const TAGS = [
-  "Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueNet",
-  "CostOfGoodsAndServicesSold", "CostOfRevenue", "CostOfGoodsSold", "CostOfServices", "CostOfGoodsAndServiceExcludingDepreciationDepletionAndAmortization",
-  "GrossProfit", "OperatingExpenses", "SellingGeneralAndAdministrativeExpense", "ResearchAndDevelopmentExpense", "SellingAndMarketingExpense",
-  "GeneralAndAdministrativeExpense", "CostsAndExpenses", "OperatingIncomeLoss", "RestructuringCharges",
-  "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
-  "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments",
-  "IncomeTaxExpenseBenefit", "NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic", "ProfitLoss",
-  "EarningsPerShareBasic", "EarningsPerShareDiluted", "WeightedAverageNumberOfDilutedSharesOutstanding", "WeightedAverageNumberOfSharesOutstandingBasic",
-  "DepreciationDepletionAndAmortization", "DepreciationAndAmortization", "DepreciationAmortizationAndAccretionNet", "Depreciation",
-  "ShareBasedCompensation", "AllocatedShareBasedCompensationExpense",
-  "InterestExpense", "InterestExpenseNonoperating", "InterestExpenseDebt", "InterestPaidNet", "InterestPaid",
-  "NetCashProvidedByUsedInOperatingActivities", "PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets",
-  "PaymentsOfDividends", "PaymentsOfDividendsCommonStock", "PaymentsForRepurchaseOfCommonStock",
-  "ProceedsFromIssuanceOfLongTermDebt", "RepaymentsOfLongTermDebt",
-  "IncreaseDecreaseInAccountsReceivable", "IncreaseDecreaseInInventories", "IncreaseDecreaseInAccountsPayable",
-  "CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents", "ShortTermInvestments",
-  "MarketableSecuritiesCurrent", "AvailableForSaleSecuritiesDebtSecuritiesCurrent",
-  "AccountsReceivableNetCurrent", "ReceivablesNetCurrent", "InventoryNet", "AccountsPayableCurrent", "AccountsPayableAndAccruedLiabilitiesCurrent",
-  "AssetsCurrent", "LiabilitiesCurrent", "Assets", "Liabilities", "StockholdersEquity",
-  "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
-  "ShortTermBorrowings", "CommercialPaper", "DebtCurrent", "LongTermDebtCurrent", "LongTermDebtNoncurrent", "LongTermDebt",
-  "OperatingLeaseLiability", "FinanceLeaseLiability", "LongTermDebtAndCapitalLeaseObligations", "LongTermDebtAndCapitalLeaseObligationsCurrent", "DebtLongtermAndShorttermCombinedAmount",
-];
+/* Every us-gaap tag is passed through (last ~5 years, 10-Q/10-K only), so new desk cards never need this Worker
+   re-deployed. Responses are gzip-compressed by Cloudflare. */
 const DEI = ["EntityCommonStockSharesOutstanding"];
 
 function cors(req) {
@@ -103,7 +80,7 @@ async function company(req, t) {
   const cutoff = new Date(Date.now() - (YEARS * 365 + 120) * 864e5).toISOString().slice(0, 10);
   const keep = {};
   const ug = (facts.facts && facts.facts["us-gaap"]) || {};
-  for (const tag of TAGS) {
+  for (const tag of Object.keys(ug)) {
     const u = ug[tag] && ug[tag].units; if (!u) continue;
     for (const unit of Object.keys(u)) {
       const rows = u[unit].filter((r) => r.end >= cutoff && FORMS.has(r.form))

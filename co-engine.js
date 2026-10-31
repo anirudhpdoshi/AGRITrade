@@ -29,6 +29,7 @@
     div: ["PaymentsOfDividends", "PaymentsOfDividendsCommonStock"], buyback: ["PaymentsForRepurchaseOfCommonStock"],
     dissue: ["ProceedsFromIssuanceOfLongTermDebt"], drepay: ["RepaymentsOfLongTermDebt"],
     d_ar: ["IncreaseDecreaseInAccountsReceivable"], d_inv: ["IncreaseDecreaseInInventories"], d_ap: ["IncreaseDecreaseInAccountsPayable"],
+    acq: ["PaymentsToAcquireBusinessesNetOfCashAcquired"], eqiss: ["ProceedsFromIssuanceOfCommonStock"], invwd: ["InventoryWriteDown"],
   };
   var INST = {
     cash: ["CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"],
@@ -37,7 +38,13 @@
     ca: ["AssetsCurrent"], cl: ["LiabilitiesCurrent"], assets: ["Assets"], liab: ["Liabilities"],
     eq: ["StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"],
     stb: ["ShortTermBorrowings"], cp: ["CommercialPaper"], dcur: ["DebtCurrent", "LongTermDebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent"],
-    ltd_nc: ["LongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligations"], ltd: ["LongTermDebt", "DebtLongtermAndShorttermCombinedAmount"], oplease: ["OperatingLeaseLiability"],
+    ltd_nc: ["LongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligations"], ltd: ["LongTermDebt", "DebtLongtermAndShorttermCombinedAmount"], oplease: ["OperatingLeaseLiability"], finlease: ["FinanceLeaseLiability"],
+    accr: ["AccruedLiabilitiesCurrent"], defrev: ["ContractWithCustomerLiabilityCurrent"], ctrasset: ["ContractWithCustomerAssetNetCurrent"],
+    allow: ["AllowanceForDoubtfulAccountsReceivableCurrent"], inv_raw: ["InventoryRawMaterials"], inv_wip: ["InventoryWorkInProcess"], inv_fg: ["InventoryFinishedGoods"],
+    rpo: ["RevenueRemainingPerformanceObligation"], revolver: ["LineOfCreditFacilityRemainingBorrowingCapacity"],
+    mat1: ["LongTermDebtMaturitiesRepaymentsOfPrincipalInNextTwelveMonths"], mat2: ["LongTermDebtMaturitiesRepaymentsOfPrincipalInYearTwo"],
+    mat3: ["LongTermDebtMaturitiesRepaymentsOfPrincipalInYearThree"], mat4: ["LongTermDebtMaturitiesRepaymentsOfPrincipalInYearFour"],
+    mat5: ["LongTermDebtMaturitiesRepaymentsOfPrincipalInYearFive"], mat6: ["LongTermDebtMaturitiesRepaymentsOfPrincipalAfterYearFive"],
   };
   var PER_SHARE = { eps_d: 1, eps_b: 1 }, SHARES = { sh_d: 1, sh_b: 1 };
 
@@ -133,6 +140,10 @@
     /* the earliest quarter can only be derived from the one before it — drop leading quarters with no revenue/NI */
     while (Q.length && !Q[0].m.ni && !Q[0].m.rev) Q.shift();
     Q.forEach(function (q, i) { derive(q, Q[i - 1], yoyOf(Q, i)); });
+    Q.forEach(function (q, i) { deep(Q, i); });
+    ["dso", "dio", "dpo", "ccc", "roe", "roic", "nd_ebitda", "int_cov", "effcost", "cashcost", "capexda", "cr", "qr"].forEach(function (k) { Q.forEach(function (q, i) { var y = yoyOf(Q, i), p = Q[i - 1];
+      if (val(q, k) != null && val(y, k) != null) q.m[k + "_yoy"] = { v: val(q, k) - val(y, k), st: "CALCULATED", how: "change vs " + y.fl.label, unit: "abs" };
+      if (val(q, k) != null && val(p, k) != null) q.m[k + "_qoq"] = { v: val(q, k) - val(p, k), st: "CALCULATED", how: "change vs " + p.fl.label, unit: "abs" }; }); });
     var A = annual(F, co.fiscalYearEnd);
     var mod = model(co);
     if (Q.length && Q.length < 4 && mod.kind === "operating") mod = { kind: "operating", note: "Only " + Q.length + " quarter" + (Q.length > 1 ? "s" : "") + " filed under this registrant (CIK " + co.cik + ") — often a new holding company or a recent listing. A predecessor’s filings are not merged in." };
@@ -169,7 +180,7 @@
     if (q.m.gdebt && val(q, "cash") != null) setC(q, "ndebt", q.m.gdebt.v - val(q, "cash") - (val(q, "sti") || 0), "gross debt − cash − short-term investments", ["gdebt", "cash", "sti"]);
     if (val(q, "ca") != null && val(q, "cl")) setC(q, "cr", val(q, "ca") / val(q, "cl"), "current assets ÷ current liabilities", ["ca", "cl"]);
     /* growth */
-    ["rev", "gp", "opinc", "ni", "eps_d", "cfo", "fcf", "capex", "sh_d", "ar", "inv", "gdebt", "cogs", "sga", "rnd"].forEach(function (k) {
+    ["rev", "gp", "opinc", "ni", "eps_d", "cfo", "fcf", "capex", "sh_d", "ar", "inv", "gdebt", "cogs", "sga", "rnd", "ap", "rpo", "div", "buyback", "da"].forEach(function (k) {
       var c = val(q, k), a = val(y, k), b = val(p, k);
       if (c != null && a != null && a !== 0) q.m[k + "_yoy"] = { v: (c / a - 1) * 100 * (a < 0 ? -1 : 1), st: "CALCULATED", how: "vs " + y.fl.label, inputs: [k] };
       if (c != null && b != null && b !== 0 && !SHARES[k]) q.m[k + "_qoq"] = { v: (c / b - 1) * 100 * (b < 0 ? -1 : 1), st: "CALCULATED", how: "vs " + p.fl.label, inputs: [k] };
@@ -220,6 +231,123 @@
     for (var j = i - 3; j <= i; j++) { var v = val(Q[j], k); if (v == null) return null; s += v; }
     if (days(Q[i - 3].end, Q[i].end) > 300) return null;   /* gap in the quarter list */
     return s;
+  }
+  /* metrics that need the previous quarter's balance or trailing-twelve-month flows */
+  function deep(Q, i) {
+    var q = Q[i], p = Q[i - 1], dq = p ? days(p.end, q.end) : 91, rev = val(q, "rev"), cogs = val(q, "cogs");
+    if (!(dq >= 80 && dq <= 100)) dq = 91;
+    function av(k) { var a = val(q, k), b = val(p, k); return a == null ? null : b == null ? null : (a + b) / 2; }
+    function avNote(k) { return val(p, k) == null ? "" : " (average of opening and closing balance)"; }
+    var ar = av("ar"), inv = av("inv"), ap = av("ap");
+    if (ar != null && rev) setC(q, "dso", ar / rev * dq, "average receivables ÷ quarterly revenue × " + dq + " days", ["ar", "rev"]);
+    if (inv != null && cogs) setC(q, "dio", inv / cogs * dq, "average inventory ÷ quarterly cost of revenue × " + dq + " days", ["inv", "cogs"]);
+    if (ap != null && cogs) { setC(q, "dpo", ap / cogs * dq, "average payables ÷ quarterly cost of revenue × " + dq + " days (cost of revenue is a proxy for supplier purchases)", ["ap", "cogs"]); q.m.dpo.approx = true; }
+    if (q.m.dso && q.m.dio && q.m.dpo) setC(q, "ccc", q.m.dso.v + q.m.dio.v - q.m.dpo.v, "DSO + DIO − DPO", ["dso", "dio", "dpo"]);
+    var wc = (val(q, "d_ar") != null || val(q, "d_inv") != null || val(q, "d_ap") != null) ? -(val(q, "d_ar") || 0) - (val(q, "d_inv") || 0) + (val(q, "d_ap") || 0) : null;
+    if (wc != null) setC(q, "wc_cf", wc, "−Δreceivables − Δinventory + Δpayables, from the cash-flow statement", ["d_ar", "d_inv", "d_ap"]);
+    if (val(q, "capex") != null && val(q, "da")) setC(q, "capexda", val(q, "capex") / val(q, "da"), "capex ÷ D&A", ["capex", "da"]);
+    if (val(q, "fcf") != null) { var ret = (val(q, "div") || 0) + (val(q, "buyback") || 0); setC(q, "shret", ret, "dividends + buybacks", ["div", "buyback"]); setC(q, "retained", val(q, "fcf") - ret, "FCF − dividends − buybacks", ["fcf", "div", "buyback"]); }
+    var gd = av("gdebt");
+    if (gd && val(q, "intexp") != null) setC(q, "effcost", val(q, "intexp") * 365 / dq / gd * 100, "annualised interest expense ÷ average gross debt (opening/closing average — an approximation; leases excluded)", ["intexp", "gdebt"]);
+    if (gd && val(q, "intpaid") != null) setC(q, "cashcost", val(q, "intpaid") * 365 / dq / gd * 100, "annualised cash interest paid ÷ average gross debt (approximation)", ["intpaid", "gdebt"]);
+    var cl = val(q, "cl");
+    if (cl) { if (val(q, "cash") != null) setC(q, "cashr", (val(q, "cash") + (val(q, "sti") || 0)) / cl, "(cash + short-term investments) ÷ current liabilities", ["cash", "sti", "cl"]);
+      if (val(q, "cash") != null && val(q, "ar") != null) setC(q, "qr", (val(q, "cash") + (val(q, "sti") || 0) + val(q, "ar")) / cl, "(cash + short-term investments + receivables) ÷ current liabilities", ["cash", "sti", "ar", "cl"]); }
+    if (val(q, "ca") != null && cl != null) setC(q, "wcap", val(q, "ca") - cl, "current assets − current liabilities", ["ca", "cl"]);
+    if (val(q, "gdebt") != null && val(q, "eq")) setC(q, "de", val(q, "gdebt") / val(q, "eq"), "gross debt ÷ shareholders’ equity", ["gdebt", "eq"]);
+    if (val(q, "gdebt") != null && val(q, "assets")) setC(q, "da_r", val(q, "gdebt") / val(q, "assets") * 100, "gross debt ÷ total assets", ["gdebt", "assets"]);
+    /* trailing twelve months */
+    if (i < 3 || days(Q[i - 3].end, q.end) > 300) return;
+    function t(k) { return ttm(Q, i, k); }
+    function a4(k) { var a = val(q, k), b = i >= 4 ? val(Q[i - 4], k) : null; return a == null ? null : b == null ? a : (a + b) / 2; }
+    var ni4 = t("ni"), eb4 = t("ebit"), da4 = t("da"), int4 = t("intexp"), cfo4 = t("cfo"), fcf4 = t("fcf"), rev4 = t("rev"), cogs4 = t("cogs"), ip4 = t("intpaid");
+    if (eb4 != null && da4 != null) setC(q, "ebitda_ttm", eb4 + da4, "TTM EBIT + TTM D&A", ["ebit", "da"]);
+    if (q.m.ebitda_ttm && val(q, "ndebt") != null && q.m.ebitda_ttm.v > 0) setC(q, "nd_ebitda", val(q, "ndebt") / q.m.ebitda_ttm.v, "net debt ÷ TTM EBITDA", ["ndebt", "ebitda_ttm"]);
+    if (eb4 != null && int4) setC(q, "int_cov", eb4 / int4, "TTM EBIT ÷ TTM interest expense", ["ebit", "intexp"]);
+    if (ip4 != null && cfo4 > 0) setC(q, "intburden", ip4 / cfo4 * 100, "TTM cash interest paid ÷ TTM operating cash flow", ["intpaid", "cfo"]);
+    if (fcf4 != null && val(q, "gdebt")) setC(q, "fcf_debt", fcf4 / val(q, "gdebt") * 100, "TTM FCF ÷ gross debt", ["fcf", "gdebt"]);
+    if (fcf4 != null) setC(q, "fcf_ttm", fcf4, "sum of the last four quarters", ["fcf"]);
+    var eqA = a4("eq"), asA = a4("assets");
+    if (ni4 != null && eqA > 0) setC(q, "roe", ni4 / eqA * 100, "TTM net income ÷ average equity (now and a year ago)", ["ni", "eq"]);
+    if (ni4 != null && asA) setC(q, "roa", ni4 / asA * 100, "TTM net income ÷ average total assets", ["ni", "assets"]);
+    var tax4 = t("tax"), pre4 = t("pretax"), tr = pre4 > 0 && tax4 != null ? Math.min(Math.max(tax4 / pre4, 0), 0.5) : 0.21;
+    var ic = val(q, "gdebt") != null && val(q, "eq") != null ? val(q, "gdebt") + val(q, "eq") - (val(q, "cash") || 0) : null;
+    if (eb4 != null && ic > 0) { setC(q, "roic", eb4 * (1 - tr) / ic * 100, "TTM EBIT × (1 − effective tax rate " + (tr * 100).toFixed(0) + "%) ÷ (gross debt + equity − cash), period-end capital", ["ebit", "tax", "gdebt", "eq", "cash"]); q.m.roic.approx = true; }
+    if (rev4 && asA) setC(q, "at", rev4 / asA, "TTM revenue ÷ average total assets", ["rev", "assets"]);
+    if (cogs4 && a4("inv")) setC(q, "invturn", cogs4 / a4("inv"), "TTM cost of revenue ÷ average inventory", ["cogs", "inv"]);
+    if (rev4 && a4("ar")) setC(q, "arturn", rev4 / a4("ar"), "TTM revenue ÷ average receivables", ["rev", "ar"]);
+    if (cogs4 && a4("ap")) setC(q, "apturn", cogs4 / a4("ap"), "TTM cost of revenue ÷ average payables", ["cogs", "ap"]);
+    if (cfo4 != null && ni4 > 0) setC(q, "cfoni_ttm", cfo4 / ni4, "TTM CFO ÷ TTM net income", ["cfo", "ni"]);
+  }
+  /* ---------------------------------------------------------------- early-warning engine (12 rules) */
+  var SEV = ["INFORMATIONAL", "WATCH", "CRITICAL", "CONFIRMED DETERIORATION"];
+  function v_(q, k) { return q && q.m[k] && q.m[k].v != null ? q.m[k].v : null; }
+  /* each rule: test(q, M) -> null (cannot evaluate) | {hit, level 1 watch / 2 critical, value, comp, thr, text} */
+  var RULES = [
+    { id: 1, title: "Revenue quality deterioration", metric: "rev_yoy", alt: "A divestiture, a strong prior-year comparison, currency or a deliberate exit from low-margin business can all depress reported growth.",
+      test: function (q) { var g = v_(q, "rev_yoy"); if (g == null) return null; return { hit: g < -3, level: g < -10 ? 2 : 1, value: g, comp: "same quarter last year", thr: "YoY < −3% (critical < −10%)", text: "Revenue " + g.toFixed(1) + "% YoY" }; } },
+    { id: 2, title: "Cash flow versus earnings divergence", metric: "cfoni_ttm", alt: "Working-capital build ahead of growth, tax timing or a large non-cash gain can open the gap temporarily.",
+      test: function (q) { var c = v_(q, "cfoni_ttm"); if (c == null) return null; return { hit: c < 0.8, level: c < 0.5 ? 2 : 1, value: c, comp: "TTM net income", thr: "TTM CFO < 0.8× net income (critical < 0.5×)", text: "TTM operating cash flow " + c.toFixed(2) + "× net income" }; } },
+    { id: 3, title: "Receivables growth exceeding revenue", metric: "ar_yoy", alt: "Acquisitions, longer contractual terms, a quarter-end sales spike or customer mix can lift receivables without collection problems.",
+      test: function (q) { var a = v_(q, "ar_yoy"), r = v_(q, "rev_yoy"); if (a == null || r == null) return null; var d = a - r; return { hit: d > 10, level: d > 25 ? 2 : 1, value: d, comp: "revenue growth " + r.toFixed(1) + "%", thr: "receivables growth − revenue growth > 10 pp (critical > 25 pp)", text: "Receivables " + a.toFixed(1) + "% YoY vs revenue " + r.toFixed(1) + "%" }; } },
+    { id: 4, title: "Inventory accumulation", metric: "inv_yoy", alt: "A planned seasonal build, a product launch, supply-chain buffering or commodity-price inflation in inventory value.",
+      test: function (q) { var a = v_(q, "inv_yoy"), r = v_(q, "rev_yoy"); if (a == null || r == null) return null; var d = a - r; return { hit: d > 10, level: d > 25 ? 2 : 1, value: d, comp: "revenue growth " + r.toFixed(1) + "%", thr: "inventory growth − revenue growth > 10 pp (critical > 25 pp)", text: "Inventory " + a.toFixed(1) + "% YoY vs revenue " + r.toFixed(1) + "%" }; } },
+    { id: 5, title: "Margin compression", metric: "opm_yoy", alt: "Mix shift, one-off charges, deliberate investment spending or input-cost spikes that pricing has not yet caught up with.",
+      test: function (q) { var d = v_(q, "opm_yoy"), k = "operating"; if (d == null) { d = v_(q, "gm_yoy"); k = "gross"; } if (d == null) return null; return { hit: d < -2, level: d < -5 ? 2 : 1, value: d, comp: "same quarter last year", thr: k + " margin down > 2 pp YoY (critical > 5 pp)", text: k[0].toUpperCase() + k.slice(1) + " margin " + d.toFixed(1) + " pp YoY" }; } },
+    { id: 6, title: "Guidance deterioration", metric: "guidance", unavailable: "Needs management guidance history — no free structured source; the earnings-release parser is a later phase." },
+    { id: 7, title: "Debt and refinancing stress", metric: "nd_ebitda", alt: "Debt-funded acquisitions with earnings not yet in the trailing window, seasonal borrowing, or a captive finance arm that carries customer loans.",
+      test: function (q, M) { var cap = M.model.kind === "utility" || M.model.kind === "reit", L = v_(q, "nd_ebitda"), c = v_(q, "int_cov"), hi = cap ? [6.5, 8] : [4, 5.5];
+        if (L == null && c == null) return null; var lvl = 0, t = [];
+        if (L != null && L > hi[0]) { lvl = Math.max(lvl, L > hi[1] ? 2 : 1); t.push("net debt / EBITDA " + L.toFixed(1) + "×"); }
+        if (c != null && c < 3) { lvl = Math.max(lvl, c < 1.5 ? 2 : 1); t.push("interest cover " + c.toFixed(1) + "×"); }
+        var m1 = v_(q, "mat1"), liq = (v_(q, "cash") || 0) + (v_(q, "sti") || 0) + (v_(q, "revolver") || 0);
+        if (m1 != null && m1 > liq && liq > 0) { lvl = 2; t.push("debt due in 12 months exceeds cash + undrawn facilities"); }
+        return { hit: lvl > 0, level: lvl || 1, value: L != null ? L : c, comp: cap ? "capital-intensive thresholds" : "generic thresholds", thr: "net debt/EBITDA > " + hi[0] + "× (critical > " + hi[1] + "×), interest cover < 3× (critical < 1.5×), or near-term maturities above liquidity", text: t.join("; ") || "within thresholds" }; } },
+    { id: 8, title: "CapEx without demonstrated returns", metric: "capex_yoy", alt: "Investment cycles take years to earn back; a new plant or data centre depresses returns before it produces revenue.",
+      test: function (q) { var cy = v_(q, "capex_yoy"), cd = v_(q, "capexda"), r = v_(q, "rev_yoy"), m = v_(q, "opm_yoy"); if (cy == null || r == null) return null;
+        var hit = cy > 30 && (cd == null || cd > 1.5) && r < 3 && (m == null || m <= 0); return { hit: hit, level: hit && cy > 60 ? 2 : 1, value: cy, comp: "revenue " + r.toFixed(1) + "% YoY", thr: "capex up > 30% YoY and > 1.5× D&A while revenue < +3% and margins not improving", text: "Capex " + cy.toFixed(0) + "% YoY, revenue " + r.toFixed(1) + "%" }; } },
+    { id: 9, title: "Weakening orders or backlog", metric: "rpo_yoy", alt: "Backlog can fall because deliveries accelerated, not because orders weakened; contract timing is lumpy.",
+      test: function (q) { var b = v_(q, "rpo_yoy"); if (b == null) return null; return { hit: b < -5, level: b < -15 ? 2 : 1, value: b, comp: "same quarter last year", thr: "remaining performance obligations down > 5% YoY (critical > 15%)", text: "Remaining performance obligations " + b.toFixed(1) + "% YoY" }; } },
+    { id: 10, title: "Customer concentration or retention risk", metric: "concentration", unavailable: "Customer concentration and retention are disclosed in text, not in the structured filings." },
+    { id: 11, title: "Share dilution", metric: "sh_d_yoy", alt: "Acquisitions paid in stock or a capital raise for growth can be value-creating despite dilution.",
+      test: function (q) { var d = v_(q, "sh_d_yoy"); if (d == null) return null; return { hit: d > 2, level: d > 5 ? 2 : 1, value: d, comp: "diluted shares a year earlier", thr: "diluted share count up > 2% YoY (critical > 5%)", text: "Diluted shares " + d.toFixed(1) + "% YoY" }; } },
+    { id: 12, title: "Unusual adjustments and recurring exclusions", metric: "restated", alt: "Restatements can be routine reclassifications rather than corrections.",
+      test: function (q) { var n = Object.keys(q.m).filter(function (k) { return q.m[k] && q.m[k].src && q.m[k].src.restated; }); return { hit: n.length > 0, level: 1, value: n.length, comp: "originally filed values", thr: "any figure re-filed with a different value", text: n.length ? "Re-filed with changed values: " + n.slice(0, 5).join(", ") : "no re-filed values" }; },
+      partial: "Non-GAAP adjustments themselves are in the earnings release text, not the structured filings — only restatements are checked." },
+  ];
+  function warnings(M) {
+    var Q = M.quarters, W = Q.slice(-8);
+    return RULES.map(function (R) {
+      var base = { id: R.id, title: R.title, metric: R.metric, alt: R.alt || "", partial: R.partial || "" };
+      if (R.unavailable) return Object.assign(base, { status: "UNAVAILABLE", severity: null, note: R.unavailable, history: W.map(function (q) { return { label: q.fl.label, st: "n/a" }; }) });
+      var H = W.map(function (q) { var r = R.test(q, M); return { label: q.fl.label, end: q.end, r: r }; });
+      var ev = H.filter(function (h) { return h.r; });
+      if (!ev.length) return Object.assign(base, { status: "UNAVAILABLE", severity: null, note: "The inputs for this rule are not filed for this company.", history: H.map(function (h) { return { label: h.label, st: "n/a" }; }) });
+      var last = H[H.length - 1], run = 0, crit = 0;
+      for (var j = H.length - 1; j >= 0 && H[j].r && H[j].r.hit; j--) { run++; if (H[j].r.level >= 2) crit++; }
+      var everHit = H.filter(function (h) { return h.r && h.r.hit; });
+      var hist = H.map(function (h) { return { label: h.label, st: !h.r ? "n/a" : h.r.hit ? (h.r.level >= 2 ? "C" : "W") : "ok", text: h.r ? h.r.text : "" }; });
+      var conf = last.r && Object.keys(M.quarters[M.quarters.length - 1].m).some(function (k) { var m = M.quarters[M.quarters.length - 1].m[k]; return m && m.approx; }) ? "MEDIUM" : "HIGH";
+      if (!last.r) return Object.assign(base, { status: "STALE", severity: null, note: "Latest quarter lacks the inputs; last evaluated " + ev[ev.length - 1].label + ".", history: hist, confidence: "LOW" });
+      if (!last.r.hit) {
+        var res = everHit.length ? everHit[everHit.length - 1] : null;
+        return Object.assign(base, { status: res ? "RESOLVED" : "NOT TRIGGERED", severity: null, resolved_after: res ? res.label : null, value: last.r.value, text: last.r.text, threshold: last.r.thr, comp: last.r.comp, history: hist, latest: last.label, confidence: conf });
+      }
+      var sev = last.r.level >= 2 ? 2 : 1;
+      if (run >= 3) sev = Math.max(sev, 2);
+      if (run >= 3 && crit >= 2) sev = 3;   /* never from a single quarter */
+      var firstRun = H[H.length - run];
+      return Object.assign(base, { status: "ACTIVE", severity: SEV[sev], persistence: run, first: firstRun.label, first_ever: everHit[0].label, latest: last.label, value: last.r.value, text: last.r.text, threshold: last.r.thr, comp: last.r.comp, history: hist, confidence: conf,
+        escalated: run >= 3 && last.r.level < 2 });
+    });
+  }
+
+  /* latest disclosed principal-maturity ladder (usually only in the 10-K) */
+  function maturities(M) {
+    var Q = M.quarters;
+    for (var i = Q.length - 1; i >= 0; i--) { var q = Q[i], b = ["mat1", "mat2", "mat3", "mat4", "mat5", "mat6"].map(function (k) { return q.m[k] || null; });
+      if (b.some(Boolean)) return { end: q.end, label: q.fl.label, buckets: b, cash: val(q, "cash"), sti: val(q, "sti"), revolver: val(q, "revolver"), gdebt: val(q, "gdebt") }; }
+    return null;
   }
   function avgBal(Q, i, k) { var a = val(Q[i], k), b = i >= 4 ? val(Q[i - 4], k) : null; return a == null ? null : b == null ? a : (a + b) / 2; }
 
@@ -340,7 +468,7 @@
   function fmt(v) { if (v == null || !isFinite(v)) return "—"; var a = Math.abs(v), s = v < 0 ? "−" : "";
     return s + (a >= 1e12 ? (a / 1e12).toFixed(2) + "T" : a >= 1e9 ? (a / 1e9).toFixed(2) + "B" : a >= 1e6 ? (a / 1e6).toFixed(1) + "M" : a >= 1e3 ? (a / 1e3).toFixed(0) + "K" : a.toFixed(2)); }
 
-  root.COENGINE = { build: build, verdicts: verdicts, series: series, trend: trend, ttm: ttm, val: val, fmt: fmt, streak: streak, fiscalLabel: fiscalLabel,
+  root.COENGINE = { warnings: warnings, RULES: RULES, maturities: maturities, build: build, verdicts: verdicts, series: series, trend: trend, ttm: ttm, val: val, fmt: fmt, streak: streak, fiscalLabel: fiscalLabel,
     quarterFromTag: quarterFromTag, quarterEnds: quarterEnds, dedupe: dedupe, reaction: reaction, latestRelease: latestRelease, DUR: DUR, INST: INST, SCALE: SCALE };
   if (typeof module !== "undefined" && module.exports) module.exports = root.COENGINE;
 })(typeof window !== "undefined" ? window : globalThis);

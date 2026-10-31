@@ -54,6 +54,13 @@ async function company(t, list) {
       }
       console.log("verdicts: " + V.verdicts.map((v) => v.name.split(" ").map((w) => w[0]).join("") + "=" + v.verdict + "(" + (v.confidence || "-") + ")").join(" ") +
         " · history EQ " + V.history.map((h) => h.eq[0]).join("") + " FR " + V.history.map((h) => h.fr[0]).join(""));
+      const K2 = ["dso", "dio", "dpo", "ccc", "effcost", "cashcost", "nd_ebitda", "int_cov", "roe", "roic", "cr", "qr", "at", "capexda", "retained"];
+      console.log("deep coverage: " + K2.map((k) => k + " " + Q.filter((q) => q.m[k] && q.m[k].v != null).length + "/8").join(" · "));
+      console.log("latest deep: " + K2.map((k) => { const m = L.m[k]; return m && m.v != null ? k + "=" + (Math.abs(m.v) >= 1000 ? E.fmt(m.v) : m.v.toFixed(2)) : null; }).filter(Boolean).join(" "));
+      const mt = E.maturities(M); console.log("maturities: " + (mt ? mt.label + " " + mt.buckets.map((b) => b ? E.fmt(b.v) : "—").join(" / ") + " · revolver " + E.fmt(mt.revolver) : "none tagged"));
+      const Wn = E.warnings(M);
+      console.log("warnings: " + Wn.map((w) => w.id + ":" + (w.status === "ACTIVE" ? w.severity.split(" ")[0] + "×" + w.persistence : w.status.slice(0, 5))).join(" "));
+      Wn.filter((w) => w.status === "ACTIVE").forEach((w) => console.log("   ! " + w.title + " — " + w.text + " (since " + w.first + ")"));
       console.log("eq evidence: " + V.verdicts[0].evidence.map((e) => (e.sign > 0 ? "+" : e.sign < 0 ? "−" : "·") + e.text).join(" | "));
       if (!L.m.rev && M.model.kind === "operating") { bad++; console.log("  !! no latest revenue for an operating company"); }
       if (Q.length < 8) console.log("  note: only " + Q.length + " quarters in the 5-year window");
