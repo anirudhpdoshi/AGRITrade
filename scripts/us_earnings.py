@@ -34,6 +34,9 @@ CLOSE_GRACE_MIN = 5            # a quote taken within 5 min after 16:00 ET may s
 DAILY_BUDGET = int(os.environ.get("FMP_DAILY_BUDGET", "200"))
 RUN_CAP = int(os.environ.get("FMP_RUN_CAP", "40"))
 FATAL = {401, 403, 429}        # bad key, plan blocked, limit reached -> stop the run
+CAL_BACK, CAL_AHEAD = 21, 60    # earnings-calendar window: last 3 weeks (results) + next 60 days (dates); FMP caps a window at 90 days
+CAL_MAX_HOURS = 24             # one calendar call a day covers every ticker...
+CAL_PENDING_MIN = 60           # ...plus a re-check (at most hourly) while a watchlist report is out but its actuals are not
 RESTRICT_DAYS = 30             # a 402 on quote means "not in your plan": price comes from profile, quote re-tried after 30 days
 
 PROFILE_KEEP = ["symbol", "price", "change", "changePercentage", "volume", "companyName", "exchange", "exchangeFullName", "currency", "sector", "industry", "ceo", "country",
@@ -48,8 +51,8 @@ ENDPOINTS = {
     "search-name": ("Search by company name", "Add the ticker to scripts/data/earnings_watchlist.json by hand — tickers need no search."),
     "quote": ("Real-time quote", "The profile call supplies price, change, % change and volume; day range and 50/200-day averages show “—”."),
     "profile": ("Company profile", "Quote still gives price and volume; sector, CEO, description and logo go blank."),
-    "earnings-calendar": ("Earnings calendar (candidate 4th)", "Per-symbol earnings endpoint if that is in the plan; otherwise the earnings panel stays empty."),
-    "earnings": ("Earnings by symbol (candidate 4th)", "Earnings calendar filtered to the watchlist, if that is in the plan."),
+    "earnings-calendar": ("Earnings calendar", "Per-symbol earnings endpoint is not in this plan either, so the earnings panel would stay empty."),
+    "earnings": ("Earnings by symbol", "Not needed: the earnings calendar, filtered to the watchlist, gives the same dates, estimates and actuals."),
 }
 # --check-plan: one cheap call per endpoint. AAPL is FMP's demo symbol, so a quote that works for AAPL but 402s for ADM
 # means the plan limits *symbols*, not the endpoint.
@@ -147,7 +150,7 @@ def ledger_today(usage, now):
             "budget": DAILY_BUDGET, "run_cap": RUN_CAP, "history": hist[-14:]}
 
 
-def plan(state, symbols, names, now, force=False, force_profile=False):
+def plan(state, symbols, names, now, force=False, force_profile=False, calendar=True):
     """Ordered list of calls this run would make before the budget is applied: (endpoint, arg, reason).
     Names first (a resolved name feeds the symbol list), then quotes (what changes), then profiles (reference data)."""
     resolved = state.get("resolved") or {}
@@ -176,7 +179,55 @@ def plan(state, symbols, names, now, force=False, force_profile=False):
         due, why = profile_due(parse(p.get("fetched_at")), now, force_profile)
         if due:
             later.append(("profile", s, why))
+    if calendar and (state.get("endpoints") or {}).get("earnings-calendar", {}).get("status") != "not_in_plan":
+        due, why = calendar_due(state.get("calendar"), now, force)
+        if due:
+            later.append(("earnings-calendar", "*", why))
     return calls + later
+
+
+def calendar_window(now):
+    d0 = now.astimezone(NY).date()
+    return (d0 - timedelta(days=CAL_BACK)).isoformat(), (d0 + timedelta(days=CAL_AHEAD)).isoformat()
+
+
+def calendar_due(cal, now, force=False):
+    """(due, reason) for the single earnings-calendar call."""
+    if force:
+        return True, "forced"
+    if not cal or not cal.get("fetched_at"):
+        return True, "no calendar yet"
+    at = parse(cal["fetched_at"])
+    age_h = (now - at).total_seconds() / 3600
+    if age_h >= CAL_MAX_HOURS:
+        return True, "calendar %d h old" % age_h
+    today = now.astimezone(NY).date().isoformat()
+    pending = [r for r in cal.get("rows") or [] if r.get("date") and r["date"] <= today and r.get("epsActual") is None]
+    if pending and age_h * 60 >= CAL_PENDING_MIN:
+        return True, "%s reported, actuals not in yet" % ",".join(sorted({r["symbol"] for r in pending}))
+    return False, "calendar %.0f h old, nothing pending" % age_h
+
+
+def surprise(act, est):
+    """Surprise in % of the estimate's size; None when either side is missing or the estimate is 0."""
+    if act is None or est is None or est == 0:
+        return None
+    return round((act - est) / abs(est) * 100, 1)
+
+
+def shape_calendar(res, watch, frm, to, now):
+    """Keep the watchlist rows of a calendar response (plus coverage counts, so a thin plan is visible)."""
+    res = res if isinstance(res, list) else []
+    rows = []
+    for x in res:
+        if x.get("symbol") in watch:
+            r = trim(x, ["symbol", "date", "epsActual", "epsEstimated", "revenueActual", "revenueEstimated", "time", "lastUpdated"])
+            r["eps_surprise_pct"] = surprise(x.get("epsActual"), x.get("epsEstimated"))
+            r["rev_surprise_pct"] = surprise(x.get("revenueActual"), x.get("revenueEstimated"))
+            rows.append(r)
+    rows.sort(key=lambda r: (r.get("date") or "", r["symbol"]))
+    return {"from": frm, "to": to, "fetched_at": iso(now), "rows_total": len(res),
+            "symbols_total": len({x.get("symbol") for x in res}), "rows": rows}
 
 
 def quote_restricted(c, now):
@@ -302,6 +353,7 @@ def main():
     made, skipped, errors, stopped = [], [], [], None
     eps = state.get("endpoints") or {}
     upcoming = state.get("upcoming") or {}
+    calendar = state.get("calendar") or {}
     WL = set(symbols)
     if a.check_plan:
         for ep, params in probes(now):
@@ -347,6 +399,9 @@ def main():
                         queue.append(("quote", hit["symbol"], "new from search"))
                     if profile_due(parse((c.get("profile") or {}).get("fetched_at")), now, a.force_profile)[0]:
                         queue.append(("profile", hit["symbol"], "new from search"))
+            elif ep == "earnings-calendar":
+                frm, to = calendar_window(now)
+                calendar = shape_calendar(fmp("earnings-calendar", {"from": frm, "to": to}, key), set(symbols), frm, to, now)
             else:
                 res = fmp(ep, {"symbol": arg}, key)
                 row = res[0] if isinstance(res, list) and res else None
@@ -359,14 +414,14 @@ def main():
                 else:
                     c[ep + "_error"] = {"at": iso(now), "msg": "empty response (symbol not covered?)"}
             made.append({"endpoint": ep, "arg": arg, "reason": why})
-            note_endpoint(eps, "search-name" if ep == "search" else ep, "ok", "*" if ep == "search" else arg, now)
+            note_endpoint(eps, "search-name" if ep == "search" else ep, "ok", "*" if ep in ("search", "earnings-calendar") else arg, now)
         except Fatal as e:
             stopped = str(e); errors.append(stopped)
             usage["calls"][ep] = usage["calls"].get(ep, 0) + 1; usage["total"] += 1   # the refused call still counts
             continue
         except Exception as e:
             errors.append(f"{ep} {arg}: {e}")
-            if ep != "search":
+            if ep not in ("search", "earnings-calendar"):
                 comps.setdefault(arg, {})[ep + "_error"] = {"at": iso(now), "msg": str(e)[:160]}
             if ep == "quote" and "402" in str(e):
                 c = comps.setdefault(arg, {})
@@ -375,7 +430,7 @@ def main():
                 if not any(x[0] == "profile" and x[1] == arg for x in queue) and (c.get("profile") or {}).get("fetched_at") != iso(now):
                     queue.append(("profile", arg, "price via profile after quote 402"))
             made.append({"endpoint": ep, "arg": arg, "reason": why, "failed": True})
-            note_endpoint(eps, "search-name" if ep == "search" else ep, outcome(e), "*" if ep == "search" else arg, now, e)
+            note_endpoint(eps, "search-name" if ep == "search" else ep, outcome(e), "*" if ep in ("search", "earnings-calendar") else arg, now, e)
         usage["calls"][ep] = usage["calls"].get(ep, 0) + 1
         usage["total"] += 1
         time.sleep(0.25)
@@ -394,12 +449,15 @@ def main():
         "session": {"open": market_open(now), "last_close": iso(last_close(now))},
         "endpoints": eps,
         "upcoming": upcoming,
+        "calendar": calendar,
         "usage": usage,
         "last_run": {"at": iso(now), "trigger": os.environ.get("GITHUB_EVENT_NAME", "local"), "planned": len(calls),
                      "made": made, "skipped": skipped, "errors": errors, "stopped": stopped},
         "policy": {"quote": f"one per symbol per run; only when the market is open and the last quote is ≥{QUOTE_MIN_MIN} min old, "
                             "or when the stored quote predates the last close",
                    "profile": f"cached {PROFILE_MAX_DAYS} days; stands in for quote (same timing rule) where quote is not in the plan", "search": "once per company name, cached",
+                   "calendar": f"one earnings-calendar call covers every ticker ({CAL_BACK} days back, {CAL_AHEAD} ahead); at most daily, "
+                               f"or hourly while a watchlist report is out without actuals",
                    "budget": f"{DAILY_BUDGET}/day, {RUN_CAP}/run, stop on 401/403/429"},
     }
     print(f"made {len(made)} call(s), skipped {len(skipped)}, errors {len(errors)}; today {usage['total']}/{usage['budget']}")

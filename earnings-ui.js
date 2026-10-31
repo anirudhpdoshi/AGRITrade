@@ -135,7 +135,7 @@
   }
   var EP_ORDER = ["quote", "profile", "search-name", "earnings-calendar", "earnings"];
   var EP_LABEL = { quote: "Real-time quote", profile: "Company profile", "search-name": "Search by company name",
-    "earnings-calendar": "Earnings calendar (candidate 4th)", earnings: "Earnings by symbol (candidate 4th)" };
+    "earnings-calendar": "Earnings calendar", earnings: "Earnings by symbol" };
   function stBadge(e) {
     if (!e) return '<span class="ue-st unk">not checked</span>';
     return { ok: '<span class="ue-st ok">✓ in plan</span>', partial: '<span class="ue-st partial">◐ some symbols</span>',
@@ -151,7 +151,7 @@
           (e && e.last_error ? '<br><code style="color:var(--amber)">last error: ' + esc(e.last_error.msg) + "</code>" : "") + "</td>" +
           "<td>" + (use ? '<b style="color:var(--amber)">In use → </b>' : "") + esc((e && e.fallback) || (k === "earnings-calendar" || k === "earnings" ? "Not wired in yet." : "")) + "</td>" +
           '<td><span class="ue-age">' + esc(e ? ago(e.checked_at) : "—") + "</span></td></tr>"; }).join("") +
-      '</tbody></table></div><div class="stamp">Statuses update for free from every normal run; the two earnings rows only from a run with “Check which FMP endpoints my plan allows” ticked (~4 calls).</div></div>';
+      '</tbody></table></div><div class="stamp">Statuses update for free from every normal run. “Earnings by symbol” is only re-checked on a run with “Check which FMP endpoints my plan allows” ticked (~4 calls).</div></div>';
   }
   function table() {
     var L = sorted();
@@ -162,7 +162,9 @@
       L.map(function (r) { var q = r.q, old = r.at && Date.now() - Date.parse(r.at) > 864e5;
         var qerr = r.c.quote_error && r.px == null;
         return '<tr data-uesym="' + esc(r.s) + '" class="' + (r.s === V.sel ? "on" : "") + '"><td><span class="ue-sym">' + esc(r.s) + '</span><span class="ue-nm">' +
-            (qerr ? '<span style="color:var(--amber)">⚠ quote failed: ' + esc(r.c.quote_error.msg) + "</span>" : esc(r.name || "—")) + "</span></td>" +
+            (qerr ? '<span style="color:var(--amber)">⚠ quote failed: ' + esc(r.c.quote_error.msg) + "</span>" : esc(r.name || "—")) + "</span>" +
+            (function () { var nr = nextReport(r.s); if (!nr) return ""; var d = daysTo(nr.date);
+              return '<span class="ue-nm" style="color:' + (d <= 7 ? "var(--amber)" : "var(--cyan)") + '">reports ' + (d === 0 ? "today" : esc(dayLbl(nr.date)) + " · " + d + " d") + "</span>"; })() + "</td>" +
           "<td>" + num(r.px, 2) + (r.at ? '<span class="ue-age' + (old ? " old" : "") + '" style="display:block"' + (r.viaP ? ' title="Quote endpoint is not in the FMP plan for this symbol — price, change and volume come from the profile call"' : "") + ">" + esc(ago(r.at)) + (r.viaP ? " · profile" : "") + "</span>" : "") + "</td><td>" + sg(r.ch, 2) + "</td><td>" + sg(r.pct, 2, "%") + "</td>" +
           "<td>" + (q.dayLow != null ? num(q.dayLow, 2) + " – " + num(q.dayHigh, 2) : "—") + "</td><td>" + rangeBar(r.ylo, r.yhi, r.px) + "</td>" +
           "<td>" + (r.vol != null ? big(r.vol) + (r.avgv ? ' <small class="ue-age">' + (r.vol / r.avgv).toFixed(1) + "×</small>" : "") : "—") + "</td>" +
@@ -184,18 +186,40 @@
         "</dd><dt>50D / 200D avg</dt><dd>" + num(q.priceAvg50, 2) + " / " + num(q.priceAvg200, 2) + "</dd><dt>Listed since</dt><dd>" + esc(p.ipoDate || "—") + "</dd></dl>" +
       (short ? '<p class="ue-desc">' + esc(short) + "</p>" : "") + (site ? '<a class="ue-btn" href="' + esc(site) + '" target="_blank" rel="noopener noreferrer">Company site ↗</a>' : "") + "</div>";
   }
+  function todayNY() { return new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" }); }
+  function dayLbl(d) { return new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric" }); }
+  function daysTo(d) { return Math.round((Date.parse(d + "T12:00:00Z") - Date.parse(todayNY() + "T12:00:00Z")) / 864e5); }
+  function nextReport(sym) {
+    var C = J.calendar, t = todayNY(); if (!C || !C.rows) return null;
+    return C.rows.filter(function (r) { return r.symbol === sym && r.date >= t; })[0] || null;
+  }
   function earningsSlot() {
-    var U = J.upcoming, E = J.endpoints || {}, ec = E["earnings-calendar"];
-    if (U && U.rows && ec && ec.status !== "not_in_plan")
-      return '<div class="tile" style="margin-top:14px"><h2>Upcoming reports <span class="h2note">— earnings calendar ' + esc(U.from) + " to " + esc(U.to) + ", watchlist names only · fetched " + esc(ago(U.fetched_at)) + "</span></h2>" +
-        (U.rows.length ? '<div class="tbl-scroll"><table class="ue-t"><thead><tr><th>Company</th><th>Date</th><th>When</th><th>EPS est.</th><th>Revenue est.</th></tr></thead><tbody>' +
-          U.rows.map(function (r) { return "<tr><td><span class=\"ue-sym\">" + esc(r.symbol) + "</span></td><td>" + esc(r.date) + "</td><td>" + esc(({ bmo: "before open", amc: "after close" })[r.time] || r.time || "—") +
-            "</td><td>" + num(r.epsEstimated, 2) + "</td><td>" + big(r.revenueEstimated) + "</td></tr>"; }).join("") + "</tbody></table></div>"
-          : '<p class="note">None of the watchlist names report in this window.</p>') +
-        '<div class="stamp">Preview of the candidate 4th endpoint from the plan check — not yet refreshed on normal runs.</div></div>';
-    return '<div class="tile" style="margin-top:14px"><h2>Earnings dates &amp; results <span class="h2note">— waiting on the fourth endpoint</span></h2>' +
-      '<div class="ue-ph">Report dates, EPS / revenue estimates vs actuals and surprise % will sit here once the earnings endpoint is wired in. ' +
-      "Quotes and profiles above already work on their own.</div></div>";
+    var C = J.calendar, ec = (J.endpoints || {})["earnings-calendar"];
+    if (ec && ec.status === "not_in_plan")
+      return '<div class="tile" style="margin-top:14px"><h2>Earnings dates &amp; results</h2><div class="ue-ph">The earnings calendar is not in this FMP plan, so there is nothing to show — see FMP plan coverage below.</div></div>';
+    if (!C || !C.fetched_at)
+      return '<div class="tile" style="margin-top:14px"><h2>Earnings dates &amp; results</h2><div class="ue-ph">Not fetched yet — the next run of the Action makes one earnings-calendar call for every ticker.</div></div>';
+    var t = todayNY(), up = C.rows.filter(function (r) { return r.date >= t && r.epsActual == null; }),
+        past = C.rows.filter(function (r) { return r.date <= t && (r.epsActual != null || r.revenueActual != null); }).reverse(),
+        pend = C.rows.filter(function (r) { return r.date <= t && r.epsActual == null && r.revenueActual == null; });
+    var head = '<div class="tile" style="margin-top:14px"><h2>Earnings dates &amp; results <span class="h2note">— FMP earnings calendar ' + esc(C.from) + " to " + esc(C.to) + " · fetched " + esc(ago(C.fetched_at)) + "</span></h2>";
+    if (!C.rows.length)
+      return head + '<div class="ue-ph">The calendar returned ' + (C.rows_total || 0) + " row" + (C.rows_total === 1 ? "" : "s") + " across " + (C.symbols_total || 0) +
+        " companies for this window, none of them on your watchlist. In earnings season that is thin: this FMP plan may cover only part of the calendar.</div></div>";
+    function surp(v) { return v == null ? '<span class="neu">—</span>' : sg(v, 1, "%"); }
+    return head +
+      '<div class="pi-l" style="margin:6px 0 2px">Next reports</div>' +
+      (up.length ? '<div class="tbl-scroll"><table class="ue-t"><thead><tr><th>Company</th><th>Date</th><th>In</th><th>When</th><th>EPS est.</th><th>Revenue est.</th></tr></thead><tbody>' +
+        up.map(function (r) { var n = daysTo(r.date); return '<tr data-uesym="' + esc(r.symbol) + '"><td><span class="ue-sym">' + esc(r.symbol) + "</span></td><td>" + esc(dayLbl(r.date)) + "</td><td>" +
+          (n === 0 ? '<b style="color:var(--amber)">today</b>' : n + " d") + "</td><td>" + esc(({ bmo: "before open", amc: "after close" })[r.time] || "—") + "</td><td>" + num(r.epsEstimated, 2) + "</td><td>" + big(r.revenueEstimated) + "</td></tr>"; }).join("") +
+        "</tbody></table></div>" : '<p class="note">No watchlist name reports in the next ' + 60 + " days.</p>") +
+      (pend.length ? '<p class="note" style="color:var(--amber)">Reported, actuals not in yet: ' + pend.map(function (r) { return esc(r.symbol) + " (" + esc(dayLbl(r.date)) + ")"; }).join(", ") + " — the next run re-checks (at most hourly).</p>" : "") +
+      '<div class="pi-l" style="margin:12px 0 2px">Recent results — actual vs estimate</div>' +
+      (past.length ? '<div class="tbl-scroll"><table class="ue-t"><thead><tr><th>Company</th><th>Date</th><th>EPS act.</th><th>EPS est.</th><th>Surprise</th><th>Revenue act.</th><th>Revenue est.</th><th>Surprise</th></tr></thead><tbody>' +
+        past.map(function (r) { return '<tr data-uesym="' + esc(r.symbol) + '"><td><span class="ue-sym">' + esc(r.symbol) + "</span></td><td>" + esc(dayLbl(r.date)) + "</td><td>" + num(r.epsActual, 2) + "</td><td>" + num(r.epsEstimated, 2) +
+          "</td><td>" + surp(r.eps_surprise_pct) + "</td><td>" + big(r.revenueActual) + "</td><td>" + big(r.revenueEstimated) + "</td><td>" + surp(r.rev_surprise_pct) + "</td></tr>"; }).join("") +
+        "</tbody></table></div>" : '<p class="note">No watchlist results in the last 3 weeks.</p>') +
+      '<div class="stamp">Surprise = (actual − estimate) ÷ |estimate|. Coverage this fetch: ' + (C.rows_total || 0) + " rows across " + (C.symbols_total || 0) + " companies. One call covers every ticker; it repeats at most daily, or hourly while a report is out without actuals.</div></div>";
   }
   function footer() {
     var pol = J.policy || {}, res = J.resolved || {}, rk = Object.keys(res);
