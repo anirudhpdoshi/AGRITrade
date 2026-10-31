@@ -82,7 +82,7 @@ DOVE = [
     (r"tighter (?:financing|financial|credit)|credit stress|financial (?:instability|stress)|strains?", "financial"),
     (r"(?:lower|reduce|cut)\w* (?:the |our )?(?:policy |interest |bank )?rates?|further (?:easing|cuts?|reductions?)|less restrictive|room to (?:ease|cut)|easing (?:may|could|would) be (?:warranted|appropriate)", "guidance"),
 ]
-AV = 2   # analysis version: stored items scored by an older version are re-read
+AV = 3   # analysis version: stored items scored by an older version are re-read
 FOREIGN = re.compile(r"\b(?:In the United States|U\.S\. economy|China|Chinese|euro area|Europe(?:an)? economy|Japan(?:ese)? economy|global (?:growth|economy|activity)|emerging market|other countries|abroad)\b", re.I)
 DISSENT = re.compile(r"voting against|dissent|preferred (?:instead )?to (?:raise|lower|cut|reduce|increase|hold|maintain|leave|keep)|voted (?:in favour|in favor|for) (?:a |an )?(?:increase|reduction|cut|hike)|(?:\d+|one|two|three|four)[–-](?:\d+|one|two|three|four) vote|(?:majority|minority) of", re.I)
 NEG = re.compile(r"\b(?:not|no longer|nor|never|without|unlikely)\b")
@@ -176,13 +176,36 @@ def get(url, timeout=12):
         if "charset" not in (r.headers.get("Content-Type") or "").lower():
             r.encoding = "utf-8"
         DIAG[url[:120]] = r.status_code
-        return r.text if r.status_code == 200 else None
+        if r.status_code != 200:
+            return None
+        if "pdf" in (r.headers.get("Content-Type") or "").lower() or r.content[:5] == b"%PDF-":
+            return PDF_MARK + pdf_text(r.content)   # BoJ (and some others) publish statements as PDF only
+        return r.text
     except Exception as e:
         DIAG[url[:120]] = type(e).__name__
         return None
 
 
+PDF_MARK = "\x00PDF\x00"
+
+
+def pdf_text(raw):
+    """Plain text of a PDF statement; soft line breaks inside paragraphs are joined so sentences stay whole."""
+    try:
+        import io
+        from pypdf import PdfReader
+        t = "\n".join((pg.extract_text() or "") for pg in PdfReader(io.BytesIO(raw)).pages[:40])
+    except Exception as e:
+        DIAG["pdf"] = type(e).__name__
+        return ""
+    t = re.sub(r"-\n(?=[a-z])", "", t)                       # hyphenated line ends
+    t = re.sub(r"(?<![.:;!?])\n(?!\s*(?:\(?\d+\)|[A-Z][a-z]+:|\u2022|-))", " ", t)   # soft wraps
+    return re.sub(r"[ \t]+", " ", t).strip()
+
+
 def page_text(h):
+    if h.startswith(PDF_MARK):
+        return h[len(PDF_MARK):]
     h = re.sub(r"(?is)<(script|style|nav|header|footer|aside|form|noscript)[^>]*>.*?</\1>", " ", h)
     m = re.search(r"(?is)<(main|article)[^>]*>(.*)</\1>", h) or re.search(r'(?is)<div[^>]+(?:id|class)="[^"]*(?:article|content|main|post)[^"]*"[^>]*>(.*)', h)
     body = m.group(m.lastindex) if m else h
