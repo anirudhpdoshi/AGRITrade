@@ -1,0 +1,26 @@
+name: Live company workspace check
+# Drives the published site in headless Chromium: search → lock → every research card. Screenshots + log go to sec-audit.
+on:
+  workflow_dispatch:
+    inputs:
+      tickers: { description: "Tickers (comma-separated)", type: string, default: "GOOGL" }
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -q playwright && python -m playwright install --with-deps chromium
+      - run: python tests/live_company_flow.py
+        env: { TICK: "${{ inputs.tickers }}" }
+      - name: Keep screenshots
+        if: always()
+        run: |
+          mkdir -p r && cd r && git init -q && git config user.name desk-audit-bot && git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git fetch -q origin sec-audit && git checkout -q -b sec-audit FETCH_HEAD || git checkout -q --orphan sec-audit
+          rm -rf live && mkdir live && cp ../shots/* live/ 2>/dev/null; git add -A live && git commit -qm "live check $(date -u +%FT%TZ)" && git push -q origin HEAD:sec-audit

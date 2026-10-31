@@ -9,7 +9,7 @@
      /search?q=adm            ticker / company-name search over SEC's list of US-listed companies (top 12)
      /company?t=ADM           SEC submissions (identity, SIC, fiscal year-end, filings) + all US-GAAP XBRL facts from
                               10-Q/10-K filings, last ~5 years
-     /prices?t=ADM            Yahoo daily closes, 1 year, for the ticker and the S&P 500 (price-reaction context)
+     /prices?t=ADM&r=5y       Yahoo daily closes (r = 1y default, 2y, 5y, 10y, max) for the ticker and the S&P 500
      /health                  {ok:true}
 
    SEC fair-access policy: every request names a contact in the User-Agent, and SEC allows ≤10 requests/second; a
@@ -110,16 +110,17 @@ async function company(req, t) {
   }, 200, 3600);
 }
 
-async function prices(req, t) {
+async function prices(req, t, rng) {
   t = (t || "").trim().toUpperCase().replace(/[^A-Z0-9.^-]/g, "");
+  rng = ["1y", "2y", "5y", "10y", "max"].includes(rng) ? rng : "1y";
   const one = async (sym) => {
-    const j = await getJSON(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=1y&interval=1d`, 900);
+    const j = await getJSON(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=${rng}&interval=1d`, 900);
     const r = j.chart && j.chart.result && j.chart.result[0]; if (!r) return null;
     const c = r.indicators.quote[0].close;
     return { symbol: sym, tz: r.meta.exchangeTimezoneName, ts: r.timestamp.map((x, i) => [new Date(x * 1000).toISOString().slice(0, 10), c[i]]).filter((x) => x[1] != null) };
   };
   const [a, b] = await Promise.all([one(t.replace(".", "-")).catch(() => null), one("^GSPC").catch(() => null)]);
-  return json(req, { ticker: a, spx: b, provider: "Yahoo Finance daily closes (delayed)", fetched_at: new Date().toISOString() }, 200, 900);
+  return json(req, { ticker: a, spx: b, range: rng, provider: "Yahoo Finance daily closes (delayed)", fetched_at: new Date().toISOString() }, 200, 900);
 }
 
 export default {
@@ -131,8 +132,8 @@ export default {
       if (u.pathname === "/health") return json(req, { ok: true, contact: CONTACT.split(" ").pop() }, 200, 60);
       if (u.pathname === "/search") return await search(req, u.searchParams.get("q"));
       if (u.pathname === "/company") return await company(req, u.searchParams.get("t"));
-      if (u.pathname === "/prices") return await prices(req, u.searchParams.get("t"));
-      return json(req, { error: "unknown route", routes: ["/search?q=", "/company?t=", "/prices?t=", "/health"] }, 404);
+      if (u.pathname === "/prices") return await prices(req, u.searchParams.get("t"), u.searchParams.get("r"));
+      return json(req, { error: "unknown route", routes: ["/search?q=", "/company?t=", "/prices?t=&r=", "/health"] }, 404);
     } catch (e) {
       return json(req, { error: String(e && e.message || e) }, 502, 30);
     }
