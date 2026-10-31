@@ -66,30 +66,30 @@ THEMES = {
     "employment": r"labou?r market|employment|unemployment|jobs?\b|job gains|hiring|wages?|payroll",
     "growth": r"growth|gdp|demand|consumption|spending|activity|output|recession|economy",
     "financial": r"financial conditions|credit|lending|financial stability|bank(?:ing)? stress|liquidity|spreads",
-    "guidance": r"policy rate|interest rates?|bank rate|federal funds|overnight rate|deposit facility|monetary policy|tighten|eas(?:e|ing)|hike|cut",
+    "guidance": r"policy rate|policy interest rate|call rate|money market operations|interest rates?|bank rate|federal funds|overnight rate|deposit facility|monetary policy|tighten|eas(?:e|ing)|hike|cut",
 }
 HAWK = [
-    (r"persist|sticky|stubborn|elevated|above (?:our |the )?target|too high|upside risks?|second[- ]round|de-?anchor|broad-?based price", "inflation"),
+    (r"skewed to the upside|persist|sticky|stubborn|elevated|above (?:our |the )?target|too high|upside risks?|second[- ]round|de-?anchor|broad-?based price", "inflation"),
     (r"resilient|tight(?:ness)?|strong hiring|wage (?:growth|pressure)s? (?:remains?|is|are) (?:strong|elevated|high)|labou?r shortages?", "employment"),
     (r"above (?:potential|capacity)|excess demand|robust|strong (?:demand|consumption|growth)|overheat", "growth"),
     (r"too (?:loose|accommodative)|insufficient(?:ly)? restrict|eased? too much|financial conditions have eased", "financial"),
     (r"(?:raise|increase|tighten)\w*|further (?:increases?|tightening|hikes?)|cuts? (?:would be|are|is) premature|(?:rates?|policy)[^.]{0,20}higher for longer|remain restrictive for (?:some time|longer)|not (?:yet )?(?:time|appropriate) to (?:cut|ease|lower)", "guidance"),
 ]
 DOVE = [
-    (r"disinflation|eas(?:ed|ing) (?:price|inflation)|moderat(?:ed|ing)|declin(?:ed|ing) inflation|below (?:our |the )?target|fading|returned to target|close to (?:our |the )?target", "inflation"),
+    (r"skewed to the downside|disinflation|eas(?:ed|ing) (?:price|inflation)|moderat(?:ed|ing)|declin(?:ed|ing) inflation|below (?:our |the )?target|fading|returned to target|close to (?:our |the )?target", "inflation"),
     (r"rising unemployment|unemployment(?: rate)? (?:has )?(?:risen|rose|increased|edged up|moved up)|job gains (?:have )?(?:slowed|weakened|moderated)|weak(?:er|ening) hiring|softening|cool(?:ed|ing)|slack|job losses|labou?r demand (?:has )?(?:weakened|eased)", "employment"),
     (r"weak(?:er|ening)? (?:demand|growth|activity)|recession|slow(?:down|ing|er|ed)|contract(?:ion|ed)|excess supply|deteriorat|subdued", "growth"),
     (r"tighter (?:financing|financial|credit)|credit stress|financial (?:instability|stress)|strains?", "financial"),
     (r"(?:lower|reduce|cut)\w* (?:the |our )?(?:policy |interest |bank )?rates?|further (?:easing|cuts?|reductions?)|less restrictive|room to (?:ease|cut)|easing (?:may|could|would) be (?:warranted|appropriate)", "guidance"),
 ]
-AV = 4   # analysis version: stored items scored by an older version are re-read
+AV = 5   # analysis version: stored items scored by an older version are re-read
 FOREIGN = re.compile(r"\b(?:In the United States|U\.S\. economy|China|Chinese|euro area|Europe(?:an)? economy|Japan(?:ese)? economy|global (?:growth|economy|activity)|emerging market|other countries|abroad)\b", re.I)
-DISSENT = re.compile(r"voting against|dissent|preferred (?:instead )?to (?:raise|lower|cut|reduce|increase|hold|maintain|leave|keep)|voted (?:in favour|in favor|for) (?:a |an )?(?:increase|reduction|cut|hike)|(?:\d+|one|two|three|four)[–-](?:\d+|one|two|three|four) vote|(?:majority|minority) of", re.I)
+DISSENT = re.compile(r"voting against|dissent|preferred (?:instead )?to (?:raise|lower|cut|reduce|increase|hold|maintain|leave|keep)|voted (?:in favour|in favor|for) (?:a |an )?(?:increase|reduction|cut|hike)|(?:\d+|one|two|three|four)[–-](?:\d+|one|two|three|four) vote|(?:majority|minority) of|\d+[–-]\d+ majority vote|proposed to (?:raise|lower|cut|increase|reduce)", re.I)
 NEG = re.compile(r"\b(?:not|no longer|nor|never|without|unlikely)\b")
 COND = re.compile(r"\b(?:could|may|might|if|would|should|possib|conditional|depend|one meeting at a time|data[- ]dependent)\w*")
-GUIDE_T = re.compile(r"(?:need|necessary|prepared|appropriate)[^.]{0,40}(?:raise|increase|tighten)|further (?:increases?|tightening|hikes?)|raise (?:the )?(?:policy )?rate (?:further|again)", re.I)
+GUIDE_T = re.compile(r"(?:need|necessary|prepared|appropriate)[^.]{0,40}(?:raise|increase|tighten)|further (?:increases?|tightening|hikes?)|raise (?:the )?(?:policy )?rate (?:further|again)|continue to (?:raise|increase) (?:the )?policy (?:interest )?rate", re.I)
 GUIDE_E = re.compile(r"(?:need|necessary|prepared|appropriate|room)[^.]{0,40}(?:lower|reduce|cut|ease)|further (?:easing|cuts?|reductions?)", re.I)
-GUIDE_H = re.compile(r"(?:maintain|keep|hold|left)\w*[^.]{0,40}(?:target range|policy rate|bank rate|interest rates?|overnight rate)\b|(?:rates?|policy)[^.]{0,30}(?:unchanged|steady|on hold)|\bpause\b", re.I)
+GUIDE_H = re.compile(r"(?:maintain|keep|hold|left)\w*[^.]{0,40}(?:target range|policy rate|bank rate|interest rates?|overnight rate)\b|(?:rates?|policy)[^.]{0,30}(?:unchanged|steady|on hold)|\bpause\b|(?:call rate|policy (?:interest )?rate)[^.]{0,30}(?:to )?remain at around", re.I)
 
 
 def sentences(text):

@@ -23,4 +23,7 @@ ok(P.classify("Agencies announce enforcement action") is None, "non-policy items
 ok(P.speaker_of("Speech by Governor Waller on the outlook", "", "speech") == "Waller", "speaker surname")
 ok(P.speaker_of("x", "", "statement") == "Committee", "statements are committee documents")
 ok(P.parse_date("Wed, 28 Oct 2026 18:00:00 GMT").startswith("2026-10-28T18:00"), "RSS date")
+j = P.analyse("Guideline for money market operations (an 8-1 majority vote). The Bank will encourage the uncollateralized overnight call rate to remain at around 1.25 percent. If the outlook is realized, the Bank will continue to raise the policy interest rate.")
+ok(j["relevance"] >= 2 and j["dissent"] and j["guidance"]["direction"] == "tighten" and j["guidance"]["conditional"], "BoJ wording: call-rate guideline, majority vote, conditional hikes")
+ok(P.page_text(P.PDF_MARK + "plain text") == "plain text", "PDF text passes through untouched")
 print(f"{n}/{n} passed")
