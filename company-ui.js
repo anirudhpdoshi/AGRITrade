@@ -173,8 +173,7 @@
       if (it.v == null) return; var top = y(Math.max(0, it.v)), h = Math.max(1, Math.abs(y(it.v) - y(0)));
       out += '<rect x="' + x.toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="3" fill="' + (it.color || C1) + '"' + (it.dim ? ' fill-opacity=".45"' : "") + "><title>" + esc(it.label + ": " + (it.text || f(it.v))) + "</title></rect>" +
         '<text x="' + (x + w / 2).toFixed(1) + '" y="' + (it.v >= 0 ? top - 6 : top + h + 13).toFixed(1) + '" text-anchor="middle" font-size="11" fill="var(--ink)" font-family="IBM Plex Mono,monospace" font-weight="600">' + esc(it.text || f(it.v)) + "</text>"; });
-    if (o.ref != null) out += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(o.ref).toFixed(1) + '" y2="' + y(o.ref).toFixed(1) + '" stroke="var(--ink)" stroke-width="1.4" stroke-dasharray="6 5"/>' +
-      '<text x="' + (pl + 4) + '" y="' + (y(o.ref) - 5).toFixed(1) + '" text-anchor="start" font-size="10.5" fill="var(--ink)" font-family="IBM Plex Mono,monospace">' + esc(o.refLabel || f(o.ref)) + "</text>";
+    if (o.ref != null) out += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(o.ref).toFixed(1) + '" y2="' + y(o.ref).toFixed(1) + '" stroke="var(--ink)" stroke-width="1.4" stroke-dasharray="6 5"><title>' + esc(o.refLabel || f(o.ref)) + "</title></line>";
     return out + "</svg>";
   }
   /* grouped bars: categories × series, one axis */
@@ -498,7 +497,7 @@
         if (!cats.length) return "";
         var gap = t1 != null && t2 != null ? (t2 >= t1 * 0.85 ? "Capex has caught up with cash flow" : "Cash flow covers capex comfortably") : "Operating cash flow vs capex";
         return '<h3 style="margin:0 0 2px;font-size:16px">' + gap + '</h3><div class="pi-l">Annual operating cash flow vs capex (10-K) plus trailing twelve months · capex guidance is not in the structured filings</div>' +
-          gbars(cats, [{ name: "Operating cash flow", color: BASE, vals: cf }, { name: "Capex", color: "#d9734e", vals: cx }], { fmt: f$, label: "Annual OCF vs capex" }); })() +
+          gbars(cats, [{ name: "Operating cash flow", color: BASE, vals: cf }, { name: "Capex", color: "#d9734e", vals: cx }], { fmt: f$, lbl: money, label: "Annual OCF vs capex" }); })() +
       '<div class="pi-l" style="margin-top:10px">Operating cash flow, capex and free cash flow — quarterly</div>' + compo(S(M, "cfo"), S(M, "capex"), S(M, "fcf")) +
       '<div class="cx-2" style="margin-top:6px"><div><div class="pi-l">FCF margin</div>' + lines([{ name: "FCF margin", color: C3, S: S(M, "fcfm") }], { zero: true, h: 150 }) + '</div><div><div class="pi-l">Annual free cash flow</div>' +
         cols(M.annual.map(function (a) { return { label: "FY" + String(a.fy).slice(2), v: a.m.fcf ? a.m.fcf.v : null, st: "CALCULATED" }; }), { neg: "var(--red)", color: C3, h: 150 }) + "</div></div>",
@@ -792,10 +791,10 @@
   function vrxCard(M) {
     var D = MEM[M.co.ticker] || {}, P = D.P;
     if (!P || !P.ticker) return shell(M, "val-rx", '<div class="ue-ph">Price history did not load.</div>');
-    var R = E.reactions(P, M.co.filings).slice(-12), bm = E.bigMoves(P.ticker.ts, 5), last = P.ticker.ts[P.ticker.ts.length - 1][0];
+    var RA = E.reactions(P, M.co.filings), R = RA.slice(-12), bm = E.bigMoves(P.ticker.ts, 5), last = P.ticker.ts[P.ticker.ts.length - 1][0];
     var yrs = ((Date.parse(last) - Date.parse(P.ticker.ts[0][0])) / 3.156e10).toFixed(1);
     var rxItems = R.map(function (r) { return { label: r.date.slice(2, 7), v: r.pct, color: r.pct >= 0 ? BULL : BEAR, text: pc(r.pct, 1) }; });
-    var worst = bm.worst.slice().reverse().map(function (w) { var isRx = R.some(function (r) { return Math.abs(Date.parse(r.date) - Date.parse(w.date)) <= 2 * 864e5; });
+    var worst = bm.worst.slice().reverse().map(function (w) { var isRx = RA.some(function (r) { return Math.abs(Date.parse(r.date) - Date.parse(w.date)) <= 2 * 864e5; });
       return { label: w.date, v: w.pct, color: isRx ? BEAR : "#7d8590", text: pc(w.pct, 1) }; });
     var avgAbs = R.length ? R.reduce(function (a, r) { return a + Math.abs(r.pct); }, 0) / R.length : null, latest = R[R.length - 1];
     return shell(M, "val-rx", '<div class="pi-l">Two-day move around each earnings release (8-K Item 2.02)</div>' + (R.length ? vbars(rxItems, { fmt: function (v) { return pc(v, 1); }, axfmt: function (v) { return pc(v, 1); }, label: "Earnings-day reactions" }) : '<p class="note">No earnings releases inside the price window.</p>') +
