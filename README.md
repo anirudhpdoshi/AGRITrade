@@ -48,6 +48,20 @@ independently and keeps its last good copy (flagged), and a World Bank series th
 z-scores against each series' own 24-month history; revisions only against a value stored on an earlier run. Local debug without
 publishing: `INTEL_DRY=1 INTEL_OUT=/tmp/intel.json python scripts/intel.py`.
 
+## US Earnings tab — prototype (locked)
+
+`scripts/us_earnings.py` → `earnings.json` on the `earnings` branch → `earnings-ui.js`. Provider: Financial Modeling Prep
+(`search-name`, `quote`, `profile`), key in the repository secret `FMP` — never in the page.
+
+- **Locked:** the tab is hidden. Open the preview with `?preview=earnings` (remembered in that browser), close it with
+  `?preview=off`. Go-live = set `EARNINGS_LIVE = true` in `earnings-ui.js`.
+- **Manual only:** the *US earnings (prototype)* Action has no schedule and is not on the scheduler clock.
+- **Call budget:** quotes only when a new price can exist (market open and ≥10 min since the last, or the stored quote
+  predates the close), profiles cached 7 days, names searched once; 200/day and 40/run caps; stops at the first 401/403/429.
+  The first run is ~20 calls for the 10-name watchlist; a weekend re-run is 0. Plan without calling:
+  `EARN_NO_PREV=1 python scripts/us_earnings.py --dry-run`.
+- Watchlist: `scripts/data/earnings_watchlist.json`.
+
 ## Turning on the true streaming tick
 
 1. Get a free API key at https://finnhub.io.

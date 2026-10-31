@@ -1,0 +1,41 @@
+name: US earnings (prototype)
+# FMP quote / profile / search-name -> earnings.json on the `earnings` branch (read by earnings-ui.js).
+# MANUAL ONLY while the section is a prototype: no schedule, and it is not on the scheduler clock, so the metered FMP key
+# is used only when someone presses Run. Each run calls only what can have changed (see scripts/us_earnings.py) and stops
+# at the daily budget. The key is the repository secret `FMP`.
+on:
+  workflow_dispatch:
+    inputs:
+      add:
+        description: "Company names to look up (comma-separated, uses search-name once each)"
+        type: string
+        default: ""
+      force:
+        description: "Re-quote every symbol even if nothing can have changed"
+        type: boolean
+        default: false
+      force_profile:
+        description: "Refresh profiles even if under 7 days old"
+        type: boolean
+        default: false
+permissions:
+  contents: write
+concurrency:
+  group: us-earnings
+  cancel-in-progress: false
+jobs:
+  earnings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Unit tests (call planning and budget)
+        run: python tests/test_us_earnings.py
+      - name: Fetch what is due, publish earnings.json
+        run: python scripts/us_earnings.py ${{ inputs.force && '--force' || '' }} ${{ inputs.force_profile && '--force-profile' || '' }} --add "$ADD"
+        env:
+          FMP: ${{ secrets.FMP }}
+          ADD: ${{ inputs.add }}
