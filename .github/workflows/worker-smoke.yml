@@ -1,0 +1,33 @@
+name: SEC Worker smoke test
+# Calls the deployed Cloudflare Worker from outside (as the desk does) and keeps the result on the sec-audit branch.
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Worker address"
+        type: string
+        default: "https://agritrade.anirudh-p-doshi.workers.dev"
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: { contents: write }
+    steps:
+      - name: Call each route
+        run: |
+          U="${{ inputs.url }}"; O="Origin: https://anirudhpdoshi.github.io"
+          {
+            echo "== /health"; curl -s -m 30 -H "$O" "$U/health"; echo
+            echo "== /search?q=deere"; curl -s -m 30 -H "$O" "$U/search?q=deere" | head -c 700; echo
+            echo "== /company?t=ADM"; curl -s -m 60 -H "$O" --compressed -o adm.json -w "HTTP %{http_code} · %{size_download} bytes · %{time_total}s · CORS " "$U/company?t=ADM"
+            curl -s -m 60 -H "$O" -D - -o /dev/null "$U/company?t=ADM" | grep -i "access-control-allow-origin" || echo "no CORS header"
+            python3 -c "import json;j=json.load(open('adm.json'));print('name',j.get('name'),'| sic',j.get('sic'),'| tags',len(j.get('facts',{})),'| filings',len(j.get('filings',[])),'| error',j.get('error') or j.get('facts_error'))"
+            echo "== /prices?t=ADM"; curl -s -m 30 -H "$O" "$U/prices?t=ADM" | python3 -c "import json,sys;j=json.load(sys.stdin);t=j.get('ticker') or {};print('closes',len(t.get('ts',[])),'last',(t.get('ts') or [[None]])[-1],'| spx',len((j.get('spx') or {}).get('ts',[])))"
+          } | tee smoke.txt
+      - name: Keep result
+        if: always()
+        run: |
+          git init -q r && cd r && git config user.name desk-audit-bot && git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git fetch -q origin sec-audit && git checkout -q -b sec-audit FETCH_HEAD || git checkout -q --orphan sec-audit
+          cp ../smoke.txt worker-smoke.txt && git add worker-smoke.txt && git commit -qm "worker smoke $(date -u +%FT%TZ)" && git push -q origin HEAD:sec-audit
