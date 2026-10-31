@@ -61,4 +61,13 @@ res = [{"symbol": "ADM.DE", "name": "Archer-Daniels-Midland Company", "exchange"
 ok(E.pick_match(res, "archer-daniels-midland company")["symbol"] == "ADM", "US listing preferred")
 ok(E.pick_match([], "x") is None, "no hit -> None")
 
+# 402 on quote: profile stands in, one call per symbol, never a dead quote retry
+rq = {"companies": {"ADM": {"quote_error": {"at": E.iso(sat), "msg": "HTTP 402 Payment Required"}, "profile": {"fetched_at": E.iso(sat)}}}}
+ok(E.quote_restricted(rq["companies"]["ADM"], sat), "an old 402 quote_error counts as restricted")
+pr = [(c[0], c[1]) for c in E.plan(rq, ["ADM"], [], sat)]
+ok(pr == [("profile", "ADM")], "restricted symbol with a price-less profile -> one profile call, no quote")
+rq["companies"]["ADM"]["profile"] = {"fetched_at": E.iso(ny(2026, 10, 30, 17)), "price": 61.2}
+ok(E.plan(rq, ["ADM"], [], sat) == [], "restricted symbol with a closing price stored -> weekend run costs 0")
+ok(not E.quote_restricted({"quote_restricted": {"at": E.iso(sat - timedelta(days=31))}}, sat), "restriction expires after 30 days")
+
 print(f"us_earnings: {n} checks passed")

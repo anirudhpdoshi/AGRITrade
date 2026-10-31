@@ -34,8 +34,9 @@ CLOSE_GRACE_MIN = 5            # a quote taken within 5 min after 16:00 ET may s
 DAILY_BUDGET = int(os.environ.get("FMP_DAILY_BUDGET", "200"))
 RUN_CAP = int(os.environ.get("FMP_RUN_CAP", "40"))
 FATAL = {401, 403, 429}        # bad key, plan blocked, limit reached -> stop the run
+RESTRICT_DAYS = 30             # a 402 on quote means "not in your plan": price comes from profile, quote re-tried after 30 days
 
-PROFILE_KEEP = ["symbol", "companyName", "exchange", "exchangeFullName", "currency", "sector", "industry", "ceo", "country",
+PROFILE_KEEP = ["symbol", "price", "change", "changePercentage", "volume", "companyName", "exchange", "exchangeFullName", "currency", "sector", "industry", "ceo", "country",
                 "marketCap", "beta", "lastDividend", "range", "averageVolume", "fullTimeEmployees", "ipoDate", "website",
                 "description", "image", "isEtf", "isAdr", "isActivelyTrading", "cik"]
 QUOTE_KEEP = ["symbol", "name", "price", "change", "changePercentage", "volume", "open", "previousClose", "dayLow", "dayHigh",
@@ -114,17 +115,32 @@ def plan(state, symbols, names, now, force=False, force_profile=False):
         if nm.lower() not in resolved:
             calls.append(("search", nm, "name not resolved yet"))
     syms = list(dict.fromkeys([s.upper() for s in symbols] + [r["symbol"] for k, r in resolved.items() if k in {n.lower() for n in names} and r.get("symbol")]))
+    later = []
     for s in syms:
-        q = (comps.get(s) or {}).get("quote") or {}
+        c = comps.get(s) or {}
+        q, p = c.get("quote") or {}, c.get("profile") or {}
+        if quote_restricted(c, now):
+            # quote not in the plan: profile carries price/change/volume, so ONE profile call serves both,
+            # on the quote timing rule (and at least every PROFILE_MAX_DAYS)
+            due, why = quote_due(parse(p.get("fetched_at")) if p.get("price") is not None else None, now, force or force_profile)
+            if not due:
+                due, why = profile_due(parse(p.get("fetched_at")), now)
+            if due:
+                calls.append(("profile", s, "price via profile (quote not in plan): " + why))
+            continue
         due, why = quote_due(parse(q.get("fetched_at")), now, force)
         if due:
             calls.append(("quote", s, why))
-    for s in syms:
-        p = (comps.get(s) or {}).get("profile") or {}
         due, why = profile_due(parse(p.get("fetched_at")), now, force_profile)
         if due:
-            calls.append(("profile", s, why))
-    return calls
+            later.append(("profile", s, why))
+    return calls + later
+
+
+def quote_restricted(c, now):
+    """True while a symbol's quote call is known to be outside the FMP plan (HTTP 402 within RESTRICT_DAYS)."""
+    r = c.get("quote_restricted") or ((c.get("quote_error") or {}) if "402" in (c.get("quote_error") or {}).get("msg", "") else None)
+    return bool(r and r.get("at") and now - parse(r["at"]) < timedelta(days=RESTRICT_DAYS))
 
 
 def allowance(usage):
@@ -268,6 +284,8 @@ def main():
                 if row:
                     c[ep] = dict(trim(row, QUOTE_KEEP if ep == "quote" else PROFILE_KEEP), fetched_at=iso(now))
                     c.pop(ep + "_error", None)
+                    if ep == "quote":
+                        c.pop("quote_restricted", None)
                 else:
                     c[ep + "_error"] = {"at": iso(now), "msg": "empty response (symbol not covered?)"}
             made.append({"endpoint": ep, "arg": arg, "reason": why})
@@ -279,6 +297,12 @@ def main():
             errors.append(f"{ep} {arg}: {e}")
             if ep != "search":
                 comps.setdefault(arg, {})[ep + "_error"] = {"at": iso(now), "msg": str(e)[:160]}
+            if ep == "quote" and "402" in str(e):
+                c = comps.setdefault(arg, {})
+                c["quote_restricted"] = {"at": iso(now), "msg": "quote endpoint not in the FMP plan for this symbol (HTTP 402)"}
+                c.pop("quote_error", None)
+                if not any(x[0] == "profile" and x[1] == arg for x in queue) and (c.get("profile") or {}).get("fetched_at") != iso(now):
+                    queue.append(("profile", arg, "price via profile after quote 402"))
             made.append({"endpoint": ep, "arg": arg, "reason": why, "failed": True})
         usage["calls"][ep] = usage["calls"].get(ep, 0) + 1
         usage["total"] += 1
@@ -297,7 +321,7 @@ def main():
                      "made": made, "skipped": skipped, "errors": errors, "stopped": stopped},
         "policy": {"quote": f"one per symbol per run; only when the market is open and the last quote is ≥{QUOTE_MIN_MIN} min old, "
                             "or when the stored quote predates the last close",
-                   "profile": f"cached {PROFILE_MAX_DAYS} days", "search": "once per company name, cached",
+                   "profile": f"cached {PROFILE_MAX_DAYS} days; stands in for quote (same timing rule) where quote is not in the plan", "search": "once per company name, cached",
                    "budget": f"{DAILY_BUDGET}/day, {RUN_CAP}/run, stop on 401/403/429"},
     }
     print(f"made {len(made)} call(s), skipped {len(skipped)}, errors {len(errors)}; today {usage['total']}/{usage['budget']}")

@@ -93,8 +93,11 @@
   function rows() {
     var C = (J && J.companies) || {};
     return ((J && J.watchlist) || []).map(function (s) { var c = C[s] || {}, q = c.quote || {}, p = c.profile || {};
-      return { s: s, c: c, q: q, p: p, name: p.companyName || q.name || "", px: q.price, ch: q.change, pct: q.changePercentage,
-        vol: q.volume, avgv: p.averageVolume, mcap: q.marketCap || p.marketCap, sector: p.sector || "", ind: p.industry || "" }; });
+      var viaP = q.price == null && p.price != null, rg = String(p.range || "").split("-").map(parseFloat);
+      return { s: s, c: c, q: q, p: p, viaP: viaP, at: viaP ? p.fetched_at : q.fetched_at, name: p.companyName || q.name || "",
+        px: viaP ? p.price : q.price, ch: viaP ? p.change : q.change, pct: viaP ? p.changePercentage : q.changePercentage,
+        vol: viaP ? p.volume : q.volume, avgv: p.averageVolume, mcap: q.marketCap || p.marketCap,
+        ylo: q.yearLow != null ? q.yearLow : rg[0], yhi: q.yearHigh != null ? q.yearHigh : rg[1], sector: p.sector || "", ind: p.industry || "" }; });
   }
   function sorted() {
     var L = rows(), k = V.sort, d = V.dir;
@@ -111,7 +114,8 @@
   function topStrip() {
     var u = J.usage || {}, used = u.total || 0, bud = u.budget || 200, pc = Math.min(100, used / bud * 100), lr = J.last_run || {},
         made = (lr.made || []).length, sk = (lr.skipped || []).length, by = (lr.made || []).reduce(function (a, m) { a[m.endpoint] = (a[m.endpoint] || 0) + 1; return a; }, {});
-    var C = J.companies || {}, n = (J.watchlist || []).length, withQ = (J.watchlist || []).filter(function (s) { return C[s] && C[s].quote; }).length;
+    var C = J.companies || {}, n = (J.watchlist || []).length, withQ = (J.watchlist || []).filter(function (s) { return C[s] && ((C[s].quote || {}).price != null || (C[s].profile || {}).price != null); }).length,
+        nR = (J.watchlist || []).filter(function (s) { return C[s] && C[s].quote_restricted; }).length;
     return '<div class="ue-top">' +
       '<div class="ue-k"><div class="l">FMP calls today (UTC)</div><div class="v">' + used + ' <small class="s">/ ' + bud + "</small></div>" +
         '<div class="ue-meter ' + (pc >= 90 ? "hot" : pc >= 70 ? "warn" : "") + '"><i style="width:' + pc.toFixed(0) + '%"></i></div>' +
@@ -120,7 +124,7 @@
         (made ? " (" + Object.keys(by).map(function (k) { return by[k] + " " + k; }).join(", ") + ")" : " — nothing was due") + (sk ? " · " + sk + " skipped" : "") + "</div></div>" +
       '<div class="ue-k"><div class="l">US session</div><div class="v" style="font-size:15px">' + (J.session && J.session.open ? '<span class="up">● Open</span>' : '<span class="neu">● Closed</span>') +
         '</div><div class="s">last close ' + esc(when(J.session && J.session.last_close)) + " (as of the run)</div></div>" +
-      '<div class="ue-k"><div class="l">Coverage</div><div class="v">' + withQ + ' <small class="s">/ ' + n + ' quoted</small></div><div class="s">profiles cached 7 days · names resolved once</div></div></div>' +
+      '<div class="ue-k"><div class="l">Coverage</div><div class="v">' + withQ + ' <small class="s">/ ' + n + ' priced</small></div><div class="s">' + (nR ? nR + " via profile (quote not in FMP plan)" : "profiles cached 7 days · names resolved once") + "</div></div></div>" +
       (lr.stopped ? '<div class="unreach" style="margin-top:10px">⚠ Last run stopped early <small>— ' + esc(lr.stopped) + "</small></div>" : "") +
       ((lr.errors || []).length && !lr.stopped ? '<div class="ue-log" style="margin-top:8px">' + lr.errors.map(function (e) { return "⚠ " + esc(e); }).join("<br>") + "</div>" : "");
   }
@@ -130,12 +134,12 @@
     function th(id, l, left) { return "<th" + (left ? ' style="text-align:left"' : "") + '><button class="' + (V.sort === id ? "on" : "") + '" data-uesort="' + id + '">' + l + (V.sort === id ? (V.dir < 0 ? " ▾" : " ▴") : "") + "</button></th>"; }
     return '<div class="tile"><h2>Watchlist <span class="h2note">— FMP real-time quote, as of each row’s last run · click a row for the company profile</span></h2><div class="tbl-scroll"><table class="ue-t"><thead><tr>' +
       th("sym", "Company", 1) + th("px", "Last") + "<th>Chg</th>" + th("pct", "Chg %") + "<th>Day range</th><th>52-wk</th>" + th("vol", "Vol / avg") + th("mcap", "Mkt cap") + th("sector", "Sector", 1) + "</tr></thead><tbody>" +
-      L.map(function (r) { var q = r.q, old = q.fetched_at && Date.now() - Date.parse(q.fetched_at) > 864e5;
-        var qerr = r.c.quote_error && !q.price;
+      L.map(function (r) { var q = r.q, old = r.at && Date.now() - Date.parse(r.at) > 864e5;
+        var qerr = r.c.quote_error && r.px == null;
         return '<tr data-uesym="' + esc(r.s) + '" class="' + (r.s === V.sel ? "on" : "") + '"><td><span class="ue-sym">' + esc(r.s) + '</span><span class="ue-nm">' +
             (qerr ? '<span style="color:var(--amber)">⚠ quote failed: ' + esc(r.c.quote_error.msg) + "</span>" : esc(r.name || "—")) + "</span></td>" +
-          "<td>" + num(r.px, 2) + (q.fetched_at ? '<span class="ue-age' + (old ? " old" : "") + '" style="display:block">' + esc(ago(q.fetched_at)) + "</span>" : "") + "</td><td>" + sg(r.ch, 2) + "</td><td>" + sg(r.pct, 2, "%") + "</td>" +
-          "<td>" + (q.dayLow != null ? num(q.dayLow, 2) + " – " + num(q.dayHigh, 2) : "—") + "</td><td>" + rangeBar(q.yearLow, q.yearHigh, r.px) + "</td>" +
+          "<td>" + num(r.px, 2) + (r.at ? '<span class="ue-age' + (old ? " old" : "") + '" style="display:block"' + (r.viaP ? ' title="Quote endpoint is not in the FMP plan for this symbol — price, change and volume come from the profile call"' : "") + ">" + esc(ago(r.at)) + (r.viaP ? " · profile" : "") + "</span>" : "") + "</td><td>" + sg(r.ch, 2) + "</td><td>" + sg(r.pct, 2, "%") + "</td>" +
+          "<td>" + (q.dayLow != null ? num(q.dayLow, 2) + " – " + num(q.dayHigh, 2) : "—") + "</td><td>" + rangeBar(r.ylo, r.yhi, r.px) + "</td>" +
           "<td>" + (r.vol != null ? big(r.vol) + (r.avgv ? ' <small class="ue-age">' + (r.vol / r.avgv).toFixed(1) + "×</small>" : "") : "—") + "</td>" +
           "<td>" + big(r.mcap) + '</td><td class="ue-sec" title="' + esc(r.ind) + '">' + esc(r.sector || "—") + "</td></tr>"; }).join("") +
       "</tbody></table></div>" + (L.length ? "" : '<p class="note">The watchlist is empty — edit scripts/data/earnings_watchlist.json.</p>') + "</div>";
