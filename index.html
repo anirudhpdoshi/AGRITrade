@@ -1086,7 +1086,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
 </main>
 
 <footer class="foot">
-  Sources: CBOT delayed quotes, CFTC, USDA FAS, Bank of Canada, Statistics Canada, US Treasury, FRED/BLS, Google News. Market data refreshes automatically (15-min server runs, ~60 s fast lane on weekdays, direct-from-source at releases); options, open interest and CORRA futures refresh once each weekday from Interactive Brokers (~10:45 am, final open interest); the model panel is recomputed daily. Every card shows its source and age — retail sentiment and FX-options reads have no free live feed and are labelled with their read date. Educational use only — not trading advice.
+  Sources: CBOT delayed quotes, CFTC, USDA FAS, Bank of Canada, Statistics Canada, US Treasury, FRED/BLS, Google News. Market data refreshes automatically (15-min server runs, ~60 s fast lane on weekdays, direct-from-source at releases); options, open interest and CORRA futures refresh once each weekday from Interactive Brokers (8:23 am ET, preliminary open interest); the model panel is recomputed daily. Every card shows its source and age — retail sentiment and FX-options reads have no free live feed and are labelled with their read date. Educational use only — not trading advice.
 </footer>
 
 <script>
@@ -2197,8 +2197,8 @@ function rollTileHTML(key){
     '<div class="beh-wrap"><h3>Trader behaviour — what each session\u2019s flow says · last 9 session deltas</h3>'+
     '<div class="beh-row beh-head"><span class="bd">Date</span><span class="bt">Front ('+R.front+') — unwinding</span><span class="bt">Deferred ('+R.def+') — adding</span></div>'+behRows+
     '<p class="decode">Decode: price↑+OI↑ = new longs · price↓+OI↑ = new shorts · price↑+OI↓ = short covering · price↓+OI↓ = long liquidation</p>'+
-    '<div class="stamp" style="border:0;margin-top:4px;padding-top:8px">Latest session ('+esc(R.lastLabel)+') highlighted'+(/prelim/.test(R.lastLabel)?' · preliminary until the exchange final is confirmed (daily run ~10:45 am ET)':'')+
-      (R.oldPrelim.length?' · ᵖ '+esc(R.oldPrelim.join(', '))+': exchange preliminary open interest, captured before the daily final-OI confirmation started — the final for that date is not available from our sources, so the preliminary figure is kept and marked':'')+'</div></div>'+
+    '<div class="stamp" style="border:0;margin-top:4px;padding-top:8px">Latest session ('+esc(R.lastLabel)+') highlighted'+(/prelim/.test(R.lastLabel)?' · preliminary until the exchange final is confirmed (CME preliminary — has matched the final within ~0.6% on this desk)':'')+
+      (R.oldPrelim.length?' · ᵖ '+esc(R.oldPrelim.join(', '))+': exchange preliminary open interest, the desk uses the preliminary figure (it has matched the exchange final within ~0.6%) from our sources, so the preliminary figure is kept and marked':'')+'</div></div>'+
     '<div class="stamp">Per-contract open interest: rollover-card history through Oct 20, then CME daily bulletin / Interactive Brokers (prelim = exchange preliminary OI, published ~10:30 pm ET on trade date; final ~10:30 am ET next day) · settles: CBOT daily settlements · behaviour rule: OI and price change of each contract that session</div></div>';
 }
 
@@ -2265,7 +2265,7 @@ function oiTileHTML(key){
     var itmNote=Uh?((bp[0]>Uh+1e-9&&cp!=='call'?'<div class="oi-itm">Largest put open interest is at <b>'+fmt(bp[0],2)+'</b> ('+fmt(bp[2])+') — that strike is <b>in the money</b> with price at '+fmt(Uh,4)+': protection bought when the market was higher, not support below today’s price. The put wall below price is <b>'+fmt(ds.put_wall[0],2)+'</b>.</div>':'')+
       (bc[0]<Uh-1e-9&&cp!=='put'?'<div class="oi-itm">Largest call open interest is at <b>'+fmt(bc[0],2)+'</b> ('+fmt(bc[1])+') — <b>in the money</b> with price at '+fmt(Uh,4)+'. The call wall above price is <b>'+fmt(ds.call_wall[0],2)+'</b>.</div>':'')):'';
     var head='<div class="oi-mh"><b>'+esc(lab)+' monthly options</b> on '+esc(ds.contract||'')+' <span class="h2note">· standard monthly expiry'+(ex?' <b>'+esc(ex)+'</b>':'')+' (weeklies listed below) · '+(m==='near'?'near month':'far month')+' · '+esc(oiLabel(ds))+'</span></div>'+itmNote;
-    if(view==='chg') return head+(prev?oiDeltaSVG(ds, prev, cp, key, lab):'<p class="note oi-nochg">Change by strike for '+esc(lab)+' needs two pulls — the previous pull was not stored for this month yet. It appears after the next ~10:45 ET daily options run.</p>');
+    if(view==='chg') return head+(prev?oiDeltaSVG(ds, prev, cp, key, lab):'<p class="note oi-nochg">Change by strike for '+esc(lab)+' needs two pulls — the previous pull was not stored for this month yet. It appears after the next 8:23 ET daily options run.</p>');
     return head+oiSVG(ds.rows, ds, cp, prev, lab);
   }).join('');
   var leg=view==='chg'?'<span><span class="sw" style="background:var(--call)"></span>Calls added</span><span><span class="sw" style="background:#1f7a52"></span>Calls closed</span><span><span class="sw" style="background:var(--put)"></span>Puts added</span><span><span class="sw" style="background:#7a2f2b"></span>Puts closed</span>':
@@ -2275,13 +2275,13 @@ function oiTileHTML(key){
       ? '✓ Next month open — '+esc(RL.def)+' holds <b>'+fmt(RL.pct,1)+'%</b> of '+esc(RL.front)+'+'+esc(RL.def)+' open interest (≥ 40% liquidity threshold, crossed '+esc(RL.crossed||'')+')'+(dF!=null&&dF>0?' · '+dF+' day'+(dF===1?'':'s')+' to first notice':'')
       : '🔒 Next option month opens when the futures roll passes <b>40%</b> — '+esc(RL.def)+' holds '+fmt(RL.pct,1)+'% of open interest ('+fmt(40-RL.pct,1)+' pp to go'+(RL.pace>0?', ~'+Math.ceil((40-RL.pct)/RL.pace)+' sessions at the current pace':'')+')')+'</p>'+
     charts+'<div class="legend">'+leg+(view==='chg'?'':'<span>faded bars = in the money · white line = live price</span>')+'</div>'+oiMonthsHTML(key)+oiWeekliesHTML(key)+
-    '<div class="stamp">Pulled '+esc(asofStamp('options'))+' · open interest is the prior session’s final close (CME final ~10:30 AM ET), pulled by the ~10:45 ET daily run · change = latest pull vs the previous stored pull for that month</div>';
+    '<div class="stamp">Pulled '+esc(asofStamp('options'))+' · open interest is the prior session’s close as published before the open (CME preliminary; on this desk it has matched the ~10:30 AM final within about 0.2% of each chain), pulled by the 8:23 ET daily run · change = latest pull vs the previous stored pull for that month</div>';
 }
 /* weekly / short-dated option expiries (pulled by the morning run): totals, biggest strikes, and any strike whose open
    interest is large next to the monthly chain's biggest strike gets highlighted */
 function oiWeekliesHTML(key){
   var g=DATA.grains[key], W=g.weeklies;
-  if(!W||!W.length) return '<div class="oi-wk"><div class="oi-mt">Weekly &amp; short-dated expiries</div><p class="note" style="margin:2px 0">Not pulled yet — the ~10:45 ET daily run adds the next weekly expiries for each grain from tomorrow.</p></div>';
+  if(!W||!W.length) return '<div class="oi-wk"><div class="oi-mt">Weekly &amp; short-dated expiries</div><p class="note" style="margin:2px 0">Not pulled yet — the 8:23 ET daily run adds the next weekly expiries for each grain from tomorrow.</p></div>';
   var mx=Math.max.apply(null,(g.near.rows||[]).map(function(r){ return Math.max(r[1],r[2]); }))||1, U=g.near.wall_ref||g.near.underlying;
   return '<div class="oi-wk"><div class="oi-mt">Weekly &amp; short-dated expiries <span class="h2note">— ±6 strikes around the money · highlighted when a strike holds ≥ 20% of the monthly chain’s biggest strike</span></div>'+
     W.map(function(w){ var big=(w.rows||[]).filter(function(r){ return Math.max(r[1],r[2])>=0.2*mx; });
@@ -2974,7 +2974,7 @@ function volTermHTML(key){
   if(!V) return '';
   var bars=barChartSVG({bars:[[V.near.contract+' IV',V.near.iv,true],[V.far.contract+' IV',V.far.iv,false],[V.near.contract+' HV30',V.near.hv,false],[V.far.contract+' HV30',V.far.hv,false]],yLabel:'Volatility (%)',dec:1,W:380,H:200,floor:0});
   var hist=H.length>=5?lineChartSVG({series:[{pts:H.map(function(x){ return [x[0],x[1]]; }),color:'#38b6c9',label:'Near IV'},{pts:H.map(function(x){ return [x[0],x[2]]; }),color:'#c084fc',label:'Far IV'},{pts:H.map(function(x){ return [x[0],x[3]]; }),color:'#e8a33d',label:'HV30'}],yLabel:'Vol (%)',dec:1,W:400,H:210}):
-    '<p class="note">Daily IV history starts '+esc(H.length?H[0][0]:'today')+' and builds with each ~10:45 ET daily options run ('+H.length+' of 5 sessions needed for the line chart).</p>';
+    '<p class="note">Daily IV history starts '+esc(H.length?H[0][0]:'today')+' and builds with each 8:23 ET daily options run ('+H.length+' of 5 sessions needed for the line chart).</p>';
   var term=V.far.iv-V.near.iv, ivhv=V.near.iv-V.near.hv, rrz=S&&Math.abs(S.rr)<0.05;
   function row(k, v, c, read, tip){ return '<div class="vr-k"'+(tip?' title="'+esc(tip)+'"':'')+'>'+k+'</div><div class="vr-v '+(c||'')+'">'+v+'</div><div class="vr-r">'+read+'</div>'; }
   var R=row('Term structure', sgn(term,1,' pts'), cls(term), 'far ('+esc(V.far.contract)+') vs near ('+esc(V.near.contract)+') — '+(term<0?'<b>inverted</b>: near-term event risk is priced':'<b>normal</b>: longer-dated vol higher'), 'Far-month IV minus near-month IV')+
@@ -4399,7 +4399,7 @@ function renderFX(){
     '<div class="kv"><span class="kk">Fed funds target</span><span class="vv">'+(function(){ var f=/(\d{3})-(\d{3})/.exec(fx.policy.fed_range||''); return f?fmt(f[1]/100,2)+'\u2013'+fmt(f[2]/100,2)+'%':esc(fx.policy.fed_range); })()+'</span></div>'+corRows+
     '<div class="kv"><span class="kk">BoC overnight (current)</span><span class="vv">'+fmt(fx.policy.corra_now,2)+'%'+(fx.policy.boc_decided&&fx.policy.corra_date===fx.policy.boc_decided.date?' <span class="sl-k">\u00b7 from the '+fmtShortDate(fx.policy.corra_date)+' statement</span>':'')+'</span></div>'+
     '<div class="stamp">Fed probabilities '+(fx.policy.fed_range&&/NY Fed/.test(fx.policy.fed_range)?'computed '+asOf('policy',true)+' from CBOT fed funds futures + NY Fed effective rate (FedWatch-style)':'pulled '+asOf('policy',true))+
-      ' \u00b7 CORRA futures (3-month, Montreal Exchange) '+(fx.policy.corra_asof?'as of '+esc(fmtDate(fx.policy.corra_asof))+(fx.policy.corra_asof.length>10?' '+tHM(fx.policy.corra_asof):''):'date unknown')+(fx.policy.corra_asof?'<span class="qt-age" data-age="'+esc(fx.policy.corra_asof)+'" data-age-max="30000"></span>':'')+' \u00b7 delayed quote, refreshed once each weekday (~10:45 ET) \u00b7 implied rate = 100 \u2212 price \u00b7 futures-implied, not forecasts</div></div>';
+      ' \u00b7 CORRA futures (3-month, Montreal Exchange) '+(fx.policy.corra_asof?'as of '+esc(fmtDate(fx.policy.corra_asof))+(fx.policy.corra_asof.length>10?' '+tHM(fx.policy.corra_asof):''):'date unknown')+(fx.policy.corra_asof?'<span class="qt-age" data-age="'+esc(fx.policy.corra_asof)+'" data-age-max="30000"></span>':'')+' \u00b7 delayed quote, refreshed once each weekday (8:23 ET) \u00b7 implied rate = 100 \u2212 price \u00b7 futures-implied, not forecasts</div></div>';
   /* positioning & sentiment */
   T.cftc=fxCftcHTML();
   T.sentiment='<div class="tile" data-src="sentiment"><h2>Retail sentiment &amp; FX options</h2>'+

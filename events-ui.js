@@ -97,8 +97,7 @@
       add({ t: zms(today, 14, 20), label: "CBOT grains close · settlement", kind: "market", cc: "us", high: true, go: "corn:overview" });
       add({ t: zms(today, 16, 30), label: "Bank of Canada daily USD/CAD rate", kind: "market", cc: "ca", go: "fx:overview" });
       /* desk's own options/open-interest runs */
-      add({ t: zms(today, 10, 30), label: "CME final open interest published", kind: "desk", go: "corn:deriv" });
-      add({ t: zms(today, 11, 10), label: "Options OI, IV, rollover & CORRA refresh on the desk (final open interest)", kind: "desk", go: "corn:deriv" });
+      add({ t: zms(today, 8, 45), label: "Options OI, IV, rollover & CORRA refresh on the desk (preliminary open interest)", kind: "desk", go: "corn:deriv" });
       add({ t: Date.UTC(+today.slice(0, 4), +today.slice(5, 7) - 1, +today.slice(8, 10), 12, 23), label: "Brazil & World fundamentals refresh (CONAB · USDA · Comex)", kind: "desk", go: "corn:fund" });
       add({ t: Date.UTC(+today.slice(0, 4), +today.slice(5, 7) - 1, +today.slice(8, 10), 17, 23), label: "Brazil & World fundamentals refresh (CONAB · USDA · Comex)", kind: "desk", go: "corn:fund" });
     }
@@ -149,7 +148,7 @@
     if (e.kind === "cftc") return { asof: "cftc_grains" };
     if (e.kind === "market" && /close · settlement/.test(e.label)) return { asof: "grains_settle" };
     if (e.kind === "desk" && /Options OI/.test(e.label)) return { asof: "options" };
-    if (e.kind === "desk" && /final open interest\)/.test(e.label)) return { asof: "options" };
+    if (e.kind === "desk" && /Options OI, IV, rollover/.test(e.label)) return { asof: "options" };
     if (e.kind === "cb") return { cb: 1 };
     return null;
   }
