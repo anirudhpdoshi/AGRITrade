@@ -1,9 +1,11 @@
-name: US earnings (prototype)
+name: US earnings
 # FMP quote / profile / search-name -> earnings.json on the `earnings` branch (read by earnings-ui.js).
 # MANUAL ONLY while the section is a prototype: no schedule, and it is not on the scheduler clock, so the metered FMP key
 # is used only when someone presses Run. Each run calls only what can have changed (see scripts/us_earnings.py) and stops
 # at the daily budget. The key is the repository secret `FMP`.
 on:
+  schedule:
+    - cron: "17 14,16,18,20 * * 1-5"   # ~10:17, 12:17, 2:17, 4:17 ET on weekdays; each run stops at the daily call budget
   workflow_dispatch:
     inputs:
       add:

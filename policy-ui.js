@@ -56,20 +56,25 @@
       "</tbody></table></div></div>";
   }
 
-  /* ---------- 2. stance monitor (sortable) ---------- */
+  /* ---------- 2. stance monitor: one panel per bank — the committee's latest statement, then every document since, newest first ---------- */
   function monitorHTML() {
-    var L = docs().slice(), k = V.sort;
-    L.sort(function (a, b) { var f = { date: function (d) { return d.published_at || ""; }, score: function (d) { return d.score; }, change: function (d) { return (d.baseline.speaker || d.baseline.institution || {}).change || 0; },
-      bank: function (d) { return d.bank; }, speaker: function (d) { return d.speaker; } }[k] || function (d) { return d.published_at; }; var x = f(a), y = f(b); return x < y ? 1 : x > y ? -1 : 0; });
-    if (k === "bank" || k === "speaker") L.reverse();
-    function th(id, l) { return '<th><button class="pi-sort' + (V.sort === id ? " on" : "") + '" data-pisort="' + id + '">' + l + (V.sort === id ? " ▾" : "") + "</button></th>"; }
-    return '<div class="tile wide"><h2>Stance monitor <span class="h2note">— every statement, minute and speech read from the official sites · click a row for the evidence</span></h2>' +
-      (L.length ? '<div class="tbl-scroll"><table class="oi-mtab pi-tab"><thead><tr>' + th("bank", "Bank") + th("speaker", "Speaker") + "<th>Type</th><th>Voting</th>" + th("score", "Score") + th("change", "vs own baseline") + "<th>vs bank statement</th><th>Guidance</th><th>Confidence</th>" + th("date", "Date") + "</tr></thead><tbody>" +
-        L.map(function (d) { var sb = d.baseline.speaker, ib = d.baseline.institution;
-          return '<tr class="pi-row" data-pidoc="' + d.id + '"><td>' + fl(J.banks[d.bank].cc) + " " + esc(d.bank.toUpperCase()) + "</td><td><b>" + esc(d.speaker) + '</b><small class="pi-t">' + esc(d.title.slice(0, 70)) + "</small></td><td>" + esc(TYPE[d.type] || d.type) + (d.dissent && d.dissent.length ? ' <span class="evc" style="--ec:#e8b93d" title="The text records disagreement">DISSENT</span>' : "") + "</td><td><small>" + esc(d.voting_status.replace("_", " ").toLowerCase()) + "</small></td>" +
-            '<td><span class="pi-badge ' + lcls(d.label) + '">' + sgn(d.score) + "</span></td><td>" + (sb ? chg(sb.change) + '<small class="pi-t">n=' + sb.n + " since " + esc(sb.since) + (sb.low_confidence ? " · thin" : "") + "</small>" : '<span class="neu">first on record</span>') + "</td>" +
-            "<td>" + (ib && d.type !== "statement" ? chg(ib.change) : '<span class="neu">—</span>') + "</td><td><small>" + esc(d.guidance.next_action) + "</small></td><td>" + esc(d.confidence.level) + "</td><td>" + esc(day(d.published_at)) + "</td></tr>"; }).join("") +
-        "</tbody></table></div>" : '<p class="note">No documents yet' + (V.bank !== "all" ? " for " + esc(bname(V.bank)) : "") + " — the engine reads each bank’s feeds every hour (every 15 minutes on decision days).</p>") + "</div>";
+    var L = docs(), banks = Object.keys(J.banks).filter(function (b) { return V.bank === "all" || V.bank === b; });
+    var panels = banks.map(function (b) {
+      var D = L.filter(function (d) { return d.bank === b; }).sort(function (x, y) { return (y.published_at || "") < (x.published_at || "") ? -1 : 1; });
+      var st = D.filter(function (d) { return d.type === "statement" && d.speaker === "Committee"; })[0];
+      var head = '<div class="pm-h"><div class="pm-b">' + fl(J.banks[b].cc) + " <b>" + esc(bname(b)) + "</b></div>" +
+        (st ? '<div class="pm-s"><span class="pi-badge ' + lcls(st.label) + '">' + sgn(st.score) + '</span> <span class="pm-l ' + lcls(st.label) + '">' + esc((st.label || "").toLowerCase()) + "</span>" +
+          '<span class="pm-g">' + esc(st.guidance.next_action) + "</span><span class=\"pm-d\">statement " + esc(day(st.published_at)) + "</span></div>" : '<div class="pm-s"><span class="neu">no committee statement read yet</span></div>') + "</div>";
+      var rows = D.slice(0, 8).map(function (d) {
+        var sb = d.baseline.speaker || (d.type !== "statement" ? d.baseline.institution : null);
+        return '<li class="pm-r" data-pidoc="' + d.id + '" title="Open the evidence"><span class="pm-dt">' + esc(day(d.published_at)) + '</span><span class="pm-ty">' + esc(TYPE[d.type] || d.type) + "</span>" +
+          '<span class="pm-ti"><b>' + esc(d.speaker) + "</b> — " + esc(d.title) + (d.dissent && d.dissent.length ? ' <span class="evc" style="--ec:#e8b93d">DISSENT</span>' : "") + "</span>" +
+          '<span class="pm-sc"><span class="pi-badge ' + lcls(d.label) + '">' + sgn(d.score) + "</span></span>" +
+          '<span class="pm-vs">' + (sb && sb.change != null ? '<span class="' + (sb.change >= 1 ? "hawk" : sb.change <= -1 ? "dove" : "neu") + '" title="' + (sb.change >= 1 ? "more hawkish" : sb.change <= -1 ? "more dovish" : "little change") + ' than ' + (d.baseline.speaker ? "this speaker\u2019s own baseline" : "the bank\u2019s statement") + '">' + sgn(sb.change) + "</span>" + ' <small>vs ' + (d.baseline.speaker ? "own" : "bank") + "</small>" : '<small class="neu">first read</small>') + "</span></li>"; }).join("");
+      return '<div class="pm-card">' + head + (rows ? '<ul class="pm-list">' + rows + "</ul>" : '<p class="note">No documents yet.</p>') + (D.length > 8 ? '<div class="pm-more">+' + (D.length - 8) + " older — open Transcript intelligence</div>" : "") + "</div>";
+    }).join("");
+    return '<div class="tile wide"><h2>Stance monitor <span class="h2note">— per bank: the committee\u2019s latest statement, then every statement, minute and speech since · score −10 dovish … +10 hawkish · click a line for the evidence</span></h2>' +
+      '<div class="pm-grid">' + panels + "</div></div>";
   }
 
   /* ---------- 3. transcript intelligence ---------- */
@@ -142,4 +147,14 @@
   window.POLICY = { render: render, poll: poll, _data: function () { return J; },
     open: function (id) { V.doc = id; V.sub = "transcript"; save(); render(); } };
   render(); if (window.DESK_LOCKED === false) poll(true);
+  var pmcss = document.createElement("style");
+  pmcss.textContent = ".pm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(560px,1fr));gap:14px}.pm-card{border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:12px 14px}" +
+    ".pm-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}.pm-b{font-size:15px;display:flex;align-items:center;gap:6px}" +
+    ".pm-s{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:12.5px}.pm-l{font:600 11.5px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.06em}.pm-g{color:var(--muted)}.pm-d{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint)}" +
+    ".pm-list{list-style:none;margin:6px 0 0;padding:0}.pm-r{display:grid;grid-template-columns:52px 112px minmax(0,1fr) 54px 84px;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px dashed var(--line);cursor:pointer;font-size:13px}" +
+    ".pm-r:hover{background:rgba(56,182,201,.07)}.pm-dt{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint)}.pm-ty{font:600 11px 'IBM Plex Mono',monospace;color:var(--cyan);text-transform:uppercase;letter-spacing:.04em}" +
+    ".pm-ti{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}.pm-ti b{color:var(--ink);font-weight:600}.pm-sc{text-align:right}.pm-vs{font:12px 'IBM Plex Mono',monospace;text-align:right}.pm-vs small{color:var(--faint)}" +
+    ".pm-more{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint);margin-top:6px}" +
+    "@media (max-width:760px){.pm-grid{grid-template-columns:1fr}.pm-r{grid-template-columns:48px minmax(0,1fr) 52px}.pm-ty,.pm-vs{display:none}}";
+  document.head.appendChild(pmcss);
 })();

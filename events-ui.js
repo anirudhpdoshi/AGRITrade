@@ -33,11 +33,15 @@
     energy: { l: "ENERGY",   c: "#f0a35e" },
     market: { l: "MARKET",   c: "#38b6c9" },
     desk:   { l: "DESK DATA",c: "#9aa8bb" },
-    cb:     { l: "CENTRAL BANK", c: "#6ea8ff" }
+    cb:     { l: "CENTRAL BANK", c: "#6ea8ff" },
+    leg:    { l: "LEGISLATION", c: "#c9a3ff" },
+    earn:   { l: "EARNINGS", c: "#f5c542" }
   };
-  var GROUPS = [["all", "All"], ["agri", "Agri"], ["macro", "Macro"], ["market", "Markets"], ["desk", "Desk data"]];
-  function groupOf(e) { return e.kind === "macro" || e.kind === "cb" || e.kind === "energy" ? "macro" : e.kind === "market" ? "market" : e.kind === "desk" ? "desk" : "agri"; }
+  var GROUPS = [["all", "All"], ["agri", "Agri"], ["macro", "Macro"], ["cb", "Central banks"], ["leg", "Legislation"], ["earn", "Earnings"], ["market", "Markets"], ["desk", "Desk data"]];
+  function groupOf(e) { return e.kind === "cb" ? "cb" : e.kind === "leg" ? "leg" : e.kind === "earn" ? "earn" : e.kind === "macro" || e.kind === "energy" ? "macro" : e.kind === "market" ? "market" : e.kind === "desk" ? "desk" : "agri"; }
   var V = store.get("desk.eventsView") || { grp: "all", high: false };
+  V.track = V.track || {};   /* categories switched off by the user (default: everything tracked) */
+  function tracked(e) { return V.track[groupOf(e)] !== false; }
   function saveV() { store.set("desk.eventsView", V); }
 
   /* ---------- today's events from every source on the page ---------- */
@@ -86,6 +90,25 @@
         add({ t: t, label: (B.name || c.bank.toUpperCase()) + ": " + c.what + (c.time ? "" : " (time TBA)"), kind: "cb", cc: B.cc, high: c.kind === "decision", go: "policy" });
       });
     } catch (x) {}
+    /* legislation: Commons sitting days, U.S. committee hearings and House floor week (Briefing tab data) */
+    try {
+      var LG = window.BRIEFING && BRIEFING._data() && BRIEFING._data().legislation;
+      if (LG && LG.ca && LG.ca.calendar && (LG.ca.calendar.next || []).indexOf(today) >= 0)
+        add({ t: zms(today, wdOf(now) === "Mon" ? 11 : 10, 0), label: "House of Commons sits (Parliament of Canada)", kind: "leg", cc: "ca", go: "briefing" });
+      if (LG && LG.ca && LG.ca.calendar) (LG.ca.calendar.breaks || []).forEach(function (b) { if (b.returns === today) add({ t: zms(today, 11, 0), label: "House of Commons returns from its break", kind: "leg", cc: "ca", high: true, go: "briefing" }); });
+      if (LG && LG.us) (LG.us.hearings || []).forEach(function (h) { var t = Date.parse(h.date); add({ t: t, label: "U.S. " + h.chamber + " hearing: " + h.title.slice(0, 110), kind: "leg", cc: "us", high: !!(h.topics && h.topics.length), go: "briefing" }); });
+      if (LG && LG.us && LG.us.floor && LG.us.floor.week && !LG.us.floor.stale && (LG.us.floor.items || []).length && ["Mon", "Tue", "Wed", "Thu", "Fri"].indexOf(wdOf(now)) >= 0)
+        add({ t: zms(today, 12, 0), label: "U.S. House floor this week: " + LG.us.floor.items.slice(0, 3).map(function (i) { return i.code; }).join(", ") + (LG.us.floor.items.length > 3 ? " +" + (LG.us.floor.items.length - 3) : ""), kind: "leg", cc: "us", go: "briefing" });
+    } catch (x) {}
+    /* earnings: watchlist companies reporting today (US Earnings tab data) */
+    try {
+      var EJ = window.EARNINGS && EARNINGS._data();
+      ((EJ && EJ.upcoming && EJ.upcoming.rows) || []).forEach(function (r) {
+        if ((r.date || "").slice(0, 10) !== today) return;
+        var tm = String(r.time || "").toLowerCase(), t = zms(today, /amc|after/.test(tm) ? 16 : 7, /amc|after/.test(tm) ? 15 : 0);
+        add({ t: t, label: (r.symbol || "") + " earnings" + (/bmo|before/.test(tm) ? " (before the open)" : /amc|after/.test(tm) ? " (after the close)" : "") + (r.epsEstimated != null ? " · EPS est " + r.epsEstimated : ""), kind: "earn", cc: "us", go: "earnings" });
+      });
+    } catch (x) {}
     var wd = wdOf(now), weekday = ["Mon", "Tue", "Wed", "Thu", "Fri"].indexOf(wd) >= 0;
     /* EIA weekly reports used on the Input costs view (skipped when the macro calendar already lists them) */
     var hasE = out.some(function (e) { return e.kind === "energy"; });
@@ -113,12 +136,12 @@
     }
     return best;
   }
-  function pass(e) { return (V.grp === "all" || groupOf(e) === V.grp) && (!V.high || e.high); }
+  function pass(e) { return tracked(e) && (V.grp === "all" || groupOf(e) === V.grp) && (!V.high || e.high); }
 
   /* ---------- rendering ---------- */
   function flagOf(e) { return e.cc && window.flag ? window.flag(e.cc, 13) + " " : ""; }
   function chip(e) { var c = CAT[e.kind] || CAT.desk; return '<span class="evc" style="--ec:' + c.c + '">' + c.l + "</span>"; }
-  function deskName(go) { var a = (go || "").split("@")[0].split(":"); if (a[0] === "world") return "World markets"; if (a[0] === "policy") return "Policy · " + (a[1] ? "evidence" : "calendar"); return ({ corn: "Corn", wheat: "Wheat", soybeans: "Soybeans", fx: "USD/CAD" })[a[0]] + " · " + ({ overview: "Overview", deriv: "Derivatives", fund: "Fundamentals", inputs: "Input costs", macro: "Macro" })[a[1]]; }
+  function deskName(go) { var a = (go || "").split("@")[0].split(":"); if (a[0] === "world") return "World markets"; if (a[0] === "briefing") return "Briefing · legislation"; if (a[0] === "earnings") return "US Earnings"; if (a[0] === "events") return "Events"; if (a[0] === "policy") return "Policy · " + (a[1] ? "evidence" : "calendar"); return ({ corn: "Corn", wheat: "Wheat", soybeans: "Soybeans", fx: "USD/CAD" })[a[0]] + " · " + ({ overview: "Overview", deriv: "Derivatives", fund: "Fundamentals", inputs: "Input costs", macro: "Macro" })[a[1]]; }
   function row(e, now) {
     var d = e.t - now, st = d > 15 * MIN ? "up" : d > 0 ? "soon" : d > -10 * MIN ? "due" : "out";
     var LD = st === "out" || st === "due" ? landed(e) : null;
@@ -272,7 +295,9 @@
       '<div class="evh-d">' + esc(dayLabel(now)) + ' · Toronto time</div>' +
       '<div class="evf">' + GROUPS.map(function (g) { var n = g[0] === "all" ? all.length : cnt[g[0]] || 0;
         return '<button data-evgrp="' + g[0] + '" aria-pressed="' + (V.grp === g[0]) + '">' + g[1] + " <small>" + n + "</small></button>"; }).join("") +
-      '<button class="evhi" data-evhigh aria-pressed="' + !!V.high + '">High impact only</button></div></div>' +
+      '<button class="evhi" data-evhigh aria-pressed="' + !!V.high + '">High impact only</button></div>' +
+      '<div class="evtr"><span>Track</span>' + GROUPS.slice(1).map(function (g) { var on = V.track[g[0]] !== false;
+        return '<button data-evtrack="' + g[0] + '" aria-pressed="' + on + '" title="' + (on ? "Tracking " : "Not tracking ") + g[1] + ' — click to switch">' + (on ? "✓ " : "") + g[1] + "</button>"; }).join("") + "</div></div>" +
       '<div class="evh-r">' + (nxt ? '<div class="evn-l">Next up · ' + (nxtLater ? esc(shortDay(nxt.t)) + " " : "") + hm(nxt.t) + ' ET</div><div class="evn-t">' + flagOf(nxt) + esc(nxt.label) + '</div><div class="hero-cd countdown" data-t="' + nxt.t + '" data-fmt="hms">' + hms(nxt.t - now) + "</div>"
         : '<div class="evn-l">Next up</div><div class="evn-t">Nothing left today</div>') +
       '<div class="evn-s"><b>' + up.length + "</b> to come · <b>" + done.length + "</b> out</div></div></div>";
@@ -499,6 +524,7 @@
     if (!t.closest("#panel-events")) { if (t.closest("#tabbtn-events")) { unseen = 0; render(); paintBadge(); } return; }
     var b = t.closest("[data-evgrp]"); if (b) { V.grp = b.getAttribute("data-evgrp"); saveV(); repaintMain(); return; }
     if (t.closest("[data-evhigh]")) { V.high = !V.high; saveV(); repaintMain(); return; }
+    var tr = t.closest("[data-evtrack]"); if (tr) { var k = tr.getAttribute("data-evtrack"); V.track[k] = V.track[k] === false; saveV(); repaintMain(); return; }
     b = t.closest("[data-evfeed]"); if (b) { FV = b.getAttribute("data-evfeed"); paintFeed(); return; }
     if (t.closest("[data-evclear]")) { ev.preventDefault(); feed = []; store.set(FEED_KEY, feed); paintFeed(); }
   });

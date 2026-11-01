@@ -1,7 +1,7 @@
-/* US Earnings tab — PROTOTYPE, locked.
+/* US Earnings tab — LIVE (was a locked prototype until Nov 1, 2026).
    Reads earnings.json from the `earnings` branch (built by scripts/us_earnings.py from Financial Modeling Prep).
    The FMP key never reaches the browser and this page never calls FMP: every FMP call happens in the manual-only
-   "US earnings (prototype)" Action, which spends calls only on what can have changed.
+   "US earnings" Action, which spends calls only on what can have changed.
 
    Lock: while EARNINGS_LIVE is false the tab button stays hidden and this module fetches nothing.
      open the preview   …/AGRITrade/?preview=earnings   (remembered in this browser)
@@ -9,7 +9,7 @@
    Going live after sign-off = set EARNINGS_LIVE to true (and decide whether the Action gets a schedule). */
 (function () {
   "use strict";
-  var EARNINGS_LIVE = false;
+  var EARNINGS_LIVE = true;   /* live since Nov 1, 2026 */
   var P = document.getElementById("panel-earnings"), BTN = document.getElementById("tabbtn-earnings");
   if (!P || !BTN) return;
 
@@ -160,7 +160,7 @@
 
   /* ---------- views ---------- */
   function protoBar() {
-    return '<div class="ue-proto"><b>PROTOTYPE · LOCKED</b><span>Preview only — hidden from the desk until signed off. This page never calls FMP; data comes from the manual “US earnings (prototype)” Action.</span>' +
+    return '<div class="ue-proto"><b>LIVE</b><span>Refreshed on weekdays at about 10:15 am, 12:15, 2:15 and 4:15 pm ET within a daily call budget. This page never calls the data provider directly.</span>' +
       '<span class="ue-act"><button class="ue-btn" data-ue="reload">Reload data</button><a class="ue-btn" href="' + RUN + '" target="_blank" rel="noopener noreferrer">Run the Action ↗</a></span></div>';
   }
   function topStrip() {
@@ -272,7 +272,7 @@
     var pol = J.policy || {}, res = J.resolved || {}, rk = Object.keys(res);
     return '<div class="tile wide" style="margin-top:14px"><div class="stamp">Call policy — quote: ' + esc(pol.quote || "") + " · profile: " + esc(pol.profile || "") + " · search: " + esc(pol.search || "") +
       " · budget: " + esc(pol.budget || "") + "." + (rk.length ? "<br>Names resolved: " + rk.map(function (k) { var r = res[k]; return esc(r.query || k) + " → " + (r.symbol ? "<b>" + esc(r.symbol) + "</b>" : "no US match"); }).join(" · ") : "") +
-      "<br>Add a company: Actions → US earnings (prototype) → Run workflow, type the name (one search call), then add the ticker to scripts/data/earnings_watchlist.json to keep it." +
+      "<br>Add a company: Actions → US earnings → Run workflow, type the name (one search call), then add the ticker to scripts/data/earnings_watchlist.json to keep it." +
       " Updated " + esc(when(J.updated_at)) + " · " + esc(J.provider || "") + ".</div></div>";
   }
   /* ================= TERMINAL SHELL: header · ticker bar · nav | workspace | earnings feed ================= */

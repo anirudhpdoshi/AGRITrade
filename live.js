@@ -297,7 +297,7 @@
     document.querySelectorAll('[data-live-chg]').forEach(function (el) { var u = chg >= 0; el.textContent = (u ? "\u25b2 +" : "\u25bc \u2212") + fmtN(Math.abs(chg), 2) + "%"; el.className = "live-chg " + (u ? "up" : "dn"); });
     if (typeof window.fxIntradaySVG === "function") document.querySelectorAll('[data-live-chart]').forEach(function (el) { el.innerHTML = window.fxIntradaySVG(window.fxIntradayPoints(ticks)); });
     var fresh = Date.now() - liveTickAt < 90000, chip = $("fx-spot-chip");
-    if (chip) { chip.textContent = fresh ? "LIVE" : "LAST TICK"; chip.className = fresh ? "chip live" : "chip frozen"; }
+    if (chip) { var fxo = fxSession(new Date()).open; chip.textContent = !fxo ? "MARKET CLOSED" : fresh ? "LIVE" : "LAST TICK"; chip.className = fxo && fresh ? "chip live" : "chip frozen"; }
     var series = (typeof window.fxIntradayPoints === "function") ? window.fxIntradayPoints(ticks) : ticks;
     if (series.length) {
       var ys = series.map(function (t) { return t[1]; }), hl = $("fx-spot-hl");

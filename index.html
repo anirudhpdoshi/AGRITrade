@@ -962,6 +962,7 @@ table.pi-tab td{vertical-align:top}table.pi-tab small{display:block;color:var(--
 .qt-age{color:var(--muted,#8a9bb0);font-size:.92em;white-space:nowrap}.qt-age.old,[data-age-src].old{color:var(--amber,#e8a33d)}
 .qt-chk{font-size:12px;color:var(--muted,#8a9bb0);margin:6px 2px 0;font-family:'IBM Plex Mono',monospace}.qt-chk b{color:var(--ink,#dbe4ee);font-weight:600}
 @media (min-width:1700px){.kpi-strip{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.layout{grid-template-columns:minmax(0,1fr) 400px}.layout.has-secnav{grid-template-columns:200px minmax(0,1fr) 400px}}
+.evtr{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:8px}.evtr span{font:600 11px "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-right:4px}.evtr button{appearance:none;font:600 11.5px "IBM Plex Mono",monospace;padding:3px 9px;border-radius:12px;border:1px dashed var(--line2);background:transparent;color:var(--faint);cursor:pointer}.evtr button[aria-pressed=true]{border-style:solid;border-color:#2f6a80;color:#bfe3ec;background:#12283a}
 .evfi-go{cursor:pointer;border-radius:6px;margin:0 -6px;padding-left:6px;padding-right:6px;transition:background .15s}.evfi-go:hover,.evfi-go:focus-visible{background:rgba(56,182,201,.08);outline:none}
 .evfo{color:#7dd8e6;font-weight:500}.evfi-go:hover .evfo{text-decoration:underline}
 </style>
@@ -1069,7 +1070,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
     <button class="tab-btn" role="tab" id="tabbtn-intel" aria-selected="false" aria-controls="panel-intel" data-tab="intel">Intel<span class="sym">Global</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-briefing" aria-selected="false" aria-controls="panel-briefing" data-tab="briefing">Briefing<span class="sym">US · CA</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-policy" aria-selected="false" aria-controls="panel-policy" data-tab="policy">Policy<span class="sym">CB intel</span></button>
-    <button class="tab-btn" role="tab" id="tabbtn-earnings" aria-selected="false" aria-controls="panel-earnings" data-tab="earnings" hidden>US Earnings<span class="sym">Prototype</span></button>
+    <button class="tab-btn" role="tab" id="tabbtn-earnings" aria-selected="false" aria-controls="panel-earnings" data-tab="earnings">US Earnings<span class="sym">Live</span></button>
   </nav>
 
 <main>
@@ -3829,7 +3830,18 @@ function omTime(ms){ var o={timeZone:'America/Toronto'}, today=new Date(ms).toLo
 /* ---------- quote tiles (rate-board style): big figure + large last two digits; motion.js flips changed digits and
    flashes the box green / red on every real change, and keeps the last-tick arrow ---------- */
 function qtPx(v, dec, pre){ var t=(pre||'')+fmt(v,dec), n=dec>=4?2:dec>=2?2:1, i=t.length-n; return '<span class="qt-bf">'+t.slice(0,i)+'</span><span class="qt-pp">'+t.slice(i)+'</span>'; }
+/* market sessions (ET): FX Sun 5pm–Fri 5pm · CBOT grains day 9:30–2:20 + overnight 8pm–8:45am · CME Globex energy/dollar index Sun 6pm–Fri 5pm with a 5–6pm break · CBOE Treasury yield indices weekdays 8am–5pm */
+window.MKT=(function(){
+  function et(t){ var p={}; new Intl.DateTimeFormat('en-US',{timeZone:'America/Toronto',weekday:'short',hour:'numeric',minute:'numeric',hourCycle:'h23'}).formatToParts(new Date(t||Date.now())).forEach(function(x){ p[x.type]=x.value; }); return {wd:p.weekday, m:(+p.hour)*60+(+p.minute)}; }
+  var WK=['Mon','Tue','Wed','Thu','Fri'];
+  return { fx:function(t){ var p=et(t); return !(p.wd==='Sat'||(p.wd==='Fri'&&p.m>=1020)||(p.wd==='Sun'&&p.m<1020)); },
+    grain:function(t){ var p=et(t); return (WK.indexOf(p.wd)>=0&&p.m>=570&&p.m<860)||(['Sun','Mon','Tue','Wed','Thu'].indexOf(p.wd)>=0&&p.m>=1200)||(WK.indexOf(p.wd)>=0&&p.m<525); },
+    fut:function(t){ var p=et(t); if(p.wd==='Sat'||(p.wd==='Sun'&&p.m<1080)||(p.wd==='Fri'&&p.m>=1020)) return false; return !(p.m>=1020&&p.m<1080); },
+    bond:function(t){ var p=et(t); return WK.indexOf(p.wd)>=0&&p.m>=480&&p.m<1020; } };
+})();
 function qtTile(o){
+  /* one rule on every tab: a quote from a closed market says CLOSED, whatever feed it came from */
+  if(o.mkt&&window.MKT&&MKT[o.mkt]&&!MKT[o.mkt]()&&o.tag&&/LIVE|DELAYED|LAST|EST/.test(o.tag)){ o.tag='CLOSED'; o.tagc='cz'; o.title=({fx:'FX market closed (Fri 5pm – Sun 5pm ET)',grain:'CBOT grains closed',fut:'Futures market closed',bond:'Treasury yield indices update weekdays 8am–5pm ET'}[o.mkt])+' — last quote shown'+(o.title?' · '+o.title:''); o.max=1e9; }
   if(!window.__ageQ){ window.__ageQ=1; setTimeout(function(){ window.__ageQ=0; if(typeof ageTick==='function') ageTick(); },0); }   /* ages painted as soon as the tiles are in the page */
   return '<div class="qt" data-qtk="'+o.k+'"'+(o.title?' title="'+esc(o.title)+'"':'')+'><div class="qt-h"><b>'+o.name+'</b><span class="qt-sub">'+(o.sub||'')+'</span></div>'+
     '<div class="qt-box" data-qt="'+o.k+'" data-v="'+o.v+'" data-dec="'+o.dec+'" data-pre="'+(o.pre||'')+'"'+(o.live?' data-qt-live="'+o.live+'"':'')+'><span class="qt-ar" aria-hidden="true"></span><span class="qt-v">'+qtPx(o.v,o.dec,o.pre)+'</span></div>'+
@@ -3845,16 +3857,16 @@ function grainTilesHTML(key){
   /* front futures: the strip's own delayed quote (same price as the fan and KPIs) */
   var L=+f.intraday[0], A=+f.anchor, nearSame=legs.near.contract===front;
   out.push(qtTile({k:'fut-'+key, name:esc(front), sub:nearSame?optSub(legs.near):'front', v:L, dec:4, pre:'$', chg:chg(L,A),
-    foot:'<span class="qt-t">'+esc(f.intraday[1]||'')+'</span>', ts:f.intraday_ts, tag:isAuto('grains_quote')?'DELAYED':'SNAPSHOT', tagc:isAuto('grains_quote')?'ok':'cz',
+    foot:'<span class="qt-t">'+esc(f.intraday[1]||'')+'</span>', ts:f.intraday_ts, mkt:'grain', tag:isAuto('grains_quote')?'DELAYED':'SNAPSHOT', tagc:isAuto('grains_quote')?'ok':'cz',
     title:'Change vs '+front+' settle '+fmt(A,4)+(f.settle_date?' ('+fmtShortDate(f.settle_date)+')':'')}));
   ['near','far'].forEach(function(leg){
     var o=legs[leg]; if(!o.contract||(leg==='near'&&nearSame)) return;
     var Q=optLegQuote(g, leg); if(!Q) return; var T=QT_TIER[Q.tier];
     out.push(qtTile({k:leg+'-'+key, name:esc(o.contract), sub:optSub(o), v:Q.px, dec:4, pre:'$', chg:(Q.tier==='settle'?'<span class="neu">settle</span>':chg(Q.px,Q.settle)),
-      foot:'<span class="qt-t">'+esc(Q.when)+'</span>', tag:T[0]==='LAST QUOTE'?'LAST':T[0], tagc:T[1], title:(Q.why?'Latest refresh failed — ':'')+'Futures under the '+o.chain+' options'}));
+      foot:'<span class="qt-t">'+esc(Q.when)+'</span>', mkt:'grain', tag:T[0]==='LAST QUOTE'?'LAST':T[0], tagc:T[1], title:(Q.why?'Latest refresh failed — ':'')+'Futures under the '+o.chain+' options'}));
   });
   out.push(qtTile({k:'cad-'+key, name:'C$/t', sub:'cash equiv.', title:'Front futures × '+fmt(BU_PER_MT[key],3)+' bu/t × USD/CAD — no basis', v:L*BU_PER_MT[key]*fx, dec:2, chg:'', foot:'<span class="qt-t">'+esc(f.intraday[1]||'')+'</span>', ts:f.intraday_ts}));
-  out.push(qtTile({k:'usdcad', name:'USD/CAD', sub:'spot', v:fx, dec:5, live:'usdcad', chg:fxChgHTML(), foot:spotStamp(), tag:isAuto('fx_spot')?'LIVE':'SNAPSHOT', tagc:isAuto('fx_spot')?'ok':'cz'}));
+  out.push(qtTile({k:'usdcad', name:'USD/CAD', sub:'spot', v:fx, dec:5, live:'usdcad', mkt:'fx', chg:fxChgHTML(), foot:spotStamp(), tag:isAuto('fx_spot')?'LIVE':'SNAPSHOT', tagc:isAuto('fx_spot')?'ok':'cz'}));
   return '<div class="qt-grid">'+out.join('')+'</div>'+'<div class="qt-chk" title="The desk re-checks every source about once a minute; each tile shows its own quote time and how old it is">Feed checked <b data-clock-src="live_at"></b> · <span data-age-src="live_at"></span> · prices refresh on their own cycle</div>';
 }
 function ylLiveHTML(){
@@ -3885,14 +3897,14 @@ function ageTick(){
 setInterval(ageTick,1000);
 function fxTilesHTML(){
   var fx=DATA.fx, w=fx.energy[0], b=fx.energy[1], R={}; fx.rates.forEach(function(r){ R[r.t]=r; });
-  var t=[qtTile({k:'usdcad', name:'USD/CAD', sub:'spot', v:+fx.feed.mid, dec:5, live:'usdcad', chg:fxChgHTML(), foot:spotStamp(), tag:isAuto('fx_spot')?'LIVE':'SNAPSHOT', tagc:isAuto('fx_spot')?'ok':'cz'})];
-  if(w&&w.last!=null) t.push(qtTile({k:'wti', name:'WTI', sub:'front', v:+w.last, dec:2, pre:'$', chg:'<span class="'+cls(w.pct)+'">'+sgn(w.chg||0,2)+' · '+sgn(w.pct||0,2,'%')+'</span>', foot:'<span class="qt-t">'+tHM(DATA.meta.asof.energy)+'</span>', ts:DATA.meta.asof.energy, tag:isAuto('energy')?'DELAYED':'SNAPSHOT', tagc:isAuto('energy')?'ok':'cz'}));
-  t.push(qtTile({k:'dxy', name:'DXY', sub:'', v:+fx.fxcross.dxy, dec:2, chg:'<span class="'+cls(fx.fxcross.dxy_chg)+'">'+sgn(+fx.fxcross.dxy_chg||0,2,'%')+'</span>', foot:'<span class="qt-t">'+tHM(DATA.meta.asof.crosses)+'</span>', ts:DATA.meta.asof.crosses, tag:isAuto('crosses')?'DELAYED':'SNAPSHOT', tagc:isAuto('crosses')?'ok':'cz'}));
+  var t=[qtTile({k:'usdcad', name:'USD/CAD', sub:'spot', v:+fx.feed.mid, dec:5, live:'usdcad', mkt:'fx', chg:fxChgHTML(), foot:spotStamp(), tag:isAuto('fx_spot')?'LIVE':'SNAPSHOT', tagc:isAuto('fx_spot')?'ok':'cz'})];
+  if(w&&w.last!=null) t.push(qtTile({k:'wti', name:'WTI', sub:'front', v:+w.last, dec:2, pre:'$', chg:'<span class="'+cls(w.pct)+'">'+sgn(w.chg||0,2)+' · '+sgn(w.pct||0,2,'%')+'</span>', foot:'<span class="qt-t">'+tHM(DATA.meta.asof.energy)+'</span>', ts:DATA.meta.asof.energy, mkt:'fut', tag:isAuto('energy')?'DELAYED':'SNAPSHOT', tagc:isAuto('energy')?'ok':'cz'}));
+  t.push(qtTile({k:'dxy', name:'DXY', sub:'', v:+fx.fxcross.dxy, dec:2, chg:'<span class="'+cls(fx.fxcross.dxy_chg)+'">'+sgn(+fx.fxcross.dxy_chg||0,2,'%')+'</span>', foot:'<span class="qt-t">'+tHM(DATA.meta.asof.crosses)+'</span>', ts:DATA.meta.asof.crosses, mkt:'fut', tag:isAuto('crosses')?'DELAYED':'SNAPSHOT', tagc:isAuto('crosses')?'ok':'cz'}));
   var YL=fx.yields_live||{}, y10=YL['10Y'];
   ['10Y','5Y','30Y'].forEach(function(tn){ var y=YL[tn], close=fx.treasury&&fx.treasury[tn];
-    if(y&&y.y!=null) t.push(qtTile({k:'ust'+tn, name:'US '+tn, sub:'yield', v:+y.y, dec:3, chg:y.chg_bp!=null?'<span class="'+cls(y.chg_bp)+'">'+sgn(y.chg_bp,1,' bp')+'</span>':'', foot:'<span class="qt-t">'+esc(y.label||'')+'</span>', ts:y.ts, tag:y.stale?'LAST':'DELAYED', tagc:y.stale?'warn':'ok', title:'change vs the official close '+fmt(+y.close,3)+'%'}));
+    if(y&&y.y!=null) t.push(qtTile({k:'ust'+tn, name:'US '+tn, sub:'yield', v:+y.y, dec:3, chg:y.chg_bp!=null?'<span class="'+cls(y.chg_bp)+'">'+sgn(y.chg_bp,1,' bp')+'</span>':'', foot:'<span class="qt-t">'+esc(y.label||'')+'</span>', ts:y.ts, mkt:'bond', tag:y.stale?'LAST':'DELAYED', tagc:y.stale?'warn':'ok', title:'change vs the official close '+fmt(+y.close,3)+'%'}));
     else if(close!=null) t.push(qtTile({k:'ust'+tn, name:'US '+tn, sub:'yield', v:+close, dec:3, chg:'', foot:'<span class="qt-t">'+esc(DATA.meta.asof.yields?fmtShortDate(DATA.meta.asof.yields.slice(0,10)):'')+'</span>', tag:'CLOSE', tagc:'cz'})); });
-  if(y10&&y10.sp_ca!=null) t.push(qtTile({k:'sp10', name:'US–CA 10Y', sub:'bp', v:+y10.sp_ca, dec:1, chg:R['10Y']?'<span class="'+cls(y10.sp_ca-R['10Y'].sp)+'">'+sgn(y10.sp_ca-R['10Y'].sp,1,' bp')+'</span>':'', foot:'<span class="qt-t">'+esc(y10.label||'')+'</span>', ts:y10.ts, tag:y10.ca_leg==='est'?'EST':'DELAYED', tagc:y10.ca_leg==='est'?'warn':'ok', title:'Live US 10Y (^TNX) minus Canada 10Y '+(y10.ca_leg==='est'?'estimated from the ZFM.TO federal-bond ETF':'official close')}));
+  if(y10&&y10.sp_ca!=null) t.push(qtTile({k:'sp10', name:'US–CA 10Y', sub:'bp', v:+y10.sp_ca, dec:1, chg:R['10Y']?'<span class="'+cls(y10.sp_ca-R['10Y'].sp)+'">'+sgn(y10.sp_ca-R['10Y'].sp,1,' bp')+'</span>':'', foot:'<span class="qt-t">'+esc(y10.label||'')+'</span>', ts:y10.ts, mkt:'bond', tag:y10.ca_leg==='est'?'EST':'DELAYED', tagc:y10.ca_leg==='est'?'warn':'ok', title:'Live US 10Y (^TNX) minus Canada 10Y '+(y10.ca_leg==='est'?'estimated from the ZFM.TO federal-bond ETF':'official close')}));
   else if(R['10Y']) t.push(qtTile({k:'sp10', name:'US–CA 10Y', sub:'bp', v:+R['10Y'].sp, dec:1, chg:'', foot:'<span class="qt-t">'+esc(DATA.meta.asof.yields?fmtShortDate(DATA.meta.asof.yields.slice(0,10)):'')+'</span>', tag:'CLOSE', tagc:'cz'}));
   return '<div class="qt-grid">'+t.join('')+'</div>'+'<div class="qt-chk" title="The desk re-checks every source about once a minute; each tile shows its own quote time and how old it is">Feed checked <b data-clock-src="live_at"></b> · <span data-age-src="live_at"></span> · prices refresh on their own cycle</div>';
 }
@@ -4698,6 +4710,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="events-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="intel-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="briefing-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
+<script>(function(){var f=document.createElement("script");f.src="glossary.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="policy-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="earnings-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var v=Date.now(),a=document.createElement("script");a.src="co-engine.js?v="+v;a.onload=function(){var b=document.createElement("script");b.src="company-ui.js?v="+v;document.body.appendChild(b);};document.body.appendChild(a);})();</script>
