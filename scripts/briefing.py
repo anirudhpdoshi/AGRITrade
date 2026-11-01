@@ -33,14 +33,14 @@ PER_SECTION = 6
 US, CA = ("en-US", "US", "US:en"), ("en-CA", "CA", "CA:en")
 DESKS = {
     "us": {"name": "United States", "loc": US, "sections": {
-        "policy": ('"Federal Reserve" OR Powell OR FOMC OR "Treasury yields" OR "Treasury Secretary"', r"fed\b|federal reserve|powell|fomc|treasury|yield|rate (?:cut|hike)|interest rate|bond"),
+        "policy": ('"Federal Reserve" OR Powell OR FOMC OR "Treasury yields" OR "Treasury Secretary"', r"fed\b|federal reserve|(?<!lake )powell|fomc|treasury|yield|rate (?:cut|hike)|interest rate|bond"),
         "politics": ('"White House" OR Congress OR Senate OR "executive order" OR "Supreme Court" OR "government shutdown"', r"white house|congress|senate|house\b|executive order|supreme court|shutdown|trump|administration|bill|vote|governor"),
         "economy": ('"US economy" OR "jobs report" OR "US inflation" OR "consumer spending" OR "jobless claims" OR "US GDP"', r"econom|jobs?|payroll|inflation|cpi|pce|gdp|spending|claims|retail sales|manufactur|recession|consumer"),
         "trade": ('"US tariffs" OR USTR OR "trade deal" OR "Commerce Department" OR "trade war"', r"tariff|trade|import|export|ustr|commerce department|duties|sanction"),
         "energy_ag": ('USDA OR "US farmers" OR "farm bill" OR "crude oil" OR "natural gas prices" OR OPEC', r"usda|farm|crop|corn|soy|wheat|grain|crude|oil|gas|opec|energy|fertili[sz]er|ethanol"),
     }},
     "ca": {"name": "Canada", "loc": CA, "sections": {
-        "policy": ('"Bank of Canada" OR Macklem OR "Canadian dollar" OR "Canada bond yields" OR "Finance Minister" Canada', r"bank of canada|macklem|loonie|canadian dollar|bond|yield|rate (?:cut|hike)|interest rate|finance minister"),
+        "policy": ('"Bank of Canada" OR Macklem OR "Canadian dollar" OR "Canada bond yields" OR "Finance Minister" Canada', r"(?<!national )(?<!royal )bank of canada|macklem|loonie|canadian dollar|bond|yield|rate (?:cut|hike)|interest rate|finance minister"),
         "politics": ('Ottawa OR Carney OR "House of Commons" OR Poilievre OR "federal budget" Canada OR "Prime Minister" Canada', r"ottawa|carney|poilievre|commons|parliament|budget|prime minister|liberal|conservative|ndp|bloc|election|minister"),
         "economy": ('"Statistics Canada" OR "Canada jobs" OR "Canada inflation" OR "Canada GDP" OR "Canadian economy" OR "Canada housing"', r"econom|jobs?|employment|inflation|cpi|gdp|housing|retail|statistics canada|recession|consumer|manufactur"),
         "trade": ('"Canada tariffs" OR "Canadian exports" OR CUSMA OR "softwood lumber" OR "Canada trade"', r"tariff|trade|export|import|cusma|usmca|softwood|duties|steel|aluminum"),
@@ -55,15 +55,16 @@ DESKS = {
         "politics": ('(Carney OR Ottawa) (Trump OR "White House" OR Washington)', r"carney|ottawa|trump|white house|washington|border|summit|talks"),
     }},
 }
+CANADA = r"\bcanad|carney|ottawa|poilievre|\balberta|\bontario|quebec"
 PROV_Q = '"{n}" (premier OR government OR legislature OR budget OR economy)'
 SECTION_NAME = {"policy": "Central bank & rates", "politics": "Politics & government", "economy": "Economy & data", "trade": "Trade & tariffs", "energy_ag": "Energy & agriculture"}
 TIER1 = {"reuters.com", "bloomberg.com", "apnews.com", "wsj.com", "ft.com", "cbc.ca", "theglobeandmail.com", "nytimes.com", "washingtonpost.com",
          "cnbc.com", "financialpost.com", "nationalpost.com", "ctvnews.ca", "globalnews.ca", "politico.com", "axios.com", "bnnbloomberg.ca", "thestar.com", "marketwatch.com"}
-NOISE = r"\b(?:nfl|nba|nhl|mlb|playoff|touchdown|celebrity|recipe|horoscope|movie|box office|album|concert|lottery|weather forecast|obituary|coupon|deal of the day|best .* to buy)\b"
+NOISE = r"(?:\((?:tse|nyse|nasdaq|tsx):|price target|marketbeat|stock (?:falls|rises|jumps|drops|rated|now rated)|shares (?:fall|rise|jump|drop)|\b(?:nfl|nba|nhl|mlb|playoff|touchdown|celebrity|recipe|horoscope|movie|box office|album|concert|lottery|weather forecast|obituary|coupon|deal of the day|best .* to buy)\b)"
 
 # what a story touches on the desk (tags) and the rule-based read ('why it matters'), checked in order, first match wins
-TAGS = [("rates", r"rate (?:cut|hike)|interest rate|yield|bond|fed\b|federal reserve|bank of canada|inflation|cpi|pce"),
-        ("cad", r"loonie|canadian dollar|\bcad\b|bank of canada|canada(?:'s)? (?:economy|gdp|jobs|inflation)|cusma|usmca|oil"),
+TAGS = [("rates", r"rate (?:cut|hike)|interest rate|yield|bond|fed\b|federal reserve|(?<!national )(?<!royal )bank of canada|inflation|cpi|pce"),
+        ("cad", r"loonie|canadian dollar|\bcad\b|(?<!national )(?<!royal )bank of canada|canada(?:'s)? (?:economy|gdp|jobs|inflation)|cusma|usmca|oil"),
         ("grains", r"farm|crop|corn|soy|wheat|canola|grain|usda|barley|fertili[sz]er|potash|ethanol|harvest"),
         ("energy", r"oil|crude|gas|pipeline|opec|lng|energy|electric"),
         ("trade", r"tariff|\btrade\b|duties|\bexports?\b|\bimports?\b|cusma|usmca|sanction")]
@@ -174,7 +175,10 @@ def build():
             except Exception as e:
                 body["health"][f"{dk}.{sk}"] = type(e).__name__
                 items = []
-            cl = cluster(items, keep)[:PER_SECTION]
+            cl = cluster(items, keep)
+            if dk == "us":
+                cl = [c for c in cl if not re.search(CANADA, c["title"].lower())]
+            cl = cl[:PER_SECTION]
             for c in cl:
                 c["section"] = sk
                 c["why"] = why_of(c["title"], sk)
