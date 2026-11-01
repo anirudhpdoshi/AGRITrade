@@ -196,7 +196,7 @@ def build():
                 desk["provinces"][pk] = {"name": pn, "items": cl[:2]}
         seen, top = [], []
         for c in sorted(pool, key=lambda c: -c["score"]):
-            if any(similar(c["title"], s) for s in seen):
+            if any(similar(c["title"], s, 0.35) for s in seen):
                 continue
             seen.append(c["title"])
             top.append(c)
