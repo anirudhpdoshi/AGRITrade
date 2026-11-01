@@ -67,5 +67,46 @@
     ".ss-x{appearance:none;border:0;background:transparent;color:var(--faint);font-size:16px;cursor:pointer;padding:0 4px}.ss-x:hover{color:var(--ink)}" +
     "@media (prefers-reduced-motion:reduce){.ss-em{animation:none}}@media (max-width:760px){.ss-s{display:block;margin:2px 0 0}}";
   document.head.appendChild(css);
-  window.SEASON = { theme: th[2], title: th[3] };
+  /* ---------- motion: particles drifting through the header + a themed cursor with a light trail (switchable, off for reduced motion) ---------- */
+  var PART = { newyear: "✨🎉", valentine: "💗", stpat: "☘️", easter: "🌸🥚", canada: "🍁", july4: "✨⭐", summer: "☀️", thanks: "🍂🍁", halloween: "🦇🍂", remember: "🌺",
+               thanksus: "🍂🍁", xmas: "❄️✨", planting: "🌱💧", growing: "🌽🌿", harvest: "🌾🍂", winter: "❄️", orange: "🧡", family: "✨", memorial: "⭐", victoria: "✨", labour: "✨" };
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches, FX = "desk.seasonFx";
+  var fxOn = !reduce; try { if (localStorage.getItem(FX) === "0") fxOn = false; } catch (e) {}
+  var chars = Array.from(PART[th[2]] || "✨"), sky = document.createElement("div"); sky.className = "ss-sky no-invert"; sky.setAttribute("aria-hidden", "true");
+  for (var i = 0; i < 14; i++) { var sp = document.createElement("span"); sp.textContent = chars[i % chars.length];
+    sp.style.left = (Math.random() * 100).toFixed(1) + "%"; sp.style.animationDelay = (-Math.random() * 14).toFixed(1) + "s"; sp.style.animationDuration = (9 + Math.random() * 8).toFixed(1) + "s";
+    sp.style.fontSize = (10 + Math.random() * 9).toFixed(0) + "px"; sp.style.setProperty("--dx", ((Math.random() - .5) * 120).toFixed(0) + "px"); sky.appendChild(sp); }
+  H.insertBefore(sky, H.firstChild);
+  var em = EMB[th[2]] || "✨", cur = "url(\"data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"><text x="2" y="22" font-size="20">' + em + "</text></svg>") + "\") 4 4, auto";
+  var last = 0, pool = 0;
+  function trail(e) {
+    var now = performance.now(); if (now - last < 70 || pool > 12) return; last = now; pool++;
+    var t = document.createElement("span"); t.className = "ss-tr no-invert"; t.textContent = chars[Math.floor(Math.random() * chars.length)];
+    t.style.left = e.clientX + "px"; t.style.top = e.clientY + "px"; t.style.setProperty("--dx", ((Math.random() - .5) * 40).toFixed(0) + "px");
+    document.body.appendChild(t); setTimeout(function () { t.remove(); pool--; }, 900);
+  }
+  function apply() {
+    document.documentElement.classList.toggle("ss-fx", fxOn); document.documentElement.style.setProperty("--ss-cur", fxOn ? cur : "auto");
+    document.removeEventListener("mousemove", trail); if (fxOn) document.addEventListener("mousemove", trail, { passive: true });
+    var b = bar.querySelector(".ss-fxb"); if (b) { b.textContent = fxOn ? "✨ Effects on" : "Effects off"; b.setAttribute("aria-pressed", fxOn); }
+  }
+  var fb = document.createElement("button"); fb.type = "button"; fb.className = "ss-fxb"; fb.title = "Seasonal cursor and animations"; bar.insertBefore(fb, bar.querySelector(".ss-x"));
+  fb.addEventListener("click", function () { fxOn = !fxOn; try { localStorage.setItem(FX, fxOn ? "1" : "0"); } catch (e) {} apply(); });
+  apply();
+  var css2 = document.createElement("style");
+  css2.textContent = ".ss-sky{position:absolute;inset:0;overflow:hidden;pointer-events:none;border-radius:inherit;z-index:0;display:none}.ss-fx .ss-sky{display:block}" +
+    ".ss-sky span{position:absolute;top:-24px;opacity:.55;animation:ssfall linear infinite;filter:saturate(.9)}" +
+    "@keyframes ssfall{0%{transform:translate(0,0) rotate(0)}100%{transform:translate(var(--dx),190px) rotate(260deg);opacity:0}}" +
+    ".topbar.ss-on>*:not(.ss-sky):not(.theme-sw){position:relative;z-index:1}.topbar.ss-on>.theme-sw{z-index:2}" +
+    ".topbar.ss-on::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--ss2),transparent);background-size:50% 100%;background-repeat:no-repeat;animation:sssweep 6s ease-in-out infinite;opacity:.8}" +
+    "@keyframes sssweep{0%{background-position:-50% 0}100%{background-position:150% 0}}" +
+    ".topbar.ss-on h1{background-size:200% 100%;animation:ssshine 8s ease-in-out infinite}@keyframes ssshine{0%,100%{background-position:0 0}50%{background-position:100% 0}}" +
+    ".ss-fx body,.ss-fx main{cursor:var(--ss-cur)}.ss-fx a,.ss-fx button,.ss-fx [role=tab],.ss-fx [data-evgo],.ss-fx .gl{cursor:pointer}.ss-fx input,.ss-fx textarea,.ss-fx select{cursor:auto}" +
+    ".ss-tr{position:fixed;z-index:99;pointer-events:none;font-size:13px;transform:translate(-50%,-50%);animation:sstr .9s ease-out forwards}" +
+    "@keyframes sstr{0%{opacity:.9;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + 26px)) scale(.5) rotate(90deg)}}" +
+    ".ss-fxb{appearance:none;border:1px solid color-mix(in srgb,var(--ss2) 50%,transparent);background:transparent;color:var(--muted);font:600 11px 'IBM Plex Mono',monospace;border-radius:10px;padding:2px 8px;cursor:pointer;white-space:nowrap}" +
+    ".ss-fxb[aria-pressed=true]{color:var(--ss2)}" +
+    "@media (prefers-reduced-motion:reduce){.ss-sky,.topbar.ss-on::after{display:none}.topbar.ss-on h1{animation:none}}";
+  document.head.appendChild(css2);
+  window.SEASON = { theme: th[2], title: th[3], fx: function () { return fxOn; } };
 })();
