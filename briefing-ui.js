@@ -109,7 +109,7 @@
         var nx = C.next && C.next[0], wb = (C.breaks || []).filter(function (b) { return /-12-|-01-/.test(b.from); })[0], br = (C.breaks || [])[0];
         cal = '<div class="br-sit"><span>' + (C.sitting_today ? '<b class="up">House of Commons sits today</b>' : nx ? "Commons next sits <b>" + dd(nx, true) + "</b>" : "No sitting days published") + "</span>" +
           (br ? "<span>Next break " + dd(br.from) + "–" + dd(br.to) + " · back " + dd(br.returns, true) + "</span>" : "") +
-          (wb && wb !== br ? "<span>Winter break from " + dd(wb.from) + " · returns <b>" + dd(wb.returns, true) + "</b></span>" : "") + "</div>";
+          (wb && wb !== br ? "<span>Winter break from " + dd(wb.from) + " · returns <b>" + dd(wb.returns, true) + "</b></span>" : !wb && C.last && /-12-/.test(C.last) ? "<span>Rises for the holidays after <b>" + dd(C.last, true) + "</b> (2027 sitting dates not yet published)</span>" : "") + "</div>";
       }
       parts.push('<div class="br-lg"><h4>🇨🇦 Parliament of Canada' + (L.ca.session ? " · session " + esc(L.ca.session) : "") + "</h4>" + cal +
         (cb.length ? '<ul class="br-list">' + cb.map(function (b) { return billRow(b, false); }).join("") + "</ul>" : '<p class="note">No bills ' + (desk === "both" ? "on trade, agriculture, energy or the border " : "") + "moved in the last 14 days.</p>") + "</div>");

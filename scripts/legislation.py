@@ -84,7 +84,8 @@ def ca_bills(rows, now):
                     "ongoing": b.get("OngoingStageName") or "", "status": b.get("StatusName") or "", "last": last[:10] if last else None, "moved": moved,
                     "assent": bool(b.get("ReceivedRoyalAssentDateTime")), "sponsor": (b.get("SponsorPersonName") or "").strip(), "topics": tp,
                     "url": f"https://www.parl.ca/legisinfo/en/bill/{b.get('ParliamentNumber')}-{b.get('SessionNumber')}/{code.lower()}"})
-    out.sort(key=lambda x: (not x["moved"], x["assent"], -(int(re.sub(r"\D", "", x["last"] or "0") or 0))))
+    out.sort(key=lambda x: -(int(re.sub(r"\D", "", x["last"] or "0") or 0)))
+    out.sort(key=lambda x: (not x["moved"], not x["gov"]))   # moved government bills first, then other bills that moved, then the rest
     return out
 
 
