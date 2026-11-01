@@ -209,6 +209,11 @@ def build():
     for c in body["desks"]["us"]["top"]:
         if any(similar(c["title"], x["title"]) for x in body["desks"]["ca"]["top"]) and not any(similar(c["title"], x["title"]) for x in both["top"]):
             both["top"].append(dict(c, note="carried on both country desks"))
+    try:   # what Parliament and Congress are doing and when they sit (its own failures never stop the news desks)
+        import legislation
+        body["legislation"] = legislation.build(NOW)
+    except Exception as e:
+        body["health"]["legislation"] = type(e).__name__
     return body
 
 

@@ -24,6 +24,8 @@ jobs:
           cache-dependency-path: scripts/requirements.txt
       - run: pip install -r scripts/requirements.txt
       - name: Unit tests (clustering, tags, desk read)
-        run: python tests/test_briefing.py
+        run: python tests/test_briefing.py && python tests/test_legislation.py
       - name: Fetch, cluster, publish briefing.json
         run: python scripts/briefing.py
+        env:
+          CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
