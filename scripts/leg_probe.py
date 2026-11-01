@@ -4,6 +4,11 @@ K = os.environ.get("CONGRESS_API_KEY", "").strip()
 UA = {"User-Agent": "Mozilla/5.0 (desk briefing)"}
 mon = dt.date.today() + dt.timedelta(days=(7 - dt.date.today().weekday()) % 7)
 mon0 = dt.date.today() - dt.timedelta(days=dt.date.today().weekday())
+def note(t, body):
+    b = " ".join(str(body).split()).replace("%", "%25").replace(":", "%3A").replace(",", "%2C")
+    print(f"::notice title={t.replace(':', '').replace(',', ' ')}::{b}")
+
+
 U = [
     "https://www.parl.ca/legisinfo/en/bills/json",
     "https://www.parl.ca/legisinfo/en/bills/json?parlsession=45-1",
@@ -19,12 +24,12 @@ U = [
 for u in U:
     try:
         r = requests.get(u, headers=UA, timeout=25)
-        print("==", u, r.status_code, r.headers.get("Content-Type"), len(r.content)); print(r.text[:700].replace("\n", " ")); print()
+        note(f"{u[-60:]} {r.status_code} {r.headers.get('Content-Type')} {len(r.content)}", r.text[:600])
     except Exception as e:
-        print("==", u, type(e).__name__)
+        note(u[-60:], type(e).__name__)
 if K:
     for path in ["bill?format=json&limit=3&sort=updateDate+desc", "committee-meeting/119?format=json&limit=3", "house-vote/119/1?format=json&limit=2"]:
         r = requests.get("https://api.congress.gov/v3/" + path, params={"api_key": K}, timeout=25)
-        print("== congress", path, r.status_code); print(r.text[:1200].replace("\n", " ")); print()
+        note(f"congress {path[:40]} {r.status_code}", r.text[:900])
 else:
     print("no CONGRESS_API_KEY")
