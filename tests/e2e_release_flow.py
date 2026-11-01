@@ -113,7 +113,7 @@ async def main():
             check(f"[{tag}] put wall shift is detected when price breaks the old wall", ws and '"put"' in ws, ws)
             # every tab renders without broken values or script errors
             bad = {}
-            for t in ("corn", "wheat", "soybeans", "fx", "world", "events", "intel", "policy"):
+            for t in ("corn", "wheat", "soybeans", "fx", "world", "events", "intel", "briefing", "policy"):
                 if not await pg.query_selector(f"#tabbtn-{t}"):
                     continue
                 await pg.evaluate(f"document.getElementById('tabbtn-{t}').click()")

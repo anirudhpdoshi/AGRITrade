@@ -1,0 +1,29 @@
+name: North America briefing
+# US and Canada news desks plus the cross-border desk -> briefing.json on the `briefing` branch (read by the Briefing tab).
+# Every 30 minutes; a failure here never touches the rest of the desk (the last good briefing stays up).
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency:
+  group: briefing
+  cancel-in-progress: false
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+      - run: pip install -r scripts/requirements.txt
+      - name: Unit tests (clustering, tags, desk read)
+        run: python tests/test_briefing.py
+      - name: Fetch, cluster, publish briefing.json
+        run: python scripts/briefing.py
