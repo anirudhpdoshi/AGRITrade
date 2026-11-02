@@ -426,8 +426,7 @@
     return "<b>[BREAKING] – " + (us ? "US" : "Canada") + " " + esc(m.name) + " " + esc(m.period) + ": " + esc(m.value) + esc(u) + "</b>" +
       '<div class="fr-al"><div><i>Trigger</i>Printed ' + esc(m.value) + esc(u) + (c != null ? " vs forecast " + esc(c) + esc(u) : "") + (m.prior != null ? " (prior " + esc(m.prior) + esc(u) + ")" : "") + "</div>" +
       '<div><i>Market impact</i><span class="fr-imp ' + cls + '">' + esc(imp) + "</span></div>" +
-      "<div><i>Why it matters</i>" + (m.good === "heat" ? "Inflation surprises move rate expectations and the currency." : "A data surprise shifts growth and rate expectations for " + (us ? "the Fed and the US dollar." : "the Bank of Canada and the Canadian dollar.")) + "</div>" +
-      "<div><i>Source &amp; time</i>" + esc(m.src || "official release") + (m.seen_at ? " · released " + new Date(m.seen_at).toLocaleTimeString("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit" }) + " ET" : "") + "</div></div>";
+      "</div>";
   }
   function diff() {
     if (!ready() || window.DESK_LOCKED) return;

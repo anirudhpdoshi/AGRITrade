@@ -49,7 +49,7 @@
     var pin = list.filter(function (m) { return breaking(m) && now - m.t < 2 * 3600000; }), rest = list.filter(function (m) { return pin.indexOf(m) < 0; });
     function item(m) {
       var t = m._t || tagsOf(m), b = breaking(m), go = m.go ? ' data-evgo="' + esc(m.go) + '" role="link" tabindex="0"' : "";
-      return '<li class="fr-i' + (b ? " br" : "") + (go ? " go" : "") + '"' + go + ">" + (b ? '<span class="fr-bk">BREAKING</span>' : "") + '<div class="fr-h">' + m.h + "</div>" +
+      return '<li class="fr-i' + (b ? " br" : "") + (go ? " go" : "") + '"' + go + ">" + (b ? '<span class="fr-bk">BREAKING</span>' : "") + '<div class="fr-h">' + String(m.h).replace(/<div><i>(Why it matters|Source &amp; time)<\/i>[\s\S]*?<\/div>(?=<div><i>|<\/div>$)/g, "") + "</div>" +
         '<div class="fr-m"><span>' + hm(m.t) + " ET</span>" + Object.keys(t).map(function (k) { return '<span class="fr-t" style="--tc:' + TC[k] + '">' + TN[k] + "</span>"; }).join("") + (go ? '<span class="fr-o">Open →</span>' : "") + "</div></li>";
     }
     var dsep = "", body = rest.slice(0, 40).map(function (m) { var d = day(m.t), s = d !== dsep ? '<li class="fr-d">' + (d === day(now) ? "Today" : new Date(m.t).toLocaleDateString("en-US", { timeZone: "America/Toronto", weekday: "short", month: "short", day: "numeric" })) + "</li>" : ""; dsep = d; return s + item(m); }).join("");
@@ -114,8 +114,7 @@
     return "<b>[" + (a.kind === "news" ? "BREAKING" : "PRICE ALERT") + "] – " + esc(a.head.replace(/^(BREAKING|PRICE ALERT) – /, "")) + "</b>" +
       '<div class="fr-al"><div><i>Trigger</i>' + esc(a.trigger) + "</div>" +
       "<div><i>Market impact</i><span class=\"fr-imp " + imp + "\">" + esc(a.impact) + "</span>" + (a.status ? ' <span class="fr-st">' + esc(a.status) + "</span>" : "") + "</div>" +
-      "<div><i>Why it matters</i>" + esc(a.why) + "</div>" +
-      "<div><i>Source &amp; time</i>" + esc(a.src) + " · market " + etHM(a.mt) + " · published " + etHM(a.t) + (a.url && /^https?:/.test(a.url) ? ' · <a href="' + esc(a.url) + '" target="_blank" rel="noopener noreferrer">source</a>' : "") + "</div></div>";
+      "</div>";
   }
   function ingest(list) {
     if (!window.EVENTS || !EVENTS.log || !list) return;
