@@ -417,6 +417,18 @@
     if (!isFinite(od)) return false;
     return ds.some(function (d) { var t = Date.parse(d.slice(0, 10) + "T12:00:00Z"); return od >= t && od - t <= 3 * 86400000; });
   }
+  /* macro print in the desk alert format; impact follows the print vs forecast (else vs prior) and the series' good direction */
+  function relHTML(m) {
+    var u = m.unit === "K" ? "K" : m.unit || "", c = m.cons && m.cons.forecast != null ? m.cons.forecast : null, ref = c != null ? c : m.prior;
+    var d = ref == null ? 0 : m.value - ref, strong = m.good === "down" ? d < 0 : d > 0, us = m.group !== "ca";
+    var imp = Math.abs(d) < Math.pow(10, -(m.dec || 1)) / 2 ? "Mixed" : (strong === us ? "Bullish" : "Bearish") + " USD/CAD (" + (strong ? "stronger" : "weaker") + " " + (us ? "US" : "Canada") + " " + (m.good === "heat" ? "inflation" : "print") + " vs " + (c != null ? "forecast" : "prior") + ")";
+    var cls = /^Bullish/.test(imp) ? "bull" : /^Bearish/.test(imp) ? "bear" : "mix";
+    return "<b>[BREAKING] – " + (us ? "US" : "Canada") + " " + esc(m.name) + " " + esc(m.period) + ": " + esc(m.value) + esc(u) + "</b>" +
+      '<div class="fr-al"><div><i>Trigger</i>Printed ' + esc(m.value) + esc(u) + (c != null ? " vs forecast " + esc(c) + esc(u) : "") + (m.prior != null ? " (prior " + esc(m.prior) + esc(u) + ")" : "") + "</div>" +
+      '<div><i>Market impact</i><span class="fr-imp ' + cls + '">' + esc(imp) + "</span></div>" +
+      "<div><i>Why it matters</i>" + (m.good === "heat" ? "Inflation surprises move rate expectations and the currency." : "A data surprise shifts growth and rate expectations for " + (us ? "the Fed and the US dollar." : "the Bank of Canada and the Canadian dollar.")) + "</div>" +
+      "<div><i>Source &amp; time</i>" + esc(m.src || "official release") + (m.seen_at ? " · released " + new Date(m.seen_at).toLocaleTimeString("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit" }) + " ET" : "") + "</div></div>";
+  }
   function diff() {
     if (!ready() || window.DESK_LOCKED) return;
     var s = snap(), first = !base, today = dayIso(Date.now());
@@ -429,13 +441,13 @@
     if (first) (window.macroAll ? macroAll() : []).forEach(function (m) {   /* prints that landed today before the page opened */
       var t = m.seen_at ? Date.parse(m.seen_at) : NaN; if (isNaN(t) || Date.now() - t > 18 * 3600000 || !printable(m)) return;
       var u = m.unit === "K" ? "K" : m.unit || "";
-      log("release", "<b>" + (m.group === "ca" ? "Canada" : "US") + " " + esc(m.name) + "</b> " + esc(m.period) + ": <b>" + esc(m.value) + esc(u) + "</b>" + (m.prior != null ? " (prior " + esc(m.prior) + esc(u) + ")" : ""), "fx:macro@[data-mkey=\"" + m.key + "\"]", "mac|" + m.key + "|" + s.macro[m.key], t);
+      log("release", relHTML(m), "fx:macro@[data-mkey=\"" + m.key + "\"]", "mac|" + m.key + "|" + s.macro[m.key], t);
     });
     if (first) { delete s.pol; base = s; return; }   /* policy items are seeded on the next pass */
     (window.macroAll ? macroAll() : []).forEach(function (m) {
       if (base.macro[m.key] && s.macro[m.key] !== base.macro[m.key] && printable(m)) {
         var u = m.unit === "K" ? "K" : m.unit || "";
-        log("release", "<b>" + (m.group === "ca" ? "Canada" : "US") + " " + esc(m.name) + "</b> " + esc(m.period) + ": <b>" + esc(m.value) + esc(u) + "</b>" + (m.prior != null ? " (prior " + esc(m.prior) + esc(u) + ")" : ""), "fx:macro@[data-mkey=\"" + m.key + "\"]", "mac|" + m.key + "|" + s.macro[m.key]);
+        log("release", relHTML(m), "fx:macro@[data-mkey=\"" + m.key + "\"]", "mac|" + m.key + "|" + s.macro[m.key]);
       }
     });
     Object.keys(s.walls).forEach(function (k) {

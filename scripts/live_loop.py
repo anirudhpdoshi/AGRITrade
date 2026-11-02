@@ -15,6 +15,7 @@ from datetime import datetime, timedelta, timezone
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import update_data as U  # noqa: E402
 import policy_watch as PW  # noqa: E402
+import alerts as AL  # noqa: E402
 PW.TOR = U.TOR
 
 ROOT = U.ROOT
@@ -94,9 +95,19 @@ def setup_worktree():
         sh("git", "config", k, v, cwd=WT)
 
 
-def payload(D):
+def briefing_json():
+    """Desk briefing (news) from the briefing branch, for the news side of the alert engine."""
+    try:
+        sh("git", "fetch", "-q", "--depth", "1", "origin", "briefing")
+        return json.loads(sh("git", "show", "FETCH_HEAD:briefing.json").stdout)
+    except Exception as e:
+        print("[alerts] briefing unavailable:", str(e)[:120])
+        return None
+
+
+def payload(D, al=None):
     a = D["meta"]["asof"]
-    return {
+    return {"alerts": (al or {}).get("items", []),
         "fx": {"feed": D["fx"]["feed"], "intraday": D["fx"].get("intraday", []),
                "energy": D["fx"]["energy"], "wcs_diff": D["fx"]["wcs_diff"], "fxcross": D["fx"]["fxcross"], "yields_live": D["fx"].get("yields_live") or {}, "yields_live_ca": D["fx"].get("yields_live_ca") or {}},
         "grains": {k: {"intraday": g["fan"]["intraday"], "intraday_ts": g["fan"].get("intraday_ts"), "quotes": g.get("quotes") or {}} for k, g in D["grains"].items()},
@@ -136,6 +147,12 @@ def main():
             rel_out["policy_watch"] = {"asof": prev_live["rel"]["policy_watch"]["asof"], "set": {"policy_watch": D["policy_watch"]}}
     except Exception as e:
         print("policy carry-over skipped:", e)
+    AS = {}
+    try:   # today's fired alerts carry across runs, so a breakout never alerts twice
+        prev_al = (json.loads(open(os.path.join(WT, "live.json")).read()).get("alerts_state")) or {}
+        AS.update(prev_al)
+    except Exception:
+        pass
     while time.time() < stop:
         t0 = time.time()
         U.NOW = datetime.now(timezone.utc)
@@ -151,7 +168,8 @@ def main():
                 PW.apply_decisions(D)
                 rel_out["policy_watch"] = {"asof": U.iso(U.NOW), "set": {"policy_watch": D["policy_watch"], "fx.policy": D["fx"]["policy"],
                                            "macro": D.get("macro"), "macro_extra": D.get("macro_extra")}}
-                early = payload(D)
+                early = payload(D, AS)
+                early["alerts_state"] = AL.public(AS)
                 early["rel"] = rel_out
                 try:
                     publish({**early, "updated_at": U.iso(U.NOW), "ok": [], "failed": {}}, first)
@@ -174,6 +192,14 @@ def main():
             if time.time() - t1 > 20:
                 errs[name + "_slow"] = f"{time.time() - t1:.0f} s"
         it += 1
+        try:   # alert engine: prices every 3rd loop (~3 min; triggers use completed 5-min bars), news every 5th
+            if it % 3 == 1 or it % 5 == 1:
+                new = AL.run(D, AS, U.NOW, U.TOR, U.yf(), briefing=briefing_json() if it % 5 == 1 else None, prices=it % 3 == 1)
+                for x in new:
+                    print(f"::notice title=alert::{x['head']} | {x['trigger'][:150]}")
+        except Exception as e:
+            errs["alerts"] = str(e)[:160]
+            print("[alerts] failed:", e)
         for name, (kind, fn, paths) in REL.items():
             if not U.recent_release(D, kind) or rel_done(D, name):
                 continue
@@ -190,7 +216,8 @@ def main():
                     print(U.iso(U.NOW), "release not out yet:", name)
             except Exception as e:
                 print(f"[rel {name}] failed: {e}")
-        core = payload(D)
+        core = payload(D, AS)
+        core["alerts_state"] = AL.public(AS)
         if rel_out:
             core["rel"] = rel_out
         # publish on change, plus a heartbeat at least every 5 min even if every fast source failed, so the page can show
