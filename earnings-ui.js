@@ -163,10 +163,8 @@
   }
 
   /* ---------- views ---------- */
-  function protoBar() {
-    return '<div class="ue-proto"><b>LIVE</b><span>Refreshed on weekdays at about 10:15 am, 12:15, 2:15 and 4:15 pm ET within a daily call budget. This page never calls the data provider directly.</span>' +
-      '<span class="ue-act"><button class="ue-btn" data-ue="reload">Reload data</button><a class="ue-btn" href="' + RUN + '" target="_blank" rel="noopener noreferrer">Run the Action ↗</a></span></div>';
-  }
+  function protoBar() { return ""; }   /* info bar removed at the desk's request; data refreshes automatically */
+
   function topStrip() {
     var u = J.usage || {}, used = u.total || 0, bud = u.budget || 200, pc = Math.min(100, used / bud * 100), lr = J.last_run || {},
         made = (lr.made || []).length, sk = (lr.skipped || []).length, by = (lr.made || []).reduce(function (a, m) { a[m.endpoint] = (a[m.endpoint] || 0) + 1; return a; }, {});
