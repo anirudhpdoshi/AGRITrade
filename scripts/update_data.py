@@ -1530,7 +1530,8 @@ def macro(D, N, only=None):
         return False
     old = {m["key"]: m for m in D.get("macro", [])}
     try:
-        pmi_calendar(D)
+        if not only:   # the fast lane only re-reads the awaited series
+            pmi_calendar(D)
     except Exception as e:
         print(f"  pmi calendar: {type(e).__name__}")
     start = (NOW - timedelta(days=2650)).date().isoformat()   # ~7 years: 5-yr averages of y/y series
