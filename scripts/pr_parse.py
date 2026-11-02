@@ -14,7 +14,7 @@ LINES = [   # key, label regex (whole label, case-insensitive), allow-negative
     ("cogs", r"(total )?cost of (sales|revenues?|goods sold)", False),
     ("gp", r"(total )?gross (margin|profit)", True),
     ("opinc", r"(total )?(operating income( \(loss\))?|income( \(loss\))? from operations|operating profit)", True),
-    ("ni", r"net income( \(loss\))?( attributable to [\w\s.,&'’-]+)?", True),
+    ("ni", r"net (income|earnings)( \(loss\))?( attributable to [\w\s.,&'’()-]+)?", True),
 ]
 
 
@@ -74,8 +74,18 @@ def parse(html):
             continue   # the income statement table only
         tt = " ".join(" ".join(c for c in r if c) for r in T).lower()
         mult = 1e6 if "in millions" in tt or "in millions" in text[:20000] else 1e3 if "in thousands" in tt or "in thousands" in text[:20000] else 1e6
+        # column order: some companies put the prior year first (e.g. 2025 | 2026) — take the latest year's column
+        yrs = []
+        for r in T[:6]:
+            for c in r:
+                for y in re.findall(r"\b(20\d\d)\b", c):
+                    yrs.append(int(y))
+            if len(yrs) >= 2:
+                break
+        col = 1 if len(yrs) >= 2 and yrs[1] > yrs[0] else 0
         in_eps, total_rev = False, None
         for lab, nums in rows:
+            nums = nums[col:] if len(nums) > col else nums
             if not nums:
                 in_eps = in_eps or bool(re.search(r"(earnings|income|net income).*per (common )?share", lab))
                 continue
