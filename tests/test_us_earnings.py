@@ -90,7 +90,14 @@ ok(E.calendar_due(dict(cal, fetched_at=E.iso(sat - timedelta(hours=25))), sat)[0
 wed = ny(2026, 11, 4, 17, 30)
 cal2 = {"fetched_at": E.iso(wed - timedelta(minutes=90)), "rows": [{"symbol": "CF", "date": "2026-11-04", "epsActual": None, "w": True}]}
 ok(E.calendar_due(cal2, wed)[0] and "CF" in E.calendar_due(cal2, wed)[1], "report day without actuals -> hourly re-check")
-ok(not E.calendar_due(dict(cal2, fetched_at=E.iso(wed - timedelta(minutes=20))), wed)[0], "...but not more than hourly")
+ok(not E.calendar_due(dict(cal2, fetched_at=E.iso(wed - timedelta(minutes=10))), wed)[0], "...but not more than every 15 min")
+ok(E.calendar_due(dict(cal2, fetched_at=E.iso(wed - timedelta(minutes=20))), wed)[0], "15+ min old while pending -> due")
+cal3 = {"fetched_at": E.iso(wed - timedelta(minutes=30)), "rows": [{"symbol": "AAPL", "date": "2026-11-04", "epsActual": None, "top": True}]}
+ok(E.calendar_due(cal3, wed)[0], "a top-100 report pending after the close -> re-check")
+ok(not E.calendar_due(cal3, ny(2026, 11, 4, 11, 0))[0], "...but not before the close on report day (AMC)")
+sh = E.shape_calendar([{"symbol": "AAPL", "date": "2026-11-04", "epsActual": 2.1, "epsEstimated": 1.99}], set(), "a", "b", wed,
+                      {("AAPL", "2026-11-04"): {"symbol": "AAPL", "date": "2026-11-04", "epsActual": None}})
+ok(sh["rows"][0].get("top") and sh["rows"][0].get("seen_at") == E.iso(wed), "top-100 flag and first-seen release time recorded")
 ok(E.plan({"endpoints": {"earnings-calendar": {"status": "not_in_plan"}}}, [], [], sat) == [], "calendar out of plan -> never called")
 ok([c[0] for c in E.plan({}, [], [], sat)] == ["earnings-calendar"], "calendar is one call regardless of watchlist size")
 ok(E.surprise(1.1, 1.0) == 10.0 and E.surprise(-0.9, -1.0) == 10.0 and E.surprise(1, 0) is None, "surprise % vs |estimate|")

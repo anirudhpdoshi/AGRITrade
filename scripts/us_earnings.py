@@ -36,7 +36,12 @@ RUN_CAP = int(os.environ.get("FMP_RUN_CAP", "40"))
 FATAL = {401, 403, 429}        # bad key, plan blocked, limit reached -> stop the run
 CAL_BACK, CAL_AHEAD = 21, 60    # earnings-calendar window: last 3 weeks (results) + next 60 days (dates); FMP caps a window at 90 days
 CAL_MAX_HOURS = 24             # one calendar call a day covers every ticker...
-CAL_PENDING_MIN = 60           # ...plus a re-check (at most hourly) while a watchlist report is out but its actuals are not
+CAL_PENDING_MIN = 15           # ...plus a re-check (at most every 15 min) while a watchlist / top-100 report is out but its actuals are not
+# Largest US-listed companies by market value (desk coverage for "released" alerts). Static list, reviewed by hand.
+TOP100 = set("""AAPL MSFT NVDA GOOGL GOOG AMZN META AVGO TSLA BRK.B LLY JPM WMT V ORCL MA XOM UNH COST NFLX JNJ HD PG ABBV BAC
+CRM CVX KO AMD TMUS PLTR CSCO WFC ABT MRK IBM PM GE ACN LIN MCD DIS PEP INTU NOW TMO GS UBER ISRG MS CAT AXP VZ ADBE QCOM T BKNG
+TXN RTX PGR SPGI AMGN BSX C SCHW NEE BLK LOW HON DHR AMAT PFE UNP SYK ETN GILD TJX COP DE ADP KKR MU PANW BX LRCX ANET CMCSA KLAC
+VRTX ADI MDT CRWD APH NKE SBUX LMT MMC ICE CB SHOP MO SO PLD BA COF INTC""".split())
 RESTRICT_DAYS = 30             # a 402 on quote means "not in your plan": price comes from profile, quote re-tried after 30 days
 
 PROFILE_KEEP = ["symbol", "price", "change", "changePercentage", "volume", "companyName", "exchange", "exchangeFullName", "currency", "sector", "industry", "ceo", "country",
@@ -202,7 +207,9 @@ def calendar_due(cal, now, force=False):
     if age_h >= CAL_MAX_HOURS:
         return True, "calendar %d h old" % age_h
     today = now.astimezone(NY).date().isoformat()
-    pending = [r for r in cal.get("rows") or [] if r.get("w") and r.get("date") and r["date"] <= today and r.get("epsActual") is None]
+    pending = [r for r in cal.get("rows") or [] if (r.get("w") or r.get("top")) and r.get("date") and r["date"] <= today
+               and r["date"] >= (now.astimezone(NY).date() - timedelta(days=3)).isoformat() and r.get("epsActual") is None
+               and (r["date"] < today or now.astimezone(NY).hour >= (7 if r.get("time") == "bmo" else 16))]
     if pending and age_h * 60 >= CAL_PENDING_MIN:
         return True, "%s reported, actuals not in yet" % ",".join(sorted({r["symbol"] for r in pending}))
     return False, "calendar %.0f h old, nothing pending" % age_h
@@ -215,7 +222,7 @@ def surprise(act, est):
     return round((act - est) / abs(est) * 100, 1)
 
 
-def shape_calendar(res, watch, frm, to, now):
+def shape_calendar(res, watch, frm, to, now, prev=None):
     """Every row of a calendar response (the market-wide feed), watchlist rows flagged `w`, plus coverage counts."""
     res = res if isinstance(res, list) else []
     rows = []
@@ -226,6 +233,14 @@ def shape_calendar(res, watch, frm, to, now):
             r["rev_surprise_pct"] = surprise(x.get("revenueActual"), x.get("revenueEstimated"))
             if x["symbol"] in watch:
                 r["w"] = True
+            if x["symbol"] in TOP100:
+                r["top"] = True
+            p_ = (prev or {}).get((x["symbol"], x.get("date")))
+            if r.get("epsActual") is not None or r.get("revenueActual") is not None:
+                # first time the desk saw the numbers (≈ release time); rows already reported before tracking began get none
+                r["seen_at"] = (p_ or {}).get("seen_at") or (iso(now) if p_ is not None and p_.get("epsActual") is None and p_.get("revenueActual") is None else None)
+                if r["seen_at"] is None:
+                    r.pop("seen_at")
             rows.append(r)
     rows.sort(key=lambda r: (r.get("date") or "", r["symbol"]))
     return {"from": frm, "to": to, "fetched_at": iso(now), "rows_total": len(res),
@@ -328,6 +343,7 @@ def main():
     ap.add_argument("--add", default="", help="comma-separated company names to resolve with search-name this run")
     ap.add_argument("--check-plan", action="store_true", help="probe each endpoint once (~4 calls) to see what the FMP plan allows")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--calendar-only", action="store_true", help="only the earnings-calendar call, and only when due (release watch)")
     a = ap.parse_args()
     now = datetime.now(timezone.utc)
 
@@ -341,6 +357,11 @@ def main():
     usage = ledger_today(state.get("usage"), now)
 
     calls = plan(state, symbols, names, now, a.force, a.force_profile)
+    if a.calendar_only:
+        calls = [c for c in calls if c[0] == "earnings-calendar"]
+        if not calls:
+            print("calendar-only: nothing due — no FMP calls")
+            return
     room = allowance(usage)
     print(f"planned {len(calls)} call(s); allowance this run {room} (today {usage['total']}/{usage['budget']}, run cap {usage['run_cap']})")
     for c in calls:
@@ -403,7 +424,8 @@ def main():
                         queue.append(("profile", hit["symbol"], "new from search"))
             elif ep == "earnings-calendar":
                 frm, to = calendar_window(now)
-                calendar = shape_calendar(fmp("earnings-calendar", {"from": frm, "to": to}, key), set(symbols), frm, to, now)
+                prev_rows = {(r["symbol"], r.get("date")): r for r in (calendar.get("rows") or [])}
+                calendar = shape_calendar(fmp("earnings-calendar", {"from": frm, "to": to}, key), set(symbols), frm, to, now, prev_rows)
             else:
                 res = fmp(ep, {"symbol": arg}, key)
                 row = res[0] if isinstance(res, list) and res else None

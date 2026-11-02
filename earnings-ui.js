@@ -91,6 +91,10 @@
     ".ut-feed h3{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:12px 0 5px;display:flex;justify-content:space-between}.ut-feed h3 small{letter-spacing:0;text-transform:none;color:var(--faint);font-weight:400}" +
     ".ut-chips{display:flex;gap:5px;flex-wrap:wrap}.ut-chips button{appearance:none;border:1px solid var(--line2);background:none;color:var(--muted);border-radius:12px;padding:2px 9px;font:inherit;font-size:11.5px;cursor:pointer}" +
     ".ut-chips button[aria-pressed=true]{border-color:var(--cyan);color:var(--ink);background:rgba(56,182,201,.1)}" +
+    ".ut-ev.ut-new{background:rgba(224,69,58,.10);border:1px solid rgba(224,69,58,.55)!important;border-left:3px solid #e0453a!important;border-radius:6px}" +
+    ".ut-nb{display:inline-block;font:700 9.5px 'IBM Plex Mono',monospace;letter-spacing:.08em;background:#e0453a;color:#fff;border-radius:3px;padding:0 5px;margin-right:6px}" +
+    ".ut-top{font:700 9px 'IBM Plex Mono',monospace;color:#7dd8e6;border:1px solid rgba(125,216,230,.5);border-radius:3px;padding:0 4px;margin-left:5px}" +
+    ".ue-newb{display:inline-block;margin-left:6px;font:700 10px 'IBM Plex Mono',monospace;background:#e0453a;color:#fff;border-radius:8px;padding:0 6px}.ue-newb[hidden]{display:none}" +
     ".ut-ev{display:grid;grid-template-columns:1fr auto;gap:2px 8px;width:100%;appearance:none;text-align:left;font:inherit;color:inherit;border:0;border-bottom:1px solid var(--line);background:none;padding:7px 2px;cursor:pointer}" +
     ".ut-ev:hover{background:rgba(255,255,255,.025)}.ut-ev .t{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px}.ut-ev .d{font-size:11.5px;color:var(--faint)}" +
     ".ut-ev .r{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-align:right;color:var(--muted)}.ut-star{color:var(--amber);font-size:10px;margin-left:3px}" +
@@ -140,7 +144,7 @@
     var a = get("earnings.json", etag, function (t) { etag = t; }).then(function (j) { if (j) J = j; err = null; })
       .catch(function (e) { err = e === 404 ? "empty" : "down"; });
     var b = get("market.json", mEtag, function (t) { mEtag = t; }).then(function (j) { if (j) M = j; }).catch(function () {});
-    Promise.all([a, b]).then(function () { busy = false; render(); });
+    Promise.all([a, b]).then(function () { busy = false; try { notify(); } catch (e) {} if (P.classList.contains("active")) render(); });
   }
   function rows() {
     var C = (J && J.companies) || {};
@@ -260,7 +264,7 @@
         up.map(function (r) { var n = daysTo(r.date); return '<tr data-uesym="' + esc(r.symbol) + '"><td><span class="ue-sym">' + esc(r.symbol) + "</span></td><td>" + esc(dayLbl(r.date)) + "</td><td>" +
           (n === 0 ? '<b style="color:var(--amber)">today</b>' : n + " d") + "</td><td>" + esc(({ bmo: "before open", amc: "after close" })[r.time] || "—") + "</td><td>" + num(r.epsEstimated, 2) + "</td><td>" + big(r.revenueEstimated) + "</td></tr>"; }).join("") +
         "</tbody></table></div>" : '<p class="note">No watchlist name reports in the next ' + 60 + " days.</p>") +
-      (pend.length ? '<p class="note" style="color:var(--amber)">Reported, actuals not in yet: ' + pend.map(function (r) { return esc(r.symbol) + " (" + esc(dayLbl(r.date)) + ")"; }).join(", ") + " — the next run re-checks (at most hourly).</p>" : "") +
+      (pend.length ? '<p class="note" style="color:var(--amber)">Reported, actuals not in yet: ' + pend.map(function (r) { return esc(r.symbol) + " (" + esc(dayLbl(r.date)) + ")"; }).join(", ") + " — re-checked every 15 min until the numbers are in.</p>" : "") +
       '<div class="pi-l" style="margin:12px 0 2px">Recent results — actual vs estimate</div>' +
       (past.length ? '<div class="tbl-scroll"><table class="ue-t"><thead><tr><th>Company</th><th>Date</th><th>EPS act.</th><th>EPS est.</th><th>Surprise</th><th>Revenue act.</th><th>Revenue est.</th><th>Surprise</th></tr></thead><tbody>' +
         past.map(function (r) { return '<tr data-uesym="' + esc(r.symbol) + '"><td><span class="ue-sym">' + esc(r.symbol) + "</span></td><td>" + esc(dayLbl(r.date)) + "</td><td>" + num(r.epsActual, 2) + "</td><td>" + num(r.epsEstimated, 2) +
@@ -348,6 +352,26 @@
   }
   /* ---------- right: earnings intelligence feed (independent of the company lock) ---------- */
   function addDays(iso, n) { var d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+  function fresh(r) {   /* results that landed in the last 18 h (or today's, if the release time was not captured) */
+    if (r.epsActual == null && r.revenueActual == null) return false;
+    return r.seen_at ? Date.now() - Date.parse(r.seen_at) < 18 * 3600000 : r.date === todayNY();
+  }
+  function notify() {
+    var C = J && J.calendar; if (!C || !C.rows) return;
+    var F = C.rows.filter(function (r) { return fresh(r) && (r.top || r.w); });
+    var b = BTN.querySelector(".ue-newb"); if (!b) { b = document.createElement("span"); b.className = "ue-newb"; BTN.appendChild(b); }
+    b.textContent = F.length ? F.length + " NEW" : ""; b.hidden = !F.length;
+    if (!window.EVENTS || !EVENTS.log) return;
+    F.forEach(function (r) {
+      var e = r.eps_surprise_pct, v = r.rev_surprise_pct, bull = (e != null && e >= 1) && (v == null || v >= 0), bear = (e != null && e <= -1) && (v == null || v <= 0);
+      var imp = e == null ? "Mixed" : bull ? "Bullish" : bear ? "Bearish" : "Mixed", cls = imp === "Bullish" ? "bull" : imp === "Bearish" ? "bear" : "mix";
+      EVENTS.log("alert", "<b>[BREAKING] – " + esc(r.symbol) + " earnings released</b>" +
+        '<div class="fr-al"><div><i>Trigger</i>EPS ' + num(r.epsActual, 2) + (r.epsEstimated != null ? " vs est " + num(r.epsEstimated, 2) + (e != null ? " (" + (e > 0 ? "+" : "") + num(e, 1) + "%)" : "") : "") +
+        (r.revenueActual != null ? " · revenue " + big(r.revenueActual) + (r.revenueEstimated != null ? " vs est " + big(r.revenueEstimated) : "") : "") + "</div>" +
+        '<div><i>Market impact</i><span class="fr-imp ' + cls + '">' + imp + " " + esc(r.symbol) + "</span></div></div>",
+        "earnings", "earn|" + r.symbol + "|" + r.date, r.seen_at ? Date.parse(r.seen_at) : Date.now());
+    });
+  }
   function verdict(r) {
     if (r.epsActual == null && r.revenueActual == null) return r.date >= todayNY() ? '<span class="ut-b na">scheduled</span>' : '<span class="ut-b wait">awaiting results</span>';
     var v = r.eps_surprise_pct; if (v == null) return '<span class="ut-b na">no consensus</span>';
@@ -357,11 +381,11 @@
   function feed() {
     var C = J && J.calendar; if (!C || !C.fetched_at) return '<aside class="ut-feed tile"><h3>Earnings feed</h3><p class="note">The calendar has not been fetched yet — the next run of the Action makes one call for the whole market.</p></aside>';
     var t = todayNY(), tm = addDays(t, 1), dow = new Date(t + "T12:00:00Z").getUTCDay(), eow = addDays(t, 7 - (dow || 7)), eonw = addDays(eow, 7);
-    var L = C.rows.filter(function (r) { return (V.fw === "all" || r.w) && (V.ft === "any" || r.time === V.ft); });
-    var rel = L.filter(function (r) { return r.epsActual != null || r.revenueActual != null; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; }).slice(0, 25);
+    var L = C.rows.filter(function (r) { return (V.fw === "all" || (V.fw === "top" ? r.top : r.w)) && (V.ft === "any" || r.time === V.ft); });
+    var rel = L.filter(function (r) { return r.epsActual != null || r.revenueActual != null; }).sort(function (a, b) { return (fresh(b) - fresh(a)) || ((b.seen_at || "") > (a.seen_at || "") ? 1 : (b.seen_at || "") < (a.seen_at || "") ? -1 : 0) || (a.date < b.date ? 1 : -1); }).slice(0, 25);
     var up = L.filter(function (r) { return r.epsActual == null && r.revenueActual == null && r.date >= t; });
     var late = L.filter(function (r) { return r.epsActual == null && r.revenueActual == null && r.date < t && r.date >= addDays(t, -3); });
-    function ev(r) { return '<button class="ut-ev" data-utev="' + esc(r.symbol) + '"><span><span class="t">' + esc(r.symbol) + "</span>" + (r.w ? '<span class="ut-star" title="On your watchlist">★</span>' : "") +
+    function ev(r) { var nw = fresh(r); return '<button class="ut-ev' + (nw ? " ut-new" : "") + '" data-utev="' + esc(r.symbol) + '"><span>' + (nw ? '<span class="ut-nb">NEW</span>' : "") + '<span class="t">' + esc(r.symbol) + "</span>" + (r.w ? '<span class="ut-star" title="On your watchlist">★</span>' : "") + (r.top ? '<span class="ut-top" title="Top-100 US company">TOP 100</span>' : "") +
       ' <span class="d">' + esc(dayLbl(r.date)) + " · " + tlbl(r.time) + "</span></span><span>" + verdict(r) + "</span>" +
       '<span class="d">' + (r.epsActual != null ? "EPS " + num(r.epsActual, 2) + " vs " + (r.epsEstimated != null ? num(r.epsEstimated, 2) : "n/a") : "EPS est " + (r.epsEstimated != null ? num(r.epsEstimated, 2) : "unavailable")) + "</span>" +
       '<span class="r">' + (r.revenueActual != null ? "Rev " + big(r.revenueActual) + " vs " + (r.revenueEstimated != null ? big(r.revenueEstimated) : "n/a") : "Rev est " + (r.revenueEstimated != null ? big(r.revenueEstimated) : "n/a")) + "</span></button>" +
@@ -371,7 +395,7 @@
         wk = up.filter(function (r) { return r.date > tm && r.date <= eow; }), nwk = up.filter(function (r) { return r.date > eow && r.date <= eonw; });
     function chip(k, v, l) { return '<button data-utf="' + k + ":" + v + '" aria-pressed="' + (V[k] === v) + '">' + l + "</button>"; }
     return '<aside class="ut-feed tile" aria-label="Earnings intelligence feed"><div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0">Earnings feed</h2><span class="ue-age">fetched ' + esc(ago(C.fetched_at)) + "</span></div>" +
-      '<div class="ut-chips" style="margin-top:8px">' + chip("fw", "all", "All companies") + chip("fw", "w", "★ Watchlist") + "</div>" +
+      '<div class="ut-chips" style="margin-top:8px">' + chip("fw", "all", "All companies") + chip("fw", "top", "Top 100") + chip("fw", "w", "★ Watchlist") + "</div>" +
       '<div class="ut-chips" style="margin-top:5px">' + chip("ft", "any", "Any time") + chip("ft", "bmo", "BMO") + chip("ft", "amc", "AMC") + "</div>" +
       "<h3>Released<small>" + rel.length + "</small></h3>" + (rel.length ? rel.map(ev).join("") : '<p class="note">No published results in this window.</p>') +
       grp("Reported — awaiting numbers", late) + grp("Today", today) + grp("Tomorrow", tom) + grp("Later this week", wk) + grp("Next week", nwk) +
@@ -500,6 +524,8 @@
   setInterval(function () { if (P.classList.contains("active") && !window.DESK_LOCKED) { var h = P.querySelector(".ut-hdr"); if (h) { var d = document.createElement("div"); d.innerHTML = header(); h.replaceWith(d.firstChild); } } }, 60000);
   /* the JSON only changes when someone runs the Action, so fetch on open (at most once a minute) — no background polling */
   BTN.addEventListener("click", function () { render(); poll(); });
+  /* background watch: earnings.json every 3 min on any tab, so a release reaches the feed and the tab badge */
+  setInterval(function () { if (!document.hidden) poll(true); }, 180000); setTimeout(function () { poll(true); }, 4000);
   window.addEventListener("desk:unlock", function () { if (P.classList.contains("active")) poll(true); });
   window.EARNINGS = { render: render, poll: poll, _data: function () { return J; } };
   render();

@@ -10,6 +10,7 @@ name: Scheduler (keepalive)
 #   Global grains       12:20 and 17:20 UTC Mon–Fri
 #   Live feed           every 30 min at :20/:50, 12:20–22:50 UTC Mon–Fri (each run loops ~33 min itself; hand-over kept off release minutes)
 #   Intelligence        hourly at :50, 10:50–22:50 UTC Mon–Fri
+#   US earnings         :17 at 14/16/18/20 UTC Mon–Fri; release watch (calendar only, when due) every 15 min 12–14 and 21–00 UTC
 on:
   schedule:
     - cron: "41 * * * *"
@@ -56,6 +57,12 @@ jobs:
               if [ "$m" -eq 50 ] && [ "$dow" -le 5 ] && [ "$h" -ge 10 ] && [ "$h" -le 22 ]; then fire intel.yml; fi
               # live-feed: :20 and :50, 12–22 UTC weekdays (off :00/:30/:45 so a hand-over never lands on a release or a central-bank decision)
               if [ $((m % 30)) -eq 20 ] && [ "$dow" -le 5 ] && [ "$h" -ge 12 ] && [ "$h" -le 22 ]; then fire live-feed.yml; fi
+              # us-earnings: full run ~9:17, 11:17, 1:17, 3:17 ET (14/16/18/20 UTC) weekdays; release watch (calendar call only, and
+              # only when a watchlist / top-100 report is out without actuals) every 15 min 12–14 UTC (pre-market) and 21–00 UTC (after the close)
+              if [ "$m" -eq 17 ] && [ "$dow" -le 5 ] && { [ "$h" -eq 14 ] || [ "$h" -eq 16 ] || [ "$h" -eq 18 ] || [ "$h" -eq 20 ]; }; then fire us-earnings.yml; fi
+              if [ $((m % 15)) -eq 3 ] && { { [ "$dow" -le 5 ] && { { [ "$h" -ge 12 ] && [ "$h" -le 14 ]; } || [ "$h" -ge 21 ]; }; } || { [ "$h" -eq 0 ] && [ "$dow" -ge 2 ] && [ "$dow" -le 6 ]; }; }; then
+                if gh workflow run us-earnings.yml --ref main -f calendar_only=true; then echo "$(date -u +%FT%TZ) dispatched us-earnings (release watch)"; else echo "::warning::release-watch dispatch failed"; fi
+              fi
               last="$slot"
             fi
             sleep $(( 60 - $(date -u +%S | sed 's/^0//') + 1 ))

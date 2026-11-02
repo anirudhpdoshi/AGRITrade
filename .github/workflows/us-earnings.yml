@@ -20,6 +20,10 @@ on:
         description: "Re-quote every symbol even if nothing can have changed"
         type: boolean
         default: false
+      calendar_only:
+        description: "Release watch: only the earnings-calendar call, and only when due"
+        type: boolean
+        default: false
       force_profile:
         description: "Refresh profiles even if under 7 days old"
         type: boolean
@@ -45,7 +49,7 @@ jobs:
         run: python scripts/us_market.py
         continue-on-error: true
       - name: Fetch what is due, publish earnings.json
-        run: python scripts/us_earnings.py ${{ inputs.force && '--force' || '' }} ${{ inputs.force_profile && '--force-profile' || '' }} ${{ inputs.check_plan && '--check-plan' || '' }} --add "$ADD"
+        run: python scripts/us_earnings.py ${{ inputs.force && '--force' || '' }} ${{ inputs.force_profile && '--force-profile' || '' }} ${{ inputs.check_plan && '--check-plan' || '' }} ${{ inputs.calendar_only && '--calendar-only' || '' }} --add "$ADD"
         env:
           FMP: ${{ secrets.FMP }}
           ADD: ${{ inputs.add }}
