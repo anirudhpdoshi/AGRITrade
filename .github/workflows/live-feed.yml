@@ -38,3 +38,5 @@ jobs:
         env:
           FAS_API_KEY: ${{ secrets.FAS_API_KEY }}
           BEA_API_KEY: ${{ secrets.BEA_API_KEY }}
+          FMP: ${{ secrets.FMP }}   # earnings release watch only (today's calendar, capped by EW_BUDGET)
+          EW_BUDGET: "120"

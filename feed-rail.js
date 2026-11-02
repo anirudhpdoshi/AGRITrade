@@ -107,7 +107,7 @@
   setInterval(watch, 1000); setTimeout(watch, 800);
 
   /* alert engine (server, fast lane) -> feed, in the desk format */
-  var GO = { corn: "corn:overview", wheat: "wheat:overview", soybeans: "soybeans:overview", fx: "fx:overview", energy: "fx:rates", metals: "world", world: "world", cb: "policy", macro: "briefing" };
+  var GO = { corn: "corn:overview", wheat: "wheat:overview", soybeans: "soybeans:overview", fx: "fx:overview", energy: "fx:rates", metals: "world", world: "world", cb: "policy", macro: "briefing", earn: "earnings" };
   function etHM(iso) { var t = Date.parse(iso); return isNaN(t) ? "" : hm(t) + " ET"; }
   function alertHTML(a) {
     var imp = /^Bullish/.test(a.impact) ? "bull" : /^Bearish/.test(a.impact) ? "bear" : "mix";

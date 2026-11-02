@@ -57,6 +57,8 @@ jobs:
               if [ "$m" -eq 50 ] && [ "$dow" -le 5 ] && [ "$h" -ge 10 ] && [ "$h" -le 22 ]; then fire intel.yml; fi
               # live-feed: :20 and :50, 12–22 UTC weekdays (off :00/:30/:45 so a hand-over never lands on a release or a central-bank decision)
               if [ $((m % 30)) -eq 20 ] && [ "$dow" -le 5 ] && [ "$h" -ge 12 ] && [ "$h" -le 22 ]; then fire live-feed.yml; fi
+              # live-feed also at 11:50 UTC (6:50 am ET in winter) so the 7:00 am BMO earnings window is covered
+              if [ "$m" -eq 50 ] && [ "$h" -eq 11 ] && [ "$dow" -le 5 ]; then fire live-feed.yml; fi
               # us-earnings: full run ~9:17, 11:17, 1:17, 3:17 ET (14/16/18/20 UTC) weekdays; release watch (calendar call only, and
               # only when a watchlist / top-100 report is out without actuals) every 15 min 12–14 UTC (pre-market) and 21–00 UTC (after the close)
               if [ "$m" -eq 17 ] && [ "$dow" -le 5 ] && { [ "$h" -eq 14 ] || [ "$h" -eq 16 ] || [ "$h" -eq 18 ] || [ "$h" -eq 20 ]; }; then fire us-earnings.yml; fi

@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import update_data as U  # noqa: E402
 import policy_watch as PW  # noqa: E402
 import alerts as AL  # noqa: E402
+import earn_watch as EWM  # noqa: E402
 PW.TOR = U.TOR
 
 ROOT = U.ROOT
@@ -105,9 +106,12 @@ def briefing_json():
         return None
 
 
+EARN_LIVE = {}
+
+
 def payload(D, al=None):
     a = D["meta"]["asof"]
-    return {"alerts": (al or {}).get("items", []),
+    return {"alerts": (al or {}).get("items", []), "earn_live": EARN_LIVE,
         "fx": {"feed": D["fx"]["feed"], "intraday": D["fx"].get("intraday", []),
                "energy": D["fx"]["energy"], "wcs_diff": D["fx"]["wcs_diff"], "fxcross": D["fx"]["fxcross"], "yields_live": D["fx"].get("yields_live") or {}, "yields_live_ca": D["fx"].get("yields_live_ca") or {}},
         "grains": {k: {"intraday": g["fan"]["intraday"], "intraday_ts": g["fan"].get("intraday_ts"), "quotes": g.get("quotes") or {}} for k, g in D["grains"].items()},
@@ -147,7 +151,15 @@ def main():
             rel_out["policy_watch"] = {"asof": prev_live["rel"]["policy_watch"]["asof"], "set": {"policy_watch": D["policy_watch"]}}
     except Exception as e:
         print("policy carry-over skipped:", e)
-    AS = {}
+    AS, ES = {}, {}
+    try:   # earnings watch: today's FMP call count and the releases already seen carry across runs
+        pl = json.loads(open(os.path.join(WT, "live.json")).read())
+        ES.update(pl.get("earn_state") or {})
+        _d = datetime.now(U.TOR).date().isoformat()
+        EARN_LIVE.update({k: v for k, v in (pl.get("earn_live") or {}).items() if v.get("date") == _d})
+    except Exception:
+        pass
+    EW = EWM.Watch(U.TOR, ES)
     try:   # today's fired alerts carry across runs, so a breakout never alerts twice
         prev_al = (json.loads(open(os.path.join(WT, "live.json")).read()).get("alerts_state")) or {}
         AS.update(prev_al)
@@ -218,6 +230,7 @@ def main():
                 print(f"[rel {name}] failed: {e}")
         core = payload(D, AS)
         core["alerts_state"] = AL.public(AS)
+        core["earn_state"] = ES
         if rel_out:
             core["rel"] = rel_out
         # publish on change, plus a heartbeat at least every 5 min even if every fast source failed, so the page can show
@@ -238,7 +251,41 @@ def main():
         hot = any(r.get("status") == "awaiting" and r.get("t_sched") and
                   U.NOW - datetime.fromisoformat(r["t_sched"]) < timedelta(hours=3)
                   for r in ((D.get("policy_watch") or {}).get(b) or {} for b in ("boc", "fed")))
-        time.sleep(max(5, (15 if hot else a.every) - (time.time() - t0)))
+        # earnings release watch: inside a reporting company's window poll every 10 s (first 2 min), then every 30 s,
+        # publishing the moment the 8-K or the numbers land; otherwise sleep as usual
+        try:
+            EW.load(U.NOW, str(ROOT))
+        except Exception as e:
+            print("[earn watch] load failed:", type(e).__name__)
+        end = t0 + (15 if hot else a.every)
+        while True:
+            now_ = datetime.now(timezone.utc)
+            iv = EW.interval(now_)
+            left = end - time.time()
+            if iv is None or left <= 0:
+                break
+            time.sleep(min(iv, max(1, left)))
+            try:
+                al, live = EW.poll(datetime.now(timezone.utc))
+            except Exception as e:
+                print("[earn watch] poll failed:", type(e).__name__)
+                continue
+            if al or live:
+                if (AS.get("day") or "") != datetime.now(U.TOR).date().isoformat():
+                    AS.clear(); AS["day"] = datetime.now(U.TOR).date().isoformat()
+                AS["items"] = (AS.get("items", []) + al)[-60:]
+                EARN_LIVE.update(live)
+                for x in al:
+                    print(f"::notice title=earnings::{x['head']} | {x['trigger'][:150]}")
+                body = {**payload(D, AS), "alerts_state": AL.public(AS), "earn_state": ES, "rel": rel_out,
+                        "updated_at": U.iso(datetime.now(timezone.utc)), "ok": ok, "failed": errs}
+                try:
+                    publish(body, first)
+                    first = False
+                    last_pub = time.time()
+                except subprocess.CalledProcessError as e:
+                    print("publish failed:", e.stderr[-300:])
+        time.sleep(max(1, end - time.time()))
 
 
 if __name__ == "__main__":

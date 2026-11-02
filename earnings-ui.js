@@ -144,7 +144,7 @@
     var a = get("earnings.json", etag, function (t) { etag = t; }).then(function (j) { if (j) J = j; err = null; })
       .catch(function (e) { err = e === 404 ? "empty" : "down"; });
     var b = get("market.json", mEtag, function (t) { mEtag = t; }).then(function (j) { if (j) M = j; }).catch(function () {});
-    Promise.all([a, b]).then(function () { busy = false; try { notify(); } catch (e) {} if (P.classList.contains("active")) render(); });
+    Promise.all([a, b]).then(function () { busy = false; try { mergeLive(window.DESK_EARN_LIVE); notify(); } catch (e) {} if (P.classList.contains("active")) render(); });
   }
   function rows() {
     var C = (J && J.companies) || {};
@@ -264,7 +264,7 @@
         up.map(function (r) { var n = daysTo(r.date); return '<tr data-uesym="' + esc(r.symbol) + '"><td><span class="ue-sym">' + esc(r.symbol) + "</span></td><td>" + esc(dayLbl(r.date)) + "</td><td>" +
           (n === 0 ? '<b style="color:var(--amber)">today</b>' : n + " d") + "</td><td>" + esc(({ bmo: "before open", amc: "after close" })[r.time] || "—") + "</td><td>" + num(r.epsEstimated, 2) + "</td><td>" + big(r.revenueEstimated) + "</td></tr>"; }).join("") +
         "</tbody></table></div>" : '<p class="note">No watchlist name reports in the next ' + 60 + " days.</p>") +
-      (pend.length ? '<p class="note" style="color:var(--amber)">Reported, actuals not in yet: ' + pend.map(function (r) { return esc(r.symbol) + " (" + esc(dayLbl(r.date)) + ")"; }).join(", ") + " — re-checked every 15 min until the numbers are in.</p>" : "") +
+      (pend.length ? '<p class="note" style="color:var(--amber)">Reported, actuals not in yet: ' + pend.map(function (r) { return esc(r.symbol) + " (" + esc(dayLbl(r.date)) + ")"; }).join(", ") + " — watched every 10 s for 2 min from the release slot, then every 30 s until the numbers are in.</p>" : "") +
       '<div class="pi-l" style="margin:12px 0 2px">Recent results — actual vs estimate</div>' +
       (past.length ? '<div class="tbl-scroll"><table class="ue-t"><thead><tr><th>Company</th><th>Date</th><th>EPS act.</th><th>EPS est.</th><th>Surprise</th><th>Revenue act.</th><th>Revenue est.</th><th>Surprise</th></tr></thead><tbody>' +
         past.map(function (r) { return '<tr data-uesym="' + esc(r.symbol) + '"><td><span class="ue-sym">' + esc(r.symbol) + "</span></td><td>" + esc(dayLbl(r.date)) + "</td><td>" + num(r.epsActual, 2) + "</td><td>" + num(r.epsEstimated, 2) +
@@ -524,6 +524,18 @@
   setInterval(function () { if (P.classList.contains("active") && !window.DESK_LOCKED) { var h = P.querySelector(".ut-hdr"); if (h) { var d = document.createElement("div"); d.innerHTML = header(); h.replaceWith(d.firstChild); } } }, 60000);
   /* the JSON only changes when someone runs the Action, so fetch on open (at most once a minute) — no background polling */
   BTN.addEventListener("click", function () { render(); poll(); });
+  /* fast-lane release watch (10 s / 30 s around each company's slot): merge its numbers straight into the calendar */
+  function mergeLive(L) {
+    if (!L || !J || !J.calendar || !J.calendar.rows) return;
+    var changed = false;
+    Object.keys(L).forEach(function (s) { var x = L[s];
+      var r = J.calendar.rows.filter(function (q) { return q.symbol === s && q.date === x.date; })[0];
+      if (!r) { r = { symbol: s, date: x.date, top: x.top, w: x.w }; J.calendar.rows.push(r); }
+      if (r.epsActual == null && r.revenueActual == null) { ["epsActual", "epsEstimated", "revenueActual", "revenueEstimated", "eps_surprise_pct", "rev_surprise_pct", "seen_at"].forEach(function (k) { if (x[k] != null) r[k] = x[k]; }); changed = true; }
+    });
+    if (changed) { try { notify(); } catch (e) {} if (P.classList.contains("active")) render(); }
+  }
+  window.addEventListener("desk:earnlive", function (e) { mergeLive(e.detail); });
   /* background watch: earnings.json every 3 min on any tab, so a release reaches the feed and the tab badge */
   setInterval(function () { if (!document.hidden) poll(true); }, 180000); setTimeout(function () { poll(true); }, 4000);
   window.addEventListener("desk:unlock", function () { if (P.classList.contains("active")) poll(true); });

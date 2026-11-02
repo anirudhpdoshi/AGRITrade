@@ -52,4 +52,5 @@ jobs:
         run: python scripts/us_earnings.py ${{ inputs.force && '--force' || '' }} ${{ inputs.force_profile && '--force-profile' || '' }} ${{ inputs.check_plan && '--check-plan' || '' }} ${{ inputs.calendar_only && '--calendar-only' || '' }} --add "$ADD"
         env:
           FMP: ${{ secrets.FMP }}
+          FMP_DAILY_BUDGET: "110"   # the fast-lane release watch has its own 120; together under the free tier's 250
           ADD: ${{ inputs.add }}
