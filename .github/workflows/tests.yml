@@ -23,6 +23,7 @@ jobs:
       - run: python tests/test_legislation.py
       - run: python tests/test_us_earnings.py
       - run: python tests/test_us_market.py
+      - run: python tests/test_alerts.py
       - run: python tests/test_bea_fastlane.py && python tests/test_roll.py
       - run: python tests/test_yields.py
   e2e:
