@@ -46,6 +46,17 @@
     ["royal assent", "Royal assent", "The final step that makes a Canadian bill law, after it passes the House of Commons and the Senate."],
     ["second reading", "Second reading", "The debate and vote on a bill's principle; if it passes, the bill goes to committee for detailed study."],
     ["union calendar", "Union Calendar", "The U.S. House list of bills that raise or spend money, reported out of committee and eligible for a floor vote."],
+    ["expected move", "Expected move", "The ±1 standard-deviation price range the options market is pricing to an expiration (or to tomorrow): futures × ATM implied volatility × √(time). Roughly 2 in 3 outcomes should fall inside it — an implied range, not a forecast."],
+    ["expected range", "Expected range", "Price ± the expected move. A close outside it means the market moved more than options priced."],
+    ["dealer gamma", "Dealer gamma (GEX)", "Estimated $ change in option dealers' hedge for a 1% move, assuming dealers are long calls and short puts. Negative (short gamma) = hedging chases price and can extend moves; positive = hedging leans against moves."],
+    ["gamma flip", "Gamma flip", "The futures price where estimated dealer gamma changes sign — markets often behave differently either side of it."],
+    ["dte", "DTE", "Days to expiration of the option."],
+    ["atm iv", "ATM implied volatility", "Implied volatility of the at-the-money options — the market's central estimate of future swings."],
+    ["vol/oi", "Volume / open interest", "Contracts traded today ÷ contracts open. Well above normal = fresh positioning at that strike."],
+    ["premium", "Option premium (est.)", "Estimated $ spent on options: volume × model option value × 5,000 bu. The desk does not see actual fills."],
+    ["analogue", "Historical analogues", "Past sessions with similar implied volatility and positioning, and what happened the next day. Few sessions = low confidence; never a certainty."],
+    ["realized ÷ implied", "Realized ÷ implied", "Actual next-day move divided by the move options priced. Below 1 = options were rich (moves smaller than priced); above 1 = cheap."],
+    ["record book", "Record book", "Each session's options-implied range, kept with what the market actually did next."],
     ["usd/cad", "USD/CAD", "Canadian dollars per US dollar. Up = weaker loonie, which raises the C$ value of US-priced grain."],
     ["spread", "Spread", "The difference between two prices or yields — e.g. US minus Canada 10-year yield, a key driver of USD/CAD."]
   ];
