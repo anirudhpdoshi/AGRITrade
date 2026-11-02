@@ -2,6 +2,7 @@
 
 Rule set (desk system rule "INTRADAY BREAKING NEWS & MARKET ALERT ENGINE"):
   Price triggers on completed 5-minute bars, today only:
+    - new intraday high / low (after 9:45 ET, beyond the prior extreme by a buffer, at most once an hour per side)
     - cross of the 20 / 50 / 100 / 200-day moving average
     - break of the +-1 sigma / +-2 sigma band (sigma = 20-day stdev of daily log returns, around the prior close)
     - break of the grain options put wall (down) / call wall (up); wall = strike with the largest
@@ -31,6 +32,7 @@ WHY = {
     "ma": "The {n}-day average is a widely watched trend gauge; a confirmed cross often triggers trend-following and stop flows.",
     "sig1": "A move beyond 1 sigma of 20-day volatility is larger than roughly two days in three; positioning starts to adjust.",
     "sig2": "A move beyond 2 sigma is statistically unusual (about 1 day in 20) and tends to force hedging and stop-loss activity.",
+    "hod": "A fresh session extreme; stop orders and momentum flows cluster beyond the prior high/low.",
     "wall": "The largest open-interest strike ({n} notional) gave way; dealer hedging around it can now accelerate the move.",
 }
 
@@ -159,6 +161,22 @@ def scan_prices(D, state, now, tor, yf):
                         fire(f"{key}|{side}wall|{k_}|{now_et.date()}", f"PRICE ALERT – {label} {'call' if up else 'put'} wall",
                              f"{'Broke above the call wall' if up else 'Broke below the put wall'} at ${k_:.2f} ({oi:,} contracts ≈ {_money(notional)} notional; {note}); confirmed on the {bt.strftime('%-I:%M %p')} ET 5-min close {_fmt(key, bc)}.",
                              up, WHY["wall"].format(n=_money(notional)), at=bt)
+            # new intraday high / low (after 9:45 ET, 60-min cooldown per side, must extend the last alerted extreme)
+            if now_et.hour * 60 + now_et.minute >= 9 * 60 + 45 and len(bars) >= 4:
+                hi_prior = max(b[1] for b in bars[:-1])
+                lo_prior = min(b[2] for b in bars[:-1])
+                for up, ext, prior in ((True, bars[-1][1], hi_prior), (False, bars[-1][2], lo_prior)):
+                    beyond = ext >= prior + buf if up else ext <= prior - buf
+                    if not beyond or not ((c1 > prior) if up else (c1 < prior)):
+                        continue   # the close must hold beyond the old extreme too
+                    sk = f"{key}|{'hod' if up else 'lod'}"
+                    last = state.setdefault("ext", {}).get(sk)
+                    if last and (now - datetime.fromisoformat(last["t"]) < timedelta(minutes=60) or (ext < last["v"] + buf if up else ext > last["v"] - buf)):
+                        continue
+                    state["ext"][sk] = {"t": now.isoformat(), "v": ext}
+                    fire(f"{sk}|{now_et.date()}|{ext}", f"PRICE ALERT – {label}",
+                         f"New intraday {'high' if up else 'low'} {_fmt(key, ext)} (prior session {'high' if up else 'low'} {_fmt(key, prior)}); 5-min close {_fmt(key, c1)}.",
+                         up, WHY["hod"])
         except Exception as e:   # one instrument failing never stops the others
             print(f"  [alerts] {key}: {type(e).__name__}: {str(e)[:120]}")
     return out
