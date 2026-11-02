@@ -408,6 +408,15 @@
     return "";
   }
   function sk(v) { return "$" + (+v).toFixed(2); }
+  /* policy rates are published every day, even unchanged: they enter the feed only when the rate actually changes, and only
+     in the days right after a scheduled decision (decision day to +3 days, covering the next-day posting) */
+  function printable(m) {
+    if (m.freq !== "D") return true;
+    if (m.prior == null || +m.value === +m.prior) return false;
+    var ds = ((DATA.release_cal || {})[m.key] || {}).dates || [], od = Date.parse((m.obs_date || "") + "T12:00:00Z");
+    if (!isFinite(od)) return false;
+    return ds.some(function (d) { var t = Date.parse(d.slice(0, 10) + "T12:00:00Z"); return od >= t && od - t <= 3 * 86400000; });
+  }
   function diff() {
     if (!ready() || window.DESK_LOCKED) return;
     var s = snap(), first = !base, today = dayIso(Date.now());
@@ -418,13 +427,13 @@
         log("data", "<b>Updated</b> — " + esc(ASOF[k][0]) + detail(k), ASOF[k][1] + "@" + (WHERE[k] ? WHERE[k][1] : '[data-src="' + k + '"]'), "asof|" + k + "|" + v, first ? Date.parse(v) : 0);
     });
     if (first) (window.macroAll ? macroAll() : []).forEach(function (m) {   /* prints that landed today before the page opened */
-      var t = m.seen_at ? Date.parse(m.seen_at) : NaN; if (isNaN(t) || Date.now() - t > 18 * 3600000) return;
+      var t = m.seen_at ? Date.parse(m.seen_at) : NaN; if (isNaN(t) || Date.now() - t > 18 * 3600000 || !printable(m)) return;
       var u = m.unit === "K" ? "K" : m.unit || "";
       log("release", "<b>" + (m.group === "ca" ? "Canada" : "US") + " " + esc(m.name) + "</b> " + esc(m.period) + ": <b>" + esc(m.value) + esc(u) + "</b>" + (m.prior != null ? " (prior " + esc(m.prior) + esc(u) + ")" : ""), "fx:macro@[data-mkey=\"" + m.key + "\"]", "mac|" + m.key + "|" + s.macro[m.key], t);
     });
     if (first) { delete s.pol; base = s; return; }   /* policy items are seeded on the next pass */
     (window.macroAll ? macroAll() : []).forEach(function (m) {
-      if (base.macro[m.key] && s.macro[m.key] !== base.macro[m.key]) {
+      if (base.macro[m.key] && s.macro[m.key] !== base.macro[m.key] && printable(m)) {
         var u = m.unit === "K" ? "K" : m.unit || "";
         log("release", "<b>" + (m.group === "ca" ? "Canada" : "US") + " " + esc(m.name) + "</b> " + esc(m.period) + ": <b>" + esc(m.value) + esc(u) + "</b>" + (m.prior != null ? " (prior " + esc(m.prior) + esc(u) + ")" : ""), "fx:macro@[data-mkey=\"" + m.key + "\"]", "mac|" + m.key + "|" + s.macro[m.key]);
       }
