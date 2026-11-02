@@ -14,6 +14,7 @@ jobs:
       - run: node tests/co_engine.test.js
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
+      - run: pip install -q -r scripts/requirements.txt   # once, before any Python test (briefing/legislation import requests)
       - run: python tests/test_world.py
       - run: python tests/test_global_grains.py
       - run: python tests/test_intel.py
@@ -21,8 +22,8 @@ jobs:
       - run: python tests/test_legislation.py
       - run: python tests/test_us_earnings.py
       - run: python tests/test_us_market.py
-      - run: pip install -q -r scripts/requirements.txt && python tests/test_bea_fastlane.py && python tests/test_roll.py
-      - run: pip install -q -r scripts/requirements.txt && python tests/test_yields.py
+      - run: python tests/test_bea_fastlane.py && python tests/test_roll.py
+      - run: python tests/test_yields.py
   e2e:
     # the release flow end to end in a real browser: landed / awaiting / calendar-only rows, "See it" jump, NEW tabs and
     # cards, Milestones feed for macro, options and central-bank releases, wall shifts, and no NaN/undefined on any tab
