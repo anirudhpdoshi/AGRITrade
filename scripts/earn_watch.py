@@ -3,9 +3,9 @@
 For every top-100 / watchlist company that reports today (from earnings.json, FMP calendar: BMO / AMC), the watch opens
 at the company's release slot and polls
     every 10 s for the first 2 minutes, then every 30 s until its numbers are in (window closes 90 min after the slot).
-Two sources per poll:
-    SEC EDGAR submissions (free): the earnings 8-K (Item 2.02) — the first official sign the release is out
-    FMP earnings calendar for today (1 metered call covers every company): EPS / revenue actual vs estimate
+Numbers come from SEC EDGAR (free): the moment the earnings 8-K (Item 2.02) is accepted, its press release (exhibit 99.1)
+is read in the same poll. FMP supplies only what EDGAR has not: the schedule and the analyst estimates (already in
+earnings.json), plus a fallback read every 2 min while no readable 8-K exists.
 FMP calls are capped per day (EW_BUDGET, default 120, at most half per session (BMO / AMC); the 15-min earnings job keeps its own budget lower) and the key
 never reaches a log line (us_earnings.fmp scrubs it). The slot is BMO -> 7:00 ET, AMC -> 4:00 pm ET, unknown -> 4:00 pm:
 the free calendar gives the session, not the minute.
@@ -105,48 +105,76 @@ class Watch:
         return res if isinstance(res, list) else []
 
     # ------------------------------------------------------------------ one poll
+    def read_pr(self, s, f):
+        """Statement lines from the 8-K's exhibit 99.1, or {}."""
+        u = PP.exhibit_url(lambda x: requests.get(x, headers=SEC_UA, timeout=20), self._cik(s), f["acc"])
+        return (dict(PP.parse(requests.get(u, headers=SEC_UA, timeout=20).text), exhibit=u) if u else {})
+
+    def _numbers(self, s, row, x, now, src, alerts, live):
+        """Record one company's numbers (x: epsActual / revenueActual) against the calendar estimates in row."""
+        ee, re_ = row.get("epsEstimated"), row.get("revenueEstimated")
+        e, v = UE.surprise(x.get("epsActual"), ee), UE.surprise(x.get("revenueActual"), re_)
+        self.st["done"][s] = {"seen_at": now.isoformat(), "src": src}
+        live[s] = {"symbol": s, "date": row.get("date"), "epsActual": x.get("epsActual"), "epsEstimated": ee,
+                   "revenueActual": x.get("revenueActual"), "revenueEstimated": re_, "eps_surprise_pct": e, "rev_surprise_pct": v,
+                   "seen_at": now.isoformat(), "top": row.get("top"), "w": row.get("w"), "src": src}
+        imp = "Mixed" if e is None else "Bullish" if e >= 1 and (v is None or v >= 0) else "Bearish" if e <= -1 and (v is None or v <= 0) else "Mixed"
+        alerts.append({"id": f"earn|{s}|{row.get('date')}", "kind": "news", "tag": "earn", "t": now.isoformat(), "mt": x.get("at") or now.isoformat(),
+                       "head": f"BREAKING – {s} earnings: EPS {x.get('epsActual')}" + (f" vs est {ee}" if ee is not None else ""),
+                       "trigger": f"EPS ${x.get('epsActual')}" + (f" vs est ${ee} ({e:+.1f}%)" if e is not None else "") +
+                                  (f" · revenue {money(x.get('revenueActual'))}" + (f" vs est {money(re_)}" if re_ is not None else "") if x.get("revenueActual") is not None else "") +
+                                  (f" · 8-K accepted {fmt_t(x['at'], self.tor)}" if x.get("at") else ""),
+                       "impact": f"{imp} {s}", "why": "", "src": src, "url": x.get("url", "")})
+
     def poll(self, now):
-        """Returns (alerts, live rows) for whatever arrived since the last poll."""
+        """Returns (alerts, live rows, press-release rows). EDGAR is the source of the numbers: the moment the earnings 8-K
+        is accepted, exhibit 99.1 is read in the same poll. FMP is only a fallback (every 2 min while no readable 8-K)."""
         P = self.pending(now)
         if not P:
-            return [], {}
-        alerts, live = [], {}
-        for s in P:   # EDGAR first: free, and usually the first official sign
-            if s in self.st["filed"]:
-                continue
+            return [], {}, {}
+        alerts, live, prs = [], {}, {}
+        need_fmp = []
+        for s, row in P.items():
             try:
-                f = self.edgar(s, now)
+                f = self.st["filed"].get(s) or self.edgar(s, now)
             except Exception as e:
                 print(f"[earn watch] EDGAR {s}: {type(e).__name__}")
-                continue
-            if f:
-                self.st["filed"][s] = f
-                t = f.get("at") or now.isoformat()
-                alerts.append({"id": f"earn8k|{s}|{f['acc']}", "kind": "news", "tag": "earn", "t": now.isoformat(), "mt": t,
-                               "head": f"BREAKING – {s} files its earnings release with the SEC",
-                               "trigger": f"8-K Item 2.02 (results of operations) accepted by EDGAR {fmt_t(t, self.tor)}; numbers follow from the calendar feed.",
-                               "impact": "Mixed", "why": "", "src": "SEC EDGAR", "url": f["url"]})
-        try:
-            rows = self.fmp_today(now, "bmo" if all(r.get("time") == "bmo" for r in P.values()) else "amc")
-        except Exception as e:   # Fatal / network: message already scrubbed of the key
-            print("[earn watch] FMP:", str(e)[:120])
-            rows = []
-        for x in rows:
-            s = x.get("symbol")
-            if s not in P or (x.get("epsActual") is None and x.get("revenueActual") is None):
-                continue
-            e, v = UE.surprise(x.get("epsActual"), x.get("epsEstimated")), UE.surprise(x.get("revenueActual"), x.get("revenueEstimated"))
-            self.st["done"][s] = {"seen_at": now.isoformat(), "src": "watch"}
-            live[s] = {"symbol": s, "date": x.get("date"), "epsActual": x.get("epsActual"), "epsEstimated": x.get("epsEstimated"),
-                       "revenueActual": x.get("revenueActual"), "revenueEstimated": x.get("revenueEstimated"),
-                       "eps_surprise_pct": e, "rev_surprise_pct": v, "seen_at": now.isoformat(), "top": P[s].get("top"), "w": P[s].get("w")}
-            imp = "Mixed" if e is None else "Bullish" if e >= 1 and (v is None or v >= 0) else "Bearish" if e <= -1 and (v is None or v <= 0) else "Mixed"
-            alerts.append({"id": f"earn|{s}|{x.get('date')}", "kind": "news", "tag": "earn", "t": now.isoformat(), "mt": now.isoformat(),
-                           "head": f"BREAKING – {s} earnings: EPS {x.get('epsActual')}" + (f" vs est {x.get('epsEstimated')}" if x.get("epsEstimated") is not None else ""),
-                           "trigger": f"EPS ${x.get('epsActual')}" + (f" vs est ${x.get('epsEstimated')} ({e:+.1f}%)" if e is not None else "") +
-                                      (f" · revenue {money(x.get('revenueActual'))} vs est {money(x.get('revenueEstimated'))}" if x.get("revenueActual") is not None else ""),
-                           "impact": f"{imp} {s}", "why": "", "src": "FMP earnings calendar"})
-        return alerts, live
+                need_fmp.append(s); continue
+            if not f:
+                need_fmp.append(s); continue
+            self.st["filed"][s] = f
+            try:
+                vals = self.read_pr(s, f) if not f.get("pr_failed") else {}
+            except Exception as e:
+                print(f"[earn watch] press release {s}: {type(e).__name__}")
+                vals = {}
+            if vals.get("eps_d") is not None or vals.get("rev"):
+                prs[s] = dict(vals, date=row.get("date"), acc=f["acc"], at=f.get("at"), url=f["url"], read_at=now.isoformat())
+                self._numbers(s, row, {"epsActual": vals.get("eps_d"), "revenueActual": vals.get("rev"), "at": f.get("at"), "url": f["url"]},
+                              now, "SEC EDGAR 8-K press release (GAAP, unaudited)", alerts, live)
+            else:
+                f["pr_failed"] = True
+                need_fmp.append(s)
+                if not any(a["id"].startswith(f"earn8k|{s}|") for a in alerts):
+                    t = f.get("at") or now.isoformat()
+                    alerts.append({"id": f"earn8k|{s}|{f['acc']}", "kind": "news", "tag": "earn", "t": now.isoformat(), "mt": t,
+                                   "head": f"BREAKING – {s} files its earnings release with the SEC",
+                                   "trigger": f"8-K Item 2.02 accepted by EDGAR {fmt_t(t, self.tor)}; its tables could not be read, numbers follow from the calendar feed.",
+                                   "impact": "Mixed", "why": "", "src": "SEC EDGAR", "url": f["url"]})
+        last = self.st.get("fmp_at")
+        if need_fmp and (not last or (now - datetime.fromisoformat(last)).total_seconds() >= 120):
+            self.st["fmp_at"] = now.isoformat()
+            try:
+                rows = self.fmp_today(now, "bmo" if all(P[s].get("time") == "bmo" for s in need_fmp) else "amc")
+            except Exception as e:   # Fatal / network: message already scrubbed of the key
+                print("[earn watch] FMP:", str(e)[:120])
+                rows = []
+            for x in rows:
+                s = x.get("symbol")
+                if s in need_fmp and (x.get("epsActual") is not None or x.get("revenueActual") is not None):
+                    self._numbers(s, dict(P[s], epsEstimated=x.get("epsEstimated", P[s].get("epsEstimated")), revenueEstimated=x.get("revenueEstimated", P[s].get("revenueEstimated"))),
+                                  {"epsActual": x.get("epsActual"), "revenueActual": x.get("revenueActual")}, now, "FMP earnings calendar", alerts, live)
+        return alerts, live, prs
 
 
 def pr_pass(w, now, store):

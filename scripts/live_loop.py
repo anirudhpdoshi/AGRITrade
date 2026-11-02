@@ -278,11 +278,12 @@ def main():
                 break
             time.sleep(min(iv, max(1, left)))
             try:
-                al, live = EW.poll(datetime.now(timezone.utc))
+                al, live, prs = EW.poll(datetime.now(timezone.utc))
+                EARN_PR.update(prs)
             except Exception as e:
                 print("[earn watch] poll failed:", type(e).__name__)
                 continue
-            if al or live:
+            if al or live or prs:
                 if (AS.get("day") or "") != datetime.now(U.TOR).date().isoformat():
                     AS.clear(); AS["day"] = datetime.now(U.TOR).date().isoformat()
                 AS["items"] = (AS.get("items", []) + al)[-60:]

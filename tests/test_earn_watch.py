@@ -27,28 +27,30 @@ ok(w.interval(at(16, 0, 30)) == 10, "AMC slot 4:00 pm -> 10 s at 4:00:30")
 ok(w.interval(at(16, 3)) == 30, "after 2 minutes -> 30 s")
 ok(w.interval(at(17, 31)) is None, "window closes 90 min after the slot")
 
-calls = []
 w.key = "k"
-w.edgar = lambda s, now: {"acc": "0000320193-26-000101", "at": "2026-11-02T16:30:41-05:00", "url": "https://www.sec.gov/x"} if s == "AAPL" else None
+w.edgar = lambda s, now: {"acc": "0000320193-26-000101", "at": "2026-11-02T16:30:41-05:00", "url": "https://www.sec.gov/x"} if s == "AAPL" and now >= at(16, 0, 40) else None
+w.read_pr = lambda s, f: {"rev": 114.477e9, "eps_d": 2.10, "gm": 47.89, "exhibit": "https://www.sec.gov/ex991.htm"}
 state = {"n": 0}
 
 
 def fake_fmp(ep, params, key):
     state["n"] += 1
-    return [{"symbol": "AAPL", "date": "2026-11-02", "epsActual": 2.05 if state["n"] >= 2 else None, "epsEstimated": 1.99,
-             "revenueActual": 115e9 if state["n"] >= 2 else None, "revenueEstimated": 113.4e9}]
+    return []
 
 
 EW.UE.fmp = fake_fmp
-al, live = w.poll(at(16, 0, 40))
-ok(len(al) == 1 and "files its earnings release" in al[0]["head"] and "4:30:41 PM ET" in al[0]["trigger"], f"EDGAR 8-K alert first: {[a['head'] for a in al]}")
-ok(not live, "numbers not in yet -> nothing merged")
-al, live = w.poll(at(16, 1, 0))
-ok(len(al) == 1 and "EPS 2.05 vs est 1.99" in al[0]["head"] and al[0]["impact"].startswith("Bullish"), f"numbers alert with beat: {[a['head'] + ' / ' + a['impact'] for a in al]}")
-ok(live.get("AAPL", {}).get("epsActual") == 2.05 and live["AAPL"].get("seen_at"), "live row carries actuals and seen time")
+al, live, prs = w.poll(at(16, 0, 10))
+ok(state["n"] == 1 and not al, "no 8-K yet -> one FMP fallback read, nothing to report")
+w.poll(at(16, 0, 20))
+ok(state["n"] == 1, "FMP fallback at most every 2 minutes (10 s polls hit EDGAR only)")
+al, live, prs = w.poll(at(16, 0, 40))
+ok(len(al) == 1 and "EPS 2.1 vs est 1.99" in al[0]["head"] and "4:30:41 PM ET" in al[0]["trigger"] and al[0]["impact"].startswith("Bullish"),
+   f"8-K read in the same poll -> numbers alert from the press release: {[a['head'] + ' | ' + a['trigger'] for a in al]}")
+ok(live["AAPL"]["epsActual"] == 2.10 and live["AAPL"]["src"].startswith("SEC EDGAR") and prs["AAPL"]["gm"] == 47.89, "live row sourced from EDGAR; press-release lines stored")
+ok(state["n"] == 1, "no FMP call once the 8-K is readable")
 ok(w.interval(at(16, 1, 10)) is None, "AAPL done -> polling stops")
-ok(w.poll(at(16, 1, 20)) == ([], {}), "no repeat alerts")
-w2 = EW.Watch(TOR, {"day": "2026-11-02", "calls": EW.EW_BUDGET, "done": {}, "filed": {"AAPL": {}}}); w2.key = "k"; w2.rows = dict(w.rows)
+ok(w.poll(at(16, 1, 20)) == ([], {}, {}), "no repeat alerts")
+w2 = EW.Watch(TOR, {"day": "2026-11-02", "calls": EW.EW_BUDGET, "done": {}, "filed": {}}); w2.key = "k"; w2.rows = dict(w.rows); w2.edgar = lambda s, now: None
 n0 = state["n"]; w2.poll(at(16, 5))
 ok(state["n"] == n0, "daily FMP budget respected")
 print(f"{P}/{N} passed")
