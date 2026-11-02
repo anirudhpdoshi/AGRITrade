@@ -13306,7 +13306,7 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-11-02T10:00:33-05:00",
+   "updated_at": "2026-11-02T10:07:22-05:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
     "fx_spot": "2026-11-02T09:51:00-05:00",
@@ -13324,7 +13324,7 @@
     "news": "2026-11-02T09:45:39-05:00",
     "calendar": "2026-11-02T09:15:25-05:00",
     "releases": "2026-10-19T08:30:00-04:00",
-    "macro": "2026-11-02T10:00:33-05:00",
+    "macro": "2026-11-02T10:07:22-05:00",
     "exports": "2026-11-02T06:00:21-05:00",
     "wasde": "2026-11-02T06:00:21-05:00",
     "canada": "2026-11-02T06:00:21-05:00",
@@ -13347,37 +13347,10 @@
    },
    "last_run": {
     "ok": [
-     "policy_watch",
-     "fx_spot",
-     "fx_alpha",
-     "fx_closes",
-     "yields",
-     "cftc_fx",
-     "cftc_grains",
-     "grains_quote",
-     "yields_live",
-     "energy",
-     "crosses",
-     "calendar",
-     "fed_odds",
-     "releases",
-     "macro",
-     "settles",
-     "exports",
-     "wasde",
-     "canada",
-     "ca_calendar",
-     "sd_hist",
-     "inputs",
-     "ext",
-     "ca_retail",
-     "fx_model",
-     "optflow"
+     "macro"
     ],
-    "failed": [
-     "news"
-    ],
-    "at": "2026-11-02T10:00:33-05:00"
+    "failed": [],
+    "at": "2026-11-02T10:07:22-05:00"
    },
    "releases_checked": "2026-11-02T09:00:25-05:00",
    "exports_checked": "2026-11-02T06:00:21-05:00",
@@ -13488,11 +13461,14 @@
    "model_checked": "2026-11-02T09:00:25-05:00",
    "bea_status": {
     "ok": true,
-    "at": "2026-11-02T10:00:33-05:00"
+    "at": "2026-11-02T10:07:22-05:00"
    },
-   "macro_checked": "2026-11-02T10:00:33-05:00",
-   "last_errors": {
-    "news": "HTTPError: 503 Server Error: Service Unavailable for url: https://news.google.com/rss/search?q=corn+futures+OR+CBOT+corn+OR+corn+exports+when%3A3d&hl=en-CA&gl=CA&ceid=CA:en"
+   "macro_checked": "2026-11-02T08:22:22-05:00",
+   "macro_errors": {
+    "ca_emp": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)",
+    "ca_ur": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)",
+    "ca_gdp": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)",
+    "ca_gdpq": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)"
    }
   },
   "macro": [
@@ -16290,6 +16266,346 @@
     "seen_at": "2026-10-23T11:37:49-04:00"
    },
    {
+    "key": "us_ism",
+    "name": "ISM Manufacturing PMI",
+    "group": "us",
+    "unit": "",
+    "dec": 1,
+    "good": "up",
+    "freq": "M",
+    "measure": "",
+    "period": "Oct '26",
+    "obs_date": "2026-10-01",
+    "value": 55.5,
+    "prior": 54.5,
+    "chg": 1.0,
+    "history": [
+     [
+      "Feb '24",
+      47.8
+     ],
+     [
+      "Mar '24",
+      50.3
+     ],
+     [
+      "Apr '24",
+      49.2
+     ],
+     [
+      "Feb '26",
+      52.4
+     ],
+     [
+      "Mar '26",
+      52.7
+     ],
+     [
+      "Apr '26",
+      52.7
+     ],
+     [
+      "May '26",
+      54.0
+     ],
+     [
+      "Jun '26",
+      53.3
+     ],
+     [
+      "Jul '26",
+      55.6
+     ],
+     [
+      "Aug '26",
+      54.6
+     ],
+     [
+      "Sep '26",
+      54.5
+     ],
+     [
+      "Oct '26",
+      55.5
+     ]
+    ],
+    "src": "ISM Report On Business",
+    "hist24": [
+     [
+      "Feb '23",
+      47.7
+     ],
+     [
+      "Mar '23",
+      46.3
+     ],
+     [
+      "Apr '23",
+      47.1
+     ],
+     [
+      "May '23",
+      46.9
+     ],
+     [
+      "Jun '23",
+      46.0
+     ],
+     [
+      "Jul '23",
+      46.4
+     ],
+     [
+      "Aug '23",
+      47.6
+     ],
+     [
+      "Sep '23",
+      49.0
+     ],
+     [
+      "Oct '23",
+      46.7
+     ],
+     [
+      "Nov '23",
+      46.7
+     ],
+     [
+      "Dec '23",
+      47.4
+     ],
+     [
+      "Jan '24",
+      49.1
+     ],
+     [
+      "Feb '24",
+      47.8
+     ],
+     [
+      "Mar '24",
+      50.3
+     ],
+     [
+      "Apr '24",
+      49.2
+     ],
+     [
+      "Feb '26",
+      52.4
+     ],
+     [
+      "Mar '26",
+      52.7
+     ],
+     [
+      "Apr '26",
+      52.7
+     ],
+     [
+      "May '26",
+      54.0
+     ],
+     [
+      "Jun '26",
+      53.3
+     ],
+     [
+      "Jul '26",
+      55.6
+     ],
+     [
+      "Aug '26",
+      54.6
+     ],
+     [
+      "Sep '26",
+      54.5
+     ],
+     [
+      "Oct '26",
+      55.5
+     ]
+    ],
+    "seen_at": "2026-11-02T10:00:00-05:00",
+    "cons": {
+     "at": "2026-11-02T10:00",
+     "forecast": 54.5,
+     "previous": 54.5
+    }
+   },
+   {
+    "key": "us_ism_svc",
+    "name": "ISM Services PMI",
+    "group": "us",
+    "unit": "",
+    "dec": 1,
+    "good": "up",
+    "freq": "M",
+    "measure": "",
+    "period": "Sep '26",
+    "obs_date": "2026-09-01",
+    "value": 54.9,
+    "prior": 55.4,
+    "chg": -0.5,
+    "history": [
+     [
+      "Jan '24",
+      53.4
+     ],
+     [
+      "Feb '24",
+      52.6
+     ],
+     [
+      "Mar '24",
+      51.4
+     ],
+     [
+      "Jan '26",
+      53.8
+     ],
+     [
+      "Feb '26",
+      56.1
+     ],
+     [
+      "Mar '26",
+      54.0
+     ],
+     [
+      "Apr '26",
+      53.6
+     ],
+     [
+      "May '26",
+      54.5
+     ],
+     [
+      "Jun '26",
+      54.0
+     ],
+     [
+      "Jul '26",
+      54.1
+     ],
+     [
+      "Aug '26",
+      55.4
+     ],
+     [
+      "Sep '26",
+      54.9
+     ]
+    ],
+    "src": "ISM Report On Business",
+    "hist24": [
+     [
+      "Jan '23",
+      55.2
+     ],
+     [
+      "Feb '23",
+      55.1
+     ],
+     [
+      "Mar '23",
+      51.2
+     ],
+     [
+      "Apr '23",
+      51.9
+     ],
+     [
+      "May '23",
+      50.3
+     ],
+     [
+      "Jun '23",
+      53.9
+     ],
+     [
+      "Jul '23",
+      52.7
+     ],
+     [
+      "Aug '23",
+      54.5
+     ],
+     [
+      "Sep '23",
+      53.6
+     ],
+     [
+      "Oct '23",
+      51.8
+     ],
+     [
+      "Nov '23",
+      52.7
+     ],
+     [
+      "Dec '23",
+      50.6
+     ],
+     [
+      "Jan '24",
+      53.4
+     ],
+     [
+      "Feb '24",
+      52.6
+     ],
+     [
+      "Mar '24",
+      51.4
+     ],
+     [
+      "Jan '26",
+      53.8
+     ],
+     [
+      "Feb '26",
+      56.1
+     ],
+     [
+      "Mar '26",
+      54.0
+     ],
+     [
+      "Apr '26",
+      53.6
+     ],
+     [
+      "May '26",
+      54.5
+     ],
+     [
+      "Jun '26",
+      54.0
+     ],
+     [
+      "Jul '26",
+      54.1
+     ],
+     [
+      "Aug '26",
+      55.4
+     ],
+     [
+      "Sep '26",
+      54.9
+     ]
+    ],
+    "seen_at": null,
+    "cons": {
+     "at": "2026-11-04T10:00",
+     "forecast": 54.9,
+     "previous": 54.9
+    }
+   },
+   {
     "key": "ca_cpi",
     "name": "CPI",
     "group": "ca",
@@ -17858,6 +18174,176 @@
      ]
     ],
     "seen_at": "2026-10-30T08:30:18-04:00"
+   },
+   {
+    "key": "ca_ivey",
+    "name": "Ivey PMI (s.a.)",
+    "group": "ca",
+    "unit": "",
+    "dec": 1,
+    "good": "up",
+    "freq": "M",
+    "measure": "",
+    "period": "Sep '26",
+    "obs_date": "2026-09-01",
+    "value": 58.2,
+    "prior": 64.3,
+    "chg": -6.1,
+    "history": [
+     [
+      "Oct '25",
+      52.4
+     ],
+     [
+      "Nov '25",
+      48.4
+     ],
+     [
+      "Dec '25",
+      51.9
+     ],
+     [
+      "Jan '26",
+      50.9
+     ],
+     [
+      "Feb '26",
+      56.6
+     ],
+     [
+      "Mar '26",
+      49.7
+     ],
+     [
+      "Apr '26",
+      57.7
+     ],
+     [
+      "May '26",
+      58.2
+     ],
+     [
+      "Jun '26",
+      56.2
+     ],
+     [
+      "Jul '26",
+      55.1
+     ],
+     [
+      "Aug '26",
+      64.3
+     ],
+     [
+      "Sep '26",
+      58.2
+     ]
+    ],
+    "src": "Ivey PMI",
+    "hist24": [
+     [
+      "Oct '24",
+      52.0
+     ],
+     [
+      "Nov '24",
+      52.3
+     ],
+     [
+      "Dec '24",
+      54.7
+     ],
+     [
+      "Jan '25",
+      47.1
+     ],
+     [
+      "Feb '25",
+      55.3
+     ],
+     [
+      "Mar '25",
+      51.3
+     ],
+     [
+      "Apr '25",
+      47.9
+     ],
+     [
+      "May '25",
+      48.9
+     ],
+     [
+      "Jun '25",
+      53.3
+     ],
+     [
+      "Jul '25",
+      55.8
+     ],
+     [
+      "Aug '25",
+      50.1
+     ],
+     [
+      "Sep '25",
+      59.8
+     ],
+     [
+      "Oct '25",
+      52.4
+     ],
+     [
+      "Nov '25",
+      48.4
+     ],
+     [
+      "Dec '25",
+      51.9
+     ],
+     [
+      "Jan '26",
+      50.9
+     ],
+     [
+      "Feb '26",
+      56.6
+     ],
+     [
+      "Mar '26",
+      49.7
+     ],
+     [
+      "Apr '26",
+      57.7
+     ],
+     [
+      "May '26",
+      58.2
+     ],
+     [
+      "Jun '26",
+      56.2
+     ],
+     [
+      "Jul '26",
+      55.1
+     ],
+     [
+      "Aug '26",
+      64.3
+     ],
+     [
+      "Sep '26",
+      58.2
+     ]
+    ],
+    "seen_at": null,
+    "cons": {
+     "at": "2026-11-06T10:00",
+     "forecast": 57.7,
+     "previous": 58.2
+    }
    },
    {
     "key": "ca_gdpq",
@@ -26259,6 +26745,30 @@
      "2027-03-19T08:30"
     ],
     "src": "https://www150.statcan.gc.ca/n1/release-diffusion/2026-eng.pdf"
+   },
+   "us_ism": {
+    "dates": [
+     "2026-10-01T10:00",
+     "2026-11-02T10:00",
+     "2026-12-01T10:00",
+     "2027-01-04T10:00"
+    ],
+    "src": "https://www.ismworld.org/supply-management-news-and-reports/reports/rob-report-calendar/"
+   },
+   "us_ism_svc": {
+    "dates": [
+     "2026-10-05T10:00",
+     "2026-11-04T10:00",
+     "2026-12-03T10:00",
+     "2027-01-06T10:00"
+    ],
+    "src": "https://www.ismworld.org/supply-management-news-and-reports/reports/rob-report-calendar/"
+   },
+   "ca_ivey": {
+    "dates": [
+     "2026-11-06T10:00"
+    ],
+    "src": "https://iveypmi.uwo.ca/"
    }
   },
   "ext": {
@@ -32868,6 +33378,23 @@
       "dir_hit": null
      }
     }
+   }
+  },
+  "macro_cons": {
+   "us_ism": {
+    "at": "2026-11-02T10:00",
+    "forecast": 54.5,
+    "previous": 54.5
+   },
+   "us_ism_svc": {
+    "at": "2026-11-04T10:00",
+    "forecast": 54.9,
+    "previous": 54.9
+   },
+   "ca_ivey": {
+    "at": "2026-11-06T10:00",
+    "forecast": 57.7,
+    "previous": 58.2
    }
   }
  },
