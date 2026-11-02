@@ -1188,12 +1188,15 @@ MACRO = [
     ("us_retail",   "Retail sales",        "us", "fred", "RSAFS",           "pct",   "%",  1, "up",   (400000, 1200000)),
     ("us_gdp",      "Real GDP (q/q ann.)", "us", "fred", "A191RL1Q225SBEA", "level", "%",  1, "up",   (-40, 40)),
     ("us_umich",    "UMich sentiment",     "us", "fred", "UMCSENT",         "level", "",   1, "up",   (20, 120)),
+    ("us_ism",      "ISM Manufacturing PMI", "us", "ism", "manufacturing",  "level", "",   1, "up",   (25, 80)),
+    ("us_ism_svc",  "ISM Services PMI",    "us", "ism", "services",         "level", "",   1, "up",   (25, 80)),
     ("ca_cpi",      "CPI",                 "ca", "valet", "V41690973",      "yoy",   "%",  1, "heat", (100, 250)),
     ("ca_trim",     "CPI-trim",            "ca", "valet", "CPI_TRIM",       "level", "%",  1, "heat", (-2, 12)),
     ("ca_median",   "CPI-median",          "ca", "valet", "CPI_MEDIAN",     "level", "%",  1, "heat", (-2, 12)),
     ("ca_emp",      "Employment change",   "ca", "statcan", 2062811,        "diff",  "K",  1, "up",   (15000, 25000)),
     ("ca_ur",       "Unemployment rate",   "ca", "statcan", 2062815,        "level", "%",  1, "down", (2, 20)),
     ("ca_gdp",      "Real GDP",            "ca", "statcan", 65201210,       "pct",   "%",  1, "up",   (1500000, 3500000)),
+    ("ca_ivey",     "Ivey PMI (s.a.)",     "ca", "ivey", "sa",              "level", "",   1, "up",   (20, 85)),
     # chart-only series for the Macro sub-tab (quarterly GDP bars, policy-rate panels)
     ("ca_gdpq",     "Real GDP (q/q ann.)", "ca", "statcan", 62305752,       "qann",  "%",  1, "up",   (1500000, 3800000)),
     ("us_policy",   "Fed funds target (upper)", "us", "fred", "DFEDTARU",   "level", "%",  2, "heat", (0, 10)),
@@ -1440,6 +1443,84 @@ def recent_release(D, kind, hours=3):
     return any(NOW - timedelta(hours=hours) <= t <= NOW for t in _release_times(D, kind))
 
 
+# ---- purchasing managers' indexes (free, public pages; no keys) ----
+# ISM publishes each Report On Business through PR Newswire; the headline value is in the release title / URL
+# ("manufacturing-pmi-at-54-5-september-2026-..."). Ivey PMI (Canada) is published by Ivey Business School as a table.
+_MN = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
+_ISM_CACHE = {}
+
+
+def _ism(kind):
+    if "rows" not in _ISM_CACHE:
+        rows = {}
+        for u in ("https://www.prnewswire.com/news/institute-for-supply-management/",
+                  "https://www.prnewswire.com/news/institute-for-supply-management/?page=2&pagesize=100"):
+            try:
+                t = get(u, headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/124 Safari/537.36"}).text
+            except Exception:
+                continue
+            for k, v, mon, yr in re.findall(r"(manufacturing|services)-pmi-at-(\d{2}(?:-\d)?)-(" + "|".join(_MN) + r")-(\d{4})", t, re.I):
+                rows[(k.lower(), f"{yr}-{_MN.index(mon.lower()) + 1:02d}-01")] = float(v.replace("-", "."))
+        _ISM_CACHE["rows"] = rows
+    out = sorted((d, v) for (k, d), v in _ISM_CACHE["rows"].items() if k == kind)
+    if not out:
+        raise RuntimeError("ISM release list not readable")
+    return out
+
+
+def _ivey(_sid=None):
+    t = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", get("https://iveypmi.uwo.ca/historic-data/").text))
+    i = t.find("Seasonally Adjusted")   # the seasonally adjusted table comes first on the page
+    seen = {}
+    for mo, yr, v in re.findall(r"\b(\d{1,2})/(\d{4}) (\d{2}\.\d)(?: \d{2}\.\d){4}", t[i:] if i >= 0 else t):
+        seen.setdefault(f"{yr}-{int(mo):02d}-01", float(v))
+    if len(seen) < 3:
+        raise RuntimeError("Ivey PMI table not readable")
+    return sorted(seen.items())
+
+
+def _bizday(y, m, n):
+    """n-th business day of a month (weekends skipped; Jan 1 and US Labor Day skipped)."""
+    d, k = datetime(y, m, 1).date(), 0
+    while True:
+        hol = (d.month == 1 and d.day == 1) or (d.month == 9 and d.weekday() == 0 and d.day <= 7)
+        if d.weekday() < 5 and not hol:
+            k += 1
+            if k == n:
+                return d
+        d += timedelta(days=1)
+
+
+FF_MAP = {("USD", "ISM Manufacturing PMI"): "us_ism", ("USD", "ISM Services PMI"): "us_ism_svc", ("CAD", "Ivey PMI"): "ca_ivey"}
+
+
+def pmi_calendar(D):
+    """Release times for the PMIs: ISM = 1st / 3rd business day 10:00 ET; this week's exact times and the market
+    forecast from the public weekly calendar feed (no key)."""
+    cal = D.setdefault("release_cal", {})
+    t0 = NOW.astimezone(TOR)
+    for key, nth in (("us_ism", 1), ("us_ism_svc", 3)):
+        ds = []
+        for i in range(-1, 3):
+            y, m = t0.year + (t0.month - 1 + i) // 12, (t0.month - 1 + i) % 12 + 1
+            ds.append(_bizday(y, m, nth).isoformat() + "T10:00")
+        cal[key] = {"dates": ds, "src": "https://www.ismworld.org/supply-management-news-and-reports/reports/rob-report-calendar/"}
+    cons = D.setdefault("macro_cons", {})
+    try:
+        for e in get("https://nfs.faireconomy.media/ff_calendar_thisweek.json").json():
+            key = FF_MAP.get((e.get("country"), e.get("title")))
+            if not key:
+                continue
+            at = datetime.fromisoformat(e["date"]).astimezone(TOR).strftime("%Y-%m-%dT%H:%M")
+            c = cal.setdefault(key, {"dates": [], "src": "https://iveypmi.uwo.ca/"})
+            if at not in c["dates"]:
+                c["dates"] = sorted(set(c["dates"] + [at]))[-6:]
+            if _num(e.get("forecast")) is not None:
+                cons[key] = {"at": at, "forecast": float(e["forecast"]), "previous": _num(e.get("previous"))}
+    except Exception as e:
+        print(f"  pmi calendar: weekly feed unavailable ({type(e).__name__})")
+
+
 def macro(D, N, only=None):
     """only = set of keys: re-read just those (the fast lane, minutes after a release); the rest are kept as they are."""
     meta = D["meta"]
@@ -1448,6 +1529,10 @@ def macro(D, N, only=None):
         print("  checked <2h ago — skipping")
         return False
     old = {m["key"]: m for m in D.get("macro", [])}
+    try:
+        pmi_calendar(D)
+    except Exception as e:
+        print(f"  pmi calendar: {type(e).__name__}")
     start = (NOW - timedelta(days=2650)).date().isoformat()   # ~7 years: 5-yr averages of y/y series
     out, errs = [], {}
     for key, name, group, src, sid, how, unit, dec, good, (lo, hi) in MACRO:
@@ -1455,7 +1540,8 @@ def macro(D, N, only=None):
             if key in old:
                 out.append(old[key])
             continue
-        label = {"fred": "FRED", "valet": "Bank of Canada Valet", "statcan": "Statistics Canada"}[src] + f" {sid}"
+        label = {"fred": "FRED", "valet": "Bank of Canada Valet", "statcan": "Statistics Canada", "ism": "ISM Report On Business",
+                 "ivey": "Ivey PMI"}[src] + ("" if src in ("ism", "ivey") else f" {sid}")
         try:
             raw = None
             if key in BEA_SRC and BEA_KEY:
@@ -1473,7 +1559,7 @@ def macro(D, N, only=None):
                     print(f"  {key}: Valet failed ({e_valet}); falling back to StatCan v{VALET_TO_STATCAN[sid]}")
                     raw = _statcan(VALET_TO_STATCAN[sid], 90)
             elif raw is None:
-                raw = (_fred(sid, start) if src == "fred" else _valet_series(sid, 0, start) if src == "valet" else _statcan(sid, 90))
+                raw = (_fred(sid, start) if src == "fred" else _ism(sid) if src == "ism" else _ivey(sid) if src == "ivey" else _valet_series(sid, 0, start) if src == "valet" else _statcan(sid, 90))
             if len(raw) < 3:
                 raise RuntimeError("too few points")
             if not all(lo <= v <= hi for _, v in raw[-6:]):
@@ -1508,6 +1594,13 @@ def macro(D, N, only=None):
             if longp:
                 out[-1]["long"] = longp
             _track(out[-1], old.get(key), pts_all)
+            if not out[-1].get("seen_at"):   # first time on the desk: if its scheduled release just passed, that is when it printed
+                for at in sorted((D.get("release_cal") or {}).get(key, {}).get("dates", []), reverse=True):
+                    t_ = datetime.fromisoformat(at).replace(tzinfo=TOR)
+                    if t_ <= NOW:
+                        if NOW - t_ < timedelta(hours=36):
+                            out[-1]["seen_at"] = iso(t_)
+                        break
             if key in ("ca_gdpq", "us_policy", "ca_policy"):
                 out[-1]["chart_only"] = True
         except Exception as e:
@@ -1517,6 +1610,12 @@ def macro(D, N, only=None):
     if not out:
         raise RuntimeError(f"all macro series failed: {errs}")
     D["macro"] = out
+    for m in out:
+        c = (D.get("macro_cons") or {}).get(m["key"])
+        if c:
+            m["cons"] = c
+        else:
+            m.pop("cons", None)
     if only:
         meta["asof"]["macro"] = iso(NOW)
         print(f"  macro (fast, {sorted(only)}): {len(only) - len(errs)} fresh, failed {list(errs)}")

@@ -417,6 +417,11 @@
       if (first ? SEED[k] && dayIso(Date.parse(v)) === today : (s.fp[k] !== base.fp[k] && base.fp[k] != null))
         log("data", "<b>Updated</b> — " + esc(ASOF[k][0]) + detail(k), ASOF[k][1] + "@" + (WHERE[k] ? WHERE[k][1] : '[data-src="' + k + '"]'), "asof|" + k + "|" + v, first ? Date.parse(v) : 0);
     });
+    if (first) (window.macroAll ? macroAll() : []).forEach(function (m) {   /* prints that landed today before the page opened */
+      var t = m.seen_at ? Date.parse(m.seen_at) : NaN; if (isNaN(t) || Date.now() - t > 18 * 3600000) return;
+      var u = m.unit === "K" ? "K" : m.unit || "";
+      log("release", "<b>" + (m.group === "ca" ? "Canada" : "US") + " " + esc(m.name) + "</b> " + esc(m.period) + ": <b>" + esc(m.value) + esc(u) + "</b>" + (m.prior != null ? " (prior " + esc(m.prior) + esc(u) + ")" : ""), "fx:macro@[data-mkey=\"" + m.key + "\"]", "mac|" + m.key + "|" + s.macro[m.key], t);
+    });
     if (first) { delete s.pol; base = s; return; }   /* policy items are seeded on the next pass */
     (window.macroAll ? macroAll() : []).forEach(function (m) {
       if (base.macro[m.key] && s.macro[m.key] !== base.macro[m.key]) {
