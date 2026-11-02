@@ -12834,7 +12834,7 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-10-31T02:02:01-04:00",
+   "updated_at": "2026-11-01T21:58:05-05:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
     "fx_spot": "2026-10-30T19:12:00-04:00",
@@ -12864,7 +12864,8 @@
     "fxopt": "2026-10-16T16:00:00-04:00",
     "model": "2026-10-31T02:02:01-04:00",
     "policy_watch": "2026-10-28T14:00:21-04:00",
-    "yields_live": "2026-10-30T16:55:00-04:00"
+    "yields_live": "2026-10-30T16:55:00-04:00",
+    "optflow": "2026-11-01T21:58:05-05:00"
    },
    "sources": {
     "news": "Google News RSS search, refreshed every 15 min",
@@ -12874,36 +12875,10 @@
    },
    "last_run": {
     "ok": [
-     "policy_watch",
-     "fx_spot",
-     "fx_alpha",
-     "fx_closes",
-     "yields",
-     "cftc_fx",
-     "cftc_grains",
-     "grains_quote",
-     "yields_live",
-     "energy",
-     "crosses",
-     "news",
-     "calendar",
-     "fed_odds",
-     "releases",
-     "macro",
-     "settles",
-     "exports",
-     "wasde",
-     "canada",
-     "ca_calendar",
-     "sd_hist",
-     "inputs",
-     "ext",
-     "fx_model"
+     "optflow"
     ],
-    "failed": [
-     "ca_retail"
-    ],
-    "at": "2026-10-31T02:02:01-04:00"
+    "failed": [],
+    "at": "2026-11-01T21:58:05-05:00"
    },
    "releases_checked": "2026-10-31T02:02:01-04:00",
    "exports_checked": "2026-10-30T20:30:25-04:00",
@@ -13022,9 +12997,6 @@
     "ca_ur": "HTTPError: 503 Server Error: Service Unavailable for url: https://www150.statcan.gc.ca/t1/wds/rest/getDataFromVectorsAndLatestNPeriods",
     "ca_gdp": "HTTPError: 503 Server Error: Service Unavailable for url: https://www150.statcan.gc.ca/t1/wds/rest/getDataFromVectorsAndLatestNPeriods",
     "ca_gdpq": "HTTPError: 503 Server Error: Service Unavailable for url: https://www150.statcan.gc.ca/t1/wds/rest/getDataFromVectorsAndLatestNPeriods"
-   },
-   "last_errors": {
-    "ca_retail": "HTTPError: 503 Server Error: Service Unavailable for url: https://www150.statcan.gc.ca/t1/wds/rest/getFullTableDownloadCSV/20100056/en"
    }
   },
   "macro": [
@@ -28589,6 +28561,1472 @@
     "stats": {
      "fnd": "Thu Dec 31, 2026",
      "hard": "Wed Dec 30, 2026"
+    }
+   }
+  },
+  "optflow": {
+   "corn": {
+    "asof": "2026-11-02T02:58:05.105198+00:00",
+    "price": 4.475,
+    "settle": 4.4775,
+    "settle_date": "2026-10-30",
+    "chains": [
+     {
+      "contract": "ZCZ26",
+      "chain": "Dec-26",
+      "expires": "2026-11-20",
+      "dte": 18.7,
+      "atm_iv": 17.2,
+      "calls_oi": 600867,
+      "puts_oi": 462281,
+      "pcr": 0.77,
+      "em": 0.1741,
+      "em_pct": 3.89,
+      "lo": 4.3009,
+      "hi": 4.6491,
+      "gex": -184517422,
+      "dex": -245880,
+      "has_vol": false,
+      "vol_c": null,
+      "vol_p": null,
+      "prem_c": null,
+      "prem_p": null,
+      "flip": 4.763,
+      "top_oi": [
+       {
+        "k": 5.0,
+        "coi": 50618,
+        "poi": 41440,
+        "cvol": null,
+        "pvol": null,
+        "gex": 382218,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 4.9,
+        "coi": 40307,
+        "poi": 30400,
+        "cvol": null,
+        "pvol": null,
+        "gex": 2096450,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 5.3,
+        "coi": 38734,
+        "poi": 15951,
+        "cvol": null,
+        "pvol": null,
+        "gex": 4452,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 5.2,
+        "coi": 32316,
+        "poi": 15565,
+        "cvol": null,
+        "pvol": null,
+        "gex": 24176,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 5.5,
+        "coi": 41572,
+        "poi": 1634,
+        "cvol": null,
+        "pvol": null,
+        "gex": 80,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 4.5,
+        "coi": 13154,
+        "poi": 29368,
+        "cvol": null,
+        "pvol": null,
+        "gex": -36942583,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 4.6,
+        "coi": 15514,
+        "poi": 26010,
+        "cvol": null,
+        "pvol": null,
+        "gex": -18529216,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 4.7,
+        "coi": 22284,
+        "poi": 18852,
+        "cvol": null,
+        "pvol": null,
+        "gex": 3651770,
+        "prem": 0,
+        "voi": null
+       }
+      ],
+      "top_gex": [
+       {
+        "k": 4.5,
+        "coi": 13154,
+        "poi": 29368,
+        "cvol": null,
+        "pvol": null,
+        "gex": -36942583,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 4.45,
+        "coi": 1343,
+        "poi": 14698,
+        "cvol": null,
+        "pvol": null,
+        "gex": -30873435,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 4.3,
+        "coi": 2268,
+        "poi": 24473,
+        "cvol": null,
+        "pvol": null,
+        "gex": -29536014,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 4.4,
+        "coi": 6172,
+        "poi": 18794,
+        "cvol": null,
+        "pvol": null,
+        "gex": -26693147,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 4.6,
+        "coi": 15514,
+        "poi": 26010,
+        "cvol": null,
+        "pvol": null,
+        "gex": -18529216,
+        "prem": 0,
+        "voi": null
+       }
+      ],
+      "leg": "near"
+     },
+     {
+      "contract": "ZCH27",
+      "chain": "Mar-27",
+      "expires": "2027-02-19",
+      "dte": 109.7,
+      "atm_iv": 17.52,
+      "calls_oi": 305364,
+      "puts_oi": 171403,
+      "pcr": 0.56,
+      "em": 0.4456,
+      "em_pct": 9.6,
+      "lo": 4.1944,
+      "hi": 5.0856,
+      "gex": -23377725,
+      "dex": -64081,
+      "has_vol": false,
+      "vol_c": null,
+      "vol_p": null,
+      "prem_c": null,
+      "prem_p": null,
+      "flip": 4.8047,
+      "top_oi": [
+       {
+        "k": 5.0,
+        "coi": 23880,
+        "poi": 22371,
+        "cvol": null,
+        "pvol": null,
+        "gex": 1022743,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 5.5,
+        "coi": 24509,
+        "poi": 6421,
+        "cvol": null,
+        "pvol": null,
+        "gex": 3954627,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 6.0,
+        "coi": 23068,
+        "poi": 543,
+        "cvol": null,
+        "pvol": null,
+        "gex": 686131,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 7.0,
+        "coi": 19489,
+        "poi": 0,
+        "cvol": null,
+        "pvol": null,
+        "gex": 2409,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 4.8,
+        "coi": 7787,
+        "poi": 11190,
+        "cvol": null,
+        "pvol": null,
+        "gex": -3093772,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 6.2,
+        "coi": 18450,
+        "poi": 49,
+        "cvol": null,
+        "pvol": null,
+        "gex": 215542,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 4.7,
+        "coi": 9001,
+        "poi": 8278,
+        "cvol": null,
+        "pvol": null,
+        "gex": 774336,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 4.9,
+        "coi": 8418,
+        "poi": 7839,
+        "cvol": null,
+        "pvol": null,
+        "gex": 461848,
+        "prem": 0,
+        "voi": null
+       }
+      ],
+      "top_gex": [
+       {
+        "k": 4.6,
+        "coi": 2563,
+        "poi": 12026,
+        "cvol": null,
+        "pvol": null,
+        "gex": -9044239,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 4.5,
+        "coi": 2173,
+        "poi": 9452,
+        "cvol": null,
+        "pvol": null,
+        "gex": -6646709,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 4.3,
+        "coi": 1114,
+        "poi": 9085,
+        "cvol": null,
+        "pvol": null,
+        "gex": -5442918,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 4.4,
+        "coi": 222,
+        "poi": 6366,
+        "cvol": null,
+        "pvol": null,
+        "gex": -5026680,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 4.55,
+        "coi": 1183,
+        "poi": 5543,
+        "cvol": null,
+        "pvol": null,
+        "gex": -4098084,
+        "prem": 0,
+        "voi": null
+       }
+      ],
+      "leg": "far"
+     }
+    ],
+    "next_day": {
+     "from": "2026-10-30",
+     "settle": 4.4775,
+     "iv": 17.2,
+     "em": 0.0485,
+     "lo": 4.429,
+     "hi": 4.526
+    },
+    "hist": [
+     {
+      "d": "2026-10-22",
+      "s": 4.605,
+      "iv": 17.49,
+      "em": 0.0507,
+      "lo": 4.5543,
+      "hi": 4.6557,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-23",
+       "close": 4.56,
+       "high": 4.6225,
+       "low": 4.5525,
+       "ret": -0.98,
+       "move": -0.045,
+       "breach_close": false,
+       "breach_intraday": true,
+       "realized_vs_implied": 0.89
+      }
+     },
+     {
+      "d": "2026-10-23",
+      "s": 4.56,
+      "iv": 17.89,
+      "em": 0.0514,
+      "lo": 4.5086,
+      "hi": 4.6114,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-26",
+       "close": 4.55,
+       "high": 4.56,
+       "low": 4.5025,
+       "ret": -0.22,
+       "move": -0.01,
+       "breach_close": false,
+       "breach_intraday": true,
+       "realized_vs_implied": 0.19
+      }
+     },
+     {
+      "d": "2026-10-26",
+      "s": 4.55,
+      "iv": 19.43,
+      "em": 0.0557,
+      "lo": 4.4943,
+      "hi": 4.6057,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-27",
+       "close": 4.4875,
+       "high": 4.55,
+       "low": 4.485,
+       "ret": -1.37,
+       "move": -0.0625,
+       "breach_close": true,
+       "breach_intraday": true,
+       "realized_vs_implied": 1.12
+      }
+     },
+     {
+      "d": "2026-10-27",
+      "s": 4.4875,
+      "iv": 19.02,
+      "em": 0.0538,
+      "lo": 4.4337,
+      "hi": 4.5413,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-28",
+       "close": 4.5175,
+       "high": 4.5475,
+       "low": 4.49,
+       "ret": 0.67,
+       "move": 0.03,
+       "breach_close": false,
+       "breach_intraday": true,
+       "realized_vs_implied": 0.56
+      }
+     },
+     {
+      "d": "2026-10-28",
+      "s": 4.5175,
+      "iv": 16.62,
+      "em": 0.0473,
+      "lo": 4.4702,
+      "hi": 4.5648,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-29",
+       "close": 4.5125,
+       "high": 4.5425,
+       "low": 4.475,
+       "ret": -0.11,
+       "move": -0.005,
+       "breach_close": false,
+       "breach_intraday": false,
+       "realized_vs_implied": 0.11
+      }
+     },
+     {
+      "d": "2026-10-29",
+      "s": 4.5125,
+      "iv": 16.94,
+      "em": 0.0482,
+      "lo": 4.4643,
+      "hi": 4.5607,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-30",
+       "close": 4.4775,
+       "high": 4.5225,
+       "low": 4.475,
+       "ret": -0.78,
+       "move": -0.035,
+       "breach_close": false,
+       "breach_intraday": false,
+       "realized_vs_implied": 0.73
+      }
+     },
+     {
+      "d": "2026-10-30",
+      "s": 4.4775,
+      "iv": 17.2,
+      "em": 0.0485,
+      "lo": 4.429,
+      "hi": 4.526,
+      "pcr": 0.77,
+      "gex": -184517422,
+      "flip": 4.763,
+      "contract": "ZCZ26"
+     }
+    ],
+    "analogues": {
+     "similar": {
+      "n": 6,
+      "avg": -0.47,
+      "median": -0.5,
+      "p_up": 17,
+      "p_down": 83,
+      "p_breach_close": 17,
+      "p_breach_intraday": 67,
+      "rv_iv": 0.6
+     },
+     "all": {
+      "n": 6,
+      "avg": -0.47,
+      "median": -0.5,
+      "p_up": 17,
+      "p_down": 83,
+      "p_breach_close": 17,
+      "p_breach_intraday": 67,
+      "rv_iv": 0.6
+     },
+     "rule": "IV within ±15% of today's, same side of put/call 1.0 and same sign of estimated net GEX",
+     "confidence": "Low"
+    }
+   },
+   "soybeans": {
+    "asof": "2026-11-02T02:58:05.105198+00:00",
+    "price": 12.34,
+    "settle": 12.3425,
+    "settle_date": "2026-10-30",
+    "chains": [
+     {
+      "contract": "ZSF27",
+      "chain": "Jan-27",
+      "expires": "2026-12-24",
+      "dte": 52.7,
+      "atm_iv": 13.87,
+      "calls_oi": 75919,
+      "puts_oi": 75550,
+      "pcr": 1.0,
+      "em": 0.6502,
+      "em_pct": 5.27,
+      "lo": 11.6898,
+      "hi": 12.9902,
+      "gex": -114096476,
+      "dex": -21826,
+      "has_vol": false,
+      "vol_c": null,
+      "vol_p": null,
+      "prem_c": null,
+      "prem_p": null,
+      "flip": 12.9912,
+      "top_oi": [
+       {
+        "k": 13.0,
+        "coi": 6230,
+        "poi": 4762,
+        "cvol": null,
+        "pvol": null,
+        "gex": 4269314,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 12.8,
+        "coi": 3405,
+        "poi": 6104,
+        "cvol": null,
+        "pvol": null,
+        "gex": -9894982,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 12.0,
+        "coi": 739,
+        "poi": 8228,
+        "cvol": null,
+        "pvol": null,
+        "gex": -30127951,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 12.5,
+        "coi": 2752,
+        "poi": 6016,
+        "cvol": null,
+        "pvol": null,
+        "gex": -14729076,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 11.5,
+        "coi": 135,
+        "poi": 8256,
+        "cvol": null,
+        "pvol": null,
+        "gex": -15344051,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 12.6,
+        "coi": 2028,
+        "poi": 4851,
+        "cvol": null,
+        "pvol": null,
+        "gex": -12175825,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 15.0,
+        "coi": 6659,
+        "poi": 0,
+        "cvol": null,
+        "pvol": null,
+        "gex": 35887,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 12.3,
+        "coi": 1539,
+        "poi": 4564,
+        "cvol": null,
+        "pvol": null,
+        "gex": -14168463,
+        "prem": 0,
+        "voi": null
+       }
+      ],
+      "top_gex": [
+       {
+        "k": 12.0,
+        "coi": 739,
+        "poi": 8228,
+        "cvol": null,
+        "pvol": null,
+        "gex": -30127951,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 12.4,
+        "coi": 1127,
+        "poi": 4672,
+        "cvol": null,
+        "pvol": null,
+        "gex": -16504608,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 11.5,
+        "coi": 135,
+        "poi": 8256,
+        "cvol": null,
+        "pvol": null,
+        "gex": -15344051,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 12.5,
+        "coi": 2752,
+        "poi": 6016,
+        "cvol": null,
+        "pvol": null,
+        "gex": -14729076,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 12.3,
+        "coi": 1539,
+        "poi": 4564,
+        "cvol": null,
+        "pvol": null,
+        "gex": -14168463,
+        "prem": 0,
+        "voi": null
+       }
+      ],
+      "leg": "near"
+     },
+     {
+      "contract": "ZSH27",
+      "chain": "Mar-27",
+      "expires": "2027-02-19",
+      "dte": 109.7,
+      "atm_iv": 14.41,
+      "calls_oi": 59946,
+      "puts_oi": 37314,
+      "pcr": 0.62,
+      "em": 0.9793,
+      "em_pct": 7.9,
+      "lo": 11.4182,
+      "hi": 13.3768,
+      "gex": 21527936,
+      "dex": 949,
+      "has_vol": false,
+      "vol_c": null,
+      "vol_p": null,
+      "prem_c": null,
+      "prem_p": null,
+      "flip": 12.0699,
+      "top_oi": [
+       {
+        "k": 14.0,
+        "coi": 13788,
+        "poi": 19,
+        "cvol": null,
+        "pvol": null,
+        "gex": 14006174,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 12.5,
+        "coi": 4661,
+        "poi": 2884,
+        "cvol": null,
+        "pvol": null,
+        "gex": 5478536,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 13.0,
+        "coi": 5633,
+        "poi": 1061,
+        "cvol": null,
+        "pvol": null,
+        "gex": 11765114,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 12.0,
+        "coi": 1877,
+        "poi": 4043,
+        "cvol": null,
+        "pvol": null,
+        "gex": -6219089,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 11.8,
+        "coi": 999,
+        "poi": 4167,
+        "cvol": null,
+        "pvol": null,
+        "gex": -8112592,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 13.6,
+        "coi": 4982,
+        "poi": 101,
+        "cvol": null,
+        "pvol": null,
+        "gex": 8047396,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 13.2,
+        "coi": 3041,
+        "poi": 1304,
+        "cvol": null,
+        "pvol": null,
+        "gex": 3947122,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 12.6,
+        "coi": 1360,
+        "poi": 2909,
+        "cvol": null,
+        "pvol": null,
+        "gex": -4680440,
+        "prem": 0,
+        "voi": null
+       }
+      ],
+      "top_gex": [
+       {
+        "k": 14.0,
+        "coi": 13788,
+        "poi": 19,
+        "cvol": null,
+        "pvol": null,
+        "gex": 14006174,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 13.0,
+        "coi": 5633,
+        "poi": 1061,
+        "cvol": null,
+        "pvol": null,
+        "gex": 11765114,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 11.8,
+        "coi": 999,
+        "poi": 4167,
+        "cvol": null,
+        "pvol": null,
+        "gex": -8112592,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 13.6,
+        "coi": 4982,
+        "poi": 101,
+        "cvol": null,
+        "pvol": null,
+        "gex": 8047396,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 13.5,
+        "coi": 4057,
+        "poi": 202,
+        "cvol": null,
+        "pvol": null,
+        "gex": 7034392,
+        "prem": 0,
+        "voi": null
+       }
+      ],
+      "leg": "far"
+     }
+    ],
+    "next_day": {
+     "from": "2026-10-30",
+     "settle": 12.3425,
+     "iv": 13.87,
+     "em": 0.1078,
+     "lo": 12.2347,
+     "hi": 12.4503
+    },
+    "hist": [
+     {
+      "d": "2026-10-22",
+      "s": 12.6475,
+      "iv": 13.3,
+      "em": 0.106,
+      "lo": 12.5415,
+      "hi": 12.7535,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-23",
+       "close": 12.685,
+       "high": 12.755,
+       "low": 12.635,
+       "ret": 0.3,
+       "move": 0.0375,
+       "breach_close": false,
+       "breach_intraday": true,
+       "realized_vs_implied": 0.35
+      }
+     },
+     {
+      "d": "2026-10-23",
+      "s": 12.685,
+      "iv": 13.55,
+      "em": 0.1083,
+      "lo": 12.5767,
+      "hi": 12.7933,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-26",
+       "close": 12.525,
+       "high": 12.62,
+       "low": 12.39,
+       "ret": -1.26,
+       "move": -0.16,
+       "breach_close": true,
+       "breach_intraday": true,
+       "realized_vs_implied": 1.48
+      }
+     },
+     {
+      "d": "2026-10-26",
+      "s": 12.525,
+      "iv": 14.38,
+      "em": 0.1135,
+      "lo": 12.4115,
+      "hi": 12.6385,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-27",
+       "close": 12.43,
+       "high": 12.615,
+       "low": 12.42,
+       "ret": -0.76,
+       "move": -0.095,
+       "breach_close": false,
+       "breach_intraday": false,
+       "realized_vs_implied": 0.84
+      }
+     },
+     {
+      "d": "2026-10-27",
+      "s": 12.43,
+      "iv": 13.98,
+      "em": 0.1095,
+      "lo": 12.3205,
+      "hi": 12.5395,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-28",
+       "close": 12.38,
+       "high": 12.5,
+       "low": 12.3625,
+       "ret": -0.4,
+       "move": -0.05,
+       "breach_close": false,
+       "breach_intraday": false,
+       "realized_vs_implied": 0.46
+      }
+     },
+     {
+      "d": "2026-10-28",
+      "s": 12.38,
+      "iv": 13.73,
+      "em": 0.1071,
+      "lo": 12.2729,
+      "hi": 12.4871,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-29",
+       "close": 12.3475,
+       "high": 12.385,
+       "low": 12.265,
+       "ret": -0.26,
+       "move": -0.0325,
+       "breach_close": false,
+       "breach_intraday": true,
+       "realized_vs_implied": 0.3
+      }
+     },
+     {
+      "d": "2026-10-29",
+      "s": 12.3475,
+      "iv": 13.44,
+      "em": 0.1045,
+      "lo": 12.243,
+      "hi": 12.452,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-30",
+       "close": 12.3425,
+       "high": 12.42,
+       "low": 12.3075,
+       "ret": -0.04,
+       "move": -0.005,
+       "breach_close": false,
+       "breach_intraday": false,
+       "realized_vs_implied": 0.05
+      }
+     },
+     {
+      "d": "2026-10-30",
+      "s": 12.3425,
+      "iv": 13.87,
+      "em": 0.1078,
+      "lo": 12.2347,
+      "hi": 12.4503,
+      "pcr": 1.0,
+      "gex": -114096476,
+      "flip": 12.9912,
+      "contract": "ZSF27"
+     }
+    ],
+    "analogues": {
+     "similar": {
+      "n": 6,
+      "avg": -0.4,
+      "median": -0.33,
+      "p_up": 17,
+      "p_down": 83,
+      "p_breach_close": 17,
+      "p_breach_intraday": 50,
+      "rv_iv": 0.58
+     },
+     "all": {
+      "n": 6,
+      "avg": -0.4,
+      "median": -0.33,
+      "p_up": 17,
+      "p_down": 83,
+      "p_breach_close": 17,
+      "p_breach_intraday": 50,
+      "rv_iv": 0.58
+     },
+     "rule": "IV within ±15% of today's, same side of put/call 1.0 and same sign of estimated net GEX",
+     "confidence": "Low"
+    }
+   },
+   "wheat": {
+    "asof": "2026-11-02T02:58:05.105198+00:00",
+    "price": 6.0325,
+    "settle": 6.035,
+    "settle_date": "2026-10-30",
+    "chains": [
+     {
+      "contract": "ZWZ26",
+      "chain": "Dec-26",
+      "expires": "2026-11-20",
+      "dte": 18.7,
+      "atm_iv": 26.29,
+      "calls_oi": 175654,
+      "puts_oi": 101137,
+      "pcr": 0.58,
+      "em": 0.3588,
+      "em_pct": 5.95,
+      "lo": 5.6737,
+      "hi": 6.3913,
+      "gex": -35683641,
+      "dex": -51765,
+      "has_vol": false,
+      "vol_c": null,
+      "vol_p": null,
+      "prem_c": null,
+      "prem_p": null,
+      "flip": 6.3914,
+      "top_oi": [
+       {
+        "k": 7.0,
+        "coi": 9282,
+        "poi": 4102,
+        "cvol": null,
+        "pvol": null,
+        "gex": 494411,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 8.0,
+        "coi": 12689,
+        "poi": 440,
+        "cvol": null,
+        "pvol": null,
+        "gex": 366,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 6.5,
+        "coi": 5189,
+        "poi": 6939,
+        "cvol": null,
+        "pvol": null,
+        "gex": -1671388,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 6.6,
+        "coi": 4898,
+        "poi": 4662,
+        "cvol": null,
+        "pvol": null,
+        "gex": 159232,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 6.0,
+        "coi": 3781,
+        "poi": 5418,
+        "cvol": null,
+        "pvol": null,
+        "gex": -3238022,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 6.8,
+        "coi": 5698,
+        "poi": 3466,
+        "cvol": null,
+        "pvol": null,
+        "gex": 630978,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 6.3,
+        "coi": 4698,
+        "poi": 4227,
+        "cvol": null,
+        "pvol": null,
+        "gex": 783891,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 7.5,
+        "coi": 8082,
+        "poi": 693,
+        "cvol": null,
+        "pvol": null,
+        "gex": 20463,
+        "prem": 0,
+        "voi": null
+       }
+      ],
+      "top_gex": [
+       {
+        "k": 5.9,
+        "coi": 120,
+        "poi": 5329,
+        "cvol": null,
+        "pvol": null,
+        "gex": -9907334,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 5.95,
+        "coi": 248,
+        "poi": 2845,
+        "cvol": null,
+        "pvol": null,
+        "gex": -5147887,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 5.85,
+        "coi": 37,
+        "poi": 2678,
+        "cvol": null,
+        "pvol": null,
+        "gex": -4687131,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 6.1,
+        "coi": 2615,
+        "poi": 4540,
+        "cvol": null,
+        "pvol": null,
+        "gex": -3676134,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 6.0,
+        "coi": 3781,
+        "poi": 5418,
+        "cvol": null,
+        "pvol": null,
+        "gex": -3238022,
+        "prem": 0,
+        "voi": null
+       }
+      ],
+      "leg": "near"
+     },
+     {
+      "contract": "ZWH27",
+      "chain": "Mar-27",
+      "expires": "2027-02-19",
+      "dte": 109.7,
+      "atm_iv": 22.88,
+      "calls_oi": 49083,
+      "puts_oi": 21810,
+      "pcr": 0.44,
+      "em": 0.7685,
+      "em_pct": 12.54,
+      "lo": 5.359,
+      "hi": 6.896,
+      "gex": -5398620,
+      "dex": -6075,
+      "has_vol": false,
+      "vol_c": null,
+      "vol_p": null,
+      "prem_c": null,
+      "prem_p": null,
+      "flip": 6.4227,
+      "top_oi": [
+       {
+        "k": 8.0,
+        "coi": 7034,
+        "poi": 52,
+        "cvol": null,
+        "pvol": null,
+        "gex": 809603,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 9.0,
+        "coi": 4419,
+        "poi": 9,
+        "cvol": null,
+        "pvol": null,
+        "gex": 47390,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 6.0,
+        "coi": 68,
+        "poi": 3389,
+        "cvol": null,
+        "pvol": null,
+        "gex": -3240128,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 10.0,
+        "coi": 2796,
+        "poi": 35,
+        "cvol": null,
+        "pvol": null,
+        "gex": 1674,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 7.5,
+        "coi": 2645,
+        "poi": 42,
+        "cvol": null,
+        "pvol": null,
+        "gex": 764512,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 7.6,
+        "coi": 2256,
+        "poi": 19,
+        "cvol": null,
+        "pvol": null,
+        "gex": 554779,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 6.5,
+        "coi": 1376,
+        "poi": 660,
+        "cvol": null,
+        "pvol": null,
+        "gex": 603342,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 6.3,
+        "coi": 451,
+        "poi": 1470,
+        "cvol": null,
+        "pvol": null,
+        "gex": -949414,
+        "prem": 0,
+        "voi": null
+       }
+      ],
+      "top_gex": [
+       {
+        "k": 6.0,
+        "coi": 68,
+        "poi": 3389,
+        "cvol": null,
+        "pvol": null,
+        "gex": -3240128,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 6.3,
+        "coi": 451,
+        "poi": 1470,
+        "cvol": null,
+        "pvol": null,
+        "gex": -949414,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 5.8,
+        "coi": 0,
+        "poi": 1020,
+        "cvol": null,
+        "pvol": null,
+        "gex": -918613,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 5.7,
+        "coi": 0,
+        "poi": 1088,
+        "cvol": null,
+        "pvol": null,
+        "gex": -909950,
+        "prem": 0,
+        "voi": null
+       },
+       {
+        "k": 8.0,
+        "coi": 7034,
+        "poi": 52,
+        "cvol": null,
+        "pvol": null,
+        "gex": 809603,
+        "prem": 0,
+        "voi": null
+       }
+      ],
+      "leg": "far"
+     }
+    ],
+    "next_day": {
+     "from": "2026-10-30",
+     "settle": 6.035,
+     "iv": 26.29,
+     "em": 0.0999,
+     "lo": 5.9351,
+     "hi": 6.1349
+    },
+    "hist": [
+     {
+      "d": "2026-10-22",
+      "s": 6.2475,
+      "iv": 24.8,
+      "em": 0.0976,
+      "lo": 6.1499,
+      "hi": 6.3451,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-23",
+       "close": 6.25,
+       "high": 6.315,
+       "low": 6.235,
+       "ret": 0.04,
+       "move": 0.0025,
+       "breach_close": false,
+       "breach_intraday": false,
+       "realized_vs_implied": 0.03
+      }
+     },
+     {
+      "d": "2026-10-23",
+      "s": 6.25,
+      "iv": 24.37,
+      "em": 0.0959,
+      "lo": 6.1541,
+      "hi": 6.3459,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-26",
+       "close": 6.16,
+       "high": 6.275,
+       "low": 6.125,
+       "ret": -1.44,
+       "move": -0.09,
+       "breach_close": false,
+       "breach_intraday": true,
+       "realized_vs_implied": 0.94
+      }
+     },
+     {
+      "d": "2026-10-26",
+      "s": 6.16,
+      "iv": 25.74,
+      "em": 0.0999,
+      "lo": 6.0601,
+      "hi": 6.2599,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-27",
+       "close": 6.1025,
+       "high": 6.185,
+       "low": 6.0975,
+       "ret": -0.93,
+       "move": -0.0575,
+       "breach_close": false,
+       "breach_intraday": false,
+       "realized_vs_implied": 0.58
+      }
+     },
+     {
+      "d": "2026-10-27",
+      "s": 6.1025,
+      "iv": 23.56,
+      "em": 0.0906,
+      "lo": 6.0119,
+      "hi": 6.1931,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-28",
+       "close": 5.99,
+       "high": 6.1475,
+       "low": 5.9325,
+       "ret": -1.84,
+       "move": -0.1125,
+       "breach_close": true,
+       "breach_intraday": true,
+       "realized_vs_implied": 1.24
+      }
+     },
+     {
+      "d": "2026-10-28",
+      "s": 5.99,
+      "iv": 23.41,
+      "em": 0.0883,
+      "lo": 5.9017,
+      "hi": 6.0783,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-29",
+       "close": 6.0375,
+       "high": 6.1,
+       "low": 5.9525,
+       "ret": 0.79,
+       "move": 0.0475,
+       "breach_close": false,
+       "breach_intraday": true,
+       "realized_vs_implied": 0.54
+      }
+     },
+     {
+      "d": "2026-10-29",
+      "s": 6.0375,
+      "iv": 23.69,
+      "em": 0.0901,
+      "lo": 5.9474,
+      "hi": 6.1276,
+      "seeded": true,
+      "out": {
+       "d": "2026-10-30",
+       "close": 6.035,
+       "high": 6.1,
+       "low": 5.9825,
+       "ret": -0.04,
+       "move": -0.0025,
+       "breach_close": false,
+       "breach_intraday": false,
+       "realized_vs_implied": 0.03
+      }
+     },
+     {
+      "d": "2026-10-30",
+      "s": 6.035,
+      "iv": 26.29,
+      "em": 0.0999,
+      "lo": 5.9351,
+      "hi": 6.1349,
+      "pcr": 0.58,
+      "gex": -35683641,
+      "flip": 6.3914,
+      "contract": "ZWZ26"
+     }
+    ],
+    "analogues": {
+     "similar": {
+      "n": 6,
+      "avg": -0.57,
+      "median": -0.49,
+      "p_up": 33,
+      "p_down": 67,
+      "p_breach_close": 17,
+      "p_breach_intraday": 50,
+      "rv_iv": 0.56
+     },
+     "all": {
+      "n": 6,
+      "avg": -0.57,
+      "median": -0.49,
+      "p_up": 33,
+      "p_down": 67,
+      "p_breach_close": 17,
+      "p_breach_intraday": 50,
+      "rv_iv": 0.56
+     },
+     "rule": "IV within ±15% of today's, same side of put/call 1.0 and same sign of estimated net GEX",
+     "confidence": "Low"
     }
    }
   }
