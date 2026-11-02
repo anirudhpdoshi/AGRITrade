@@ -138,7 +138,7 @@
 
   function repaint() {
     var t = document.querySelector(".mi-tile"); if (!t) return;
-    var y = window.scrollY, w = document.createElement("div"); w.innerHTML = window.fxMacroHTML(); t.replaceWith(w.firstChild); window.scrollTo(0, y);
+    var y = window.scrollY, w = document.createElement("div"); w.innerHTML = window.fxMacroHTML(); var n = w.firstChild; if (t.getAttribute("data-sec")) n.setAttribute("data-sec", t.getAttribute("data-sec")); t.replaceWith(n); window.scrollTo(0, y);
   }
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t || !t.closest(".mi-tile")) return;
