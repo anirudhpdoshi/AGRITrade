@@ -1,0 +1,20 @@
+name: probe-pmi
+on: workflow_dispatch
+permissions: {contents: read}
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          python3 - <<'PY'
+          import json,urllib.request
+          for c in ["ISM/pmi/pm","ISM/nm-pmi/pm","ISM/nmi/nm","ISM/pmi","ISM/nm-pmi"]:
+              try:
+                  u="https://api.db.nomics.world/v22/series/"+c+"?observations=1&limit=3"
+                  j=json.load(urllib.request.urlopen(u,timeout=20))
+                  docs=j.get("series",{}).get("docs",[])
+                  s=[(d.get("series_code"),d.get("series_name","")[:40],d.get("period",[])[-2:],d.get("value",[])[-2:]) for d in docs[:3]]
+                  print(f"::notice::{c} OK {s}")
+              except Exception as e:
+                  print(f"::notice::{c} ERR {str(e)[:80]}")
+          PY
