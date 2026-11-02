@@ -17,26 +17,15 @@ jobs:
           def n(tag,msg): print(f"::notice::{tag} {msg}"[:900])
           try:
               j=json.loads(g("https://nfs.faireconomy.media/ff_calendar_thisweek.json"))
-              us=[e for e in j if "PMI" in e.get("title","")]
-              n("FF",[ (e["country"],e["title"],e["date"],{k:e.get(k) for k in e if k not in("title","country","date")}) for e in us[:6]])
+              n("FF",[(e["country"],e["title"],e["date"],e.get("forecast")) for e in j if e["country"] in("USD","CAD") and "PMI" in e["title"]])
           except Exception as e: n("FF ERR",str(e)[:100])
-          try:
-              t=g("https://www.ismworld.org/supply-management-news-and-reports/reports/ism-report-on-business/pmi/october/")
-              m=re.findall(r"PMI[^<]{0,120}?(\d\d\.\d)",t)[:4]; n("ISM",f"len={len(t)} {m}")
-          except Exception as e: n("ISM ERR",str(e)[:100])
-          try:
-              t=g("https://www.prnewswire.com/news/institute-for-supply-management/")
-              m=re.findall(r'href="(/news-releases/[^"]*pmi[^"]*)"',t,re.I)[:4]; n("PRN",f"len={len(t)} {m}")
-          except Exception as e: n("PRN ERR",str(e)[:100])
-          try:
-              j=json.loads(g(f"https://financialmodelingprep.com/stable/economic-calendar?from=2026-10-01&to=2026-11-02&apikey={os.environ['FMP']}"))
-              rows=[r for r in j if "PMI" in str(r.get("event"))][:6] if isinstance(j,list) else j
-              n("FMP",str(rows)[:800])
-          except Exception as e: n("FMP ERR",re.sub(r"apikey=\w+","apikey=***",str(e))[:100])
-          try:
-              j=json.loads(g(f"https://finnhub.io/api/v1/calendar/economic?from=2026-10-01&to=2026-11-02&token={os.environ['FH']}"))
-              ec=j.get("economicCalendar",j) if isinstance(j,dict) else j
-              rows=[r for r in ec if "PMI" in str(r.get("event"))][:6] if isinstance(ec,list) else ec
-              n("FH",str(rows)[:800])
-          except Exception as e: n("FH ERR",re.sub(r"token=\w+","token=***",str(e))[:100])
+          for u in ["https://www.prnewswire.com/news/institute-for-supply-management/?page=1&pagesize=100","https://www.prnewswire.com/news/institute-for-supply-management/?page=2&pagesize=100"]:
+              try:
+                  t=g(u); m=re.findall(r'(manufacturing|services)-pmi-at-([0-9-]+?)-(january|february|march|april|may|june|july|august|september|october|november|december)-(\d{4})',t,re.I)
+                  n("PRN",f"{len(m)} first={m[:2]} last={m[-2:]}")
+              except Exception as e: n("PRN ERR",str(e)[:100])
+          for u in ["https://www.newswire.ca/news/ivey-business-school/","https://www.newswire.ca/news-releases/?keyword=ivey%20pmi","https://www.ivey.uwo.ca/ivey-pmi/"]:
+              try:
+                  t=g(u); m=re.findall(r'href="([^"]*pmi[^"]*)"',t,re.I)[:5]; n("IVEY",f"{u[:40]} len={len(t)} {m} {re.findall(r'PMI[^<]{0,80}',t)[:3]}")
+              except Exception as e: n("IVEY ERR",u[:40]+str(e)[:80])
           PY
