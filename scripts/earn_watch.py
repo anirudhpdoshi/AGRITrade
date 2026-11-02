@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 import requests
 
 import us_earnings as UE
+import pr_parse as PP
 
 EW_BUDGET = int(os.environ.get("EW_BUDGET", "120"))
 SEC_UA = {"User-Agent": "AGRITrade desk anirudh.p.doshi@gmail.com", "Accept-Encoding": "gzip, deflate"}
@@ -146,6 +147,33 @@ class Watch:
                                       (f" · revenue {money(x.get('revenueActual'))} vs est {money(x.get('revenueEstimated'))}" if x.get("revenueActual") is not None else ""),
                            "impact": f"{imp} {s}", "why": "", "src": "FMP earnings calendar"})
         return alerts, live
+
+
+def pr_pass(w, now, store):
+    """Press-release statement lines for every company reporting today (watched or not): once its earnings 8-K is on
+    EDGAR, read exhibit 99.1 (unaudited condensed statements). EDGAR is free; each symbol is checked at most once a minute."""
+    new = {}
+    last = w.st.setdefault("pr_try", {})
+    for s, r in w.rows.items():
+        if s in store or (last.get(s) and (now - datetime.fromisoformat(last[s])).total_seconds() < 60):
+            continue
+        day = now.astimezone(w.tor).date()
+        if now < slot(r, day, w.tor) - timedelta(hours=3 if r.get("time") == "bmo" else 6):
+            continue
+        last[s] = now.isoformat()
+        try:
+            f = (w.st.get("filed") or {}).get(s) or w.edgar(s, now)   # the 8-K alert itself stays with poll()
+            if not f:
+                continue
+            cik = w._cik(s)
+            u = PP.exhibit_url(lambda x: requests.get(x, headers=SEC_UA, timeout=20), cik, f["acc"])
+            vals = PP.parse(requests.get(u, headers=SEC_UA, timeout=20).text) if u else {}
+            if vals.get("rev"):
+                new[s] = dict(vals, date=r["date"], acc=f["acc"], at=f.get("at"), url=f["url"], exhibit=u, read_at=now.isoformat())
+                print(f"::notice title=press release::{s} " + " ".join(f"{k}={v:,.2f}" for k, v in vals.items()))
+        except Exception as e:
+            print(f"[earn watch] press release {s}: {type(e).__name__}")
+    return new
 
 
 def money(v):

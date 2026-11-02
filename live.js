@@ -442,6 +442,7 @@
     if (!L || !L.updated_at || !L.asof) return;
     if (lastLive && new Date(L.updated_at) <= new Date(lastLive.updated_at)) return;
     lastLive = L;
+    if (L.earn_pr) { window.DESK_EARN_PR = L.earn_pr; try { window.dispatchEvent(new CustomEvent("desk:earnpr", { detail: L.earn_pr })); } catch (e) {} }
     if (L.earn_live) { window.DESK_EARN_LIVE = L.earn_live; try { window.dispatchEvent(new CustomEvent("desk:earnlive", { detail: L.earn_live })); } catch (e) {} }
     if (L.alerts) { window.DESK_ALERTS = L.alerts; try { window.dispatchEvent(new CustomEvent("desk:alerts", { detail: L.alerts })); } catch (e) {} }
     var before = Object.assign({}, DATA.meta.asof);

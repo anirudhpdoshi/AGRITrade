@@ -106,12 +106,12 @@ def briefing_json():
         return None
 
 
-EARN_LIVE = {}
+EARN_LIVE, EARN_PR = {}, {}
 
 
 def payload(D, al=None):
     a = D["meta"]["asof"]
-    return {"alerts": (al or {}).get("items", []), "earn_live": EARN_LIVE,
+    return {"alerts": (al or {}).get("items", []), "earn_live": EARN_LIVE, "earn_pr": EARN_PR,
         "fx": {"feed": D["fx"]["feed"], "intraday": D["fx"].get("intraday", []),
                "energy": D["fx"]["energy"], "wcs_diff": D["fx"]["wcs_diff"], "fxcross": D["fx"]["fxcross"], "yields_live": D["fx"].get("yields_live") or {}, "yields_live_ca": D["fx"].get("yields_live_ca") or {}},
         "grains": {k: {"intraday": g["fan"]["intraday"], "intraday_ts": g["fan"].get("intraday_ts"), "quotes": g.get("quotes") or {}} for k, g in D["grains"].items()},
@@ -157,6 +157,8 @@ def main():
         ES.update(pl.get("earn_state") or {})
         _d = datetime.now(U.TOR).date().isoformat()
         EARN_LIVE.update({k: v for k, v in (pl.get("earn_live") or {}).items() if v.get("date") == _d})
+        _d10 = (datetime.now(U.TOR).date() - timedelta(days=10)).isoformat()
+        EARN_PR.update({k: v for k, v in (pl.get("earn_pr") or {}).items() if (v.get("date") or "") >= _d10})
     except Exception:
         pass
     EW = EWM.Watch(U.TOR, ES)
@@ -257,6 +259,16 @@ def main():
             EW.load(U.NOW, str(ROOT))
         except Exception as e:
             print("[earn watch] load failed:", type(e).__name__)
+        try:   # press-release statement lines (8-K exhibit 99.1) for today's reporters -> company cards
+            npr = EWM.pr_pass(EW, datetime.now(timezone.utc), EARN_PR)
+            if npr:
+                EARN_PR.update(npr)
+                publish({**payload(D, AS), "alerts_state": AL.public(AS), "earn_state": ES, "rel": rel_out,
+                         "updated_at": U.iso(datetime.now(timezone.utc)), "ok": ok, "failed": errs}, first)
+                first = False
+                last_pub = time.time()
+        except Exception as e:
+            print("[earn watch] press release pass failed:", type(e).__name__)
         end = t0 + (15 if hot else a.every)
         while True:
             now_ = datetime.now(timezone.utc)

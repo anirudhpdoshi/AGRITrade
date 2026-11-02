@@ -43,7 +43,7 @@
   /* ---------------- CSS ---------------- */
   var css = document.createElement("style");
   css.textContent =
-    ".cx-new{border:1px solid rgba(224,69,58,.6);border-left:4px solid #e0453a;background:rgba(224,69,58,.09);border-radius:10px;padding:12px 14px;margin-bottom:12px}.cx-new-h{font-weight:700;font-size:14px}.cx-new-b{display:inline-block;font:700 10.5px \"IBM Plex Mono\",monospace;letter-spacing:.1em;background:#e0453a;color:#fff;border-radius:3px;padding:1px 6px;margin-right:6px}.cx-new-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:8px}.cx-new .lab{font:600 10.5px \"IBM Plex Mono\",monospace;text-transform:uppercase;color:var(--muted)}.cx-new .m{font:600 20px \"IBM Plex Mono\",monospace}.cx-new .n{font-size:12.5px;color:var(--muted)}.cx-new .pos{color:#3fb97f}.cx-new .neg{color:#ff8a84}.cx-h{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:4px}.cx-h h2{margin:0}.cx-sub{font-size:12.5px;color:var(--muted)}" +
+    ".cx-prs{border:1px solid rgba(224,69,58,.55);border-left:4px solid #e0453a;background:rgba(224,69,58,.08);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:13px}.cx-prs small{color:var(--muted)}.cx-prs a{color:#7dd8e6}.cx-new{border:1px solid rgba(224,69,58,.6);border-left:4px solid #e0453a;background:rgba(224,69,58,.09);border-radius:10px;padding:12px 14px;margin-bottom:12px}.cx-new-h{font-weight:700;font-size:14px}.cx-new-b{display:inline-block;font:700 10.5px \"IBM Plex Mono\",monospace;letter-spacing:.1em;background:#e0453a;color:#fff;border-radius:3px;padding:1px 6px;margin-right:6px}.cx-new-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:8px}.cx-new .lab{font:600 10.5px \"IBM Plex Mono\",monospace;text-transform:uppercase;color:var(--muted)}.cx-new .m{font:600 20px \"IBM Plex Mono\",monospace}.cx-new .n{font-size:12.5px;color:var(--muted)}.cx-new .pos{color:#3fb97f}.cx-new .neg{color:#ff8a84}.cx-h{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:4px}.cx-h h2{margin:0}.cx-sub{font-size:12.5px;color:var(--muted)}" +
     ".cx-part{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:16px 0 6px}" +
     ".cx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:10px}" +
     ".cx-card{appearance:none;text-align:left;font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:11px 13px;display:flex;flex-direction:column;gap:3px;min-height:132px;transition:border-color .12s,transform .12s}" +
@@ -310,7 +310,7 @@
   /* ---------------- shared card page pieces ---------------- */
   function head(M, k, unit) {
     var q = L(M), m = q.m[k], y = q.m[k + "_yoy"], p = q.m[k + "_qoq"];
-    return '<div class="cx-hd"><div><div class="lab">' + esc(nm(k)) + " · " + esc(q.fl.label) + " (" + esc(q.end) + ")</div><div class=\"big\">" + fv(k, m && m.v) + "</div></div>" +
+    return prStrip(M, k) + '<div class="cx-hd"><div><div class="lab">' + esc(nm(k)) + " · " + esc(q.fl.label) + " (" + esc(q.end) + ")</div><div class=\"big\">" + fv(k, m && m.v) + "</div></div>" +
       '<div><div class="lab">YoY</div><div class="m">' + (y ? sgc(tone(k, y.v), fv(k + "_yoy", y.v)) : "—") + '</div></div><div><div class="lab">vs prior quarter</div><div class="m">' + (p ? sgc(tone(k, p.v), fv(k + "_qoq", p.v)) : "—") + "</div></div>" +
       (!PCT[k] && !DAYS[k] && !XR[k] && ttmI(M, k) != null ? '<div><div class="lab">TTM</div><div class="m">' + fv(k, ttmI(M, k)) + "</div></div>" : "") +
       '<div><div class="lab">Status</div><div class="m">' + stB(m) + '</div></div><div><div class="lab">Unit</div><div class="m">' + (unit || (PCT[k] ? "%" : DAYS[k] ? "days" : XR[k] ? "times" : "USD")) + "</div></div></div>";
@@ -353,6 +353,19 @@
   var BUILT = { "val-snap": 1, "val-scn": 1, "val-pe": 1, "val-rx": 1, snap: 1, verdicts: 1, health: 1, revenue: 1, gross: 1, operating: 1, eps: 1, cfo: 1, fcf: 1, "wc-ar": 1, "wc-inv": 1, "wc-ap": 1, "wc-ccc": 1, capex: 1, alloc: 1, debt: 1, costdebt: 1, maturity: 1, service: 1, liq: 1, returns: 1, lev: 1, eff: 1, warn: 1 };
   function cardTitle(id) { var t = ""; PARTS.forEach(function (p) { p[1].forEach(function (c) { if (c[0] === id) t = c[1]; }); }); return t; }
 
+  /* press-release figures (8-K exhibit 99.1, read by the fast lane minutes after filing) for a quarter not yet in XBRL */
+  function prFor(M) { var P = window.DESK_EARN_PR || {}, x = P[M.co.ticker], q = L(M); return x && x.date > q.end ? x : null; }
+  function nextQ(q) { return q.fl.q === 4 ? { q: 1, fy: q.fl.fy + 1 } : { q: q.fl.q + 1, fy: q.fl.fy }; }
+  function prStrip(M, k) {
+    var x = prFor(M); if (!x || x[k] == null) return "";
+    var q = L(M), n = nextQ(q), lab = "Q" + n.q + " FY" + String(n.fy).slice(2);
+    var ly = M.quarters.filter(function (z) { return z.fl.q === n.q && z.fl.fy === n.fy - 1; })[0], lv = ly && ly.m[k] ? ly.m[k].v : null;
+    var yo = lv == null ? "" : PCT[k] ? " · " + (x[k] - lv >= 0 ? "+" : "") + (x[k] - lv).toFixed(1) + " pp YoY" : lv ? " · " + ((x[k] / lv - 1) * 100 >= 0 ? "+" : "") + ((x[k] / lv - 1) * 100).toFixed(1) + "% YoY" : "";
+    return '<div class="cx-prs"><span class="cx-new-b">RELEASED</span> ' + lab + " · " + esc(nm(k)) + " <b>" + fv(k, x[k]) + "</b>" + yo +
+      ' <small>press release ' + esc(new Date(x.date + "T12:00:00Z").toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" })) + ", unaudited · full statements with the " + (n.q === 4 ? "10-K" : "10-Q") +
+      (x.exhibit ? ' · <a href="' + esc(x.exhibit) + '" target="_blank" rel="noopener noreferrer">exhibit 99.1 ↗</a>' : "") + "</small></div>";
+  }
+  window.addEventListener("desk:earnpr", function () { try { var a = document.getElementById("panel-earnings"); if (a && a.classList.contains("active")) rerender(); } catch (e) {} });
   /* red banner: results out (earnings calendar) before the quarter's 10-Q/10-K reaches XBRL */
   function justReleased(M) {
     var co = M.co, q = L(M), D = window.EARNINGS && EARNINGS._data && EARNINGS._data(), C = D && D.calendar;
@@ -366,8 +379,10 @@
       (r.time === "amc" ? " after the close" : r.time === "bmo" ? " before the open" : "") + "</div>" +
       '<div class="cx-new-g"><div><div class="lab">EPS (diluted)</div><div class="m">$' + (r.epsActual != null ? r.epsActual.toFixed(2) : "—") + "</div><div class=\"n\">vs est $" + (r.epsEstimated != null ? r.epsEstimated.toFixed(2) : "—") + pc(e) + "</div></div>" +
       '<div><div class="lab">Revenue</div><div class="m">' + m(r.revenueActual) + '</div><div class="n">vs est ' + m(r.revenueEstimated) + pc(v) + "</div></div>" +
+      (function () { var x = prFor(M); if (!x) return ""; function c(k, l) { return x[k] == null ? "" : '<div><div class="lab">' + l + '</div><div class="m">' + fv(k, x[k]) + "</div><div class=\"n\">press release (GAAP, unaudited)</div></div>"; }
+        return c("gm", "Gross margin") + c("opinc", "Operating income") + c("opm", "Operating margin") + c("ni", "Net income") + c("eps_d", "Diluted EPS · GAAP"); })() +
       '<div><div class="lab">On EDGAR</div><div class="n">' + (relNow ? 'Earnings release 8-K (Item 2.02) filed ' + esc(rel.filed) + (rel.a ? ' · <a href="https://www.sec.gov/Archives/edgar/data/' + (+co.cik) + "/" + rel.a.replace(/-/g, "") + "/" + rel.a + '-index.htm" target="_blank" rel="noopener noreferrer">open ↗</a>' : "") : "Earnings 8-K not on EDGAR yet — usually within hours of the release") + "</div></div></div>" +
-      '<div class="n" style="margin-top:6px">The cards below still show ' + esc(q.fl.label) + " (" + esc(q.end) + "): the full " + nq + " statements reach EDGAR’s data feed only with the " + (q.fl.q === 3 ? "annual 10-K (the fourth quarter is filed inside the 10-K, typically within a few weeks)" : "10-Q (typically within a few weeks)") + ", and are picked up automatically then. Headline figures above: FMP earnings calendar.</div></div>";
+      '<div class="n" style="margin-top:6px">The cards below still show ' + esc(q.fl.label) + " (" + esc(q.end) + "): the full " + nq + " statements reach EDGAR’s data feed only with the " + (q.fl.q === 3 ? "annual 10-K (the fourth quarter is filed inside the 10-K, typically within a few weeks)" : "10-Q (typically within a few weeks)") + ", and are picked up automatically then. Headline EPS / revenue: FMP earnings calendar; GAAP lines: the company’s press release (8-K exhibit 99.1), shown with a red RELEASED line on each card.</div></div>";
   }
   function grid(M, VV) {
     var q = L(M), co = M.co;
