@@ -37,7 +37,9 @@ def b76(F, K, T, iv, call):
     d1 = (math.log(F / K) + s * s / 2) / s
     d2 = d1 - s
     val = F * _N(d1) - K * _N(d2) if call else K * _N(-d2) - F * _N(-d1)
-    return {"v": val, "d": _N(d1) if call else _N(d1) - 1, "g": _n(d1) / (F * s)}
+    vanna = -_n(d1) * d2 / (iv / 100)                       # d(delta)/d(vol), per 1.00 of vol
+    charm = -_n(d1) * (-d2 / (2 * T))                         # d(delta)/d(time) per year (r≈0, same for calls and puts)
+    return {"v": val, "d": _N(d1) if call else _N(d1) - 1, "g": _n(d1) / (F * s), "vanna": vanna, "charm": charm}
 
 
 def _T(expires, now):
@@ -107,6 +109,150 @@ def chain_stats(ch, F, now, iv_fallback=None):
     return out
 
 
+def positioning(ch, F, now, hl, em):
+    """Strike-by-strike positioning from two confirmed daily OI snapshots (rows vs rows_prev) plus IV change and price action.
+    Classification is inference (labelled so): OI up + IV up -> more likely bought (long); OI up + IV down -> more likely
+    written (short); OI down -> closing. Daily OI cannot prove opening vs closing for any single trade."""
+    rows, prev = ch.get("rows") or [], (ch.get("rows_prev") or {}).get("rows") or []
+    T, _d = _T(ch.get("expires") or "", now)
+    iv = ch.get("iv")
+    P = {round(r[0], 4): r for r in prev}
+    tot = sum(r[1] + r[2] for r in rows) or 1
+    dates = sorted(hl)[-20:]
+    out, vanna, charm = [], 0.0, 0.0
+    for r in rows:
+        K = r[0]
+        p = P.get(round(K, 4))
+        civ = r[3] if len(r) > 3 and r[3] else iv
+        piv = r[4] if len(r) > 4 and r[4] else iv
+        c = b76(F, K, T, civ, True) if T else None
+        q = b76(F, K, T, piv, False) if T else None
+        if c: vanna += c["vanna"] * r[1] * MULT; charm += c["charm"] * r[1] * MULT
+        if q: vanna -= q["vanna"] * r[2] * MULT; charm -= q["charm"] * r[2] * MULT
+        if r[1] + r[2] < 0.01 * tot:
+            continue
+        dc = r[1] - p[1] if p else None
+        dp = r[2] - p[2] if p else None
+        divc = (r[3] - p[3]) if p and len(p) > 3 and len(r) > 3 and p[3] and r[3] else None
+        divp = (r[4] - p[4]) if p and len(p) > 4 and len(r) > 4 and p[4] and r[4] else None
+        def cls(side, d, div, base):
+            if d is None:
+                return None
+            if abs(d) < max(150, 0.03 * max(base, 1)):
+                return "steady"
+            if d < 0:
+                return "closing"
+            return ("long " if div is not None and div > 0 else "short " if div is not None and div < 0 else "new ") + side
+        lc, lp = cls("calls", dc, divc, p[1] if p else 0), cls("puts", dp, divp, p[2] if p else 0)
+        touches = [x for x in dates if hl[x][0] is not None and hl[x][1] <= K <= hl[x][0]]
+        above = sum(1 for x in dates if hl[x][2] > K); below = len(dates) - above
+        held_sup = sum(1 for x in touches if hl[x][2] >= K); held_res = sum(1 for x in touches if hl[x][2] <= K)
+        gex = ((c["g"] * r[1]) if c else 0) - ((q["g"] * r[2]) if q else 0)
+        dist = (K - F) / F * 100
+        # strike role (potential, never certain)
+        role, why = "weak", []
+        conc = (r[1] + r[2]) / tot * 100
+        if K < F and r[2] >= r[1]:
+            role = "support"; why.append("put-heavy below price")
+        elif K > F and r[1] >= r[2]:
+            role = "resistance"; why.append("call-heavy above price")
+        if abs(dist) <= 1.0 and conc >= 6:
+            role = "magnet"; why.append("large two-sided open interest near price")
+        if gex < 0 and abs(dist) <= 4 and role != "magnet" and conc >= 4:
+            role = role if role in ("support", "resistance") else "acceleration"; why.append("short-gamma strike — hedging can speed a move through it")
+        if (dc or 0) + (dp or 0) < -0.1 * max(1, (p[1] + p[2]) if p else 1):
+            role = "weakening"; why.append("open interest down more than 10% day over day")
+        if role == "support" and dates and hl[dates[-1]][2] < K: role, why = "broken support", why + ["last close below the strike"]
+        if role == "resistance" and dates and hl[dates[-1]][2] > K: role, why = "broken resistance", why + ["last close above the strike"]
+        if (lp or "").startswith("short") and K < F: why.append("puts likely written — sellers defend this level")
+        if (lc or "").startswith("short") and K > F: why.append("calls likely written — sellers cap this level")
+        if (lp or "").startswith("long"): why.append("puts likely bought — protection or bearish bets")
+        if (lc or "").startswith("long"): why.append("calls likely bought — upside bets")
+        if touches: why.append(f"traded through {len(touches)}× in the last {len(dates)} sessions; closes held as support {held_sup}×, as resistance {held_res}×")
+        score = conc + (5 if p and ((dc or 0) + (dp or 0)) > 0 else 0) + (5 if touches and (held_sup if role == 'support' else held_res) >= max(1, len(touches) / 2) else 0)
+        conf = "Medium" if p and civ and score >= 10 else "Low"
+        out.append({"k": K, "dist": round(dist, 2), "coi": r[1], "poi": r[2], "dc": dc, "dp": dp, "dc_pct": round(dc / p[1] * 100, 1) if p and p[1] and dc is not None else None,
+                    "dp_pct": round(dp / p[2] * 100, 1) if p and p[2] and dp is not None else None, "conc": round(conc, 1), "civ": civ, "piv": piv, "divc": round(divc, 2) if divc is not None else None,
+                    "divp": round(divp, 2) if divp is not None else None, "lc": lc, "lp": lp, "gex": round(gex * MULT * F * F * 0.01), "role": role, "why": why, "conf": conf,
+                    "touch": len(touches), "in_em": abs(K - F) <= (em or 0), "vol": ((r[5] or 0) + (r[6] or 0)) if len(r) > 6 else None})
+    out.sort(key=lambda x: -(x["coi"] + x["poi"]))
+    # directional score: bought calls / written puts lean bullish; bought puts / written calls lean bearish (weighted by contracts)
+    w = {"long calls": 1, "short puts": 1, "long puts": -1, "short calls": -1}
+    bull = bear = hedge = 0
+    for x in out:
+        for lab, d in ((x["lc"], x["dc"]), (x["lp"], x["dp"])):
+            if lab in w and d:
+                if w[lab] > 0: bull += d
+                else: bear += d
+                if lab == "long puts" and x["k"] < F: hedge += d
+    adds = sorted([x for x in out if x["dc"] is not None], key=lambda x: -((x["dc"] or 0) + (x["dp"] or 0)))
+    tot_d = bull + bear
+    score = round((bull - bear) / tot_d * 100) if tot_d else 0
+    biv = [x for x in out if x["divc"] is not None or x["divp"] is not None]
+    ivchg = round(sum(((x["divc"] or 0) + (x["divp"] or 0)) / 2 for x in biv) / len(biv), 2) if biv else None
+    if not prev:
+        label = "unknown — needs two daily snapshots"
+    elif tot_d < 0.002 * tot:
+        label = "mixed / inconclusive"
+    elif score >= 25:
+        label = "bullish positioning"
+    elif score <= -25:
+        label = "bearish positioning" if hedge < 0.6 * bear else "protective hedging"
+    else:
+        label = "mixed / inconclusive"
+    unwind = sum(min(0, x["dc"] or 0) + min(0, x["dp"] or 0) for x in out)
+    if prev and -unwind > 2 * max(1, sum(max(0, x["dc"] or 0) + max(0, x["dp"] or 0) for x in out)):
+        label = "position unwinding"
+    vol_view = "volatility expansion" if ivchg is not None and ivchg >= 0.5 else "volatility compression" if ivchg is not None and ivchg <= -0.5 else "volatility steady"
+    rolls = []
+    for side, key in (("calls", "dc"), ("puts", "dp")):
+        dn = [x for x in out if (x[key] or 0) < -500]; up = [x for x in out if (x[key] or 0) > 500]
+        for a in dn:
+            b = min(up, key=lambda y: abs(abs(y[key]) - abs(a[key])), default=None)
+            if b and abs(abs(b[key]) - abs(a[key])) <= 0.35 * abs(a[key]) and b["k"] != a["k"]:
+                rolls.append(f"{side}: {a['k']:.2f} → {b['k']:.2f} (≈{abs(a[key]):,} contracts)")
+    near = [x for x in out if abs(x["dist"]) <= 8 or x["role"].startswith("broken")]
+    big3 = [x for x in out[:3] if x not in near]
+    show = sorted(near, key=lambda x: abs(x["dist"]))[:12] + big3
+    share = tot_d / tot * 100
+    pconf = "Low" if (not prev or share < 0.5) else "Medium" if share < 2 else "High"
+    return {"conf": pconf, "share": round(share, 2), "strikes": show, "score": score if prev else None, "label": label, "vol_view": vol_view, "iv_chg": ivchg, "bull": bull, "bear": bear, "hedge": hedge,
+            "adds": [{"k": x["k"], "d": (x["dc"] or 0) + (x["dp"] or 0), "dc": x["dc"], "dp": x["dp"]} for x in adds[:5]],
+            "cuts": [{"k": x["k"], "d": (x["dc"] or 0) + (x["dp"] or 0), "dc": x["dc"], "dp": x["dp"]} for x in adds[::-1][:5] if (x["dc"] or 0) + (x["dp"] or 0) < 0],
+            "rolls": rolls[:3], "vanna": round(vanna), "charm": round(charm), "prev_date": (ch.get("rows_prev") or {}).get("date"),
+            "top_calls": [[x["k"], x["coi"]] for x in sorted(out, key=lambda x: -x["coi"])[:10]], "top_puts": [[x["k"], x["poi"]] for x in sorted(out, key=lambda x: -x["poi"])[:10]]}
+
+
+def p_touch(F, K, iv, T):
+    """Probability (lognormal, driftless) that price trades at K before T ≈ 2 × P(finish beyond K)."""
+    if not (F and K and iv and T):
+        return None
+    z = abs(math.log(K / F)) / (iv / 100 * math.sqrt(T))
+    return round(min(1.0, 2 * (1 - _N(z))) * 100)
+
+
+def conclusion(name, F, nc, pos, nd, A):
+    st = pos["strikes"]
+    if not st:
+        return []
+    big = max(st, key=lambda x: x["coi"] + x["poi"])
+    sup = [x for x in st if x["role"] == "support"]; res_ = [x for x in st if x["role"] == "resistance"]
+    s1 = max(sup, key=lambda x: x["poi"]) if sup else None; r1 = max(res_, key=lambda x: x["coi"]) if res_ else None
+    gx = nc.get("gex")
+    add = pos["adds"][0] if pos["adds"] and pos["adds"][0]["d"] > 0 else None
+    q = [
+        ("Where is the largest outstanding risk?", f"{big['k']:.2f} strike — {big['coi']:,} calls / {big['poi']:,} puts ({big['conc']:.0f}% of the near chain), {big['dist']:+.1f}% from price."),
+        ("Where is new capital entering?", (f"{add['k']:.2f} (+{add['d']:,} contracts since {pos['prev_date']})" if add else "No meaningful net additions on the latest confirmed update.") + (" · possible rolls: " + "; ".join(pos["rolls"]) if pos["rolls"] else "")),
+        ("Building, closing or rolling?", f"{pos['label'].capitalize()} · {pos['bull']:,} new contracts lean bullish (calls bought / puts written) vs {pos['bear']:,} lean bearish (puts bought / calls written) — inferred from the OI and IV change." if pos["score"] is not None else "Needs two daily open-interest snapshots."),
+        ("Potential support and resistance?", f"Support {s1['k']:.2f} ({s1['poi']:,} puts) · resistance {r1['k']:.2f} ({r1['coi']:,} calls)" if s1 and r1 else "No clear put-heavy level below / call-heavy level above price."),
+        ("Will dealer hedging amplify or dampen moves?", ("Amplify — estimated dealers short gamma" if gx is not None and gx < 0 else "Dampen — estimated dealers long gamma") + (f"; behaviour may change near the gamma flip {nc['flip']:.2f}" if nc.get("flip") else "") + " (convention: dealers long calls, short puts)."),
+        ("Dominant directional positioning?", f"{pos['label']} (score {pos['score']:+d} of ±100) · {pos['vol_view']}" if pos["score"] is not None else pos["label"]),
+        ("What invalidates the current read?", (f"A settle below {s1['k']:.2f}" if s1 else "") + (" or above " + f"{r1['k']:.2f}" if r1 else "") + (" — outside the levels the options market is defending." if s1 or r1 else "No defended levels identified.")),
+        ("What to watch next session?", (f"Expected range {nd['lo']:.4f}–{nd['hi']:.4f}" if nd else "") + (f" · touch odds {s1['k']:.2f}: {s1.get('p_touch','—')}%" if s1 else "") + (f", {r1['k']:.2f}: {r1.get('p_touch','—')}%" if r1 else "") + " · whether new OI confirms or reverses today's changes."),
+    ]
+    return [{"q": a, "a": b} for a, b in q]
+
+
 def build_grain(g, hl, now, prev):
     """hl: {date: (high, low, close)} for the front futures; prev: last DATA.optflow[grain] (keeps the history)."""
     F = None
@@ -136,6 +282,18 @@ def build_grain(g, hl, now, prev):
     if iv_n and S:
         em1 = S * iv_n / 100 * math.sqrt(1 / TRADING_DAYS)
         res["next_day"] = {"from": res["settle_date"], "settle": S, "iv": iv_n, "em": round(em1, 4), "lo": round(S - em1, 4), "hi": round(S + em1, 4)}
+    # ---- positioning engine on the near chain (confirmed daily OI vs the previous snapshot)
+    nch = g.get("near") or {}
+    if nch.get("rows"):
+        ncs = next((c for c in res["chains"] if c.get("leg") == "near"), {})
+        Fn = float(F or S)
+        pos = positioning(nch, Fn, now, hl, (res.get("next_day") or {}).get("em"))
+        Tn, _ = _T(nch.get("expires") or "", now)
+        for x in pos["strikes"]:
+            x["p_touch"] = p_touch(Fn, x["k"], nch.get("iv"), Tn)
+            x["p_touch_1d"] = p_touch(Fn, x["k"], nch.get("iv"), 1 / TRADING_DAYS)
+        res["positioning"] = pos
+        res["conclusion"] = conclusion(g.get("name", ""), Fn, ncs, pos, res.get("next_day"), None)
     # ---- history: one record per settle date; outcome filled when the next session settles
     hist = list((prev or {}).get("hist") or [])
     byd = {h["d"]: h for h in hist}
@@ -143,7 +301,7 @@ def build_grain(g, hl, now, prev):
     if res.get("next_day") and res["settle_date"]:
         d = res["settle_date"]
         rec = byd.get(d) or {"d": d}
-        rec.update(s=S, iv=iv_n, em=res["next_day"]["em"], lo=res["next_day"]["lo"], hi=res["next_day"]["hi"], pcr=nc.get("pcr"), gex=nc.get("gex"), flip=nc.get("flip"),
+        rec.update(score=(res.get("positioning") or {}).get("score"), label=(res.get("positioning") or {}).get("label"), s=S, iv=iv_n, em=res["next_day"]["em"], lo=res["next_day"]["lo"], hi=res["next_day"]["hi"], pcr=nc.get("pcr"), gex=nc.get("gex"), flip=nc.get("flip"),
                    contract=g["roll"][0]["contract"] if g.get("roll") else None)
         byd[d] = rec
     dates = sorted(hl)
@@ -178,4 +336,12 @@ def build_grain(g, hl, now, prev):
                     "rv_iv": round(sum(x["out"]["realized_vs_implied"] or 0 for x in L) / len(L), 2)}
         res["analogues"] = {"similar": stats(sim), "all": stats(done), "rule": "IV within ±15% of today's, same side of put/call 1.0 and same sign of estimated net GEX",
                             "confidence": "Low" if len(sim) < 10 else "Medium" if len(sim) < 30 else "High"}
+    perf = {}
+    for n in (20, 60, 90):
+        L = [h for h in done][-n:]
+        if L:
+            dirn = [h for h in L if h.get("score") not in (None, 0)]
+            perf[str(n)] = {"n": len(L), "breach_close": round(sum(1 for h in L if h["out"]["breach_close"]) / len(L) * 100), "rv_iv": round(sum(h["out"]["realized_vs_implied"] or 0 for h in L) / len(L), 2),
+                            "dir_n": len(dirn), "dir_hit": round(sum(1 for h in dirn if (h["score"] > 0) == (h["out"]["ret"] > 0)) / len(dirn) * 100) if dirn else None}
+    res["ledger"] = perf
     return res
