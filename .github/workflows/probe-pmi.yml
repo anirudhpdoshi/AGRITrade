@@ -15,17 +15,9 @@ jobs:
           def g(u):
               return urllib.request.urlopen(urllib.request.Request(u,headers=H),timeout=25).read().decode("utf8","ignore")
           def n(tag,msg): print(f"::notice::{tag} {msg}"[:900])
-          try:
-              j=json.loads(g("https://nfs.faireconomy.media/ff_calendar_thisweek.json"))
-              n("FF",[(e["country"],e["title"],e["date"],e.get("forecast")) for e in j if e["country"] in("USD","CAD") and "PMI" in e["title"]])
-          except Exception as e: n("FF ERR",str(e)[:100])
-          for u in ["https://www.prnewswire.com/news/institute-for-supply-management/?page=1&pagesize=100","https://www.prnewswire.com/news/institute-for-supply-management/?page=2&pagesize=100"]:
+          for u in ["https://iveypmi.uwo.ca/historic-data/","https://iveypmi.uwo.ca/"]:
               try:
-                  t=g(u); m=re.findall(r'(manufacturing|services)-pmi-at-([0-9-]+?)-(january|february|march|april|may|june|july|august|september|october|november|december)-(\d{4})',t,re.I)
-                  n("PRN",f"{len(m)} first={m[:2]} last={m[-2:]}")
-              except Exception as e: n("PRN ERR",str(e)[:100])
-          for u in ["https://www.newswire.ca/news/ivey-business-school/","https://www.newswire.ca/news-releases/?keyword=ivey%20pmi","https://www.ivey.uwo.ca/ivey-pmi/"]:
-              try:
-                  t=g(u); m=re.findall(r'href="([^"]*pmi[^"]*)"',t,re.I)[:5]; n("IVEY",f"{u[:40]} len={len(t)} {m} {re.findall(r'PMI[^<]{0,80}',t)[:3]}")
-              except Exception as e: n("IVEY ERR",u[:40]+str(e)[:80])
+                  t=g(u); x=re.sub(r"<[^>]+>"," ",t); x=re.sub(r"\s+"," ",x)
+                  i=x.find("2026"); n("IV",f"{u} len={len(t)} links={re.findall(r'href=.([^ >]*(?:xls|csv|pdf)[^ >]*)',t)[:4]} :: {x[max(0,i-300):i+500]}")
+              except Exception as e: n("IV ERR",str(e)[:80])
           PY
