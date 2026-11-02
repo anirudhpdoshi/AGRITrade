@@ -5,16 +5,38 @@ jobs:
   p:
     runs-on: ubuntu-latest
     steps:
-      - run: |
+      - env:
+          FMP: ${{ secrets.FMP }}
+          FH: ${{ secrets.FINNHUB_API_KEY }}
+        run: |
           python3 - <<'PY'
-          import json,urllib.request
-          for c in ["ISM/pmi/pm","ISM/nm-pmi/pm","ISM/nmi/nm","ISM/pmi","ISM/nm-pmi"]:
-              try:
-                  u="https://api.db.nomics.world/v22/series/"+c+"?observations=1&limit=3"
-                  j=json.load(urllib.request.urlopen(u,timeout=20))
-                  docs=j.get("series",{}).get("docs",[])
-                  s=[(d.get("series_code"),d.get("series_name","")[:40],d.get("period",[])[-2:],d.get("value",[])[-2:]) for d in docs[:3]]
-                  print(f"::notice::{c} OK {s}")
-              except Exception as e:
-                  print(f"::notice::{c} ERR {str(e)[:80]}")
+          import json,os,re,urllib.request
+          H={"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36","Accept":"*/*"}
+          def g(u):
+              return urllib.request.urlopen(urllib.request.Request(u,headers=H),timeout=25).read().decode("utf8","ignore")
+          def n(tag,msg): print(f"::notice::{tag} {msg}"[:900])
+          try:
+              j=json.loads(g("https://nfs.faireconomy.media/ff_calendar_thisweek.json"))
+              us=[e for e in j if "PMI" in e.get("title","")]
+              n("FF",[ (e["country"],e["title"],e["date"],{k:e.get(k) for k in e if k not in("title","country","date")}) for e in us[:6]])
+          except Exception as e: n("FF ERR",str(e)[:100])
+          try:
+              t=g("https://www.ismworld.org/supply-management-news-and-reports/reports/ism-report-on-business/pmi/october/")
+              m=re.findall(r"PMI[^<]{0,120}?(\d\d\.\d)",t)[:4]; n("ISM",f"len={len(t)} {m}")
+          except Exception as e: n("ISM ERR",str(e)[:100])
+          try:
+              t=g("https://www.prnewswire.com/news/institute-for-supply-management/")
+              m=re.findall(r'href="(/news-releases/[^"]*pmi[^"]*)"',t,re.I)[:4]; n("PRN",f"len={len(t)} {m}")
+          except Exception as e: n("PRN ERR",str(e)[:100])
+          try:
+              j=json.loads(g(f"https://financialmodelingprep.com/stable/economic-calendar?from=2026-10-01&to=2026-11-02&apikey={os.environ['FMP']}"))
+              rows=[r for r in j if "PMI" in str(r.get("event"))][:6] if isinstance(j,list) else j
+              n("FMP",str(rows)[:800])
+          except Exception as e: n("FMP ERR",re.sub(r"apikey=\w+","apikey=***",str(e))[:100])
+          try:
+              j=json.loads(g(f"https://finnhub.io/api/v1/calendar/economic?from=2026-10-01&to=2026-11-02&token={os.environ['FH']}"))
+              ec=j.get("economicCalendar",j) if isinstance(j,dict) else j
+              rows=[r for r in ec if "PMI" in str(r.get("event"))][:6] if isinstance(ec,list) else ec
+              n("FH",str(rows)[:800])
+          except Exception as e: n("FH ERR",re.sub(r"token=\w+","token=***",str(e))[:100])
           PY
