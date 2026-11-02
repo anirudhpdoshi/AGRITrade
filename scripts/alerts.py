@@ -119,11 +119,19 @@ def scan_prices(D, state, now, tor, yf):
             buf = base["buf"]
             mt = t_last + timedelta(minutes=5)
 
-            def fire(fid, head, trig, up, why):
+            def first_break(lv, up, b):
+                """End time and close of the first bar where the break was confirmed (2 closes beyond, latest by >= buffer)."""
+                for i in range(1, len(bars)):
+                    p_, q_ = bars[i - 1][3], bars[i][3]
+                    if (p_ > lv and q_ >= lv + b) if up else (p_ < lv and q_ <= lv - b):
+                        return bars[i][0] + timedelta(minutes=5), q_
+                return mt, c1
+
+            def fire(fid, head, trig, up, why, at=None):
                 if fid in fired:
                     return
                 fired[fid] = now.isoformat()
-                out.append({"id": fid, "kind": "price", "tag": tag, "t": now.isoformat(), "mt": mt.isoformat(),
+                out.append({"id": fid, "kind": "price", "tag": tag, "t": now.isoformat(), "mt": (at or mt).isoformat(),
                             "head": head, "trigger": trig, "impact": ("Bullish" if up else "Bearish") + (" USD/CAD (CAD weaker)" if key == "usdcad" and up else " USD/CAD (CAD stronger)" if key == "usdcad" else ""),
                             "why": why, "src": f"Yahoo Finance {sym} 5-min bars (futures delayed ~10 min)"})
 
@@ -135,9 +143,10 @@ def scan_prices(D, state, now, tor, yf):
                     if wk.startswith("sig") and ((lk.startswith("sp") and not up) or (lk.startswith("sm") and up)):
                         continue   # +σ bands break upward, −σ bands downward
                     if started and conf:
+                        bt, bc = first_break(lv, up, buf)
                         fire(f"{key}|{lk}|{'u' if up else 'd'}|{now_et.date()}", f"PRICE ALERT – {label}",
-                             f"{'Broke above' if up else 'Broke below'} its {lname} at {_fmt(key, lv)}; last 5-min close {_fmt(key, c1)} ({mt.strftime('%-I:%M %p')} ET), prior close {_fmt(key, base['pc'])}.",
-                             up, WHY[wk].format(n=n))
+                             f"{'Broke above' if up else 'Broke below'} its {lname} at {_fmt(key, lv)}; confirmed on the {bt.strftime('%-I:%M %p')} ET 5-min close {_fmt(key, bc)}; now {_fmt(key, c1)}, prior close {_fmt(key, base['pc'])}.",
+                             up, WHY[wk].format(n=n), at=bt)
             # options walls (grains)
             if tag in ("corn", "wheat", "soybeans"):
                 W = _walls(D, key)
@@ -148,9 +157,10 @@ def scan_prices(D, state, now, tor, yf):
                     started = (open_ref < k_) if up else (open_ref > k_)
                     conf = (c0 > k_ and c1 >= k_ + buf) if up else (c0 < k_ and c1 <= k_ - buf)
                     if started and conf:
+                        bt, bc = first_break(k_, up, buf)
                         fire(f"{key}|{side}wall|{k_}|{now_et.date()}", f"PRICE ALERT – {label} {'call' if up else 'put'} wall",
-                             f"{'Broke above the call wall' if up else 'Broke below the put wall'} at ${k_:.2f} ({oi:,} contracts ≈ {_money(notional)} notional; {note}); last 5-min close {_fmt(key, c1)}.",
-                             up, WHY["wall"].format(n=_money(notional)))
+                             f"{'Broke above the call wall' if up else 'Broke below the put wall'} at ${k_:.2f} ({oi:,} contracts ≈ {_money(notional)} notional; {note}); confirmed on the {bt.strftime('%-I:%M %p')} ET 5-min close {_fmt(key, bc)}.",
+                             up, WHY["wall"].format(n=_money(notional)), at=bt)
             # new intraday high / low (after 9:45 ET, 60-min cooldown per side, must extend the last alerted extreme)
             if now_et.hour * 60 + now_et.minute >= 9 * 60 + 45 and len(bars) >= 4:
                 hi_prior = max(b[1] for b in bars[:-1])
