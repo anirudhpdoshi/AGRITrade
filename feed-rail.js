@@ -16,7 +16,8 @@
   function hm(t) { return new Date(t).toLocaleTimeString("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit" }); }
   function day(t) { return new Date(t).toLocaleDateString("en-CA", { timeZone: "America/Toronto" }); }
   function tab() { var a = document.querySelector(".tab-panel.active"); return a ? a.id.replace("panel-", "") : "corn"; }
-  function feed() { try { return (window.EVENTS && EVENTS._feed && EVENTS._feed()) || []; } catch (e) { return []; } }
+  var DROP = /^al\|[^|]+\|(hod|lod)\|/;   /* new intraday high/low alerts are not wanted on the desk */
+  function feed() { try { return ((window.EVENTS && EVENTS._feed && EVENTS._feed()) || []).filter(function (m) { return !DROP.test(m.id || ""); }); } catch (e) { return []; } }
 
   function tagsOf(m) {
     var t = {}, g = (m.go || "").split("@")[0].split(":")[0], h = (m.h || "").replace(/<[^>]+>/g, " ");
@@ -119,7 +120,7 @@
   }
   function ingest(list) {
     if (!window.EVENTS || !EVENTS.log || !list) return;
-    list.forEach(function (a) { if (a && a.id && a.head) EVENTS.log("alert", alertHTML(a), GO[a.tag] || "", "al|" + a.id, Date.parse(a.t) || Date.now()); });
+    list.forEach(function (a) { if (a && a.id && a.head && !DROP.test("al|" + a.id)) EVENTS.log("alert", alertHTML(a), GO[a.tag] || "", "al|" + a.id, Date.parse(a.t) || Date.now()); });
   }
   window.addEventListener("desk:alerts", function (e) { ingest(e.detail); });
   setTimeout(function () { ingest(window.DESK_ALERTS); }, 1500);
