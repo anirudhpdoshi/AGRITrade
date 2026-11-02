@@ -1,0 +1,24 @@
+name: probe-pr
+on: workflow_dispatch
+permissions: {contents: read}
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -q requests
+      - run: |
+          cd scripts && python3 - <<'PY'
+          import requests, time, pr_parse as PP
+          S=requests.Session(); S.headers.update(PP.SEC_UA)
+          get=lambda u: (time.sleep(0.15), S.get(u,timeout=20))[1]
+          for sym,cik in [("AAPL",320193),("MSFT",789019),("AMZN",1018724),("XOM",34088),("JPM",19617),("ADM",7084),("DE",315189),("PLTR",1321655)]:
+              try:
+                  R=get(f"https://data.sec.gov/submissions/CIK{cik:010d}.json").json()["filings"]["recent"]
+                  i=next(i for i,f in enumerate(R["form"]) if f=="8-K" and "2.02" in R["items"][i])
+                  acc=R["accessionNumber"][i]; u=PP.exhibit_url(get,cik,acc)
+                  o=PP.parse(get(u).text) if u else {}
+                  print(f"::notice::{sym} {R['filingDate'][i]} {R.get('acceptanceDateTime',['']*99)[i]} {u.rsplit('/',1)[-1] if u else None} "+" ".join(f"{k}={v:,.2f}" for k,v in o.items()))
+              except Exception as e:
+                  print(f"::notice::{sym} ERR {type(e).__name__} {str(e)[:100]}")
+          PY
