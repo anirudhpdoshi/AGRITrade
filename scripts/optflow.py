@@ -174,7 +174,8 @@ def positioning(ch, F, now, hl, em):
         out.append({"k": K, "dist": round(dist, 2), "coi": r[1], "poi": r[2], "dc": dc, "dp": dp, "dc_pct": round(dc / p[1] * 100, 1) if p and p[1] and dc is not None else None,
                     "dp_pct": round(dp / p[2] * 100, 1) if p and p[2] and dp is not None else None, "conc": round(conc, 1), "civ": civ, "piv": piv, "divc": round(divc, 2) if divc is not None else None,
                     "divp": round(divp, 2) if divp is not None else None, "lc": lc, "lp": lp, "gex": round(gex * MULT * F * F * 0.01), "role": role, "why": why, "conf": conf,
-                    "touch": len(touches), "in_em": abs(K - F) <= (em or 0), "vol": ((r[5] or 0) + (r[6] or 0)) if len(r) > 6 else None})
+                    "touch": len(touches), "in_em": abs(K - F) <= (em or 0), "vol": ((r[5] or 0) + (r[6] or 0)) if len(r) > 6 else None,
+                    "prem_c": round((r[5] or 0) * c["v"] * MULT) if len(r) > 6 and c and r[5] else None, "prem_p": round((r[6] or 0) * q["v"] * MULT) if len(r) > 6 and q and r[6] else None})
     out.sort(key=lambda x: -(x["coi"] + x["poi"]))
     # directional score: bought calls / written puts lean bullish; bought puts / written calls lean bearish (weighted by contracts)
     w = {"long calls": 1, "short puts": 1, "long puts": -1, "short calls": -1}
