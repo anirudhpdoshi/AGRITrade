@@ -1615,6 +1615,61 @@ def settles(D, N):
     return True
 
 
+# ------------------------------------------------------------------ options flow & expiration intelligence (daily tier)
+def _yahoo_hl(sym, period="2mo"):
+    """{date: (high, low, close)} for completed sessions of one CBOT contract ($/bu)."""
+    h = yf().Ticker(f"{sym}.CBT").history(period=period, interval="1d")
+    now = datetime.now(TOR)
+    out = {}
+    for idx, row in h.iterrows():
+        d = idx.date()
+        if d > now.date() or (d == now.date() and not (17 <= now.hour < 20)):
+            continue
+        out[d.isoformat()] = (round(float(row["High"]) / 100, 4), round(float(row["Low"]) / 100, 4), round(float(row["Close"]) / 100, 4))
+    return out
+
+
+def optflow(D, N):
+    import optflow as OF
+    prev_all = D.get("optflow") or {}
+    out, errs = {}, {}
+    for k, g in D["grains"].items():
+        try:
+            front = g["roll"][0]["contract"]
+            try:
+                hl = _yahoo_hl(front)
+            except Exception as e:
+                hl, errs[k + "_hl"] = {}, str(e)[:120]
+            # settlements from the desk's own (verified) history win over the bar's close
+            for h in g.get("history") or []:
+                d = h["d"][:10]
+                hl[d] = (hl[d][0], hl[d][1], h["s"]) if d in hl else (None, None, h["s"])
+            prev = prev_all.get(k)
+            if not prev or not prev.get("hist"):   # first run: seed the record book from the stored IV history
+                setl = {h["d"][:10]: h["s"] for h in g.get("history") or []}
+                seed = []
+                for row in g.get("vol_hist") or []:
+                    d, iv = row[0], row[1]
+                    if d in setl and iv:
+                        S = setl[d]; em = S * iv / 100 * (1 / 252) ** 0.5
+                        seed.append({"d": d, "s": S, "iv": iv, "em": round(em, 4), "lo": round(S - em, 4), "hi": round(S + em, 4), "seeded": True})
+                prev = {"hist": seed}
+            out[k] = OF.build_grain(g, hl, NOW, prev)
+        except Exception as e:
+            errs[k] = f"{type(e).__name__}: {e}"[:200]
+            if k in prev_all:
+                out[k] = prev_all[k]
+    if not out:
+        raise RuntimeError(f"optflow failed: {errs}")
+    D["optflow"] = out
+    D["meta"]["asof"]["optflow"] = iso(NOW)
+    if errs:
+        D["meta"]["optflow_errors"] = errs
+    else:
+        D["meta"].pop("optflow_errors", None)
+    return True
+
+
 # ------------------------------------------------------------------ USDA export sales (needs FAS_API_KEY)
 FAS = "https://api.fas.usda.gov/api/esr"   # key goes in the X-Api-Key header
 ESR_MATCH = {"corn": ["corn"], "soybeans": ["soybeans"], "wheat": ["all wheat", "wheat - all", "wheat"]}
@@ -2403,7 +2458,7 @@ def policy_watch(D, N):
 
 BLOCKS = [("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("yields_live", yields_live), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model)]
+          ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow)]
 
 
 def main():
