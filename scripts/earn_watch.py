@@ -196,7 +196,7 @@ class Watch:
                 print(f"[earn watch] press release {s}: {type(e).__name__}")
                 vals = {}
             if vals.get("eps_d") is not None or vals.get("rev"):
-                prs[s] = dict(vals, date=row.get("date"), acc=f["acc"], at=f.get("at"), url=f["url"], read_at=now.isoformat())
+                prs[s] = dict(vals, date=row.get("date"), acc=f["acc"], at=f.get("at"), url=f["url"], read_at=now.isoformat(), pv=PP.VERSION)
                 self._numbers(s, row, {"epsActual": vals.get("eps_d"), "revenueActual": vals.get("rev"), "at": f.get("at"), "url": f["url"]},
                               now, "SEC EDGAR 8-K press release (GAAP, unaudited)", alerts, live)
             else:
@@ -243,7 +243,13 @@ def board(w, now, prs, live):
         if f:
             it["filing"] = {"at": f.get("at"), "url": f.get("url"), "acc": f.get("acc")}
         if pr:
-            it["pr"] = {k: pr.get(k) for k in ("rev", "eps_d", "ni", "opinc", "gp", "gm", "opm", "nm", "rev_yoy", "ni_yoy", "eps_d_yoy", "opinc_yoy", "py", "quotes", "exhibit", "read_at")}
+            it["pr"] = {k: pr.get(k) for k in ("rev", "eps_d", "eps_adj", "ni", "opinc", "gp", "gm", "opm", "nm", "rev_yoy", "ni_yoy", "eps_d_yoy", "eps_adj_yoy", "opinc_yoy", "py", "quotes", "exhibit", "read_at")}
+            ea, ce = pr.get("eps_adj"), it["est"]["eps"]
+            if ea is not None and ce not in (None, 0) and (ea / ce > 3 or ea / ce < 1 / 3 or ea * ce < 0):
+                it["pr"]["eps_adj"] = None   # far from consensus: almost certainly a misread line (full-year figure, per-ADS, …)
+                it["pr"]["eps_adj_note"] = "adjusted EPS line not reliably read"
+            elif ea is not None and ce not in (None, 0):
+                it["eps_pct"] = UE.surprise(ea, ce)   # company-reported adjusted EPS vs consensus: same basis
         if fmp_act or lv.get("src", "").startswith("FMP"):
             a = lv if lv.get("src", "").startswith("FMP") else r
             it["adj"] = {"eps": a.get("epsActual"), "eps_est": a.get("epsEstimated"), "rev": a.get("revenueActual"), "rev_est": a.get("revenueEstimated"),
@@ -280,7 +286,7 @@ def pr_pass(w, now, store):
             u = PP.exhibit_url(lambda x: requests.get(x, headers=SEC_UA, timeout=20), cik, f["acc"])
             vals = PP.parse(requests.get(u, headers=SEC_UA, timeout=20).text) if u else {}
             if vals.get("rev"):
-                new[s] = dict(vals, date=r["date"], acc=f["acc"], at=f.get("at"), url=f["url"], exhibit=u, read_at=now.isoformat())
+                new[s] = dict(vals, date=r["date"], acc=f["acc"], at=f.get("at"), url=f["url"], exhibit=u, read_at=now.isoformat(), pv=PP.VERSION)
                 print(f"::notice title=press release::{s} " + " ".join(f"{k}={v:,.2f}" for k, v in vals.items()))
         except Exception as e:
             print(f"[earn watch] press release {s}: {type(e).__name__}")

@@ -435,15 +435,15 @@
   function card(x) {
     var p = x.pr || {}, a = x.adj || {}, e = x.est || {}, q = p.quotes || {}, f = x.filing || {};
     var revA = p.rev != null ? p.rev : a.rev, revE = e.rev || a.rev_est, revD = revA != null && revE ? revA - revE : null, revP = x.rev_pct != null ? x.rev_pct : a.rev_pct;
-    var epsCmp = a.eps != null && (a.eps_est != null || e.eps != null);
-    var epsP = epsCmp ? (a.eps_pct != null ? a.eps_pct : null) : null;
-    var verdict = epsP != null ? lbl3(epsP) : revP != null ? lbl3(revP) : "N/A";
+    var epsP = x.eps_pct != null ? x.eps_pct : a.eps_pct != null ? a.eps_pct : null;
+    var verdict = verdictOf(x);
     function m(lab, val, sub) { return '<div class="eb-m"><div class="l">' + lab + '</div><div class="v">' + val + "</div>" + (sub ? '<div class="s">' + sub + "</div>" : "") + "</div>"; }
     var body =
       '<div class="eb-g">' +
       m("Revenue (reported)", mny(revA), (revE ? "est " + mny(revE) + " · " + (revD != null ? (revD >= 0 ? "+" : "−") + mny(Math.abs(revD)).slice(revD < 0 ? 0 : 0) : "") + ' <b class="' + cls3(revP) + '">' + pc(revP) + "</b>" : "estimate N/A") + (p.rev_yoy != null ? " · YoY " + pc(p.rev_yoy) : "")) +
       m("EPS · GAAP diluted", p.eps_d != null ? "$" + p.eps_d.toFixed(2) : "N/A", (e.eps != null ? "consensus $" + (+e.eps).toFixed(2) + " (" + esc(e.eps_src || "estimate") + ", adjusted basis — not comparable)" : "consensus N/A") + (p.eps_d_yoy != null ? " · YoY " + pc(p.eps_d_yoy) : "")) +
-      (a.eps != null ? m("EPS · adjusted", "$" + (+a.eps).toFixed(2), "est " + (a.eps_est != null ? "$" + (+a.eps_est).toFixed(2) : "N/A") + ' · <b class="' + cls3(a.eps_pct) + '">' + pc(a.eps_pct) + " " + lbl3(a.eps_pct) + "</b> <small>(" + esc(a.src) + ")</small>") : "") +
+      (p.eps_adj != null ? m("EPS · adjusted (company-reported)", "$" + p.eps_adj.toFixed(2), (e.eps != null ? "consensus $" + (+e.eps).toFixed(2) + " · " + ((p.eps_adj - e.eps) >= 0 ? "+" : "−") + "$" + Math.abs(p.eps_adj - e.eps).toFixed(2) + ' <b class="' + cls3(x.eps_pct) + '">' + pc(x.eps_pct) + " " + lbl3(x.eps_pct) + "</b>" : "consensus N/A") + (p.eps_adj_yoy != null ? " · YoY " + pc(p.eps_adj_yoy) : "")) : p.eps_adj_note ? m("EPS · adjusted", "N/A", esc(p.eps_adj_note)) : "") +
+      (a.eps != null && p.eps_adj == null ? m("EPS · adjusted", "$" + (+a.eps).toFixed(2), "est " + (a.eps_est != null ? "$" + (+a.eps_est).toFixed(2) : "N/A") + ' · <b class="' + cls3(a.eps_pct) + '">' + pc(a.eps_pct) + " " + lbl3(a.eps_pct) + "</b> <small>(" + esc(a.src) + ")</small>") : "") +
       m("Net income", mny(p.ni), p.ni_yoy != null ? "YoY " + pc(p.ni_yoy) : "") +
       m("Margins", (p.gm != null ? "GM " + p.gm.toFixed(1) + "% · " : "") + (p.opm != null ? "Op " + p.opm.toFixed(1) + "%" : p.gm == null ? "N/A" : ""), p.nm != null ? "net " + p.nm.toFixed(1) + "%" : "") +
       "</div>" +
@@ -451,7 +451,7 @@
       (q.highlights && q.highlights.length ? '<div class="eb-q"><b>Highlights (quoted)</b>' + q.highlights.map(function (t) { return "<q>" + esc(t) + "</q>"; }).join("") + "</div>" : "") +
       '<div class="eb-src">Sources: ' + (f.url ? '<a href="' + esc(f.url) + '" target="_blank" rel="noopener noreferrer">SEC 8-K filing ↗</a>' : "8-K not yet located") + (p.exhibit ? ' · <a href="' + esc(p.exhibit) + '" target="_blank" rel="noopener noreferrer">earnings release (ex. 99.1) ↗</a>' : "") +
       " · filed " + esc(f.at ? tET(f.at) : "—") + " · verified " + esc(p.read_at ? tET(p.read_at) : x.detected_at ? tET(x.detected_at) : "—") + " · period: quarter ending " + esc(x.fq || "N/A") + ". Estimates are third-party consensus, not company data; GAAP figures are unaudited.</div>";
-    var rel = f.at || x.detected_at, epsTxt = a.eps != null ? "$" + (+a.eps).toFixed(2) + ' <small>adj.</small>' : p.eps_d != null ? "$" + p.eps_d.toFixed(2) + ' <small>GAAP</small>' : "N/A";
+    var rel = f.at || x.detected_at, epsTxt = p.eps_adj != null ? "$" + p.eps_adj.toFixed(2) + ' <small>adj.</small>' : a.eps != null ? "$" + (+a.eps).toFixed(2) + ' <small>adj.</small>' : p.eps_d != null ? "$" + p.eps_d.toFixed(2) + ' <small>GAAP</small>' : "N/A";
     return '<details class="eb-c"' + (V.ebo && V.ebo[x.s] ? " open" : "") + ' data-ebc="' + esc(x.s) + '"><summary><div class="eb-ch"><b>' + esc(x.s) + " · " + esc(x.n) + '</b><span class="vd ' + (verdict === "BEAT" ? "beat" : verdict === "MISS" ? "miss" : verdict === "INLINE" ? "inl" : "na") + '">' + verdict + "</span></div>" +
       '<div class="eb-cg"><div><span>EPS actual</span><b>' + epsTxt + "</b></div><div><span>Revenue</span><b>" + mny(revA) + "</b></div><div><span>Revenue vs est.</span><b class=\"" + cls3(revP) + "\">" + pc(revP) + "</b></div><div><span>Released</span><b>" + esc(tET(rel)) + "</b></div></div>" +
       '<div class="eb-cx">Consensus vs actual · Guidance · Source verification · Expand for analysis ▾</div></summary>' + body + "</details>";
@@ -482,7 +482,7 @@
       "</tbody></table></div><div class=\"stamp\">Schedule and EPS estimates: Nasdaq earnings calendar (consensus, third-party); revenue estimates where FMP covers the company, else N/A. Actuals only from the company’s own release on SEC EDGAR.</div></div>";
     return '<div class="tile eb">' + top + mon + queue + "</div>";
   }
-  function verdictOf(x) { var a = x.adj || {}, rp = x.rev_pct != null ? x.rev_pct : a.rev_pct; return a.eps_pct != null ? lbl3(a.eps_pct) : rp != null ? lbl3(rp) : "N/A"; }
+  function verdictOf(x) { var a = x.adj || {}, rp = x.rev_pct != null ? x.rev_pct : a.rev_pct, ep = x.eps_pct != null ? x.eps_pct : a.eps_pct; return ep != null ? lbl3(ep) : rp != null ? lbl3(rp) : "N/A"; }
   function ebRepaint() { var el = P.querySelector(".eb"); if (!el || !P.classList.contains("active")) return; var d = document.createElement("div"); d.innerHTML = boardHTML(); el.replaceWith(d.firstChild); }
   window.addEventListener("desk:earnboard", function (e) { EB = e.detail; ebRepaint(); });
   P.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-ebs]"); if (b) { var k = b.getAttribute("data-ebs"); V.ebd = V.ebs === k ? -(V.ebd || 1) : 1; V.ebs = k; save(); ebRepaint(); } });

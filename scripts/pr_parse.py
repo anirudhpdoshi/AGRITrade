@@ -5,6 +5,8 @@ lines are read from the HTML tables: the first number on a matched row is the cu
 Only rows with an unambiguous label are taken; anything not found stays absent (never estimated).
 """
 import os, re
+
+VERSION = 2   # bump when the reader changes: stored reads from an older version are re-read
 from html.parser import HTMLParser
 
 # SEC fair-access rule: automated requests must name a contact email. It comes from the SEC_CONTACT secret (never in the repo).
@@ -123,14 +125,37 @@ def parse(html):
                     py["eps_d"] = prior
         if out.get("rev") and out.get("ni") is not None:
             break
+    # EPS anywhere in the release (summary tables above the income statement included): GAAP diluted, and the company's own
+    # adjusted / non-GAAP EPS (same basis as analyst consensus). First matching row wins; prior year from the other column.
+    for T in p.tables:
+        yrs = []
+        for r in T[:6]:
+            for c in r:
+                yrs += [int(y) for y in re.findall(r"\b(20\d\d)\b", c)]
+            if len(yrs) >= 2:
+                break
+        col = 1 if len(yrs) >= 2 and yrs[1] > yrs[0] else 0
+        for r in T:
+            lab, raw = _row(r)
+            if len(raw) <= col or abs(raw[col]) >= 1000 or BAD_EPS.search(lab):
+                continue
+            prior = raw[1 - col] if len(raw) > 1 else None
+            if "eps_adj" not in out and ADJ_EPS.search(lab):
+                out["eps_adj"] = raw[col]
+                if prior is not None and abs(prior) < 1000:
+                    out.setdefault("py", {})["eps_adj"] = prior
+            elif "eps_d" not in out and GAAP_EPS.search(lab) and not ADJ_EPS.search(lab):
+                out["eps_d"] = raw[col]
+                if prior is not None and abs(prior) < 1000:
+                    out.setdefault("py", {})["eps_d"] = prior
     py = out.pop("py", {})
     py.pop("rev_total", None)
     if py.get("rev") and py.get("gp") is None and py.get("cogs") is not None:
         py["gp"] = py["rev"] - py["cogs"]
-    for k in ("rev", "ni", "eps_d", "opinc", "gp"):   # year-over-year growth, only where both years were read
+    for k in ("rev", "ni", "eps_d", "eps_adj", "opinc", "gp"):   # year-over-year growth, only where both years were read
         if out.get(k) is not None and py.get(k):
             out[k + "_yoy"] = round((out[k] / py[k] - 1) * 100, 1) if py[k] > 0 else None
-    out["py"] = {k: v for k, v in py.items() if k in ("rev", "ni", "eps_d", "opinc", "gp")}
+    out["py"] = {k: v for k, v in py.items() if k in ("rev", "ni", "eps_d", "eps_adj", "opinc", "gp")}
     out["quotes"] = quotes(" ".join("".join(p.prose).split()))
     if out.get("rev") and (out["rev"] > 4e11 or out["rev"] < 1e6):
         return {}   # no S&P 500 company books > $400B or < $1M a quarter: the unit was misread — show N/A rather than a wrong number
@@ -146,6 +171,9 @@ def parse(html):
     return out
 
 
+GAAP_EPS = re.compile(r"(diluted (net )?(earnings|income|eps)|(earnings|income|eps).{0,40}\bper diluted|\bdiluted eps\b|^(gaap|reported)\W.{0,12}(diluted )?eps|^total diluted (earnings|income)|per (common )?share.{0,10}diluted|diluted.{0,50}per (common )?share|^diluted$)", re.I)
+ADJ_EPS = re.compile(r"(adjusted|non-gaap|excluding special items|ex(\.|cluding)? items|core).{0,40}(eps|per (diluted |common )?share)|(eps|per share).{0,20}(excluding special items|adjusted)", re.I)
+BAD_EPS = re.compile(r"basic|weighted|shares outstanding|impact|^less\b|dividend|par value|treasury|authorized|discontinued", re.I)
 GUIDE = re.compile(r"\b(outlook|guidance|guides?|expects?|expected to|reaffirm\w*|raises?|raised|lowers?|lowered|narrow\w*|full[- ]year|fiscal (?:year )?20\d\d|next quarter)\b", re.I)
 HIGH = re.compile(r"\b(record|increased?|decreased?|grew|growth|up \d|down \d|declined?|rose|fell|margin|demand|volumes?|segment)\b", re.I)
 BOILER = re.compile(r"forward-looking statements|safe harbor|non-gaap financial measures? (?:are|is)|webcast|conference call|replay|investor relations|about [A-Z]|www\.|press release", re.I)
