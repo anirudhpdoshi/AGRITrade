@@ -319,9 +319,9 @@ def collect(bank, cfg, known):
                 url = f"https://www.bankofengland.co.uk/monetary-policy-summary-and-minutes/{y}/{MON[mo - 1]}-{y}"
                 t = re.sub(r"<[^>]+>", " ", get(url) or "")
                 m = re.search(r"Published on\s*(\d{1,2})\s+([A-Za-z]+)\s+(20\d\d)", t)
-                if m and m.group(2).lower() in MON:
-                    items.append({"title": f"Monetary Policy Summary, {MON[mo - 1].title()} {y}", "link": url, "src": lst,
-                                  "date": f"{m.group(3)}-{MON.index(m.group(2).lower()) + 1:02d}-{int(m.group(1)):02d}T12:00:00+00:00"})
+                d_ = f"{m.group(3)}-{MON.index(m.group(2).lower()) + 1:02d}-{int(m.group(1)):02d}T12:00:00+00:00" if m and m.group(2).lower() in MON else None
+                if d_ and "to be published" not in t.lower() and dt.datetime.fromisoformat(d_) <= NOW:   # skip the next meeting's placeholder page
+                    items.append({"title": f"Monetary Policy Summary, {MON[mo - 1].title()} {y}", "link": url, "src": lst, "date": d_})
                     found += 1
                     if found == 2:
                         break
