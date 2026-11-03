@@ -17,7 +17,8 @@
   /* release marking: NEW (< 36 h), this week (< 7 d), due (next 36 h) */
   function mark(m) {
     var now = Date.now(), s = seenMs(m), n = nextRelease(m.key);
-    if (s && now - s < 36 * HR) return { k: "new", t: "NEW · released " + etLabel(s, true) + " ET" };
+    var dET = function (t) { return new Date(t).toLocaleDateString("en-CA", { timeZone: "America/Toronto" }); };
+    if (s && dET(s) === dET(now)) return { k: "new", t: "NEW · released " + etLabel(s, true) + " ET" };   /* NEW = today's prints only */
     if (n && n.t && n.t - now < 36 * HR && n.t > now) return { k: "due", t: "DUE · " + etLabel(n.t, true) + " ET" };
     if (s && now - s < 7 * 24 * HR) return { k: "wk", t: "Released " + etLabel(s, true) + " ET" };
     return null;
