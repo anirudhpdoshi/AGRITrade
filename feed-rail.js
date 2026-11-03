@@ -45,22 +45,37 @@
   }
   function matches(m, f) { var t = m._t || (m._t = tagsOf(m)); return f === "all" || (f === "agri" ? t.corn || t.wheat || t.soybeans : t[f]); }
 
-  function cardHTML(ctx) {
-    var f = pick[ctx] || DEF[ctx] || "all", L = feed(), now = Date.now();
-    var cnt = {}; L.forEach(function (m) { TAGS.forEach(function (t) { if (t[0] !== "all" && matches(m, t[0])) cnt[t[0]] = (cnt[t[0]] || 0) + 1; }); });
-    var list = L.filter(function (m) { return matches(m, f) && (!ONLY || breaking(m) || f === "wires"); });
-    var pin = [], rest = list;   /* strictly newest first: breaking items are red in place, never pinned over newer news */
-    function item(m) {
-      var t = m._t || tagsOf(m), b = breaking(m), go = m.go ? ' data-evgo="' + esc(m.go) + '" role="link" tabindex="0"' : "";
-      return '<li class="fr-i' + (b ? " br" : "") + (go ? " go" : "") + '"' + go + ">" + (b ? '<span class="fr-bk">BREAKING</span>' : "") + '<div class="fr-h">' + String(m.h).replace(/<div><i>(Why it matters|Source &amp; time)<\/i>[\s\S]*?<\/div>(?=<div><i>|<\/div>$)/g, "") + "</div>" +
-        '<div class="fr-m"><span>' + hm(m.t) + " ET</span>" + Object.keys(t).map(function (k) { return '<span class="fr-t" style="--tc:' + TC[k] + '">' + TN[k] + "</span>"; }).join("") + (go ? '<span class="fr-o">Open →</span>' : "") + "</div></li>";
-    }
-    var dsep = "", body = rest.slice(0, 40).map(function (m) { var d = day(m.t), s = d !== dsep ? '<li class="fr-d">' + (d === day(now) ? "Today" : new Date(m.t).toLocaleDateString("en-US", { timeZone: "America/Toronto", weekday: "short", month: "short", day: "numeric" })) + "</li>" : ""; dsep = d; return s + item(m); }).join("");
-    return '<div class="fr-head"><span class="fr-title">Feed</span><span class="fr-mode"><button data-frmode="1" aria-pressed="' + ONLY + '" title="Confirmed breaks, new market-moving announcements, data prints and central-bank decisions only">⚡ Alerts</button><button data-frmode="0" aria-pressed="' + !ONLY + '" title="Everything the desk logs: data arrivals, OI moves, calendar items">All activity</button></span><span class="fr-live" title="Time of the last fast-lane update this page received"><i></i>live · ' + (window.DESK_WIRES && DESK_WIRES.at ? hm(Date.parse(DESK_WIRES.at)) : "—") + "</span></div>" +
-      '<div class="fr-chips" role="tablist">' + TAGS.filter(function (t) { return t[0] === "all" || cnt[t[0]] || t[0] === f || t[0] === DEF[ctx]; }).map(function (t) {
-        return '<button data-frf="' + t[0] + '" aria-pressed="' + (f === t[0]) + '"' + (t[0] !== "all" && t[0] !== "agri" ? ' style="--tc:' + TC[t[0]] + '"' : "") + ">" + t[1] + (t[0] === "all" ? "" : " <small>" + (cnt[t[0]] || 0) + "</small>") + "</button>"; }).join("") + "</div>" +
-      '<ul class="fr-list">' + (pin.length ? pin.map(item).join("") : "") + (body || (!pin.length ? '<li class="fr-empty">' + (ONLY ? "No alerts for " + esc(TN[f]) + " today. Alerts fire only on a confirmed break (new intraday high/low, 20/50/100/200-day average, ±1σ/±2σ, options put/call wall), a new market-moving announcement, a data print or a central-bank decision." : "Nothing for " + esc(TN[f]) + " yet.") + "</li>" : "")) + "</ul>";
+  /* One clean stream: source · time, then the plain headline. Newest on top, nothing dated in the future, no tags. */
+  function plain(h) { var d = document.createElement("div"); d.innerHTML = h || ""; return (d.textContent || "").replace(/\s+/g, " ").trim(); }
+  function itemOf(m) {
+    var d = document.createElement("div"); d.innerHTML = m.h || "";
+    var src = "", txt = "", url = "", sEl = d.querySelector(".fr-src"), a = d.querySelector("a[href^='http']");
+    if (sEl) { src = sEl.textContent.trim(); sEl.remove(); }
+    if (a) { url = a.getAttribute("href"); }
+    d.querySelectorAll(".fr-lnk,small").forEach(function (x) { x.remove(); });
+    if (m.k === "alert" || m.k === "release") {
+      var b = d.querySelector("b"); txt = plain(b ? b.innerHTML : m.h).replace(/^\[(BREAKING|PRICE ALERT)\]\s*[–-]\s*/, "");
+      var tr = d.querySelector(".fr-al div"); var tt = tr ? plain(tr.innerHTML).replace(/^Trigger\s*/i, "") : "";
+      if (tt && m.k !== "release" && !/earnings/i.test(txt) && tt.toLowerCase().indexOf(txt.toLowerCase().slice(0, 30)) < 0) txt += " — " + tt;
+      if (!src) src = m.k === "release" ? "Macro data" : /earn/.test(m.go || "") ? "Earnings" : /PRICE ALERT/.test(m.h) ? "Price alert" : "Desk alert";
+    } else txt = plain(d.innerHTML);
+    if (!src) src = { policy: "Central bank", data: "Desk data", oi: "Options", level: "Price alert", world: "World markets", wire: "Wire" }[m.k] || "Desk";
+    return { src: src, txt: txt, url: url };
   }
+  function cardHTML(ctx) {
+    var now = Date.now(), seen = {};
+    var L = feed().filter(function (m) { return m.t <= now + 60000; }).slice().sort(function (a, b) { return b.t - a.t; });
+    var rows = L.map(function (m) {
+      var it = itemOf(m), key = it.txt.toLowerCase().slice(0, 80); if (!it.txt || seen[key]) return ""; seen[key] = 1;
+      var tm = day(m.t) === day(now) ? hm(m.t) : new Date(m.t).toLocaleDateString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric" }) + " " + hm(m.t);
+      var go = !it.url && m.go ? ' data-evgo="' + esc(m.go) + '" role="link" tabindex="0"' : "";
+      var body = it.url ? '<a class="fs-t" href="' + esc(it.url) + '" target="_blank" rel="noopener noreferrer">' + esc(it.txt) + "</a>" : '<div class="fs-t">' + esc(it.txt) + "</div>";
+      return '<li class="fs-i' + (breaking(m) ? " br" : "") + (go ? " go" : "") + '"' + go + '><div class="fs-h"><b>' + esc(it.src) + "</b><span>" + tm + "</span></div>" + body + "</li>";
+    }).join("");
+    return '<div class="fr-head"><span class="fr-title">Feed</span><span class="fr-live" title="Time of the last live update this page received"><i></i>live · ' + (window.DESK_WIRES && DESK_WIRES.at ? hm(Date.parse(DESK_WIRES.at)) : "—") + "</span></div>" +
+      '<ul class="fr-list fs">' + (rows || '<li class="fr-empty">Waiting for the first items…</li>') + "</ul>";
+  }
+
 
   /* ---------- mounting ---------- */
   var drawer = null, dbtn = null;
@@ -155,6 +170,8 @@
     ".fr-i.br{background:rgba(224,69,58,.10);border:1px solid rgba(224,69,58,.45);border-left:3px solid #e0453a;margin:6px 0}.fr-i.br .fr-h{color:#ffd9d4;font-weight:600}.fr-i.br .fr-h b{color:#fff}" +
     ".fr-bk,.fr-tbk{display:inline-block;font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#fff;background:#e0453a;border-radius:3px;padding:1px 6px;margin-bottom:4px}" +
     ".fr-src{font:700 10px 'IBM Plex Mono',monospace;color:#9fb4cf;border:1px solid var(--line2);border-radius:3px;padding:0 4px;margin-right:3px}.fr-lnk{color:#7dd8e6;text-decoration:none}" +
+    ".fs .fs-i{padding:9px 4px;border-bottom:1px solid var(--line)}.fs .fs-i.go{cursor:pointer}.fs .fs-i.br{border-left:3px solid #e0453a;padding-left:8px}.fs-h{display:flex;justify-content:space-between;gap:8px;font-size:12.5px}.fs-h b{color:#fff}.fs-h span{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint)}" +
+    ".fs-t{display:block;font-size:13.5px;line-height:1.45;color:#d4deea;margin-top:3px;text-decoration:none}a.fs-t:hover{color:#7dd8e6}" +
     ".fr-empty{font-size:13px;color:var(--muted);padding:10px 0}" +
     ".fr-mode{display:inline-flex;border:1px solid var(--line2);border-radius:12px;overflow:hidden}.fr-mode button{appearance:none;border:0;background:transparent;color:var(--muted);font:600 11px 'IBM Plex Mono',monospace;padding:3px 8px;cursor:pointer}.fr-mode button[aria-pressed=true]{background:#e0453a;color:#fff}.fr-mode button[data-frmode='0'][aria-pressed=true]{background:#13304a}" +
     ".fr-al{margin-top:4px;display:grid;gap:3px;font-size:12.5px;font-weight:400;color:#d4deea}.fr-al i{display:inline-block;min-width:96px;font:normal 600 10.5px 'IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;color:#ff9d94;margin-right:6px}.fr-al a{color:#7dd8e6}" +
