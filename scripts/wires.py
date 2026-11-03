@@ -1,6 +1,6 @@
 """Business newswires and official press rooms -> the desk feed (runs inside the fast lane, every ~2 min).
 
-Sources (free, no keys): Business Wire, PR Newswire, Canada Newswire (RSS), Press Release Feed (JSON API),
+Sources (free, no keys): FinancialJuice squawk headlines (RSS), Business Wire, PR Newswire, Canada Newswire (RSS), Press Release Feed (JSON API),
 Federal Reserve, Bank of Canada, USDA, CFTC (RSS), Statistics Canada Daily (Atom), SEC EDGAR current 8-K filings (Atom,
 needs the SEC_CONTACT secret). GlobeNewswire, EIN Presswire, ACCESS Newswire and Newsfile publish no feed that answers
 an automated client (403/404/empty) and are not polled.
@@ -28,6 +28,7 @@ SOURCES = [   # key, label, url, kind
     ("usda", "USDA", "https://www.usda.gov/rss/latest-releases.xml", "usda"),
     ("cftc", "CFTC", "https://www.cftc.gov/RSS/RSSGP/rssgp.xml", "cftc"),
     ("stc", "Statistics Canada", "https://www150.statcan.gc.ca/n1/rss/dai-quo/0-eng.atom", "stc"),
+    ("fj", "FinancialJuice", "https://www.financialjuice.com/feed.ashx?xy=rss", "fj"),
     ("sec", "SEC EDGAR", "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&company=&dateb=&owner=include&start=0&count=100&output=atom", "sec"),
 ]
 NAMES = {  # ticker -> name pattern used in release titles (top-100 + agri watchlist)
@@ -53,6 +54,9 @@ MATERIAL = re.compile(r"\b(results|earnings|quarter|revenue|guidance|outlook|acq
 AGRI = re.compile(r"\b(grain|corn|wheat|soy(bean)?s?|canola|oilseed|fertili[sz]er|potash|nitrogen|ethanol|biofuel|renewable diesel|crush|crop|harvest|farm(er|ing)?s?|livestock|cattle|hog|USDA|WASDE|Black Sea|crude|OPEC|pipeline|LNG)\b", re.I)
 FED_KEY = re.compile(r"FOMC|monetary policy|federal funds|discount rate|policy statement|minutes of the|implementation note", re.I)
 BOC_KEY = re.compile(r"policy rate|interest rate announcement|Monetary Policy Report|Governing Council|deliberations|market operations", re.I)
+# FinancialJuice squawk headlines: keep what moves the desk's markets; BREAKING for central banks, trade/tariff, geopolitics, oil supply, grains
+FJ_KEEP = re.compile(r"\b(USD|CAD|Canad|dollar|Fed\b|FOMC|Powell|BoC|Macklem|rate|yield|Treasur|inflation|CPI|PCE|jobs|payroll|GDP|PMI|ISM|tariff|trade|Trump|China|Iran|Israel|Russia|Ukraine|OPEC|oil|crude|gasoline|EIA|API|grain|wheat|corn|soy|USDA|WASDE|fertili|Black Sea|sanction|ceasefire|missile|strike|war)", re.I)
+FJ_BREAK = re.compile(r"\b(Fed\b.*\b(cut|hike|holds|decision)|FOMC (statement|decision)|BoC\b.*\b(cut|hike|holds|decision)|rate (cut|hike)s?\b|tariffs? (on|of|to)|imposes|sanction|missile|airstrike|strikes? on|invasion|ceasefire|OPEC\+? (agrees|cuts|raises|keeps)|export ban|WASDE|Trump (signs|orders|announces|imposes))", re.I)
 USDA_KEY = re.compile(r"WASDE|export|trade|tariff|China|crop|grain|corn|wheat|soy|farm|commodity|disaster|bird flu|avian|screwworm", re.I)
 
 
@@ -93,6 +97,8 @@ def classify(kind, title):
         return True, bool(BOC_KEY.search(title)), ["cb"], []
     if kind == "usda":
         return True, bool(USDA_KEY.search(title)), ["agri"], []
+    if kind == "fj":
+        return bool(FJ_KEEP.search(title)), bool(FJ_BREAK.search(title)), ["agri" if AGRI.search(title) and re.search(r"grain|wheat|corn|soy|fertili|USDA|WASDE", title, re.I) else "macro"], []
     if kind in ("cftc", "stc"):
         return True, False, ["agri" if AGRI.search(title) else "macro"], []
     agri = bool(AGRI.search(title))
@@ -132,6 +138,8 @@ def fetch(now, get=None, only=None):
             if key == "sec":
                 m = re.match(r"8-K\s*-\s*(.*?)\s*\(\d+\)", title)
                 title = f"{m.group(1).title() if m else title} files an 8-K"
+            if key == "fj":
+                title = re.sub(r"^FinancialJuice:\s*", "", title)
             keep, brk, tags, tick = classify(kind, title + (" " + comp if comp else ""))
             if not keep:
                 continue
