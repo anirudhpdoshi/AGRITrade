@@ -346,7 +346,13 @@ def collect(bank, cfg, known):
         if pub and dt.datetime.fromisoformat(pub) < NOW - dt.timedelta(days=120):
             continue
         out.append(dict(it, type=typ, published_at=pub))
-    return out[:25]
+    # newest 25, but always keep the latest policy statement: it is the baseline every remark is scored against
+    out.sort(key=lambda d: d.get("published_at") or "", reverse=True)
+    keep = out[:25]
+    st = next((d for d in out if d["type"] == "statement"), None)
+    if st and st not in keep:
+        keep = keep[:24] + [st]
+    return keep
 
 
 # ---------------------------------------------------------------- baselines (Layer B) and confidence
