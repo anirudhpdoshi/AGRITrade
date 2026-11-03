@@ -161,7 +161,9 @@ def main():
         _d = datetime.now(U.TOR).date().isoformat()
         EARN_LIVE.update({k: v for k, v in (pl.get("earn_live") or {}).items() if v.get("date") == _d})
         _d10 = (datetime.now(U.TOR).date() - timedelta(days=10)).isoformat()
-        EARN_PR.update({k: v for k, v in (pl.get("earn_pr") or {}).items() if (v.get("date") or "") >= _d10 and 1e6 <= (v.get("rev") or 1e9) <= 8e11})
+        EARN_PR.update({k: v for k, v in (pl.get("earn_pr") or {}).items() if (v.get("date") or "") >= _d10 and 1e6 <= (v.get("rev") or 1e9) <= 4e11})
+        for k in [k for k, v in (pl.get("earn_pr") or {}).items() if k not in EARN_PR]:   # rejected rows are re-read with the current reader
+            (ES.get("done") or {}).pop(k, None); (ES.get("filed") or {}).get(k, {}).pop("pr_failed", None)
     except Exception:
         pass
     EW = EWM.Watch(U.TOR, ES)

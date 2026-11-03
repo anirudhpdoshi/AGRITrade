@@ -132,8 +132,8 @@ def parse(html):
             out[k + "_yoy"] = round((out[k] / py[k] - 1) * 100, 1) if py[k] > 0 else None
     out["py"] = {k: v for k, v in py.items() if k in ("rev", "ni", "eps_d", "opinc", "gp")}
     out["quotes"] = quotes(" ".join("".join(p.prose).split()))
-    if out.get("rev") and (out["rev"] > 8e11 or out["rev"] < 1e6):
-        return {}   # no S&P 500 company books > $800B or < $1M a quarter: the unit was misread — show N/A rather than a wrong number
+    if out.get("rev") and (out["rev"] > 4e11 or out["rev"] < 1e6):
+        return {}   # no S&P 500 company books > $400B or < $1M a quarter: the unit was misread — show N/A rather than a wrong number
     if out.get("rev") and out.get("gp") is None and out.get("cogs") is not None:
         out["gp"] = out["rev"] - out["cogs"]
     if out.get("rev"):
