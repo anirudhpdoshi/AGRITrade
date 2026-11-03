@@ -312,18 +312,20 @@ def collect(bank, cfg, known):
             items += boj_table(h, lst)
             continue
         if "bankofengland.co.uk" in lst:
+            # the index is built by JavaScript; summary pages follow /monetary-policy-summary-and-minutes/<year>/<month>-<year>
             MON = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
-            for path, yr, mon in sorted(set(re.findall(r'href="(/monetary-policy-summary-and-minutes/(20\d\d)/([a-z]+)-20\d\d)"', h)), reverse=True):
-                if mon not in MON:
-                    continue
-                url, day = "https://www.bankofengland.co.uk" + path, None
-                if len([x for x in items if x.get("src") == lst]) < 2:   # the newest two: read the real publication date
-                    m = re.search(r"Published on\s*(\d{1,2})\s+([A-Za-z]+)\s+(20\d\d)", re.sub(r"<[^>]+>", " ", get(url) or ""))
-                    if m and m.group(2).lower() in MON:
-                        day = f"{m.group(3)}-{MON.index(m.group(2).lower()) + 1:02d}-{int(m.group(1)):02d}T12:00:00+00:00"
-                if not day:
-                    continue   # never show a guessed date
-                items.append({"title": f"Monetary Policy Summary, {mon.title()} {yr}", "link": url, "date": day, "src": lst})
+            y, mo, found = NOW.year, NOW.month, 0
+            for _ in range(5):
+                url = f"https://www.bankofengland.co.uk/monetary-policy-summary-and-minutes/{y}/{MON[mo - 1]}-{y}"
+                t = re.sub(r"<[^>]+>", " ", get(url) or "")
+                m = re.search(r"Published on\s*(\d{1,2})\s+([A-Za-z]+)\s+(20\d\d)", t)
+                if m and m.group(2).lower() in MON:
+                    items.append({"title": f"Monetary Policy Summary, {MON[mo - 1].title()} {y}", "link": url, "src": lst,
+                                  "date": f"{m.group(3)}-{MON.index(m.group(2).lower()) + 1:02d}-{int(m.group(1)):02d}T12:00:00+00:00"})
+                    found += 1
+                    if found == 2:
+                        break
+                y, mo = (y, mo - 1) if mo > 1 else (y - 1, 12)
             continue
         for href, title in re.findall(r'<a[^>]+href="(https://www\.bankofcanada\.ca/20\d\d/\d\d/[^"]+/)"[^>]*>\s*([^<]{12,160})</a>', h):
             items.append({"title": _html.unescape(title).strip(), "link": href, "date": "", "src": lst})
