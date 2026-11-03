@@ -133,6 +133,8 @@
     return '<span class="ue-rng" title="' + num(lo, 2) + " – " + num(hi, 2) + '"><i style="left:calc(' + p.toFixed(1) + '% - 1px)"></i></span>'; }
 
   /* ---------- data ---------- */
+  function raw(file) { return fetch("https://raw.githubusercontent.com/" + REPO + "/earnings/" + file + "?t=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { if (r.status === 404) throw 404; if (!r.ok) throw r.status; return r.json(); }); }
   function get(file, tag, cb) {
     var h = { Accept: "application/vnd.github.raw+json" }; if (tag) h["If-None-Match"] = tag;
     return fetch("https://api.github.com/repos/" + REPO + "/contents/" + file + "?ref=earnings", { headers: h, cache: "no-store" })
@@ -141,8 +143,12 @@
         return fetch("https://raw.githubusercontent.com/" + REPO + "/earnings/" + file + "?t=" + Date.now(), { cache: "no-store" })
           .then(function (r) { if (r.status === 404) throw 404; if (!r.ok) throw r.status; return r.json(); }); });
   }
-  function poll(force) {
+  function poll(force, bg) {
     if (window.DESK_LOCKED || busy) return; if (!force && Date.now() - lastTry < 60000) return; lastTry = Date.now(); busy = true;
+    if (bg) {   /* background check from other tabs: raw copy only, so it never uses the GitHub API allowance the live feed needs */
+      raw("earnings.json").then(function (j) { if (j) J = j; }).catch(function () {}).then(function () { busy = false; try { mergeLive(window.DESK_EARN_LIVE); notify(); } catch (e) {} });
+      return;
+    }
     if (window.WORLD && WORLD.poll) try { WORLD.poll(); } catch (e) {}
     var a = get("earnings.json", etag, function (t) { etag = t; }).then(function (j) { if (j) J = j; err = null; })
       .catch(function (e) { err = e === 404 ? "empty" : "down"; });
@@ -557,7 +563,7 @@
   }
   window.addEventListener("desk:earnlive", function (e) { mergeLive(e.detail); });
   /* background watch: earnings.json every 3 min on any tab, so a release reaches the feed and the tab badge */
-  setInterval(function () { if (!document.hidden) poll(true); }, 180000); setTimeout(function () { poll(true); }, 4000);
+  setInterval(function () { if (!document.hidden) poll(true, !P.classList.contains("active")); }, 300000); setTimeout(function () { poll(true, !P.classList.contains("active")); }, 4000);
   window.addEventListener("desk:unlock", function () { if (P.classList.contains("active")) poll(true); });
   window.EARNINGS = { render: render, poll: poll, _data: function () { return J; } };
   render();
