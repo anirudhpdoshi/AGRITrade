@@ -167,6 +167,9 @@ def main():
     try:   # today's fired alerts carry across runs, so a breakout never alerts twice
         prev_al = (json.loads(open(os.path.join(WT, "live.json")).read()).get("alerts_state")) or {}
         AS.update(prev_al)
+        # wire alerts that no longer pass the BREAKING rule (rule tightened) are withdrawn
+        AS["items"] = [x for x in AS.get("items", []) if not (x.get("id", "").startswith("wire|") and x.get("src") == "FinancialJuice"
+                                                               and not WR.FJ_BREAK.search(x.get("head", "")))]
     except Exception:
         pass
     while time.time() < stop:
