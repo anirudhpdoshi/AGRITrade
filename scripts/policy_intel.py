@@ -39,7 +39,9 @@ BANKS = {
     "fed": {"name": "Federal Reserve", "cc": "us", "feeds": ["https://www.federalreserve.gov/feeds/press_monetary.xml",
              "https://www.federalreserve.gov/feeds/speeches.xml", "https://www.federalreserve.gov/feeds/testimony.xml"]},
     "ecb": {"name": "European Central Bank", "cc": "eu", "feeds": ["https://www.ecb.europa.eu/rss/press.html"]},
-    "boe": {"name": "Bank of England", "cc": "gb", "feeds": ["https://www.bankofengland.co.uk/rss/speeches", "https://www.bankofengland.co.uk/rss/news"]},
+    "boe": {"name": "Bank of England", "cc": "gb", "feeds": ["https://www.bankofengland.co.uk/rss/speeches", "https://www.bankofengland.co.uk/rss/news"],
+            # the news feed keeps only ~25 items, so an MPC decision drops out within weeks: read the summaries index too
+            "lists": ["https://www.bankofengland.co.uk/monetary-policy-summary-and-minutes/monetary-policy-summary-and-minutes"]},
     "boc": {"name": "Bank of Canada", "cc": "ca", "feeds": ["https://www.bankofcanada.ca/content_type/speeches/feed/"],
             "lists": ["https://www.bankofcanada.ca/press/speeches/", "https://www.bankofcanada.ca/press/press-releases/"]},
     "boj": {"name": "Bank of Japan", "cc": "jp", "feeds": ["https://www.boj.or.jp/en/rss/whatsnew.xml"],
@@ -308,6 +310,20 @@ def collect(bank, cfg, known):
         h = get(lst) or ""
         if "boj.or.jp" in lst:
             items += boj_table(h, lst)
+            continue
+        if "bankofengland.co.uk" in lst:
+            MON = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
+            for path, yr, mon in sorted(set(re.findall(r'href="(/monetary-policy-summary-and-minutes/(20\d\d)/([a-z]+)-20\d\d)"', h)), reverse=True):
+                if mon not in MON:
+                    continue
+                url, day = "https://www.bankofengland.co.uk" + path, None
+                if len([x for x in items if x.get("src") == lst]) < 2:   # the newest two: read the real publication date
+                    m = re.search(r"Published on\s*(\d{1,2})\s+([A-Za-z]+)\s+(20\d\d)", re.sub(r"<[^>]+>", " ", get(url) or ""))
+                    if m and m.group(2).lower() in MON:
+                        day = f"{m.group(3)}-{MON.index(m.group(2).lower()) + 1:02d}-{int(m.group(1)):02d}T12:00:00+00:00"
+                if not day:
+                    continue   # never show a guessed date
+                items.append({"title": f"Monetary Policy Summary, {mon.title()} {yr}", "link": url, "date": day, "src": lst})
             continue
         for href, title in re.findall(r'<a[^>]+href="(https://www\.bankofcanada\.ca/20\d\d/\d\d/[^"]+/)"[^>]*>\s*([^<]{12,160})</a>', h):
             items.append({"title": _html.unescape(title).strip(), "link": href, "date": "", "src": lst})
