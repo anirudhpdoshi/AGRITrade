@@ -350,9 +350,10 @@
   }
   /* ---------- right: earnings intelligence feed (independent of the company lock) ---------- */
   function addDays(iso, n) { var d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
-  function fresh(r) {   /* results that landed in the last 18 h (or today's, if the release time was not captured) */
+  function fresh(r) {   /* NEW = results that landed today (ET); yesterday's release is no longer new the next morning */
     if (r.epsActual == null && r.revenueActual == null) return false;
-    return r.seen_at ? Date.now() - Date.parse(r.seen_at) < 18 * 3600000 : r.date === todayNY();
+    var d = r.seen_at ? new Date(r.seen_at).toLocaleDateString("en-CA", { timeZone: "America/New_York" }) : r.date;
+    return d === todayNY();
   }
   function notify() {
     var C = J && J.calendar; if (!C || !C.rows) return;

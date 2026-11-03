@@ -39,6 +39,7 @@
   function breaking(m) {
     var h = (m.h || "").replace(/<[^>]+>/g, " ");
     /* desk rule: only confirmed intraday breaks, new market-moving announcements, macro prints and central-bank decisions */
+    if (day(m.t) !== day(Date.now())) return false;   /* breaking means today's (ET) news only; older items stay in the feed as plain entries */
     return m.k === "alert" || m.k === "release" || (m.k === "policy" && /statement|decision|HIKE|CUT|HOLD|minutes/i.test(h)) || /Federal Reserve: |Bank of Canada: /.test(h);
   }
   function matches(m, f) { var t = m._t || (m._t = tagsOf(m)); return f === "all" || (f === "agri" ? t.corn || t.wheat || t.soybeans : t[f]); }
