@@ -109,11 +109,12 @@ def briefing_json():
 
 EARN_LIVE, EARN_PR = {}, {}
 WIRES = {"items": [], "health": {}, "at": None}
+BOARD = {}
 
 
 def payload(D, al=None):
     a = D["meta"]["asof"]
-    return {"alerts": (al or {}).get("items", []), "earn_live": EARN_LIVE, "earn_pr": EARN_PR, "wires": WIRES,
+    return {"alerts": (al or {}).get("items", []), "earn_live": EARN_LIVE, "earn_pr": EARN_PR, "wires": WIRES, "earn_board": BOARD,
         "fx": {"feed": D["fx"]["feed"], "intraday": D["fx"].get("intraday", []),
                "energy": D["fx"]["energy"], "wcs_diff": D["fx"]["wcs_diff"], "fxcross": D["fx"]["fxcross"], "yields_live": D["fx"].get("yields_live") or {}, "yields_live_ca": D["fx"].get("yields_live_ca") or {}},
         "grains": {k: {"intraday": g["fan"]["intraday"], "intraday_ts": g["fan"].get("intraday_ts"), "quotes": g.get("quotes") or {}} for k, g in D["grains"].items()},
@@ -277,6 +278,10 @@ def main():
             EW.load(U.NOW, str(ROOT))
         except Exception as e:
             print("[earn watch] load failed:", type(e).__name__)
+        try:
+            BOARD.clear(); BOARD.update(EWM.board(EW, datetime.now(timezone.utc), EARN_PR, EARN_LIVE))
+        except Exception as e:
+            print("[earn board] failed:", type(e).__name__, e)
         try:   # press-release statement lines (8-K exhibit 99.1) for today's reporters -> company cards
             npr = EWM.pr_pass(EW, datetime.now(timezone.utc), EARN_PR)
             if npr:
@@ -306,6 +311,10 @@ def main():
                     AS.clear(); AS["day"] = datetime.now(U.TOR).date().isoformat()
                 AS["items"] = (AS.get("items", []) + al)[-60:]
                 EARN_LIVE.update(live)
+                try:
+                    BOARD.clear(); BOARD.update(EWM.board(EW, datetime.now(timezone.utc), EARN_PR, EARN_LIVE))
+                except Exception as e:
+                    print("[earn board] failed:", type(e).__name__)
                 for x in al:
                     print(f"::notice title=earnings::{x['head']} | {x['trigger'][:150]}")
                 body = {**payload(D, AS), "alerts_state": AL.public(AS), "earn_state": ES, "rel": rel_out,

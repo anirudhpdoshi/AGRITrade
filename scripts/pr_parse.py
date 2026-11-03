@@ -23,16 +23,22 @@ class _T(HTMLParser):
     def __init__(self):
         super().__init__()
         self.tables, self.row, self.cell, self.inrow, self.incell, self.text = [], None, None, False, False, []
+        self.depth, self.prose = 0, []   # text outside tables (narrative paragraphs) for the quoted sentences
 
     def handle_starttag(self, tag, a):
         if tag == "table":
             self.tables.append([])
+            self.depth += 1
+        elif tag in ("p", "div", "li", "br") and not self.depth:
+            self.prose.append(" \n ")
         elif tag == "tr" and self.tables:
             self.row = []
         elif tag in ("td", "th") and self.row is not None:
             self.cell = []
 
     def handle_endtag(self, tag):
+        if tag == "table":
+            self.depth = max(0, self.depth - 1)
         if tag in ("td", "th") and self.cell is not None and self.row is not None:
             self.row.append(" ".join("".join(self.cell).split()))
             self.cell = None
@@ -43,6 +49,8 @@ class _T(HTMLParser):
 
     def handle_data(self, d):
         self.text.append(d)
+        if not self.depth:
+            self.prose.append(d)
         if self.cell is not None:
             self.cell.append(d)
 
@@ -84,25 +92,44 @@ def parse(html):
             if len(yrs) >= 2:
                 break
         col = 1 if len(yrs) >= 2 and yrs[1] > yrs[0] else 0
-        in_eps, total_rev = False, None
-        for lab, nums in rows:
-            nums = nums[col:] if len(nums) > col else nums
+        in_eps, total_rev, pyc = False, None, 0 if col == 1 else 1   # the other three-month column = same quarter last year
+        py = out.setdefault("py", {})
+        for lab, raw in rows:
+            nums = raw[col:] if len(raw) > col else raw
+            prior = raw[pyc] if len(raw) > max(col, pyc) else None
             if not nums:
                 in_eps = in_eps or bool(re.search(r"(earnings|income|net income).*per (common )?share", lab))
                 continue
             for key, rx, _ in LINES:
                 if key not in out and re.fullmatch(rx, lab):
                     out[key] = nums[0] * mult
+                    if prior is not None:
+                        py[key] = prior * mult
                     if key == "rev" and lab.startswith("total"):
                         total_rev = nums[0] * mult
+                        if prior is not None:
+                            py["rev_total"] = prior * mult
             if total_rev:
                 out["rev"] = total_rev
+                if "rev_total" in py:
+                    py["rev"] = py["rev_total"]
             if re.search(r"per (common )?share", lab):
                 in_eps = True
             if "eps_d" not in out and (in_eps or "per share" in lab) and re.fullmatch(r"(diluted|diluted earnings per share|.*per share.*diluted|diluted net income per share)", lab) and abs(nums[0]) < 1000:
                 out["eps_d"] = nums[0]
+                if prior is not None and abs(prior) < 1000:
+                    py["eps_d"] = prior
         if out.get("rev") and out.get("ni") is not None:
             break
+    py = out.pop("py", {})
+    py.pop("rev_total", None)
+    if py.get("rev") and py.get("gp") is None and py.get("cogs") is not None:
+        py["gp"] = py["rev"] - py["cogs"]
+    for k in ("rev", "ni", "eps_d", "opinc", "gp"):   # year-over-year growth, only where both years were read
+        if out.get(k) is not None and py.get(k):
+            out[k + "_yoy"] = round((out[k] / py[k] - 1) * 100, 1) if py[k] > 0 else None
+    out["py"] = {k: v for k, v in py.items() if k in ("rev", "ni", "eps_d", "opinc", "gp")}
+    out["quotes"] = quotes(" ".join("".join(p.prose).split()))
     if out.get("rev") and out.get("gp") is None and out.get("cogs") is not None:
         out["gp"] = out["rev"] - out["cogs"]
     if out.get("rev"):
@@ -113,6 +140,19 @@ def parse(html):
         if out.get("ni") is not None:
             out["nm"] = round(out["ni"] / out["rev"] * 100, 2)
     return out
+
+
+GUIDE = re.compile(r"\b(outlook|guidance|guides?|expects?|expected to|reaffirm\w*|raises?|raised|lowers?|lowered|narrow\w*|full[- ]year|fiscal (?:year )?20\d\d|next quarter)\b", re.I)
+HIGH = re.compile(r"\b(record|increased?|decreased?|grew|growth|up \d|down \d|declined?|rose|fell|margin|demand|volumes?|segment)\b", re.I)
+BOILER = re.compile(r"forward-looking statements|safe harbor|non-gaap financial measures? (?:are|is)|webcast|conference call|replay|investor relations|about [A-Z]|www\.|press release", re.I)
+
+
+def quotes(text):
+    """Guidance and highlight sentences quoted verbatim from the release (boilerplate dropped), at most 3 each."""
+    S = [x.strip() for x in re.split(r"(?<=[.!?])\s+(?=[A-Z“\"])", text[:60000]) if 40 <= len(x.strip()) <= 320 and not BOILER.search(x)]
+    g = [x for x in S if GUIDE.search(x) and re.search(r"\d", x)][:3]
+    h = [x for x in S[:80] if HIGH.search(x) and re.search(r"\d", x) and x not in g][:3]
+    return {"guidance": g, "highlights": h}
 
 
 def exhibit_url(get, cik, acc):

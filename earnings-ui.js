@@ -91,6 +91,15 @@
     ".ut-feed h3{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:12px 0 5px;display:flex;justify-content:space-between}.ut-feed h3 small{letter-spacing:0;text-transform:none;color:var(--faint);font-weight:400}" +
     ".ut-chips{display:flex;gap:5px;flex-wrap:wrap}.ut-chips button{appearance:none;border:1px solid var(--line2);background:none;color:var(--muted);border-radius:12px;padding:2px 9px;font:inherit;font-size:11.5px;cursor:pointer}" +
     ".ut-chips button[aria-pressed=true]{border-color:var(--cyan);color:var(--ink);background:rgba(56,182,201,.1)}" +
+    ".eb{margin-bottom:12px}.eb-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start}.eb-sum{font-size:13px;color:var(--muted);margin-top:4px}.eb-sum b{color:var(--ink)}.eb-sum b.beat,.eb .beat{color:#3fb97f}.eb .miss{color:#ff8a84}.eb .inl{color:#e8b93d}.eb .amb{color:#e8b93d}" +
+    ".eb-st{display:flex;gap:8px;flex-wrap:wrap}.eb-live,.eb-src2{font:11px 'IBM Plex Mono',monospace;border:1px solid var(--line2);border-radius:10px;padding:2px 8px;display:inline-flex;gap:5px;align-items:center}.eb-live i{width:7px;height:7px;border-radius:50%;background:#3fb97f}.eb-live.stale i{background:#e8b93d}.eb-src2.ok{color:#3fb97f}.eb-src2.bad{color:#ff8a84;border-color:rgba(255,138,132,.5)}" +
+    ".eb-tabs{display:flex;gap:6px;margin:10px 0 6px;flex-wrap:wrap}.eb-tabs button{appearance:none;font:700 11.5px 'IBM Plex Mono',monospace;letter-spacing:.06em;padding:5px 10px;border-radius:7px;border:1px solid var(--line2);background:transparent;color:var(--muted);cursor:pointer}.eb-tabs button small{margin-left:4px;color:var(--faint)}.eb-tabs button[aria-pressed=true]{background:#13304a;color:#fff;border-color:#38b6c9}.eb-tabs button[data-ebt=new][aria-pressed=true]{background:#e0453a;border-color:#e0453a}" +
+    ".eb-b{max-height:620px;overflow:auto}.eb-r{display:grid;grid-template-columns:64px minmax(0,1.4fr) minmax(0,1.6fr) auto;gap:8px;align-items:center;padding:6px 4px;border-bottom:1px dashed var(--line);font-size:12.5px}.eb-r .t{font:700 12.5px 'IBM Plex Mono',monospace}.eb-r .n{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.eb-r .w,.eb-r .e{font:11.5px 'IBM Plex Mono',monospace;color:var(--muted)}" +
+    ".eb-c{border:1px solid rgba(224,69,58,.45);border-left:3px solid #e0453a;border-radius:8px;margin:6px 0;background:rgba(224,69,58,.05)}.eb-c summary{display:grid;grid-template-columns:auto 60px minmax(0,1fr) auto auto auto;gap:8px;align-items:center;padding:8px 10px;cursor:pointer;list-style:none;font-size:13px}.eb-c summary::-webkit-details-marker{display:none}" +
+    ".eb-c .t{font:700 13px 'IBM Plex Mono',monospace}.eb-c .n{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.eb-c .w,.eb-c .k{font:11.5px 'IBM Plex Mono',monospace;color:var(--muted)}.eb-nb{font:700 9.5px 'IBM Plex Mono',monospace;background:#e0453a;color:#fff;border-radius:3px;padding:1px 5px}" +
+    ".eb-c .vd{font:700 10.5px 'IBM Plex Mono',monospace;padding:1px 7px;border-radius:4px;border:1px solid}.vd.beat{color:#3fb97f}.vd.miss{color:#ff8a84}.vd.inl{color:#e8b93d}.vd.na{color:var(--faint)}" +
+    ".eb-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;padding:4px 10px 8px}.eb-m{background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:7px 9px}.eb-m .l{font:600 10.5px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}.eb-m .v{font:600 18px 'IBM Plex Mono',monospace}.eb-m .s{font-size:11.5px;color:var(--muted)}" +
+    ".eb-q{padding:2px 10px 6px;font-size:12.5px}.eb-q b{display:block;font:600 10.5px 'IBM Plex Mono',monospace;text-transform:uppercase;color:var(--muted);margin-bottom:2px}.eb-q q{display:block;font-style:italic;color:#d4deea;margin:2px 0}.eb-src{padding:4px 10px 9px;font-size:11.5px;color:var(--faint)}.eb-src a{color:#7dd8e6}" +
     ".sp-h{font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;margin:8px 0 3px;color:var(--muted)}.sp-h small{margin-left:6px;color:var(--faint)}.sp-h.bmo{color:#e8b93d}.sp-h.amc{color:#7dd8e6}" +
     ".sp-r{display:grid;grid-template-columns:52px minmax(0,1fr) auto auto;gap:6px;align-items:center;padding:4px 6px;border-bottom:1px dashed var(--line);font-size:12.5px;cursor:pointer}.sp-r:hover{background:rgba(56,182,201,.07)}" +
     ".sp-r .t{font:700 12px 'IBM Plex Mono',monospace}.sp-r .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}.sp-r .e{font:11.5px 'IBM Plex Mono',monospace}.sp-r .mc{font:11px 'IBM Plex Mono',monospace;color:var(--faint)}.sp-r.done{background:rgba(63,185,127,.07)}" +
@@ -402,6 +411,64 @@
     return day(t, "Reporting today · S&P 500", true) + (nx ? day(nx, (nx === tm ? "Tomorrow" : dayLbl(nx)) + " · S&P 500", false) : "") +
       '<div class="stamp" style="margin:2px 0 8px">Session and EPS forecast: Nasdaq earnings calendar · S&amp;P 500 members: public constituents list · updated ' + esc(ago(S.fetched_at)) + ". Exact minute is not published; the release watch covers each session window.</div>";
   }
+
+  /* ---------- S&P 500 live earnings board (fast lane: live.json earn_board, every minute) ----------
+     UPCOMING (slot ahead) -> REFRESHING (slot passed, no official release found yet) -> NEW RESULTS (earnings 8-K found and read).
+     Passing the slot never counts as reported. Actuals: the company's press release on SEC EDGAR (GAAP, unaudited); estimates are
+     labelled as estimates; a surprise is shown only where actual and estimate are on the same basis. */
+  var EB = null;
+  function ebTab(t) { V.ebt = t; save(); }
+  function mny(v) { return v == null ? "N/A" : (v < 0 ? "−" : "") + "$" + (Math.abs(v) >= 1e9 ? (Math.abs(v) / 1e9).toFixed(2) + "B" : (Math.abs(v) / 1e6).toFixed(0) + "M"); }
+  function pc(v) { return v == null ? "N/A" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + "%"; }
+  function cls3(v) { return v == null ? "" : v >= 1 ? "beat" : v <= -1 ? "miss" : "inl"; }
+  function lbl3(v) { return v == null ? "N/A" : v >= 1 ? "BEAT" : v <= -1 ? "MISS" : "INLINE"; }
+  function tET(iso) { return iso ? new Date(iso).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }) + " ET" : "—"; }
+  function sess(t) { return t === "bmo" ? "Before open" : t === "amc" ? "After close" : "Time not confirmed"; }
+  function card(x) {
+    var p = x.pr || {}, a = x.adj || {}, e = x.est || {}, q = p.quotes || {}, f = x.filing || {};
+    var revA = p.rev != null ? p.rev : a.rev, revE = e.rev || a.rev_est, revD = revA != null && revE ? revA - revE : null, revP = x.rev_pct != null ? x.rev_pct : a.rev_pct;
+    var epsCmp = a.eps != null && (a.eps_est != null || e.eps != null);
+    var epsP = epsCmp ? (a.eps_pct != null ? a.eps_pct : null) : null;
+    var verdict = epsP != null ? lbl3(epsP) : revP != null ? lbl3(revP) : "N/A";
+    function m(lab, val, sub) { return '<div class="eb-m"><div class="l">' + lab + '</div><div class="v">' + val + "</div>" + (sub ? '<div class="s">' + sub + "</div>" : "") + "</div>"; }
+    var body =
+      '<div class="eb-g">' +
+      m("Revenue (reported)", mny(revA), (revE ? "est " + mny(revE) + " · " + (revD != null ? (revD >= 0 ? "+" : "−") + mny(Math.abs(revD)).slice(revD < 0 ? 0 : 0) : "") + ' <b class="' + cls3(revP) + '">' + pc(revP) + "</b>" : "estimate N/A") + (p.rev_yoy != null ? " · YoY " + pc(p.rev_yoy) : "")) +
+      m("EPS · GAAP diluted", p.eps_d != null ? "$" + p.eps_d.toFixed(2) : "N/A", (e.eps != null ? "consensus $" + (+e.eps).toFixed(2) + " (" + esc(e.eps_src || "estimate") + ", adjusted basis — not comparable)" : "consensus N/A") + (p.eps_d_yoy != null ? " · YoY " + pc(p.eps_d_yoy) : "")) +
+      (a.eps != null ? m("EPS · adjusted", "$" + (+a.eps).toFixed(2), "est " + (a.eps_est != null ? "$" + (+a.eps_est).toFixed(2) : "N/A") + ' · <b class="' + cls3(a.eps_pct) + '">' + pc(a.eps_pct) + " " + lbl3(a.eps_pct) + "</b> <small>(" + esc(a.src) + ")</small>") : "") +
+      m("Net income", mny(p.ni), p.ni_yoy != null ? "YoY " + pc(p.ni_yoy) : "") +
+      m("Margins", (p.gm != null ? "GM " + p.gm.toFixed(1) + "% · " : "") + (p.opm != null ? "Op " + p.opm.toFixed(1) + "%" : p.gm == null ? "N/A" : ""), p.nm != null ? "net " + p.nm.toFixed(1) + "%" : "") +
+      "</div>" +
+      (q.guidance && q.guidance.length ? '<div class="eb-q"><b>Guidance (quoted from the release)</b>' + q.guidance.map(function (t) { return "<q>" + esc(t) + "</q>"; }).join("") + "</div>" : '<div class="eb-q"><b>Guidance</b> <span class="neu">none stated in the release text read</span></div>') +
+      (q.highlights && q.highlights.length ? '<div class="eb-q"><b>Highlights (quoted)</b>' + q.highlights.map(function (t) { return "<q>" + esc(t) + "</q>"; }).join("") + "</div>" : "") +
+      '<div class="eb-src">Sources: ' + (f.url ? '<a href="' + esc(f.url) + '" target="_blank" rel="noopener noreferrer">SEC 8-K filing ↗</a>' : "8-K not yet located") + (p.exhibit ? ' · <a href="' + esc(p.exhibit) + '" target="_blank" rel="noopener noreferrer">earnings release (ex. 99.1) ↗</a>' : "") +
+      " · filed " + esc(f.at ? tET(f.at) : "—") + " · verified " + esc(p.read_at ? tET(p.read_at) : x.detected_at ? tET(x.detected_at) : "—") + " · period: quarter ending " + esc(x.fq || "N/A") + ". Estimates are third-party consensus, not company data; GAAP figures are unaudited.</div>";
+    return '<details class="eb-c"' + (V.ebo && V.ebo[x.s] ? " open" : "") + ' data-ebc="' + esc(x.s) + '"><summary><span class="eb-nb">NEW</span><b class="t">' + esc(x.s) + '</b><span class="n">' + esc(x.n) + '</span><span class="w">' + esc(f.at ? tET(f.at) : tET(x.detected_at)) + "</span>" +
+      '<span class="k">Rev ' + mny(revA) + (revP != null ? ' <b class="' + cls3(revP) + '">' + pc(revP) + "</b>" : "") + " · EPS " + (a.eps != null ? "$" + (+a.eps).toFixed(2) + " adj" : p.eps_d != null ? "$" + p.eps_d.toFixed(2) + " GAAP" : "N/A") + '</span><span class="vd ' + (verdict === "BEAT" ? "beat" : verdict === "MISS" ? "miss" : verdict === "INLINE" ? "inl" : "na") + '">' + verdict + "</span></summary>" + body + "</details>";
+  }
+  function boardHTML() {
+    var B = EB || window.DESK_EARN_BOARD; if (!B || !B.items) return '<div class="tile eb"><h2>S&amp;P 500 earnings — live</h2><p class="note">The live board starts with the next fast-lane update (within a minute).</p></div>';
+    var I = B.items.filter(function (x) { return x.sp || x.top || x.w; }), c = { new: [], refreshing: [], upcoming: [], not_detected: [] };
+    I.forEach(function (x) { (c[x.status] || c.upcoming).push(x); });
+    c.new.sort(function (a, b) { return ((b.filing || {}).at || b.detected_at || "") > ((a.filing || {}).at || a.detected_at || "") ? 1 : -1; });
+    c.upcoming.sort(function (a, b) { return a.slot < b.slot ? -1 : a.slot > b.slot ? 1 : (b.mcap || 0) - (a.mcap || 0); });
+    var t = V.ebt || (c.new.length ? "new" : c.refreshing.length ? "refreshing" : "upcoming"), age = (Date.now() - Date.parse(B.asof)) / 1000;
+    var live = '<span class="eb-live ' + (age < 180 ? "ok" : "stale") + '"><i></i>' + (age < 180 ? "live" : "stale") + " · updated " + esc(tET(B.asof)) + "</span>";
+    var head = '<div class="eb-h"><div><h2 style="margin:0">S&amp;P 500 earnings — today</h2><div class="eb-sum"><b>' + I.length + "</b> reporting · <b class=\"beat\">" + c.new.length + "</b> released · <b class=\"amb\">" + c.refreshing.length + "</b> awaiting · <b>" + c.upcoming.length + "</b> upcoming" + (c.not_detected.length ? " · " + c.not_detected.length + " not found today" : "") + "</div></div>" +
+      '<div class="eb-st">' + live + '<span class="eb-src2 ' + (B.sec ? "ok" : "bad") + '">SEC EDGAR ' + (B.sec ? "connected" : "needs the SEC_CONTACT secret") + "</span></div></div>";
+    var tabs = '<div class="eb-tabs">' + [["new", "NEW RESULTS"], ["refreshing", "REFRESHING"], ["upcoming", "UPCOMING"]].concat(c.not_detected.length ? [["not_detected", "NOT FOUND TODAY"]] : []).map(function (k) {
+      return '<button data-ebt="' + k[0] + '" aria-pressed="' + (t === k[0]) + '">' + k[1] + " <small>" + c[k[0]].length + "</small></button>"; }).join("") + "</div>";
+    function row(x, extra) { var e = x.est || {}; return '<div class="eb-r"><span class="t">' + esc(x.s) + '</span><span class="n">' + esc(x.n) + '</span><span class="w">' + extra + '</span><span class="e">EPS est ' + (e.eps != null ? "$" + (+e.eps).toFixed(2) : "N/A") + (e.ests ? " · " + e.ests + " ests" : "") + "</span></div>"; }
+    var body = t === "new" ? (c.new.length ? c.new.map(card).join("") : '<p class="note">No official releases detected yet today.</p>')
+      : t === "refreshing" ? (c.refreshing.length ? c.refreshing.map(function (x) { return row(x, sess(x.time) + " · slot " + tET(x.slot) + " passed · <b class=\"amb\">checking EDGAR</b>"); }).join("") : '<p class="note">Nothing awaiting right now.</p>')
+      : t === "upcoming" ? (c.upcoming.length ? c.upcoming.map(function (x) { return row(x, sess(x.time) + " · from " + tET(x.slot)); }).join("") : '<p class="note">No more reports scheduled today.</p>')
+      : c.not_detected.map(function (x) { return row(x, sess(x.time) + " · no release found on EDGAR today"); }).join("");
+    return '<div class="tile eb">' + head + tabs + '<div class="eb-b">' + body + "</div></div>";
+  }
+  function ebRepaint() { var el = P.querySelector(".eb"); if (!el || !P.classList.contains("active")) return; var d = document.createElement("div"); d.innerHTML = boardHTML(); el.replaceWith(d.firstChild); }
+  window.addEventListener("desk:earnboard", function (e) { EB = e.detail; ebRepaint(); });
+  P.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-ebt]"); if (b) { ebTab(b.getAttribute("data-ebt")); ebRepaint(); } });
+  P.addEventListener("toggle", function (ev) { var d = ev.target; if (d && d.matches && d.matches("[data-ebc]")) { V.ebo = V.ebo || {}; V.ebo[d.getAttribute("data-ebc")] = d.open; save(); } }, true);
   function tlbl(t) { return ({ bmo: "BMO", amc: "AMC", dmh: "during hours" })[t] || "time n/a"; }
   function feed() {
     var C = J && J.calendar; if (!C || !C.fetched_at) return '<aside class="ut-feed tile"><h3>Earnings feed</h3><p class="note">The calendar has not been fetched yet — the next run of the Action makes one call for the whole market.</p></aside>';
@@ -514,7 +581,7 @@
     if (!V.lock) V.sel = null;
     if (!(V.lock && V.sel) && V.view === "company") V.view = "market";
     var centre = V.view === "season" ? seasonView() : V.view === "plan" ? '<div class="tile"><h2>Data &amp; plan coverage</h2>' + topStrip() + "</div>" + planTile() + footer()
-      : V.view === "company" && V.lock && V.sel && window.COMPANY ? COMPANY.html(V.sel) : '<div class="ue-grid" style="grid-template-columns:1fr;margin-top:0"><div>' + table() + earningsSlot() + "</div></div>";
+      : V.view === "company" && V.lock && V.sel && window.COMPANY ? COMPANY.html(V.sel) : boardHTML() + '<div class="ue-grid" style="grid-template-columns:1fr;margin-top:0"><div>' + table() + earningsSlot() + "</div></div>";
     P.innerHTML = protoBar() + header() + indexDetail() + tickerBar() + (flashMsg ? '<div class="ut-ask" style="margin:-4px 0 10px">' + esc(flashMsg) + "</div>" : "") +
       '<div class="ut-shell">' + nav() + '<main class="ut-main" style="min-width:0">' + centre + "</main>" + feed() + "</div>";
     if (hadQ) { var i = P.querySelector("[data-utq]"); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch (e) {} } }

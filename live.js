@@ -442,6 +442,7 @@
     if (!L || !L.updated_at || !L.asof) return;
     if (lastLive && new Date(L.updated_at) <= new Date(lastLive.updated_at)) return;
     lastLive = L;
+    if (L.earn_board) { window.DESK_EARN_BOARD = L.earn_board; try { window.dispatchEvent(new CustomEvent("desk:earnboard", { detail: L.earn_board })); } catch (e) {} }
     if (L.wires) { window.DESK_WIRES = L.wires; try { window.dispatchEvent(new CustomEvent("desk:wires", { detail: L.wires })); } catch (e) {} }
     if (L.earn_pr) { window.DESK_EARN_PR = L.earn_pr; try { window.dispatchEvent(new CustomEvent("desk:earnpr", { detail: L.earn_pr })); } catch (e) {} }
     if (L.earn_live) { window.DESK_EARN_LIVE = L.earn_live; try { window.dispatchEvent(new CustomEvent("desk:earnlive", { detail: L.earn_live })); } catch (e) {} }

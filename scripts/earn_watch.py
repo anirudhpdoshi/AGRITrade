@@ -10,7 +10,7 @@ FMP calls are capped per day (EW_BUDGET, default 120, at most half per session (
 never reaches a log line (us_earnings.fmp scrubs it). The slot is BMO -> 7:00 ET, AMC -> 4:00 pm ET, unknown -> 4:00 pm:
 the free calendar gives the session, not the minute.
 """
-import json, os, subprocess, time
+import json, os, re, subprocess, time
 from datetime import datetime, timedelta
 
 import requests
@@ -25,8 +25,14 @@ FAST_S, SLOW_S, FAST_FOR, WINDOW = 10, 30, timedelta(minutes=2), timedelta(minut
 
 
 def slot(row, day, tor):
-    h, m = (7, 0) if row.get("time") == "bmo" else (16, 0)
+    """Release slot (America/New_York == Toronto time): before the open 6:00, after the close 16:00, unknown 6:00."""
+    h, m = (16, 0) if row.get("time") == "amc" else (6, 0)
     return datetime(day.year, day.month, day.day, h, m, tzinfo=tor)
+
+
+def slot_end(row, day, tor):
+    """Watching stops here for the day (a release can come late; the 15-min earnings job keeps looking after)."""
+    return datetime(day.year, day.month, day.day, 23, 0, tzinfo=tor) if row.get("time") == "amc" else datetime(day.year, day.month, day.day, 20, 0, tzinfo=tor)
 
 
 class Watch:
@@ -51,15 +57,24 @@ class Watch:
         if self.st.get("day") != day.isoformat():
             self.st.clear()
             self.st.update({"day": day.isoformat(), "calls": 0, "done": {}, "filed": {}})
-        self.rows = {r["symbol"]: r for r in (E.get("calendar") or {}).get("rows") or []
-                     if r.get("date") == day.isoformat() and (r.get("top") or r.get("w"))}
+        # universe: every S&P 500 company the Nasdaq schedule has for today, plus watchlist / top-100 names from the FMP calendar;
+        # FMP fields (estimates, actuals) are merged where FMP covers the company
+        fmp = {r["symbol"]: r for r in (E.get("calendar") or {}).get("rows") or [] if r.get("date") == day.isoformat()}
+        rows = {}
+        for x in ((E.get("sp_schedule") or {}).get("days") or {}).get(day.isoformat(), []):
+            rows[x["s"]] = {"symbol": x["s"], "date": day.isoformat(), "time": x.get("time"), "name": x.get("n"), "fq": x.get("fq"),
+                            "eps_f": x.get("eps_f"), "ests": x.get("ests"), "mcap": x.get("mcap"), "sp": True}
+        for sym, r in fmp.items():
+            if sym in rows or r.get("top") or r.get("w"):
+                rows[sym] = dict(rows.get(sym, {"symbol": sym, "date": day.isoformat()}), **{k: v for k, v in r.items() if v is not None})
+        self.rows = rows
         for s, r in self.rows.items():
             if r.get("epsActual") is not None or r.get("revenueActual") is not None:
                 self.st["done"].setdefault(s, {"seen_at": r.get("seen_at") or now.isoformat(), "src": "calendar"})
 
     def pending(self, now):
         day = now.astimezone(self.tor).date()
-        return {s: r for s, r in self.rows.items() if s not in self.st.get("done", {}) and slot(r, day, self.tor) <= now <= slot(r, day, self.tor) + WINDOW}
+        return {s: r for s, r in self.rows.items() if s not in self.st.get("done", {}) and slot(r, day, self.tor) <= now <= slot_end(r, day, self.tor)}
 
     def interval(self, now):
         """Seconds to the next poll, or None when no company is inside its window."""
@@ -68,6 +83,21 @@ class Watch:
             return None
         day = now.astimezone(self.tor).date()
         return FAST_S if any(now - slot(r, day, self.tor) < FAST_FOR for r in P.values()) else SLOW_S
+
+    def current_8k(self, now):
+        """One request for the whole market: EDGAR's latest 8-K filings (Atom). {cik: filing} for today's Item 2.02 filings."""
+        if len(SEC_UA["User-Agent"]) <= len("AGRITrade desk"):
+            return {}
+        t = requests.get("https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&company=&dateb=&owner=include&start=0&count=100&output=atom",
+                         headers=dict(SEC_UA, Accept="application/atom+xml"), timeout=15).text
+        out, today = {}, now.astimezone(self.tor).date().isoformat()
+        for blk in re.findall(r"<entry>.*?</entry>", t, re.S):
+            m = re.search(r'href="(https://www\.sec\.gov/Archives/edgar/data/(\d+)/(\d+)/([\d-]+)-index\.htm)"', blk)
+            if not m or "2.02" not in blk or today not in blk:
+                continue
+            up = re.search(r"<updated>([^<]+)</updated>", blk)
+            out[int(m.group(2))] = {"acc": m.group(4), "at": up.group(1) if up else "", "url": m.group(1)}
+        return out
 
     # ------------------------------------------------------------------ sources
     def _cik(self, sym):
@@ -114,15 +144,22 @@ class Watch:
     def _numbers(self, s, row, x, now, src, alerts, live):
         """Record one company's numbers (x: epsActual / revenueActual) against the calendar estimates in row."""
         ee, re_ = row.get("epsEstimated"), row.get("revenueEstimated")
-        e, v = UE.surprise(x.get("epsActual"), ee), UE.surprise(x.get("revenueActual"), re_)
+        if ee is None and row.get("eps_f") is not None:
+            ee = row["eps_f"]
+        # consensus EPS is on the adjusted basis; a GAAP figure from the press release is not comparable -> no EPS surprise
+        e = None if src.startswith("SEC") else UE.surprise(x.get("epsActual"), ee)
+        v = UE.surprise(x.get("revenueActual"), re_)
         self.st["done"][s] = {"seen_at": now.isoformat(), "src": src}
         live[s] = {"symbol": s, "date": row.get("date"), "epsActual": x.get("epsActual"), "epsEstimated": ee,
                    "revenueActual": x.get("revenueActual"), "revenueEstimated": re_, "eps_surprise_pct": e, "rev_surprise_pct": v,
                    "seen_at": now.isoformat(), "top": row.get("top"), "w": row.get("w"), "src": src}
-        imp = "Mixed" if e is None else "Bullish" if e >= 1 and (v is None or v >= 0) else "Bearish" if e <= -1 and (v is None or v <= 0) else "Mixed"
+        if e is not None:
+            imp = "Bullish" if e >= 1 and (v is None or v >= 0) else "Bearish" if e <= -1 and (v is None or v <= 0) else "Mixed"
+        else:
+            imp = "Bullish" if v is not None and v >= 1 else "Bearish" if v is not None and v <= -1 else "Mixed"
         alerts.append({"id": f"earn|{s}|{row.get('date')}", "kind": "news", "tag": "earn", "t": now.isoformat(), "mt": x.get("at") or now.isoformat(),
-                       "head": f"BREAKING – {s} earnings: EPS {x.get('epsActual')}" + (f" vs est {ee}" if ee is not None else ""),
-                       "trigger": f"EPS ${x.get('epsActual')}" + (f" vs est ${ee} ({e:+.1f}%)" if e is not None else "") +
+                       "head": f"BREAKING – {s} earnings: " + (f"EPS {x.get('epsActual')} vs est {ee}" if e is not None else f"GAAP EPS {x.get('epsActual')}" if x.get("epsActual") is not None else "results out"),
+                       "trigger": (f"EPS ${x.get('epsActual')} vs est ${ee} ({e:+.1f}%)" if e is not None else f"GAAP diluted EPS ${x.get('epsActual')} (consensus ${ee} is adjusted — not comparable)" if x.get("epsActual") is not None and ee is not None else f"GAAP diluted EPS ${x.get('epsActual')}" if x.get("epsActual") is not None else "") +
                                   (f" · revenue {money(x.get('revenueActual'))}" + (f" vs est {money(re_)}" if re_ is not None else "") if x.get("revenueActual") is not None else "") +
                                   (f" · 8-K accepted {fmt_t(x['at'], self.tor)}" if x.get("at") else ""),
                        "impact": f"{imp} {s}", "why": "", "src": src, "url": x.get("url", "")})
@@ -135,9 +172,18 @@ class Watch:
             return [], {}, {}
         alerts, live, prs = [], {}, {}
         need_fmp = []
+        try:
+            cur = self.current_8k(now)
+        except Exception as e:
+            print("[earn watch] EDGAR current filings:", type(e).__name__)
+            cur = {}
+        chk = self.st.setdefault("sub_at", {})
         for s, row in P.items():
             try:
-                f = self.st["filed"].get(s) or self.edgar(s, now)
+                f = self.st["filed"].get(s) or cur.get(self._cik(s) or -1)
+                if not f and (not chk.get(s) or (now - datetime.fromisoformat(chk[s])).total_seconds() >= 120):
+                    chk[s] = now.isoformat()   # per-company filing index, at most every 2 min (the Atom list covers the rest)
+                    f = self.edgar(s, now)
             except Exception as e:
                 print(f"[earn watch] EDGAR {s}: {type(e).__name__}")
                 need_fmp.append(s); continue
@@ -178,12 +224,48 @@ class Watch:
         return alerts, live, prs
 
 
+def board(w, now, prs, live):
+    """Today's S&P 500 reporting board: UPCOMING -> REFRESHING -> NEW (only on a read, official release)."""
+    day = now.astimezone(w.tor).date()
+    items = []
+    for sym, r in w.rows.items():
+        sl, en = slot(r, day, w.tor), slot_end(r, day, w.tor)
+        f, d, pr, lv = (w.st.get("filed") or {}).get(sym), (w.st.get("done") or {}).get(sym), prs.get(sym), live.get(sym) or {}
+        fmp_act = r.get("epsActual") is not None or r.get("revenueActual") is not None
+        st = "new" if (pr or d or fmp_act) else "refreshing" if now >= sl else "upcoming"
+        if st == "refreshing" and now > en:
+            st = "not_detected"
+        ee = r.get("epsEstimated")
+        it = {"s": sym, "n": r.get("name") or sym, "time": r.get("time"), "slot": sl.isoformat(), "status": st, "fq": r.get("fq"),
+              "mcap": r.get("mcap"), "sp": bool(r.get("sp")), "top": bool(r.get("top")), "w": bool(r.get("w")),
+              "est": {"eps": ee if ee is not None else r.get("eps_f"), "eps_src": "FMP consensus" if ee is not None else "Nasdaq consensus" if r.get("eps_f") is not None else None,
+                      "ests": r.get("ests"), "rev": r.get("revenueEstimated")}}
+        if f:
+            it["filing"] = {"at": f.get("at"), "url": f.get("url"), "acc": f.get("acc")}
+        if pr:
+            it["pr"] = {k: pr.get(k) for k in ("rev", "eps_d", "ni", "opinc", "gp", "gm", "opm", "nm", "rev_yoy", "ni_yoy", "eps_d_yoy", "opinc_yoy", "py", "quotes", "exhibit", "read_at")}
+        if fmp_act or lv.get("src", "").startswith("FMP"):
+            a = lv if lv.get("src", "").startswith("FMP") else r
+            it["adj"] = {"eps": a.get("epsActual"), "eps_est": a.get("epsEstimated"), "rev": a.get("revenueActual"), "rev_est": a.get("revenueEstimated"),
+                         "eps_pct": a.get("eps_surprise_pct"), "rev_pct": a.get("rev_surprise_pct"), "src": "FMP earnings calendar"}
+        rv = (it.get("pr") or {}).get("rev") or (it.get("adj") or {}).get("rev")
+        if rv is not None and r.get("revenueEstimated"):
+            it["rev_pct"] = UE.surprise(rv, r["revenueEstimated"])
+        it["detected_at"] = (d or {}).get("seen_at") or (pr or {}).get("read_at") or r.get("seen_at")
+        items.append(it)
+    order = {"new": 0, "refreshing": 1, "upcoming": 2, "not_detected": 3}
+    items.sort(key=lambda x: (order[x["status"]], -(x.get("mcap") or 0)))
+    return {"day": day.isoformat(), "asof": now.isoformat(), "sec": len(SEC_UA["User-Agent"]) > len("AGRITrade desk"), "items": items}
+
+
 def pr_pass(w, now, store):
     """Press-release statement lines for every company reporting today (watched or not): once its earnings 8-K is on
     EDGAR, read exhibit 99.1 (unaudited condensed statements). EDGAR is free; each symbol is checked at most once a minute."""
     new = {}
     last = w.st.setdefault("pr_try", {})
     for s, r in w.rows.items():
+        if s not in (w.st.get("done") or {}):
+            continue   # undetected companies are handled by poll(); this pass only adds press-release lines to calendar-detected ones
         if s in store or (last.get(s) and (now - datetime.fromisoformat(last[s])).total_seconds() < 60):
             continue
         day = now.astimezone(w.tor).date()
