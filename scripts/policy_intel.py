@@ -244,6 +244,7 @@ def parse_date(s):
 
 TYPES = [("statement", r"outlook for economic activity and prices|monetary policy summary|statement on monetary policy|fomc statement|monetary policy decision|policy rate|interest rate decision|bank rate (?:maintained|increased|reduced|cut|raised)|statement on monetary policy|\b(?:maintains|lowers|raises|holds|cuts|hikes|keeps|leaves)\b(?= (?:its |the )?(?:policy |key |benchmark |interest |the target )?(?:rates?|range))"),
          ("minutes", r"minutes|account of the monetary|summary of (?:deliberations|opinions)"),
+         ("testimony", r"standing committee|testimony|before the (?:house|senate)|parliamentary committee|committee on (?:finance|banking)|semiannual monetary policy report to the congress"),
          ("press_conference", r"press conference|opening statement"),
          ("testimony", r"testimony|before the committee"),
          ("speech", r"speech|remarks|lecture|address|keynote|fireside|panel"),
@@ -453,6 +454,8 @@ def main():
         if (d.get("published_at") or "") > NOW.isoformat():
             continue   # a document dated in the future was a placeholder page: never keep it
         t_ = classify(d.get("title") or "")
+        if t_ == "testimony" and d.get("type") == "press_conference":
+            d["type"] = "testimony"
         if d.get("type") == "statement" and t_ != "statement":
             continue   # was taken for a policy statement under the old (looser) rule: dropped
         docs[d["id"]] = d

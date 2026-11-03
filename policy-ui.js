@@ -71,10 +71,39 @@
           '<span class="pm-ti"><b>' + esc(d.speaker) + "</b> — " + esc(d.title) + (d.dissent && d.dissent.length ? ' <span class="evc" style="--ec:#e8b93d">DISSENT</span>' : "") + "</span>" +
           '<span class="pm-sc"><span class="pi-badge ' + lcls(d.label) + '">' + sgn(d.score) + "</span></span>" +
           '<span class="pm-vs">' + (sb && sb.change != null ? '<span class="' + (sb.change >= 1 ? "hawk" : sb.change <= -1 ? "dove" : "neu") + '" title="' + (sb.change >= 1 ? "more hawkish" : sb.change <= -1 ? "more dovish" : "little change") + ' than ' + (d.baseline.speaker ? "this speaker\u2019s own baseline" : "the bank\u2019s statement") + '">' + sgn(sb.change) + "</span>" + ' <small>vs ' + (d.baseline.speaker ? "own" : "bank") + "</small>" : '<small class="neu">first read</small>') + "</span></li>"; }).join("");
-      return '<div class="pm-card">' + head + (rows ? '<ul class="pm-list">' + rows + "</ul>" : '<p class="note">No documents yet.</p>') + (D.length > 8 ? '<div class="pm-more">+' + (D.length - 8) + " older — open Transcript intelligence</div>" : "") + "</div>";
+      return '<div class="pm-card">' + head + guidanceHTML(b, D, st) + (rows ? '<ul class="pm-list">' + rows + "</ul>" : '<p class="note">No documents yet.</p>') + (D.length > 8 ? '<div class="pm-more">+' + (D.length - 8) + " older — open Transcript intelligence</div>" : "") + "</div>";
     }).join("");
     return '<div class="tile wide"><h2>Stance monitor <span class="h2note">— per bank: the committee\u2019s latest statement, then every statement, minute and speech since · score −10 dovish … +10 hawkish · click a line for the evidence</span></h2>' +
       '<div class="pm-grid">' + panels + "</div></div>";
+  }
+
+  /* Toward the next decision: every remark since the meeting statement (speech, testimony, presser), time-stamped, with its tone,
+     its explicit guidance sentence and direction; then what that adds up to for the next meeting, beside market pricing. */
+  function guidanceHTML(b, D, st) {
+    var since = st ? D.filter(function (d) { return d.type !== "statement" && d.type !== "minutes" && (d.published_at || "") > (st.published_at || ""); }) : [];
+    var nx = (J.calendar || []).filter(function (c) { return c.bank === b && c.kind === "decision" && c.date >= new Date().toISOString().slice(0, 10); }).sort(function (x, y) { return x.date < y.date ? -1 : 1; })[0];
+    var DIR = { tighten: ["HIKE", "hawk"], ease: ["CUT", "dove"], hold: ["HOLD", "neu"] }, KEY = { HIKE: "tighten", CUT: "ease", HOLD: "hold" };
+    function tm(iso) { return iso ? new Date(iso).toLocaleString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " ET" : "—"; }
+    var votes = { HIKE: 0, CUT: 0, HOLD: 0 }, toneD = [];
+    var rows = since.map(function (d) {
+      var g = d.guidance || {}, dir = DIR[g.direction], ch = d.baseline && d.baseline.institution && d.score != null ? d.score - d.baseline.institution.score : null;
+      if (dir) votes[dir[0]]++; if (ch != null && d.policy_relevant !== false) toneD.push(ch);   /* off-topic talks do not move the tone read */
+      return '<li class="pg-r"><span class="pg-t">' + esc(tm(d.published_at)) + '</span><span class="pg-w"><b>' + esc(d.speaker || "") + "</b> · " + esc(TYPE[d.type] || d.type) + "</span>" +
+        '<span class="pg-s"><span class="pi-badge ' + lcls(d.label) + '">' + sgn(d.score) + "</span>" + (ch != null ? ' <small class="' + (ch >= 1 ? "hawk" : ch <= -1 ? "dove" : "neu") + '">' + (ch >= 0 ? "+" : "−") + Math.abs(ch).toFixed(1) + " vs meeting</small>" : "") + "</span>" +
+        (dir ? '<span class="pg-g ' + dir[1] + '">' + dir[0] + (g.conditional ? " (conditional)" : "") + "</span>" : '<span class="pg-g neu">' + (d.policy_relevant === false ? "not about policy" : "no explicit guidance") + "</span>") +
+        (g.quote ? '<q class="pg-q">' + esc(g.quote) + "</q>" : "") + "</li>";
+    }).join("");
+    var mk = "", P = (window.DATA && DATA.fx && DATA.fx.policy) || {};
+    if (b === "fed" && P.fed && P.fed[0]) { var f = P.fed[0]; mk = "Market: " + Math.round(f.hike_pct) + "% hike · " + Math.round(f.no_change_pct) + "% hold · " + Math.round(f.ease_pct) + "% cut for " + esc(f.meeting) + " (fed funds futures)"; }
+    if (b === "boc" && P.corra && P.corra[0] && P.corra_now != null) { var bp = Math.round((P.corra[0].implied_rate_pct - (+P.corra_now)) * 100); mk = "Market: CORRA futures imply " + (bp > 0 ? "+" : "") + bp + " bp by " + esc(P.corra[0].month) + " (" + (bp >= 13 ? "a hike priced" : bp <= -13 ? "a cut priced" : "no change priced") + ")"; }
+    var n = votes.HIKE + votes.CUT + votes.HOLD, lead = n ? Object.keys(votes).sort(function (x, y) { return votes[y] - votes[x]; })[0] : null;
+    var mt = toneD.length ? toneD.reduce(function (a, c) { return a + c; }, 0) / toneD.length : null;
+    var exp = !since.length ? "No remarks since the meeting yet — the statement is the latest guidance."
+      : (n ? 'Remarks lean <b class="' + DIR[KEY[lead]][1] + '">' + lead + "</b> (" + votes[lead] + " of " + n + " with explicit guidance)" : "No explicit rate guidance in the remarks") +
+        (mt != null ? " · tone " + (mt >= 0 ? "+" : "−") + Math.abs(mt).toFixed(1) + " vs the meeting statement (" + (mt >= 1 ? "more hawkish" : mt <= -1 ? "more dovish" : "about the same") + ")" : "") + ".";
+    return '<div class="pg"><div class="pg-h">Toward the next decision' + (nx ? " · " + esc(day(nx.date + "T12:00:00Z")) : "") + " · " + since.length + " remark" + (since.length === 1 ? "" : "s") + " since the meeting</div>" +
+      '<div class="pg-x">' + exp + (mk ? '<div class="pg-m">' + mk + "</div>" : "") + "</div>" +
+      (rows ? '<ul class="pg-l">' + rows + "</ul>" : "") + "</div>";
   }
 
   /* ---------- 3. transcript intelligence ---------- */
@@ -148,7 +177,7 @@
     open: function (id) { V.doc = id; V.sub = "transcript"; save(); render(); } };
   render(); if (window.DESK_LOCKED === false) poll(true);
   var pmcss = document.createElement("style");
-  pmcss.textContent = ".pm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(560px,1fr));gap:14px}.pm-card{border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:12px 14px}" +
+  pmcss.textContent = ".pg{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:8px 0;background:rgba(155,140,255,.05)}.pg-h{font:700 11px 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#b9aefc}.pg-x{font-size:13px;margin-top:4px}.pg-m{font:11.5px 'IBM Plex Mono',monospace;color:var(--muted);margin-top:3px}.pg-l{list-style:none;margin:6px 0 0;padding:0;max-height:260px;overflow:auto}.pg-r{display:grid;grid-template-columns:120px 1fr auto auto;gap:4px 8px;align-items:center;padding:5px 0;border-top:1px dashed var(--line);font-size:12.5px}.pg-t{font:11px 'IBM Plex Mono',monospace;color:var(--faint)}.pg-g{font:700 10.5px 'IBM Plex Mono',monospace}.pg-g.hawk,.pg-x b.hawk{color:#ff8a84}.pg-g.dove,.pg-x b.dove{color:#7dd8e6}.pg-g.neu{color:var(--muted);font-weight:400}.pg-q{grid-column:1/-1;color:#d4deea;font-style:italic}.pm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(560px,1fr));gap:14px}.pm-card{border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:12px 14px}" +
     ".pm-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}.pm-b{font-size:15px;display:flex;align-items:center;gap:6px}" +
     ".pm-s{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:12.5px}.pm-l{font:600 11.5px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.06em}.pm-g{color:var(--muted)}.pm-d{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint)}" +
     ".pm-list{list-style:none;margin:6px 0 0;padding:0}.pm-r{display:grid;grid-template-columns:52px 112px minmax(0,1fr) 54px 84px;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px dashed var(--line);cursor:pointer;font-size:13px}" +
