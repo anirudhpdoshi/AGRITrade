@@ -26,34 +26,45 @@
     return '<svg viewBox="0 0 120 66" class="od-g"><defs><linearGradient id="odg" x1="0" x2="1"><stop offset="0" stop-color="#e0453a"/><stop offset=".5" stop-color="#e8b93d"/><stop offset="1" stop-color="#3fb97f"/></linearGradient></defs>' +
       '<path d="M10 58 A50 50 0 0 1 110 58" fill="none" stroke="url(#odg)" stroke-width="9" stroke-linecap="round"/><line x1="60" y1="58" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="#fff" stroke-width="3" stroke-linecap="round"/><circle cx="60" cy="58" r="5" fill="#fff"/></svg>';
   }
+  /* Strike positioning map. Fixed lanes so no label can collide:
+       top    spot label · gamma-flip label · premium dots (one row, sized by premium)
+       plot   call / put OI bars, support (green) and resistance (orange) boxes, shaded next-day 1σ range, spot and flip lines
+       bottom strike · call OI change · put OI change · role tag
+     Spot and flip are placed by interpolating between the neighbouring strikes (strikes are unevenly spaced). */
   function smap(PS, F, nd, nc) {
     var S = PS.strikes.filter(function (x) { return Math.abs(x.dist) <= 9; }).sort(function (a, b) { return a.k - b.k; }); if (!S.length) return "";
-    var W = 680, H = 300, L = 44, R = 10, T = 36, B = 40, n = S.length, bw = (W - L - R) / n;
+    var W = 720, L = 46, R = 12, T = 58, PH = 200, H = T + PH + 70, n = S.length, bw = (W - L - R) / n, base = T + PH;
     var mx = Math.max.apply(null, S.map(function (x) { return Math.max(x.coi, x.poi); }).concat([1]));
     var hasP = S.some(function (x) { return x.prem_c || x.prem_p; }), mp = Math.max.apply(null, S.map(function (x) { return (x.prem_c || 0) + (x.prem_p || 0); }).concat([1]));
-    function X(i) { return L + i * bw; } function Y(v) { return T + (H - T - B) * (1 - v / mx); }
-    var kmin = S[0].k, kmax = S[n - 1].k, xk = function (k) { return L + (k - kmin) / ((kmax - kmin) || 1) * (bw * (n - 1)) + bw / 2; };
+    function X(i) { return L + i * bw; } function C(i) { return X(i) + bw / 2; } function Y(v) { return T + PH * (1 - v / mx); }
+    function xk(k) {
+      if (k <= S[0].k) return C(0) - Math.min(bw / 2, (S[0].k - k) / ((S[1] || S[0]).k - S[0].k || 1) * bw);
+      for (var i = 0; i < n - 1; i++) if (k <= S[i + 1].k) return C(i) + (k - S[i].k) / (S[i + 1].k - S[i].k) * bw;
+      return C(n - 1) + Math.min(bw / 2, (k - S[n - 1].k) / (S[n - 1].k - S[n - 2].k || 1) * bw);
+    }
+    function kc(v) { var a = Math.abs(v); return (v > 0 ? "+" : "−") + (a >= 1000 ? (a / 1000).toFixed(1) + "k" : a); }
     var sup = S.filter(function (x) { return x.role === "support"; }).sort(function (a, b) { return b.poi - a.poi; })[0], res = S.filter(function (x) { return x.role === "resistance"; }).sort(function (a, b) { return b.coi - a.coi; })[0];
     var g = "";
     [0, .5, 1].forEach(function (f) { var y = Y(mx * f); g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" class="od-gl"/><text x="' + (L - 6) + '" y="' + (y + 4) + '" class="od-ax" text-anchor="end">' + (mx * f >= 1000 ? Math.round(mx * f / 1000) + "K" : Math.round(mx * f)) + "</text>"; });
-    if (nd) { var x1 = Math.max(L, xk(nd.lo)), x2 = Math.min(W - R, xk(nd.hi)); if (x2 > x1) g += '<rect x="' + x1 + '" y="' + T + '" width="' + (x2 - x1) + '" height="' + (H - T - B) + '" class="od-em"/><text x="' + ((x1 + x2) / 2) + '" y="' + (T + 12) + '" class="od-emt" text-anchor="middle">next-day 1σ</text>'; }
-    if (nc && nc.flip && nc.flip >= kmin && nc.flip <= kmax) { var xf = xk(nc.flip); g += '<line x1="' + xf + '" x2="' + xf + '" y1="' + T + '" y2="' + (H - B) + '" class="od-flip"/><text x="' + (xf + 4) + '" y="' + (T + 26) + '" class="od-flt" text-anchor="' + (xf > W - 140 ? "end" : "start") + '" dx="' + (xf > W - 140 ? -8 : 0) + '">gamma flip ' + nc.flip.toFixed(2) + "</text>"; }
+    if (nd) { var x1 = Math.max(L, xk(nd.lo)), x2 = Math.min(W - R, xk(nd.hi)); if (x2 > x1) g += '<rect x="' + x1 + '" y="' + T + '" width="' + (x2 - x1) + '" height="' + PH + '" class="od-em"><title>next-day 1σ range ' + px(nd.lo) + " – " + px(nd.hi) + "</title></rect>"; }
     S.forEach(function (x, i) {
-      var cx = X(i) + bw * 0.14, w = bw * 0.33, hi = x === sup || x === res;
-      if (hi) g += '<rect x="' + (X(i) + 3) + '" y="' + (T + 16) + '" width="' + (bw - 6) + '" height="' + (H - T - B - 16) + '" rx="6" class="' + (x === sup ? "od-hs" : "od-hr") + '"/>';
-      if (x.role === "acceleration" || x.role === "magnet") g += '<rect x="' + X(i) + '" y="' + (H - B + 2) + '" width="' + bw + '" height="4" fill="#9b5cf6"/>';
-      if (/^broken/.test(x.role)) g += '<text x="' + (X(i) + bw / 2) + '" y="' + (T + 30) + '" class="od-brk" text-anchor="middle">broken</text>';
-      g += '<rect x="' + cx + '" y="' + Y(x.coi) + '" width="' + w + '" height="' + (H - B - Y(x.coi)) + '" rx="2" class="od-c"><title>' + px(x.k) + " calls " + n0(x.coi) + (x.dc != null ? " (" + (x.dc >= 0 ? "+" : "") + n0(x.dc) + ")" : "") + "</title></rect>";
-      g += '<rect x="' + (cx + w + 2) + '" y="' + Y(x.poi) + '" width="' + w + '" height="' + (H - B - Y(x.poi)) + '" rx="2" class="od-p"><title>' + px(x.k) + " puts " + n0(x.poi) + (x.dp != null ? " (" + (x.dp >= 0 ? "+" : "") + n0(x.dp) + ")" : "") + "</title></rect>";
-      function chg(d, xx, yy) { if (!d || Math.abs(d) < 100) return ""; return '<text x="' + xx + '" y="' + (yy - 4) + '" class="' + (d > 0 ? "od-up" : "od-dn") + '" text-anchor="middle">' + (d > 0 ? "▲" : "▼") + (Math.abs(d) >= 1000 ? (Math.abs(d) / 1000).toFixed(1) + "k" : Math.abs(d)) + "</text>"; }
-      g += chg(x.dc, cx + w / 2, Y(x.coi)) + chg(x.dp, cx + w * 1.5 + 2, Y(x.poi));
-      if (hasP && (x.prem_c || x.prem_p)) { var pr = (x.prem_c || 0) + (x.prem_p || 0); g += '<circle cx="' + (X(i) + bw / 2) + '" cy="' + (T + 2 + (1 - pr / mp) * 14) + '" r="' + (2 + 5 * pr / mp) + '" class="od-pm"><title>est. premium ' + mm(pr) + "</title></circle>"; }
-      g += '<text x="' + (X(i) + bw / 2) + '" y="' + (H - B + 18) + '" class="od-ax' + (hi ? " b" : "") + '" text-anchor="middle">' + x.k.toFixed(x.k >= 10 ? 1 : 2) + "</text>";
+      var cx = X(i) + bw * 0.15, w = bw * 0.33, hi = x === sup || x === res;
+      if (hi) g += '<rect x="' + (X(i) + 3) + '" y="' + T + '" width="' + (bw - 6) + '" height="' + PH + '" rx="6" class="' + (x === sup ? "od-hs" : "od-hr") + '"/>';
+      g += '<rect x="' + cx + '" y="' + Y(x.coi) + '" width="' + w + '" height="' + (base - Y(x.coi)) + '" rx="2" class="od-c"><title>' + px(x.k) + " calls " + n0(x.coi) + (x.dc != null ? " (" + (x.dc >= 0 ? "+" : "") + n0(x.dc) + " d/d)" : "") + "</title></rect>";
+      g += '<rect x="' + (cx + w + 2) + '" y="' + Y(x.poi) + '" width="' + w + '" height="' + (base - Y(x.poi)) + '" rx="2" class="od-p"><title>' + px(x.k) + " puts " + n0(x.poi) + (x.dp != null ? " (" + (x.dp >= 0 ? "+" : "") + n0(x.dp) + " d/d)" : "") + "</title></rect>";
+      if (x.role === "acceleration" || x.role === "magnet") g += '<rect x="' + (X(i) + 2) + '" y="' + (base + 2) + '" width="' + (bw - 4) + '" height="3" fill="#9b5cf6"><title>gamma zone</title></rect>';
+      g += '<text x="' + C(i) + '" y="' + (base + 18) + '" class="od-ax' + (hi ? " b" : "") + '" text-anchor="middle">' + x.k.toFixed(x.k >= 10 ? 1 : 2) + "</text>";
+      if (x.dc != null && Math.abs(x.dc) >= 100) g += '<text x="' + C(i) + '" y="' + (base + 33) + '" class="od-cc ' + (x.dc > 0 ? "up" : "dn") + '" text-anchor="middle">C ' + kc(x.dc) + "</text>";
+      if (x.dp != null && Math.abs(x.dp) >= 100) g += '<text x="' + C(i) + '" y="' + (base + 47) + '" class="od-cp ' + (x.dp > 0 ? "up" : "dn") + '" text-anchor="middle">P ' + kc(x.dp) + "</text>";
+      if (hi) g += '<text x="' + C(i) + '" y="' + (base + 63) + '" class="' + (x === sup ? "od-lbs" : "od-lbr") + '" text-anchor="middle">' + (x === sup ? "SUPPORT" : "RESIST.") + "</text>";
+      else if (/^broken/.test(x.role)) g += '<text x="' + C(i) + '" y="' + (base + 63) + '" class="od-brk" text-anchor="middle">broken</text>';
+      if (hasP && (x.prem_c || x.prem_p)) { var pr = (x.prem_c || 0) + (x.prem_p || 0); g += '<circle cx="' + C(i) + '" cy="' + (T - 9) + '" r="' + (1.5 + 4.5 * Math.sqrt(pr / mp)) + '" class="od-pm"><title>' + px(x.k) + " est. premium " + mm(pr) + "</title></circle>"; }
     });
-    var xs = xk(F); g += '<line x1="' + xs + '" x2="' + xs + '" y1="' + (T - 6) + '" y2="' + (H - B) + '" class="od-spot"/><text x="' + xs + '" y="' + (T - 10) + '" class="od-spt" text-anchor="middle">Spot ' + F.toFixed(4) + "</text>";
-    if (sup) g += '<text x="' + (X(S.indexOf(sup)) + bw / 2) + '" y="' + (T + 28) + '" class="od-lbs" text-anchor="middle">Put support</text>';
-    if (res) g += '<text x="' + (X(S.indexOf(res)) + bw / 2) + '" y="' + (T + 28) + '" class="od-lbr" text-anchor="middle">Call resistance</text>';
-    return '<svg viewBox="0 0 ' + W + " " + H + '" class="od-map" role="img" aria-label="Strike positioning map">' + g + "</svg>";
+    var xs = xk(F), sa = xs < L + 60 ? "start" : xs > W - R - 60 ? "end" : "middle";
+    g += '<line x1="' + xs + '" x2="' + xs + '" y1="' + (T - 2) + '" y2="' + base + '" class="od-spot"/><text x="' + xs + '" y="14" class="od-spt" text-anchor="' + sa + '">Spot ' + F.toFixed(4) + "</text>";
+    if (nc && nc.flip && nc.flip >= S[0].k && nc.flip <= S[n - 1].k) { var xf = xk(nc.flip), fa = xf < L + 70 ? "start" : xf > W - R - 70 ? "end" : "middle";
+      g += '<line x1="' + xf + '" x2="' + xf + '" y1="' + (T - 2) + '" y2="' + base + '" class="od-flip"/><text x="' + xf + '" y="30" class="od-flt" text-anchor="' + fa + '">γ flip ' + nc.flip.toFixed(2) + "</text>"; }
+    return '<svg viewBox="0 0 ' + W + " " + H + '" class="od-map" role="img" aria-label="Strike positioning map: open interest by strike with support, resistance, spot and gamma flip">' + g + "</svg>";
   }
   function dash(key) {
     var O = window.DATA && DATA.optflow && DATA.optflow[key]; if (!O || !O.positioning) return "";
@@ -87,7 +98,7 @@
     var ana = '<div class="od-b"><div class="od-bt">Historical analogue</div><div class="od-r"><span>Similar sessions</span><b>' + (sim.n || 0) + '</b></div><div class="od-r"><span>Next-day move</span><b class="' + ((sim.avg || 0) >= 0 ? "up" : "dn") + '">' + (sim.n ? (sim.avg >= 0 ? "+" : "") + sim.avg + "% avg" : "—") + '</b></div><div class="od-r"><span>Range breach (close)</span><b>' + (sim.n ? sim.p_breach_close + "%" : "—") + '</b></div><div class="od-s">Confidence ' + esc(A.confidence || "Low") + " — past sessions, not a forecast</div></div>";
     var sumr = '<div class="od-sum"><span class="od-sh">⚠ Market structure</span><span>Options activity: <b class="' + cl + '">' + esc(PS.label) + "</b></span><span>Key levels: " + (sup ? "support <b>" + px(sup.k) + "</b>" : "") + (res ? " · resistance <b>" + px(res.k) + "</b>" : "") + "</span>" +
       "<span>Risk: <b>" + (nc.gex < 0 ? "moves can extend" + (res ? " if " + px(res.k) + " breaks" : "") : "moves likely damped") + "</b></span><span class=\"od-mon\">✓ Monitor: " + (res ? px(res.k) : "") + (sup ? " / " + px(sup.k) : "") + " &amp; IV trend</span></div>";
-    return '<div class="od">' + top + '<div class="od-mid"><div class="od-mapw"><div class="od-mh"><b>Strike positioning map</b><span><i class="lc"></i>Call OI <i class="lp"></i>Put OI <i class="ls"></i>Support <i class="lr"></i>Resistance <i class="lg"></i>Gamma zone · ▲▼ OI change' + (nc.has_vol ? " · ● est. premium" : "") + "</span></div>" + smap(PS, F, nd, nc) + "</div>" + ins + "</div>" +
+    return '<div class="od">' + top + '<div class="od-mid"><div class="od-mapw"><div class="od-mh"><b>Strike positioning map</b><span><i class="lc"></i>Call OI <i class="lp"></i>Put OI <i class="ls"></i>Support <i class="lr"></i>Resistance <i class="lg"></i>Gamma zone <i class="le"></i>Next-day 1σ · C / P = OI change d/d' + (nc.has_vol ? " · ● est. premium (top row)" : "") + "</span></div>" + smap(PS, F, nd, nc) + "</div>" + ins + "</div>" +
       '<div class="od-bot">' + trend + intent + emb + ana + "</div>" + sumr + "</div>";
   }
 
@@ -176,6 +187,7 @@
     ".od-mh{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;font-size:13.5px}.od-mh span{font-size:11.5px;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}.od-mh i{display:inline-block;width:10px;height:10px;border-radius:2px}.od-mh .lc{background:#3b82f6}.od-mh .lp{background:#8b5cf6}.od-mh .ls{border:2px solid #3fb97f}.od-mh .lr{border:2px solid #f59e0b}.od-mh .lg{background:#9b5cf6;height:4px}" +
     ".od-map{width:100%;height:auto;margin-top:6px}.od-gl{stroke:#1e2a3a}.od-ax{font:11px 'IBM Plex Mono',monospace;fill:#99a8bd}.od-ax.b{fill:#fff;font-weight:700}.od-c{fill:#3b82f6}.od-p{fill:#8b5cf6}.od-hs{fill:rgba(63,185,127,.08);stroke:#3fb97f;stroke-width:2}.od-hr{fill:rgba(245,158,11,.08);stroke:#f59e0b;stroke-width:2}" +
     ".od-lbs{font:700 11px 'Libre Franklin',sans-serif;fill:#3fb97f}.od-lbr{font:700 11px 'Libre Franklin',sans-serif;fill:#f59e0b}.od-up{font:10px 'IBM Plex Mono',monospace;fill:#3fb97f}.od-dn{font:10px 'IBM Plex Mono',monospace;fill:#e0655f}.od-pm{fill:#f5c542;opacity:.85}" +
+    ".od-cc,.od-cp{font:600 10px 'IBM Plex Mono',monospace}.od-cc.up,.od-cp.up{fill:#3fb97f}.od-cc.dn,.od-cp.dn{fill:#ff8a84}.od-mh i.le{background:rgba(56,182,201,.35)}" +
     ".od-spot{stroke:#fff;stroke-dasharray:4 4;stroke-width:1.5}.od-spt{font:700 12px 'IBM Plex Mono',monospace;fill:#fff}.od-em{fill:rgba(56,182,201,.07)}.od-emt{font:10px 'IBM Plex Mono',monospace;fill:#7dd8e6}.od-flip{stroke:#9b5cf6;stroke-dasharray:2 3}.od-flt{font:10px 'IBM Plex Mono',monospace;fill:#c9a3ff}.od-brk{font:700 10px 'IBM Plex Mono',monospace;fill:#e0453a}" +
     ".od-it{font-weight:700;font-size:14px;margin-bottom:6px}.od-i{border-left:3px solid;border-radius:4px;padding:6px 8px;margin-bottom:6px;background:rgba(255,255,255,.02);font-size:13px}.od-i b{display:block}.od-i span{color:var(--muted);font-size:12px}.od-i.g{border-color:#3fb97f}.od-i.o{border-color:#f59e0b}.od-i.p{border-color:#9b5cf6}.od-i.b{border-color:#38b6c9}.od-i.v{border-color:#6ea8ff}" +
     ".od-bot{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:10px}.od-bt{font-weight:700;font-size:13.5px;margin-bottom:6px}.od-bt small{font-weight:400;color:var(--faint);margin-left:4px}.od-b .od-sp{position:static;width:100%;height:60px}" +
