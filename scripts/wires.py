@@ -85,7 +85,8 @@ def parse_feed(text):
 
 def classify(kind, title):
     """(keep, breaking, tags, tickers)."""
-    tick = [t for t, rx in NAME_RX.items() if rx.search(title)]
+    # the company must be the subject (named at the start), not a partner mentioned in passing ("…, an Oracle partner, acquires…")
+    tick = [t for t, rx in NAME_RX.items() if (lambda m: m and m.start() < 30)(rx.search(title))]
     if kind == "fed":
         return True, bool(FED_KEY.search(title)), ["cb"], []
     if kind == "boc":
