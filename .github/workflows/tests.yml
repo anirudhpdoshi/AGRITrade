@@ -26,6 +26,7 @@ jobs:
       - run: python tests/test_alerts.py
       - run: python tests/test_earn_watch.py
       - run: python tests/test_pr_parse.py
+      - run: python tests/test_wires.py
       - run: python tests/test_bea_fastlane.py && python tests/test_roll.py
       - run: python tests/test_yields.py
   e2e:

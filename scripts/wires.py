@@ -126,7 +126,7 @@ def fetch(now, get=None, only=None):
             health[key] = type(e).__name__
             continue
         for title, link, d, comp in rows:
-            if not title or not d or now - d > timedelta(hours=24) or d - now > timedelta(minutes=10):
+            if not title or not d or now - d > timedelta(hours=72) or d - now > timedelta(minutes=10):
                 continue
             if key == "sec":
                 m = re.match(r"8-K\s*-\s*(.*?)\s*\(\d+\)", title)
