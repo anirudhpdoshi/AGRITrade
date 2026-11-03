@@ -4,7 +4,7 @@
    reconciliation check (sum of the last four derived quarters vs the reported fiscal year where they line up).
    Usage: node scripts/sec_validate.js META GOOGL ...      (exit code 1 if any company fails a hard check) */
 const E = require("../co-engine.js");
-const UA = { "User-Agent": "AGRITrade-desk/1.0 (+https://github.com/anirudhpdoshi/AGRITrade)", Accept: "application/json" };
+const UA = { "User-Agent": ("AGRITrade desk " + (process.env.SEC_CONTACT || "")).trim(), Accept: "application/json" };   // contact email from the SEC_CONTACT secret
 const FORMS = new Set(["10-Q", "10-K", "10-Q/A", "10-K/A", "10-KT", "10-QT"]);
 const TAGS = [...new Set([].concat(...Object.values(E.DUR), ...Object.values(E.INST)))];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

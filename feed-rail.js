@@ -6,9 +6,9 @@
    Tabs with a right rail get the panel at the top of the rail; full-width tabs get it as a docked drawer on the right. */
 (function () {
   "use strict";
-  var TAGS = [["all", "All"], ["agri", "Agri"], ["corn", "Corn"], ["wheat", "Wheat"], ["soybeans", "Soybeans"], ["fx", "USD/CAD"], ["macro", "Macro"], ["cb", "Central banks"], ["world", "World"], ["energy", "Energy"], ["metals", "Metals"], ["leg", "Legislation"], ["earn", "Earnings"]];
+  var TAGS = [["all", "All"], ["wires", "Wires"], ["agri", "Agri"], ["corn", "Corn"], ["wheat", "Wheat"], ["soybeans", "Soybeans"], ["fx", "USD/CAD"], ["macro", "Macro"], ["cb", "Central banks"], ["world", "World"], ["energy", "Energy"], ["metals", "Metals"], ["leg", "Legislation"], ["earn", "Earnings"]];
   var TN = {}; TAGS.forEach(function (t) { TN[t[0]] = t[1]; });
-  var TC = { corn: "#e8b93d", wheat: "#d9a066", soybeans: "#3fb97f", fx: "#38b6c9", macro: "#6ea8ff", cb: "#9b8cff", world: "#ff8a84", leg: "#c9a3ff", earn: "#f5c542", energy: "#f08a5d", metals: "#d4b25a" };
+  var TC = { corn: "#e8b93d", wheat: "#d9a066", soybeans: "#3fb97f", fx: "#38b6c9", macro: "#6ea8ff", cb: "#9b8cff", world: "#ff8a84", leg: "#c9a3ff", earn: "#f5c542", energy: "#f08a5d", metals: "#d4b25a", wires: "#9fb4cf" };
   var DEF = { corn: "corn", wheat: "wheat", soybeans: "soybeans", fx: "fx", world: "world", policy: "cb", earnings: "earn", briefing: "all", events: "all", intel: "agri" };
   var pick = {}, seen = {}, firstPass = true, lastSig = "", ONLY = true;
   try { ONLY = localStorage.getItem("desk.feedall") !== "1"; } catch (e) {}
@@ -32,6 +32,7 @@
     if (/WTI crude|\bcrude\b|\bOPEC|\boil (price|output|supply)/i.test(h)) t.energy = 1;
     if (/\b(Gold|Silver)\b/.test(h)) t.metals = 1;
     if (m.k === "alert" && /S&P 500|Nasdaq|Dow Jones|S&P\/TSX|Euro Stoxx|FTSE|US Dollar Index/.test(h)) t.world = 1;
+    if (m.k === "wire") t.wires = 1;
     if (!Object.keys(t).length) t.macro = 1;
     return t;
   }
@@ -45,7 +46,7 @@
   function cardHTML(ctx) {
     var f = pick[ctx] || DEF[ctx] || "all", L = feed(), now = Date.now();
     var cnt = {}; L.forEach(function (m) { TAGS.forEach(function (t) { if (t[0] !== "all" && matches(m, t[0])) cnt[t[0]] = (cnt[t[0]] || 0) + 1; }); });
-    var list = L.filter(function (m) { return matches(m, f) && (!ONLY || breaking(m)); });
+    var list = L.filter(function (m) { return matches(m, f) && (!ONLY || breaking(m) || f === "wires"); });
     var pin = list.filter(function (m) { return breaking(m) && now - m.t < 2 * 3600000; }), rest = list.filter(function (m) { return pin.indexOf(m) < 0; });
     function item(m) {
       var t = m._t || tagsOf(m), b = breaking(m), go = m.go ? ' data-evgo="' + esc(m.go) + '" role="link" tabindex="0"' : "";
@@ -121,6 +122,18 @@
     list.forEach(function (a) { if (a && a.id && a.head) EVENTS.log("alert", alertHTML(a), GO[a.tag] || "", "al|" + a.id, Date.parse(a.t) || Date.now()); });
   }
   window.addEventListener("desk:alerts", function (e) { ingest(e.detail); });
+  /* newswires and official press rooms (fast lane, every ~2 min): plain items, linked to the release */
+  function wires(W) {
+    if (!window.EVENTS || !EVENTS.log || !W || !W.items) return;
+    W.items.slice(0, 80).reverse().forEach(function (x) {
+      if (!x || !x.id || !x.title) return;
+      var u = /^https?:\/\//.test(x.url || "") ? x.url : "";
+      EVENTS.log("wire", '<span class="fr-src">' + esc(x.src) + "</span> " + esc(x.title) + (x.tick && x.tick.length ? " <small>(" + esc(x.tick.join(", ")) + ")</small>" : "") +
+        (u ? ' <a class="fr-lnk" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">↗</a>' : ""), "", "wr|" + x.id, Date.parse(x.t) || Date.now());
+    });
+  }
+  window.addEventListener("desk:wires", function (e) { wires(e.detail); });
+  setTimeout(function () { wires(window.DESK_WIRES); }, 1600);
   setTimeout(function () { ingest(window.DESK_ALERTS); }, 1500);
 
   var css = document.createElement("style");
@@ -138,6 +151,7 @@
     ".fr-t{border:1px solid var(--tc);color:var(--tc);border-radius:4px;padding:0 5px;font-weight:600}.fr-o{color:#7dd8e6;margin-left:auto}" +
     ".fr-i.br{background:rgba(224,69,58,.10);border:1px solid rgba(224,69,58,.45);border-left:3px solid #e0453a;margin:6px 0}.fr-i.br .fr-h{color:#ffd9d4;font-weight:600}.fr-i.br .fr-h b{color:#fff}" +
     ".fr-bk,.fr-tbk{display:inline-block;font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#fff;background:#e0453a;border-radius:3px;padding:1px 6px;margin-bottom:4px}" +
+    ".fr-src{font:700 10px 'IBM Plex Mono',monospace;color:#9fb4cf;border:1px solid var(--line2);border-radius:3px;padding:0 4px;margin-right:3px}.fr-lnk{color:#7dd8e6;text-decoration:none}" +
     ".fr-empty{font-size:13px;color:var(--muted);padding:10px 0}" +
     ".fr-mode{display:inline-flex;border:1px solid var(--line2);border-radius:12px;overflow:hidden}.fr-mode button{appearance:none;border:0;background:transparent;color:var(--muted);font:600 11px 'IBM Plex Mono',monospace;padding:3px 8px;cursor:pointer}.fr-mode button[aria-pressed=true]{background:#e0453a;color:#fff}.fr-mode button[data-frmode='0'][aria-pressed=true]{background:#13304a}" +
     ".fr-al{margin-top:4px;display:grid;gap:3px;font-size:12.5px;font-weight:400;color:#d4deea}.fr-al i{display:inline-block;min-width:96px;font:normal 600 10.5px 'IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;color:#ff9d94;margin-right:6px}.fr-al a{color:#7dd8e6}" +

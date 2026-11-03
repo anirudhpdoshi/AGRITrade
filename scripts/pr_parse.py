@@ -4,10 +4,11 @@ The release is filed minutes after the results; its condensed statements are una
 lines are read from the HTML tables: the first number on a matched row is the current quarter (three months ended).
 Only rows with an unambiguous label are taken; anything not found stays absent (never estimated).
 """
-import re
+import os, re
 from html.parser import HTMLParser
 
-SEC_UA = {"User-Agent": "AGRITrade-desk/1.0 (+https://github.com/anirudhpdoshi/AGRITrade)", "Accept-Encoding": "gzip, deflate"}
+# SEC fair-access rule: automated requests must name a contact email. It comes from the SEC_CONTACT secret (never in the repo).
+SEC_UA = {"User-Agent": ("AGRITrade desk " + os.environ.get("SEC_CONTACT", "").strip()).strip(), "Accept-Encoding": "gzip, deflate"}
 
 LINES = [   # key, label regex (whole label, case-insensitive), allow-negative
     ("rev", r"(total )?(net sales|net revenues?|revenues?|total revenues?|total net sales|total net revenues?|sales)", False),

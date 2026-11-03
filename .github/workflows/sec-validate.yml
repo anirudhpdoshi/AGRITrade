@@ -22,6 +22,8 @@ jobs:
       - run: node tests/co_engine.test.js
       - name: Validate on live SEC data
         run: node scripts/sec_validate.js ${{ inputs.tickers }} | tee /tmp/audit.txt; exit ${PIPESTATUS[0]}
+        env:
+          SEC_CONTACT: ${{ secrets.SEC_CONTACT }}
       - name: Keep the audit text on the sec-audit branch (developer check only)
         if: always()
         run: |

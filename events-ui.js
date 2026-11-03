@@ -322,7 +322,7 @@
     id = id || kind + "|" + html;
     for (var i = 0; i < feed.length; i++) if (feed[i].id === id) return;
     feed.unshift({ t: t || Date.now(), k: kind, h: html, go: go || "", id: id });
-    feed.sort(function (a, b) { return b.t - a.t; }); feed = feed.slice(0, 80); store.set(FEED_KEY, feed);
+    feed.sort(function (a, b) { return b.t - a.t; }); var nw = 0; feed = feed.filter(function (m) { return m.k !== "wire" || ++nw <= 80; }).slice(0, 220); store.set(FEED_KEY, feed);
     if (!active()) unseen++;
     paintBadge(); if (active()) paintFeed();
   }

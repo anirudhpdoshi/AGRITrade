@@ -17,6 +17,7 @@ import update_data as U  # noqa: E402
 import policy_watch as PW  # noqa: E402
 import alerts as AL  # noqa: E402
 import earn_watch as EWM  # noqa: E402
+import wires as WR  # noqa: E402
 PW.TOR = U.TOR
 
 ROOT = U.ROOT
@@ -107,11 +108,12 @@ def briefing_json():
 
 
 EARN_LIVE, EARN_PR = {}, {}
+WIRES = {"items": [], "health": {}, "at": None}
 
 
 def payload(D, al=None):
     a = D["meta"]["asof"]
-    return {"alerts": (al or {}).get("items", []), "earn_live": EARN_LIVE, "earn_pr": EARN_PR,
+    return {"alerts": (al or {}).get("items", []), "earn_live": EARN_LIVE, "earn_pr": EARN_PR, "wires": WIRES,
         "fx": {"feed": D["fx"]["feed"], "intraday": D["fx"].get("intraday", []),
                "energy": D["fx"]["energy"], "wcs_diff": D["fx"]["wcs_diff"], "fxcross": D["fx"]["fxcross"], "yields_live": D["fx"].get("yields_live") or {}, "yields_live_ca": D["fx"].get("yields_live_ca") or {}},
         "grains": {k: {"intraday": g["fan"]["intraday"], "intraday_ts": g["fan"].get("intraday_ts"), "quotes": g.get("quotes") or {}} for k, g in D["grains"].items()},
@@ -206,6 +208,19 @@ def main():
             if time.time() - t1 > 20:
                 errs[name + "_slow"] = f"{time.time() - t1:.0f} s"
         it += 1
+        try:   # newswires + official press rooms, every 2nd loop (~2 min)
+            if it % 2 == 1:
+                wi, wh = WR.fetch(datetime.now(timezone.utc))
+                WIRES.update({"items": wi, "health": wh, "at": U.iso(U.NOW)})
+                if AS.get("day") == datetime.now(U.TOR).date().isoformat() or not AS.get("day"):
+                    AS.setdefault("day", datetime.now(U.TOR).date().isoformat())
+                    nw = WR.alerts_from(wi, AS.setdefault("fired", {}), datetime.now(timezone.utc))
+                    AS["items"] = (AS.get("items", []) + nw)[-60:]
+                    for x in nw:
+                        print(f"::notice title=wire::{x['head'][:180]}")
+        except Exception as e:
+            errs["wires"] = str(e)[:160]
+            print("[wires] failed:", e)
         try:   # alert engine: prices every 3rd loop (~3 min; triggers use completed 5-min bars), news every 5th
             if it % 3 == 1 or it % 5 == 1:
                 new = AL.run(D, AS, U.NOW, U.TOR, U.yf(), briefing=briefing_json() if it % 5 == 1 else None, prices=it % 3 == 1)

@@ -19,7 +19,8 @@ import us_earnings as UE
 import pr_parse as PP
 
 EW_BUDGET = int(os.environ.get("EW_BUDGET", "120"))
-SEC_UA = {"User-Agent": "AGRITrade-desk/1.0 (+https://github.com/anirudhpdoshi/AGRITrade)", "Accept-Encoding": "gzip, deflate"}
+# SEC fair-access rule: automated requests must name a contact email. It comes from the SEC_CONTACT secret (never in the repo).
+SEC_UA = {"User-Agent": ("AGRITrade desk " + os.environ.get("SEC_CONTACT", "").strip()).strip(), "Accept-Encoding": "gzip, deflate"}
 FAST_S, SLOW_S, FAST_FOR, WINDOW = 10, 30, timedelta(minutes=2), timedelta(minutes=90)
 
 

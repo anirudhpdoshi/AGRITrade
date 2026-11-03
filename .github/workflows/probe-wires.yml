@@ -5,22 +5,16 @@ jobs:
   p:
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          python3 - <<'PY'
-          import urllib.request, re, json
-          UA={"User-Agent":"AGRITrade-desk/1.0 (+https://github.com/anirudhpdoshi/AGRITrade)","Accept":"*/*"}
-          def g(u,h=UA): return urllib.request.urlopen(urllib.request.Request(u,headers=h),timeout=20)
-          out=[]
-          j=json.loads(g("https://pressreleasefeed.org/api/releases").read())
-          r=j["releases"][0]; out.append("PRF keys="+",".join(r.keys())+" n="+str(len(j["releases"])))
-          out.append("PRF srcs="+str(sorted({str(x.get('source') or x.get('source_name') or x.get('brand') or '') for x in j['releases']})[:20]))
-          for q in ["?q=apple","?source=globenewswire","?limit=100","?page=2"]:
-              try:
-                  jj=json.loads(g("https://pressreleasefeed.org/api/releases"+q).read()); out.append(f"PRF{q} n={len(jj.get('releases',[]))} first={jj['releases'][0]['title'][:50] if jj.get('releases') else ''}")
-              except Exception as e: out.append(f"PRF{q} ERR {str(e)[:40]}")
-          for k,u in {"secsub":"https://data.sec.gov/submissions/CIK0000320193.json","secidx":"https://www.sec.gov/Archives/edgar/data/320193/","usda_gd":"https://content.govdelivery.com/accounts/USDAOC/bulletins.rss","usda_fas":"https://www.fas.usda.gov/rss/press-releases","gnw_pub":"https://www.globenewswire.com/RssFeed/country/United%20States/feedTitle/GlobeNewswire%20-%20News%20from%20United%20States"}.items():
-              try:
-                  t=g(u).read().decode("utf8","ignore"); out.append(f"{k} OK len={len(t)} items={t.count('<item')+t.count('<entry')}")
-              except Exception as e: out.append(f"{k} ERR {str(e)[:40]}")
-          for i in range(0,len(out),3): print("::notice::"+" ||| ".join(out[i:i+3])[:1000])
+      - uses: actions/checkout@v4
+      - run: pip install -q requests
+      - env: {SEC_CONTACT: "${{ secrets.SEC_CONTACT }}"}
+        run: |
+          cd scripts && python3 - <<'PY'
+          from datetime import datetime, timezone
+          import wires as W
+          it, h = W.fetch(datetime.now(timezone.utc))
+          print("::notice::health " + str(h))
+          print("::notice::kept " + str(len(it)) + " breaking " + str(sum(i['breaking'] for i in it)) + " by src " + str({s: sum(1 for i in it if i['srck']==s) for s in {i['srck'] for i in it}}))
+          for i in range(0, min(len(it), 24), 6):
+              print("::notice::" + " ||| ".join(f"[{x['src']}{'*' if x['breaking'] else ''}] {x['title'][:80]} {x['tick']}" for x in it[i:i+6]))
           PY
