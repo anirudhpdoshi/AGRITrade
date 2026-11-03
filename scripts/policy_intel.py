@@ -452,6 +452,9 @@ def main():
             d["id"] = hashlib.sha1(d["page"].encode()).hexdigest()[:12]
         if (d.get("published_at") or "") > NOW.isoformat():
             continue   # a document dated in the future was a placeholder page: never keep it
+        t_ = classify(d.get("title") or "")
+        if d.get("type") == "statement" and t_ != "statement":
+            continue   # was taken for a policy statement under the old (looser) rule: dropped
         docs[d["id"]] = d
     status = {}
     cap = 15 if "--backfill" in sys.argv else 5
@@ -503,7 +506,7 @@ def main():
     stance = {}
     for bank in BANKS:
         b = [d for d in allv if d["bank"] == bank and d.get("policy_relevant", True)]
-        st = next((d for d in b if d["type"] in ("statement", "press_conference")), None)
+        st = next((d for d in b if d["type"] == "statement"), None)   # the decision statement is the baseline (not testimony / pressers)
         since = [d for d in b if d["type"] in ("speech", "testimony", "interview") and (not st or (d.get("published_at") or "") > (st.get("published_at") or ""))]
         stance[bank] = {"statement": {k: st[k] for k in ("id", "title", "score", "label", "published_at")} if st else None,
                         "speeches_since": len(since), "speeches_mean": round(sum(d["score"] for d in since) / len(since), 1) if since else None,
