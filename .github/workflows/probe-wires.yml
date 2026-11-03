@@ -9,36 +9,18 @@ jobs:
           python3 - <<'PY'
           import urllib.request, re, json
           UA={"User-Agent":"AGRITrade-desk/1.0 (+https://github.com/anirudhpdoshi/AGRITrade)","Accept":"*/*"}
-          BR={"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) Chrome/124 Safari/537.36","Accept":"*/*"}
-          F={
-           "bw":"https://feed.businesswire.com/rss/home/?rss=G1QFDERJXkJeEFtRWA==",
-           "prn":"https://www.prnewswire.com/rss/news-releases-list.rss",
-           "gnw":"https://www.globenewswire.com/RssFeed/orgclass/1/feedTitle/GlobeNewswire%20-%20News%20about%20Public%20Companies",
-           "prf1":"https://pressreleasefeed.org/api/releases","prf2":"https://pressreleasefeed.org/feed","prf3":"https://pressreleasefeed.org/rss","prf4":"https://pressreleasefeed.org/docs",
-           "nfc":"https://feeds.newsfilecorp.com/feed/news-releases","nfc2":"https://www.newsfilecorp.com/rss",
-           "acc":"https://www.accessnewswire.com/newsroom/rss","acc2":"https://www.accesswire.com/rss/latest",
-           "ein":"https://www.einpresswire.com/rss/latest","ein2":"https://world.einnews.com/rss/press-releases",
-           "cnw":"https://www.newswire.ca/rss/news-releases-list.rss",
-           "sec":"https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&company=&dateb=&owner=include&start=0&count=40&output=atom",
-           "fed":"https://www.federalreserve.gov/feeds/press_all.xml",
-           "boc":"https://www.bankofcanada.ca/content_type/press-releases/feed/",
-           "usda":"https://www.usda.gov/rss/latest-releases.xml","usda2":"https://www.usda.gov/about-usda/news/press-releases/rss.xml",
-           "cftc":"https://www.cftc.gov/RSS/RSSGP/rssgp.xml","cftc2":"https://www.cftc.gov/rss/pressreleases.xml",
-           "stc":"https://www150.statcan.gc.ca/n1/rss/dai-quo/0-eng.atom","stc2":"https://www150.statcan.gc.ca/n1/dai-quo/rss-eng.xml",
-          }
+          def g(u,h=UA): return urllib.request.urlopen(urllib.request.Request(u,headers=h),timeout=20)
           out=[]
-          j=json.loads(urllib.request.urlopen(urllib.request.Request(F["prf1"],headers=UA),timeout=20).read())
-          print("::notice::PRF " + json.dumps(j if not isinstance(j,list) else j[:1])[:900])
-          for k in ["prf1","prf2","prf3","prf4","nfc","nfc2","gnw","bw","prn"]: F.pop(k)
-          F.update({"gnw2":"https://www.globenewswire.com/RssFeed/subjectcode/1-Earnings%20Releases%20and%20Operating%20Results/feedTitle/GlobeNewswire","nfc3":"https://www.newsfilecorp.com/rss/latest","acc3":"https://www.accessnewswire.com/rss"})
-          for k,u in F.items():
-              for nm,h in (("ua",UA),("br",BR)):
-                  try:
-                      r=urllib.request.urlopen(urllib.request.Request(u,headers=h),timeout=20); t=r.read().decode("utf8","ignore")
-                      titles=re.findall(r"<title[^>]*>(?:<!\[CDATA\[)?\s*([^<\]]{6,90})",t)[1:3]
-                      dates=re.findall(r"<(?:pubDate|updated|dc:date)>([^<]{8,40})",t)[:1]
-                      out.append(f"{k} {nm} {r.status} items={t.count('<item')+t.count('<entry')} {dates} {titles[:1]}"); break
-                  except Exception as e:
-                      if nm=="br": out.append(f"{k} ERR {str(e)[:50]}")
-          for i in range(0,len(out),4): print("::notice::"+" ||| ".join(out[i:i+4]))
+          j=json.loads(g("https://pressreleasefeed.org/api/releases").read())
+          r=j["releases"][0]; out.append("PRF keys="+",".join(r.keys())+" n="+str(len(j["releases"])))
+          out.append("PRF srcs="+str(sorted({str(x.get('source') or x.get('source_name') or x.get('brand') or '') for x in j['releases']})[:20]))
+          for q in ["?q=apple","?source=globenewswire","?limit=100","?page=2"]:
+              try:
+                  jj=json.loads(g("https://pressreleasefeed.org/api/releases"+q).read()); out.append(f"PRF{q} n={len(jj.get('releases',[]))} first={jj['releases'][0]['title'][:50] if jj.get('releases') else ''}")
+              except Exception as e: out.append(f"PRF{q} ERR {str(e)[:40]}")
+          for k,u in {"secsub":"https://data.sec.gov/submissions/CIK0000320193.json","secidx":"https://www.sec.gov/Archives/edgar/data/320193/","usda_gd":"https://content.govdelivery.com/accounts/USDAOC/bulletins.rss","usda_fas":"https://www.fas.usda.gov/rss/press-releases","gnw_pub":"https://www.globenewswire.com/RssFeed/country/United%20States/feedTitle/GlobeNewswire%20-%20News%20from%20United%20States"}.items():
+              try:
+                  t=g(u).read().decode("utf8","ignore"); out.append(f"{k} OK len={len(t)} items={t.count('<item')+t.count('<entry')}")
+              except Exception as e: out.append(f"{k} ERR {str(e)[:40]}")
+          for i in range(0,len(out),3): print("::notice::"+" ||| ".join(out[i:i+3])[:1000])
           PY
