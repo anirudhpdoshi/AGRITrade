@@ -56,7 +56,7 @@ FED_KEY = re.compile(r"FOMC|monetary policy|federal funds|discount rate|policy s
 BOC_KEY = re.compile(r"policy rate|interest rate announcement|Monetary Policy Report|Governing Council|deliberations|market operations", re.I)
 # FinancialJuice squawk headlines: keep what moves the desk's markets; BREAKING for central banks, trade/tariff, geopolitics, oil supply, grains
 FJ_KEEP = re.compile(r"\b(USD|CAD|Canad|dollar|Fed\b|FOMC|Powell|BoC|Macklem|rate|yield|Treasur|inflation|CPI|PCE|jobs|payroll|GDP|PMI|ISM|tariff|trade|Trump|China|Iran|Israel|Russia|Ukraine|OPEC|oil|crude|gasoline|EIA|API|grain|wheat|corn|soy|USDA|WASDE|fertili|Black Sea|sanction|ceasefire|missile|strike|war)", re.I)
-FJ_BREAK = re.compile(r"\b(Fed\b.*\b(cut|hike|holds|decision)|FOMC (statement|decision)|BoC\b.*\b(cut|hike|holds|decision)|rate (cut|hike)s?\b|tariffs? (on|of|to)|imposes|sanction|missile|airstrike|strikes? on|invasion|ceasefire|OPEC\+? (agrees|cuts|raises|keeps)|export ban|WASDE|Trump (signs|orders|announces|imposes))", re.I)
+FJ_BREAK = re.compile(r"\b((Fed|FOMC|BoC|Bank of Canada|ECB|BoE|BoJ)\b[^:]*:?\s*(raises|lowers|cuts|hikes|holds|keeps|leaves) (its |the )?(policy |benchmark |key |interest )?rates?\b|rate decision|emergency (cut|meeting)|imposes|tariffs? (take effect|imposed|of \d+%)|sanctions? on|missile (strike|attack)|airstrikes?|strikes? on|invasion|ceasefire (agreed|deal|collapses)|OPEC\+? (agrees|cuts|raises|keeps)|export ban|WASDE|Trump (signs|orders|imposes))", re.I)
 USDA_KEY = re.compile(r"WASDE|export|trade|tariff|China|crop|grain|corn|wheat|soy|farm|commodity|disaster|bird flu|avian|screwworm", re.I)
 
 
@@ -164,8 +164,8 @@ def alerts_from(items, fired, now):
         if not it["breaking"] or fid in fired:
             continue
         fired[fid] = now.isoformat()
-        tag = "cb" if "cb" in it["tags"] else "agri" if it["tags"] == ["agri"] else "earn"
-        out.append({"id": fid, "kind": "news", "tag": {"agri": "corn", "earn": "earn", "cb": "cb"}[tag], "t": now.isoformat(), "mt": it["t"],
+        tag = "cb" if "cb" in it["tags"] else "earn" if "earn" in it["tags"] else "agri" if "agri" in it["tags"] else "macro"
+        out.append({"id": fid, "kind": "news", "tag": {"agri": "corn", "earn": "earn", "cb": "cb", "macro": "macro"}[tag], "t": now.isoformat(), "mt": it["t"],
                     "head": f"BREAKING – {it['title']}", "trigger": f"{it['src']}: {it['title']}" + (f" ({', '.join(it['tick'])})" if it["tick"] else ""),
                     "impact": "Mixed", "why": "", "src": it["src"], "url": it["url"]})
     return out

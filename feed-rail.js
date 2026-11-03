@@ -48,7 +48,7 @@
     var f = pick[ctx] || DEF[ctx] || "all", L = feed(), now = Date.now();
     var cnt = {}; L.forEach(function (m) { TAGS.forEach(function (t) { if (t[0] !== "all" && matches(m, t[0])) cnt[t[0]] = (cnt[t[0]] || 0) + 1; }); });
     var list = L.filter(function (m) { return matches(m, f) && (!ONLY || breaking(m) || f === "wires"); });
-    var pin = list.filter(function (m) { return breaking(m) && now - m.t < 2 * 3600000; }), rest = list.filter(function (m) { return pin.indexOf(m) < 0; });
+    var pin = [], rest = list;   /* strictly newest first: breaking items are red in place, never pinned over newer news */
     function item(m) {
       var t = m._t || tagsOf(m), b = breaking(m), go = m.go ? ' data-evgo="' + esc(m.go) + '" role="link" tabindex="0"' : "";
       return '<li class="fr-i' + (b ? " br" : "") + (go ? " go" : "") + '"' + go + ">" + (b ? '<span class="fr-bk">BREAKING</span>' : "") + '<div class="fr-h">' + String(m.h).replace(/<div><i>(Why it matters|Source &amp; time)<\/i>[\s\S]*?<\/div>(?=<div><i>|<\/div>$)/g, "") + "</div>" +
