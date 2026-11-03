@@ -26,13 +26,19 @@ jobs:
            "cftc":"https://www.cftc.gov/RSS/RSSGP/rssgp.xml","cftc2":"https://www.cftc.gov/rss/pressreleases.xml",
            "stc":"https://www150.statcan.gc.ca/n1/rss/dai-quo/0-eng.atom","stc2":"https://www150.statcan.gc.ca/n1/dai-quo/rss-eng.xml",
           }
+          out=[]
+          j=json.loads(urllib.request.urlopen(urllib.request.Request(F["prf1"],headers=UA),timeout=20).read())
+          print("::notice::PRF " + json.dumps(j if not isinstance(j,list) else j[:1])[:900])
+          for k in ["prf1","prf2","prf3","prf4","nfc","nfc2","gnw","bw","prn"]: F.pop(k)
+          F.update({"gnw2":"https://www.globenewswire.com/RssFeed/subjectcode/1-Earnings%20Releases%20and%20Operating%20Results/feedTitle/GlobeNewswire","nfc3":"https://www.newsfilecorp.com/rss/latest","acc3":"https://www.accessnewswire.com/rss"})
           for k,u in F.items():
               for nm,h in (("ua",UA),("br",BR)):
                   try:
                       r=urllib.request.urlopen(urllib.request.Request(u,headers=h),timeout=20); t=r.read().decode("utf8","ignore")
                       titles=re.findall(r"<title[^>]*>(?:<!\[CDATA\[)?\s*([^<\]]{6,90})",t)[1:3]
                       dates=re.findall(r"<(?:pubDate|updated|dc:date)>([^<]{8,40})",t)[:1]
-                      print(f"::notice::{k} {nm} {r.status} len={len(t)} items={t.count('<item')+t.count('<entry')} {dates} {titles}"); break
+                      out.append(f"{k} {nm} {r.status} items={t.count('<item')+t.count('<entry')} {dates} {titles[:1]}"); break
                   except Exception as e:
-                      if nm=="br": print(f"::notice::{k} ERR {str(e)[:70]}")
+                      if nm=="br": out.append(f"{k} ERR {str(e)[:50]}")
+          for i in range(0,len(out),4): print("::notice::"+" ||| ".join(out[i:i+4]))
           PY
