@@ -6,15 +6,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: pip install -q requests
       - env: {SEC_CONTACT: "${{ secrets.SEC_CONTACT }}"}
         run: |
           cd scripts && python3 - <<'PY'
-          import json, re, time, urllib.request, pr_parse as P
+          import json, re, time, requests, pr_parse as P
           U=json.load(open("data/_probe_ex.json"))
           for s,u in list(U.items())[:10]:
               time.sleep(0.3)
               try:
-                  h=urllib.request.urlopen(urllib.request.Request(u,headers=P.SEC_UA),timeout=25).read().decode("utf8","ignore")
+                  h=requests.get(u,headers=P.SEC_UA,timeout=25).text
                   t=P._T(); t.feed(h); L=[]
                   for T in t.tables:
                       for r in T:
