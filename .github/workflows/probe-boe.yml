@@ -1,0 +1,17 @@
+name: probe-boe
+on: workflow_dispatch
+permissions: {contents: read}
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          python3 - <<'PY'
+          import urllib.request, re
+          H={"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) Chrome/124 Safari/537.36"}
+          for m in ["september-2026","november-2026"]:
+              r=urllib.request.urlopen(urllib.request.Request(f"https://www.bankofengland.co.uk/monetary-policy-summary-and-minutes/2026/{m}",headers=H),timeout=25)
+              t=r.read().decode("utf8","ignore"); x=re.sub(r"\s+"," ",re.sub(r"<[^>]+>"," ",t))
+              i=x.lower().find("published"); j=x.find("Monetary Policy Summary")
+              print(f"::notice::{m} url={r.geturl()[-60:]} len={len(t)} pub=[{x[max(0,i-80):i+120]}] mps=[{x[j:j+300]}]")
+          PY
