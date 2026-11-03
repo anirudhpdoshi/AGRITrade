@@ -81,7 +81,7 @@
     ".ut-ctx{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}.ut-ctx b{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--ink)}" +
     ".ut-lock{appearance:none;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);border-radius:7px;padding:5px 10px;font:inherit;font-size:12.5px;cursor:pointer}" +
     ".ut-lock[aria-pressed=true]{border-color:var(--amber);color:var(--amber);background:rgba(232,163,61,.08)}" +
-    ".ut-shell{display:grid;grid-template-columns:196px minmax(0,1fr) 340px;gap:12px;align-items:start}" +
+    ".ut-shell{display:grid;grid-template-columns:196px minmax(0,1fr);gap:12px;align-items:start}" +
     ".ut-nav{position:sticky;top:calc(var(--strip-h,40px) + 8px);border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:8px}" +
     ".ut-nav .g{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);padding:8px 8px 4px}" +
     ".ut-nav button{display:flex;justify-content:space-between;align-items:center;width:100%;appearance:none;border:0;background:none;color:var(--muted);font:inherit;font-size:13px;text-align:left;padding:6px 8px;border-radius:6px;cursor:pointer}" +
@@ -91,12 +91,20 @@
     ".ut-feed h3{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:12px 0 5px;display:flex;justify-content:space-between}.ut-feed h3 small{letter-spacing:0;text-transform:none;color:var(--faint);font-weight:400}" +
     ".ut-chips{display:flex;gap:5px;flex-wrap:wrap}.ut-chips button{appearance:none;border:1px solid var(--line2);background:none;color:var(--muted);border-radius:12px;padding:2px 9px;font:inherit;font-size:11.5px;cursor:pointer}" +
     ".ut-chips button[aria-pressed=true]{border-color:var(--cyan);color:var(--ink);background:rgba(56,182,201,.1)}" +
+    ".eb-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.eb-tt{font:700 14px 'IBM Plex Mono',monospace;letter-spacing:.1em}.eb-pills{display:flex;gap:6px;flex-wrap:wrap}.eb-pill{font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.06em;border-radius:12px;padding:3px 9px;border:1px solid;display:inline-flex;gap:5px;align-items:center}.eb-pill i{width:7px;height:7px;border-radius:50%;background:currentColor}.eb-pill.ok{color:#3fb97f;background:rgba(63,185,127,.1)}.eb-pill.warn{color:#e8b93d}.eb-pill.bad{color:#ff8a84;background:rgba(224,69,58,.08)}" +
+    ".eb-big{margin:10px 0 6px;font-size:13px;color:var(--muted)}.eb-big b{font:700 30px 'IBM Plex Mono',monospace;color:var(--ink);margin-right:6px}" +
+    ".eb-kpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding-bottom:12px;border-bottom:1px solid var(--line)}.eb-kpi span{display:block;font-size:12.5px;color:var(--muted)}.eb-kpi b{font:700 24px 'IBM Plex Mono',monospace}" +
+    ".eb-sec{padding-top:12px}.eb-sh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}.eb-sh span{font:700 13px 'IBM Plex Mono',monospace;letter-spacing:.08em}.eb-sh small{color:var(--faint);font-size:12px}" +
+    ".eb-chips{display:flex;gap:6px;margin:8px 0}.eb-chips .ch{font:700 10.5px 'IBM Plex Mono',monospace;border:1px solid var(--line2);border-radius:12px;padding:2px 9px;color:var(--muted)}.eb-chips .ch.g{color:#3fb97f;border-color:rgba(63,185,127,.5)}.eb-chips .ch.o{color:#f08a5d;border-color:rgba(240,138,93,.5)}" +
+    ".eb-c{border:1px solid var(--line2);border-left:3px solid #3fb97f;border-radius:10px;margin:8px 0;background:var(--panel2)}.eb-c summary{display:block;padding:10px 12px;cursor:pointer;list-style:none}.eb-c summary::-webkit-details-marker{display:none}" +
+    ".eb-ch{display:flex;justify-content:space-between;align-items:center;gap:8px}.eb-ch b{font-size:15px}.eb-cg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}.eb-cg span{display:block;font-size:12px;color:var(--muted)}.eb-cg b{font:700 17px 'IBM Plex Mono',monospace}.eb-cg small{font-size:10.5px;color:var(--faint)}.eb-cx{margin-top:6px;font-size:11.5px;color:var(--faint)}" +
+    ".eb-q{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}.eb-q th{text-align:left;border-bottom:1px solid var(--line2);padding:6px 8px}.eb-q th.r,.eb-q td.r{text-align:right}.eb-q th button{appearance:none;background:none;border:0;color:var(--muted);font:600 11.5px 'IBM Plex Mono',monospace;letter-spacing:.05em;cursor:pointer;padding:0}.eb-q td{padding:7px 8px;border-bottom:1px dashed var(--line);text-align:left;font-family:inherit}.eb-q td:nth-child(2){color:var(--muted)}.eb-q td.tk{font:700 12.5px 'IBM Plex Mono',monospace}.eb-q td small{color:var(--faint);font-size:10.5px}" +
+    ".q-st{font:700 10.5px 'IBM Plex Mono',monospace;color:var(--muted)}.q-st.o{color:#f08a5d}.q-st.n{color:var(--faint)}" +
+    "@media (max-width:760px){.eb-kpi,.eb-cg{grid-template-columns:repeat(2,minmax(0,1fr))}}" +
     ".eb{margin-bottom:12px}.eb-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start}.eb-sum{font-size:13px;color:var(--muted);margin-top:4px}.eb-sum b{color:var(--ink)}.eb-sum b.beat,.eb .beat{color:#3fb97f}.eb .miss{color:#ff8a84}.eb .inl{color:#e8b93d}.eb .amb{color:#e8b93d}" +
     ".eb-st{display:flex;gap:8px;flex-wrap:wrap}.eb-live,.eb-src2{font:11px 'IBM Plex Mono',monospace;border:1px solid var(--line2);border-radius:10px;padding:2px 8px;display:inline-flex;gap:5px;align-items:center}.eb-live i{width:7px;height:7px;border-radius:50%;background:#3fb97f}.eb-live.stale i{background:#e8b93d}.eb-src2.ok{color:#3fb97f}.eb-src2.bad{color:#ff8a84;border-color:rgba(255,138,132,.5)}" +
     ".eb-tabs{display:flex;gap:6px;margin:10px 0 6px;flex-wrap:wrap}.eb-tabs button{appearance:none;font:700 11.5px 'IBM Plex Mono',monospace;letter-spacing:.06em;padding:5px 10px;border-radius:7px;border:1px solid var(--line2);background:transparent;color:var(--muted);cursor:pointer}.eb-tabs button small{margin-left:4px;color:var(--faint)}.eb-tabs button[aria-pressed=true]{background:#13304a;color:#fff;border-color:#38b6c9}.eb-tabs button[data-ebt=new][aria-pressed=true]{background:#e0453a;border-color:#e0453a}" +
     ".eb-b{max-height:620px;overflow:auto}.eb-r{display:grid;grid-template-columns:64px minmax(0,1.4fr) minmax(0,1.6fr) auto;gap:8px;align-items:center;padding:6px 4px;border-bottom:1px dashed var(--line);font-size:12.5px}.eb-r .t{font:700 12.5px 'IBM Plex Mono',monospace}.eb-r .n{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.eb-r .w,.eb-r .e{font:11.5px 'IBM Plex Mono',monospace;color:var(--muted)}" +
-    ".eb-c{border:1px solid rgba(224,69,58,.45);border-left:3px solid #e0453a;border-radius:8px;margin:6px 0;background:rgba(224,69,58,.05)}.eb-c summary{display:grid;grid-template-columns:auto 60px minmax(0,1fr) auto auto auto;gap:8px;align-items:center;padding:8px 10px;cursor:pointer;list-style:none;font-size:13px}.eb-c summary::-webkit-details-marker{display:none}" +
-    ".eb-c .t{font:700 13px 'IBM Plex Mono',monospace}.eb-c .n{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.eb-c .w,.eb-c .k{font:11.5px 'IBM Plex Mono',monospace;color:var(--muted)}.eb-nb{font:700 9.5px 'IBM Plex Mono',monospace;background:#e0453a;color:#fff;border-radius:3px;padding:1px 5px}" +
     ".eb-c .vd{font:700 10.5px 'IBM Plex Mono',monospace;padding:1px 7px;border-radius:4px;border:1px solid}.vd.beat{color:#3fb97f}.vd.miss{color:#ff8a84}.vd.inl{color:#e8b93d}.vd.na{color:var(--faint)}" +
     ".eb-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;padding:4px 10px 8px}.eb-m{background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:7px 9px}.eb-m .l{font:600 10.5px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}.eb-m .v{font:600 18px 'IBM Plex Mono',monospace}.eb-m .s{font-size:11.5px;color:var(--muted)}" +
     ".eb-q{padding:2px 10px 6px;font-size:12.5px}.eb-q b{display:block;font:600 10.5px 'IBM Plex Mono',monospace;text-transform:uppercase;color:var(--muted);margin-bottom:2px}.eb-q q{display:block;font-style:italic;color:#d4deea;margin:2px 0}.eb-src{padding:4px 10px 9px;font-size:11.5px;color:var(--faint)}.eb-src a{color:#7dd8e6}" +
@@ -443,31 +451,41 @@
       (q.highlights && q.highlights.length ? '<div class="eb-q"><b>Highlights (quoted)</b>' + q.highlights.map(function (t) { return "<q>" + esc(t) + "</q>"; }).join("") + "</div>" : "") +
       '<div class="eb-src">Sources: ' + (f.url ? '<a href="' + esc(f.url) + '" target="_blank" rel="noopener noreferrer">SEC 8-K filing ↗</a>' : "8-K not yet located") + (p.exhibit ? ' · <a href="' + esc(p.exhibit) + '" target="_blank" rel="noopener noreferrer">earnings release (ex. 99.1) ↗</a>' : "") +
       " · filed " + esc(f.at ? tET(f.at) : "—") + " · verified " + esc(p.read_at ? tET(p.read_at) : x.detected_at ? tET(x.detected_at) : "—") + " · period: quarter ending " + esc(x.fq || "N/A") + ". Estimates are third-party consensus, not company data; GAAP figures are unaudited.</div>";
-    return '<details class="eb-c"' + (V.ebo && V.ebo[x.s] ? " open" : "") + ' data-ebc="' + esc(x.s) + '"><summary><span class="eb-nb">NEW</span><b class="t">' + esc(x.s) + '</b><span class="n">' + esc(x.n) + '</span><span class="w">' + esc(f.at ? tET(f.at) : tET(x.detected_at)) + "</span>" +
-      '<span class="k">Rev ' + mny(revA) + (revP != null ? ' <b class="' + cls3(revP) + '">' + pc(revP) + "</b>" : "") + " · EPS " + (a.eps != null ? "$" + (+a.eps).toFixed(2) + " adj" : p.eps_d != null ? "$" + p.eps_d.toFixed(2) + " GAAP" : "N/A") + '</span><span class="vd ' + (verdict === "BEAT" ? "beat" : verdict === "MISS" ? "miss" : verdict === "INLINE" ? "inl" : "na") + '">' + verdict + "</span></summary>" + body + "</details>";
+    var rel = f.at || x.detected_at, epsTxt = a.eps != null ? "$" + (+a.eps).toFixed(2) + ' <small>adj.</small>' : p.eps_d != null ? "$" + p.eps_d.toFixed(2) + ' <small>GAAP</small>' : "N/A";
+    return '<details class="eb-c"' + (V.ebo && V.ebo[x.s] ? " open" : "") + ' data-ebc="' + esc(x.s) + '"><summary><div class="eb-ch"><b>' + esc(x.s) + " · " + esc(x.n) + '</b><span class="vd ' + (verdict === "BEAT" ? "beat" : verdict === "MISS" ? "miss" : verdict === "INLINE" ? "inl" : "na") + '">' + verdict + "</span></div>" +
+      '<div class="eb-cg"><div><span>EPS actual</span><b>' + epsTxt + "</b></div><div><span>Revenue</span><b>" + mny(revA) + "</b></div><div><span>Revenue vs est.</span><b class=\"" + cls3(revP) + "\">" + pc(revP) + "</b></div><div><span>Released</span><b>" + esc(tET(rel)) + "</b></div></div>" +
+      '<div class="eb-cx">Consensus vs actual · Guidance · Source verification · Expand for analysis ▾</div></summary>' + body + "</details>";
   }
   function boardHTML() {
-    var B = EB || window.DESK_EARN_BOARD; if (!B || !B.items) return '<div class="tile eb"><h2>S&amp;P 500 earnings — live</h2><p class="note">The live board starts with the next fast-lane update (within a minute).</p></div>';
+    var B = EB || window.DESK_EARN_BOARD; if (!B || !B.items) return '<div class="tile eb"><div class="eb-top"><div class="eb-tt">S&amp;P 500 · EARNINGS INTELLIGENCE</div></div><p class="note">The live monitor starts with the next fast-lane update (within a minute).</p></div>';
     var I = B.items.filter(function (x) { return x.sp || x.top || x.w; }), c = { new: [], refreshing: [], upcoming: [], not_detected: [] };
     I.forEach(function (x) { (c[x.status] || c.upcoming).push(x); });
     c.new.sort(function (a, b) { return ((b.filing || {}).at || b.detected_at || "") > ((a.filing || {}).at || a.detected_at || "") ? 1 : -1; });
-    c.upcoming.sort(function (a, b) { return a.slot < b.slot ? -1 : a.slot > b.slot ? 1 : (b.mcap || 0) - (a.mcap || 0); });
-    var t = V.ebt || (c.new.length ? "new" : c.refreshing.length ? "refreshing" : "upcoming"), age = (Date.now() - Date.parse(B.asof)) / 1000;
-    var live = '<span class="eb-live ' + (age < 180 ? "ok" : "stale") + '"><i></i>' + (age < 180 ? "live" : "stale") + " · updated " + esc(tET(B.asof)) + "</span>";
-    var head = '<div class="eb-h"><div><h2 style="margin:0">S&amp;P 500 earnings — today</h2><div class="eb-sum"><b>' + I.length + "</b> reporting · <b class=\"beat\">" + c.new.length + "</b> released · <b class=\"amb\">" + c.refreshing.length + "</b> awaiting · <b>" + c.upcoming.length + "</b> upcoming" + (c.not_detected.length ? " · " + c.not_detected.length + " not found today" : "") + "</div></div>" +
-      '<div class="eb-st">' + live + '<span class="eb-src2 ' + (B.sec ? "ok" : "bad") + '">SEC EDGAR ' + (B.sec ? "connected" : "needs the SEC_CONTACT secret") + "</span></div></div>";
-    var tabs = '<div class="eb-tabs">' + [["new", "NEW RESULTS"], ["refreshing", "REFRESHING"], ["upcoming", "UPCOMING"]].concat(c.not_detected.length ? [["not_detected", "NOT FOUND TODAY"]] : []).map(function (k) {
-      return '<button data-ebt="' + k[0] + '" aria-pressed="' + (t === k[0]) + '">' + k[1] + " <small>" + c[k[0]].length + "</small></button>"; }).join("") + "</div>";
-    function row(x, extra) { var e = x.est || {}; return '<div class="eb-r"><span class="t">' + esc(x.s) + '</span><span class="n">' + esc(x.n) + '</span><span class="w">' + extra + '</span><span class="e">EPS est ' + (e.eps != null ? "$" + (+e.eps).toFixed(2) : "N/A") + (e.ests ? " · " + e.ests + " ests" : "") + "</span></div>"; }
-    var body = t === "new" ? (c.new.length ? c.new.map(card).join("") : '<p class="note">No official releases detected yet today.</p>')
-      : t === "refreshing" ? (c.refreshing.length ? c.refreshing.map(function (x) { return row(x, sess(x.time) + " · slot " + tET(x.slot) + " passed · <b class=\"amb\">checking EDGAR</b>"); }).join("") : '<p class="note">Nothing awaiting right now.</p>')
-      : t === "upcoming" ? (c.upcoming.length ? c.upcoming.map(function (x) { return row(x, sess(x.time) + " · from " + tET(x.slot)); }).join("") : '<p class="note">No more reports scheduled today.</p>')
-      : c.not_detected.map(function (x) { return row(x, sess(x.time) + " · no release found on EDGAR today"); }).join("");
-    return '<div class="tile eb">' + head + tabs + '<div class="eb-b">' + body + "</div></div>";
+    var vd = c.new.map(verdictOf), nb = vd.filter(function (v) { return v === "BEAT"; }).length, nm = vd.filter(function (v) { return v === "MISS"; }).length;
+    var age = (Date.now() - Date.parse(B.asof)) / 1000, ok = age < 180;
+    var top = '<div class="eb-top"><div class="eb-tt">S&amp;P 500 · EARNINGS INTELLIGENCE</div><div class="eb-pills"><span class="eb-pill ' + (ok ? "ok" : "warn") + '"><i></i>' + (ok ? "LIVE MONITOR" : "STALE") + " · " + esc(tET(B.asof)) + "</span>" +
+      '<span class="eb-pill ' + (B.sec ? "ok" : "bad") + '">SEC EDGAR · ' + (B.sec ? "connected" : "needs SEC_CONTACT secret") + "</span></div></div>" +
+      '<div class="eb-big"><b>' + I.length + "</b> companies reporting today</div>" +
+      '<div class="eb-kpi"><div><span>Released</span><b class="beat">' + c.new.length + "</b></div><div><span>Refreshing</span><b class=\"amb\">" + c.refreshing.length + "</b></div><div><span>Upcoming</span><b>" + c.upcoming.length + "</b></div><div><span>Beat / Miss</span><b>" + nb + " / " + nm + "</b></div></div>";
+    var mon = '<div class="eb-sec"><div class="eb-sh"><span>RESULT MONITOR</span><small>newest release first · click a card for the analysis</small></div>' +
+      '<div class="eb-chips"><span class="ch g">NEW RESULTS · ' + c.new.length + '</span><span class="ch o">REFRESHING · ' + c.refreshing.length + '</span><span class="ch">UPCOMING · ' + c.upcoming.length + "</span></div>" +
+      (c.new.length ? c.new.map(card).join("") : '<p class="note">No official releases detected yet today.</p>') + "</div>";
+    var Q = c.refreshing.concat(c.upcoming, c.not_detected), sk = V.ebs || "time", sd = V.ebd || 1;
+    var F = { time: function (x) { return x.slot + (x.status === "refreshing" ? "0" : "1"); }, s: function (x) { return x.s; }, n: function (x) { return x.n; }, eps: function (x) { return (x.est || {}).eps; }, rev: function (x) { return (x.est || {}).rev; }, mcap: function (x) { return x.mcap; }, st: function (x) { return x.status; } }[sk];
+    Q.sort(function (a, b) { var p = F(a), q = F(b); if (p == null) return 1; if (q == null) return -1; return (p < q ? -1 : p > q ? 1 : (b.mcap || 0) - (a.mcap || 0)) * sd; });
+    function th(k, l, r) { return '<th' + (r ? ' class="r"' : "") + '><button data-ebs="' + k + '">' + l + (sk === k ? (sd > 0 ? " ▴" : " ▾") : "") + "</button></th>"; }
+    var STL = { refreshing: '<span class="q-st o">Refreshing</span>', upcoming: '<span class="q-st">Upcoming</span>', not_detected: '<span class="q-st n">Not found today</span>' };
+    var queue = '<div class="eb-sec"><div class="eb-sh"><span>UPCOMING / REFRESHING QUEUE</span><small>' + Q.length + " companies · Refreshing = scheduled time passed, official release not yet found on EDGAR</small></div>" +
+      '<div class="tbl-scroll"><table class="eb-q"><thead><tr>' + th("s", "Ticker") + th("n", "Company") + th("time", "Schedule") + th("eps", "EPS est.", 1) + th("rev", "Revenue est.", 1) + th("mcap", "Mkt cap", 1) + th("st", "Status") + "</tr></thead><tbody>" +
+      Q.map(function (x) { var e = x.est || {}; return "<tr><td class=\"tk\">" + esc(x.s) + "</td><td>" + esc(x.n) + "</td><td>" + (x.time === "amc" ? "After close · " : x.time === "bmo" ? "Before open · " : "TBC · ") + esc(tET(x.slot)) + '</td><td class="r">' + (e.eps != null ? "$" + (+e.eps).toFixed(2) : "N/A") + (e.ests ? ' <small>' + e.ests + "</small>" : "") +
+        '</td><td class="r">' + (e.rev ? mny(e.rev) : "N/A") + '</td><td class="r">' + mny(x.mcap) + "</td><td>" + (STL[x.status] || "") + "</td></tr>"; }).join("") +
+      "</tbody></table></div><div class=\"stamp\">Schedule and EPS estimates: Nasdaq earnings calendar (consensus, third-party); revenue estimates where FMP covers the company, else N/A. Actuals only from the company’s own release on SEC EDGAR.</div></div>";
+    return '<div class="tile eb">' + top + mon + queue + "</div>";
   }
+  function verdictOf(x) { var a = x.adj || {}, rp = x.rev_pct != null ? x.rev_pct : a.rev_pct; return a.eps_pct != null ? lbl3(a.eps_pct) : rp != null ? lbl3(rp) : "N/A"; }
   function ebRepaint() { var el = P.querySelector(".eb"); if (!el || !P.classList.contains("active")) return; var d = document.createElement("div"); d.innerHTML = boardHTML(); el.replaceWith(d.firstChild); }
   window.addEventListener("desk:earnboard", function (e) { EB = e.detail; ebRepaint(); });
-  P.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-ebt]"); if (b) { ebTab(b.getAttribute("data-ebt")); ebRepaint(); } });
+  P.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-ebs]"); if (b) { var k = b.getAttribute("data-ebs"); V.ebd = V.ebs === k ? -(V.ebd || 1) : 1; V.ebs = k; save(); ebRepaint(); } });
   P.addEventListener("toggle", function (ev) { var d = ev.target; if (d && d.matches && d.matches("[data-ebc]")) { V.ebo = V.ebo || {}; V.ebo[d.getAttribute("data-ebc")] = d.open; save(); } }, true);
   function tlbl(t) { return ({ bmo: "BMO", amc: "AMC", dmh: "during hours" })[t] || "time n/a"; }
   function feed() {
@@ -581,9 +599,9 @@
     if (!V.lock) V.sel = null;
     if (!(V.lock && V.sel) && V.view === "company") V.view = "market";
     var centre = V.view === "season" ? seasonView() : V.view === "plan" ? '<div class="tile"><h2>Data &amp; plan coverage</h2>' + topStrip() + "</div>" + planTile() + footer()
-      : V.view === "company" && V.lock && V.sel && window.COMPANY ? COMPANY.html(V.sel) : boardHTML() + '<div class="ue-grid" style="grid-template-columns:1fr;margin-top:0"><div>' + table() + earningsSlot() + "</div></div>";
+      : V.view === "company" && V.lock && V.sel && window.COMPANY ? COMPANY.html(V.sel) : boardHTML();
     P.innerHTML = protoBar() + header() + indexDetail() + tickerBar() + (flashMsg ? '<div class="ut-ask" style="margin:-4px 0 10px">' + esc(flashMsg) + "</div>" : "") +
-      '<div class="ut-shell">' + nav() + '<main class="ut-main" style="min-width:0">' + centre + "</main>" + feed() + "</div>";
+      '<div class="ut-shell">' + nav() + '<main class="ut-main" style="min-width:0">' + centre + "</main></div>";
     if (hadQ) { var i = P.querySelector("[data-utq]"); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch (e) {} } }
   }
 
