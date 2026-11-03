@@ -11,6 +11,10 @@
     var seen = {};
     return macroAll().filter(function (m) { if (seen[m.key]) return false; seen[m.key] = 1; return !m.chart_only && (MGEO === "both" || m.group === MGEO); });
   }
+  /* indicators added to the desk later start ticked even when the viewer has a saved selection */
+  (function () { try { var seen = JSON.parse(localStorage.getItem("desk.mseen") || "null"), all = macroAll().map(function (m) { return m.key; });
+    if (SEL && seen) all.forEach(function (k) { if (seen.indexOf(k) < 0 && SEL.indexOf(k) < 0) SEL.push(k); });
+    localStorage.setItem("desk.mseen", JSON.stringify(all)); save(); } catch (e) {} })();
   function on(m) { return !SEL || SEL.indexOf(m.key) >= 0; }
   function seenMs(m) { var t = m.seen_at ? Date.parse(m.seen_at) : NaN; return isNaN(t) ? null : t; }
 

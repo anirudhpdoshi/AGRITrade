@@ -1188,6 +1188,22 @@ MACRO = [
     ("us_retail",   "Retail sales",        "us", "fred", "RSAFS",           "pct",   "%",  1, "up",   (400000, 1200000)),
     ("us_gdp",      "Real GDP (q/q ann.)", "us", "fred", "A191RL1Q225SBEA", "level", "%",  1, "up",   (-40, 40)),
     ("us_umich",    "UMich sentiment",     "us", "fred", "UMCSENT",         "level", "",   1, "up",   (20, 120)),
+    # labour & demand
+    ("us_jolts",    "JOLTS job openings",  "us", "fred", "JTSJOL",          "raw",   "K",  0, "up",   (3000, 15000)),
+    ("us_adp",      "ADP private payrolls", "us", "fred", "ADPMNUSNERSA",   "diffk", "K",  0, "up",   (100000000, 160000000)),
+    ("us_factory",  "Factory orders",      "us", "fred", "AMTMNO",          "pct",   "%",  1, "up",   (300000, 800000)),
+    ("us_durable",  "Durable goods orders", "us", "fred", "DGORDER",        "pct",   "%",  1, "up",   (150000, 450000)),
+    ("us_indpro",   "Industrial production", "us", "fred", "INDPRO",        "pct",   "%",  1, "up",   (70, 140)),
+    # prices & income
+    ("us_ppi",      "PPI final demand",    "us", "fred", "PPIFIS",          "yoy",   "%",  1, "heat", (100, 250)),
+    ("us_pce",      "PCE prices",          "us", "fred", "PCEPI",           "yoy",   "%",  1, "heat", (80, 200)),
+    ("us_pinc",     "Personal income",     "us", "fred", "PI",              "pct",   "%",  1, "up",   (15000, 40000)),
+    ("us_pspend",   "Personal spending",   "us", "fred", "PCE",             "pct",   "%",  1, "up",   (12000, 35000)),
+    ("us_import",   "Import prices",       "us", "fred", "IR",              "yoy",   "%",  1, "heat", (80, 220)),
+    # housing (thousands of units, seasonally adjusted annual rate)
+    ("us_starts",   "Housing starts",      "us", "fred", "HOUST",           "raw",   "K",  0, "up",   (500, 2500)),
+    ("us_permits",  "Building permits",    "us", "fred", "PERMIT",          "raw",   "K",  0, "up",   (500, 2500)),
+    ("us_nhs",      "New home sales",      "us", "fred", "HSN1F",           "raw",   "K",  0, "up",   (300, 1500)),
     ("us_ism",      "ISM Manufacturing PMI", "us", "ism", "manufacturing",  "level", "",   1, "up",   (25, 80)),
     ("us_ism_svc",  "ISM Services PMI",    "us", "ism", "services",         "level", "",   1, "up",   (25, 80)),
     ("ca_cpi",      "CPI",                 "ca", "valet", "V41690973",      "yoy",   "%",  1, "heat", (100, 250)),
@@ -1196,6 +1212,12 @@ MACRO = [
     ("ca_emp",      "Employment change",   "ca", "statcan", 2062811,        "diff",  "K",  1, "up",   (15000, 25000)),
     ("ca_ur",       "Unemployment rate",   "ca", "statcan", 2062815,        "level", "%",  1, "down", (2, 20)),
     ("ca_gdp",      "Real GDP",            "ca", "statcan", 65201210,       "pct",   "%",  1, "up",   (1500000, 3500000)),
+    ("ca_starts",   "Housing starts",      "ca", "statcan", 52300157,       "raw",   "K",  1, "up",   (100, 400)),
+    ("ca_permits",  "Building permits (y/y)", "ca", "statcan", 1675115467,  "yoy",   "%",  1, "up",   (3000000, 30000000)),
+    ("ca_mfg",      "Manufacturing sales (y/y)", "ca", "statcan", 800025,   "yoy",   "%",  1, "up",   (40000000, 120000000)),
+    ("ca_whl",      "Wholesale sales",     "ca", "statcan", 52367637,       "pct",   "%",  1, "up",   (60000000, 140000000)),
+    ("ca_ippi",     "Industrial product prices", "ca", "statcan", 1230996007, "yoy", "%",  1, "heat", (80, 200)),
+    ("ca_vac",      "Job vacancies",       "ca", "statcan", 1481212145,     "lvlk",  "K",  0, "up",   (100000, 1500000)),
     ("ca_ivey",     "Ivey PMI (s.a.)",     "ca", "ivey", "sa",              "level", "",   1, "up",   (20, 85)),
     # chart-only series for the Macro sub-tab (quarterly GDP bars, policy-rate panels)
     ("ca_gdpq",     "Real GDP (q/q ann.)", "ca", "statcan", 62305752,       "qann",  "%",  1, "up",   (1500000, 3800000)),
@@ -1312,8 +1334,12 @@ def _transform(points, how):
     out = []
     byd = dict(points)
     for i, (d, v) in enumerate(points):
-        if how == "level":
+        if how in ("level", "raw"):
             out.append((d, v))
+        elif how == "lvlk":
+            out.append((d, v / 1000))
+        elif how == "diffk" and i > 0:
+            out.append((d, (v - points[i-1][1]) / 1000))
         elif how in ("diff", "pct") and i > 0:
             pv = points[i-1][1]
             out.append((d, (v - pv) if how == "diff" else (v / pv - 1) * 100))
@@ -1491,7 +1517,26 @@ def _bizday(y, m, n):
         d += timedelta(days=1)
 
 
-FF_MAP = {("USD", "ISM Manufacturing PMI"): "us_ism", ("USD", "ISM Services PMI"): "us_ism_svc", ("CAD", "Ivey PMI"): "ca_ivey"}
+FF_MAP = {("USD", "ISM Manufacturing PMI"): "us_ism", ("USD", "ISM Services PMI"): "us_ism_svc", ("CAD", "Ivey PMI"): "ca_ivey",
+          ("USD", "JOLTS Job Openings"): "us_jolts", ("USD", "ADP Non-Farm Employment Change"): "us_adp", ("USD", "Factory Orders m/m"): "us_factory",
+          ("USD", "Durable Goods Orders m/m"): "us_durable", ("USD", "Industrial Production m/m"): "us_indpro", ("USD", "PPI m/m"): "us_ppi",
+          ("USD", "Personal Income m/m"): "us_pinc", ("USD", "Personal Spending m/m"): "us_pspend", ("USD", "Import Prices m/m"): "us_import",
+          ("USD", "Housing Starts"): "us_starts", ("USD", "Building Permits"): "us_permits", ("USD", "New Home Sales"): "us_nhs",
+          ("USD", "Core PCE Price Index m/m"): "us_pce",
+          ("CAD", "Housing Starts"): "ca_starts", ("CAD", "Building Permits m/m"): "ca_permits", ("CAD", "Manufacturing Sales m/m"): "ca_mfg",
+          ("CAD", "Wholesale Sales m/m"): "ca_whl", ("CAD", "IPPI m/m"): "ca_ippi"}
+# the weekly feed's forecast is used only where it is in the desk's own unit (m/m % vs m/m %, level vs level); otherwise date only
+FF_UNIT = {"us_jolts": 1000, "us_adp": 1, "us_factory": 1, "us_durable": 1, "us_indpro": 1, "us_pinc": 1, "us_pspend": 1,
+           "us_starts": 1000, "us_permits": 1000, "us_nhs": 1000, "ca_starts": 1, "ca_whl": 1, "us_ism": 1, "us_ism_svc": 1, "ca_ivey": 1}
+
+
+def _ffnum(x):
+    """'7.20M' -> 7.2 (millions), '245K' -> 245, '0.3%' -> 0.3 — in the feed's own unit; FF_UNIT converts to the desk's."""
+    m = re.match(r"^\s*(-?\d+(?:\.\d+)?)\s*([KMB%]?)\s*$", str(x or ""))
+    if not m:
+        return None
+    v = float(m.group(1))
+    return v * {"K": 1, "M": 1, "B": 1, "%": 1, "": 1}[m.group(2)]
 
 
 def pmi_calendar(D):
@@ -1512,11 +1557,13 @@ def pmi_calendar(D):
             if not key:
                 continue
             at = datetime.fromisoformat(e["date"]).astimezone(TOR).strftime("%Y-%m-%dT%H:%M")
-            c = cal.setdefault(key, {"dates": [], "src": "https://iveypmi.uwo.ca/"})
+            c = cal.setdefault(key, {"dates": [], "src": "https://iveypmi.uwo.ca/" if key == "ca_ivey" else "weekly economic calendar (official agency schedules)"})
             if at not in c["dates"]:
                 c["dates"] = sorted(set(c["dates"] + [at]))[-6:]
-            if _num(e.get("forecast")) is not None:
-                cons[key] = {"at": at, "forecast": float(e["forecast"]), "previous": _num(e.get("previous"))}
+            fc = _ffnum(e.get("forecast"))
+            if fc is not None and key in FF_UNIT:
+                pv = _ffnum(e.get("previous"))
+                cons[key] = {"at": at, "forecast": round(fc * FF_UNIT[key], 2), "previous": None if pv is None else round(pv * FF_UNIT[key], 2)}
     except Exception as e:
         print(f"  pmi calendar: weekly feed unavailable ({type(e).__name__})")
 
@@ -1587,7 +1634,7 @@ def macro(D, N, only=None):
                 raise RuntimeError("too few transformed points")
             val, prv = pts[-1][1], pts[-2][1]
             out.append({"key": key, "name": name, "group": group, "unit": unit, "dec": dec, "good": good,
-                        "freq": fq, "measure": {"yoy": "y/y", "diff": "m/m", "pct": "m/m", "level": "", "qann": ""}[how],
+                        "freq": fq, "measure": {"yoy": "y/y", "diff": "m/m", "pct": "m/m", "level": "", "qann": "", "raw": "", "lvlk": "", "diffk": "m/m"}[how],
                         "period": _label(pts[-1][0], fq), "obs_date": pts[-1][0],
                         "value": round(val, dec + 1), "prior": round(prv, dec + 1), "chg": round(val - prv, dec + 1),
                         "history": [[_label(d, fq), round(v, dec + 1)] for d, v in pts],
