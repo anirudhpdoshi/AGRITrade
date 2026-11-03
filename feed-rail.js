@@ -55,7 +55,7 @@
         '<div class="fr-m"><span>' + hm(m.t) + " ET</span>" + Object.keys(t).map(function (k) { return '<span class="fr-t" style="--tc:' + TC[k] + '">' + TN[k] + "</span>"; }).join("") + (go ? '<span class="fr-o">Open →</span>' : "") + "</div></li>";
     }
     var dsep = "", body = rest.slice(0, 40).map(function (m) { var d = day(m.t), s = d !== dsep ? '<li class="fr-d">' + (d === day(now) ? "Today" : new Date(m.t).toLocaleDateString("en-US", { timeZone: "America/Toronto", weekday: "short", month: "short", day: "numeric" })) + "</li>" : ""; dsep = d; return s + item(m); }).join("");
-    return '<div class="fr-head"><span class="fr-title">Feed</span><span class="fr-mode"><button data-frmode="1" aria-pressed="' + ONLY + '" title="Confirmed breaks, new market-moving announcements, data prints and central-bank decisions only">⚡ Alerts</button><button data-frmode="0" aria-pressed="' + !ONLY + '" title="Everything the desk logs: data arrivals, OI moves, calendar items">All activity</button></span><span class="fr-live"><i></i>live</span></div>' +
+    return '<div class="fr-head"><span class="fr-title">Feed</span><span class="fr-mode"><button data-frmode="1" aria-pressed="' + ONLY + '" title="Confirmed breaks, new market-moving announcements, data prints and central-bank decisions only">⚡ Alerts</button><button data-frmode="0" aria-pressed="' + !ONLY + '" title="Everything the desk logs: data arrivals, OI moves, calendar items">All activity</button></span><span class="fr-live" title="Time of the last fast-lane update this page received"><i></i>live · ' + (window.DESK_WIRES && DESK_WIRES.at ? hm(Date.parse(DESK_WIRES.at)) : "—") + "</span></div>" +
       '<div class="fr-chips" role="tablist">' + TAGS.filter(function (t) { return t[0] === "all" || cnt[t[0]] || t[0] === f || t[0] === DEF[ctx]; }).map(function (t) {
         return '<button data-frf="' + t[0] + '" aria-pressed="' + (f === t[0]) + '"' + (t[0] !== "all" && t[0] !== "agri" ? ' style="--tc:' + TC[t[0]] + '"' : "") + ">" + t[1] + (t[0] === "all" ? "" : " <small>" + (cnt[t[0]] || 0) + "</small>") + "</button>"; }).join("") + "</div>" +
       '<ul class="fr-list">' + (pin.length ? pin.map(item).join("") : "") + (body || (!pin.length ? '<li class="fr-empty">' + (ONLY ? "No alerts for " + esc(TN[f]) + " today. Alerts fire only on a confirmed break (new intraday high/low, 20/50/100/200-day average, ±1σ/±2σ, options put/call wall), a new market-moving announcement, a data print or a central-bank decision." : "Nothing for " + esc(TN[f]) + " yet.") + "</li>" : "")) + "</ul>";
@@ -133,7 +133,7 @@
         (u ? ' <a class="fr-lnk" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">↗</a>' : ""), "", "wr|" + x.id, Date.parse(x.t) || Date.now());
     });
   }
-  window.addEventListener("desk:wires", function (e) { wires(e.detail); });
+  window.addEventListener("desk:wires", function (e) { wires(e.detail); paint(true); });
   setTimeout(function () { wires(window.DESK_WIRES); }, 1600);
   setTimeout(function () { ingest(window.DESK_ALERTS); }, 1500);
 
