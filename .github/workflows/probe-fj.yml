@@ -1,0 +1,20 @@
+name: probe-fj
+on: workflow_dispatch
+permissions: {contents: read}
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          python3 - <<'PY'
+          import urllib.request, re
+          out=[]
+          for u in ["https://www.financialjuice.com/feed.ashx?xy=rss","https://www.financialjuice.com/feed.ashx"]:
+              for nm,h in (("ua",{"User-Agent":"AGRITrade-desk/1.0 (+https://github.com/anirudhpdoshi/AGRITrade)"}),("br",{"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) Chrome/124 Safari/537.36"})):
+                  try:
+                      t=urllib.request.urlopen(urllib.request.Request(u,headers=h),timeout=20).read().decode("utf8","ignore")
+                      ti=re.findall(r"<title>(?:<!\[CDATA\[)?([^<\]]{5,120})",t)[1:4]; d=re.findall(r"<pubDate>([^<]+)",t)[:1]
+                      out.append(f"{u[-12:]} {nm} OK items={t.count('<item')} {d} {ti}")
+                  except Exception as e: out.append(f"{u[-12:]} {nm} ERR {str(e)[:50]}")
+          print("::notice::"+" ||| ".join(out)[:1000])
+          PY
