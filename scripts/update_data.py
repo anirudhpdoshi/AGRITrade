@@ -1215,7 +1215,7 @@ MACRO = [
     ("ca_starts",   "Housing starts",      "ca", "statcan", 52300157,       "raw",   "K",  1, "up",   (100, 400)),
     ("ca_permits",  "Building permits (y/y)", "ca", "statcan", 1675115467,  "yoy",   "%",  1, "up",   (3000000, 30000000)),
     ("ca_mfg",      "Manufacturing sales (y/y)", "ca", "statcan", 800025,   "yoy",   "%",  1, "up",   (40000000, 120000000)),
-    ("ca_whl",      "Wholesale sales",     "ca", "statcan", 52367637,       "pct",   "%",  1, "up",   (60000000, 140000000)),
+    ("ca_whl",      "Wholesale sales",     "ca", "statcan", 52367637,       "pct",   "%",  1, "up",   (5000000, 200000000)),
     ("ca_ippi",     "Industrial product prices", "ca", "statcan", 1230996007, "yoy", "%",  1, "heat", (80, 200)),
     ("ca_vac",      "Job vacancies",       "ca", "statcan", 1481212145,     "lvlk",  "K",  0, "up",   (100000, 1500000)),
     ("ca_ivey",     "Ivey PMI (s.a.)",     "ca", "ivey", "sa",              "level", "",   1, "up",   (20, 85)),
