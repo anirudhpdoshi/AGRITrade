@@ -82,7 +82,9 @@ def parse(html):
         if not re.search(r"net income|net earnings", labels) or not re.search(r"revenue|net sales|sales", labels):
             continue   # the income statement table only
         tt = " ".join(" ".join(c for c in r if c) for r in T).lower()
-        mult = 1e6 if "in millions" in tt or "in millions" in text[:20000] else 1e3 if "in thousands" in tt or "in thousands" in text[:20000] else 1e6
+        # the table's own unit wins; the narrative ("$701.5 million …") must not override "(in thousands)" on the table
+        mult = (1e3 if "in thousands" in tt else 1e6 if "in millions" in tt else 1 if "in dollars" in tt else
+                1e3 if "in thousands" in text[:20000] else 1e6)
         # column order: some companies put the prior year first (e.g. 2025 | 2026) — take the latest year's column
         yrs = []
         for r in T[:6]:
@@ -130,6 +132,8 @@ def parse(html):
             out[k + "_yoy"] = round((out[k] / py[k] - 1) * 100, 1) if py[k] > 0 else None
     out["py"] = {k: v for k, v in py.items() if k in ("rev", "ni", "eps_d", "opinc", "gp")}
     out["quotes"] = quotes(" ".join("".join(p.prose).split()))
+    if out.get("rev") and (out["rev"] > 8e11 or out["rev"] < 1e6):
+        return {}   # no S&P 500 company books > $800B or < $1M a quarter: the unit was misread — show N/A rather than a wrong number
     if out.get("rev") and out.get("gp") is None and out.get("cogs") is not None:
         out["gp"] = out["rev"] - out["cogs"]
     if out.get("rev"):
