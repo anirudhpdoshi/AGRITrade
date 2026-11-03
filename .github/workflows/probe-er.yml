@@ -1,0 +1,23 @@
+name: probe-er
+on: workflow_dispatch
+permissions: {contents: read}
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          python3 - <<'PY'
+          import urllib.request, json
+          B={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36","Accept":"application/json, text/plain, */*","Origin":"https://www.nasdaq.com","Referer":"https://www.nasdaq.com/"}
+          out=[]
+          for u in ["https://api.nasdaq.com/api/company/ADM/earnings-surprise","https://api.nasdaq.com/api/analyst/ADM/earnings-forecast"]:
+              try: j=json.loads(urllib.request.urlopen(urllib.request.Request(u,headers=B),timeout=25).read()); out.append(u[-30:]+" "+json.dumps(j.get("data"))[:600])
+              except Exception as e: out.append(u[-30:]+" ERR "+str(e)[:60])
+          O={"Origin":"https://anirudhpdoshi.github.io","User-Agent":"Mozilla/5.0"}
+          for u in ["https://agritrade-sec.anirudh-p-doshi.workers.dev/search?q=ADM","https://agritrade-sec.anirudh-p-doshi.workers.dev/company?t=ADM"]:
+              try:
+                  r=urllib.request.urlopen(urllib.request.Request(u,headers=O),timeout=60); t=r.read().decode("utf8","ignore"); out.append(f"{u[-20:]} {r.status} {t[:250]}")
+              except urllib.error.HTTPError as e: out.append(f"{u[-20:]} HTTP {e.code} {e.read().decode('utf8','ignore')[:250]}")
+              except Exception as e: out.append(f"{u[-20:]} ERR {str(e)[:80]}")
+          for x in out: print("::notice::"+x[:950])
+          PY
