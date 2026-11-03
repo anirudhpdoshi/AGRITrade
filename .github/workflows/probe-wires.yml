@@ -1,0 +1,38 @@
+name: probe-wires
+on: workflow_dispatch
+permissions: {contents: read}
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          python3 - <<'PY'
+          import urllib.request, re, json
+          UA={"User-Agent":"AGRITrade-desk/1.0 (+https://github.com/anirudhpdoshi/AGRITrade)","Accept":"*/*"}
+          BR={"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) Chrome/124 Safari/537.36","Accept":"*/*"}
+          F={
+           "bw":"https://feed.businesswire.com/rss/home/?rss=G1QFDERJXkJeEFtRWA==",
+           "prn":"https://www.prnewswire.com/rss/news-releases-list.rss",
+           "gnw":"https://www.globenewswire.com/RssFeed/orgclass/1/feedTitle/GlobeNewswire%20-%20News%20about%20Public%20Companies",
+           "prf1":"https://pressreleasefeed.org/api/releases","prf2":"https://pressreleasefeed.org/feed","prf3":"https://pressreleasefeed.org/rss","prf4":"https://pressreleasefeed.org/docs",
+           "nfc":"https://feeds.newsfilecorp.com/feed/news-releases","nfc2":"https://www.newsfilecorp.com/rss",
+           "acc":"https://www.accessnewswire.com/newsroom/rss","acc2":"https://www.accesswire.com/rss/latest",
+           "ein":"https://www.einpresswire.com/rss/latest","ein2":"https://world.einnews.com/rss/press-releases",
+           "cnw":"https://www.newswire.ca/rss/news-releases-list.rss",
+           "sec":"https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&company=&dateb=&owner=include&start=0&count=40&output=atom",
+           "fed":"https://www.federalreserve.gov/feeds/press_all.xml",
+           "boc":"https://www.bankofcanada.ca/content_type/press-releases/feed/",
+           "usda":"https://www.usda.gov/rss/latest-releases.xml","usda2":"https://www.usda.gov/about-usda/news/press-releases/rss.xml",
+           "cftc":"https://www.cftc.gov/RSS/RSSGP/rssgp.xml","cftc2":"https://www.cftc.gov/rss/pressreleases.xml",
+           "stc":"https://www150.statcan.gc.ca/n1/rss/dai-quo/0-eng.atom","stc2":"https://www150.statcan.gc.ca/n1/dai-quo/rss-eng.xml",
+          }
+          for k,u in F.items():
+              for nm,h in (("ua",UA),("br",BR)):
+                  try:
+                      r=urllib.request.urlopen(urllib.request.Request(u,headers=h),timeout=20); t=r.read().decode("utf8","ignore")
+                      titles=re.findall(r"<title[^>]*>(?:<!\[CDATA\[)?\s*([^<\]]{6,90})",t)[1:3]
+                      dates=re.findall(r"<(?:pubDate|updated|dc:date)>([^<]{8,40})",t)[:1]
+                      print(f"::notice::{k} {nm} {r.status} len={len(t)} items={t.count('<item')+t.count('<entry')} {dates} {titles}"); break
+                  except Exception as e:
+                      if nm=="br": print(f"::notice::{k} ERR {str(e)[:70]}")
+          PY

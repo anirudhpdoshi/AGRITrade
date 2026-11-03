@@ -7,7 +7,7 @@ Only rows with an unambiguous label are taken; anything not found stays absent (
 import re
 from html.parser import HTMLParser
 
-SEC_UA = {"User-Agent": "AGRITrade desk anirudh.p.doshi@gmail.com", "Accept-Encoding": "gzip, deflate"}
+SEC_UA = {"User-Agent": "AGRITrade-desk/1.0 (+https://github.com/anirudhpdoshi/AGRITrade)", "Accept-Encoding": "gzip, deflate"}
 
 LINES = [   # key, label regex (whole label, case-insensitive), allow-negative
     ("rev", r"(total )?(net sales|net revenues?|revenues?|total revenues?|total net sales|total net revenues?|sales)", False),
