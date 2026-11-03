@@ -13982,7 +13982,7 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-11-03T10:30:24-05:00",
+   "updated_at": "2026-11-03T10:39:23-05:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
     "fx_spot": "2026-11-03T10:30:00-05:00",
@@ -14000,7 +14000,7 @@
     "news": "2026-11-03T10:30:24-05:00",
     "calendar": "2026-11-03T09:30:25-05:00",
     "releases": "2026-10-19T08:30:00-04:00",
-    "macro": "2026-11-03T10:30:24-05:00",
+    "macro": "2026-11-03T10:39:23-05:00",
     "exports": "2026-11-03T08:15:34-05:00",
     "wasde": "2026-11-03T08:15:34-05:00",
     "canada": "2026-11-03T02:02:48-05:00",
@@ -14023,36 +14023,10 @@
    },
    "last_run": {
     "ok": [
-     "policy_watch",
-     "fx_spot",
-     "fx_alpha",
-     "fx_closes",
-     "yields",
-     "cftc_fx",
-     "cftc_grains",
-     "grains_quote",
-     "yields_live",
-     "energy",
-     "crosses",
-     "news",
-     "calendar",
-     "fed_odds",
-     "releases",
-     "macro",
-     "settles",
-     "exports",
-     "wasde",
-     "canada",
-     "ca_calendar",
-     "sd_hist",
-     "inputs",
-     "ext",
-     "ca_retail",
-     "fx_model",
-     "optflow"
+     "macro"
     ],
     "failed": [],
-    "at": "2026-11-03T10:30:24-05:00"
+    "at": "2026-11-03T10:39:23-05:00"
    },
    "releases_checked": "2026-11-03T09:00:25-05:00",
    "exports_checked": "2026-11-03T08:15:34-05:00",
@@ -14163,9 +14137,9 @@
    "model_checked": "2026-11-03T09:00:25-05:00",
    "bea_status": {
     "ok": true,
-    "at": "2026-11-03T10:30:24-05:00"
+    "at": "2026-11-03T10:39:23-05:00"
    },
-   "macro_checked": "2026-11-03T10:30:24-05:00"
+   "macro_checked": "2026-11-03T10:39:23-05:00"
   },
   "macro": [
    {
@@ -18628,7 +18602,7 @@
    },
    {
     "key": "us_starts",
-    "name": "Housing starts",
+    "name": "Housing starts (SAAR)",
     "group": "us",
     "unit": "K",
     "dec": 0,
@@ -18793,7 +18767,7 @@
    },
    {
     "key": "us_permits",
-    "name": "Building permits",
+    "name": "Building permits (SAAR)",
     "group": "us",
     "unit": "K",
     "dec": 0,
@@ -18958,7 +18932,7 @@
    },
    {
     "key": "us_nhs",
-    "name": "New home sales",
+    "name": "New home sales (SAAR)",
     "group": "us",
     "unit": "K",
     "dec": 0,
@@ -21033,7 +21007,7 @@
    },
    {
     "key": "ca_starts",
-    "name": "Housing starts",
+    "name": "Housing starts (SAAR)",
     "group": "ca",
     "unit": "K",
     "dec": 1,
@@ -21198,7 +21172,7 @@
    },
    {
     "key": "ca_permits",
-    "name": "Building permits (y/y)",
+    "name": "Building permits, value",
     "group": "ca",
     "unit": "%",
     "dec": 1,
@@ -21363,7 +21337,7 @@
    },
    {
     "key": "ca_mfg",
-    "name": "Manufacturing sales (y/y)",
+    "name": "Manufacturing sales (unadj.)",
     "group": "ca",
     "unit": "%",
     "dec": 1,
@@ -22193,7 +22167,7 @@
    },
    {
     "key": "ca_gdpq",
-    "name": "Real GDP (q/q ann.)",
+    "name": "Real GDP (q/q ann., chained 2017 $)",
     "group": "ca",
     "unit": "%",
     "dec": 1,
