@@ -450,6 +450,8 @@ def main():
         if (d.get("page") or "").startswith("http://www.boj.or.jp"):
             d["page"] = d["page"].replace("http://", "https://", 1); d["url"] = (d.get("url") or "").replace("http://", "https://", 1)
             d["id"] = hashlib.sha1(d["page"].encode()).hexdigest()[:12]
+        if (d.get("published_at") or "") > NOW.isoformat():
+            continue   # a document dated in the future was a placeholder page: never keep it
         docs[d["id"]] = d
     status = {}
     cap = 15 if "--backfill" in sys.argv else 5
