@@ -5,16 +5,13 @@ jobs:
   p:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: pip install -q requests
-      - env: {SEC_CONTACT: "${{ secrets.SEC_CONTACT }}"}
-        run: |
-          cd scripts && python3 - <<'PY'
-          from datetime import datetime, timezone
-          import wires as W
-          it, h = W.fetch(datetime.now(timezone.utc))
-          print("::notice::health " + str(h))
-          print("::notice::kept " + str(len(it)) + " breaking " + str(sum(i['breaking'] for i in it)) + " by src " + str({s: sum(1 for i in it if i['srck']==s) for s in {i['srck'] for i in it}}))
-          for i in range(0, min(len(it), 24), 6):
-              print("::notice::" + " ||| ".join(f"[{x['src']}{'*' if x['breaking'] else ''}] {x['title'][:80]} {x['tick']}" for x in it[i:i+6]))
+      - run: |
+          python3 - <<'PY'
+          import urllib.request, re
+          H={"User-Agent":"AGRITrade-desk/1.0 (+https://github.com/anirudhpdoshi/AGRITrade)"}
+          for k,u in [("fed","https://www.federalreserve.gov/feeds/press_all.xml"),("boc","https://www.bankofcanada.ca/content_type/press-releases/feed/"),("cftc","https://www.cftc.gov/RSS/RSSGP/rssgp.xml"),("stc","https://www150.statcan.gc.ca/n1/rss/dai-quo/0-eng.atom")]:
+              t=urllib.request.urlopen(urllib.request.Request(u,headers=H),timeout=20).read().decode("utf8","ignore")
+              b=re.search(r"<(item|entry)\b.*?</(item|entry)>",t,re.S)
+              x=re.sub(r"\s+"," ",b.group(0))[:600] if b else t[:300]
+              print("::notice::"+k+" "+x.replace("<","[").replace(">","]"))
           PY
