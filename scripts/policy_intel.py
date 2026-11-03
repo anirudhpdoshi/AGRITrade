@@ -242,7 +242,7 @@ def parse_date(s):
     return None
 
 
-TYPES = [("statement", r"outlook for economic activity and prices|monetary policy summary|statement on monetary policy|fomc statement|monetary policy decision|policy rate|interest rate decision|bank rate (?:maintained|increased|reduced|cut|raised)|statement on monetary policy|maintains|lowers|raises|holds"),
+TYPES = [("statement", r"outlook for economic activity and prices|monetary policy summary|statement on monetary policy|fomc statement|monetary policy decision|policy rate|interest rate decision|bank rate (?:maintained|increased|reduced|cut|raised)|statement on monetary policy|\b(?:maintains|lowers|raises|holds|cuts|hikes|keeps|leaves)\b(?= (?:its |the )?(?:policy |key |benchmark |interest |the target )?(?:rates?|range))"),
          ("minutes", r"minutes|account of the monetary|summary of (?:deliberations|opinions)"),
          ("press_conference", r"press conference|opening statement"),
          ("testimony", r"testimony|before the committee"),
