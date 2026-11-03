@@ -204,6 +204,8 @@ def calendar_due(cal, now, force=False):
         return True, "no calendar yet"
     at = parse(cal["fetched_at"])
     age_h = (now - at).total_seconds() / 3600
+    if at.astimezone(NY).date() < now.astimezone(NY).date() and now.astimezone(NY).hour >= 6:
+        return True, "new day"
     if age_h >= CAL_MAX_HOURS:
         return True, "calendar %d h old" % age_h
     today = now.astimezone(NY).date().isoformat()
@@ -213,6 +215,68 @@ def calendar_due(cal, now, force=False):
     if pending and age_h * 60 >= CAL_PENDING_MIN:
         return True, "%s reported, actuals not in yet" % ",".join(sorted({r["symbol"] for r in pending}))
     return False, "calendar %.0f h old, nothing pending" % age_h
+
+
+# ---------------------------------------------------------------- S&P 500 reporting schedule (no FMP calls)
+# Members: datasets/s-and-p-500-companies (GitHub, refreshed weekly here). Who reports which day and when (before the open /
+# after the close) with the EPS forecast: the Nasdaq earnings calendar (public JSON, no key), today + the next 4 weekdays.
+SP500_URL = "https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/data/constituents.csv"
+NASDAQ = "https://api.nasdaq.com/api/calendar/earnings?date="
+NQ_H = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+        "Accept": "application/json, text/plain, */*", "Origin": "https://www.nasdaq.com", "Referer": "https://www.nasdaq.com/"}
+NQ_TIME = {"time-pre-market": "bmo", "time-after-hours": "amc"}
+
+
+def _get(url, headers, timeout=25):
+    with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=timeout) as r:
+        return r.read().decode("utf-8", "ignore")
+
+
+def sp500(prev, now, get=_get):
+    if prev and prev.get("rows") and (now - parse(prev["fetched_at"])).days < 7:
+        return prev
+    import csv, io
+    rows = {r["Symbol"].strip(): r["Security"].strip() for r in csv.DictReader(io.StringIO(get(SP500_URL, {"User-Agent": "AGRITrade-desk/1.0"})))}
+    if len(rows) < 450:
+        raise RuntimeError("S&P 500 list looks incomplete")
+    return {"fetched_at": iso(now), "rows": rows, "src": SP500_URL}
+
+
+def _num_s(x):
+    try:
+        return float(str(x).replace("$", "").replace(",", "").replace("(", "-").replace(")", ""))
+    except ValueError:
+        return None
+
+
+def sp_schedule(prev, sp, now, get=_get, force=False):
+    """{fetched_at, days: {date: [rows]}} for S&P 500 members, re-read when older than 30 min."""
+    if prev and not force and (now - parse(prev["fetched_at"])).total_seconds() < 1800:
+        return prev
+    d, days, out = now.astimezone(NY).date(), [], {}
+    while len(days) < 5:
+        if d.weekday() < 5:
+            days.append(d)
+        d += timedelta(days=1)
+    for day in days:
+        j = json.loads(get(NASDAQ + day.isoformat(), NQ_H))
+        rows = ((j.get("data") or {}).get("rows")) or []
+        out[day.isoformat()] = sorted([{"s": r["symbol"], "n": sp.get(r["symbol"]) or r.get("name"), "time": NQ_TIME.get(r.get("time")),
+                                        "eps_f": _num_s(r.get("epsForecast")), "ests": _num_s(r.get("noOfEsts")), "mcap": _num_s(r.get("marketCap")),
+                                        "fq": r.get("fiscalQuarterEnding"), "ly_eps": _num_s(r.get("lastYearEPS"))}
+                                       for r in rows if r.get("symbol") in sp], key=lambda r: -(r["mcap"] or 0))
+    return {"fetched_at": iso(now), "days": out, "src": "Nasdaq earnings calendar"}
+
+
+def merge_times(calendar, sched):
+    """Session (BMO / AMC) and S&P 500 flag from the schedule onto the FMP calendar rows."""
+    m = {(r["s"], d): r for d, L in (sched or {}).get("days", {}).items() for r in L}
+    for r in (calendar or {}).get("rows") or []:
+        x = m.get((r["symbol"], r.get("date")))
+        if x:
+            r["sp"] = True
+            if x.get("time") and not r.get("time"):
+                r["time"] = x["time"]
 
 
 def surprise(act, est):
@@ -356,10 +420,18 @@ def main():
     resolved = state.get("resolved") or {}
     usage = ledger_today(state.get("usage"), now)
 
+    sched_prev = state.get("sp_schedule")
+    try:
+        spl = sp500(state.get("sp500"), now)
+        sched = sp_schedule(sched_prev, spl["rows"], now)
+    except Exception as e:
+        print("S&P 500 schedule unavailable:", type(e).__name__, str(e)[:100])
+        spl, sched = state.get("sp500"), sched_prev
+    sched_new = sched is not sched_prev
     calls = plan(state, symbols, names, now, a.force, a.force_profile)
     if a.calendar_only:
         calls = [c for c in calls if c[0] == "earnings-calendar"]
-        if not calls:
+        if not calls and not sched_new:
             print("calendar-only: nothing due — no FMP calls")
             return
     room = allowance(usage)
@@ -463,6 +535,7 @@ def main():
         if sym in symbols and quote_restricted(c, now) and sym not in ((eps.get("quote") or {}).get("blocked_syms") or []):
             r = c.get("quote_restricted") or c.get("quote_error") or {}
             note_endpoint(eps, "quote", "not_in_plan", sym, parse(r.get("at")) or now)
+    merge_times(calendar, sched)
     body = {
         "updated_at": iso(now),
         "provider": "Financial Modeling Prep (stable API)",
@@ -474,6 +547,8 @@ def main():
         "endpoints": eps,
         "upcoming": upcoming,
         "calendar": calendar,
+        "sp500": spl,
+        "sp_schedule": sched,
         "usage": usage,
         "last_run": {"at": iso(now), "trigger": os.environ.get("GITHUB_EVENT_NAME", "local"), "planned": len(calls),
                      "made": made, "skipped": skipped, "errors": errors, "stopped": stopped},

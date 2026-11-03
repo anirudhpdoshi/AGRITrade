@@ -91,6 +91,9 @@
     ".ut-feed h3{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:12px 0 5px;display:flex;justify-content:space-between}.ut-feed h3 small{letter-spacing:0;text-transform:none;color:var(--faint);font-weight:400}" +
     ".ut-chips{display:flex;gap:5px;flex-wrap:wrap}.ut-chips button{appearance:none;border:1px solid var(--line2);background:none;color:var(--muted);border-radius:12px;padding:2px 9px;font:inherit;font-size:11.5px;cursor:pointer}" +
     ".ut-chips button[aria-pressed=true]{border-color:var(--cyan);color:var(--ink);background:rgba(56,182,201,.1)}" +
+    ".sp-h{font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;margin:8px 0 3px;color:var(--muted)}.sp-h small{margin-left:6px;color:var(--faint)}.sp-h.bmo{color:#e8b93d}.sp-h.amc{color:#7dd8e6}" +
+    ".sp-r{display:grid;grid-template-columns:52px minmax(0,1fr) auto auto;gap:6px;align-items:center;padding:4px 6px;border-bottom:1px dashed var(--line);font-size:12.5px;cursor:pointer}.sp-r:hover{background:rgba(56,182,201,.07)}" +
+    ".sp-r .t{font:700 12px 'IBM Plex Mono',monospace}.sp-r .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}.sp-r .e{font:11.5px 'IBM Plex Mono',monospace}.sp-r .mc{font:11px 'IBM Plex Mono',monospace;color:var(--faint)}.sp-r.done{background:rgba(63,185,127,.07)}" +
     ".ut-ev.ut-new{background:rgba(224,69,58,.10);border:1px solid rgba(224,69,58,.55)!important;border-left:3px solid #e0453a!important;border-radius:6px}" +
     ".ut-nb{display:inline-block;font:700 9.5px 'IBM Plex Mono',monospace;letter-spacing:.08em;background:#e0453a;color:#fff;border-radius:3px;padding:0 5px;margin-right:6px}" +
     ".ut-top{font:700 9px 'IBM Plex Mono',monospace;color:#7dd8e6;border:1px solid rgba(125,216,230,.5);border-radius:3px;padding:0 4px;margin-left:5px}" +
@@ -376,6 +379,23 @@
     var v = r.eps_surprise_pct; if (v == null) return '<span class="ut-b na">no consensus</span>';
     return Math.abs(v) < 1 ? '<span class="ut-b inl">in line</span>' : v > 0 ? '<span class="ut-b beat">beat ' + num(v, 1) + "%</span>" : '<span class="ut-b miss">miss ' + num(-v, 1) + "%</span>";
   }
+  /* S&P 500 reporting schedule (Nasdaq earnings calendar): today by session, then the next reporting day */
+  function spToday(t, tm, addDays) {
+    var S = J && J.sp_schedule, D = S && S.days; if (!D) return "";
+    var C = (J.calendar && J.calendar.rows) || [], A = {}; C.forEach(function (r) { if (r.epsActual != null || r.revenueActual != null) A[r.symbol + "|" + r.date] = r; });
+    function mc(v) { return v == null ? "" : v >= 1e12 ? "$" + (v / 1e12).toFixed(2) + "T" : v >= 1e9 ? "$" + (v / 1e9).toFixed(0) + "B" : "$" + (v / 1e6).toFixed(0) + "M"; }
+    function row(x, d) { var a = A[x.s + "|" + d];
+      return '<div class="sp-r' + (a ? " done" : "") + '" data-utev="' + esc(x.s) + '"><span class="t">' + esc(x.s) + '</span><span class="nm">' + esc(x.n || "") + "</span>" +
+        '<span class="e">' + (a ? "EPS " + num(a.epsActual, 2) + " " + verdict(a) : "est " + (x.eps_f != null ? "$" + num(x.eps_f, 2) : "n/a") + (x.ests ? " · " + x.ests + " ests" : "")) + '</span><span class="mc">' + mc(x.mcap) + "</span></div>"; }
+    function sess(L, d, lab, cls) { return L.length ? '<div class="sp-h ' + cls + '">' + lab + "<small>" + L.length + "</small></div>" + L.map(function (x) { return row(x, d); }).join("") : ""; }
+    function day(d, title, full) { var L = D[d] || []; if (!L.length) return "";
+      var b = L.filter(function (x) { return x.time === "bmo"; }), a = L.filter(function (x) { return x.time === "amc"; }), n = L.filter(function (x) { return !x.time; });
+      return "<h3>" + title + "<small>" + L.length + "</small></h3>" + (full ? sess(b, d, "Before the open · ~7:00–9:30 am ET", "bmo") + sess(a, d, "After the close · ~4:00–5:30 pm ET", "amc") + sess(n, d, "Time not confirmed", "na")
+        : '<p class="note" style="margin:2px 0 6px">' + L.slice(0, 14).map(function (x) { return "<b>" + esc(x.s) + "</b>" + (x.time ? " " + x.time.toUpperCase() : ""); }).join(" · ") + (L.length > 14 ? " · +" + (L.length - 14) + " more" : "") + "</p>"); }
+    var nx = Object.keys(D).filter(function (d) { return d > t && (D[d] || []).length; }).sort()[0];
+    return day(t, "Reporting today · S&P 500", true) + (nx ? day(nx, (nx === tm ? "Tomorrow" : dayLbl(nx)) + " · S&P 500", false) : "") +
+      '<div class="stamp" style="margin:2px 0 8px">Session and EPS forecast: Nasdaq earnings calendar · S&amp;P 500 members: public constituents list · updated ' + esc(ago(S.fetched_at)) + ". Exact minute is not published; the release watch covers each session window.</div>";
+  }
   function tlbl(t) { return ({ bmo: "BMO", amc: "AMC", dmh: "during hours" })[t] || "time n/a"; }
   function feed() {
     var C = J && J.calendar; if (!C || !C.fetched_at) return '<aside class="ut-feed tile"><h3>Earnings feed</h3><p class="note">The calendar has not been fetched yet — the next run of the Action makes one call for the whole market.</p></aside>';
@@ -396,6 +416,7 @@
     return '<aside class="ut-feed tile" aria-label="Earnings intelligence feed"><div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0">Earnings feed</h2><span class="ue-age">fetched ' + esc(ago(C.fetched_at)) + "</span></div>" +
       '<div class="ut-chips" style="margin-top:8px">' + chip("fw", "all", "All companies") + chip("fw", "top", "Top 100") + chip("fw", "w", "★ Watchlist") + "</div>" +
       '<div class="ut-chips" style="margin-top:5px">' + chip("ft", "any", "Any time") + chip("ft", "bmo", "BMO") + chip("ft", "amc", "AMC") + "</div>" +
+      spToday(t, tm, addDays) +
       "<h3>Released<small>" + rel.length + "</small></h3>" + (rel.length ? rel.map(ev).join("") : '<p class="note">No published results in this window.</p>') +
       grp("Reported — awaiting numbers", late) + grp("Today", today) + grp("Tomorrow", tom) + grp("Later this week", wk) + grp("Next week", nwk) +
       (!today.length && !tom.length && !wk.length && !nwk.length ? '<h3>Upcoming</h3><p class="note">Nothing scheduled in the next two weeks for this filter.</p>' : "") +

@@ -354,7 +354,10 @@
   function cardTitle(id) { var t = ""; PARTS.forEach(function (p) { p[1].forEach(function (c) { if (c[0] === id) t = c[1]; }); }); return t; }
 
   /* press-release figures (8-K exhibit 99.1, read by the fast lane minutes after filing) for a quarter not yet in XBRL */
-  function prFor(M) { var P = window.DESK_EARN_PR || {}, x = P[M.co.ticker], q = L(M); return x && x.date > q.end ? x : null; }
+  /* a release is "ahead of the filings" only when the latest filed quarter is the one BEFORE it: a release comes ~3–8 weeks
+     after its quarter ends, so once the reported quarter is filed (release − quarter end < ~75 days) the cards are current */
+  function afterFiled(relDate, qEnd) { return (Date.parse(relDate + "T12:00:00Z") - Date.parse(qEnd + "T12:00:00Z")) / 864e5 > 75; }
+  function prFor(M) { var P = window.DESK_EARN_PR || {}, x = P[M.co.ticker], q = L(M); return x && afterFiled(x.date, q.end) ? x : null; }
   function nextQ(q) { return q.fl.q === 4 ? { q: 1, fy: q.fl.fy + 1 } : { q: q.fl.q + 1, fy: q.fl.fy }; }
   function prStrip(M, k) {
     var x = prFor(M); if (!x || x[k] == null) return "";
@@ -371,7 +374,7 @@
   function justReleased(M) {
     var co = M.co, q = L(M), D = window.EARNINGS && EARNINGS._data && EARNINGS._data(), C = D && D.calendar;
     var r = C && C.rows ? C.rows.filter(function (x) { return x.symbol === co.ticker && (x.epsActual != null || x.revenueActual != null); }).sort(function (a, b) { return a.date < b.date ? 1 : -1; })[0] : null;
-    if (!r || Date.now() - Date.parse(r.date + "T12:00:00Z") > 10 * 864e5 || r.date <= q.end) return "";
+    if (!r || Date.now() - Date.parse(r.date + "T12:00:00Z") > 10 * 864e5 || !afterFiled(r.date, q.end)) return "";
     var nq = q.fl.q === 4 ? "Q1 FY" + String(q.fl.fy + 1).slice(2) : "Q" + (q.fl.q + 1) + " FY" + String(q.fl.fy).slice(2);
     var e = r.eps_surprise_pct, v = r.rev_surprise_pct, rel = E.latestRelease(co), relNow = rel && rel.filed >= r.date;
     function m(x) { return x == null ? "—" : Math.abs(x) >= 1e9 ? "$" + (x / 1e9).toFixed(2) + "B" : "$" + (x / 1e6).toFixed(0) + "M"; }
