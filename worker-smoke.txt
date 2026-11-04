@@ -1,12 +1,18 @@
 == /health
-
+{"ok":true,"contact":"anirudh.p.doshi@gmail.com"}
 == status + headers for /search?q=adm
-HTTP/2 404 
+HTTP/2 200 
+content-type: application/json
+access-control-allow-origin: https://anirudhpdoshi.github.io
+access-control-allow-methods: GET
 server: cloudflare
-cf-ray: a5342837aceb11fd-ORD
-HTTP 404
-
+cf-ray: a556a68d1ff0525d-DFW
+HTTP 200
+{"results":[{"cik":7084,"name":"Archer-Daniels-Midland Co","ticker":"ADM","exchange":"NYSE"},{"cik":1368514,"name":"ADMA BIOLOGICS, INC.","ticker":"ADMA","exchange":"Nasdaq"},{"cik":1588014,"name":"ADM ENDEAVORS, INC.","ticker":"ADMQ","exchange":"OTC"},{"cik":849401,"name":"ADM TRONICS UNLIMITED, IN
 == /search?q=deere
-
+{"results":[{"cik":315189,"name":"DEERE & CO","ticker":"DE","exchange":"NYSE"}],"source":"SEC company_tickers_exchange.json"}
 == /company?t=ADM
-HTTP 404 · 0 bytes · 0.101441s · CORS no CORS header
+HTTP 200 · 80583 bytes · 0.475192s · CORS access-control-allow-origin: https://anirudhpdoshi.github.io
+name Archer-Daniels-Midland Co | sic 2070 | tags 410 | filings 59 | error None
+== /prices?t=ADM
+closes 251 last ['2026-11-04', 70.83999633789062] | spx 251
