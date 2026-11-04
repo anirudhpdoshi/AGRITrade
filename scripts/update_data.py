@@ -2647,7 +2647,7 @@ def ust(D, N):
         raise RuntimeError(f"MSPD table 3 looks incomplete ({len(sec)} securities)")
     tot = lambda typ=None: sum(a for t, m, a in sec if (typ is None or t == typ) and m > asof)   # outstanding at the statement date
     marketable = tot()
-    ref = NOW.astimezone(TOR).date()   # windows run from today; securities that matured since the statement date are excluded
+    ref = asof   # windows run from the statement date: a consistent snapshot (bills maturing since were rolled into new bills not yet in MSPD)
     months = lambda d: (d.year - ref.year) * 12 + d.month - ref.month + (d.day - ref.day) / 30.4
     due = lambda n, typ=None: sum(a for t, m, a in sec if (typ is None or t == typ) and 0 < months(m) <= n)
     live = [(t, m, a) for t, m, a in sec if m > ref]
