@@ -7,6 +7,10 @@ on:
         description: "Worker address"
         type: string
         default: "https://agritrade-sec.anirudh-p-doshi.workers.dev"
+      ticker:
+        description: "Ticker for /company"
+        type: string
+        default: "ADM"
 jobs:
   smoke:
     runs-on: ubuntu-latest
@@ -20,8 +24,8 @@ jobs:
             echo "== /health"; curl -s -m 30 -H "$O" "$U/health"; echo
             echo "== status + headers for /search?q=adm"; curl -s -m 30 -H "$O" -D - -o body.txt -w "HTTP %{http_code}\n" "$U/search?q=adm" | grep -iE "^HTTP|server|cf-ray|cf-mitigated|access-control|content-type" ; head -c 300 body.txt; echo
             echo "== /search?q=deere"; curl -s -m 30 -H "$O" "$U/search?q=deere" | head -c 700; echo
-            echo "== /company?t=ADM"; curl -s -m 60 -H "$O" --compressed -o adm.json -w "HTTP %{http_code} · %{size_download} bytes · %{time_total}s · CORS " "$U/company?t=ADM"
-            curl -s -m 60 -H "$O" -D - -o /dev/null "$U/company?t=ADM" | grep -i "access-control-allow-origin" || echo "no CORS header"
+            echo "== /company?t=${{ inputs.ticker || 'ADM' }}"; curl -s -m 60 -H "$O" --compressed -o adm.json -w "HTTP %{http_code} · %{size_download} bytes · %{time_total}s · CORS " "$U/company?t=${{ inputs.ticker || 'ADM' }}"
+            curl -s -m 60 -H "$O" -D - -o /dev/null "$U/company?t=${{ inputs.ticker || 'ADM' }}" | grep -i "access-control-allow-origin" || echo "no CORS header"
             python3 -c "import json;j=json.load(open('adm.json'));print('name',j.get('name'),'| sic',j.get('sic'),'| tags',len(j.get('facts',{})),'| filings',len(j.get('filings',[])),'| error',j.get('error') or j.get('facts_error'))"
             echo "== /prices?t=ADM"; curl -s -m 30 -H "$O" "$U/prices?t=ADM" | python3 -c "import json,sys;j=json.load(sys.stdin);t=j.get('ticker') or {};print('closes',len(t.get('ts',[])),'last',(t.get('ts') or [[None]])[-1],'| spx',len((j.get('spx') or {}).get('ts',[])))"
           } | tee smoke.txt
