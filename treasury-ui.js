@@ -29,14 +29,17 @@
       kpi("WA interest rate", U.wa_rate != null ? U.wa_rate.toFixed(3) + "%" : "N/A", "marketable, " + esc(dLbl(U.rates_date))) + "</div>";
     /* 24-month maturity concentration: months as rows, calendar years as columns */
     var W = U.wall || {}, keys = Object.keys(W).sort().slice(0, 25), yrs = [], mx = 0;
+    /* months already behind us (ET) matured after the statement date: shown greyed as rolled over, not as a coming wall */
+    var nowM = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" }).slice(0, 7), past = keys.filter(function (k) { return k < nowM; });
     keys.forEach(function (k) { var y = k.slice(0, 4); if (yrs.indexOf(y) < 0) yrs.push(y); mx = Math.max(mx, W[k]); });
     var rows = MON.map(function (m, i) {
       var mm = ("0" + (i + 1)).slice(-2);
       return "<tr><td class=\"m\">" + m + "</td>" + yrs.map(function (y) { var v = keys.indexOf(y + "-" + mm) >= 0 ? W[y + "-" + mm] : null;
-        return '<td><div class="tq-c ' + heat(v, mx) + '">' + (v ? B(v) : "—") + "</div></td>"; }).join("") + "</tr>";
+        var gone = v && y + "-" + mm < nowM;
+        return '<td><div class="tq-c ' + (gone ? "tq-past" : heat(v, mx)) + '"' + (gone ? ' title="Matured after the statement date — already repaid / rolled into new debt"' : "") + ">" + (v ? B(v) : "—") + (gone ? '<i>matured</i>' : "") + "</div></td>"; }).join("") + "</tr>";
     }).join("");
     var totals = "<tr class=\"tot\"><td>Total in window</td>" + yrs.map(function (y) { var s = 0; keys.forEach(function (k) { if (k.slice(0, 4) === y) s += W[k]; }); return "<td>" + B(s) + "</td>"; }).join("") + "</tr>";
-    var wall = '<section class="tq-p tq-wall"><div class="tq-ph"><h2>24-month maturity concentration</h2><span>principal maturing in the 24 months after the MSPD statement date, $ billions · bills at maturity value</span></div>' +
+    var wall = '<section class="tq-p tq-wall"><div class="tq-ph"><h2>24-month maturity concentration</h2><span>principal maturing in the 24 months after the MSPD statement date, $ billions · bills at maturity value' + (past.length ? " · greyed months have already matured and rolled; refreshes when Treasury publishes the next monthly statement (early each month)" : "") + '</span></div>' +
       '<div class="tbl-scroll"><table class="tq-t"><thead><tr><th>Month</th>' + yrs.map(function (y) { return "<th>" + y + "</th>"; }).join("") + "</tr></thead><tbody>" + rows + totals + "</tbody></table></div></section>";
     /* current maturity profile */
     var PT = U.profile.reduce(function (a, x) { return a + x.bn; }, 0), COL = ["#ef4444", "#f97316", "#f59e0b", "#3b82f6", "#6366f1", "#a855f7"];
@@ -71,7 +74,7 @@
     ".tq-p{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}.tq-p h2{margin:0 0 8px;font-size:14px;text-transform:uppercase;letter-spacing:.06em}.tq-ph{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}.tq-ph span{font-size:11.5px;color:var(--faint)}" +
     ".tq-t{width:100%;border-collapse:collapse;font:13px 'IBM Plex Mono',monospace}.tq-t th{text-align:right;color:var(--muted);font-size:11.5px;padding:6px 8px;border-bottom:1px solid var(--line2)}.tq-t th:first-child,.tq-t td:first-child{text-align:left}" +
     ".tq-t td{text-align:right;padding:3px 4px;border-bottom:1px solid var(--line)}.tq-t td.m{color:var(--muted);font-family:inherit}.tq-t tr.tot td{font-weight:700;border-top:2px solid var(--line2);padding:8px}" +
-    ".tq-c{padding:6px 8px;border-radius:5px}.tq-h0{color:var(--faint)}.tq-h1{background:rgba(148,163,184,.08)}.tq-h2{background:rgba(245,158,11,.18);color:#fcd34d}.tq-h3{background:rgba(249,115,22,.3);color:#fed7aa;font-weight:600}.tq-h4{background:rgba(220,38,38,.45);color:#fee2e2;font-weight:700}" +
+    ".tq-c{padding:6px 8px;border-radius:5px}.tq-h0{color:var(--faint)}.tq-past{color:var(--faint);text-decoration:line-through;opacity:.6}.tq-past i{display:block;font-size:9px;font-style:normal;text-decoration:none;letter-spacing:.04em;text-transform:uppercase}.tq-h1{background:rgba(148,163,184,.08)}.tq-h2{background:rgba(245,158,11,.18);color:#fcd34d}.tq-h3{background:rgba(249,115,22,.3);color:#fed7aa;font-weight:600}.tq-h4{background:rgba(220,38,38,.45);color:#fee2e2;font-weight:700}" +
     ".tq-bar{display:flex;height:24px;border-radius:5px;overflow:hidden;border:1px solid var(--line2)}.tq-bar div{display:flex;align-items:center;justify-content:center;font:700 10.5px 'IBM Plex Mono',monospace;color:#fff}" +
     ".tq-lg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;font:11.5px 'IBM Plex Mono',monospace;color:var(--muted)}.tq-lg div{display:flex;align-items:center;gap:6px}.tq-lg i{width:8px;height:8px;border-radius:50%}.tq-lg b{margin-left:auto;color:var(--ink)}" +
     ".tq-sc{display:flex;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 10px;margin-top:6px;font:13px 'IBM Plex Mono',monospace}.tq-sc b{color:#ff8a84}" +
