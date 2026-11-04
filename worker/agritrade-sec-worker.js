@@ -15,9 +15,11 @@
    SEC fair-access policy: every request names a contact in the User-Agent, and SEC allows ≤10 requests/second; a
    lookup here makes at most 3. Only the desk's own origin may call it (ALLOWED_ORIGINS).
 
+   The contact is the Worker secret SEC_CONTACT (Settings → Variables and Secrets), not in this file.
+   Smart placement runs the Worker near SEC's servers, so every request leaves from the same well-behaved region.
    Deploy: dash.cloudflare.com → Workers & Pages → Create → Create Worker → paste this file → Deploy. */
 
-const CONTACT = "AGRITrade desk anirudh.p.doshi@gmail.com";
+let CONTACT = "AGRITrade desk";   // contact email comes from the Cloudflare secret SEC_CONTACT (never in this public repo)
 const ALLOWED_ORIGINS = ["https://anirudhpdoshi.github.io", "http://127.0.0.1", "http://localhost"];
 const YEARS = 5;
 const FORMS = new Set(["10-Q", "10-K", "10-Q/A", "10-K/A", "10-KT", "10-QT"]);
@@ -35,7 +37,13 @@ function json(req, body, status = 200, maxAge = 300) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "Cache-Control": `public, max-age=${maxAge}`, ...cors(req) } });
 }
 async function getJSON(url, ttl) {
-  const r = await fetch(url, { headers: { "User-Agent": CONTACT, "Accept": "application/json" }, cf: { cacheTtl: ttl, cacheEverything: true } });
+  const h = { "User-Agent": CONTACT, "Accept": "application/json", "Accept-Encoding": "gzip, deflate" };
+  let r;
+  for (let i = 0; i < 3; i++) {   // SEC answers 403/429 to bursts: back off and retry (still far under its 10 requests/second)
+    r = await fetch(url, { headers: h, cf: { cacheTtl: ttl, cacheEverything: true, cacheTtlByStatus: { "200-299": ttl, "400-599": 0 } } });
+    if (r.ok || ![403, 429, 500, 502, 503].includes(r.status)) break;
+    await new Promise((res) => setTimeout(res, 800 * (i + 1)));
+  }
   if (!r.ok) throw new Error(`${new URL(url).host} HTTP ${r.status}`);
   return r.json();
 }
@@ -124,12 +132,13 @@ async function prices(req, t, rng) {
 }
 
 export default {
-  async fetch(req) {
+  async fetch(req, env) {
+    if (env && env.SEC_CONTACT) CONTACT = "AGRITrade desk " + String(env.SEC_CONTACT).trim();
     const u = new URL(req.url);
     if (req.method === "OPTIONS") return new Response(null, { headers: cors(req) });
     if (req.method !== "GET") return json(req, { error: "GET only" }, 405);
     try {
-      if (u.pathname === "/health") return json(req, { ok: true, contact: CONTACT.split(" ").pop() }, 200, 60);
+      if (u.pathname === "/health") return json(req, { ok: true, contact_set: CONTACT.includes("@") }, 200, 60);
       if (u.pathname === "/search") return await search(req, u.searchParams.get("q"));
       if (u.pathname === "/company") return await company(req, u.searchParams.get("t"));
       if (u.pathname === "/prices") return await prices(req, u.searchParams.get("t"), u.searchParams.get("r"));
