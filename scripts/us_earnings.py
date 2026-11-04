@@ -566,7 +566,13 @@ def main():
         json.dump(body, open(os.environ["EARN_OUT"], "w"), indent=1); return
     publish(body)
     if stopped:
-        sys.exit(f"stopped early: {stopped}")
+        k = os.environ.get("FMP", "").strip()
+        why = (stopped.replace(k, "***") if k else stopped)[:240]
+        if "429" in why or "limit" in why.lower():   # daily / per-minute allowance used up: data kept, next run continues
+            print("::warning title=us-earnings::FMP allowance reached — " + why)
+            return
+        print("::error title=us-earnings::FMP refused the key — " + why)
+        sys.exit(f"stopped early: {why}")
 
 
 if __name__ == "__main__":
