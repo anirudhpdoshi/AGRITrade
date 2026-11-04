@@ -434,7 +434,8 @@ def cftc_fx(D, N):
 
 def fx_alpha(D, N):
     """USD/CAD from Alpha Vantage CURRENCY_EXCHANGE_RATE — second-tier spot behind the browser's Finnhub stream.
-    Free key = 25 requests/day: checked at most every 30 min, weekdays 08:00-19:30 ET, hard cap 24/day.
+    Free key = 25 requests/day, shared: this backup takes at most 12 (hourly, weekdays 08:00-19:30 ET); the earnings
+    board takes up to 12 for adjusted-EPS checks (scripts/earn_watch.py).
     The key is server-only (GitHub secret); every error is redacted before it can reach logs or data.json."""
     import os
     key = os.environ.get("ALPHAVANTAGE_API_KEY", "").strip()
@@ -446,15 +447,15 @@ def fx_alpha(D, N):
         print("  outside 08:00-19:30 ET weekdays - skipped")
         return False
     last = meta.get("alpha_checked")
-    if last and NOW - datetime.fromisoformat(last) < timedelta(minutes=29):
-        print("  checked <30 min ago - skipping")
+    if last and NOW - datetime.fromisoformat(last) < timedelta(minutes=59):
+        print("  checked <60 min ago - skipping")
         return False
     day = et.date().isoformat()
     cnt = meta.get("alpha_calls") or {}
     if cnt.get("d") != day:
         cnt = {"d": day, "n": 0}
-    if cnt["n"] >= 24:
-        print("  daily cap (24) reached - skipping")
+    if cnt["n"] >= 12:
+        print("  daily cap (12) reached - skipping")
         return False
     cnt["n"] += 1
     meta["alpha_calls"], meta["alpha_checked"] = cnt, iso(NOW)

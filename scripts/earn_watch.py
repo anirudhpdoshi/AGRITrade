@@ -254,6 +254,11 @@ def board(w, now, prs, live):
             a = lv if lv.get("src", "").startswith("FMP") else r
             it["adj"] = {"eps": a.get("epsActual"), "eps_est": a.get("epsEstimated"), "rev": a.get("revenueActual"), "rev_est": a.get("revenueEstimated"),
                          "eps_pct": a.get("eps_surprise_pct"), "rev_pct": a.get("rev_surprise_pct"), "src": "FMP earnings calendar"}
+        avd = ((w.st.get("av") or {}).get("got") or {}).get(sym) or {}
+        if avd.get("eps") is not None:
+            it["av"] = avd
+            if it.get("eps_pct") is None and (it.get("adj") or {}).get("eps_pct") is None:
+                it["eps_pct"] = avd["pct"] if avd.get("pct") is not None else UE.surprise(avd["eps"], avd.get("est"))
         rv = (it.get("pr") or {}).get("rev") or (it.get("adj") or {}).get("rev")
         if rv is not None and r.get("revenueEstimated"):
             it["rev_pct"] = UE.surprise(rv, r["revenueEstimated"])
@@ -262,6 +267,42 @@ def board(w, now, prs, live):
     order = {"new": 0, "refreshing": 1, "upcoming": 2, "not_detected": 3}
     items.sort(key=lambda x: (order[x["status"]], -(x.get("mcap") or 0)))
     return {"day": day.isoformat(), "asof": now.isoformat(), "sec": len(SEC_UA["User-Agent"]) > len("AGRITrade desk"), "items": items}
+
+
+AV_CAP, AV_EVERY = 12, timedelta(minutes=4)   # 12 of the free key's 25/day (USD/CAD backup keeps 12); one call per pass (≤ 5/min)
+
+
+def av_pass(w, now, items):
+    """Alpha Vantage EARNINGS for today's biggest released companies whose own release gave no usable adjusted EPS:
+    reported (adjusted) EPS vs estimate from a second, independent source. Third-party data, labelled as such."""
+    key = os.environ.get("ALPHAVANTAGE_API_KEY", "").strip()
+    av = w.st.setdefault("av", {})
+    if not key or av.get("n", 0) >= AV_CAP or (av.get("at") and now - datetime.fromisoformat(av["at"]) < AV_EVERY):
+        return None
+    done = av.setdefault("got", {})
+    todo = sorted([x for x in items if x["status"] == "new" and x["s"] not in done and (x.get("pr") or {}).get("eps_adj") is None
+                   and (x.get("adj") or {}).get("eps") is None], key=lambda x: -(x.get("mcap") or 0))
+    if not todo:
+        return None
+    sym = todo[0]["s"]
+    av["at"], av["n"] = now.isoformat(), av.get("n", 0) + 1
+    try:
+        j = requests.get("https://www.alphavantage.co/query", params={"function": "EARNINGS", "symbol": sym, "apikey": key}, timeout=20).json()
+    except Exception as e:
+        print("[alpha vantage]", sym, type(e).__name__)   # never the URL: it carries the key
+        return None
+    q = (j.get("quarterlyEarnings") or [None])[0]
+    if not q:
+        print("[alpha vantage]", sym, "no data:", str(j.get("Note") or j.get("Information") or "")[:80].replace(key, "***"))
+        done[sym] = {"none": True}
+        return None
+    if q.get("reportedDate") != now.astimezone(w.tor).date().isoformat():
+        done[sym] = {"stale": q.get("reportedDate")}   # today's quarter not in yet at Alpha Vantage: not retried (budget)
+        return None
+    f = lambda v: None if v in (None, "", "None") else float(v)
+    done[sym] = {"eps": f(q.get("reportedEPS")), "est": f(q.get("estimatedEPS")), "pct": f(q.get("surprisePercentage")),
+                 "period": q.get("fiscalDateEnding"), "at": now.isoformat(), "src": "Alpha Vantage (third-party, adjusted basis)"}
+    return sym
 
 
 def pr_pass(w, now, store):

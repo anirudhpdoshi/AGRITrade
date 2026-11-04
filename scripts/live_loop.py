@@ -286,6 +286,11 @@ def main():
             BOARD.clear(); BOARD.update(EWM.board(EW, datetime.now(timezone.utc), EARN_PR, EARN_LIVE))
         except Exception as e:
             print("[earn board] failed:", type(e).__name__, e)
+        try:   # adjusted EPS from Alpha Vantage for released companies whose release gave none (12 calls/day, one per pass)
+            if BOARD.get("items") and EWM.av_pass(EW, datetime.now(timezone.utc), BOARD["items"]):
+                BOARD.clear(); BOARD.update(EWM.board(EW, datetime.now(timezone.utc), EARN_PR, EARN_LIVE))
+        except Exception as e:
+            print("[alpha vantage] failed:", type(e).__name__)
         try:   # press-release statement lines (8-K exhibit 99.1) for today's reporters -> company cards
             npr = EWM.pr_pass(EW, datetime.now(timezone.utc), EARN_PR)
             if npr:

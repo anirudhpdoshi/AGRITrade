@@ -68,5 +68,18 @@ ok(st.get("AAPL") == "new" and B["items"][0]["s"] == "AAPL", f"board: AAPL NEW f
 w3 = EW.Watch(TOR, {"day": "2026-11-02", "done": {}, "filed": {}}); w3.rows = {"ADM": {"symbol": "ADM", "date": "2026-11-02", "time": "bmo", "eps_f": 1.63}, "AMD": {"symbol": "AMD", "date": "2026-11-02", "time": "amc"}}
 S = {x["s"]: x["status"] for x in EW.board(w3, at(9, 0), {}, {})["items"]}
 ok(S == {"ADM": "refreshing", "AMD": "upcoming"}, f"slot passed without a release -> REFRESHING, not NEW: {S}")
+os.environ["ALPHAVANTAGE_API_KEY"] = "k"
+class _R:
+    def json(self): return {"quarterlyEarnings": [{"fiscalDateEnding": "2026-09-30", "reportedDate": "2026-11-02", "reportedEPS": "1.75", "estimatedEPS": "1.63", "surprisePercentage": "7.36"}]}
+EW.requests.get = lambda *a, **k: _R()
+w4 = EW.Watch(TOR, {"day": "2026-11-02", "done": {}, "filed": {}}); w4.rows = {"ADM": {"symbol": "ADM", "date": "2026-11-02", "time": "bmo", "eps_f": 1.63, "mcap": 3e10}}
+w4.st["done"]["ADM"] = {"seen_at": "x"}
+items = EW.board(w4, at(9, 0), {"ADM": {"rev": 2e10, "eps_d": 1.7}}, {})["items"]
+ok(EW.av_pass(w4, at(9, 0), items) == "ADM" and EW.av_pass(w4, at(9, 1), items) is None, "Alpha Vantage: biggest released company without adjusted EPS, one call per 4-min pass")
+it = EW.board(w4, at(9, 2), {"ADM": {"rev": 2e10, "eps_d": 1.7}}, {})["items"][0]
+ok(it.get("av", {}).get("eps") == 1.75 and abs(it.get("eps_pct") - 7.36) < 0.01, f"board uses the third-party adjusted EPS for beat/miss: {it.get('eps_pct')}")
+w4.st["av"]["n"] = EW.AV_CAP; w4.st["av"]["at"] = None; w4.st["av"]["got"] = {}
+ok(EW.av_pass(w4, at(10, 0), items) is None, "daily Alpha Vantage cap respected")
+EW.requests.get = _no_net
 print(f"{P}/{N} passed")
 sys.exit(0 if P == N else 1)
