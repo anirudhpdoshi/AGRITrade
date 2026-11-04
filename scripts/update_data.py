@@ -2604,9 +2604,81 @@ def policy_watch(D, N):
     if PW.watch(D, NOW, TOR):
         D["meta"]["asof"]["policy_watch"] = iso(NOW)
 
+# ------------------------------------------------------------------ US Treasury debt maturity wall (official, no key)
+FISCAL = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/"
+UST_TYPES = [("Bills", "Treasury Bills"), ("Notes", "Treasury Notes"), ("Bonds", "Treasury Bonds"),
+             ("Treasury Inflation-Protected Securities", "Treasury Inflation-Protected Securities (TIPS)"), ("Floating Rate Notes", "Floating Rate Notes (FRN)")]
+
+
+def _fd(path, **params):
+    q = "&".join(f"{k.replace('[', '%5B').replace(']', '%5D')}={v}" for k, v in params.items())
+    return get(FISCAL + path + "?" + q).json().get("data") or []
+
+
+def ust(D, N):
+    """Debt to the Penny (daily) + Monthly Statement of the Public Debt (every marketable security with its maturity) +
+    average interest rates. Everything on the tab is computed from these official figures; nothing is modelled."""
+    meta = D["meta"]
+    last = meta.get("ust_checked")
+    if last and NOW - datetime.fromisoformat(last) < timedelta(hours=6):
+        print("  checked <6h ago - skipping")
+        return False
+    pen = _fd("v2/accounting/od/debt_to_penny", sort="-record_date", **{"page[size]": 1})[0]
+    t1 = _fd("v1/debt/mspd/mspd_table_1", sort="-record_date", **{"page[size]": 40})
+    rd = t1[0]["record_date"]
+    t1 = [r for r in t1 if r["record_date"] == rd]
+    rates = [r for r in _fd("v2/accounting/od/avg_interest_rates", sort="-record_date", **{"page[size]": 40}) if r["security_type_desc"] == "Marketable"]
+    rrd = rates[0]["record_date"] if rates else None
+    rates = {r["security_desc"]: _num(r["avg_interest_rate_amt"]) for r in rates if r["record_date"] == rrd}
+    rows = _fd("v1/debt/mspd/mspd_table_3_market", filter=f"record_date:eq:{rd}", **{"page[size]": 10000})
+    asof = datetime.fromisoformat(rd).date()
+    sec = []
+    for r in rows:
+        amt, mat, cls = _num(r.get("outstanding_amt")), r.get("maturity_date"), r.get("security_class1_desc") or ""
+        if amt is None or not mat or mat == "null" or not re.fullmatch(r"[0-9A-Z]{9}", r.get("security_class2_desc") or ""):
+            continue   # subtotal / header lines
+        cl = cls.lower()
+        typ = "Treasury Inflation-Protected Securities" if "inflation" in cl else "Floating Rate Notes" if "floating" in cl else \
+              next((k for k in ("Bills", "Notes", "Bonds") if cl.startswith(k.lower())), None)
+        if not typ:
+            continue
+        sec.append((typ, datetime.fromisoformat(mat).date(), amt / 1000.0))   # $ millions -> $ billions
+    if len(sec) < 200:
+        raise RuntimeError(f"MSPD table 3 looks incomplete ({len(sec)} securities)")
+    tot = lambda typ=None: sum(a for t, m, a in sec if (typ is None or t == typ) and m > asof)
+    marketable = tot()
+    months = lambda d: (d.year - asof.year) * 12 + d.month - asof.month + (d.day - asof.day) / 30.4
+    due = lambda n, typ=None: sum(a for t, m, a in sec if (typ is None or t == typ) and 0 < months(m) <= n)
+    wam = sum(a * months(m) for t, m, a in sec if m > asof) / marketable
+    wall = {}
+    for t, m, a in sec:
+        if 0 < months(m) <= 27:
+            k = m.strftime("%Y-%m")
+            wall[k] = wall.get(k, 0) + a
+    buckets = [("< 6M", 0, 6), ("6–12M", 6, 12), ("1–2Y", 12, 24), ("2–5Y", 24, 60), ("5–10Y", 60, 120), ("> 10Y", 120, 9999)]
+    prof = [{"label": l, "bn": round(sum(a for t, m, a in sec if lo < months(m) <= hi), 1)} for l, lo, hi in buckets]
+    d24 = due(24)
+    rate_of = lambda k: next((v for d_, v in rates.items() if ("inflation" in d_.lower()) == ("Inflation" in k) and ("floating" in d_.lower()) == ("Floating" in k)
+                              and (k.split()[0].lower() in d_.lower() or "Inflation" in k or "Floating" in k)), None)
+    comp = [{"type": lab, "rate": rate_of(k), "due24": round(due(24, k), 1), "pct24": round(due(24, k) / d24 * 100, 1) if d24 else None,
+             "out": round(tot(k), 1)} for k, lab in UST_TYPES]
+    D["ust"] = {"asof": rd, "penny_date": pen["record_date"], "rates_date": rrd,
+                "total_debt_t": round(float(pen["tot_pub_debt_out_amt"]) / 1e12, 3), "public_t": round(float(pen["debt_held_public_amt"]) / 1e12, 3),
+                "intragov_t": round(float(pen["intragov_hold_amt"]) / 1e12, 3), "marketable_t": round(marketable / 1000, 3),
+                "due12_t": round(due(12) / 1000, 3), "due24_t": round(d24 / 1000, 3), "wam_months": round(wam, 1),
+                "wa_rate": rates.get("Total Marketable"), "wall": {k: round(v, 1) for k, v in sorted(wall.items())},
+                "profile": prof, "composition": comp, "n_securities": len(sec),
+                "src": {"penny": "Treasury Fiscal Data — Debt to the Penny", "mspd": "Monthly Statement of the Public Debt (MSPD), tables 1 and 3",
+                        "rates": "Average Interest Rates on U.S. Treasury Securities"}}
+    meta["ust_checked"] = iso(NOW)
+    meta["asof"]["ust"] = iso(NOW)
+    print(f"  ust: debt ${D['ust']['total_debt_t']}T, marketable ${D['ust']['marketable_t']}T, 24M ${D['ust']['due24_t']}T, WAM {wam:.1f} mo, {len(sec)} securities")
+    return True
+
+
 BLOCKS = [("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("yields_live", yields_live), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow)]
+          ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow), ("ust", ust)]
 
 
 def main():
