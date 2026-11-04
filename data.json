@@ -13950,7 +13950,7 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-11-04T09:30:24-05:00",
+   "updated_at": "2026-11-04T09:42:09-05:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
     "fx_spot": "2026-11-04T09:30:00-05:00",
@@ -13981,7 +13981,8 @@
     "model": "2026-11-04T09:15:26-05:00",
     "policy_watch": "2026-10-28T14:00:21-04:00",
     "yields_live": "2026-11-04T09:30:00-05:00",
-    "optflow": "2026-11-04T09:30:24-05:00"
+    "optflow": "2026-11-04T09:30:24-05:00",
+    "ust": "2026-11-04T09:42:09-05:00"
    },
    "sources": {
     "news": "Google News RSS search, refreshed every 15 min",
@@ -13991,36 +13992,10 @@
    },
    "last_run": {
     "ok": [
-     "policy_watch",
-     "fx_spot",
-     "fx_alpha",
-     "fx_closes",
-     "yields",
-     "cftc_fx",
-     "cftc_grains",
-     "grains_quote",
-     "yields_live",
-     "energy",
-     "crosses",
-     "news",
-     "calendar",
-     "fed_odds",
-     "releases",
-     "macro",
-     "settles",
-     "exports",
-     "wasde",
-     "canada",
-     "ca_calendar",
-     "sd_hist",
-     "inputs",
-     "ext",
-     "ca_retail",
-     "fx_model",
-     "optflow"
+     "ust"
     ],
     "failed": [],
-    "at": "2026-11-04T09:30:24-05:00"
+    "at": "2026-11-04T09:42:09-05:00"
    },
    "releases_checked": "2026-11-04T09:15:26-05:00",
    "exports_checked": "2026-11-04T08:00:24-05:00",
@@ -14133,7 +14108,8 @@
     "ok": true,
     "at": "2026-11-04T09:30:24-05:00"
    },
-   "macro_checked": "2026-11-04T09:30:24-05:00"
+   "macro_checked": "2026-11-04T09:30:24-05:00",
+   "ust_checked": "2026-11-04T09:42:09-05:00"
   },
   "macro": [
    {
@@ -38335,6 +38311,117 @@
     "at": "2026-11-04T08:15",
     "forecast": 67.0,
     "previous": 90.0
+   }
+  },
+  "ust": {
+   "asof": "2026-09-30",
+   "penny_date": "2026-11-02",
+   "rates_date": "2026-09-30",
+   "total_debt_t": 40.502,
+   "public_t": 32.72,
+   "intragov_t": 7.782,
+   "marketable_t": 31.831,
+   "due12_t": 10.64,
+   "due24_t": 14.642,
+   "wam_months": 69.7,
+   "wa_rate": 3.518,
+   "wall": {
+    "2026-10": 2895.9,
+    "2026-11": 1800.4,
+    "2026-12": 1462.5,
+    "2027-01": 1077.9,
+    "2027-02": 677.8,
+    "2027-03": 615.1,
+    "2027-04": 410.6,
+    "2027-05": 341.1,
+    "2027-06": 283.4,
+    "2027-07": 419.5,
+    "2027-08": 369.0,
+    "2027-09": 287.0,
+    "2027-10": 358.3,
+    "2027-11": 342.6,
+    "2027-12": 244.9,
+    "2028-01": 421.6,
+    "2028-02": 345.9,
+    "2028-03": 249.0,
+    "2028-04": 434.7,
+    "2028-05": 350.8,
+    "2028-06": 252.2,
+    "2028-07": 387.3,
+    "2028-08": 358.9,
+    "2028-09": 255.9,
+    "2028-10": 224.1,
+    "2028-11": 275.9,
+    "2028-12": 58.0
+   },
+   "profile": [
+    {
+     "label": "< 6M",
+     "bn": 8362.9
+    },
+    {
+     "label": "6–12M",
+     "bn": 2277.3
+    },
+    {
+     "label": "1–2Y",
+     "bn": 4002.0
+    },
+    {
+     "label": "2–5Y",
+     "bn": 7060.8
+    },
+    {
+     "label": "5–10Y",
+     "bn": 4299.8
+    },
+    {
+     "label": "> 10Y",
+     "bn": 5828.5
+    }
+   ],
+   "composition": [
+    {
+     "type": "Treasury Bills",
+     "rate": 3.87,
+     "due24": 7118.1,
+     "pct24": 48.6,
+     "out": 7118.1
+    },
+    {
+     "type": "Treasury Notes",
+     "rate": 3.383,
+     "due24": 6280.5,
+     "pct24": 42.9,
+     "out": 16281.5
+    },
+    {
+     "type": "Treasury Bonds",
+     "rate": 3.466,
+     "due24": 63.4,
+     "pct24": 0.4,
+     "out": 5551.0
+    },
+    {
+     "type": "Treasury Inflation-Protected Securities (TIPS)",
+     "rate": 1.149,
+     "due24": 472.1,
+     "pct24": 3.2,
+     "out": 2172.6
+    },
+    {
+     "type": "Floating Rate Notes (FRN)",
+     "rate": 4.141,
+     "due24": 708.0,
+     "pct24": 4.8,
+     "out": 708.0
+    }
+   ],
+   "n_securities": 463,
+   "src": {
+    "penny": "Treasury Fiscal Data — Debt to the Penny",
+    "mspd": "Monthly Statement of the Public Debt (MSPD), tables 1 and 3",
+    "rates": "Average Interest Rates on U.S. Treasury Securities"
    }
   }
  },
