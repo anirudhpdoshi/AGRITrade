@@ -5,6 +5,9 @@ from zoneinfo import ZoneInfo
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 import earn_watch as EW  # noqa: E402
+def _no_net(*a, **k):
+    raise RuntimeError("no network in tests")
+EW.requests.get = _no_net   # every network path must be stubbed; nothing reaches the SEC or FMP from a test
 
 TOR = ZoneInfo("America/Toronto")
 N = P = 0
@@ -30,9 +33,10 @@ w.rows["XOM"]["epsActual"] = None; w.st["done"]["XOM"] = {"seen_at": "x"}
 ok(w.interval(at(23, 1)) is None, "AMC watch ends at 11 pm; BMO / unknown at 8 pm")
 
 w.key = "k"
+w.edgar = lambda s, now: None   # hermetic: no network in tests (CI can reach the SEC, this sandbox cannot)
 w._cik = lambda s: 320193 if s == "AAPL" else None
 w.current_8k = lambda now: {320193: {"acc": "0000320193-26-000101", "at": "2026-11-02T16:30:41-05:00", "url": "https://www.sec.gov/x"}} if now >= at(16, 0, 40) else {}
-w.edgar_unused = lambda s, now: {"acc": "0000320193-26-000101", "at": "2026-11-02T16:30:41-05:00", "url": "https://www.sec.gov/x"} if s == "AAPL" and now >= at(16, 0, 40) else None
+_unused = lambda s, now: {"acc": "0000320193-26-000101", "at": "2026-11-02T16:30:41-05:00", "url": "https://www.sec.gov/x"} if s == "AAPL" and now >= at(16, 0, 40) else None
 w.read_pr = lambda s, f: {"rev": 114.477e9, "eps_d": 2.10, "gm": 47.89, "exhibit": "https://www.sec.gov/ex991.htm"}
 state = {"n": 0}
 
@@ -47,7 +51,6 @@ al, live, prs = w.poll(at(16, 0, 10))
 ok(state["n"] == 1 and not al, "no 8-K yet -> one FMP fallback read, nothing to report")
 w.poll(at(16, 0, 20))
 ok(state["n"] == 1, "FMP fallback at most every 2 minutes (10 s polls hit EDGAR only)")
-w.edgar = lambda s, now: None
 al, live, prs = w.poll(at(16, 0, 40))
 ok(len(al) == 1 and "GAAP EPS 2.1" in al[0]["head"] and "4:30:41 PM ET" in al[0]["trigger"] and "not comparable" in al[0]["trigger"],
    f"8-K found in EDGAR's live filings list and read in the same poll -> numbers alert from the press release: {[a['head'] + ' | ' + a['trigger'] for a in al]}")

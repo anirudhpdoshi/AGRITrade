@@ -443,6 +443,8 @@ def publish(root, body):
     sh("rm", "-rf", WT, check=False); sh("git", "worktree", "prune", cwd=root, check=False)
     exists = sh("git", "ls-remote", "--exit-code", "--heads", "origin", "world", cwd=root, check=False).returncode == 0
     if exists:
+        sh("git", "fetch", "-q", "--depth", "1", "origin", "world:refs/remotes/origin/world", cwd=root, check=False)
+    if exists:
         sh("git", "worktree", "add", "-f", "-B", "world", WT, "origin/world", cwd=root)
     else:
         sh("git", "worktree", "add", "--detach", WT, cwd=root)
@@ -544,7 +546,15 @@ def main():
     if a.dry_run:
         json.dump(body, open(os.path.join(root, "world.dry.json"), "w"), indent=1, default=str)
         return
-    publish(root, body)
+    for attempt in range(3):   # a transient git error must not fail the run (and e-mail a failure): retry, then warn
+        try:
+            publish(root, body)
+            break
+        except Exception as e:
+            print(f"publish attempt {attempt + 1} failed: {type(e).__name__}")
+            time.sleep(5 * (attempt + 1))
+    else:
+        print("::warning title=world::publish failed 3 times; the next run (15 min) publishes again")
 
 
 if __name__ == "__main__":
