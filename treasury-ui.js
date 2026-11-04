@@ -36,7 +36,7 @@
         return '<td><div class="tq-c ' + heat(v, mx) + '">' + (v ? B(v) : "—") + "</div></td>"; }).join("") + "</tr>";
     }).join("");
     var totals = "<tr class=\"tot\"><td>Total in window</td>" + yrs.map(function (y) { var s = 0; keys.forEach(function (k) { if (k.slice(0, 4) === y) s += W[k]; }); return "<td>" + B(s) + "</td>"; }).join("") + "</tr>";
-    var wall = '<section class="tq-p tq-wall"><div class="tq-ph"><h2>24-month maturity concentration</h2><span>principal maturing, $ billions · bills at maturity value</span></div>' +
+    var wall = '<section class="tq-p tq-wall"><div class="tq-ph"><h2>24-month maturity concentration</h2><span>principal maturing from today, $ billions · amounts outstanding at the MSPD date · bills at maturity value</span></div>' +
       '<div class="tbl-scroll"><table class="tq-t"><thead><tr><th>Month</th>' + yrs.map(function (y) { return "<th>" + y + "</th>"; }).join("") + "</tr></thead><tbody>" + rows + totals + "</tbody></table></div></section>";
     /* current maturity profile */
     var PT = U.profile.reduce(function (a, x) { return a + x.bn; }, 0), COL = ["#ef4444", "#f97316", "#f59e0b", "#3b82f6", "#6366f1", "#a855f7"];

@@ -2645,14 +2645,16 @@ def ust(D, N):
         sec.append((typ, datetime.fromisoformat(mat).date(), amt / 1000.0))   # $ millions -> $ billions
     if len(sec) < 200:
         raise RuntimeError(f"MSPD table 3 looks incomplete ({len(sec)} securities)")
-    tot = lambda typ=None: sum(a for t, m, a in sec if (typ is None or t == typ) and m > asof)
+    tot = lambda typ=None: sum(a for t, m, a in sec if (typ is None or t == typ) and m > asof)   # outstanding at the statement date
     marketable = tot()
-    months = lambda d: (d.year - asof.year) * 12 + d.month - asof.month + (d.day - asof.day) / 30.4
+    ref = NOW.astimezone(TOR).date()   # windows run from today; securities that matured since the statement date are excluded
+    months = lambda d: (d.year - ref.year) * 12 + d.month - ref.month + (d.day - ref.day) / 30.4
     due = lambda n, typ=None: sum(a for t, m, a in sec if (typ is None or t == typ) and 0 < months(m) <= n)
-    wam = sum(a * months(m) for t, m, a in sec if m > asof) / marketable
+    live = [(t, m, a) for t, m, a in sec if m > ref]
+    wam = sum(a * months(m) for t, m, a in live) / sum(a for t, m, a in live)
     wall = {}
     for t, m, a in sec:
-        if 0 < months(m) <= 27:
+        if 0 < months(m) <= 24.99:
             k = m.strftime("%Y-%m")
             wall[k] = wall.get(k, 0) + a
     buckets = [("< 6M", 0, 6), ("6–12M", 6, 12), ("1–2Y", 12, 24), ("2–5Y", 24, 60), ("5–10Y", 60, 120), ("> 10Y", 120, 9999)]
