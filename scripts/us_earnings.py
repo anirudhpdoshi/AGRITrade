@@ -570,4 +570,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as e:   # say why in the run summary (no URL, no key), then fail as before
+        k = os.environ.get("FMP", "").strip()
+        msg = f"{type(e).__name__}: {e}"
+        print("::error title=us-earnings::" + (msg.replace(k, "***") if k else msg)[:300])
+        raise
