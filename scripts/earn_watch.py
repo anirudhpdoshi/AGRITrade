@@ -209,7 +209,7 @@ class Watch:
                                    "trigger": f"8-K Item 2.02 accepted by EDGAR {fmt_t(t, self.tor)}; its tables could not be read, numbers follow from the calendar feed.",
                                    "impact": "Mixed", "why": "", "src": "SEC EDGAR", "url": f["url"]})
         last = self.st.get("fmp_at")
-        if need_fmp and (not last or (now - datetime.fromisoformat(last)).total_seconds() >= 120):
+        if need_fmp and (not last or (now - datetime.fromisoformat(last)).total_seconds() >= 600):   # backup only: EDGAR is the source
             self.st["fmp_at"] = now.isoformat()
             try:
                 rows = self.fmp_today(now, "bmo" if all(P[s].get("time") == "bmo" for s in need_fmp) else "amc")

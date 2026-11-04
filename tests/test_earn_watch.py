@@ -50,7 +50,7 @@ EW.UE.fmp = fake_fmp
 al, live, prs = w.poll(at(16, 0, 10))
 ok(state["n"] == 1 and not al, "no 8-K yet -> one FMP fallback read, nothing to report")
 w.poll(at(16, 0, 20))
-ok(state["n"] == 1, "FMP fallback at most every 2 minutes (10 s polls hit EDGAR only)")
+ok(state["n"] == 1, "FMP backup at most every 10 minutes (10 s polls hit EDGAR only)")
 al, live, prs = w.poll(at(16, 0, 40))
 ok(len(al) == 1 and "GAAP EPS 2.1" in al[0]["head"] and "4:30:41 PM ET" in al[0]["trigger"] and "not comparable" in al[0]["trigger"],
    f"8-K found in EDGAR's live filings list and read in the same poll -> numbers alert from the press release: {[a['head'] + ' | ' + a['trigger'] for a in al]}")
