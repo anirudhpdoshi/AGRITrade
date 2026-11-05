@@ -14,7 +14,7 @@ No FMP calls. The live header (last, change, status) comes from world.json, whic
 Usage: python scripts/us_market.py [--dry-run]
 """
 import json, os, subprocess, sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BRANCH, FILE, WT = "earnings", "market.json", "/tmp/market-wt"
@@ -236,7 +236,7 @@ def build_breadth():
     rows = list(csv.DictReader(io.StringIO(get_url(CONSTITUENTS).decode())))
     sec = {r["Symbol"]: r["GICS Sector"] for r in rows}
     yahoo = {s.replace(".", "-"): s for s in sec}
-    d = yf.download(list(yahoo), period="13mo", interval="1d", auto_adjust=False, progress=False, threads=4)["Close"]
+    d = yf.download(list(yahoo), start=(datetime.now(timezone.utc) - timedelta(days=400)).strftime("%Y-%m-%d"), end=(datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%d"), interval="1d", auto_adjust=False, progress=False, threads=4)["Close"]
     out = []
     for y, s in yahoo.items():
         if y not in d:
