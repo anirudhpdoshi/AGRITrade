@@ -1,4 +1,4 @@
-/* US Market tracker shell (Glass Cockpit blueprint), Phase 1. Preview-only until sign-off:
+/* US Market tracker shell (Glass Cockpit blueprint), Phase 1. Live since Nov 4, 2026 (set LIVE = false to return to the plain Earnings tab):
      open  …/AGRITrade/?preview=tracker   close  …/AGRITrade/?preview=off   (remembered in this browser)
    Without the flag this file does nothing and the US Earnings tab is untouched.
    The existing page is not rewritten: #panel-earnings is moved into the C6 workspace and keeps its own logic and id.
@@ -6,7 +6,7 @@
    Data: world.json, earnings.json and the live earnings board, all already loaded by the desk. No new network calls. */
 (function () {
   "use strict";
-  var LIVE = false, PKEY = "desk.trackerPreview", on = false;
+  var LIVE = true, PKEY = "desk.trackerPreview", on = false;
   try {
     var q = new URLSearchParams(location.search).get("preview");
     if (q === "tracker") localStorage.setItem(PKEY, "1");

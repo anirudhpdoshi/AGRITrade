@@ -50,6 +50,8 @@ publishing: `INTEL_DRY=1 INTEL_OUT=/tmp/intel.json python scripts/intel.py`.
 
 ## US Earnings tab — prototype (locked)
 
+US Market tab: `tracker-ui.js` (C1–C9 shell; the earnings page lives under C6). `scripts/us_market.py` builds its index, sector, breadth and debt-book data.
+
 `scripts/us_earnings.py` → `earnings.json` on the `earnings` branch → `earnings-ui.js`. Provider: Financial Modeling Prep
 (`search-name`, `quote`, `profile`), key in the repository secret `FMP` — never in the page.
 
