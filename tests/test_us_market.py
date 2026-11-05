@@ -51,4 +51,18 @@ ok(close(R["month"], 10.0) and close(R["qtd"], 20.0) and close(R["ytd"], 32.0), 
 S = M.period_returns([("2026-11-09", 10.0), ("2026-11-10", 11.0)])
 ok(S["month"] is None and S["ytd"] is None and M.period_returns([]) is None, "a missing base close stays None")
 
+E = [{"start": "2026-01-01", "end": "2026-03-31", "val": 10}, {"start": "2026-01-01", "end": "2026-06-30", "val": 25}, {"start": "2026-07-01", "end": "2026-09-30", "val": 7}, {"start": "2026-01-01", "end": "2026-12-31", "val": 40}]
+Q = M.quarterly(E)
+ok(Q["2026-03"] == 10 and Q["2026-06"] == 15 and Q["2026-09"] == 7, "ytd minus prior ytd gives the quarter; a direct 3-month fact is used as is")
+ok("2026-12" not in Q, "no same-start nine-month base, so Q4 stays missing rather than estimated")
+Fx = {"LongTermDebtMaturitiesRepaymentsOfPrincipal" + w: {"units": {"USD": [{"end": "2026-06-30", "val": i + 1, "filed": "2026-07-30"}] + ([{"end": "2026-09-30", "val": 99}] if i == 0 else [])}} for i, w in enumerate(M.WALL)}
+W = M.maturity_wall(Fx)
+ok(W["end"] == "2026-06-30" and W["b"] == [1, 2, 3, 4, 5, 6], "wall uses the newest report with all six buckets")
+ok(M.maturity_wall({}) is None, "no buckets, no wall")
+ok(M.latest_fact({"A": {"units": {"USD": [{"end": "2026-03-31", "val": 1}]}}, "B": {"units": {"USD": [{"end": "2026-06-30", "val": 2}]}}}, ["A", "B"])[1] == 2, "newest debt tag wins")
+Rw = [(f"2025-{m:02d}-15", 100.0) for m in range(1, 13)] * 1
+Rw = [("2025-01-%02d" % d, 100.0) for d in range(1, 29)] + [("2025-%02d-%02d" % (m, d), 100.0) for m in range(2, 12) for d in range(1, 26)] + [("2025-12-01", 120.0)]
+B = M.breadth_row("X", "Tech", Rw)
+ok(B["nh"] and not B["nl"] and B["a20"] and B["l"] == 120.0, "new closing high and above its moving average")
+
 print(f"us_market: {n} checks passed")

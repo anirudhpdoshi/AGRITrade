@@ -48,6 +48,8 @@ jobs:
       - name: Market seasonality (Yahoo, no FMP calls)
         run: python scripts/us_market.py
         continue-on-error: true
+        env:
+          SEC_CONTACT: ${{ secrets.SEC_CONTACT }}
       - name: Fetch what is due, publish earnings.json
         run: python scripts/us_earnings.py ${{ inputs.force && '--force' || '' }} ${{ inputs.force_profile && '--force-profile' || '' }} ${{ inputs.check_plan && '--check-plan' || '' }} ${{ inputs.calendar_only && '--calendar-only' || '' }} --add "$ADD"
         env:

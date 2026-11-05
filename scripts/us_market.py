@@ -51,6 +51,87 @@ def period_returns(rows):
             "ytd": pct(last, base(lambda x: x < f"{y}-01-01")), "closes": [round(r[1], 4) for r in rows[-60:]]}
 
 
+def sma_above(closes, n):
+    return None if len(closes) < n else closes[-1] > sum(closes[-n:]) / n
+
+
+def breadth_row(sym, sector, rows):
+    """One constituent's line in the breadth table; 52-week flags compare the last close with the prior 251 closes."""
+    r = period_returns(rows)
+    if not r:
+        return None
+    c = [x[1] for x in sorted(rows) if x[1] is not None]
+    prior = c[-252:-1]
+    rnd = lambda v: None if v is None else round(v, 2)
+    return {"s": sym, "x": sector, "d": r["date"], "l": round(r["last"], 2), "day": rnd(r["day"]), "week": rnd(r["week"]), "month": rnd(r["month"]), "ytd": rnd(r["ytd"]),
+            "a20": sma_above(c, 20), "a50": sma_above(c, 50), "a200": sma_above(c, 200),
+            "nh": bool(len(prior) >= 200 and c[-1] > max(prior)), "nl": bool(len(prior) >= 200 and c[-1] < min(prior))}
+
+
+def latest_fact(facts, tags):
+    """Newest balance-sheet value over several possible tags (earlier tag wins a tie): (end, val, form, filed)."""
+    best = None
+    for t in tags:
+        for f in usd(facts, t):
+            if best is None or f["end"] > best["end"]:
+                best = f
+    return (best["end"], best["val"], best.get("form"), best.get("filed")) if best else None
+
+
+def usd(facts, tag):
+    return (facts.get(tag) or {}).get("units", {}).get("USD") or []
+
+
+def days_between(a, b):
+    from datetime import date
+    return (date(*map(int, b.split("-"))) - date(*map(int, a.split("-")))).days
+
+
+def quarterly(entries):
+    """Cash-flow facts are year-to-date in 10-Qs -> {YYYY-MM quarter end: value}. A ~3-month fact is used as is; otherwise
+    the year-to-date figure less the same-start year-to-date figure one quarter earlier. No base, no value."""
+    ded = {}
+    for f in entries:
+        if f.get("start"):
+            ded[(f["start"], f["end"])] = f["val"]
+    out = {}
+    for (st, en), v in ded.items():
+        n = days_between(st, en)
+        if 80 <= n <= 100:
+            out[en[:7]] = v
+    for (st, en), v in ded.items():
+        n = days_between(st, en)
+        if n <= 100 or n > 380 or en[:7] in out:
+            continue
+        prev = [k for k in ded if k[0] == st and 70 <= days_between(k[1], en) <= 110]
+        if prev:
+            out[en[:7]] = v - ded[prev[0]]
+    return out
+
+
+def merged_quarterly(facts, tags):
+    out = {}
+    for t in tags:
+        for k, v in quarterly(usd(facts, t)).items():
+            out.setdefault(k, v)
+    return out
+
+
+WALL = ["InNextTwelveMonths", "InYearTwo", "InYearThree", "InYearFour", "InYearFive", "AfterYearFive"]
+
+
+def maturity_wall(facts):
+    """Principal due by bucket from the newest report that gives all six buckets; otherwise None."""
+    maps = [{f["end"]: f for f in usd(facts, "LongTermDebtMaturitiesRepaymentsOfPrincipal" + w)} for w in WALL]
+    ends = set(maps[0])
+    for m in maps[1:]:
+        ends &= set(m)
+    if not ends:
+        return None
+    e = max(ends)
+    return {"end": e, "b": [m[e]["val"] for m in maps], "filed": maps[0][e].get("filed")}
+
+
 def month_end_closes(rows):
     """[(YYYY-MM-DD, close)] daily -> {YYYY-MM: last close of that month}."""
     out = {}
@@ -132,6 +213,73 @@ def publish(body):
     print("published")
 
 
+CONSTITUENTS = "https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/data/constituents.csv"
+PREV = "https://raw.githubusercontent.com/anirudhpdoshi/AGRITrade/earnings/market.json"
+ISSUERS = {"full": ["MSFT", "GOOGL", "AMZN", "META", "ORCL", "NVDA"], "native": ["CRWV", "APLD", "CORZ", "IREN"]}
+DEBT = ["LongTermDebt", "DebtInstrumentCarryingAmount", "DebtLongtermAndShorttermCombinedAmount", "LongTermDebtNoncurrent"]
+ISSUE = ["ProceedsFromIssuanceOfLongTermDebt", "ProceedsFromIssuanceOfDebt", "ProceedsFromIssuanceOfSeniorLongTermDebt", "ProceedsFromNotesPayable", "ProceedsFromConvertibleNotesPayable"]
+EQUITY = ["ProceedsFromIssuanceOfCommonStock", "ProceedsFromIssuanceInitialPublicOffering"]
+INTEREST = ["InterestExpense", "InterestExpenseDebt", "InterestExpenseNonoperating"]
+
+
+def get_url(u, headers=None):
+    import urllib.request
+    h = {"User-Agent": "Mozilla/5.0 (desk market job)", "Accept-Encoding": "identity"}
+    h.update(headers or {})
+    with urllib.request.urlopen(urllib.request.Request(u, headers=h), timeout=40) as r:
+        return r.read()
+
+
+def build_breadth():
+    import csv, io
+    import yfinance as yf
+    rows = list(csv.DictReader(io.StringIO(get_url(CONSTITUENTS).decode())))
+    sec = {r["Symbol"]: r["GICS Sector"] for r in rows}
+    yahoo = {s.replace(".", "-"): s for s in sec}
+    d = yf.download(list(yahoo), period="13mo", interval="1d", auto_adjust=False, progress=False, threads=4)["Close"]
+    out = []
+    for y, s in yahoo.items():
+        if y not in d:
+            continue
+        col = d[y].dropna()
+        r = breadth_row(s, sec[s], [(i.strftime("%Y-%m-%d"), float(v)) for i, v in col.items()])
+        if r:
+            out.append(r)
+    dates = [r["d"] for r in out]
+    date = max(set(dates), key=dates.count) if dates else None
+    out = [r for r in out if r["d"] == date]   # a stale or partial symbol is left out and counted, never mixed in
+    return {"date": date, "listed": len(sec), "rows": out} if len(out) >= 400 else None
+
+
+def build_northbook(now):
+    contact = os.environ.get("SEC_CONTACT", "").strip()
+    if not contact:
+        raise RuntimeError("SEC_CONTACT missing")
+    ua = {"User-Agent": "AGRITrade desk " + contact}
+    tick = {v["ticker"]: v["cik_str"] for v in json.loads(get_url("https://www.sec.gov/files/company_tickers.json", ua)).values()}
+    out = []
+    for scope, names in ISSUERS.items():
+        for s in names:
+            if s not in tick:
+                continue
+            try:
+                f = json.loads(get_url(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{tick[s]:010d}.json", ua))["facts"].get("us-gaap", {})
+            except Exception as e:
+                print(f"! {s}: {e}")
+                continue
+            debt = latest_fact(f, DEBT)
+            iq = merged_quarterly(f, INTEREST)
+            ik = sorted(iq)[-4:]
+            ttm = sum(iq[k] for k in ik) if len(ik) == 4 else None
+            q0 = f"{now.year - 3}-01"
+            out.append({"s": s, "scope": scope, "debt": debt and debt[1], "debt_end": debt and debt[0], "filed": debt and debt[3], "ttm_int": ttm,
+                        "wall": maturity_wall(f), "iss": {k: v for k, v in merged_quarterly(f, ISSUE).items() if k >= q0},
+                        "eq": {k: v for k, v in merged_quarterly(f, EQUITY).items() if k >= q0}})
+            import time
+            time.sleep(0.2)
+    return {"fetched": now.strftime("%Y-%m-%d"), "issuers": out} if out else None
+
+
 def main():
     now = datetime.now(timezone.utc)
     cur = now.strftime("%Y-%m")
@@ -157,9 +305,25 @@ def main():
                     periods[bucket].append(dict(r, sym=sym, name=name))
             except Exception as e:
                 print(f"! {sym}: {e}")
+    try:
+        prev = json.loads(get_url(PREV))
+    except Exception:
+        prev = {}
+    breadth = None
+    try:
+        breadth = build_breadth()
+    except Exception as e:
+        print(f"! breadth: {e}")
+    breadth = breadth or prev.get("breadth")
+    nb = prev.get("northbook")
+    if not nb or nb.get("fetched") != now.strftime("%Y-%m-%d"):   # filings change slowly: once a day is plenty
+        try:
+            nb = build_northbook(now) or nb
+        except Exception as e:
+            print(f"! northbook: {e}")
     body = {"updated_at": now.isoformat(timespec="seconds").replace("+00:00", "Z"), "provider": "Yahoo Finance daily closes (delayed, free)",
             "basis": "Price return — index levels, dividends excluded. Month-end close to month-end close; annual = Dec close to prior Dec close.",
-            "seasonality": out, "periods": periods, "health": health}
+            "seasonality": out, "periods": periods, "breadth": breadth, "northbook": nb, "health": health}
     if "--dry-run" in sys.argv:
         for k, v in out.items():
             print(k, "annual", {y: round(r, 1) for y, r in v["annual"].items() if r is not None}, "ytd", v["ytd"]["total"] and round(v["ytd"]["total"], 1))
