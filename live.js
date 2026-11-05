@@ -19,6 +19,7 @@
   var SYMBOL = "OANDA:USD_CAD";
 
   /* expected cadence (minutes) per source — drives pill colour */
+  var CADWORD = { cftc_fx: "weekly", cftc_grains: "weekly", exports: "weekly", wasde: "monthly", grains_settle: "settlement", options: "daily" };
   var CADENCE = {
     fx_spot: 15, grains_quote: 30, energy: 120, news: 240,
     crosses: 1440, fx_closes: 1440, yields: 1440, policy: 1440, sentiment: 1440,
@@ -94,7 +95,9 @@
     var t = new Date(iso).getTime();
     var age = now - t, biz = age - weekendMs(t, now), cad = (CADENCE[key] || 1440) * 60000;
     var cls = biz <= cad * 1.5 ? "fresh" : biz <= cad * 4 ? "aging" : "old";
-    return { cls: cls, txt: dur(age) + " ago", title: "as of " + new Date(iso).toLocaleString("en-US", { timeZone: ET }) + " ET" };
+    var tm = new Date(t), day = tm.toLocaleString("en-US", { timeZone: ET, month: "short", day: "numeric" }), clock = tm.toLocaleString("en-US", { timeZone: ET, hour: "numeric", minute: "2-digit" });
+    var word = CADWORD[key] ? " · " + CADWORD[key] : "", label = key === "grains_quote" ? "DELAYED" : key === "fx_spot" && cls === "fresh" ? "LIVE" : "LATEST VERIFIED";
+    return { cls: cls, txt: day + ", " + clock + " ET" + word + " · " + dur(age) + " old · " + label, title: "" };
   }
   function paintPills() {
     var now = Date.now();
@@ -103,11 +106,12 @@
       var a = ageInfo(tile.getAttribute("data-src"), now);
       if (a && a.txt === "live" && tile.id === "fx-spot-tile") a = null;   // the LIVE chip already says it
       var pill = h2.querySelector(".age-pill");
+      if (!a && /^(cftc_grains|grains_settle|options|wasde|exports|inputs|sd_hist|model)$/.test(tile.getAttribute("data-src"))) a = { cls: "old", txt: "UNAVAILABLE", title: "" };
       if (!a) { if (pill) pill.remove(); return; }
       if (!pill) { pill = document.createElement("span"); h2.appendChild(pill); }
       pill.className = "age-pill " + a.cls;
       pill.textContent = a.txt;
-      if (a.title) pill.title = a.title;
+      pill.removeAttribute("title");
     });
   }
 
@@ -517,5 +521,5 @@
   window.addEventListener("desk:lock", function () { if (ws) { try { ws.close(); } catch (e) {} ws = null; } });
   if (window.DESK_LOCKED === false) onUnlock();      // live.js arrived after an unlock
 
-  window.DESK_LIVE = { onTick: onTick, pollData: pollData, pollLive: pollLive, applyLive: applyLive, toast: toast, feedState: feedState }; // handy for testing in the console
+  window.DESK_LIVE = { paintPills: paintPills, onTick: onTick, pollData: pollData, pollLive: pollLive, applyLive: applyLive, toast: toast, feedState: feedState }; // handy for testing in the console
 })();

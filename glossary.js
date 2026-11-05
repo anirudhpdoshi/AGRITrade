@@ -77,10 +77,10 @@
       if (card.closest(".gl-done") && card.closest(".gl-done") !== card) return;
       var used = {};
       [].forEach.call(card.querySelectorAll(SEL), function (el) {
-        if (el.closest("button, a, .gl, svg, select, option, input")) return;
+        if (el.closest("button, a, .gl, .age-pill, svg, select, option, input")) return;
         if (el.querySelector(".gl")) { [].forEach.call(el.querySelectorAll(".gl"), function (b) { used[b.getAttribute("data-gl")] = 1; }); return; }
         var w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null), n, nodes = [];
-        while ((n = w.nextNode())) if (n.nodeValue.trim().length > 1 && !n.parentNode.closest("button, a, .gl")) nodes.push(n);
+        while ((n = w.nextNode())) if (n.nodeValue.trim().length > 1 && !n.parentNode.closest("button, a, .gl, .age-pill")) nodes.push(n);
         nodes.forEach(function (tn) {
           for (var i = 0; i < RX.length; i++) {
             if (used[i]) continue;

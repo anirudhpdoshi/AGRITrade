@@ -156,7 +156,7 @@
     W.items.slice(0, 80).reverse().forEach(function (x) {
       if (!x || !x.id || !x.title) return;
       var u = /^https?:\/\//.test(x.url || "") ? x.url : "";
-      EVENTS.log("wire", '<span class="fr-src">' + esc(x.src) + "</span> " + esc(x.title) + (x.tick && x.tick.length ? " <small>(" + esc(x.tick.join(", ")) + ")</small>" : "") +
+      EVENTS.log("wire", '<span class="fr-src">Wire</span> ' + esc(x.title) + (x.tick && x.tick.length ? " <small>(" + esc(x.tick.join(", ")) + ")</small>" : "") +
         (u ? ' <a class="fr-lnk" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">↗</a>' : ""), "", "wr|" + x.id, Date.parse(x.t) || Date.now());
     });
   }

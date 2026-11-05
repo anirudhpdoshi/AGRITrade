@@ -138,7 +138,7 @@
       '<span class="mi-cnt">' + sel.length + " of " + all.length + " shown" + (nNew ? ' · <b class="mi-b new">' + nNew + " NEW</b>" : "") + "</span>" +
       (VIEW === "cards" ? '<div class="m-legend"><span class="up">▲ stronger</span><span class="dn">▼ weaker</span><span class="heat">▲ inflation hotter</span><span class="cool">▼ inflation cooler</span></div>' : "") + "</div>" +
       '<div class="mi-wrap">' + picker(all) + '<div class="mi-main">' + (sel.length ? (VIEW === "charts" ? chartsView(sel) : cardsView(sel)) : '<p class="note">No indicators selected — tick some on the left.</p>') + "</div></div>" +
-      '<div class="stamp">Official series (BLS, BEA, DOL, Census, UMich, ISM, Bank of Canada, Statistics Canada, Ivey) · checked ' + asOf("macro", true) + " · refreshed every 2h and minutes after each scheduled release" + (errs ? " · " + errs + " series kept at their last good reading" : "") + "</div></div>";
+      '<div class="stamp">Verified ' + asOf("macro", true) + " · refreshed every 2h and minutes after each scheduled release" + (errs ? " · " + errs + " series kept at their last good reading" : "") + "</div></div>";
   };
 
   function repaint() {

@@ -549,6 +549,8 @@ table.dest-tbl{font-size:13px}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(63,185,127,.6)}70%{box-shadow:0 0 0 7px rgba(63,185,127,0)}100%{box-shadow:0 0 0 0 rgba(63,185,127,0)}}
 .age-pill{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;letter-spacing:.03em;text-transform:none;
   padding:1px 7px;border-radius:20px;margin-left:8px;vertical-align:1px;border:1px solid}
+.kb-src{display:none!important}
+.age-pill{white-space:normal}
 .age-pill.fresh{background:#123626;color:#5fd598;border-color:#1f5c3d}
 .age-pill.aging{background:#3a2a10;color:#f2c169;border-color:#6e5518}
 .age-pill.old{background:#3d1a18;color:#ff9d97;border-color:#6e2b26}
@@ -1109,7 +1111,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
 </main>
 
 <footer class="foot">
-  Sources: CBOT delayed quotes, CFTC, USDA FAS, Bank of Canada, Statistics Canada, US Treasury, FRED/BLS, Google News. Market data refreshes automatically (15-min server runs, ~60 s fast lane on weekdays, direct-from-source at releases); options, open interest and CORRA futures refresh once each weekday from Interactive Brokers (8:23 am ET, preliminary open interest); the model panel is recomputed daily. Every card shows its source and age — retail sentiment and FX-options reads have no free live feed and are labelled with their read date. Educational use only — not trading advice.
+  Market data refreshes automatically (15-min server runs, ~60 s fast lane on weekdays, direct-from-source at releases); options, open interest and CORRA futures refresh once each weekday (8:23 am ET, preliminary open interest); the model panel is recomputed daily. Every card shows its as-of time and age — retail sentiment and FX-options reads have no free live feed and are labelled with their read date. Educational use only — not trading advice.
 </footer>
 
 <script>
@@ -1670,7 +1672,7 @@ function exportTileHTML(key){
       '<div class="kv"><span class="kk">Spread — actual minus consensus midpoint</span><span class="vv"><span class="'+cls(cspread)+'">'+sgn(cspread,0)+' MT ('+sgn(cspct,1,'%')+')</span></span></div>'+
       '<div class="kv"><span class="kk">Verdict vs the range</span><span class="vv"><span class="chip '+chipCls+'">'+verdict+'</span></span></div></div>'
     : '';
-  return '<div class="tile wide"><h2>'+flag('us',15)+' Export Sales — 10-week trend <span class="h2note">USDA FAS · weekly net sales · current marketing year</span></h2>'+
+  return '<div class="tile wide" data-src="exports"><h2>'+flag('us',15)+' Export Sales — 10-week trend <span class="h2note">weekly net sales · current marketing year</span></h2>'+
     '<div class="es-head"><div class="k">Latest release · week ending '+fmtDate(latest[0])+' · released '+fmtDate(latest[1])+'</div>'+
     '<div class="es-big">Latest actual (w/e '+fmtShortDate(latest[0])+'): '+fmtFullMT(latest[2])+' <span class="chip '+chipCls+'">'+verdict+'</span></div>'+
     '<p class="read" style="margin-top:4px">'+vline+'</p></div>'+ consBlock +
@@ -2204,7 +2206,7 @@ function rollTileHTML(key){
   var behRows=bT.map(function(b,i){
     return '<div class="beh-row'+(i===bT.length-1?' hl':'')+'"><span class="bd">'+b[0]+'</span><span class="bt">'+esc(b[1])+'</span><span class="bt">'+esc(b[2])+'</span></div>';
   }).join("");
-  return '<div class="tile wide roll-tile"><div class="tile-head"><h2>Futures roll — '+R.front+' → '+R.def+' <span class="h2note">· OI migration &amp; calendar spread · through '+esc(R.lastLabel)+'</span></h2></div>'+
+  return '<div class="tile wide roll-tile" data-src="grains_settle"><div class="tile-head"><h2>Futures roll — '+R.front+' → '+R.def+' <span class="h2note">· OI migration &amp; calendar spread · through '+esc(R.lastLabel)+'</span></h2></div>'+
     '<div class="stat-row" style="margin-top:8px">'+
     stat('Roll progress · '+R.lastLabel, st.roll) + stat('Front OI · '+R.lastLabel, lastT[1]) +
     stat('Deferred OI · '+R.lastLabel, lastT[2]) + stat('Calendar spread', st.sp) +
@@ -2220,9 +2222,9 @@ function rollTileHTML(key){
     '<div class="beh-wrap"><h3>Trader behaviour — what each session\u2019s flow says · last 9 session deltas</h3>'+
     '<div class="beh-row beh-head"><span class="bd">Date</span><span class="bt">Front ('+R.front+') — unwinding</span><span class="bt">Deferred ('+R.def+') — adding</span></div>'+behRows+
     '<p class="decode">Decode: price↑+OI↑ = new longs · price↓+OI↑ = new shorts · price↑+OI↓ = short covering · price↓+OI↓ = long liquidation</p>'+
-    '<div class="stamp" style="border:0;margin-top:4px;padding-top:8px">Latest session ('+esc(R.lastLabel)+') highlighted'+(/prelim/.test(R.lastLabel)?' · preliminary until the exchange final is confirmed (CME preliminary — has matched the final within ~0.6% on this desk)':'')+
-      (R.oldPrelim.length?' · ᵖ '+esc(R.oldPrelim.join(', '))+': exchange preliminary open interest, the desk uses the preliminary figure (it has matched the exchange final within ~0.6%) from our sources, so the preliminary figure is kept and marked':'')+'</div></div>'+
-    '<div class="stamp">Per-contract open interest: rollover-card history through Oct 20, then CME daily bulletin / Interactive Brokers (prelim = exchange preliminary OI, published ~10:30 pm ET on trade date; final ~10:30 am ET next day) · settles: CBOT daily settlements · behaviour rule: OI and price change of each contract that session</div></div>';
+    '<div class="stamp" style="border:0;margin-top:4px;padding-top:8px">Latest session ('+esc(R.lastLabel)+') highlighted'+(/prelim/.test(R.lastLabel)?' · preliminary until the exchange final is confirmed (exchange preliminary — has matched the final within ~0.6% on this desk)':'')+
+      (R.oldPrelim.length?' · ᵖ '+esc(R.oldPrelim.join(', ').replace(/\s*\(?\b(IBKR|CME)\b\)?/g,''))+': exchange preliminary open interest, the desk uses the preliminary figure (it has matched the exchange final within ~0.6%) from our sources, so the preliminary figure is kept and marked':'')+'</div></div>'+
+    '<div class="stamp">Per-contract open interest: rollover-card history through Oct 20, then the exchange daily bulletin (prelim = exchange preliminary OI, published ~10:30 pm ET on trade date; final ~10:30 am ET next day) · settles: CBOT daily settlements · behaviour rule: OI and price change of each contract that session</div></div>';
 }
 
 /* ---------------- grain tab render ---------------- */
@@ -2298,7 +2300,7 @@ function oiTileHTML(key){
       ? '✓ Next month open — '+esc(RL.def)+' holds <b>'+fmt(RL.pct,1)+'%</b> of '+esc(RL.front)+'+'+esc(RL.def)+' open interest (≥ 40% liquidity threshold, crossed '+esc(RL.crossed||'')+')'+(dF!=null&&dF>0?' · '+dF+' day'+(dF===1?'':'s')+' to first notice':'')
       : '🔒 Next option month opens when the futures roll passes <b>40%</b> — '+esc(RL.def)+' holds '+fmt(RL.pct,1)+'% of open interest ('+fmt(40-RL.pct,1)+' pp to go'+(RL.pace>0?', ~'+Math.ceil((40-RL.pct)/RL.pace)+' sessions at the current pace':'')+')')+'</p>'+
     charts+'<div class="legend">'+leg+(view==='chg'?'':'<span>faded bars = in the money · white line = live price</span>')+'</div>'+oiMonthsHTML(key)+oiWeekliesHTML(key)+
-    '<div class="stamp">Pulled '+esc(asofStamp('options'))+' · open interest is the prior session’s close as published before the open (CME preliminary; on this desk it has matched the ~10:30 AM final within about 0.2% of each chain), pulled by the 8:23 ET daily run · change = latest pull vs the previous stored pull for that month</div>';
+    '<div class="stamp">Pulled '+esc(asofStamp('options'))+' · open interest is the prior session’s close as published before the open (exchange preliminary; on this desk it has matched the ~10:30 AM final within about 0.2% of each chain), pulled by the 8:23 ET daily run · change = latest pull vs the previous stored pull for that month</div>';
 }
 /* weekly / short-dated option expiries (pulled by the morning run): totals, biggest strikes, and any strike whose open
    interest is large next to the monthly chain's biggest strike gets highlighted */
@@ -2630,7 +2632,7 @@ function askClaude(scope){
   window.open('https://claude.ai/new?q='+encodeURIComponent(prompt),'_blank','noopener');
 }
 function grainDashboardHTML(key){
-  return '<div class="tile wide dash-head"><h2>'+GMETA[key].name+' KPI dashboard <span class="h2note">— countdown, balance sheet, export pace</span></h2>'+
+  return '<div class="tile wide dash-head" data-src="model"><h2>'+GMETA[key].name+' KPI dashboard <span class="h2note">— countdown, balance sheet, export pace</span></h2>'+
     '<div class="dash-grid">'+grainHeroHTML(key)+grainBalanceHTML(key)+grainPaceHTML(key)+'</div></div>'+
     '';
 }
@@ -2876,7 +2878,7 @@ function macroLinePanel(m, opt){
   var head=opt.headline(last, m);
   return '<div class="mpanel has-flag">'+cflag(m.group)+'<h3 class="mp-h mk-click" data-mkey="'+m.key+'" title="Click for the full breakdown">'+head+' <span class="h2note">\u24d8</span></h3>'+
     lineChartSVG({series:[{pts:pts.slice(-60),color:opt.color,label:'Actual',width:2.2}], refs:refs, yLabel:opt.yLabel, dec:1, aria:head.replace(/<[^>]+>/g,'')})+
-    nextReleaseHTML(m.key)+'<div class="stamp">'+esc(m.direct||m.src)+' · latest '+esc(m.period)+' · dashed = trailing 2/3/5-yr averages'+(opt.target!=null?' · dotted = 2% target':'')+'</div></div>';
+    nextReleaseHTML(m.key)+'<div class="stamp">Latest '+esc(m.period)+' · dashed = trailing 2/3/5-yr averages'+(opt.target!=null?' · dotted = 2% target':'')+'</div></div>';
 }
 function macroKpiCard(title, us, ca, dec, unit){
   function row(flag, m){ if(!m) return ''; var ch=m.chg, flat=Math.abs(ch)<Math.pow(10,-dec)/2;
@@ -2905,19 +2907,19 @@ function macroDashHTML(){
   function pol(m,country,color){ if(!m||!m.long) return '<div class="mpanel"><h3 class="mp-h">'+country+' policy rate</h3><p class="note">Policy-rate history loads on the next macro refresh.</p></div>';
     var p=m.long, l=p[p.length-1][1], y1=p.length>12?p[p.length-13][1]:null;
     return '<div class="mpanel has-flag">'+cflag(m.group)+'<h3 class="mp-h">'+country+' policy rate: <b>'+fmt(l,2)+'%</b>'+(y1!=null?', '+(l<y1?'down '+fmt((y1-l)*100,0)+' bps':l>y1?'up '+fmt((l-y1)*100,0)+' bps':'unchanged')+' in 12 months':'')+'</h3>'+
-      lineChartSVG({series:[{pts:p.slice(-60),color:color,label:'Rate'}],yLabel:'Policy rate (%)',dec:2,H:200})+'<div class="stamp">'+esc(m.src)+' · month-end readings</div></div>'; }
+      lineChartSVG({series:[{pts:p.slice(-60),color:color,label:'Rate'}],yLabel:'Policy rate (%)',dec:2,H:200})+'<div class="stamp">Month-end readings</div></div>'; }
   var polH=(showUS?pol(up,'Fed funds (upper)','#38b6c9'):'')+(showCA?pol(cp,'BoC overnight','#e0655f'):'');
   function gdp(m,country){ if(!m) return ''; var src=m.long||m.history.map(function(h){ return [h[0],h[1]]; });
     var bars=src.slice(-12).map(function(p,i,a){ var q=p[0].length>=7?('Q'+(Math.floor((+p[0].slice(5,7)-1)/3)+1)+" '"+p[0].slice(2,4)):p[0]; return [q,p[1],i===a.length-1]; });
     var l=bars[bars.length-1][1];
-    return '<div class="mpanel has-flag">'+cflag(m.group)+'<h3 class="mp-h">'+country+' real GDP: <b>'+fmt(l,1)+'%</b> '+(m.key==='ca_gdp'?'m/m':'q/q annualized')+'</h3>'+barChartSVG({bars:bars,yLabel:'Growth (%)',dec:1,H:200})+'<div class="stamp">'+esc(m.src)+' · '+esc(m.period)+'</div></div>'; }
+    return '<div class="mpanel has-flag">'+cflag(m.group)+'<h3 class="mp-h">'+country+' real GDP: <b>'+fmt(l,1)+'%</b> '+(m.key==='ca_gdp'?'m/m':'q/q annualized')+'</h3>'+barChartSVG({bars:bars,yLabel:'Growth (%)',dec:1,H:200})+'<div class="stamp">'+esc(m.period)+'</div></div>'; }
   var gdpH=(showUS?gdp(ug,'U.S.'):'')+(showCA?gdp(cg,'Canada'):'');
   return '<div class="tile wide" data-src="macro"><div class="tile-head"><h2>US vs Canada macro dashboard <span class="h2note">— latest prints, 5-year context, what it means for USD/CAD</span></h2>'+
     '<span class="toggle" role="group">'+b('both',flag('us',11)+' + '+flag('ca',11))+b('us',flag('us',11)+' US')+b('ca',flag('ca',11)+' CANADA')+'</span></div>'+
     '<div class="dash-grid four">'+macroKpiCard('CPI inflation (y/y)',uc,cc,1,'%')+macroKpiCard('Unemployment rate',uu,cu,1,'%')+macroKpiCard('Policy rate',up,cp,2,'%')+macroKpiCard('Real GDP',ug,cg,1,'%')+'</div>'+
     '<div class="mpanels'+(MGEO==='both'?'':' one')+'">'+cpi+ur+polH+gdpH+'</div>'+
     (MGEO==='both'?'<h3 class="m-h">Country comparison</h3>'+macroCompareHTML():'')+
-    '<div class="stamp">Source: BLS / BEA / Federal Reserve via FRED · Statistics Canada · Bank of Canada Valet · data checked '+asOf('macro',true)+'</div></div>';
+    '<div class="stamp">Verified '+asOf('macro',true)+'</div></div>';
 }
 
 /* ---------- Canada charts (fundamentals sub-tab) ---------- */
@@ -3208,13 +3210,13 @@ function inputsHTML(key){
     '<div class="dash-card"><div class="dk">Latest event</div><div class="dsub">'+(function(){ var E=(DATA.inputs.events||[]), e=E[E.length-1]; return e?'<b>'+esc(e.date)+'</b> · '+esc(e.label):'—'; })()+'</div></div></div>';
   var html='<div class="tile wide" data-src="inputs"><div class="tile-head"><h2>'+GMETA[key].name+' input costs <span class="h2note">— fertilizer, chemicals, energy · 2-year view</span></h2></div>'+top+
     '<div class="tbl-scroll" style="margin-top:10px"><table class="sd-tbl cmp-tbl"><thead><tr><th>Input · role</th><th>Latest</th><th>1M</th><th>3M</th><th>1Y</th><th>2Y</th><th>2-yr trend</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
-    '<div class="stamp">Red = input dearer (bad for margins), green = cheaper · FRED (EIA energy spot prices; BLS producer price indexes) · World Bank Pink Sheet (urea, DAP, potash, $/mt, monthly) · checked '+esc(asOf('inputs',true))+' · seed and retail chemical prices have no free daily feed — the BLS pesticide index stands in for glyphosate/atrazine</div></div>';
+    '<div class="stamp">Red = input dearer (bad for margins), green = cheaper · energy spot prices and producer price indexes · fertilizer (urea, DAP, potash, $/mt, monthly) · checked '+esc(asOf('inputs',true))+' · seed and retail chemical prices have no free daily feed — a pesticide price index stands in for glyphosate/atrazine</div></div>';
   /* charts: one per input, with numbered event markers */
   var charts=list.map(function(x){ var s=S[x[0]], pts=inPts(s,2), L=pts[pts.length-1], c24=chgOver(s,730);
     var ev=inputEvents(x[0]).filter(function(e){ return e.date>=pts[0][0]; }).map(function(e){ return Object.assign({sk:x[0]},e); });
     return '<div class="mpanel"><h3 class="mp-h">'+esc(s.label)+': <b>'+inFmt(s,L[1])+'</b>'+(c24!=null?', <span class="'+cls(-c24)+'">'+sgn(c24,1,'%')+'</span> in 2 yrs':'')+'</h3>'+
       lineChartSVG({series:[{pts:pts,color:s.kind==='energy'?'#e8a33d':s.kind==='chem'?'#c084fc':'#5fd598',label:'Last'}],yLabel:s.unit,dec:s.unit==='index'?1:s.unit==='$/mt'?0:2,H:200,events:ev,aria:s.label+' over two years'})+
-      '<div class="stamp">'+esc(s.src)+' · '+esc(s.unit)+(ev.length?' · '+ev.length+' event marker'+(ev.length>1?'s':''):'')+'</div></div>'; }).join('');
+      '<div class="stamp">'+esc(s.unit)+(ev.length?' · '+ev.length+' event marker'+(ev.length>1?'s':''):'')+'</div></div>'; }).join('');
   html+='<div class="tile wide" data-src="inputs"><h2>Two-year price paths with key events <span class="h2note">— hover or tap a numbered marker to see the event and its price impact · click to pin</span></h2><div class="mpanels">'+charts+'</div></div>';
   return html;
 }
@@ -3235,7 +3237,7 @@ function nextReleaseHTML(key, compact){
   var n=nextRelease(key); if(!n) return '';
   if(!n.t) return '<div class="mnext">Next: <span class="neu">'+esc(n.note||'date not published')+'</span></div>';
   var now=Date.now(), est=/estimated/.test(n.note);
-  return '<div class="mnext" title="'+esc((n.note?n.note+' · ':'')+'source: '+n.src)+'">Next'+(est?' (est.)':'')+': <b>'+etLabel(n.t,true)+'</b>'+(compact?'':' ET')+' · <span class="countdown" data-t="'+n.t+'">'+cdText(n.t-now)+'</span></div>';
+  return '<div class="mnext" title="'+esc(n.note||'')+'">Next'+(est?' (est.)':'')+': <b>'+etLabel(n.t,true)+'</b>'+(compact?'':' ET')+' · <span class="countdown" data-t="'+n.t+'">'+cdText(n.t-now)+'</span></div>';
 }
 
 /* ================= TRADE & FISCAL BALANCES ================= */
@@ -3245,7 +3247,7 @@ function extRow(label, key, unit, ccy, calKey, goodUp){
   var S=extSeries(key); if(!S||!S.pts||S.pts.length<2) return '<tr><td class="lbl">'+esc(label)+'</td><td colspan="6" class="cmp-na">loads on the next refresh</td></tr>';
   var P=S.pts, L=P[P.length-1], pv=P[P.length-2], y1=P.length>12?P[P.length-13]:null, ch=L[1]-pv[1];
   var good=goodUp?ch:-ch;
-  return '<tr><td class="lbl" data-l="" title="'+esc(S.src)+'"><b>'+esc(label)+'</b></td>'+
+  return '<tr><td class="lbl" data-l=""><b>'+esc(label)+'</b></td>'+
     '<td data-l="Latest"><b>'+money(ccy,L[1])+'</b><br><small class="h2note">'+esc(mLabel(L[0]+'-01'))+'</small></td>'+
     '<td data-l="Prior">'+money(ccy,pv[1])+'</td><td data-l="Net change" class="'+cls(good)+'">'+sgn(ch,1,'B')+'</td>'+
     '<td data-l="1 yr ago">'+(y1?money(ccy,y1[1]):'—')+'</td>'+
@@ -3288,7 +3290,7 @@ function extBars(key, title, ccy){
   var tips=P.map(function(p,i){ return extTip(key, p[0], i?P[i-1][0]:null, ccy); });
   return '<div class="mpanel has-flag">'+cflag(key.slice(0,2))+'<h3 class="mp-h">'+title+': <b>'+money(ccy,L[1])+'</b> ('+esc(mLabel(L[0]+'-01'))+')</h3>'+
     barChartSVG({bars:bars,yLabel:ccy+' billions',dec:1,H:220,months:P.map(function(p){ return p[0]; }),tips:tips})+
-    '<div class="stamp">'+esc(S.src)+' · last 24 months · hover or tap a bar for what makes up the number</div></div>';
+    '<div class="stamp">Last 24 months · hover or tap a bar for what makes up the number</div></div>';
 }
 /* exports vs imports (dots + OLS trendlines) over balance bars, one hover/click column per month */
 function olsFit(vals){ var pts=vals.map(function(v,i){ return [i,v]; }).filter(function(p){ return p[1]!=null; }), n=pts.length; if(n<3) return null;
@@ -3355,7 +3357,7 @@ function flowPanel(kind){
   return '<div class="mpanel has-flag flowpanel">'+cflag(kind.slice(0,2))+'<h3 class="mp-h">'+cfg.title+' — '+esc(mLabel(months[L]+'-01'))+': '+money(cfg.ccy,iv[L])+' − '+money(cfg.ccy,ov[L])+' = <b class="'+cls(bv[L])+'">'+money(cfg.ccy,bv[L])+'</b></h3>'+
     '<div class="flowwrap">'+flowComboSVG({months:months, inflow:{label:cfg.inL,short:cfg.inS,vals:iv,color:'#5fd598'}, outflow:{label:cfg.outL,short:cfg.outS,vals:ov,color:'#f0a35e'}, bal:bv, ccy:cfg.ccy, tips:tips, inLab:cfg.top, balLab:cfg.bot})+'</div>'+
     '<p class="mdc-read" style="margin:6px 2px 0">'+read+'.</p>'+
-    '<div class="stamp">'+esc(B.src)+' · dots = monthly values, dashed = straight-line trend over 24 months · hover a month for the exact maths · click to highlight a month</div></div>';
+    '<div class="stamp">Dots = monthly values, dashed = straight-line trend over 24 months · hover a month for the exact maths · click to highlight a month</div></div>';
 }
 
 function tradeFiscalHTML(){
@@ -3379,7 +3381,7 @@ function tradeFiscalHTML(){
   var errs=X.errors&&Object.keys(X.errors).length?' · waiting on: '+Object.keys(X.errors).join(', '):'';
   return '<div class="tile wide" data-src="ext"><div class="tile-head"><h2>Trade &amp; fiscal balances <span class="h2note">— exports, imports, deficits · 2-year trend · next release</span></h2></div>'+us+ca+
     '<div class="mpanels'+(MGEO==='both'?'':' one')+'">'+charts+'</div>'+
-    '<div class="stamp">Negative = deficit · net change = latest minus prior month (green = balance improved / exports up, red = worse) · US: Census/BEA via FRED, Treasury Monthly Treasury Statement via FRED · Canada: Statistics Canada 12-10-0011-01, Finance Canada Fiscal Monitor · checked '+esc(asOf('ext',true))+errs+'</div></div>';
+    '<div class="stamp">Negative = deficit · net change = latest minus prior month (green = balance improved / exports up, red = worse) · Verified '+esc(asOf('ext',true))+errs+'</div></div>';
 }
 
 /* ================= LIVE USD/CAD (macro view copy) ================= */
@@ -3967,16 +3969,16 @@ function renderGrain(key){
   /* export sales — 10-week trend */
   FU+=wasdeTableHTML(key)+exportTileHTML(key)+destTileHTML(key);
   /* insight + curve (both computed from the data) */
-  OV+='<div class="tile wide"><h2>Insight</h2><p class="read">'+grainInsight(key)+'</p><div class="stamp">Generated from the current settles, options and CFTC data</div></div>';
+  OV+='<div class="tile wide" data-src="model"><h2>Insight</h2><p class="read">'+grainInsight(key)+'</p><div class="stamp">Generated from the current settles, options and CFTC data</div></div>';
   DV+=positioningKpiHTML(key)+cockpitHTML(key)+volTermHTML(key)+grainSpreadsHTML(key).replace('class="tile"','class="tile wide"');
   /* positioning (toggle target) */
-  DV+='<div class="tile wide" id="pos-'+key+'">'+positioningHTML(key)+'</div>';
+  DV+='<div class="tile wide" data-src="options" id="pos-'+key+'">'+positioningHTML(key)+'</div>';
   /* OI chart (toggle target) */
   DV+='<div class="tile wide" data-src="options" id="oi-'+key+'">'+oiTileHTML(key)+'</div>';
   /* rollover — full card replication */
   DV+=flowTileHTML(key)+rollTileHTML(key);
   /* skew */
-  DV+='<div class="tile wide"><h2>IV skew <span class="h2note">— liquid side · ±2σ window</span></h2>'+ skewSVG(g, meta)+
+  DV+='<div class="tile wide" data-src="options"><h2>IV skew <span class="h2note">— liquid side · ±2σ window</span></h2>'+ skewSVG(g, meta)+
     '<div class="legend"><span><span class="sw" style="background:var(--put)"></span>Puts below futures</span><span><span class="sw" style="background:var(--call)"></span>Calls at/above futures</span></div>'+
     '<div class="stamp">'+(f.iv_note?esc(f.iv_note):'Per-strike theoretical IV'+(f.iv_as_of?', as of '+esc(fmtDate(f.iv_as_of)):''))+' · window = futures ± 2× the 10-day σ · market-implied, not a prediction</div></div>';
   /* CFTC */
@@ -4101,7 +4103,7 @@ function fxMacroHTML(){
     (MGEO!=='ca'?'<h3 class="m-h">United States <span class="chip inline">USD</span> '+flag('us',15)+'</h3><div class="m-grid">'+grp('us')+'</div>':'')+
     (MGEO!=='us'?'<h3 class="m-h">Canada <span class="chip inline">CAD</span> '+flag('ca',15)+'</h3><div class="m-grid">'+grp('ca')+'</div>':'')+
     (MGEO==='both'?'<h3 class="m-h">US − Canada differentials <span class="h2note">— what moves USD/CAD</span></h3><div class="m-grid">'+macroDiffs()+'</div>':'')+
-    '<div class="stamp">FRED (BLS, BEA, DOL, Census, UMich) · Bank of Canada Valet · Statistics Canada · checked '+asOf('macro',true)+' · refreshed every 2h'+(errs?' · '+errs+' series kept at their last good reading':'')+'</div></div>';
+    '<div class="stamp">Verified '+asOf('macro',true)+' · refreshed every 2h'+(errs?' · '+errs+' series kept at their last good reading':'')+'</div></div>';
 }
 function fxKpiHTML(){
   var fx=DATA.fx, R={}; fx.rates.forEach(function(r){ R[r.t]=r; });
@@ -4188,7 +4190,7 @@ function fxReleasesHTML(){
       '<div class="read" style="margin-top:4px">'+(r.consensus!=null?'Consensus '+fmt(r.consensus,r.dec)+u+' · ':'')+(r.history.length>1?'prior '+fmt(r.history[r.history.length-2][1],r.dec)+u:'')+'</div>'+
       releaseSVG(r)+'<p class="read" style="font-size:13px">'+releaseRead(r)+'</p>'+sub+
       '<div class="legend"><span><span class="sw" style="background:#b18cff"></span>OLS trend</span>'+(r.consensus!=null?'<span><span class="sw" style="background:#e8a33d"></span>latest / consensus tick</span>':'')+'</div>'+
-      '<div class="note">'+esc(r.source)+'</div></div>';
+      '</div>';
   }).join('');
   return '<div class="tile wide" data-src="releases"><h2>Latest releases <span class="h2note">— newest first by release date · last '+8+' readings, trend and plot</span></h2>'+
     '<div class="rel-grid">'+body+'</div>'+
@@ -4203,7 +4205,7 @@ function fxCftcHTML(){
     '<div class="stat-row">'+stat("Long", fmt(p.long))+stat("Short", fmt(p.short))+stat("Week over week", '<span class="'+cls(p.wow)+'">'+sgn(p.wow,0)+'</span>')+
     stat("% of OI", fmt(p.pct_oi,1)+'%')+stat("1Y / 3Y percentile", fmt(p.p1y,0)+'th / '+fmt(p.p3y,0)+'th')+stat("Report date", asOf('cftc_fx'))+'</div>'+
     '<div class="posread">'+esc(p.label)+'</div>'+chart+
-    '<div class="stamp">CFTC Traders in Financial Futures · CAD (CME) · leveraged funds long minus short · positions as of Tuesday, published Friday 3:30pm ET</div></div>';
+    '<div class="stamp">CFTC Traders in Financial Futures · CAD · leveraged funds long minus short · positions as of Tuesday, published Friday 3:30pm ET</div></div>';
 }
 
 function fxIntradaySVG(pts){

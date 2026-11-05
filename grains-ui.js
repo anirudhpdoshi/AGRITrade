@@ -86,6 +86,7 @@
     b.click();
     if (sub && root.setSub) root.setSub(k, sub);      /* the section holds when the commodity changes */
     root.scrollTo(0, y);                              /* CG-2: same scroll position */
+    if (root.DESK_LIVE && DESK_LIVE.paintPills) DESK_LIVE.paintPills();
   }
   parent.addEventListener("click", function () { pick(active() || saved()); });
   head.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-grain-pick]"); if (b) pick(b.getAttribute("data-grain-pick")); });
