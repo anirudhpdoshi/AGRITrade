@@ -1,0 +1,12 @@
+name: tracker probe (temporary)
+on: { workflow_dispatch: {} }
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -q yfinance
+      - run: python scripts/_probe.py
+        env: { SEC_CONTACT: "${{ secrets.SEC_CONTACT }}" }
