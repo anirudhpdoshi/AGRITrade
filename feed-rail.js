@@ -10,6 +10,7 @@
   var TN = {}; TAGS.forEach(function (t) { TN[t[0]] = t[1]; });
   var TC = { corn: "#e8b93d", wheat: "#d9a066", soybeans: "#3fb97f", fx: "#38b6c9", macro: "#6ea8ff", cb: "#9b8cff", world: "#ff8a84", leg: "#c9a3ff", earn: "#f5c542", energy: "#f08a5d", metals: "#d4b25a", wires: "#9fb4cf" };
   var DEF = { corn: "corn", wheat: "wheat", soybeans: "soybeans", fx: "fx", world: "world", policy: "cb", earnings: "earn", briefing: "all", events: "all", intel: "agri" };
+  var LOADED = Date.now();   /* news older than the page never pops a notification, however late the stored feed arrives */
   var pick = {}, seen = {}, firstPass = true, lastSig = "", ONLY = true;
   try { ONLY = localStorage.getItem("desk.feedall") !== "1"; } catch (e) {}
   function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
@@ -62,6 +63,15 @@
     if (!src) src = { policy: "Central bank", data: "Desk data", oi: "Options", level: "Price alert", world: "World markets", wire: "Wire" }[m.k] || "Desk";
     return { src: src, txt: txt, url: url };
   }
+  /* green or red background by direction; anything without a clear direction stays neutral */
+  function tone(m, txt) {
+    var t = plain(m.h || "") + " " + txt;
+    if (/\bmixed\b|inconclusive/i.test(t)) return ""; if (/\bbullish\b/i.test(t)) return " pos"; if (/\bbearish\b/i.test(t)) return " neg";
+    if (/\bbeat\b|\bbeats\b/i.test(t) && !/\bmiss/i.test(t)) return " pos"; if (/\bmiss(es|ed)?\b/i.test(t) && !/\bbeat/i.test(t)) return " neg";
+    var up = /(^|[\s(])\+\d/.test(t) || /\b(surge|soar|jump|rall(y|ies)|gain|rise|rises|rose|climb|higher|boost|upgrade|record high|week high)/i.test(t),
+        dn = /(^|[\s(])[−-]\d/.test(t) || /\b(plunge|tumble|slump|sink|sank|drop|fall|falls|fell|decline|lower|cut|cuts|downgrade|crash|week low|lowest)/i.test(t);
+    return up && !dn ? " pos" : dn && !up ? " neg" : "";
+  }
   function cardHTML(ctx) {
     var now = Date.now(), seen = {};
     var L = feed().filter(function (m) { return m.t <= now + 60000; }).slice().sort(function (a, b) { return b.t - a.t; });
@@ -70,7 +80,7 @@
       var tm = day(m.t) === day(now) ? hm(m.t) : new Date(m.t).toLocaleDateString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric" }) + " " + hm(m.t);
       var go = !it.url && m.go ? ' data-evgo="' + esc(m.go) + '" role="link" tabindex="0"' : "";
       var body = it.url ? '<a class="fs-t" href="' + esc(it.url) + '" target="_blank" rel="noopener noreferrer">' + esc(it.txt) + "</a>" : '<div class="fs-t">' + esc(it.txt) + "</div>";
-      return '<li class="fs-i' + (breaking(m) ? " br" : "") + (go ? " go" : "") + '"' + go + '><div class="fs-h"><b>' + esc(it.src) + "</b><span>" + tm + "</span></div>" + body + "</li>";
+      return '<li class="fs-i' + (breaking(m) ? " br" : "") + tone(m, it.txt) + (go ? " go" : "") + '"' + go + '><div class="fs-h"><b>' + esc(it.src) + "</b><span>" + tm + "</span></div>" + body + "</li>";
     }).join("");
     return '<div class="fr-head"><span class="fr-title">Feed</span><span class="fr-live" title="Time of the last live update this page received"><i></i>live · ' + (window.DESK_WIRES && DESK_WIRES.at ? hm(Date.parse(DESK_WIRES.at)) : "—") + "</span></div>" +
       '<ul class="fr-list fs">' + (rows || '<li class="fr-empty">Waiting for the first items…</li>') + "</ul>";
@@ -107,7 +117,7 @@
     var L = feed(), sig = L.length + "|" + (L[0] && L[0].id);
     L.forEach(function (m) {
       if (seen[m.id]) return; seen[m.id] = 1;
-      if (!firstPass && breaking(m) && window.DESK_LIVE && DESK_LIVE.toast) {
+      if (!firstPass && breaking(m) && m.t >= LOADED - 300000 && window.DESK_LIVE && DESK_LIVE.toast) {
         window.__evNoLog = true;
         try { DESK_LIVE.toast('<span class="fr-tbk">BREAKING</span> ' + (m.k === "alert" ? (m.h.match(/^<b>[\s\S]*?<\/b>/) || [m.h])[0] + ' — ' + ((m.h.match(/<i>Trigger<\/i>([^<]*)/) || [, ''])[1]) : m.h)); } catch (e) {}
         window.__evNoLog = false;
@@ -175,6 +185,7 @@
     ".fr-empty{font-size:13px;color:var(--muted);padding:10px 0}" +
     ".fr-mode{display:inline-flex;border:1px solid var(--line2);border-radius:12px;overflow:hidden}.fr-mode button{appearance:none;border:0;background:transparent;color:var(--muted);font:600 11px 'IBM Plex Mono',monospace;padding:3px 8px;cursor:pointer}.fr-mode button[aria-pressed=true]{background:#e0453a;color:#fff}.fr-mode button[data-frmode='0'][aria-pressed=true]{background:#13304a}" +
     ".fr-al{margin-top:4px;display:grid;gap:3px;font-size:12.5px;font-weight:400;color:#d4deea}.fr-al i{display:inline-block;min-width:96px;font:normal 600 10.5px 'IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;color:#ff9d94;margin-right:6px}.fr-al a{color:#7dd8e6}" +
+    ".fs-i.pos{background:rgba(63,185,127,.14)!important}.fs-i.neg{background:rgba(224,101,95,.14)!important}" +
     ".fr-imp{font:700 11px 'IBM Plex Mono',monospace;padding:0 6px;border-radius:4px}.fr-imp.bull{background:rgba(63,185,127,.2);color:#3fb97f}.fr-imp.bear{background:rgba(224,101,95,.2);color:#ff8a84}.fr-imp.mix{background:rgba(232,163,61,.18);color:#e8a33d}.fr-st{font:11px 'IBM Plex Mono',monospace;color:var(--muted)}" +
     ".fr-drawer{position:fixed;top:0;right:0;bottom:0;width:min(380px,92vw);z-index:70;background:var(--panel);border-left:1px solid var(--line2);box-shadow:-10px 0 30px rgba(0,0,0,.45);transform:translateX(105%);transition:transform .25s ease;overflow:auto}" +
     ".fr-drawer.open{transform:none}.fr-drawer .fr-list{max-height:none}.fr-close{position:absolute;top:8px;right:10px;appearance:none;border:0;background:transparent;color:var(--faint);font-size:20px;cursor:pointer}" +

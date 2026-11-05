@@ -869,7 +869,7 @@
   function html(t) {
     if (!worker()) return '<div class="tile"><h2>Company research</h2><div class="ue-ph">Live search needs the AGRITrade SEC Worker. Once it is deployed, open the desk once with <code>?worker=https://&lt;name&gt;.workers.dev</code> — the address is remembered in this browser.</div></div>';
     var D = MEM[t]; if (!D) { load(t); D = MEM[t]; }
-    if (D.loading) return '<div class="tile"><h2>' + esc(t) + '</h2><p class="note">Fetching SEC filings for ' + esc(t) + "… (live, nothing stored)</p></div>";
+    if (D.loading) return '<div class="tile"><h2>' + esc(t) + '</h2><div class="usm-skg" aria-label="Loading"><i></i><i></i><i></i><i></i></div><p class="note">Loading latest filings for ' + esc(t) + "…</p></div>";
     if (D.err) return '<div class="tile"><h2>' + esc(t) + '</h2><div class="unreach">⚠ Could not load ' + esc(t) + " <small>— " + esc(D.err) + '</small></div><button class="ue-btn" data-coretry="' + esc(t) + '" style="margin-top:8px">Try again</button></div>';
     if (!D.M.quarters.length) return '<div class="tile"><h2>' + esc(t) + '</h2><div class="ue-ph">' + esc(D.co.name) + " has no US-GAAP quarterly figures in SEC XBRL" + (D.co.ifrs ? " (it files under IFRS)" : "") + ".</div></div>";
     return card && CARDS[card] ? CARDS[card](D.M, D.V) : grid(D.M, D.V);

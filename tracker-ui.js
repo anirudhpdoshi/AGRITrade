@@ -17,8 +17,7 @@
   if (!(LIVE || on) || !P || !BTN) return;
 
   var CATS = [["c1", "C1", "Snapshot"], ["c2", "C2", "Indexes"], ["c3", "C3", "Sectors"], ["c4", "C4", "Breadth"],
-    ["c5", "C5", "Breakout Stream"], ["c6", "C6", "Earnings"], ["c7", "C7", "Flows", "na"], ["c8", "C8", "Deals & Events"],
-    ["c9", "C9", "Northbook"], ["wl", "", "Watchlist"], ["pos", "", "Positions", "na"]];
+    ["c5", "C5", "Breakout Stream"], ["c6", "C6", "Earnings"], ["c9", "C7", "Northbook"]];
   var INDEX = ["^GSPC", "^NDX", "^IXIC", "^DJI", "^RUT"], SHORT = { "^GSPC": "S&P 500", "^NDX": "Nasdaq 100", "^IXIC": "Nasdaq Comp", "^DJI": "Dow Jones", "^RUT": "Russell 2000", "^VIX": "VIX" };
   var cat = "c1"; try { cat = localStorage.getItem("desk.usmCat") || "c1"; } catch (e) {}
   if (!CATS.some(function (c) { return c[0] === cat; })) cat = "c1";
@@ -82,8 +81,7 @@
     return '<section class="usm-card usm-hold"><span class="usm-b cl">Planned · Phase ' + c[4] + "</span><h3>" + esc(c[2]) + "</h3><p>This view is built in Phase " + c[4] + ". Nothing is shown until its data is verified.</p></section>";
   }
   /* -------- C6: calendar & estimate matrix -------- */
-  var C6 = { sub: "cal", per: "q", state: "all", wl: false, day: null, wk: 0, sort: "date", dir: 1 }, sel = null;
-  try { C6.wl = localStorage.getItem("desk.usmWl") === "1"; } catch (e) {}
+  var C6 = { sub: "intel", per: "q", state: "all", wl: false, day: null, wk: 0, sort: "date", dir: 1 }, sel = null;
   function E() { return window.EARNINGS && EARNINGS._data ? EARNINGS._data() : null; }
   function nyDay(d) { return new Date(d || Date.now()).toLocaleDateString("en-CA", { timeZone: "America/New_York" }); }
   function records() {
@@ -147,15 +145,14 @@
     if (C6.sub === "intel") return "";
     if (C6.per === "fy") return '<section class="usm-card usm-hold"><span class="usm-b na">Unavailable</span><h3>Fiscal-year estimates</h3><p>Annual consensus isn’t in the verified data yet, so no figures are shown. Each company’s reported annual results are in Intelligence.</p></section>';
     if (!E()) return '<section class="usm-card"><p class="note">Loading the reporting calendar…</p></section>';
-    var today = nyDay(), R = records().filter(function (x) { return !C6.wl || x.w; });
+    var today = nyDay(), R = records();
     if (C6.day === null && !C6.touched && R.some(function (x) { return x.date === today; })) C6.day = today;
     return seasonRead(R) + calendar(R, today) + matrix(R, today);
   }
   function subBar() {
     function b(a, v, t) { return "<button data-usm" + a + '="' + v + '"' + (C6[a] === v ? ' aria-pressed="true"' : "") + ">" + t + "</button>"; }
-    return '<span class="usm-seg">' + b("sub", "cal", "Calendar &amp; estimates") + b("sub", "intel", "Intelligence") + "</span>" +
-      (C6.sub === "cal" ? '<span class="usm-seg">' + b("per", "q", "Quarter") + b("per", "fy", "Fiscal year") + "</span>" +
-      '<label class="usm-tg"><input type="checkbox" id="usmWl"' + (C6.wl ? " checked" : "") + "> Watchlist only</label>" : "");
+    return '<span class="usm-seg">' + b("sub", "intel", "Company &amp; results") + b("sub", "cal", "Calendar &amp; estimates") + "</span>" +
+      (C6.sub === "cal" ? '<span class="usm-seg">' + b("per", "q", "Quarter") + b("per", "fy", "Fiscal year") + "</span>" : "");
   }
   /* -------- E: inspector. A symbol click never leaves the current screen -------- */
   function kv(k, v) { return "<div><dt>" + esc(k) + "</dt><dd>" + v + "</dd></div>"; }
@@ -174,7 +171,7 @@
     if (sel.t === "n") { var nI = (function () { var sc = NB.scope; NB.scope = "full"; var a = issuers() || []; NB.scope = sc; return a; })().filter(function (i) { return i.s === sel.k; })[0], fxN = fxRate(); if (!nI) return head(sel.k, "") + '<span class="usm-b na">Unavailable</span>';
       return head(nI.s, stName(nI.s)) + "<h4>Debt</h4><dl>" + kv("Outstanding", amt(nI.debt, fxN)) + kv("Implied rate", nI.rate == null ? "Unavailable" : num(nI.rate, 2) + "%") + kv("Interest, 4 quarters", amt(nI.ttm, fxN)) + kv("Coupon / yield", '<span class="usm-b na">Unavailable</span>') + "</dl><h4>Maturity schedule</h4><dl>" + (nI.wall ? WB.map(function (n, k) { return kv(n, amt(nI.wall.b[k], fxN)); }).join("") : kv("Schedule", '<span class="usm-b na">Unavailable</span>')) + "</dl><h4>Evidence</h4><dl>" + kv("Debt as of", esc(nI.end || "Unavailable")) + kv("Filed", esc(nI.filed || "Unavailable")) + (nI.wall ? kv("Schedule as of", esc(nI.wall.end)) : "") + "</dl>"; }
     var R = records(), p = sel.k.split("|"), x = R.filter(function (r) { return r.s === p[0] && r.date === p[1]; })[0] || R.filter(function (r) { return r.s === p[0]; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; })[0];
-    if (!x) return head(p[0], "") + '<span class="usm-b na">Unavailable</span><p class="usm-none">This company isn’t on the reporting calendar in view.</p>' + brSec(p[0]) + '<button class="usm-open" data-usmopen="' + esc(p[0]) + '">Open full research</button>';
+    if (!x) return head(p[0], "") + '<span class="usm-b na">Unavailable</span><p class="usm-none">This company isn’t on the reporting calendar in view.</p>' + brSec(p[0]) + '<button class="usm-open" data-usmopen="' + esc(p[0]) + '">Lock and open company</button>';
     return head(x.s, x.n || "") + '<div class="usm-er">' + outcome(x, today) + "<span>" + esc(x.date) + " · " + sess(x.time) + "</span></div>" + brSec(x.s) +
       "<h4>Estimates vs actual</h4><dl>" +
       kv("EPS", (x.epsA == null ? "—" : num(x.epsA, 2) + (x.gaap ? " GAAP" : "")) + " vs " + (x.epsE == null ? "—" : num(x.epsE, 2))) + kv("EPS surprise", '<span class="' + dirCls(x.epsP) + '">' + (x.gaap ? "Not comparable" : sg(x.epsP, 1, "%")) + "</span>") +
@@ -182,13 +179,13 @@
       (x.yoy != null ? kv("Revenue YoY", '<span class="' + dirCls(x.yoy) + '">' + sg(x.yoy, 1, "%") + "</span>") : "") + (x.ly != null ? kv("EPS a year ago", num(x.ly, 2)) : "") + (x.ests != null ? kv("Estimates", num(x.ests, 0)) : "") + (x.mcap ? kv("Market cap", money(x.mcap)) : "") + (x.fq ? kv("Fiscal quarter", esc(x.fq)) : "") + "</dl>" +
       (x.hl ? '<h4>Release highlight</h4><p class="usm-q">' + esc(x.hl) + "</p>" : "") + (x.guide ? '<h4>Guidance</h4><p class="usm-q">' + esc(x.guide) + "</p>" : "") +
       "<h4>Evidence</h4><dl>" + kv("Release filed", x.filed ? new Date(x.filed).toLocaleString("en-CA", { timeZone: "America/Toronto", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) + (/^https:\/\//.test(x.url || "") ? ' · <a href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">Filing ↗</a>' : "") : x.done ? "Date unavailable" : "Not yet") + (x.upd ? kv("Estimate verified", esc(x.upd)) : "") + kv("Transcript", '<span class="usm-b na">Unavailable</span>') + "</dl>" +
-      '<button class="usm-open" data-usmopen="' + esc(x.s) + '">Open full research</button>';
+      '<button class="usm-open" data-usmopen="' + esc(x.s) + '">Lock and open company</button>';
   }
   function paintE() { var e = document.getElementById("usmE"); e.innerHTML = inspector(); root.classList.toggle("insp", !!sel); }
   function openSel(t, k) { sel = { t: t, k: k }; paintE(); crumbs(); }
   function crumbs() {
     var c = current(), a = '<button data-usmcat="c1">US Market</button> › <button data-usmcat="' + c[0] + '"' + (c[0] === "c6" || sel ? "" : ' aria-current="page"') + ">" + esc((c[1] ? c[1] + " " : "") + c[2]) + "</button>";
-    if (c[0] === "c6") a += " › " + (C6.sub === "intel" ? "<b>Intelligence</b>" : "<b>" + (C6.per === "fy" ? "Fiscal year" : "Calendar &amp; estimates") + "</b>");
+    if (c[0] === "c6") a += " › " + (C6.sub === "intel" ? "<b>Company &amp; results</b>" : "<b>" + (C6.per === "fy" ? "Fiscal year" : "Calendar &amp; estimates") + "</b>");
     if (sel) a += " › <b>" + esc(sel.t === "x" ? ((per("sectors") || []).filter(function (r) { return r.sym === sel.k; })[0] || { name: sel.k }).name : sel.t === "i" ? ((W() && W().instruments || []).filter(function (i) { return i.id === sel.k; })[0] || { name: sel.k }).name : sel.k.split("|")[0]) + "</b>";
     document.getElementById("usmCrumb").innerHTML = a;
   }
@@ -222,19 +219,6 @@
       '<section class="usm-card"><div class="usm-rowh"><h3>Sector performance <small>sector funds, price return</small></h3>' + tabs("c3", ["day", "week", "month", "qtd"]) + "</div>" +
       L.map(function (r) { var w = Math.abs(r[o]) / mx * 50; return '<div class="usm-bar' + (sym === r.sym ? " on" : "") + '" data-usmx="' + esc(r.sym) + '" role="button" tabindex="0"><span class="nm">' + esc(r.name) + '</span><span class="tk"><i class="' + (r[o] >= 0 ? "pos" : "neg") + '" style="width:' + w.toFixed(1) + "%;" + (r[o] >= 0 ? "left:50%" : "right:50%") + '"></i></span><span class="val ' + dirCls(r[o]) + '">' + sg(r[o], 2, "%") + "</span></div>"; }).join("") + "</section>";
   }
-  function c8View() {
-    var days = PV.c8 === "day" ? 1 : PV.c8 === "week" ? 7 : 30, J = E(), Sc = (J && J.sp_schedule && J.sp_schedule.days) || {}, now = Date.now(), rows = [];
-    for (var n = 0; n < days; n++) { var t = now + n * 864e5, d = nyDay(t);
-      try { (window.EVENTS && EVENTS.on ? EVENTS.on(t) : []).forEach(function (e) { if (e.cc !== "us" || /^(contract|wasde|cftc|ca|usda)$/.test(e.kind || "") || /earnings|CBOT|grain|corn|wheat|soy/i.test(e.label || "") || (n === 0 && e.t < now - 864e5)) return; rows.push({ d: d, t: e.t, label: e.label, high: e.high }); }); } catch (x) {}
-      if (Sc[d] && Sc[d].length) { var top = Sc[d].slice().sort(function (a, b) { return (b.mcap || 0) - (a.mcap || 0); }).slice(0, 4); rows.push({ d: d, t: Infinity, label: Sc[d].length + " S&P 500 earnings reports", syms: top.map(function (y) { return y.s + "|" + d; }) }); } }
-    rows.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : a.t - b.t; });
-    function tm(r) { return r.t === Infinity ? "All day" : new Date(r.t).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }) + " ET"; }
-    return '<section class="usm-card"><div class="usm-rowh"><h3>US event list <small>' + rows.length + "</small></h3>" + tabs("c8", ["day", "week", "month"]) + "</div>" +
-      (rows.length ? '<div class="usm-tw"><table class="usm-tb usm-ev"><thead><tr><th>Date</th><th>Time</th><th>Event</th><th></th></tr></thead><tbody>' + rows.map(function (r) { return "<tr><td>" + esc(r.d.slice(5)) + "</td><td>" + tm(r) + "</td><td>" + esc(r.label) + (r.syms ? ' <span class="usm-chips">' + r.syms.map(function (k) { return '<button class="usm-mini" data-usms="' + esc(k) + '">' + esc(k.split("|")[0]) + "</button>"; }).join("") + "</span>" : "") + "</td><td>" + (r.high ? '<span class="usm-b dl">High impact</span>' : "") + "</td></tr>"; }).join("") + "</tbody></table></div>" : '<p class="usm-none">No US events scheduled in this period.</p>') + "</section>" +
-      '<section class="usm-card usm-rowh"><h3 style="margin:0">M&amp;A tracker</h3><span class="usm-b na">Unavailable</span></section>';
-  }
-  /* -------- C4 Breadth -------- */
-  var B4 = { per: "day", f: null }, B4P = { day: 1, week: 2, month: 4, ytd: 10 };
   function BR() { var m = MK(); return m && m.breadth && m.breadth.rows && m.breadth.rows.length ? m.breadth : null; }
   function stName(s) { var J = E(), N = J && J.sp500 && J.sp500.rows; return (N && N[s]) || ""; }
   function bucketOf(v, k) { var e = [-3, -2, -1, 0, 1, 2, 3].map(function (x) { return x * k; }), i = 0; while (i < e.length && v >= e[i]) i++; return i; }
@@ -335,11 +319,6 @@
     return '<section class="usm-card"><div class="usm-rowh"><h3>Breakout stream <small>' + L.length + ' today, grouped by name per minute</small></h3><span class="usm-seg">' + seg("all", "All") + seg("cash", "Cash") + seg("fut", "Futures") + seg("eq", "Earnings") + "</span></div>" + streamTable(L) + "</section>" +
       stockHighs();
   }
-  function wlView() {
-    var J = E(); if (!J) return '<section class="usm-card"><p class="note">Loading…</p></section>';
-    var R = records().filter(function (x) { return x.w; }), d = C6.day; C6.day = null; var h = seasonRead(R) + matrix(R, nyDay()); C6.day = d;
-    return h + '<section class="usm-card usm-rowh"><div><h3 style="margin:0">Watchlist names</h3><p class="usm-none" style="margin:3px 0 0">' + (J.watchlist || []).map(esc).join(" · ") + "</p></div></section>";
-  }
   /* -------- A: command palette + saved workspaces -------- */
   var PRESET = [{ n: "Pre-Market Brief", cat: "c1", dock: true }, { n: "Intraday Momentum", cat: "c5", f: "all" }, { n: "Earnings Night", cat: "c6", sub: "cal", per: "q", state: "done", today: true, dock: false }];
   function saved() { try { return JSON.parse(localStorage.getItem("desk.usmWs") || "[]"); } catch (e) { return []; } }
@@ -370,7 +349,7 @@
       var R = records(), J = E(), N = (J && J.sp500 && J.sp500.rows) || {};
       R.forEach(function (x) { sym(x.s, x.n, function () { openSel("s", x.s + "|" + x.date); }); });
       Object.keys(N).forEach(function (k) { sym(k, N[k], function () { openSel("s", k + "|"); }); });
-      if (/^[A-Z.\-]{1,6}$/.test(U)) add("Research", "Research " + U + " in Intelligence", function () { C6.sub = "intel"; go("c6"); if (window.EARNINGS && EARNINGS.choose) EARNINGS.choose(U); });
+      if (/^[A-Z.\-]{1,6}$/.test(U)) add("Lock", "Lock " + U + " and open company", function () { lockCo(U); });
       saved().forEach(function (w) { if (w.n.toLowerCase().indexOf(l) >= 0) add("Workspace", "Remove “" + w.n + "”", function () { setSaved(saved().filter(function (a) { return a.n !== w.n; })); paintWs(); }); });
     }
     if (!l) add("Workspace", "Type “save name” to save this view", function () { palOpen("save "); });
@@ -384,11 +363,39 @@
   function palClose() { document.getElementById("usmP").hidden = true; }
   function palRun(i) { var x = PAL.items[i]; if (!x) return; palClose(); x.fn(); }
   function paintWs() { var w = document.getElementById("usmWs"); w.innerHTML = '<option value="">Workspaces</option>' + PRESET.concat(saved()).map(function (x, i) { return '<option value="' + i + '">' + esc(x.n) + "</option>"; }).join(""); }
+  /* -------- Locked company: earnings card. Skeleton while a release is due, then numbers the moment they arrive, then the filing cards reload -------- */
+  var LOCK = { was: {}, sk: {} };
+  function lockedSym() { var V = window.EARNINGS && EARNINGS._view ? EARNINGS._view() : null; return V && V.lock && V.sel ? V.sel : null; }
+  function lockCo(sym) { C6.sub = "intel"; go("c6"); if (window.EARNINGS && EARNINGS.lockTo) EARNINGS.lockTo(sym); paintLock(); }
+  function pickRec(sym) { var A = records().filter(function (r) { return r.s === sym; }), t = nyDay(), f = function (p) { return A.filter(p).sort(function (a, b) { return a.date < b.date ? -1 : 1; }); };
+    return f(function (r) { return r.date === t; })[0] || f(function (r) { return r.done && Date.parse(t) - Date.parse(r.date) <= 864e6; }).pop() || f(function (r) { return r.date > t; })[0] || f(function () { return true; }).pop() || null; }
+  function dueNow(x) { if (x.done || x.date !== nyDay()) return x.board === "refreshing" && !x.done; if (x.board === "refreshing" || x.filed) return true;
+    var m = new Date().toLocaleTimeString("en-GB", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit" }); return x.time === "bmo" ? m >= "06:00" : x.time === "amc" ? m >= "16:00" : false; }
+  function lockCard(sym, x) {
+    var h = '<div class="usm-lh"><b>' + esc(sym) + "</b><span>" + esc(x && x.n || "") + "</span>";
+    if (!x) return '<section class="usm-card usm-lock">' + h + '<span class="usm-b na">No date on the calendar</span></div></section>';
+    var sk = LOCK.sk[sym] || dueNow(x);
+    if (sk) return '<section class="usm-card usm-lock">' + h + '<span class="usm-b dl">Results due · checking automatically</span></div><div class="usm-skg" aria-label="Waiting for results"><i></i><i></i><i></i><i></i></div><p class="usm-none">' + esc(x.date) + " · " + sess(x.time) + " · estimate EPS " + (x.epsE == null ? "—" : num(x.epsE, 2)) + " · revenue " + money(x.revE) + "</p></section>";
+    function m(l, v, n) { return "<div><small>" + l + "</small><b>" + v + "</b>" + (n ? "<em>" + n + "</em>" : "") + "</div>"; }
+    function sp(v) { return v == null ? "" : '<span class="' + dirCls(v) + '">' + sg(v, 1, "%") + " vs estimate</span>"; }
+    if (!x.done) return '<section class="usm-card usm-lock">' + h + '<span class="usm-b cl">Next earnings</span></div><div class="usm-lg">' + m("Report date", esc(x.date), sess(x.time)) + m("EPS estimate", x.epsE == null ? "—" : num(x.epsE, 2), x.ests != null ? num(x.ests, 0) + " estimates" : "") + m("Revenue estimate", money(x.revE)) + m("EPS a year ago", x.ly == null ? "—" : num(x.ly, 2)) + "</div></section>";
+    return '<section class="usm-card usm-lock' + (x.date === nyDay() ? " fresh" : "") + '">' + h + outcome(x, nyDay()) + '<span class="usm-b ' + (x.date === nyDay() ? "up" : "cl") + '">' + (x.date === nyDay() ? "Released today" : "Latest results " + esc(x.date)) + '</span></div><div class="usm-lg">' + m("EPS" + (x.gaap ? " (GAAP)" : ""), x.epsA == null ? "—" : num(x.epsA, 2), x.gaap ? "Not comparable with estimate " + (x.epsE == null ? "—" : num(x.epsE, 2)) : sp(x.epsP) || "Estimate " + (x.epsE == null ? "—" : num(x.epsE, 2))) + m("Revenue", money(x.revA), sp(x.revP) || "Estimate " + money(x.revE)) + (x.yoy != null ? m("Revenue YoY", '<span class="' + dirCls(x.yoy) + '">' + sg(x.yoy, 1, "%") + "</span>") : "") + m("Reported", esc(x.date), sess(x.time)) + "</div>" + (x.hl ? '<p class="usm-q">' + esc(x.hl) + "</p>" : "") + (x.guide ? '<p class="usm-q"><b>Guidance:</b> ' + esc(x.guide) + "</p>" : "") + "</section>";
+  }
+  function paintLock() {
+    var el = document.getElementById("usmLock"); if (!el) return;
+    var sym = cat === "c6" && C6.sub === "intel" ? lockedSym() : null;
+    if (!sym) { if (el.innerHTML) el.innerHTML = ""; return; }
+    var x = pickRec(sym), key = sym + "|" + (x ? x.date : "");
+    if (x) { var pv = LOCK.was[key];
+      if (pv === false && x.done) { LOCK.sk[sym] = true; setTimeout(function () { delete LOCK.sk[sym]; if (window.COMPANY && COMPANY._mem) delete COMPANY._mem[sym]; if (window.EARNINGS) EARNINGS.render(); paintLock(); }, 1200); }
+      LOCK.was[key] = x.done; }
+    var h = lockCard(sym, x); if (el.innerHTML !== h) el.innerHTML = h;
+  }
   function current() { return CATS.filter(function (c) { return c[0] === cat; })[0]; }
 
   /* -------- shell -------- */
   var css = document.createElement("style");
-  css.textContent = '#usm{display:none;gap:10px;grid-template-columns:172px minmax(0,1fr);grid-template-areas:"a a" "c c" "b d" "f f" "g g"}#usm:has(#panel-earnings.active){display:grid}' +
+  css.textContent = '#usm{display:none;gap:10px;grid-template-columns:minmax(0,1fr);grid-template-areas:"a" "c" "b" "d" "f" "g"}#usm:has(#panel-earnings.active){display:grid}' +
     '.usm-a{grid-area:a;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:8px 12px}.usm-a b{font-size:14px;color:var(--ink);letter-spacing:.02em}' +
     '.usm-s{flex:1 1 240px;max-width:460px;background:var(--panel2);color:var(--ink);border:1px solid var(--line2);border-radius:6px;padding:7px 10px;font:inherit;font-size:13px}.usm-s:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}' +
     '.usm-st{margin-left:auto;display:flex;gap:10px;align-items:center;font:500 12px "IBM Plex Mono",monospace;color:var(--muted);flex-wrap:wrap}' +
@@ -406,7 +413,7 @@
     '.usm-gl .h{display:flex;justify-content:space-between;align-items:center}.usm-gl h3{margin:0}.usm-gl .big{font:600 34px "IBM Plex Mono",monospace;margin:2px 0 8px}.usm-gl .usm-rd{display:grid;grid-template-columns:1fr 1fr 2.4fr;gap:14px;font-size:13px;color:var(--ink)}.usm-gl .usm-rd b{display:block;font-size:11.5px;font-weight:500;color:var(--faint)}' +
     '.usm-hold{padding:34px 22px;text-align:center}.usm-hold h3{margin:10px 0 6px;font-size:17px}.usm-hold p{margin:0;color:var(--muted);font-size:13.5px}' +
     '.usm-g{grid-area:g;position:sticky;bottom:0;z-index:5;overflow:hidden;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;font:500 12px/28px "IBM Plex Mono",monospace;white-space:nowrap}.usm-g>div{display:inline-block;padding-left:100%;animation:usmTape 80s linear infinite}.usm-g:hover>div{animation-play-state:paused}.usm-g span{margin-right:22px;color:var(--ink)}.usm-g em{font-style:normal;color:var(--faint);margin-right:14px}@keyframes usmTape{to{transform:translateX(-100%)}}' +
-    '#usm.insp{grid-template-columns:172px minmax(0,1fr) 300px;grid-template-areas:"a a a" "c c c" "b d e" "f f f" "g g g"}#usmE{display:none;grid-area:e;align-self:start;position:sticky;top:8px;max-height:calc(100vh - 60px);overflow:auto;background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--ink)}#usm.insp #usmE{display:block}' +
+    '#usm.insp{grid-template-columns:minmax(0,1fr) 300px;grid-template-areas:"a a" "c c" "b b" "d e" "f f" "g g"}#usmE{display:none;grid-area:e;align-self:start;position:sticky;top:8px;max-height:calc(100vh - 60px);overflow:auto;background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--ink)}#usm.insp #usmE{display:block}' +
     '.usm-eh{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:8px}.usm-eh b{font:600 17px "IBM Plex Mono",monospace;display:block}.usm-eh small{color:var(--muted)}#usmE .big{font:600 24px "IBM Plex Mono",monospace}#usmE h4{margin:13px 0 5px;font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}#usmE dl{margin:0}#usmE dl>div{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-top:1px solid var(--line)}#usmE dt{color:var(--muted)}#usmE dd{margin:0;text-align:right;font-family:"IBM Plex Mono",monospace;font-size:12px}#usmE a{color:var(--cyan)}.usm-sp{display:block;width:100%;height:56px;margin-top:8px}.usm-er{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px}.usm-q{margin:0;font-size:12.5px;line-height:1.45;color:var(--muted)}.usm-open{width:100%;margin-top:12px;padding:7px;background:#1a2a42;color:#fff;border:1px solid #3d5a80;border-radius:6px;font:inherit;font-size:13px;cursor:pointer}' +
     '.usm-b.up{color:var(--green)}.usm-b.dn{color:var(--red)}.usm-seg{display:inline-flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden}.usm-seg button{appearance:none;border:0;background:var(--panel);color:var(--muted);font:inherit;font-size:12.5px;padding:5px 10px;cursor:pointer}.usm-seg button[aria-pressed]{background:#1a2a42;color:#fff}.usm-tg{font-size:12.5px;color:var(--muted);display:inline-flex;gap:5px;align-items:center}.usm-rowh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}.usm-rowh h3{margin:0}.usm-mini{appearance:none;background:var(--panel2);border:1px solid var(--line2);color:var(--muted);border-radius:4px;padding:1px 8px;font:inherit;font-size:12px;cursor:pointer;margin-left:3px}.usm-none{color:var(--muted);font-size:13px;margin:8px 0}' +
     '.usm-cal{display:grid;grid-template-columns:52px repeat(5,minmax(0,1fr));gap:3px;font-size:12px}.usm-cal .hd,.usm-cal .wk{color:var(--faint);font-size:11px;padding:3px}.usm-cal .wk{align-self:center}.usm-cal .dy{appearance:none;display:flex;gap:6px;align-items:baseline;min-height:30px;padding:4px 7px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;color:var(--faint);font:inherit;text-align:left;cursor:pointer}.usm-cal .dy:disabled{cursor:default;opacity:.55}.usm-cal .dy b{color:var(--ink);font:600 13px "IBM Plex Mono",monospace}.usm-cal .dy small{margin-left:auto;color:var(--green);font-size:10.5px}.usm-cal .dy.tdy{border-color:var(--amber)}.usm-cal .dy.on{background:#1a2a42;border-color:#3d5a80}' +
@@ -419,16 +426,20 @@
     '.usm-heat{display:flex;flex-wrap:wrap;gap:4px}.usm-heat button{appearance:none;border:1px solid var(--line2);border-radius:4px;padding:8px;color:var(--ink);font:inherit;font-size:12px;text-align:left;cursor:pointer;min-height:52px}.usm-heat button.on{outline:2px solid var(--cyan)}.usm-heat b{display:block;font-size:12.5px}.usm-heat span{font-family:"IBM Plex Mono",monospace;font-size:11px}' +
     '.usm-grid td,.usm-grid th{text-align:left}.usm-grid button{appearance:none;width:100%;border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:4px;padding:5px 7px;font:500 12.5px "IBM Plex Mono",monospace;text-align:left;cursor:pointer}.usm-grid button:disabled{color:var(--faint);cursor:default}.usm-grid button.on{background:#1a2a42;border-color:#3d5a80}.usm-grid small{display:block;font-size:10.5px;font-weight:400;color:var(--faint)}.usm-wl{display:grid;grid-template-columns:100px minmax(40px,1fr) 104px;gap:8px;align-items:center;font-size:12.5px;color:var(--ink);padding:5px 0}.usm-wl .tk{height:14px;background:var(--panel2);border-radius:2px;overflow:hidden}.usm-wl i{display:block;height:100%}.usm-wl i.nr{background:var(--green)}.usm-wl i.md{background:var(--amber)}.usm-wl i.lg{background:var(--faint)}.usm-wl span:last-child{font-family:"IBM Plex Mono",monospace;text-align:right;font-size:12px}[data-usmn]{cursor:pointer}.usm-tb tr[data-usmn]:hover td{background:var(--panel2)}' +
     '@media (max-width:760px){.usm-kp{grid-template-columns:repeat(2,minmax(0,1fr))}.usm-hist .lb{font-size:9px}}' +
+    '.usm-b-rail{flex-direction:row!important;flex-wrap:wrap;position:static!important;gap:6px;padding:8px}.usm-b-rail button{flex:1 1 110px;justify-content:center;align-items:center;white-space:nowrap;background:var(--panel2);border:1px solid var(--line2);padding:8px 10px;border-radius:6px}.usm-b-rail button[aria-current]{background:#1a2a42;border-color:var(--green);box-shadow:none;color:#fff;font-weight:600}' +
+    '#panel-earnings .ut-shell{display:block}#panel-earnings .ut-nav{display:flex!important;flex-wrap:wrap;gap:5px;align-items:center;position:static;width:auto;max-height:none;margin:0 0 10px;padding:7px 9px}#panel-earnings .ut-nav .g{width:auto;margin:0 4px 0 6px;padding:0}#panel-earnings .ut-nav button{width:auto;flex:0 0 auto;margin:0;padding:6px 10px;border:1px solid var(--line2);border-radius:6px;background:var(--panel2);white-space:nowrap}#panel-earnings .ut-nav button[aria-current=true]{background:#1a2a42;border-color:var(--green);color:#fff}#panel-earnings .ut-nav button small{display:none}#panel-earnings .ut-nav button:disabled{display:none}#panel-earnings .ut-main{width:100%}' +
+    '.usm-lock{border-color:#3d5a80}.usm-lock.fresh{background:rgba(63,185,127,.08);border-color:var(--green)}.usm-lh{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:9px}.usm-lh b{font:600 18px "IBM Plex Mono",monospace;color:var(--ink)}.usm-lh>span:nth-child(2){color:var(--muted);font-size:13px;margin-right:auto}.usm-lg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.usm-lg small{display:block;color:var(--faint);font-size:11.5px}.usm-lg b{display:block;font:600 18px "IBM Plex Mono",monospace;color:var(--ink)}.usm-lg em{font-style:normal;font-size:11.5px;color:var(--muted)}.usm-lock .usm-q{margin-top:8px}.usm-skg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:8px}.usm-skg i{display:block;height:44px;border-radius:5px;background:linear-gradient(90deg,var(--panel2),var(--line2),var(--panel2));background-size:200% 100%;animation:usmSk 1.3s linear infinite}@keyframes usmSk{to{background-position:-200% 0}}' +
+    '@media (max-width:760px){.usm-lg,.usm-skg{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (prefers-reduced-motion:reduce){.usm-skg i{animation:none}}' +
     '@media (prefers-reduced-motion:reduce){.usm-g{overflow-x:auto}.usm-g>div{animation:none;padding-left:8px}}' +
     '@media (max-width:1100px){.usm-c{grid-template-columns:repeat(3,minmax(0,1fr))}.usm-2{grid-template-columns:1fr}}' +
-    '@media (max-width:1100px){#usm.insp{grid-template-columns:172px minmax(0,1fr);grid-template-areas:"a a" "c c" "b d" "f f" "g g"}#usm.insp #usmE{position:fixed;right:0;top:0;bottom:0;width:min(340px,100vw);max-height:none;z-index:60;border-radius:0}}' +
+    '@media (max-width:1100px){#usm.insp{grid-template-columns:minmax(0,1fr);grid-template-areas:"a" "c" "b" "d" "f" "g"}#usm.insp #usmE{position:fixed;right:0;top:0;bottom:0;width:min(340px,100vw);max-height:none;z-index:60;border-radius:0}}' +
     '@media (max-width:760px){#usm.insp,#usm{grid-template-columns:minmax(0,1fr);grid-template-areas:"a" "c" "b" "d" "f" "g"}.usm-c{grid-template-columns:repeat(2,minmax(0,1fr))}.usm-b-rail{flex-direction:row;overflow-x:auto;position:static}.usm-b-rail button{white-space:nowrap;flex:0 0 auto}.usm-b-rail hr{display:none}.usm-gl .usm-rd{grid-template-columns:1fr}.usm-g{position:static}.usm-st{margin-left:0}}';
   document.head.appendChild(css);
 
   var root = document.createElement("div"); root.id = "usm";
   root.innerHTML = '<div class="usm-a"><b>US Market</b><button class="usm-s usm-qb" id="usmQ" aria-label="Open command palette">Ticker, category or period · Ctrl+K</button><select id="usmWs" aria-label="Saved workspaces"></select><div class="usm-st" id="usmSt"></div></div>' +
-    '<div class="usm-c" id="usmC"></div><nav class="usm-b-rail" id="usmB" aria-label="US Market categories"></nav>' +
-    '<div class="usm-d"><div class="usm-crumb" id="usmCrumb"></div><div id="usmSub"></div><div id="usmView"></div></div><aside id="usmE" aria-label="Inspector"></aside><div class="usm-f" id="usmF"></div><div class="usm-g" id="usmG" aria-hidden="true"></div><div id="usmP" hidden role="dialog" aria-label="Command palette"><div class="usm-pb"><input id="usmPq" type="text" autocomplete="off" spellcheck="false" placeholder="Type a ticker, category or period (monthly sectors)"><div id="usmPl" role="listbox"></div></div></div>';
+    '<div class="usm-c" id="usmC"></div><nav class="usm-b-rail" id="usmB" aria-label="US Market category slicer"></nav>' +
+    '<div class="usm-d"><div class="usm-crumb" id="usmCrumb"></div><div id="usmSub"></div><div id="usmLock"></div><div id="usmView"></div></div><aside id="usmE" aria-label="Inspector"></aside><div class="usm-f" id="usmF"></div><div class="usm-g" id="usmG" aria-hidden="true"></div><div id="usmP" hidden role="dialog" aria-label="Command palette"><div class="usm-pb"><input id="usmPq" type="text" autocomplete="off" spellcheck="false" placeholder="Type a ticker, category or period (monthly sectors)"><div id="usmPl" role="listbox"></div></div></div>';
   P.parentNode.insertBefore(root, P);
   root.querySelector(".usm-d").appendChild(P);   /* C6 hosts the existing page */
   var lab = BTN.firstChild; if (lab && lab.nodeType === 3) lab.nodeValue = "US Market";
@@ -436,7 +447,7 @@
   function paintRail() {
     root.dataset.cat = cat;
     document.getElementById("usmB").innerHTML = CATS.map(function (c) {
-      return (c[0] === "wl" ? "<hr>" : "") + '<button data-usmcat="' + c[0] + '"' + (c[0] === cat ? ' aria-current="page"' : "") + "><i>" + c[1] + "</i>" + esc(c[2]) + "</button>";
+      return '<button data-usmcat="' + c[0] + '"' + (c[0] === cat ? ' aria-current="page"' : "") + ">" + esc(c[2]) + "</button>";
     }).join("");
     root.dataset.v = cat === "c6" && C6.sub === "intel" ? "intel" : "view"; crumbs();
   }
@@ -449,23 +460,23 @@
         one = function (i, n) { return "<span>" + esc(n) + " " + num(i.last, dec(i)) + ' <b class="' + dirCls(i.chg) + '">' + sg(i.pct, 2, "%") + "</b></span>"; };
     document.getElementById("usmG").innerHTML = "<div><em>CASH</em>" + cash.map(function (i) { return one(i, SHORT[i.sym] || i.name); }).join("") + "<em>FUTURES</em>" + fut.map(function (i) { return one(i, i.name.replace(/ \(.*\)/, "")); }).join("") + "</div>";
     if (cat === "c1") document.getElementById("usmView").innerHTML = snapshot(); else if (cat === "c6") paintC6(); else if (cat === "c2" || cat === "c3") view();
-    paintDock();
+    paintDock(); paintLock();
     if (sel) paintE();
   }
-  function view() { var C = current(), c = C[0]; document.getElementById("usmView").innerHTML = c === "c1" ? snapshot() : c === "c2" ? c2View() : c === "c3" ? c3View() : c === "c4" ? c4View() : c === "c9" ? c9View() : c === "c8" ? c8View() : c === "c5" ? c5View(ST.paused && ST.snap ? ST.snap : streamRows()) : c === "wl" ? wlView() : c === "c6" ? c6View() : holding(C); }
-  function paintC6() { if (cat === "wl") { view(); return; } document.getElementById("usmSub").innerHTML = subBar(); root.dataset.v = C6.sub === "intel" ? "intel" : "view"; document.getElementById("usmView").innerHTML = c6View(); crumbs(); }
+  function view() { var C = current(), c = C[0]; document.getElementById("usmView").innerHTML = c === "c1" ? snapshot() : c === "c2" ? c2View() : c === "c3" ? c3View() : c === "c4" ? c4View() : c === "c9" ? c9View() : c === "c5" ? c5View(ST.paused && ST.snap ? ST.snap : streamRows()) : c === "c6" ? c6View() : holding(C); }
+  function paintC6() { if (cat === "wl") { view(); return; } document.getElementById("usmSub").innerHTML = subBar(); root.dataset.v = C6.sub === "intel" ? "intel" : "view"; document.getElementById("usmView").innerHTML = c6View(); crumbs(); paintLock(); }
   function go(c) {
     cat = c; try { localStorage.setItem("desk.usmCat", c); } catch (e) {}
     paintRail(); var C = current();
     view();
-    paintDock();
+    paintDock(); paintLock();
     if (c === "c6") { document.getElementById("usmSub").innerHTML = subBar(); if (C6.sub === "intel" && window.EARNINGS) EARNINGS.render(); }
   }
   root.addEventListener("click", function (ev) { var t = ev.target.closest ? ev.target : null; var b; if (!t) return;
     if (t.closest("#panel-earnings")) return;
     b = t.closest("[data-usmcat]"); if (b) { go(b.getAttribute("data-usmcat")); return; }
     if (t.closest("[data-usmclose]")) { sel = null; paintE(); crumbs(); return; }
-    b = t.closest("[data-usmopen]"); if (b) { C6.sub = "intel"; go("c6"); if (window.EARNINGS && EARNINGS.choose) EARNINGS.choose(b.getAttribute("data-usmopen")); return; }
+    b = t.closest("[data-usmopen]"); if (b) { lockCo(b.getAttribute("data-usmopen")); return; }
     if (t.closest("[data-usmpause]")) { ST.paused = true; ST.snap = streamRows(); paintDock(); return; }
     if (t.closest("[data-usmresume]")) { ST.paused = false; ST.snap = null; paintDock(); return; }
     if (t.closest("[data-usmdock]")) { ST.dock = !ST.dock; try { localStorage.setItem("desk.usmDock", ST.dock ? "1" : "0"); } catch (e) {} paintDock(); return; }
@@ -490,10 +501,7 @@
     b = t.closest("[data-usms]"); if (b) { openSel("s", b.getAttribute("data-usms")); if (cat === "c6") paintC6(); return; }
     b = t.closest("[data-usmi]"); if (b) openSel("i", b.getAttribute("data-usmi"));
   });
-  root.addEventListener("change", function (ev) { if (ev.target.id === "usmWl") { C6.wl = ev.target.checked; try { localStorage.setItem("desk.usmWl", C6.wl ? "1" : "0"); } catch (e) {} paintC6(); } });
   root.addEventListener("keydown", function (ev) { if (ev.key !== "Enter" && ev.key !== " ") return; var b = ev.target.closest && ev.target.closest("[data-usms],[data-usmi],[data-usmx],[data-usmn]"); if (b) { ev.preventDefault(); b.click(); } });
-  /* a symbol clicked inside the Intelligence page also fills the inspector; that page keeps its own behaviour */
-  P.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-uesym],[data-utev]"); if (b) openSel("s", (b.getAttribute("data-uesym") || b.getAttribute("data-utev")) + "|"); });
   var PQ = document.getElementById("usmPq");
   PQ.addEventListener("input", function () { PAL.i = 0; palPaint(); });
   PQ.addEventListener("keydown", function (ev) {
@@ -519,7 +527,7 @@
     while ((n = tw.nextNode())) { var v = n.nodeValue, c = clean(v); if (c !== v) n.nodeValue = c; }
     P.querySelectorAll("[title],[placeholder]").forEach(function (e) { ["title", "placeholder"].forEach(function (a) { var v = e.getAttribute(a); if (v) { var c = clean(v); if (c !== v) e.setAttribute(a, c); } }); });
   }
-  var mo = new MutationObserver(function () { mo.disconnect(); scrub(); watch(); });
+  var mo = new MutationObserver(function () { mo.disconnect(); scrub(); watch(); paintLock(); });
   function watch() { mo.observe(P, { subtree: true, childList: true, characterData: true }); }
   scrub(); watch();
 
@@ -527,6 +535,8 @@
   setInterval(function () { if (P.classList.contains("active") && !document.hidden) paintLive(); }, 30000);
   (function wait(n) { if (W()) { paintLive(); return; } if (n > 0) setTimeout(function () { wait(n - 1); }, 1500); })(40);
   (function waitE(n) { if (E() && MK()) { paintLive(); if (cat !== "c1") view(); if (cat === "c6") paintC6(); return; } if (n > 0) setTimeout(function () { waitE(n - 1); }, 1500); })(40);
-  window.addEventListener("desk:earnboard", function () { if (cat === "c6" && C6.sub === "cal" && P.classList.contains("active")) paintC6(); if (sel && sel.t === "s") paintE(); });
+  window.addEventListener("desk:earnboard", function () { if (cat === "c6" && C6.sub === "cal" && P.classList.contains("active")) paintC6(); if (sel && sel.t === "s") paintE(); paintLock(); });
+  ["desk:earnlive", "desk:earnpr"].forEach(function (n) { window.addEventListener(n, paintLock); });
+  setInterval(function () { if (P.classList.contains("active") && !document.hidden) paintLock(); }, 15000);
   window.USM = { go: go };
 })();
