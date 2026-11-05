@@ -67,11 +67,12 @@
     ".ss-x{appearance:none;border:0;background:transparent;color:var(--faint);font-size:16px;cursor:pointer;padding:0 4px}.ss-x:hover{color:var(--ink)}" +
     "@media (prefers-reduced-motion:reduce){.ss-em{animation:none}}@media (max-width:760px){.ss-s{display:block;margin:2px 0 0}}";
   document.head.appendChild(css);
-  /* ---------- motion: particles drifting through the header + a themed cursor with a light trail (switchable, off for reduced motion) ---------- */
+  /* ---------- motion: particles drifting through the header + a themed cursor with a light trail (always on) ---------- */
   var PART = { newyear: "✨🎉", valentine: "💗", stpat: "☘️", easter: "🌸🥚", canada: "🍁", july4: "✨⭐", summer: "☀️", thanks: "🍂🍁", halloween: "🦇🍂", remember: "🌺",
                thanksus: "🍂🍁", xmas: "❄️✨", planting: "🌱💧", growing: "🌽🌿", harvest: "🌾🍂", winter: "❄️", orange: "🧡", family: "✨", memorial: "⭐", victoria: "✨", labour: "✨" };
   var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches, FX = "desk.seasonFx";
-  var fxOn = !reduce; try { if (localStorage.getItem(FX) === "0") fxOn = false; } catch (e) {}
+  var fxOn = true;   /* BRD FX-1: effects are always on, with no off switch and no stored preference */
+  try { localStorage.removeItem(FX); } catch (e) {}
   var chars = Array.from(PART[th[2]] || "✨"), sky = document.createElement("div"); sky.className = "ss-sky no-invert"; sky.setAttribute("aria-hidden", "true");
   for (var i = 0; i < 14; i++) { var sp = document.createElement("span"); sp.textContent = chars[i % chars.length];
     sp.style.left = (Math.random() * 100).toFixed(1) + "%"; sp.style.animationDelay = (-Math.random() * 14).toFixed(1) + "s"; sp.style.animationDuration = (9 + Math.random() * 8).toFixed(1) + "s";
@@ -88,10 +89,7 @@
   function apply() {
     document.documentElement.classList.toggle("ss-fx", fxOn); document.documentElement.style.setProperty("--ss-cur", fxOn ? cur : "auto");
     document.removeEventListener("mousemove", trail); if (fxOn) document.addEventListener("mousemove", trail, { passive: true });
-    var b = bar.querySelector(".ss-fxb"); if (b) { b.textContent = fxOn ? "✨ Effects on" : "Effects off"; b.setAttribute("aria-pressed", fxOn); }
   }
-  var fb = document.createElement("button"); fb.type = "button"; fb.className = "ss-fxb"; fb.title = "Seasonal cursor and animations"; bar.insertBefore(fb, bar.querySelector(".ss-x"));
-  fb.addEventListener("click", function () { fxOn = !fxOn; try { localStorage.setItem(FX, fxOn ? "1" : "0"); } catch (e) {} apply(); });
   apply();
   var css2 = document.createElement("style");
   css2.textContent = ".ss-sky{position:absolute;inset:0;overflow:hidden;pointer-events:none;border-radius:inherit;z-index:0;display:none}.ss-fx .ss-sky{display:block}" +

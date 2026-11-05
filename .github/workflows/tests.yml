@@ -12,6 +12,7 @@ jobs:
         with: { node-version: "20" }
       - run: node tests/fwd.test.js
       - run: node tests/co_engine.test.js
+      - run: node tests/grains.test.js
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install -q -r scripts/requirements.txt   # once, before any Python test (briefing/legislation import requests)

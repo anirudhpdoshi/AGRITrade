@@ -50,6 +50,23 @@ a:hover{text-decoration:underline}
 .tab-btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 
 main{max-width:1920px;margin:0 auto;padding:14px 16px 30px}
+.tab-btn.gr-child{display:none!important}
+#grains-head[hidden]{display:none}
+#grains-head{margin:0 0 14px}
+.gr-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;font-size:13px;color:var(--muted);margin-bottom:8px}
+.gr-next{color:var(--amber);font-weight:600}
+.gr-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.gr-tile{appearance:none;display:flex;flex-direction:column;gap:3px;text-align:left;font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer}
+.gr-tile[aria-pressed="true"]{border-color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
+.gr-tile:focus-visible,.gr-slicer button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.gr-n{font-size:13px;color:var(--muted);font-weight:600}.gr-n b{font-family:"IBM Plex Mono",monospace;font-weight:500;color:var(--ink)}
+.gr-v{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:600}.gr-v small{font-size:12px;font-weight:500;color:var(--muted)}
+.gr-c{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--muted)}.gr-c.up{color:var(--green)}.gr-c.down{color:var(--red)}
+.gr-f{font-size:12px;color:var(--muted)}.gr-stale,.gr-una{font-size:12px;font-weight:700;color:var(--amber)}
+.gr-slicer{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px}.gr-slicer span{font-size:13px;color:var(--muted);margin-right:4px}
+.gr-slicer button{appearance:none;font:inherit;font-size:13px;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer}
+.gr-slicer button[aria-pressed="true"]{color:#101825;background:var(--amber);border-color:var(--amber)}
+@media (max-width:760px){.gr-strip{grid-template-columns:1fr}}
 .tab-panel{display:none}
 .tab-panel.active{display:block}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
@@ -1058,13 +1075,14 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
 <header class="topbar">
   <button class="theme-sw" id="themeSw" type="button" aria-label="Switch between dark and light mode" title="Dark / light mode"><span class="ts-d">☾ Dark</span><span class="ts-l">☀ Light</span></button>
   <h1>Grain &amp; USD/CAD Desk</h1>
-  <div class="sub">Corn · Wheat · Soybeans · USD/CAD — every tile carries its own as-of time; the strip above shows what is live.</div>
+  <div class="sub">Corn · Soybeans · Wheat · USD/CAD — every tile carries its own as-of time; the strip above shows what is live.</div>
 </header>
 <script>(function(){var f=document.createElement("script");f.src="season.js?v="+Date.now();document.head.appendChild(f);})();</script>
 <nav class="tabs" role="tablist" aria-label="Dashboard tabs">
-    <button class="tab-btn" role="tab" id="tabbtn-corn" aria-selected="true" aria-controls="panel-corn" data-tab="corn">Corn<span class="sym">ZCZ26</span></button>
-    <button class="tab-btn" role="tab" id="tabbtn-wheat" aria-selected="false" aria-controls="panel-wheat" data-tab="wheat">Wheat<span class="sym">ZWZ26</span></button>
-    <button class="tab-btn" role="tab" id="tabbtn-soybeans" aria-selected="false" aria-controls="panel-soybeans" data-tab="soybeans">Soybeans<span class="sym">ZSF27</span></button>
+    <button class="tab-btn" role="tab" id="tabbtn-grains" aria-selected="true">Grains and Oilseeds</button>
+    <button class="tab-btn gr-child" role="tab" id="tabbtn-corn" aria-selected="true" aria-controls="panel-corn" data-tab="corn">Corn<span class="sym">ZCZ26</span></button>
+    <button class="tab-btn gr-child" role="tab" id="tabbtn-wheat" aria-selected="false" aria-controls="panel-wheat" data-tab="wheat">Wheat<span class="sym">ZWZ26</span></button>
+    <button class="tab-btn gr-child" role="tab" id="tabbtn-soybeans" aria-selected="false" aria-controls="panel-soybeans" data-tab="soybeans">Soybeans<span class="sym">ZSF27</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-fx" aria-selected="false" aria-controls="panel-fx" data-tab="fx">USD/CAD<span class="sym">Desk</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-world" aria-selected="false" aria-controls="panel-world" data-tab="world">World<span class="sym">Markets</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-events" aria-selected="false" aria-controls="panel-events" data-tab="events">Events<span class="sym">Today</span></button>
@@ -1076,6 +1094,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
   </nav>
 
 <main>
+  <div id="grains-head"></div>
   <section class="tab-panel active" id="panel-corn" role="tabpanel" aria-labelledby="tabbtn-corn"></section>
   <section class="tab-panel" id="panel-wheat" role="tabpanel" aria-labelledby="tabbtn-wheat"></section>
   <section class="tab-panel" id="panel-soybeans" role="tabpanel" aria-labelledby="tabbtn-soybeans"></section>
@@ -4450,7 +4469,7 @@ function renderFX(){
 }
 
 /* ---------------- wiring ---------------- */
-document.querySelectorAll('.tab-btn').forEach(function(btn){
+document.querySelectorAll('.tab-btn[data-tab]').forEach(function(btn){
   btn.addEventListener('click', function(){
     document.querySelectorAll('.tab-btn').forEach(function(b){ b.setAttribute('aria-selected', b===btn ? 'true':'false'); });
     document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.toggle('active', p.id==='panel-'+btn.getAttribute('data-tab')); });
@@ -4631,7 +4650,7 @@ renderAll();
     if(on&&on!=='fx'&&typeof drawDestMaps==='function') drawDestMaps();
     if(typeof paintAwaiting==='function') paintAwaiting();
   };
-  document.querySelectorAll('.tab-btn').forEach(function(b){ b.addEventListener('click', function(){
+  document.querySelectorAll('.tab-btn[data-tab]').forEach(function(b){ b.addEventListener('click', function(){
     var k=b.getAttribute('data-tab'); if(DIRTY[k]&&R[k]){ R[k](); delete DIRTY[k]; if(k!=='fx'&&typeof drawDestMaps==='function') drawDestMaps(); if(typeof paintAwaiting==='function') paintAwaiting(); if(window.MOTION) MOTION.scan(); }
   }); });
 })();
@@ -4714,6 +4733,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="intel-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="briefing-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="glossary.js?v="+Date.now();document.body.appendChild(f);})();</script>
+<script src="grains-ui.js"></script>
 <script>(function(){var f=document.createElement("script");f.src="feed-rail.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="optflow-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="macro-ind.js?v="+Date.now();document.body.appendChild(f);})();</script>

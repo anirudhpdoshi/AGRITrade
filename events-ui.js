@@ -216,7 +216,7 @@
       if (!bar) { bar = document.createElement("div"); bar.className = "today-bar"; P.insertBefore(bar, P.firstChild); }
       var h = '<span class="tb-k">Updated today</span>' + J.map(function (j) { return '<button class="tb-go" data-evgo="' + esc(j.go) + '" data-evsel="' + esc(j.sel) + '" title="Go to ' + esc(j.where) + '">' + esc(j.n) + ' <small>' + hm(j.at) + '</small> →</button>'; }).join("");
       if (bar.innerHTML !== h) bar.innerHTML = h; });
-    [].forEach.call(document.querySelectorAll(".tab-btn"), function (b) { var k = b.getAttribute("data-tab"), L = tabs[k];
+    [].forEach.call(document.querySelectorAll(".tab-btn"), function (b) { var k = b.getAttribute("data-tab"), L = tabs[k]; if (!k) return;
       b.classList.toggle("tab-today", !!L); if (L) b.title = "Updated today: " + L.join(" · "); else b.removeAttribute("title"); });
   }
 
