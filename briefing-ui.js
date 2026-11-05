@@ -96,7 +96,7 @@
   function dd(iso, wd) { var p = iso.slice(0, 10).split("-"); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2], 12)).toLocaleDateString("en-US", Object.assign({ timeZone: "UTC", month: "short", day: "numeric" }, wd ? { weekday: "short" } : {})); }
   function tpc(t) { return (t || []).map(function (x) { return '<span class="br-tp">' + esc(x) + "</span>"; }).join(""); }
   function billRow(b, us) {
-    return '<li class="br-bl"><span class="br-bc">' + esc(b.code) + '</span><div><a class="br-bt" href="' + esc(b.url) + '" target="_blank" rel="noopener noreferrer">' + esc(b.title) + "</a>" +
+    return '<li class="br-bl"><span class="br-bc">' + esc(b.code) + '</span><div><span class="br-bt">' + esc(b.title) + "</span>" +
       '<div class="br-bs">' + (us ? esc(b.action) + " · " + dd(b.date) : esc(b.stage || b.status) + (b.last ? " · " + dd(b.last) : "") + (b.gov ? ' · <b>Government bill</b>' : "") + (b.assent ? ' · <b class="up">Royal assent</b>' : "")) +
       (b.law ? ' · <b class="up">Law</b>' : "") + " " + tpc(b.topics) + "</div></div></li>";
   }
