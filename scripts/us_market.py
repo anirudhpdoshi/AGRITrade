@@ -23,7 +23,34 @@ YEARS = 5
 FLAT = 0.25          # |monthly return| below this (in %) reads as "flat" in the summary
 
 
+SECTORS = {"XLK": "Technology", "XLC": "Communication Services", "XLY": "Consumer Discretionary", "XLP": "Consumer Staples", "XLE": "Energy",
+           "XLF": "Financials", "XLV": "Health Care", "XLI": "Industrials", "XLB": "Materials", "XLRE": "Real Estate", "XLU": "Utilities"}
+INDEX_PERIODS = {"^GSPC": "S&P 500", "^NDX": "Nasdaq 100", "^IXIC": "Nasdaq Composite", "^DJI": "Dow Jones", "^RUT": "Russell 2000"}
+
+
 # ---------------------------------------------------------------- pure functions (unit-tested, no network)
+def period_returns(rows):
+    """[(YYYY-MM-DD, close)] daily -> % change of the last close against each period's base close.
+    day = previous session; week = last close before this ISO week; month / qtd / ytd = last close before that period began.
+    A period whose base close is not in the history is None, never estimated."""
+    rows = sorted(r for r in rows if r[1] is not None)
+    if not rows:
+        return None
+    from datetime import date
+    last_d, last = rows[-1]
+    y, m, d = map(int, last_d.split("-"))
+    wk = date(y, m, d).isocalendar()[:2]
+    q0 = f"{y}-{(m - 1) // 3 * 3 + 1:02d}-01"
+
+    def base(test):
+        c = [r[1] for r in rows[:-1] if test(r[0])]
+        return c[-1] if c else None
+    return {"date": last_d, "last": last, "day": pct(last, rows[-2][1]) if len(rows) > 1 else None,
+            "week": pct(last, base(lambda x: date(*map(int, x.split("-"))).isocalendar()[:2] < wk)),
+            "month": pct(last, base(lambda x: x < last_d[:7] + "-01")), "qtd": pct(last, base(lambda x: x < q0)),
+            "ytd": pct(last, base(lambda x: x < f"{y}-01-01")), "closes": [round(r[1], 4) for r in rows[-60:]]}
+
+
 def month_end_closes(rows):
     """[(YYYY-MM-DD, close)] daily -> {YYYY-MM: last close of that month}."""
     out = {}
@@ -121,9 +148,18 @@ def main():
         except Exception as e:
             health[k] = {"ok": False, "error": str(e)[:160]}
             print(f"! {sym}: {e}")
+    periods = {"indexes": [], "sectors": []}
+    for bucket, names in (("indexes", INDEX_PERIODS), ("sectors", SECTORS)):
+        for sym, name in names.items():
+            try:
+                r = period_returns(fetch(sym, f"{now.year - 1}-12-01"))
+                if r:
+                    periods[bucket].append(dict(r, sym=sym, name=name))
+            except Exception as e:
+                print(f"! {sym}: {e}")
     body = {"updated_at": now.isoformat(timespec="seconds").replace("+00:00", "Z"), "provider": "Yahoo Finance daily closes (delayed, free)",
             "basis": "Price return — index levels, dividends excluded. Month-end close to month-end close; annual = Dec close to prior Dec close.",
-            "seasonality": out, "health": health}
+            "seasonality": out, "periods": periods, "health": health}
     if "--dry-run" in sys.argv:
         for k, v in out.items():
             print(k, "annual", {y: round(r, 1) for y, r in v["annual"].items() if r is not None}, "ytd", v["ytd"]["total"] and round(v["ytd"]["total"], 1))

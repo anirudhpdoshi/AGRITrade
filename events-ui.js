@@ -567,6 +567,6 @@
   (function () { var ra = window.renderAll; if (ra && !ra._ev) { window.renderAll = function () { var r = ra.apply(this, arguments); try { decorate(); } catch (e) {} return r; }; window.renderAll._ev = 1; } })();
   document.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest(".tab-btn, [data-sub], [data-sec-v]")) setTimeout(function () { try { decorate(); } catch (e) {} }, 60); });
   window.addEventListener("desk:unlock", function () { base = null; setTimeout(function () { diff(); render(); paintBadge(); }, 800); });
-  window.EVENTS = { today: function () { return todayEvents(Date.now()); }, landed: landed, decorate: decorate, render: render, log: log, _feed: function () { return feed; }, _diff: diff, _snap: snap, _base: function () { return base; } };
+  window.EVENTS = { today: function () { return todayEvents(Date.now()); }, on: todayEvents, landed: landed, decorate: decorate, render: render, log: log, _feed: function () { return feed; }, _diff: diff, _snap: snap, _base: function () { return base; } };
   if (ready()) { lastDay = dayIso(Date.now()); render(); paintBadge(); diff(); hookToast(); }
 })();

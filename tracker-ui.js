@@ -16,8 +16,8 @@
   var P = document.getElementById("panel-earnings"), BTN = document.getElementById("tabbtn-earnings");
   if (!(LIVE || on) || !P || !BTN) return;
 
-  var CATS = [["c1", "C1", "Snapshot"], ["c2", "C2", "Indexes", "plan", 3], ["c3", "C3", "Sectors", "plan", 3], ["c4", "C4", "Breadth", "na"],
-    ["c5", "C5", "Breakout Stream", "plan", 4], ["c6", "C6", "Earnings"], ["c7", "C7", "Flows", "na"], ["c8", "C8", "Deals & Events", "plan", 3],
+  var CATS = [["c1", "C1", "Snapshot"], ["c2", "C2", "Indexes"], ["c3", "C3", "Sectors"], ["c4", "C4", "Breadth", "na"],
+    ["c5", "C5", "Breakout Stream", "plan", 4], ["c6", "C6", "Earnings"], ["c7", "C7", "Flows", "na"], ["c8", "C8", "Deals & Events"],
     ["c9", "C9", "Northbook", "na"], ["wl", "", "Watchlist", "plan", 2], ["pos", "", "Positions", "na"]];
   var INDEX = ["^GSPC", "^NDX", "^IXIC", "^DJI", "^RUT"], SHORT = { "^GSPC": "S&P 500", "^NDX": "Nasdaq 100", "^IXIC": "Nasdaq Comp", "^DJI": "Dow Jones", "^RUT": "Russell 2000", "^VIX": "VIX" };
   var cat = "c1"; try { cat = localStorage.getItem("desk.usmCat") || "c1"; } catch (e) {}
@@ -61,8 +61,11 @@
         v = bySym("^VIX"), y = (W().instruments || []).filter(function (i) { return i.id === "us10y"; })[0], bits = ["Largest index move: " + (SHORT[top.sym] || top.name) + " " + sg(top.pct, 2, "%")];
     if (v && v.pct != null) bits.push("VIX " + sg(v.pct, 1, "%"));
     if (y && y.chg != null) bits.push("10Y yield " + sg(y.chg * 100, 1, " bp"));
+    var sc = (per("sectors") || []).filter(function (r) { return r.day != null; }).sort(function (a, b) { return b.day - a.day; });
+    if (sc.length) bits.push("Top sector " + sc[0].name + " " + sg(sc[0].day, 2, "%"));
+    var wk = (per("indexes") || []).filter(function (r) { return r.sym === "^GSPC"; })[0];
     return '<section class="usm-card usm-gl"><div class="h"><h3>S&amp;P 500 read</h3>' + badge(s) + '</div><div class="big ' + dirCls(s.pct) + '">' + sg(s.pct, 2, "%") + "</div>" +
-      '<div class="usm-rd"><div><b>Magnitude</b>' + num(s.last, dec(s)) + " · " + sg(s.chg, dec(s)) + " pts</div><div><b>Breadth</b>" + up + " of " + idx.length + " US indexes up</div><div><b>Driver</b>" + esc(bits.join(" · ")) + "</div></div></section>";
+      '<div class="usm-rd"><div><b>Magnitude</b>' + num(s.last, dec(s)) + " · " + sg(s.chg, dec(s)) + " pts" + (wk && wk.week != null ? " · week " + sg(wk.week, 2, "%") : "") + "</div><div><b>Breadth</b>" + up + " of " + idx.length + " US indexes up</div><div><b>Driver</b>" + esc(bits.join(" · ")) + "</div></div></section>";
   }
   function snapshot() {
     var w = W(); if (!w) return '<section class="usm-card"><p class="note">Loading the market read…</p></section>';
@@ -166,6 +169,8 @@
       return head(i.name, i.ex || "") + '<div class="big ' + dirCls(i.chg) + '">' + num(i.last, dec(i)) + (i.kind === "yield" ? "%" : "") + '</div><div class="' + dirCls(i.chg) + '">' + move(i) + "</div>" + range(i) + sparkline(i.spark) +
         "<h4>Detail</h4><dl>" + kv("Previous close", num(i.prev_close, dec(i))) + kv("Open", num(i.open, dec(i))) + (i.w52 ? kv("52-week range", num(i.w52.low, dec(i)) + " – " + num(i.w52.high, dec(i))) : "") + kv("State", badge(i)) + "</dl>" +
         "<h4>Evidence</h4><dl>" + kv("Quote as of", i.ts ? new Date(i.ts).toLocaleString("en-CA", { timeZone: "America/Toronto", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "Unavailable") + "</dl>"; }
+    if (sel.t === "x") { var z = (per("sectors") || []).filter(function (r) { return r.sym === sel.k; })[0]; if (!z) return head(sel.k, "") + '<span class="usm-b na">Unavailable</span>';
+      return head(z.name, z.sym + " · sector fund") + '<div class="big">' + num(z.last, 2) + "</div>" + asOf(z) + sparkline(z.closes) + "<h4>Performance</h4><dl>" + ["day", "week", "month", "qtd", "ytd"].map(function (c) { return kv(PN[c], '<span class="' + dirCls(z[c]) + '">' + sg(z[c], 2, "%") + "</span>"); }).join("") + "</dl><h4>Constituents</h4><dl>" + kv("Holdings table", '<span class="usm-b na">Unavailable</span>') + "</dl>"; }
     var R = records(), p = sel.k.split("|"), x = R.filter(function (r) { return r.s === p[0] && r.date === p[1]; })[0] || R.filter(function (r) { return r.s === p[0]; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; })[0];
     if (!x) return head(p[0], "") + '<span class="usm-b na">Unavailable</span><p class="usm-none">This company isn’t on the reporting calendar in view.</p>' + '<button class="usm-open" data-usmopen="' + esc(p[0]) + '">Open full research</button>';
     return head(x.s, x.n || "") + '<div class="usm-er">' + outcome(x, today) + "<span>" + esc(x.date) + " · " + sess(x.time) + "</span></div>" +
@@ -182,8 +187,49 @@
   function crumbs() {
     var c = current(), a = '<button data-usmcat="c1">US Market</button> › <button data-usmcat="' + c[0] + '"' + (c[0] === "c6" || sel ? "" : ' aria-current="page"') + ">" + esc((c[1] ? c[1] + " " : "") + c[2]) + "</button>";
     if (c[0] === "c6") a += " › " + (C6.sub === "intel" ? "<b>Intelligence</b>" : "<b>" + (C6.per === "fy" ? "Fiscal year" : "Calendar &amp; estimates") + "</b>");
-    if (sel) a += " › <b>" + esc(sel.t === "i" ? ((W() && W().instruments || []).filter(function (i) { return i.id === sel.k; })[0] || { name: sel.k }).name : sel.k.split("|")[0]) + "</b>";
+    if (sel) a += " › <b>" + esc(sel.t === "x" ? ((per("sectors") || []).filter(function (r) { return r.sym === sel.k; })[0] || { name: sel.k }).name : sel.t === "i" ? ((W() && W().instruments || []).filter(function (i) { return i.id === sel.k; })[0] || { name: sel.k }).name : sel.k.split("|")[0]) + "</b>";
     document.getElementById("usmCrumb").innerHTML = a;
+  }
+  /* -------- C2 Indexes, C3 Sectors, C8 Deals & Events -------- */
+  var PV = { c2: "day", c3: "day", c8: "week" }, PN = { day: "Day", week: "Week", month: "Month", qtd: "QTD", ytd: "YTD" };
+  function MK() { return window.EARNINGS && EARNINGS._market ? EARNINGS._market() : null; }
+  function per(b) { var m = MK(); return m && m.periods && m.periods[b] && m.periods[b].length ? m.periods[b] : null; }
+  function asOf(r) { /* blueprint state rule: closes taken during the session state their delay; otherwise state the close date */
+    var m = MK(), sp = bySym("^GSPC"), t = Date.parse(m && m.updated_at || "");
+    if (sp && sp.status === "open" && r && r.date === nyDay() && !isNaN(t)) return '<span class="usm-b dl">Delayed ' + Math.round((Date.now() - t) / 60000) + " min</span>";
+    return '<span class="usm-b cl">As of ' + esc(r ? r.date : "") + " close</span>";
+  }
+  function tabs(k, list) { return '<span class="usm-seg">' + list.map(function (p) { return '<button data-usmpv="' + k + ":" + p + '"' + (PV[k] === p ? ' aria-pressed="true"' : "") + ">" + PN[p] + "</button>"; }).join("") + "</span>"; }
+  function pending(t) { return '<section class="usm-card usm-hold"><span class="usm-b na">Unavailable</span><h3>' + esc(t) + "</h3><p>Waiting for the first verified data run. Nothing is estimated in the meantime.</p></section>"; }
+  function c2View() {
+    var R = per("indexes"); if (!R) return pending("Indexes");
+    var cols = ["day", "week", "month", "qtd", "ytd"], o = PV.c2, L = R.slice().sort(function (a, b) { return (b[o] == null ? -1e9 : b[o]) - (a[o] == null ? -1e9 : a[o]); });
+    return '<section class="usm-card"><div class="usm-rowh"><h3>Index performance <small>price return</small></h3><span style="display:flex;gap:8px;align-items:center">' + asOf(R[0]) + tabs("c2", ["day", "week", "month"]) + "</span></div>" +
+      '<div class="usm-tw"><table class="usm-tb usm-mx"><thead><tr><th>Index</th><th>Close</th>' + cols.map(function (c) { return "<th" + (c === o ? ' class="usm-on"' : "") + ">" + PN[c] + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      L.map(function (r) { var i = bySym(r.sym); return "<tr" + (i ? ' data-usmi="' + esc(i.id) + '" tabindex="0"' : "") + "><td>" + esc(r.name) + "</td><td>" + num(r.last, 2) + "</td>" + cols.map(function (c) { return '<td class="' + dirCls(r[c]) + (c === o ? " usm-on" : "") + '">' + sg(r[c], 2, "%") + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table></div></section>" +
+      '<section class="usm-card usm-rowh"><div><h3 style="margin:0">Monthly seasonality</h3><p class="usm-none" style="margin:3px 0 0">Five-year monthly return heatmap by index.</p></div><button class="usm-mini" data-usmseason>Open heatmap</button></section>' +
+      '<section class="usm-card usm-rowh"><h3 style="margin:0">Index composition</h3><span class="usm-b na">Unavailable</span></section>';
+  }
+  function c3View() {
+    var R = per("sectors"); if (!R) return pending("Sectors");
+    var o = PV.c3, L = R.filter(function (r) { return r[o] != null; }).sort(function (a, b) { return b[o] - a[o]; });
+    if (!L.length) return pending("Sectors");
+    var mx = Math.max.apply(null, L.map(function (r) { return Math.abs(r[o]); })) || 1, avg = L.reduce(function (t, r) { return t + r[o]; }, 0) / L.length, up = L.filter(function (r) { return r[o] > 0; }).length, sym = sel && sel.t === "x" ? sel.k : null;
+    return '<section class="usm-card usm-gl"><div class="h"><h3>Sector read: ' + PN[o] + ", equal-weight average</h3>" + asOf(L[0]) + '</div><div class="big ' + dirCls(avg) + '">' + sg(avg, 2, "%") + "</div>" +
+      '<div class="usm-rd"><div><b>Magnitude</b>Spread ' + num(L[0][o] - L[L.length - 1][o], 2) + " pts, best to worst</div><div><b>Breadth</b>" + up + " of " + L.length + " sectors up</div><div><b>Driver</b>Led by " + esc(L[0].name) + " " + sg(L[0][o], 2, "%") + " · lagged by " + esc(L[L.length - 1].name) + " " + sg(L[L.length - 1][o], 2, "%") + "</div></div></section>" +
+      '<section class="usm-card"><div class="usm-rowh"><h3>Sector performance <small>sector funds, price return</small></h3>' + tabs("c3", ["day", "week", "month", "qtd"]) + "</div>" +
+      L.map(function (r) { var w = Math.abs(r[o]) / mx * 50; return '<div class="usm-bar' + (sym === r.sym ? " on" : "") + '" data-usmx="' + esc(r.sym) + '" role="button" tabindex="0"><span class="nm">' + esc(r.name) + '</span><span class="tk"><i class="' + (r[o] >= 0 ? "pos" : "neg") + '" style="width:' + w.toFixed(1) + "%;" + (r[o] >= 0 ? "left:50%" : "right:50%") + '"></i></span><span class="val ' + dirCls(r[o]) + '">' + sg(r[o], 2, "%") + "</span></div>"; }).join("") + "</section>";
+  }
+  function c8View() {
+    var days = PV.c8 === "day" ? 1 : PV.c8 === "week" ? 7 : 30, J = E(), Sc = (J && J.sp_schedule && J.sp_schedule.days) || {}, now = Date.now(), rows = [];
+    for (var n = 0; n < days; n++) { var t = now + n * 864e5, d = nyDay(t);
+      try { (window.EVENTS && EVENTS.on ? EVENTS.on(t) : []).forEach(function (e) { if (e.cc !== "us" || /^(contract|wasde|cftc|ca|usda)$/.test(e.kind || "") || /earnings|CBOT|grain|corn|wheat|soy/i.test(e.label || "") || (n === 0 && e.t < now - 864e5)) return; rows.push({ d: d, t: e.t, label: e.label, high: e.high }); }); } catch (x) {}
+      if (Sc[d] && Sc[d].length) { var top = Sc[d].slice().sort(function (a, b) { return (b.mcap || 0) - (a.mcap || 0); }).slice(0, 4); rows.push({ d: d, t: Infinity, label: Sc[d].length + " S&P 500 earnings reports", syms: top.map(function (y) { return y.s + "|" + d; }) }); } }
+    rows.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : a.t - b.t; });
+    function tm(r) { return r.t === Infinity ? "All day" : new Date(r.t).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }) + " ET"; }
+    return '<section class="usm-card"><div class="usm-rowh"><h3>US event list <small>' + rows.length + "</small></h3>" + tabs("c8", ["day", "week", "month"]) + "</div>" +
+      (rows.length ? '<div class="usm-tw"><table class="usm-tb usm-ev"><thead><tr><th>Date</th><th>Time</th><th>Event</th><th></th></tr></thead><tbody>' + rows.map(function (r) { return "<tr><td>" + esc(r.d.slice(5)) + "</td><td>" + tm(r) + "</td><td>" + esc(r.label) + (r.syms ? ' <span class="usm-chips">' + r.syms.map(function (k) { return '<button class="usm-mini" data-usms="' + esc(k) + '">' + esc(k.split("|")[0]) + "</button>"; }).join("") + "</span>" : "") + "</td><td>" + (r.high ? '<span class="usm-b dl">High impact</span>' : "") + "</td></tr>"; }).join("") + "</tbody></table></div>" : '<p class="usm-none">No US events scheduled in this period.</p>') + "</section>" +
+      '<section class="usm-card usm-rowh"><h3 style="margin:0">M&amp;A tracker</h3><span class="usm-b na">Unavailable</span></section>';
   }
   function current() { return CATS.filter(function (c) { return c[0] === cat; })[0]; }
 
@@ -203,7 +249,7 @@
     '.usm-d{grid-area:d;min-width:0}.usm-crumb{font-size:12px;color:var(--faint);margin:2px 0 8px}.usm-crumb b{color:var(--muted);font-weight:600}.usm-crumb button{appearance:none;border:0;background:none;padding:0;font:inherit;color:var(--faint);cursor:pointer}.usm-crumb button:hover{color:var(--ink);text-decoration:underline}#usm:not([data-v="intel"]) #panel-earnings{display:none!important}' +
     '#usm[data-v="intel"] #usmView{display:none}#usmSub{display:none;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px}#usm[data-cat="c6"] #usmSub{display:flex}#panel-earnings .ut-hdr,#panel-earnings [data-utgo="plan"]{display:none!important}' +
     '.usm-card{background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:12px 14px;margin-bottom:10px;min-width:0}.usm-card h3{margin:0 0 8px;font-size:14px;color:var(--ink)}.usm-card h3 small{font-weight:500;color:var(--faint);margin-left:4px}.usm-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.usm-2 .usm-card{margin:0}' +
-    '.usm-tw{overflow-x:auto}.usm-tb{width:100%;border-collapse:collapse;font-size:12.5px}.usm-tb th{text-align:left;color:var(--faint);font-weight:500;padding:3px 8px 5px 0;white-space:nowrap}.usm-tb td{padding:5px 8px 5px 0;border-top:1px solid var(--line);color:var(--ink);white-space:nowrap}.usm-tb td:nth-child(2),.usm-tb td:nth-child(3){font-family:"IBM Plex Mono",monospace}.usm-tb td:nth-child(4){min-width:130px}' +
+    '.usm-tw{overflow-x:auto}.usm-tb{width:100%;border-collapse:collapse;font-size:12.5px}.usm-tb th{text-align:left;color:var(--faint);font-weight:500;padding:3px 8px 5px 0;white-space:nowrap}.usm-tb td{padding:5px 8px 5px 0;border-top:1px solid var(--line);color:var(--ink);white-space:nowrap}.usm-tb td:nth-child(2),.usm-tb td:nth-child(3){font-family:"IBM Plex Mono",monospace}.usm-tb:not(.usm-mx):not(.usm-ev) td:nth-child(4){min-width:130px}' +
     '.usm-gl .h{display:flex;justify-content:space-between;align-items:center}.usm-gl h3{margin:0}.usm-gl .big{font:600 34px "IBM Plex Mono",monospace;margin:2px 0 8px}.usm-gl .usm-rd{display:grid;grid-template-columns:1fr 1fr 2.4fr;gap:14px;font-size:13px;color:var(--ink)}.usm-gl .usm-rd b{display:block;font-size:11.5px;font-weight:500;color:var(--faint)}' +
     '.usm-hold{padding:34px 22px;text-align:center}.usm-hold h3{margin:10px 0 6px;font-size:17px}.usm-hold p{margin:0;color:var(--muted);font-size:13.5px}' +
     '.usm-g{grid-area:g;position:sticky;bottom:0;z-index:5;overflow:hidden;background:var(--panel2);border:1px solid var(--line2);border-radius:6px;font:500 12px/28px "IBM Plex Mono",monospace;white-space:nowrap}.usm-g>div{display:inline-block;padding-left:100%;animation:usmTape 80s linear infinite}.usm-g:hover>div{animation-play-state:paused}.usm-g span{margin-right:22px;color:var(--ink)}.usm-g em{font-style:normal;color:var(--faint);margin-right:14px}@keyframes usmTape{to{transform:translateX(-100%)}}' +
@@ -212,6 +258,7 @@
     '.usm-b.up{color:var(--green)}.usm-b.dn{color:var(--red)}.usm-seg{display:inline-flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden}.usm-seg button{appearance:none;border:0;background:var(--panel);color:var(--muted);font:inherit;font-size:12.5px;padding:5px 10px;cursor:pointer}.usm-seg button[aria-pressed]{background:#1a2a42;color:#fff}.usm-tg{font-size:12.5px;color:var(--muted);display:inline-flex;gap:5px;align-items:center}.usm-rowh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}.usm-rowh h3{margin:0}.usm-mini{appearance:none;background:var(--panel2);border:1px solid var(--line2);color:var(--muted);border-radius:4px;padding:1px 8px;font:inherit;font-size:12px;cursor:pointer;margin-left:3px}.usm-none{color:var(--muted);font-size:13px;margin:8px 0}' +
     '.usm-cal{display:grid;grid-template-columns:52px repeat(5,minmax(0,1fr));gap:3px;font-size:12px}.usm-cal .hd,.usm-cal .wk{color:var(--faint);font-size:11px;padding:3px}.usm-cal .wk{align-self:center}.usm-cal .dy{appearance:none;display:flex;gap:6px;align-items:baseline;min-height:30px;padding:4px 7px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;color:var(--faint);font:inherit;text-align:left;cursor:pointer}.usm-cal .dy:disabled{cursor:default;opacity:.55}.usm-cal .dy b{color:var(--ink);font:600 13px "IBM Plex Mono",monospace}.usm-cal .dy small{margin-left:auto;color:var(--green);font-size:10.5px}.usm-cal .dy.tdy{border-color:var(--amber)}.usm-cal .dy.on{background:#1a2a42;border-color:#3d5a80}' +
     '.usm-tb th button{appearance:none;border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;text-transform:inherit;letter-spacing:inherit}.usm-mx td{font-family:"IBM Plex Mono",monospace}.usm-mx td:nth-child(4){min-width:0}.usm-mx small{color:var(--faint)}[data-usmi],[data-usms]{cursor:pointer}.usm-tb tr[data-usmi]:hover td,.usm-tb tr[data-usms]:hover td,.usm-tb tr.on td{background:var(--panel2)}.usm-t[data-usmi]:hover{border-color:#3d5a80}[data-usmi]:focus-visible,[data-usms]:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}' +
+    '.usm-bar{display:grid;grid-template-columns:170px minmax(60px,1fr) 70px;gap:10px;align-items:center;padding:4px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink);cursor:pointer}.usm-bar:hover,.usm-bar.on{background:var(--panel2)}.usm-bar .tk{position:relative;height:14px;border-left:0;background:linear-gradient(var(--line2),var(--line2)) center/1px 100% no-repeat}.usm-bar i{position:absolute;top:1px;bottom:1px}.usm-bar i.pos{background:var(--green)}.usm-bar i.neg{background:var(--red)}.usm-bar .val{text-align:right;font-family:"IBM Plex Mono",monospace}.usm-bar:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}.usm-tb .usm-on{background:var(--panel2)}.usm-ev td,.usm-ev th{white-space:normal;text-align:left}.usm-ev td:nth-child(3){font-family:inherit}.usm-ev td:nth-child(1),.usm-ev td:nth-child(2){white-space:nowrap;font-family:"IBM Plex Mono",monospace}.usm-chips{display:inline-flex;flex-wrap:wrap;gap:2px;margin-left:4px}' +
     '@media (prefers-reduced-motion:reduce){.usm-g{overflow-x:auto}.usm-g>div{animation:none;padding-left:8px}}' +
     '@media (max-width:1100px){.usm-c{grid-template-columns:repeat(3,minmax(0,1fr))}.usm-2{grid-template-columns:1fr}}' +
     '@media (max-width:1100px){#usm.insp{grid-template-columns:172px minmax(0,1fr);grid-template-areas:"a a" "c c" "b d" "g g"}#usm.insp #usmE{position:fixed;right:0;top:0;bottom:0;width:min(340px,100vw);max-height:none;z-index:60;border-radius:0}}' +
@@ -241,14 +288,15 @@
     var cash = INDEX.concat(["^VIX"]).map(bySym).filter(Boolean), fut = (W() && W().instruments || []).filter(function (i) { return /=F$/.test(i.sym || "") && i.last != null; }),
         one = function (i, n) { return "<span>" + esc(n) + " " + num(i.last, dec(i)) + ' <b class="' + dirCls(i.chg) + '">' + sg(i.pct, 2, "%") + "</b></span>"; };
     document.getElementById("usmG").innerHTML = "<div><em>CASH</em>" + cash.map(function (i) { return one(i, SHORT[i.sym] || i.name); }).join("") + "<em>FUTURES</em>" + fut.map(function (i) { return one(i, i.name.replace(/ \(.*\)/, "")); }).join("") + "</div>";
-    if (cat === "c1") document.getElementById("usmView").innerHTML = snapshot(); else if (cat === "c6") paintC6();
+    if (cat === "c1") document.getElementById("usmView").innerHTML = snapshot(); else if (cat === "c6") paintC6(); else if (cat === "c2" || cat === "c3") view();
     if (sel) paintE();
   }
+  function view() { var C = current(), c = C[0]; document.getElementById("usmView").innerHTML = c === "c1" ? snapshot() : c === "c2" ? c2View() : c === "c3" ? c3View() : c === "c8" ? c8View() : c === "c6" ? c6View() : holding(C); }
   function paintC6() { document.getElementById("usmSub").innerHTML = subBar(); root.dataset.v = C6.sub === "intel" ? "intel" : "view"; document.getElementById("usmView").innerHTML = c6View(); crumbs(); }
   function go(c) {
     cat = c; try { localStorage.setItem("desk.usmCat", c); } catch (e) {}
     paintRail(); var C = current();
-    document.getElementById("usmView").innerHTML = c === "c1" ? snapshot() : c === "c6" ? c6View() : holding(C);
+    view();
     if (c === "c6") { document.getElementById("usmSub").innerHTML = subBar(); if (C6.sub === "intel" && window.EARNINGS) EARNINGS.render(); }
   }
   root.addEventListener("click", function (ev) { var t = ev.target.closest ? ev.target : null; var b; if (!t) return;
@@ -256,6 +304,9 @@
     b = t.closest("[data-usmcat]"); if (b) { go(b.getAttribute("data-usmcat")); return; }
     if (t.closest("[data-usmclose]")) { sel = null; paintE(); crumbs(); return; }
     b = t.closest("[data-usmopen]"); if (b) { C6.sub = "intel"; go("c6"); if (window.EARNINGS && EARNINGS.choose) EARNINGS.choose(b.getAttribute("data-usmopen")); return; }
+    b = t.closest("[data-usmpv]"); if (b) { var pv = b.getAttribute("data-usmpv").split(":"); PV[pv[0]] = pv[1]; view(); return; }
+    if (t.closest("[data-usmseason]")) { C6.sub = "intel"; go("c6"); var ss = P.querySelector('[data-utgo="season"]'); if (ss) ss.click(); return; }
+    b = t.closest("[data-usmx]"); if (b) { openSel("x", b.getAttribute("data-usmx")); view(); return; }
     b = t.closest("[data-usmsub]"); if (b) { C6.sub = b.getAttribute("data-usmsub"); paintC6(); if (C6.sub === "intel" && window.EARNINGS) EARNINGS.render(); return; }
     b = t.closest("[data-usmper]"); if (b) { C6.per = b.getAttribute("data-usmper"); paintC6(); return; }
     b = t.closest("[data-usmstate]"); if (b) { C6.state = b.getAttribute("data-usmstate"); paintC6(); return; }
@@ -266,7 +317,7 @@
     b = t.closest("[data-usmi]"); if (b) openSel("i", b.getAttribute("data-usmi"));
   });
   root.addEventListener("change", function (ev) { if (ev.target.id === "usmWl") { C6.wl = ev.target.checked; try { localStorage.setItem("desk.usmWl", C6.wl ? "1" : "0"); } catch (e) {} paintC6(); } });
-  root.addEventListener("keydown", function (ev) { if (ev.key !== "Enter" && ev.key !== " ") return; var b = ev.target.closest && ev.target.closest("[data-usms],[data-usmi]"); if (b) { ev.preventDefault(); b.click(); } });
+  root.addEventListener("keydown", function (ev) { if (ev.key !== "Enter" && ev.key !== " ") return; var b = ev.target.closest && ev.target.closest("[data-usms],[data-usmi],[data-usmx]"); if (b) { ev.preventDefault(); b.click(); } });
   /* a symbol clicked inside the Intelligence page also fills the inspector; that page keeps its own behaviour */
   P.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-uesym],[data-utev]"); if (b) openSel("s", (b.getAttribute("data-uesym") || b.getAttribute("data-utev")) + "|"); });
   /* A: command bar. A category name jumps there; anything else is treated as a ticker and handed to the C6 search */
@@ -306,7 +357,7 @@
   paintRail(); go(cat); paintLive();
   setInterval(function () { if (P.classList.contains("active") && !document.hidden) paintLive(); }, 30000);
   (function wait(n) { if (W()) { paintLive(); return; } if (n > 0) setTimeout(function () { wait(n - 1); }, 1500); })(40);
-  (function waitE(n) { if (E()) { if (cat === "c6") paintC6(); return; } if (n > 0) setTimeout(function () { waitE(n - 1); }, 1500); })(40);
+  (function waitE(n) { if (E() && MK()) { paintLive(); if (cat !== "c1") view(); if (cat === "c6") paintC6(); return; } if (n > 0) setTimeout(function () { waitE(n - 1); }, 1500); })(40);
   window.addEventListener("desk:earnboard", function () { if (cat === "c6" && C6.sub === "cal" && P.classList.contains("active")) paintC6(); if (sel && sel.t === "s") paintE(); });
   window.USM = { go: go };
 })();

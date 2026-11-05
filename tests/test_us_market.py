@@ -45,4 +45,10 @@ G = M.seasonality(gap, years, "2026-11")
 ok(G["grid"]["2024"][4] is None and G["grid"]["2024"][5] is None and G["avg"][4]["n"] == 4, "a missing month-end leaves gaps, never a filled value")
 ok(M.month_end_closes([("2026-01-30", 5.0), ("2026-01-02", 1.0), ("2026-02-27", 7.0)]) == {"2026-01": 5.0, "2026-02": 7.0}, "last trading day of the month")
 
+R = M.period_returns([("2025-12-31", 100.0), ("2026-09-30", 110.0), ("2026-10-30", 120.0), ("2026-11-03", 125.0), ("2026-11-06", 130.0), ("2026-11-09", 135.0), ("2026-11-10", 132.0)])
+ok(close(R["day"], (132 / 135 - 1) * 100) and close(R["week"], (132 / 130 - 1) * 100), "day is previous session, week is last close before this ISO week")
+ok(close(R["month"], 10.0) and close(R["qtd"], 20.0) and close(R["ytd"], 32.0), "month, quarter and year use the last close before each period")
+S = M.period_returns([("2026-11-09", 10.0), ("2026-11-10", 11.0)])
+ok(S["month"] is None and S["ytd"] is None and M.period_returns([]) is None, "a missing base close stays None")
+
 print(f"us_market: {n} checks passed")
