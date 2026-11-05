@@ -651,6 +651,6 @@
   /* background watch: earnings.json every 3 min on any tab, so a release reaches the feed and the tab badge */
   setInterval(function () { if (!document.hidden) poll(true, !P.classList.contains("active")); }, 300000); setTimeout(function () { poll(true, !P.classList.contains("active")); }, 4000);
   window.addEventListener("desk:unlock", function () { if (P.classList.contains("active")) poll(true); });
-  window.EARNINGS = { render: render, poll: poll, _data: function () { return J; } };
+  window.EARNINGS = { render: render, poll: poll, choose: choose, _data: function () { return J; } };
   render();
 })();
