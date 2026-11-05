@@ -25,7 +25,7 @@
     var ch = of && (of.chains || []).filter(function (c) { return c.contract === near.contract; })[0], pos = of && of.positioning;
     var pc = ch && ch.prem_c, pp = ch && ch.prem_p, tot = pc != null && pp != null ? pc + pp : null;
     o.optflow = (tot ? "Est. premium " + usd(tot) + " · calls " + Math.round(pc / tot * 100) + "% / puts " + Math.round(pp / tot * 100) + "%" : "Est. premium " + UNA) + (pos && pos.conf ? " · conviction " + pos.conf : "");
-    o.flow = pos && pos.label ? String(pos.label).replace(/^./, function (c) { return c.toUpperCase(); }) : UNA;
+    o.flow = UNA;   /* read from the panel itself, so the headline can never disagree with its signal */
     if (R[0] && R[1] && R[0].settle != null && R[1].settle != null) o.carry = R[0].contract + " to " + R[1].contract + " · spread " + sign((R[0].settle - R[1].settle) * 100, function (x) { return x.toFixed(2) + "¢"; }) + (fnd ? " · FND " + fnd(R[0].contract) : ""); else o.carry = UNA;
     o.oi = near.call_wall ? "Call wall " + strike(near.call_wall) + " (" + n(near.call_wall[1]) + " contracts) · put wall " + strike(near.put_wall) + " (" + n(near.put_wall[1]) + " contracts)" : UNA;
     return o;
@@ -57,6 +57,8 @@
     [].forEach.call(sub.querySelectorAll(":scope > .prow-h, :scope > .prow-top"), function (x) { x.remove(); });
     var G = root.DATA && DATA.grains && DATA.grains[k]; if (!G) return;
     var H = headlines(G, DATA.optflow && DATA.optflow[k], root.GRAINS && GRAINS.fndLabel);
+    var F = sub.querySelector(".fl-tile"), fv = F && F.querySelector(".fl-vv"), fl = F && F.querySelector("li");
+    if (fv) H.flow = fv.textContent.trim() + (fl ? " · " + fl.textContent.trim().split(/\.\s/)[0] : "");
     var top = doc.createElement("div"); top.className = "prow-top"; top.setAttribute("data-sec", "*");
     top.innerHTML = "<b>" + NAME[k] + " · Derivatives</b><span>" + sectionAsOf() + "</span>";
     var kids = [].slice.call(sub.children), frag = doc.createDocumentFragment(), used = [];
