@@ -34,6 +34,7 @@
   }
   if (typeof module !== "undefined" && module.exports) { module.exports = { fndOf: fndOf, fndLabel: fndLabel, tile: tile, age: age }; return; }
 
+  root.GRAINS = { fndLabel: fndLabel };
   var doc = root.document, parent = doc.getElementById("tabbtn-grains"), head = doc.getElementById("grains-head");
   if (!parent || !head) return;
   var ET = "America/New_York";

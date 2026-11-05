@@ -67,6 +67,13 @@ main{max-width:1920px;margin:0 auto;padding:14px 16px 30px}
 .gr-slicer button{appearance:none;font:inherit;font-size:13px;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer}
 .gr-slicer button[aria-pressed="true"]{color:#101825;background:var(--amber);border-color:var(--amber)}
 @media (max-width:760px){.gr-strip{grid-template-columns:1fr}}
+.prow-off{display:none!important}
+.prow-top{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;font-size:13px;color:var(--muted);padding:2px 2px 0}.prow-top b{color:var(--ink)}
+.prow-h{grid-column:1/-1;appearance:none;display:grid;grid-template-columns:18px minmax(190px,250px) 1fr;gap:10px;align-items:baseline;text-align:left;font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:11px 14px;cursor:pointer}
+.prow-h:hover{border-color:var(--line2)}.prow-h[aria-expanded="true"]{border-color:var(--amber)}.prow-h:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.prow-c{color:var(--amber)}.prow-n{font-weight:600;font-size:14px}.prow-v{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted)}
+.prow-ev{margin-top:10px;font-size:12px;color:var(--muted)}.prow-ev summary{cursor:pointer;font-weight:600}.prow-ev .stamp,.prow-ev .note{border:0;margin:6px 0 0;padding:0}
+@media (max-width:760px){.prow-h{grid-template-columns:18px 1fr}.prow-v{grid-column:2}}
 .tab-panel{display:none}
 .tab-panel.active{display:block}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
@@ -4493,7 +4500,7 @@ document.querySelector('main').addEventListener('click', function(ev){
 var SECG={
   grain:{
     overview:[['snap','Snapshot & KPIs',/kpi-strip|dash-head/],['fan','Price & σ fan',/σ fan/],['insight','Insight',/\bInsight\b/],['ask','Ask Claude',/ask-tile/]],
-    deriv:[['cockpit','Derivatives cockpit',/kpi-strip/],['pos','Positioning KPIs',/poskpi|ckwrap/],['cftc','CFTC managed money',/cftc_grains/],['opt','Options data',/Options positioning|Open interest by strike|Open-interest change/],['vol','Volatility & skew',/Volatility|IV skew/],['optflow','Options flow & expirations',/Options flow &amp; expirations|Options flow & expirations/],['flow','Position flow signal',/Position flow/],['carry','Carry & roll',/Curve & calendar|Futures roll/]],
+    deriv:[['cockpit','Derivatives cockpit',/kpi-strip/],['pos','Positioning KPIs',/poskpi|ckwrap/],['cftc','CFTC managed money',/cftc_grains/],['opt','Options data',/Options positioning|Open-interest change/],['vol','Volatility & skew',/Volatility|IV skew/],['optflow','Options flow & expirations',/Options flow &amp; expirations|Options flow & expirations/],['flow','Position flow signal',/Position flow/],['carry','Carry & roll',/Curve & calendar|Futures roll/],['oi','Open interest by strike',/\boi-(corn|wheat|soybeans)\b/]],
     fund:[['cmp','Crop-year comparison',/Crop-year comparison/],['xcmp','Export comparison',/Export comparison/],['wmap','World map',/production map/i],['wdet','Country detail',/ detail /],['wprod','Top producers',/Top producers/],['wexp','Top exporters',/Top exporters/],['brsurvey','CONAB survey',/CONAB crop survey/],['brsd','Brazil supply & demand',/Brazil (soybean )?supply/i],['brvs','CONAB vs USDA',/CONAB vs USDA/],['brexp','Brazil exports',/exports \u2014 actual|exports — actual/],['brl','USD/BRL',/USD\/BRL/],['sd','Supply & demand (WASDE)',/supply & demand/i],['dest','Export destinations',/Export destinations/i],['exp','Export sales',/Export Sales/i],['cal','Agri calendar',/agri calendar/i],['caprod','Production & farm prices',/production by crop year|farm price/i],['ca','Canada / Ontario stats',/Canada|Ontario/]],
     inputs:[['cost','Input cost summary',/input costs/i],['paths','Price paths & events',/price paths/i]]
   },
@@ -4575,7 +4582,7 @@ function buildSecNav(panel){
   var rules=(SECG[panel==='fx'?'fx':'grain']||{})[sub.getAttribute('data-subpanel')]||[], groups={}, order=[];
   var og=sub.querySelector(':scope>.kb-guide'); if(og) og.remove();
   [].forEach.call(sub.children, function(t){
-    if(/geo-head/.test(t.className)){ t.setAttribute('data-sec','*'); return; }
+    if(/geo-head|prow-h|prow-top/.test(t.className)){ t.setAttribute('data-sec','*'); return; }
     var h=t.querySelector('h2,h3'), txt=t.className+' '+(t.getAttribute('data-src')||'')+' '+(t.id||'')+' '+(h?h.textContent:'');
     var hit=null; for(var i=0;i<rules.length;i++){ if(rules[i][2].test(txt)){ hit=rules[i]; break; } }
     var id=hit?hit[0]:'more', lab=hit?hit[1]:(h?h.textContent.split('—')[0].trim():'More');
@@ -4736,6 +4743,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="briefing-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="glossary.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script src="grains-ui.js"></script>
+<script src="rows-ui.js"></script>
 <script>(function(){var f=document.createElement("script");f.src="feed-rail.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="optflow-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="macro-ind.js?v="+Date.now();document.body.appendChild(f);})();</script>
