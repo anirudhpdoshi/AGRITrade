@@ -129,7 +129,7 @@
     else {
       var T = C.total, s = T.seasons || ["", ""];
       out += '<div class="tile wide"><h2>' + flagOf("BRA", 13) + " Brazil " + CN[key].toLowerCase() + ' — CONAB crop survey <span class="h2note">— ' + esc(G.conab.survey) + " · season " + esc(s[1]) + " vs " + esc(s[0]) + "</span></h2>" +
-        '<div class="ggstamp">' + esc(G.conab.source) + " · " + tag("forecast") + ' · <a href="' + esc(G.conab.url) + '" target="_blank" rel="noopener">survey page ↗</a> · area 1,000 ha · yield kg/ha · production 1,000 t' + stale(G.conab) + "</div>" +
+        '<div class="ggstamp">' + tag("forecast") + ' · area 1,000 ha · yield kg/ha · production 1,000 t' + stale(G.conab) + "</div>" +
         '<div class="ggk">' +
         k("Production " + esc(s[1]), mt(T.prod[1]) + " MMT", '<span class="' + cl(T.yoy_prod) + '">' + pc(T.yoy_prod) + "</span> vs " + mt(T.prod[0]) + " MMT in " + esc(s[0])) +
         k("Area · yield", n1(T.area[1] / 1000, 2) + " M ha", n1(T.yield[1] / 1000, 2) + " t/ha (" + pc(T.yield[0] ? 100 * (T.yield[1] - T.yield[0]) / T.yield[0] : null) + " yield)") +

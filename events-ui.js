@@ -258,7 +258,7 @@
           ((r.hawk || []).length ? '<div class="pw-ph"><b class="hawk">Hawkish lines</b> ' + r.hawk.map(function (p) { return "“" + esc(p) + "”"; }).join(" · ") + "</div>" : "") +
           ((r.dove || []).length ? '<div class="pw-ph"><b class="dove">Dovish lines</b> ' + r.dove.map(function (p) { return "“" + esc(p) + "”"; }).join(" · ") + "</div>" : "") +
           '<div class="pw-lag"><span>⏱ On the desk <b>' + new Date(Date.parse(r.t_seen)).toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit", second: "2-digit" }) + " ET</b> — <b>" + lagTxt(r.lag_min) + "</b> after the scheduled time</span>" +
-            (scr != null ? "<span>on this screen " + lagTxt(scr) + " after</span>" : "") + (r.url && /^https:\/\/www\.(bankofcanada\.ca|federalreserve\.gov)\//.test(r.url) ? '<a href="' + esc(r.url) + '" target="_blank" rel="noopener noreferrer">Official statement ↗</a>' : "") + "</div></div>";
+            (scr != null ? "<span>on this screen " + lagTxt(scr) + " after</span>" : "") + "" + "</div></div>";
       }).join("") + "</div>" + lagTableHTML(now) + '<div class="stamp">Tone = decision (hike +2 / cut −2) + surprise vs the consensus forecast (±1 per 25 bp) + statement language (hawkish minus dovish phrases, capped ±2): ≥ +2 hawkish, ≤ −2 dovish. A phrase-based read of the statement — the lines it matched are shown so you can judge. Press-conference remarks come later and are not scored.</div></div>';
   }
   /* publication lag for every timed release today: scheduled time vs when the desk first had the new number */

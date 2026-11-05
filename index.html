@@ -2641,7 +2641,7 @@ function grainDashboardHTML(key){
 var SC_LINKS={annual:["32-10-0359-01","3210035901","Estimated areas, yield, production, average farm price and total farm value of principal field crops"],
   prices:["32-10-0077-01","3210007701","Monthly average farm prices for crops"],
   stocks:["32-10-0007-01","3210000701","Stocks of principal field crops at March 31, July 31 and December 31"]};
-function scLink(k){ var L=SC_LINKS[k]; return '<a href="https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid='+L[1]+'" target="_blank" rel="noopener" title="'+esc(L[2])+'">StatCan '+L[0]+'</a>'; }
+function scLink(k){ var L=SC_LINKS[k]; return '<span title="'+esc(L[2])+'">Table '+L[0]+'</span>'; }
 function caState(key){ var s=dstate(key); if(!s.ca_geo){ s.ca_geo='Ontario'; s.ca_view='avg'; s.ca_unit='imp'; } return s; }
 function caAvg(arr, from, to){ var v=arr.slice(Math.max(0,from), to).filter(function(x){ return x!=null; }); return v.length?v.reduce(function(a,b){return a+b;},0)/v.length:null; }
 /* each measure: label, getter(annual,i) in display units for imperial/metric, decimals */
@@ -2788,7 +2788,7 @@ function caCalendarHTML(){
   var nr=m.canada_new_release;
   return '<div class="tile wide" data-src="ca_calendar"><h2>'+flag('ca',15)+' Canada &amp; Ontario agri calendar <span class="h2note">— dates taken from AAFC’s latest Outlook ('+esc(C.report||'n/a')+') · StatCan tables watched for new releases</span></h2>'+rows+
     '<div class="mini-kv" style="margin-top:8px"><span>Release watch</span><b>'+(m.canada_watch?'checked '+esc(asOf('canada',true)):'starts on the next refresh')+'</b>'+(nr?' · last new StatCan data '+esc(new Date(nr.at).toLocaleString('en-US',{timeZone:'America/Toronto',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+' ET ('+esc(nr.tables.join(', '))+')':'')+'</div>'+
-    '<div class="stamp">The updater checks Statistics Canada’s table metadata on every 15-minute run (8:30 ET release days included) and re-pulls tables 32-10-0359 / 0077 / 0007 the moment their release time changes · AAFC dates parsed from <a href="'+safeUrl(C.report_url||'https://agriculture.canada.ca/en/sector/crops/reports-statistics')+'" target="_blank" rel="noopener">the Outlook report</a>; hover a row for the source sentence</div></div>';
+    '<div class="stamp">The updater checks Statistics Canada’s table metadata on every 15-minute run (8:30 ET release days included) and re-pulls tables 32-10-0359 / 0077 / 0007 the moment their release time changes · AAFC dates parsed from the Outlook report; hover a row for the source sentence</div></div>';
 }
 
 /* ---------- generic charts ---------- */
@@ -3471,7 +3471,7 @@ function macroDetailHTML(key){
     (chart2?'<h4 class="mdc-h">Change vs prior reading</h4><div class="mdc-chart">'+chart2+'</div>':'')+
     '<p class="mdc-read">Read: '+st.concat([m.value>a3?'latest above its 3-reading average':'latest below its 3-reading average']).join('; ')+'.</p>'+
     (rel3?'<h4 class="mdc-h">Related indicators <span class="h2note">(tap to open)</span></h4><div class="mdc-rels">'+rel3+'</div>':'')+
-    '<div class="mdc-foot">'+(nx&&nx.t?'Next release: <b>'+etLabel(nx.t,true)+' ET</b> · <span class="countdown" data-t="'+nx.t+'">'+cdText(nx.t-Date.now())+'</span>':'Next release: '+esc(nx&&nx.note||'not scheduled'))+' · data: '+esc(m.direct||m.src)+' · '+ccy+(nx&&nx.src?' · <a href="'+safeUrl(nx.src)+'" target="_blank" rel="noopener">official release calendar \u2197</a>':'')+'</div>'+
+    '<div class="mdc-foot">'+(nx&&nx.t?'Next release: <b>'+etLabel(nx.t,true)+' ET</b> · <span class="countdown" data-t="'+nx.t+'">'+cdText(nx.t-Date.now())+'</span>':'Next release: '+esc(nx&&nx.note||'not scheduled'))+' · '+ccy+'</div>'+
     '<button class="mdc-ask" data-mask="'+key+'">Ask Claude about this print</button>'+
   '</div>';
 }
@@ -3542,7 +3542,7 @@ function evPopHTML(n, sk){
       lines+='<div class="evp-row"><span>Now</span><b>'+inFmt(S,L[1])+'</b><small class="'+cls(-pc(at[1],L[1]))+'">'+sgn(pc(at[1],L[1]),1,'%')+' since event</small></div>'; } }
   var also=(DATA.inputs.events[n-1].tags.indexOf('*')>=0?'all inputs':DATA.inputs.events[n-1].tags.map(function(t){ return DATA.inputs.series[t]?DATA.inputs.series[t].label.replace(/ \(.*\)/,''):t; }).join(', '));
   return '<div class="evp-h"><span class="ev-n">'+n+'</span> '+esc(new Date(e.date+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))+'</div><div class="evp-t">'+esc(e.label)+'</div>'+lines+
-    '<div class="evp-f">Affected: '+esc(also)+'</div><a class="evp-link" href="'+safeUrl(e.src)+'" target="_blank" rel="noopener">Open source report \u2197</a>';
+    '<div class="evp-f">Affected: '+esc(also)+'</div>';
 }
 function evShow(g, pin){
   var p=document.getElementById('evpop'); if(!p){ p=document.createElement('div'); p.id='evpop'; document.body.appendChild(p); }
@@ -3748,7 +3748,7 @@ function awaitMsg(a){
   var why=AW.netErr?'This desk could not reach its data server on the last check (network or GitHub error) \u2014 check your connection; it will keep retrying.':
     I.who?I.who.charAt(0).toUpperCase()+I.who.slice(1)+' released it at '+when+' ET, but the new numbers have not reached the desk yet. '+(I.lag||''):'The source has not published the new numbers yet.';
   return {title:'Sorry, we can\u2019t be reached now<span class="aw-sub">'+(I.flag?flag(I.flag,12)+' ':'')+esc(I.what||a.label.replace(/^Awaiting /,''))+' \u2014 new data cannot be displayed yet</span>',
-    body:why+(I.prev?' <b>Showing the previous reading: '+I.prev+'.</b>':' Showing the previous data.')+(I.url?' <a href="'+safeUrl(I.url)+'" target="_blank" rel="noopener">Check '+esc(I.urlLab||'the source')+' \u2197</a>':''),
+    body:why+(I.prev?' <b>Showing the previous reading: '+I.prev+'.</b>':' Showing the previous data.'),
     short:(I.short||I.what||'')+': not updated yet \u2014 showing '+(I.prev||'previous data')};
 }
 var AW={tries:0, next:0, last:0, err:false, busy:false, prev:{}, netErr:false};

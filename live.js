@@ -200,7 +200,6 @@
           rows.push('<div class="pwb out" role="alert"><b class="pwb-tag">BREAKING</b><span><b>' + B.n + " " + bannerEsc(r.decision) + (r.change_bp ? " " + (r.change_bp > 0 ? "+" : "") + r.change_bp + " bp" : "") +
             "</b> · " + pct2(r.prev) + " → <b>" + pct2(r.rate) + "</b>" + sur + " · <b>" + bannerEsc(r.tone) + "</b>" + (r.read_from && /series/.test(r.read_from) ? " (rate series; statement text not read)" : "") +
             " · on the desk " + etHM(Date.parse(r.t_seen)) + " ET (" + (r.lag_min != null ? (+r.lag_min).toFixed(1) + " min after" : "") + ")</span>" +
-            (r.url ? '<a class="pwb-btn" href="' + bannerEsc(r.url) + '" target="_blank" rel="noopener noreferrer">Statement ↗</a>' : "") +
             '<button type="button" class="pwb-x" data-pw-hide="' + id + '" aria-label="Dismiss">✕</button></div>');
           return;
         }
@@ -218,7 +217,7 @@
           (stale ? (lastMs ? "the server last checked the statement at " + etHM(lastMs) + " ET — no check for " + dur(now - lastMs) : "no server check on record yet") :
             "not published / not read yet — checked " + (r.checks || 0) + "× · last " + etHM(lastMs) + " ET") +
           (probe.length ? ' · <span title="What the bank’s site returned on the last check">site said: ' + bannerEsc(probe.join(", ")) + "</span>" : "") +
-          "</span>" + refresh + '<a class="pwb-btn" href="' + B.url + '" target="_blank" rel="noopener noreferrer">Bank site ↗</a></div>');
+          "</span>" + refresh + '</div>');
       });
     });
     return rows.join("");

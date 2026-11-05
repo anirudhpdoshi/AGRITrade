@@ -231,7 +231,7 @@
       (i.revisions && i.revisions.length ? "<p style=\"margin:0 0 6px\" class=\"it-amb\">Revised: " + i.revisions.map(function (r) { return mon(r.month) + " " + nf(r.prev, 2) + " → " + nf(r.new, 2); }).join("; ") + "</p>" : "") +
       "<h4 style=\"margin-top:8px\">Confirm before treating this as a trade</h4><ul>" + (i.confirm || []).map(function (c) { return "<li>" + esc(c) + "</li>"; }).join("") + "</ul></div></div>" +
       '<div class="it-row" style="margin-top:10px"><span class="it-src">' + (i.spark ? spark(i.spark, 160, 34) + " last 24 months · " : "") + "Category: " + esc(CATN[i.cat]) + "</span>" +
-      (i.url ? '<a href="' + esc(i.url) + '" target="_blank" rel="noopener">Open original source ↗</a>' : i.kind === "data" ? '<a href="' + esc(srcUrl(i)) + '" target="_blank" rel="noopener">Open source data ↗</a>' : "") + "</div>";
+      (i.url ? '<a href="' + esc(i.url) + '" target="_blank" rel="noopener">Open story ↗</a>' : "") + "</div>";
   }
   function srcUrl(i) { var s = D.sources || {}; return /FAO/.test(i.source) ? (s.fao || {}).url || "" : /IMF/.test(i.source) ? (s.imf || {}).url || "" : (s.worldbank || {}).url || ""; }
 
@@ -274,7 +274,7 @@
     }).join("");
     var cmo = ((D.sources || {}).worldbank || {}).cmo || [];
     return '<div class="tile wide"><h2>Release calendar <span class="h2note">· institutional publications that feed this tab</span></h2><table class="it-t"><thead><tr><th>Date</th><th>In</th><th>Release</th><th>Date basis</th></tr></thead><tbody>' + rows + "</tbody></table>" +
-      (cmo.length ? '<div class="stamp">Commodity Markets Outlook editions found on the World Bank page: ' + cmo.map(function (p) { return '<a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.edition) + "</a>"; }).join(" · ") + "</div>" : "") +
+      (cmo.length ? '<div class="stamp">Commodity Markets Outlook editions: ' + cmo.map(function (p) { return esc(p.edition); }).join(" · ") + "</div>" : "") +
       '<div class="stamp">“published” = date taken from the publisher’s own page. “estimated” = the publisher’s usual timing; check the source before relying on it. USDA WASDE, export sales and CFTC dates live on the Events tab.</div></div>';
   }
   function healthHTML() {
@@ -282,7 +282,7 @@
     var rows = Object.keys(S).map(function (k) {
       var s = S[k], f = (h.failed || []).filter(function (x) { return x.part === k || x.part.indexOf(k + "/") === 0; });
       var st = s.stale ? '<span class="it-amb">LAST GOOD COPY</span>' : f.length ? '<span class="it-amb">partial</span>' : '<span class="it-ok">OK</span>';
-      return '<tr><td class="ev" data-l="Source">' + esc(s.source || k) + (s.url ? '<small><a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(s.url.replace(/^https?:\/\//, "").slice(0, 70)) + "</a></small>" : "") + '</td><td data-l="Status">' + st + '</td><td class="tm" data-l="Fetched">' + esc(et(s.fetched_at)) + " (" + ago(s.fetched_at) + ')</td><td class="tm" data-l="Data through">' + esc(s.through ? mon(s.through) : "—") + '</td><td class="it-src" data-l="Notes">' + esc((s.missing && s.missing.length ? "no data for " + s.missing.join(", ") + ". " : "") + f.map(function (x) { return x.error; }).join(" · ")) + "</td></tr>";
+      return '<tr><td class="ev" data-l="Source">' + esc(s.source || k) + '</td><td data-l="Status">' + st + '</td><td class="tm" data-l="Fetched">' + esc(et(s.fetched_at)) + " (" + ago(s.fetched_at) + ')</td><td class="tm" data-l="Data through">' + esc(s.through ? mon(s.through) : "—") + '</td><td class="it-src" data-l="Notes">' + esc((s.missing && s.missing.length ? "no data for " + s.missing.join(", ") + ". " : "") + f.map(function (x) { return x.error; }).join(" · ")) + "</td></tr>";
     }).join("");
     var fails = (h.failed || []).filter(function (x) { return !S[x.part]; });
     return '<div class="tile wide"><h2>Sources & health <span class="h2note">· server run ' + esc(et(D.updated_at)) + " ET · " + esc(D.run_seconds) + ' s</span></h2><div style="overflow-x:auto"><table class="it-t"><thead><tr><th>Source</th><th>Status</th><th>Fetched</th><th>Data through</th><th>Notes</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +

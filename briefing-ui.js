@@ -96,7 +96,7 @@
   function dd(iso, wd) { var p = iso.slice(0, 10).split("-"); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2], 12)).toLocaleDateString("en-US", Object.assign({ timeZone: "UTC", month: "short", day: "numeric" }, wd ? { weekday: "short" } : {})); }
   function tpc(t) { return (t || []).map(function (x) { return '<span class="br-tp">' + esc(x) + "</span>"; }).join(""); }
   function billRow(b, us) {
-    return '<li class="br-bl"><a class="br-bc" href="' + esc(b.url) + '" target="_blank" rel="noopener noreferrer">' + esc(b.code) + '</a><div><a class="br-bt" href="' + esc(b.url) + '" target="_blank" rel="noopener noreferrer">' + esc(b.title) + "</a>" +
+    return '<li class="br-bl"><span class="br-bc">' + esc(b.code) + '</span><div><a class="br-bt" href="' + esc(b.url) + '" target="_blank" rel="noopener noreferrer">' + esc(b.title) + "</a>" +
       '<div class="br-bs">' + (us ? esc(b.action) + " · " + dd(b.date) : esc(b.stage || b.status) + (b.last ? " · " + dd(b.last) : "") + (b.gov ? ' · <b>Government bill</b>' : "") + (b.assent ? ' · <b class="up">Royal assent</b>' : "")) +
       (b.law ? ' · <b class="up">Law</b>' : "") + " " + tpc(b.topics) + "</div></div></li>";
   }
@@ -119,7 +119,7 @@
       var flH = fl && !fl.stale && fl.items.length ? '<div class="br-fl"><b>House floor ' + (fl.week ? "this week" : dd(fl.date, true)) + ":</b> " + fl.items.slice(0, 8).map(function (i) { return esc(i.code) + " " + esc(i.title); }).join(" · ") + "</div>"
         : '<div class="br-sit"><span>House floor: ' + (fl && fl.stale ? "no schedule since " + dd(fl.date) + " — the House is not sitting" : "no floor schedule published for this week") + "</span></div>";
       parts.push('<div class="br-lg"><h4>🇺🇸 U.S. Congress</h4>' + flH +
-        (hr.length ? '<div class="br-hh">Upcoming committee hearings</div><ul class="br-list">' + hr.map(function (h) { return '<li class="br-bl"><span class="br-bc">' + dd(h.date, true) + '</span><div><a class="br-bt" href="' + esc(h.url) + '" target="_blank" rel="noopener noreferrer">' + esc(h.title) + '</a><div class="br-bs">' + esc(h.chamber) + (h.committee ? " · " + esc(h.committee) : "") + " " + tpc(h.topics) + "</div></div></li>"; }).join("") + "</ul>" : "") +
+        (hr.length ? '<div class="br-hh">Upcoming committee hearings</div><ul class="br-list">' + hr.map(function (h) { return '<li class="br-bl"><span class="br-bc">' + dd(h.date, true) + '</span><div><span class="br-bt">' + esc(h.title) + '</span><div class="br-bs">' + esc(h.chamber) + (h.committee ? " · " + esc(h.committee) : "") + " " + tpc(h.topics) + "</div></div></li>"; }).join("") + "</ul>" : "") +
         '<div class="br-hh">Bills with action in the last 10 days</div>' + (ub.length ? '<ul class="br-list">' + ub.map(function (b) { return billRow(b, true); }).join("") + "</ul>" : '<p class="note">' + (U.errors && U.errors.congress ? "Congress.gov key not set." : "No significant bill actions in the last 10 days.") + "</p>") + "</div>");
     }
     return parts.length ? '<div class="tile wide"><h3 class="br-s">Legislation — what is moving and when they sit <span class="h2note">official parliamentary and congressional data</span></h3><div class="br-lgw">' + parts.join("") + "</div></div>" : "";
