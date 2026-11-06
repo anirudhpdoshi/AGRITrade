@@ -4,11 +4,14 @@
 (function (root) {
   function tokens(s) { return (String(s).match(/\d[\d,]*(?:\.\d+)?/g) || []).map(function (x) { return x.replace(/,/g, ""); }); }
   function traceable(b, text) { var T = " " + String(text).replace(/,/g, "") + " "; return tokens(b).every(function (x) { return new RegExp("(^|[^\\d.])" + x.replace(".", "\\.") + "(?![\\d])").test(T); }); }
-  function fresh(key, asof, now) { var MAX = { options: 96, optflow: 96, grains_settle: 96, cftc_grains: 264, model: 96, exports: 264, wasde: 1100 }, h = MAX[key]; if (!h) return true; var t = Date.parse(asof); return isFinite(t) && now - t <= h * 3600000; }
+  function fresh(key, asof, now) { var MAX = { options: 96, optflow: 96, grains_settle: 96, cftc_grains: 240, model: 96, exports: 264, wasde: 1100 }, h = MAX[key]; if (!h) return true; var t = Date.parse(asof); return isFinite(t) && now - t <= h * 3600000; }
   function n(v) { return Math.round(Math.abs(v)).toLocaleString("en-US"); }
   function d2(v) { return (+v).toFixed(2); }
   function month(iso) { var p = String(iso || "").split("-"); return p.length === 3 ? new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : ""; }
 
+  /* over-crowded scale, BRD CG-10: net % of open interest */
+  function crowd(p) { if (p == null || isNaN(p)) return null; if (p >= 20) return { extreme: true, label: "Extreme Crowded Long (Exhausted buying capacity)" }; if (p <= -20) return { extreme: true, label: "Extreme Crowded Short (High short-squeeze risk)" }; if (p >= -10 && p <= 10) return { extreme: false, label: "Neutral" }; return { extreme: false, label: p > 0 ? "Leaning long" : "Leaning short" }; }
+  function pct1(p) { return Math.abs(p).toFixed(1) + "%"; }
   /* compares each input with its reading about a year earlier, by date */
   function yearAgo(D, list) { var S = D && D.inputs && D.inputs.series, o = []; if (!S) return o; list.forEach(function (x) { var p = S[x[0]] && S[x[0]].pts; if (!p || p.length < 2) return; var L = p[p.length - 1], cut = Date.parse(L[0]) - 365 * 864e5, B = null; p.forEach(function (q) { if (Date.parse(q[0]) <= cut) B = q; }); if (!B) return; var up = L[1] > B[1]; o.push(x[1] + " " + (up ? "higher" : "lower") + " than a year ago, " + (up ? "raising" : "easing") + " grower costs."); }); return o; }
   /* each rule returns plain-English bullets for one panel */
@@ -24,10 +27,12 @@
       o.push("Funds are net " + (K.net < 0 ? "short " : "long ") + n(K.net) + " contracts as of " + month(K.date) + ".");
       if (K.streak) o.push("They have been net " + (K.streak < 0 ? "sellers" : "buyers") + " for " + Math.abs(K.streak) + " straight weeks.");
       if (K.z52 != null) o.push(Math.abs(K.z52) >= 2 ? "That position is extreme against the past year, so a reversal risk is building." : "That position is not extreme against the past year, so there is room to extend."); return o; },
-    cftc: function (g) { var C = g.cftc || [], L = C[C.length - 1], P = C[C.length - 2], o = []; if (!L) return o;
-      o.push("Net position " + (L.net < 0 ? "short " : "long ") + n(L.net) + " in the " + month(L.date) + " report.");
-      if (P) { var d = L.net - P.net; o.push("Funds " + (d < 0 ? "sold" : "bought") + " on the week, " + (Math.abs(d) > Math.abs(P.net) * 0.25 ? "a large move" : "a modest move") + " against the prior week's position."); }
-      return o; },
+    cftc: function (g, of, D, k) { var C = g.cftc || [], L = C[C.length - 1], P = C[C.length - 2], o = []; if (!L) return o;
+      var nm = { corn: "corn", soybeans: "soybean", wheat: "wheat" }[k] || "", pct = L.oi ? L.net / L.oi * 100 : null, c = crowd(pct), d = P ? L.net - P.net : 0, longSide = L.net >= 0;
+      if (P && d) o.push("Funds " + (d < 0 ? (longSide ? "cut the " + nm + " long" : "extended the " + nm + " short") : (longSide ? "extended the " + nm + " long" : "cut the " + nm + " short")) + " in the week to " + month(L.date) + ".");
+      if (c && c.extreme) o.push(c.label + ": net " + (longSide ? "long " : "short ") + pct1(pct) + " of open interest, " + (longSide ? "so buying power may be exhausted." : "so a bullish surprise could force covering."));
+      else if (c) o.push("Net " + (longSide ? "long " : "short ") + pct1(pct) + " of open interest: " + c.label.toLowerCase() + ", not at the extreme band.");
+      o.push("Weekly data, never read as today's position."); return o; },
     opt: function (g) { var N = g.near, o = []; if (!N) return o; var u = N.underlying;
       if (N.call_wall) o.push("Largest call open interest sits at " + d2(N.call_wall[0]) + (u && N.call_wall[0] - u > u * 0.1 ? ", well above the market, so it is not a near-term cap." : ", close enough to act as a cap."));
       if (N.put_wall) o.push("Largest put open interest sits at " + d2(N.put_wall[0]) + (u && Math.abs(u - N.put_wall[0]) / u < 0.02 ? ", right at the market, so it is the level to watch." : ", the nearest support from options."));
@@ -55,7 +60,7 @@
       if (N.pcr != null) o.push(N.pcr < 1 ? "Calls outnumber puts in this expiry." : "Puts outnumber calls in this expiry."); return o; }
   };
   /* one box per panel: the Volatility and Carry rows hold two panels, and the box goes under the first */
-  if (typeof module !== "undefined" && module.exports) { module.exports = { RULES: RULES, traceable: traceable, fresh: fresh }; return; }
+  if (typeof module !== "undefined" && module.exports) { module.exports = { RULES: RULES, traceable: traceable, fresh: fresh, crowd: crowd }; return; }
 
   var SECOND = {
     vol: function (g) { var S = g.skew || [], c = S.filter(function (x) { return x[2] === "C"; }), p = S.filter(function (x) { return x[2] === "P"; }); if (!c.length || !p.length) return []; var av = function (a) { return a.reduce(function (s, x) { return s + x[1]; }, 0) / a.length; }; return [av(c) > av(p) ? "Calls are priced richer than puts: the market is paying up for upside." : "Puts are priced richer than calls: the market is paying up for protection."]; },
@@ -81,6 +86,23 @@
     if (sec === "snap") { var m = /\d{4}\/\d{2}\s*([\d,.]+) mil bu ending stocks\s*([+−-][\d,.]+)/.exec(t); if (m) o.push("New-crop ending stocks are " + m[1] + " mil bu, " + (/^[−-]/.test(m[2]) ? "tighter" : "looser") + " than the last report."); var e = /Next market-moving event\s*(.+?) (HIGH|MEDIUM|LOW)/.exec(t.replace(/\s+/g, " ")); if (e) o.push("Next market-moving report: " + e[1] + "."); }
     return o;
   }
+  function cftcView(k, t, G) {
+    var old = t.querySelector(":scope > .cf-view"); if (old) old.remove();
+    var C = G.cftc || [], L = C[C.length - 1], P = C[C.length - 2]; if (!L) return;
+    var day = new Date(L.date + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }), stale = Date.now() - Date.parse(L.date + "T15:30:00-04:00") > 240 * 36e5;
+    var p = L.oi ? L.net / L.oi * 100 : null, c = crowd(p), side = L.net < 0 ? "Net short" : "Net long", d = P ? L.net - P.net : null, sg = function (v) { return (v < 0 ? "−" : "+") + n(v); };
+    var Tr = C.slice(-5), lo = Math.min.apply(null, Tr.map(function (x) { return x.net; })), hi = Math.max.apply(null, Tr.map(function (x) { return x.net; })), W = 520, H = 86, xy = Tr.map(function (x, i) { return [36 + i * (W - 72) / Math.max(1, Tr.length - 1), 20 + (hi === lo ? 20 : (hi - x.net) / (hi - lo) * 34)]; });
+    var svg = '<svg viewBox="0 0 ' + W + " " + H + '" class="cf-svg" role="img" aria-label="Net position, last ' + Tr.length + ' weekly reports"><polyline fill="none" stroke="#e8c33a" stroke-width="2" points="' + xy.map(function (q) { return q.join(","); }).join(" ") + '"/>' + xy.map(function (q, i) { return '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="3" fill="#e8c33a"/><text x="' + q[0] + '" y="' + (q[1] - 6) + '" text-anchor="middle" font-size="10" fill="currentColor">' + sg(Tr[i].net) + "</text>"+'<text x="' + q[0] + '" y="' + (H - 4) + '" text-anchor="middle" font-size="11" fill="currentColor">' + month(Tr[i].date) + "</text>"; }).join("") + "</svg>";
+    var ord = ["corn", "soybeans", "wheat"], nm = { corn: "Corn", soybeans: "Soybeans", wheat: "Wheat" };
+    var el = doc.createElement("div"); el.className = "cf-view";
+    el.innerHTML = '<div class="cf-head"><b>CFTC - Managed money</b><span>Report ' + day + " · weekly" + (stale ? ' · <b class="cf-stale">STALE</b>' : "") + "</span></div>" +
+      '<div class="gr-slicer" role="group" aria-label="CFTC commodity"><span>Commodity</span>' + ord.map(function (x) { return '<button type="button" data-cf-pick="' + x + '" aria-pressed="' + (x === k) + '">' + nm[x] + "</button>"; }).join("") + "</div>" +
+      '<table class="cf-tbl"><thead><tr><th>Measure</th><th>' + nm[k] + "</th><th>Week on week</th><th>Read</th></tr></thead><tbody>" +
+      "<tr><td>Managed-money net</td><td>" + sg(L.net) + " contracts</td><td>" + (d == null ? "UNAVAILABLE" : "Funds " + (d < 0 ? "sold " : "bought ") + n(d) + " net") + "</td><td>" + side + "</td></tr>" +
+      "<tr><td>Net as % of open interest</td><td>" + (p == null ? "UNAVAILABLE" : (p < 0 ? "−" : "+") + pct1(p)) + "</td><td>-</td><td>" + (c ? c.label : "UNAVAILABLE") + "</td></tr>" +
+      "<tr><td>Positioning trend (last " + Tr.length + ' reports)</td><td colspan="3">' + svg + "</td></tr></tbody></table>";
+    var h = t.querySelector(":scope > h2, :scope > .tile-head"); if (h) h.after(el); else t.prepend(el);
+  }
   function paint(k) {
     var P = doc.getElementById("panel-" + k), sub = P && P.querySelector("[data-subpanel].on"), G = root.DATA && DATA.grains && DATA.grains[k]; if (!sub || !G) return;
     var seen = {}, KEYS = { fan: "grains_settle", pos: "cftc_grains", cftc: "cftc_grains", cockpit: "options", opt: "options", vol: "options", optflow: "optflow", carry: "grains_settle", oi: "options", flow: "options", snap: "model", cost: "inputs", paths: "inputs", sd: "wasde", exp: "exports", dest: "exports", cmp: "sd_hist" };
@@ -88,6 +110,7 @@
       if (!t.classList.contains("tile")) return; var sec = t.getAttribute("data-sec");
       if (sub.getAttribute("data-subpanel") === "overview" && sec === "insight") { demote(t, [].slice.call(t.querySelectorAll(":scope > p.read"))); var rd = t.querySelector(".prow-ev p.read"), ss2 = rd ? rd.textContent.split(/(?<=[a-z%\d)])\.\s+(?=[A-Z])/).slice(0, 2).map(function (x) { return x.trim().replace(/\.+$/, "") + "."; }) : []; box(t, ss2, "model"); return; }
       if (sec === "flow") { var hs = [].filter.call(t.querySelectorAll("h3,h4,b,div"), function (x) { return /^What the flow is saying/.test(x.textContent.trim()) && x.children.length < 2; })[0]; if (hs && hs.nextElementSibling) demote(t, [hs, hs.nextElementSibling]); }
+      if (sec === "cftc") cftcView(k, t, G);
       if (seen[sec]) { var two = SECOND[sec] ? SECOND[sec](G, t) : []; if (two.length) box(t, two, KEYS[sec] || "model"); return; }
       if (sec === "snap" && !/dash-head/.test(t.className)) { var R0 = (G.roll || [])[0]; if (R0 && R0.prev) box(t, [R0.contract + " last settled " + (R0.settle > R0.prev ? "higher" : R0.settle < R0.prev ? "lower" : "unchanged") + " on the day."], "grains_settle"); return; }
       var r = RULES[sec], bs = r ? r(G, DATA.optflow && DATA.optflow[k], DATA, k) : domBullets(sec, t);
@@ -97,6 +120,7 @@
   var rg = root.renderGrain, ss = root.setSub;
   root.renderGrain = function (k) { var r = rg.apply(this, arguments); paint(k); return r; };
   root.setSub = function (p) { var r = ss.apply(this, arguments); if (GR.indexOf(p) >= 0) paint(p); return r; };
+  doc.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-cf-pick]"); if (b && root.GRAINS && GRAINS.pick) { var y = b.getBoundingClientRect().top; GRAINS.pick(b.getAttribute("data-cf-pick")); var nb = doc.querySelector('.tab-panel.active [data-cf-pick]'); if (nb) root.scrollBy(0, nb.getBoundingClientRect().top - y); } });
   doc.addEventListener("click", function (ev) { var t = ev.target.closest && ev.target.closest(".tile button, .tile [data-oiv]"); if (!t) return; var P = t.closest(".tab-panel"), k = P && P.id.replace("panel-", ""); if (GR.indexOf(k) >= 0) setTimeout(function () { paint(k); }, 30); });
   GR.forEach(paint);
   root.OBSLOG = LOG;
