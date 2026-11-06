@@ -68,6 +68,8 @@ main{max-width:1920px;margin:0 auto;padding:14px 16px 30px}
 .gr-slicer button[aria-pressed="true"]{color:#101825;background:var(--amber);border-color:var(--amber)}
 @media (max-width:760px){.gr-strip{grid-template-columns:1fr}}
 .prow-off{display:none!important}
+.obs-box{margin-top:12px;padding:10px 14px;border-radius:8px;border:1px solid rgba(232,195,58,.35);background:linear-gradient(135deg,#14233b,#0d1626);color:#e6edf6}
+.obs-box b{display:block;font-size:11px;letter-spacing:.14em;color:#e8c33a;margin-bottom:4px}.obs-box ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.45}
 .prow-top{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;font-size:13px;color:var(--muted);padding:2px 2px 0}.prow-top b{color:var(--ink)}
 .prow-h{grid-column:1/-1;appearance:none;display:grid;grid-template-columns:18px minmax(190px,250px) 1fr;gap:10px;align-items:baseline;text-align:left;font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:11px 14px;cursor:pointer}
 .prow-h:hover{border-color:var(--line2)}.prow-h[aria-expanded="true"]{border-color:var(--amber)}.prow-h:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
@@ -4583,7 +4585,7 @@ function buildSecNav(panel){
   var og=sub.querySelector(':scope>.kb-guide'); if(og) og.remove();
   [].forEach.call(sub.children, function(t){
     if(/geo-head|prow-h|prow-top/.test(t.className)){ t.setAttribute('data-sec','*'); return; }
-    var h=t.querySelector('h2,h3'), txt=t.className+' '+(t.getAttribute('data-src')||'')+' '+(t.id||'')+' '+(h?h.textContent:'');
+    var h=t.querySelector('h2,h3'), hc=h&&h.cloneNode(true); if(hc) [].forEach.call(hc.querySelectorAll('.age-pill,button'),function(x){x.remove();}); var txt=t.className+' '+(t.getAttribute('data-src')||'')+' '+(t.id||'')+' '+(hc?hc.textContent:'');
     var hit=null; for(var i=0;i<rules.length;i++){ if(rules[i][2].test(txt)){ hit=rules[i]; break; } }
     var id=hit?hit[0]:'more', lab=hit?hit[1]:(h?h.textContent.split('—')[0].trim():'More');
     if(!hit){ id='more-'+order.length; }
@@ -4744,6 +4746,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="glossary.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script src="grains-ui.js"></script>
 <script src="rows-ui.js"></script>
+<script src="obs-ui.js"></script>
 <script>(function(){var f=document.createElement("script");f.src="feed-rail.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="optflow-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="macro-ind.js?v="+Date.now();document.body.appendChild(f);})();</script>
