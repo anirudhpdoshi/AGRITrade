@@ -36,6 +36,8 @@
   try { open = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) {}
   function save() { try { localStorage.setItem(KEY, JSON.stringify(open)); } catch (e) {} }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  /* owner rule: a label with no data is hidden, not shown as UNAVAILABLE */
+  function clean(s) { return String(s).split("  |  ").map(function (p) { return p.split(" · ").filter(function (x) { return x.indexOf(UNA) < 0; }).join(" · "); }).filter(Boolean).join("  |  "); }
   function subOf(k) { var P = doc.getElementById("panel-" + k); return P && P.querySelector('[data-subpanel="deriv"]'); }
 
   function evidence(tile) {
@@ -52,10 +54,14 @@
     var G = DATA.grains[k], R = G.roll || [], fl = root.GRAINS && GRAINS.fndLabel; if (!R[0] || !R[1]) return;
     var live = typeof rollData === "function" ? rollData(k) : null, N = live && live.dailyN ? live.dailyN.slice(-6) : [], sp = function (a, b) { return a && b && a.settle != null && b.settle != null ? (a.settle - b.settle) * 100 : null; };
     var h = '<h2>Spread traceability <span class="h2note">— current pair, next pair, expired pairs</span></h2>' +
-      '<div class="tr-sec"><h3>Default pair: ' + R[0].contract + " to " + R[1].contract + "</h3>Spread " + fmtSp(sp(R[0], R[1])) + " · " + R[0].contract + " FND " + (fl ? fl(R[0].contract) : "UNAVAILABLE") + (N.length ? rowsOf(N) : "") + "</div>" +
-      '<div class="tr-sec"><h3>Next pair: ' + (R[2] ? R[1].contract + " to " + R[2].contract : "UNAVAILABLE") + "</h3>" + (R[2] ? "Spread " + fmtSp(sp(R[1], R[2])) + " · " + R[1].contract + " FND " + (fl ? fl(R[1].contract) : "UNAVAILABLE") : "") + "</div>";
+      '<div class="tr-sec"><h3>Default pair: ' + R[0].contract + " to " + R[1].contract + "</h3>" + (sp(R[0], R[1]) != null ? "Spread " + fmtSp(sp(R[0], R[1])) : "") + (fl && fl(R[0].contract) ? " · " + R[0].contract + " FND " + fl(R[0].contract) : "") + (N.length ? rowsOf(N) : "") + "</div>" +
+      (R[2] && sp(R[1], R[2]) != null ? '<div class="tr-sec"><h3>Next pair: ' + R[1].contract + " to " + R[2].contract + "</h3>Spread " + fmtSp(sp(R[1], R[2])) + (fl && fl(R[1].contract) ? " · " + R[1].contract + " FND " + fl(R[1].contract) : "") + "</div>" : "");
     var X = typeof ROLLS !== "undefined" && ROLLS[k];
     if (X && X.front !== R[0].contract && X.def === R[0].contract) { var last = X.dailyN[X.dailyN.length - 1]; h += '<div class="tr-sec"><h3>' + X.front + " to " + X.def + ' <span class="tr-exp">EXPIRED</span> · FND ' + X.stats.fnd + "</h3>History held through " + last[0] + ". Never the default." + rowsOf(X.dailyN.slice(-6)) + "</div>"; }
+    var XP = (DATA.rolls_expired && DATA.rolls_expired[k]) || [];
+    XP.forEach(function (e) { var F = (e.follow || []).slice(-6); if (!F.length && !(e.rows || []).length) return;
+      var isStatic = X && X.front === e.front; if (!isStatic) h += '<div class="tr-sec"><h3>' + e.front + " to " + e.def + ' <span class="tr-exp">EXPIRED</span> · FND ' + e.fnd + "</h3></div>";
+      if (F.length) h += '<div class="tr-sec"><h3>' + e.front + " to " + e.def + (e.done ? " · followed to the end" : " · still being followed") + '</h3><table class="cf-tbl"><thead><tr><th>Session</th><th>' + e.front + "</th><th>" + e.def + "</th><th>Spread</th></tr></thead><tbody>" + F.map(function (r) { return "<tr><td>" + r[0] + "</td><td>" + (+r[1]).toFixed(4) + "</td><td>" + (+r[2]).toFixed(4) + "</td><td>" + fmtSp((r[1] - r[2]) * 100) + "</td></tr>"; }).join("") + "</tbody></table></div>"; });
     var t = doc.createElement("div"); t.className = "tile wide tr-tile"; t.setAttribute("data-src", "grains_settle"); t.setAttribute("data-sec", "carry"); t.innerHTML = h; sub.appendChild(t);
   }
   function sectionAsOf() {
@@ -81,7 +87,7 @@
     ROWS.forEach(function (r, i) {
       var on = !!open[r[0]], b = doc.createElement("button"), tiles = kids.filter(function (t) { return t.getAttribute("data-sec") === r[0]; });
       b.type = "button"; b.className = "prow-h"; b.setAttribute("data-sec", "*"); b.setAttribute("data-prow", r[0]); b.setAttribute("aria-expanded", on);
-      b.innerHTML = '<span class="prow-c" aria-hidden="true">' + (on ? "▾" : "▸") + '</span><span class="prow-n">' + (i + 1) + " · " + esc(r[1]) + '</span><span class="prow-v">' + esc(H[r[0]]) + "</span>";
+      b.innerHTML = '<span class="prow-c" aria-hidden="true">' + (on ? "▾" : "▸") + '</span><span class="prow-n">' + (i + 1) + " · " + esc(r[1]) + '</span><span class="prow-v">' + esc(clean(H[r[0]])) + "</span>";
       frag.appendChild(b);
       tiles.forEach(function (t) { t.classList.toggle("prow-off", !on); evidence(t); frag.appendChild(t); used.push(t); });
     });
