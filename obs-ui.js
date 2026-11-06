@@ -110,6 +110,7 @@
       if (!t.classList.contains("tile")) return; var sec = t.getAttribute("data-sec");
       if (sub.getAttribute("data-subpanel") === "overview" && sec === "insight") { demote(t, [].slice.call(t.querySelectorAll(":scope > p.read"))); var rd = t.querySelector(".prow-ev p.read"), ss2 = rd ? rd.textContent.split(/(?<=[a-z%\d)])\.\s+(?=[A-Z])/).slice(0, 2).map(function (x) { return x.trim().replace(/\.+$/, "") + "."; }) : []; box(t, ss2, "model"); return; }
       if (sec === "flow") { var hs = [].filter.call(t.querySelectorAll("h3,h4,b,div"), function (x) { return /^What the flow is saying/.test(x.textContent.trim()) && x.children.length < 2; })[0]; if (hs && hs.nextElementSibling) demote(t, [hs, hs.nextElementSibling]); }
+      if (t.classList.contains("tr-tile")) { var R = G.roll || [], ex = t.querySelector(".tr-exp"); box(t, ex ? ["The default switched at First Notice Day: " + R[0].contract + " is the front contract across the desk. The expired pair stays here, never as the default."] : [R[0].contract + " stays the default until its First Notice Day, then the desk moves to " + (R[1] || {}).contract + "."], "grains_settle"); return; }
       if (sec === "cftc") cftcView(k, t, G);
       if (seen[sec]) { var two = SECOND[sec] ? SECOND[sec](G, t) : []; if (two.length) box(t, two, KEYS[sec] || "model"); return; }
       if (sec === "snap" && !/dash-head/.test(t.className)) { var R0 = (G.roll || [])[0]; if (R0 && R0.prev) box(t, [R0.contract + " last settled " + (R0.settle > R0.prev ? "higher" : R0.settle < R0.prev ? "lower" : "unchanged") + " on the day."], "grains_settle"); return; }
@@ -124,4 +125,5 @@
   doc.addEventListener("click", function (ev) { var t = ev.target.closest && ev.target.closest(".tile button, .tile [data-oiv]"); if (!t) return; var P = t.closest(".tab-panel"), k = P && P.id.replace("panel-", ""); if (GR.indexOf(k) >= 0) setTimeout(function () { paint(k); }, 30); });
   GR.forEach(paint);
   root.OBSLOG = LOG;
+  root.OBSUI = { paint: paint };
 })(typeof window !== "undefined" ? window : this);
