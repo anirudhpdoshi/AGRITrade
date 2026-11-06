@@ -2009,7 +2009,7 @@ function rollSpreadLine(R){
    Reads the daily futures open-interest rows (front + next month) with price to classify each session:
    price↑ OI↑ new longs · price↓ OI↑ new shorts · price↑ OI↓ short covering · price↓ OI↓ long liquidation.
    Roll-proof: uses COMBINED front+next OI so a position moving from one month to the next cancels out; price is
-   taken from ONE reference contract for the whole window (the next month once the roll has passed 40%), so the
+   taken from ONE reference contract for the whole window (the default front contract), so the
    series never jumps by the calendar spread. In the delivery window, falling combined OI is partly delivery
    avoidance / rolls to a third month, so those sessions count at half strength. */
 var FLOWN={}; try{ FLOWN=JSON.parse(localStorage.getItem('desk.flown')||'{}')||{}; }catch(e){}
@@ -2017,7 +2017,7 @@ var FLOWQ={NL:{l:'New longs',w:1,c:'#3fb97f',read:'fresh buying'},SC:{l:'Short c
   NS:{l:'New shorts',w:-1,c:'#e0655f',read:'fresh selling'},LL:{l:'Long liquidation',w:-0.5,c:'#f0a35e',read:'longs exiting'},FL:{l:'Flat',w:0,c:'#6b7a90',read:'no change'}};
 function flowSessions(key){
   var R=rollData(key), N=R.dailyN, g=DATA.grains[key], hist={}; (g.history||[]).forEach(function(h){ hist[h.d.slice(5,10)]=h.s; });
-  var L=N[N.length-1], useDef=L[3]>=40, dF=daysToFnd(key);
+  var useDef=false, dF=daysToFnd(key);   /* BR-CR-1: the reference is the default contract, with no OI threshold */
   function px(r){ var f=r[5]!=null?r[5]:hist[r[0]]; if(f==null) return null; return useDef?(r[6]!=null?r[6]:f-r[4]/100):f; }
   var out=[], FV=(DATA.flow_vol&&DATA.flow_vol[key])||{}, vf=FV[R.front]||{}, vd=FV[R.def]||{};
   for(var i=1;i<N.length;i++){ var a=N[i-1], b=N[i], pa=px(a), pb=px(b); if(pa==null||pb==null) continue;
@@ -2207,7 +2207,7 @@ function rollTileHTML(key){
     ['Deferred OI net (window)', st.dnet],
     ['Combined OI net (window)','<b>'+st.cnet+'</b>'],
     ['Roll pace', st.pace],
-    ['Liquidity threshold 40%', st.thr],
+    ['Option-month unlock at 40% rolled', st.thr],
     ['Calendar spread', st.sp],
     ['Managed money net', st.mm],
     ['First notice day (FND)', st.fnd],
