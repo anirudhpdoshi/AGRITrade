@@ -37,7 +37,7 @@
   function save() { try { localStorage.setItem(KEY, JSON.stringify(open)); } catch (e) {} }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   /* owner rule: a label with no data is hidden, not shown as UNAVAILABLE */
-  function clean(s) { return String(s).split("  |  ").map(function (p) { return p.split(" · ").filter(function (x) { return x.indexOf(UNA) < 0; }).join(" · "); }).filter(Boolean).join("  |  "); }
+  function clean(s) { return String(s).split("  |  ").map(function (p) { return p.split(" · ").filter(function (x) { return x.indexOf(UNA) < 0; }).join(" · "); }).filter(Boolean).join("  |  ").replace(/^./, function (c) { return c.toUpperCase(); }); }
   function subOf(k) { var P = doc.getElementById("panel-" + k); return P && P.querySelector('[data-subpanel="deriv"]'); }
 
   function evidence(tile) {

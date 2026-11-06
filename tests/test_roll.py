@@ -10,6 +10,13 @@ def ok(c, m):
     n += 1
 ok(U.contract_dates("ZSX26") == (date(2026, 10, 30), date(2026, 10, 29)), "ZSX26 FND Oct 30, hard exit Oct 29")
 ok(U.contract_dates("ZCZ26") == (date(2026, 11, 30), date(2026, 11, 27)), "Dec corn: Thanksgiving skipped")
+ok(U.last_trade("ZSX26") == date(2026, 11, 13), "Nov soybeans last trade: Nov 14 is a Saturday, so Fri Nov 13")
+_e = {"fnd": "Fri Oct 30, 2026", "last_trade": "2026-11-13", "follow": [], "done": False}
+U.merge_follow(_e, [("2026-10-29", 1.0), ("2026-10-30", 12.0), ("2026-11-02", 12.1)], [("2026-10-30", 12.1), ("2026-11-02", 12.2)], date(2026, 11, 5))
+ok(_e["follow"] == [["2026-10-30", 12.0, 12.1], ["2026-11-02", 12.1, 12.2]] and not _e["done"], "spread follows from FND on common dates")
+U.merge_follow(_e, [], [], date(2026, 11, 14)); ok(_e["done"] and len(_e["follow"]) == 2, "done after last trade; history kept")
+_D = {"rolls_add": {"corn": [["11-04", 1, 2, 3.0, 4.0, "P"]]}}; U.archive_pair(_D, "corn", "ZCZ26", "ZCH27"); U.archive_pair(_D, "corn", "ZCZ26", "ZCH27")
+ok(len(_D["rolls_expired"]["corn"]) == 1 and _D["rolls_expired"]["corn"][0]["rows"][0][0] == "11-04", "roll data archived once before it is reset")
 ok(U.next_contract("ZSX26", "soybeans") == "ZSF27" and U.next_contract("ZCZ26", "corn") == "ZCH27", "next listed month")
 D = json.load(open(os.path.join(os.path.dirname(__file__), "..", "data.json")))["DATA"]
 D["grains"]["soybeans"]["roll"] = [{"contract": c, "settle": None, "prev": None, "oi_pct": 0.0} for c in ("ZSX26", "ZSF27", "ZSH27")]
