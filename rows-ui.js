@@ -44,6 +44,20 @@
     if (!d) { d = doc.createElement("details"); d.className = "prow-ev"; d.innerHTML = "<summary>Detail evidence</summary>"; tile.appendChild(d); }
     bits.forEach(function (b) { b.innerHTML = b.innerHTML.replace(/\b(IBKR|IB) /g, ""); d.appendChild(b); });
   }
+  function fmtSp(v) { return v == null || isNaN(v) ? "UNAVAILABLE" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "¢"; }
+  function rowsOf(N) { return '<table class="cf-tbl"><thead><tr><th>Session</th><th>Front OI</th><th>Deferred OI</th><th>Roll %</th><th>Spread</th></tr></thead><tbody>' + N.map(function (r) { return "<tr><td>" + r[0] + "</td><td>" + Math.round(r[1]).toLocaleString("en-US") + "</td><td>" + Math.round(r[2]).toLocaleString("en-US") + "</td><td>" + (+r[3]).toFixed(1) + "%</td><td>" + fmtSp(r[4]) + "</td></tr>"; }).join("") + "</tbody></table>"; }
+  /* BR-CR-5: Spread traceability, grouped in Carry & roll: current pair, next pair, expired-pair history */
+  function trace(k, sub) {
+    var old = sub.querySelector(":scope > .tr-tile"); if (old) old.remove();
+    var G = DATA.grains[k], R = G.roll || [], fl = root.GRAINS && GRAINS.fndLabel; if (!R[0] || !R[1]) return;
+    var live = typeof rollData === "function" ? rollData(k) : null, N = live && live.dailyN ? live.dailyN.slice(-6) : [], sp = function (a, b) { return a && b && a.settle != null && b.settle != null ? (a.settle - b.settle) * 100 : null; };
+    var h = '<h2>Spread traceability <span class="h2note">— current pair, next pair, expired pairs</span></h2>' +
+      '<div class="tr-sec"><h3>Default pair: ' + R[0].contract + " to " + R[1].contract + "</h3>Spread " + fmtSp(sp(R[0], R[1])) + " · " + R[0].contract + " FND " + (fl ? fl(R[0].contract) : "UNAVAILABLE") + (N.length ? rowsOf(N) : "") + "</div>" +
+      '<div class="tr-sec"><h3>Next pair: ' + (R[2] ? R[1].contract + " to " + R[2].contract : "UNAVAILABLE") + "</h3>" + (R[2] ? "Spread " + fmtSp(sp(R[1], R[2])) + " · " + R[1].contract + " FND " + (fl ? fl(R[1].contract) : "UNAVAILABLE") : "") + "</div>";
+    var X = typeof ROLLS !== "undefined" && ROLLS[k];
+    if (X && X.front !== R[0].contract && X.def === R[0].contract) { var last = X.dailyN[X.dailyN.length - 1]; h += '<div class="tr-sec"><h3>' + X.front + " to " + X.def + ' <span class="tr-exp">EXPIRED</span> · FND ' + X.stats.fnd + "</h3>History held through " + last[0] + ". Never the default." + rowsOf(X.dailyN.slice(-6)) + "</div>"; }
+    var t = doc.createElement("div"); t.className = "tile wide tr-tile"; t.setAttribute("data-src", "grains_settle"); t.setAttribute("data-sec", "carry"); t.innerHTML = h; sub.appendChild(t);
+  }
   function sectionAsOf() {
     var A = root.DATA && DATA.meta && DATA.meta.asof || {}, best = 0;
     ["options", "grains_settle", "cftc_grains", "optflow"].forEach(function (k) { var t = Date.parse(A[k]); if (t > best) best = t; });
@@ -61,6 +75,7 @@
     if (fv) H.flow = fv.textContent.trim() + (fl ? " · " + fl.textContent.trim().split(/\.\s/)[0] : "");
     var top = doc.createElement("div"); top.className = "prow-top"; top.setAttribute("data-sec", "*");
     top.innerHTML = "<b>" + NAME[k] + " · Derivatives</b><span>" + sectionAsOf() + "</span>";
+    trace(k, sub);
     var kids = [].slice.call(sub.children), frag = doc.createDocumentFragment(), used = [];
     frag.appendChild(top);
     ROWS.forEach(function (r, i) {
@@ -100,6 +115,12 @@
     setRow(v, true);
     var h = sub.querySelector(':scope > [data-prow="' + v + '"]'); if (h) root.scrollTo({ top: h.getBoundingClientRect().top + root.scrollY - 90, behavior: "smooth" });
   }, true);
+  /* some panels load after the page draws (Options flow): put a late arrival into its row */
+  var busy = false;
+  function settle(k) { if (busy) return; var sub = subOf(k); if (!sub || !sub.classList.contains("on")) return;
+    var lastH = null, stray = false; [].forEach.call(sub.children, function (t) { if (t.classList.contains("prow-h")) lastH = t; else if (t.classList.contains("tile") && !t.classList.contains("tr-tile")) { var id = t.getAttribute("data-sec"); if (!id || !lastH || lastH.getAttribute("data-prow") !== id) stray = true; } });
+    if (!stray) return; busy = true; if (root.buildSecNav) buildSecNav(k); build(k); if (root.OBSUI) OBSUI.paint(k); setTimeout(function () { busy = false; }, 0); }
+  if (root.MutationObserver) GR.forEach(function (k) { var sub = subOf(k); if (sub) new MutationObserver(function () { settle(k); }).observe(sub, { childList: true }); });
   GR.forEach(build);
   root.ROWSUI = { build: build };
 })(typeof window !== "undefined" ? window : this);
