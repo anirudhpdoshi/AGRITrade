@@ -81,6 +81,7 @@
       '<div class="gr-slicer" role="group" aria-label="Commodity"><span>Commodity</span>' + ORDER.map(function (k) { return '<button type="button" data-grain-pick="' + k + '" aria-pressed="' + (k === on) + '">' + NAME[k] + '</button>'; }).join("") + '</div>';
     if (head.innerHTML !== h) head.innerHTML = h;
   }
+  root.GRAINS.pick = function (k) { pick(k); };
   function section(k) { var s = doc.querySelector("#panel-" + k + ' [data-sub][aria-selected="true"]'); return s ? s.getAttribute("data-sub") : null; }
   function pick(k) {
     var from = active(), sub = from && from !== k ? section(from) : null, y = root.scrollY, b = btn(k); if (!b) return;
