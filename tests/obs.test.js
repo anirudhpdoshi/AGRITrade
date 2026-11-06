@@ -1,0 +1,5 @@
+const assert = require("node:assert"), test = require("node:test"), O = require("../obs-ui.js");
+test("a bullet citing a number not in the panel is rejected", () => { assert.ok(O.traceable("Net short 74,606 contracts", "Net -74,606 report")); assert.ok(!O.traceable("Net short 74,607 contracts", "Net -74,606 report")); assert.ok(O.traceable("no numbers here", "")); });
+test("stale panels are withheld", () => { const now = Date.parse("2026-11-20T12:00:00Z"); assert.ok(!O.fresh("cftc_grains", "2026-10-27T15:30:00Z", now)); assert.ok(O.fresh("cftc_grains", "2026-11-13T15:30:00Z", now)); assert.ok(!O.fresh("options", undefined, now)); });
+test("CFTC bullets state side and direction in words", () => { const b = O.RULES.cftc({ cftc: [{ date: "2026-10-20", net: -52005 }, { date: "2026-10-27", net: -74606 }] }); assert.strictEqual(b[0], "Net position short 74,606 in the Oct 27 report."); assert.match(b[1], /sold on the week/); });
+test("nothing is written from missing data", () => { Object.keys(O.RULES).forEach(k => assert.deepStrictEqual(O.RULES[k]({}), [])); });

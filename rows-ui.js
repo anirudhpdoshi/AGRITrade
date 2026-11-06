@@ -42,7 +42,7 @@
     var bits = [].slice.call(tile.querySelectorAll(".stamp, p.note")).filter(function (x) { return !x.closest(".prow-ev"); }); if (!bits.length) return;
     var d = tile.querySelector(":scope > .prow-ev");
     if (!d) { d = doc.createElement("details"); d.className = "prow-ev"; d.innerHTML = "<summary>Detail evidence</summary>"; tile.appendChild(d); }
-    bits.forEach(function (b) { d.appendChild(b); });
+    bits.forEach(function (b) { b.innerHTML = b.innerHTML.replace(/\b(IBKR|IB) /g, ""); d.appendChild(b); });
   }
   function sectionAsOf() {
     var A = root.DATA && DATA.meta && DATA.meta.asof || {}, best = 0;
