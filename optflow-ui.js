@@ -71,7 +71,7 @@
     var PS = O.positioning, nc = (O.chains || []).filter(function (c) { return c.leg === "near"; })[0] || {}, nd = O.next_day, A = O.analogues || {}, sim = A.similar || {}, F = O.price;
     var g = DATA.grains[key], H = (g.history || []).map(function (h) { return h.s; }).slice(-20), ch1 = H.length ? (F / H[H.length - 1] - 1) * 100 : null;
     var S = PS.strikes.filter(function (x) { return Math.abs(x.dist) <= 9; }), sup = S.filter(function (x) { return x.role === "support"; }).sort(function (a, b) { return b.poi - a.poi; })[0], res = S.filter(function (x) { return x.role === "resistance"; }).sort(function (a, b) { return b.coi - a.coi; })[0];
-    var pc = nc.prem_c, pp = nc.prem_p, hasV = nc.has_vol, sc = PS.score || 0, cl = sc > 15 ? "up" : sc < -15 ? "dn" : "neu";
+    var pc = nc.prem_c, pp = nc.prem_p, hasV = nc.has_vol && ((pc || 0) + (pp || 0)) > 0, sc = PS.score || 0, cl = sc > 15 ? "up" : sc < -15 ? "dn" : "neu";
     var lab = PS.score == null ? "Building" : sc >= 25 ? "Bullish" : sc <= -25 ? "Bearish" : "Mixed";
     var top = '<div class="od-top">' +
       '<div class="od-c1"><div class="od-l">Front futures · ' + esc(g.roll && g.roll[0] ? g.roll[0].contract : "") + '</div><div class="od-v">' + px(F) + '</div><div class="' + (ch1 >= 0 ? "up" : "dn") + '">' + (ch1 != null ? (ch1 >= 0 ? "▲ +" : "▼ ") + ch1.toFixed(2) + "% vs settle" : "") + "</div>" + spark(H.concat([F]), 120, 34, "#38b6c9") + "</div>" +

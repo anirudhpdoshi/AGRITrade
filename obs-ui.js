@@ -98,8 +98,8 @@
     el.innerHTML = '<div class="cf-head"><b>CFTC - Managed money</b><span>Report ' + day + " · weekly" + (stale ? ' · <b class="cf-stale">STALE</b>' : "") + "</span></div>" +
       '<div class="gr-slicer" role="group" aria-label="CFTC commodity"><span>Commodity</span>' + ord.map(function (x) { return '<button type="button" data-cf-pick="' + x + '" aria-pressed="' + (x === k) + '">' + nm[x] + "</button>"; }).join("") + "</div>" +
       '<table class="cf-tbl"><thead><tr><th>Measure</th><th>' + nm[k] + "</th><th>Week on week</th><th>Read</th></tr></thead><tbody>" +
-      "<tr><td>Managed-money net</td><td>" + sg(L.net) + " contracts</td><td>" + (d == null ? "UNAVAILABLE" : "Funds " + (d < 0 ? "sold " : "bought ") + n(d) + " net") + "</td><td>" + side + "</td></tr>" +
-      "<tr><td>Net as % of open interest</td><td>" + (p == null ? "UNAVAILABLE" : (p < 0 ? "−" : "+") + pct1(p)) + "</td><td>-</td><td>" + (c ? c.label : "UNAVAILABLE") + "</td></tr>" +
+      "<tr><td>Managed-money net</td><td>" + sg(L.net) + " contracts</td><td>" + (d == null ? "" : "Funds " + (d < 0 ? "sold " : "bought ") + n(d) + " net") + "</td><td>" + side + "</td></tr>" +
+      (p == null ? "" : "<tr><td>Net as % of open interest</td><td>" + (p < 0 ? "−" : "+") + pct1(p) + "</td><td></td><td>" + c.label + "</td></tr>") +
       "<tr><td>Positioning trend (last " + Tr.length + ' reports)</td><td colspan="3">' + svg + "</td></tr></tbody></table>";
     var h = t.querySelector(":scope > h2, :scope > .tile-head"); if (h) h.after(el); else t.prepend(el);
   }

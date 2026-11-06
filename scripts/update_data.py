@@ -778,6 +778,54 @@ def next_contract(code, grain):
     return root + (ms[i + 1] + f"{y:02d}" if i + 1 < len(ms) else ms[0] + f"{y + 1:02d}")
 
 
+def last_trade(code):
+    """CBOT grains trade to the business day before the 15th of the contract month."""
+    d = datetime(2000 + int(code[-2:]), MCODE.index(code[-3]) + 1, 14).date()
+    while not _bday(d):
+        d -= timedelta(days=1)
+    return d
+
+
+def archive_pair(D, grain, front, deferred):
+    """Keep an expired pair for Spread traceability: it stops being the default at the roll, and its data is kept till it is out."""
+    X = D.setdefault("rolls_expired", {}).setdefault(grain, [])
+    if any(e["front"] == front for e in X):
+        return
+    fnd = contract_dates(front)[0]
+    X.append({"front": front, "def": deferred, "fnd": fnd.strftime("%a %b %d, %Y"), "last_trade": last_trade(front).isoformat(),
+              "rows": list((D.get("rolls_add") or {}).get(grain) or []), "follow": [], "done": False})
+
+
+def merge_follow(e, front_settles, def_settles, today):
+    """Common settle dates of an expired pair, from its FND on; marks the pair done once the front has stopped trading."""
+    start = datetime.strptime(e["fnd"], "%a %b %d, %Y").date().isoformat()
+    D2 = dict(def_settles)
+    rows = {r[0]: r for r in e.get("follow") or []}
+    for d, v in front_settles:
+        if d >= start and d in D2:
+            rows[d] = [d, v, D2[d]]
+    e["follow"] = [rows[d] for d in sorted(rows)]
+    if today.isoformat() > e["last_trade"]:
+        e["done"] = True
+    return e
+
+
+def expired_track(D, N):
+    """Once a day after the settle: follow each expired pair till its front is completely out."""
+    now = datetime.now(TOR)
+    for pair in (("soybeans", "ZSX26", "ZSF27"),):   # the pair already on the desk when collection began
+        archive_pair(D, *pair)
+    for k, L in (D.get("rolls_expired") or {}).items():
+        for e in L:
+            if e.get("done") or e.get("checked") == now.date().isoformat() or now.hour < 17:
+                continue
+            try:
+                merge_follow(e, _yahoo_settles(e["front"]), _yahoo_settles(e["def"]), now.date())
+                e["checked"] = now.date().isoformat()
+            except Exception as ex:
+                print(f"  expired pair {e['front']}: kept last copy ({type(ex).__name__})")
+
+
 def roll_fronts(D, today=None):
     """Drop fronts past the desk's hard exit; returns [(grain, old, new)]."""
     today = today or NOW.astimezone(TOR).date()
@@ -792,6 +840,7 @@ def roll_fronts(D, today=None):
             (g.get("quotes") or {}).pop(old["contract"], None)
             g["fan"]["settle_date"] = "2000-01-01"   # forces the fan/history rebuild on the new front
             g["fan"].pop("front", None)
+            archive_pair(D, k, old["contract"], R[0]["contract"])
             done.append((k, old["contract"], R[0]["contract"]))
         g["roll"] = R
         fnd, hard = contract_dates(R[0]["contract"])
@@ -2678,7 +2727,7 @@ def ust(D, N):
     return True
 
 
-BLOCKS = [("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
+BLOCKS = [("expired_track", expired_track), ("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("yields_live", yields_live), ("energy", energy),
           ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow), ("ust", ust)]
 

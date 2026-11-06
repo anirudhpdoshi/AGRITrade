@@ -106,7 +106,6 @@
       var a = ageInfo(tile.getAttribute("data-src"), now);
       if (a && a.txt === "live" && tile.id === "fx-spot-tile") a = null;   // the LIVE chip already says it
       var pill = h2.querySelector(".age-pill");
-      if (!a && /^(cftc_grains|grains_settle|options|wasde|exports|inputs|sd_hist|model)$/.test(tile.getAttribute("data-src"))) a = { cls: "old", txt: "UNAVAILABLE", title: "" };
       if (!a) { if (pill) pill.remove(); return; }
       if (!pill) { pill = document.createElement("span"); h2.appendChild(pill); }
       pill.className = "age-pill " + a.cls;

@@ -47,7 +47,7 @@
 
   function asOfLine(now) {
     var a = root.DATA && DATA.meta && DATA.meta.asof && DATA.meta.asof.grains_settle, t = a ? Date.parse(a) : NaN;
-    if (!isFinite(t)) return { text: "As of UNAVAILABLE", day: "" };
+    if (!isFinite(t)) return { text: "", day: "" };
     return { text: fmtET(t, { month: "short", day: "numeric" }) + ", " + fmtET(t, { hour: "numeric", minute: "2-digit" }) + " ET · settlement · " + age(now - t) + " old",
              day: new Date(t).toLocaleDateString("en-CA", { timeZone: ET }) };
   }
@@ -61,13 +61,13 @@
   }
   function tileHTML(k, day, on) {
     var g = root.DATA && DATA.grains && DATA.grains[k], R = g && g.roll && g.roll[0], T = tile(R), sel = ' aria-pressed="' + on + '" data-grain-pick="' + k + '"';
-    if (!T) return '<button type="button" class="gr-tile"' + sel + '><span class="gr-n">' + NAME[k] + '</span><span class="gr-una">UNAVAILABLE</span></button>';
+    if (!T) return '<button type="button" class="gr-tile"' + sel + '><span class="gr-n">' + NAME[k] + '</span></button>';
     var stale = day && T.date && T.date < day;
     return '<button type="button" class="gr-tile"' + sel + '>' +
       '<span class="gr-n">' + NAME[k] + ' <b>' + T.contract + '</b></span>' +
       '<span class="gr-v">' + T.settle + '<small> c/bu</small></span>' +
-      '<span class="gr-c ' + T.dir + '">' + (T.chg ? T.chg + " · " + T.pct : "Change UNAVAILABLE") + '</span>' +
-      '<span class="gr-f">Front ' + T.expiry + ' · FND ' + (fndLabel(T.contract) || "UNAVAILABLE") + '</span>' +
+      '<span class="gr-c ' + T.dir + '">' + (T.chg ? T.chg + " · " + T.pct : "") + '</span>' +
+      '<span class="gr-f">Front ' + T.expiry + (fndLabel(T.contract) ? ' · FND ' + fndLabel(T.contract) : "") + '</span>' +
       (stale ? '<span class="gr-stale">LATEST VERIFIED ' + shortDate(T.date) + '</span>' : "") + '</button>';
   }
   function paint() {
