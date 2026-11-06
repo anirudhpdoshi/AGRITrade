@@ -9,9 +9,11 @@
   function sign(v, f) { return (v > 0 ? "+" : v < 0 ? "−" : "") + f(Math.abs(v)); }
   function strike(w) { return w && w[0] != null ? (+w[0]).toFixed(2) : null; }
   function side(net) { return net == null ? UNA : (net < 0 ? "Net short " : "Net long ") + n(Math.abs(net)); }
+  function usdB(v) { return v >= 1e9 ? "$" + (v / 1e9).toFixed(2) + "B" : usd(v); }
+  function notional(oi, px) { return oi == null || !px ? null : oi * 5000 * px; }
   function usd(v) { return v >= 1e6 ? "$" + (v / 1e6).toFixed(1) + "M" : v >= 1e3 ? "$" + Math.round(v / 1e3) + "K" : "$" + Math.round(v); }
   function shortDay(iso) { var p = String(iso || "").split("-"); return p.length === 3 ? new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" }) : ""; }
-  function month(m) { return m && m.calls != null ? m.chain + " C " + n(m.calls) + " · P " + n(m.puts) + " · P/C " + m.pcr + " · call wall " + (strike(m.call_wall) || UNA) : null; }
+  function month(m) { return m && m.calls != null ? m.chain + " C " + n(m.calls) + " · P " + n(m.puts) + " · P/C " + m.pcr + " · call wall " + (strike(m.call_wall) || UNA) + (m.underlying ? " · notional " + usdB(notional(m.calls + m.puts, m.underlying)) : "") : null; }
 
   /* collapsed headline for each row, from the desk's own data; anything missing says UNAVAILABLE */
   function headlines(g, of, fnd) {
@@ -30,7 +32,7 @@
     o.oi = near.call_wall ? "Call wall " + strike(near.call_wall) + " (" + n(near.call_wall[1]) + " contracts) · put wall " + strike(near.put_wall) + " (" + n(near.put_wall[1]) + " contracts)" : UNA;
     return o;
   }
-  if (typeof module !== "undefined" && module.exports) { module.exports = { headlines: headlines, ROWS: ROWS }; return; }
+  if (typeof module !== "undefined" && module.exports) { module.exports = { headlines: headlines, ROWS: ROWS, notional: notional, usdB: usdB }; return; }
 
   var doc = root.document, GR = ["corn", "soybeans", "wheat"], NAME = { corn: "Corn", soybeans: "Soybeans", wheat: "Wheat" }, KEY = "desk.rows", open = {};
   try { open = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) {}
@@ -47,7 +49,8 @@
     bits.forEach(function (b) { b.innerHTML = b.innerHTML.replace(/\b(IBKR|IB) /g, ""); d.appendChild(b); });
   }
   function fmtSp(v) { return v == null || isNaN(v) ? "UNAVAILABLE" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "¢"; }
-  function rowsOf(N) { return '<table class="cf-tbl"><thead><tr><th>Session</th><th>Front OI</th><th>Deferred OI</th><th>Roll %</th><th>Spread</th></tr></thead><tbody>' + N.map(function (r) { return "<tr><td>" + r[0] + "</td><td>" + Math.round(r[1]).toLocaleString("en-US") + "</td><td>" + Math.round(r[2]).toLocaleString("en-US") + "</td><td>" + (+r[3]).toFixed(1) + "%</td><td>" + fmtSp(r[4]) + "</td></tr>"; }).join("") + "</tbody></table>"; }
+  function val(oi, px) { return px ? " (" + usdB(notional(oi, px)) + ")" : ""; }
+  function rowsOf(N) { return '<table class="cf-tbl"><thead><tr><th>Session</th><th>Front OI (futures OI value)</th><th>Deferred OI (futures OI value)</th><th>Roll %</th><th>Spread</th></tr></thead><tbody>' + N.map(function (r) { return "<tr><td>" + r[0] + "</td><td>" + Math.round(r[1]).toLocaleString("en-US") + val(r[1], r[5]) + "</td><td>" + Math.round(r[2]).toLocaleString("en-US") + val(r[2], r[6]) + "</td><td>" + (+r[3]).toFixed(1) + "%</td><td>" + fmtSp(r[4]) + "</td></tr>"; }).join("") + "</tbody></table>"; }
   /* BR-CR-5: Spread traceability, grouped in Carry & roll: current pair, next pair, expired-pair history */
   function trace(k, sub) {
     var old = sub.querySelector(":scope > .tr-tile"); if (old) old.remove();
@@ -109,7 +112,7 @@
   doc.addEventListener("click", function (ev) {
     var t = ev.target; if (!t.closest) return;
     var h = t.closest("[data-prow]"); if (h) { setRow(h.getAttribute("data-prow"), h.getAttribute("aria-expanded") !== "true"); return; }
-    if (t.closest("[data-oiv], .toggle button")) { var P = t.closest(".tab-panel"), k = P && P.id.replace("panel-", ""); if (GR.indexOf(k) >= 0) setTimeout(function () { var sub = subOf(k); if (sub) [].forEach.call(sub.children, function (x) { if (x.classList.contains("tile")) evidence(x); }); if (root.DESK_LIVE && DESK_LIVE.paintPills) DESK_LIVE.paintPills(); }, 0); }
+    if (t.closest("[data-oiv], .toggle button")) { var P = doc.querySelector(".tab-panel.active"), k = P && P.id.replace("panel-", ""); if (GR.indexOf(k) >= 0) setTimeout(function () { var sub = subOf(k); if (sub) [].forEach.call(sub.children, function (x) { if (x.classList.contains("tile")) evidence(x); }); if (root.DESK_LIVE && DESK_LIVE.paintPills) DESK_LIVE.paintPills(); }, 0); }
   });
   /* the left menu opens the row and goes to it */
   doc.addEventListener("click", function (ev) {
@@ -132,5 +135,5 @@
   root.setSub = function (p) { var r = ss2.apply(this, arguments); if (GR.indexOf(p) >= 0) watch(p); return r; };
   GR.forEach(watch);
   GR.forEach(build);
-  root.ROWSUI = { build: build };
+  root.ROWSUI = { build: build, notional: notional, usdB: usdB };
 })(typeof window !== "undefined" ? window : this);

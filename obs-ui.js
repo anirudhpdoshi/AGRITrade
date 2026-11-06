@@ -53,11 +53,11 @@
     exp: function (g, of, D, k) { var W = D && D.exports && D.exports[k] && D.exports[k].weeks, o = []; if (!W || W.length < 2) return o; var L = W[W.length - 1][2], P = W[W.length - 2][2]; if (L == null || P == null) return o; o.push("Latest weekly net sales came in " + (L > P ? "above" : L < P ? "below" : "level with") + " the prior week."); return o; },
     dest: function (g, of, D, k) { var T = D && D.exports && D.exports[k] && D.exports[k].dest, o = [], B = T && T.top_week && T.top_week[0]; if (!B) return o; o.push(String(B.country).split(",")[0] + " was the largest buyer this week."); return o; },
     cmp: function (g, of, D, k) { var Y = D && D.sd_hist && D.sd_hist[k] && D.sd_hist[k].years, o = []; if (!Y) return o; var a = Y["2026"], b = Y["2025"]; if (!a || !b || a.Production == null || b.Production == null) return o; o.push("US production is " + (a.Production > b.Production ? "larger" : "smaller") + " than the prior crop year."); return o; },
-    oi: function (g) { var N = g.near, o = []; if (!N || !N.rows) return o; var P = N.rows_prev && N.rows_prev.rows, M = {}, best = null;
-      (P || []).forEach(function (r) { M[r[0]] = r; });
-      if (P) N.rows.forEach(function (r) { var q = M[r[0]]; if (!q) return; [[1, "call"], [2, "put"]].forEach(function (x) { var d = (r[x[0]] || 0) - (q[x[0]] || 0); if (!best || Math.abs(d) > Math.abs(best.d)) best = { d: d, k: r[0], s: x[1] }; }); });
-      if (best && best.d) o.push("Biggest change since the last pull: " + best.s + "s at " + d2(best.k) + (best.d > 0 ? ", where positions were added." : ", where positions were closed."));
-      if (N.pcr != null) o.push(N.pcr < 1 ? "Calls outnumber puts in this expiry." : "Puts outnumber calls in this expiry."); return o; }
+    oi: function (g) { var N = g.near, o = []; if (!N || !N.rows || !N.underlying) return o; var c = 0, p = 0, top = null; N.rows.forEach(function (r) { var a = r[1] || 0, b = r[2] || 0; c += a; p += b; if (!top || a + b > top.t) top = { t: a + b, k: r[0] }; });
+      var tot = c + p; if (!tot) return o; o.push("Exposure is most concentrated at the " + d2(top.k) + " strike.");
+      o.push("Calls hold " + Math.round(c / tot * 100) + "% of " + N.chain + " notional exposure and puts " + Math.round(p / tot * 100) + "%, on notional only since no verified premium is held.");
+      var P = N.rows_prev && N.rows_prev.rows; if (P) { var M = {}, was = 0, now = 0; P.forEach(function (r) { M[r[0]] = r; }); N.rows.forEach(function (r) { var q = M[r[0]]; if (q) { was += (q[1] || 0) + (q[2] || 0); now += (r[1] || 0) + (r[2] || 0); } }); if (was && now !== was) o.push("Exposure is " + (now > was ? "building" : "unwinding") + " versus the prior session."); }
+      return o; }
   };
   /* one box per panel: the Volatility and Carry rows hold two panels, and the box goes under the first */
   if (typeof module !== "undefined" && module.exports) { module.exports = { RULES: RULES, traceable: traceable, fresh: fresh, crowd: crowd }; return; }
@@ -103,6 +103,18 @@
       "<tr><td>Positioning trend (last " + Tr.length + ' reports)</td><td colspan="3">' + svg + "</td></tr></tbody></table>";
     var h = t.querySelector(":scope > h2, :scope > .tile-head"); if (h) h.after(el); else t.prepend(el);
   }
+  var OIDOL = false;
+  function futVal(t, G) { var old = t.querySelector(":scope > .oi-usd"); if (old) old.remove(); var R = G.roll || [], U = root.ROWSUI, A = R[0], B = R[1]; if (!U || !A || !B) return;
+    var D = typeof rollData === "function" ? rollData(t.closest(".tab-panel").id.replace("panel-", "")) : null, N = D && D.dailyN && D.dailyN[D.dailyN.length - 1]; if (!N || !A.settle || !B.settle) return;
+    var el = doc.createElement("div"); el.className = "oi-usd"; el.innerHTML = "<b>FUTURES OI VALUE ($)</b> " + A.contract + " " + U.usdB(U.notional(N[1], A.settle)) + " · " + B.contract + " " + U.usdB(U.notional(N[2], B.settle)) + " · contracts × 5,000 bu × settle"; var h = t.querySelector(":scope > .tile-head"); if (h) h.after(el); else t.prepend(el); }
+  function oiView(t, G) { var old = t.querySelector(":scope > .oid"); if (old) old.remove(); var N = G.near, U = root.ROWSUI; if (!N || !N.rows || !N.underlying || !U) return; var px = N.underlying, c = 0, p = 0; N.rows.forEach(function (r) { c += r[1] || 0; p += r[2] || 0; });
+    var f = function (v) { return U.usdB(U.notional(v, px)); }, cnt = function (v) { return Math.round(v || 0).toLocaleString("en-US"); }, tops = N.rows.slice().sort(function (a, b) { return ((b[1] || 0) + (b[2] || 0)) - ((a[1] || 0) + (a[2] || 0)); }).slice(0, 12).sort(function (a, b) { return a[0] - b[0]; });
+    var el = doc.createElement("div"); el.className = "oid"; el.innerHTML = '<div class="cf-head"><b>Underlying notional exposure ($) · ' + esc(N.chain) + "</b><span>Contracts × 5,000 bu × futures " + esc(N.contract || "") + " $" + (+px).toFixed(4) + (N.oi_label ? " · " + esc(String(N.oi_label).split(" · ")[0]) : "") + "</span></div>" +
+      '<div class="oid-sum">Calls ' + f(c) + " (" + Math.round(c / (c + p) * 100) + "%) · Puts " + f(p) + " (" + Math.round(p / (c + p) * 100) + "%) · Month total " + f(c + p) + "</div>" +
+      '<div class="toggle oid-tog" role="group"><button type="button" data-oid="0" aria-pressed="' + !OIDOL + '">Contracts</button><button type="button" data-oid="1" aria-pressed="' + OIDOL + '">Dollars</button></div>' +
+      (OIDOL ? '<table class="cf-tbl"><thead><tr><th>Strike</th><th>Call OI</th><th>Call notional</th><th>Put OI</th><th>Put notional</th></tr></thead><tbody>' + tops.map(function (r) { return "<tr><td>" + d2(r[0]) + "</td><td>" + cnt(r[1]) + "</td><td>" + f(r[1] || 0) + "</td><td>" + cnt(r[2]) + "</td><td>" + f(r[2] || 0) + "</td></tr>"; }).join("") + "<tr><td><b>Month total</b></td><td>" + cnt(c) + "</td><td>" + f(c) + "</td><td>" + cnt(p) + "</td><td>" + f(p) + "</td></tr></tbody></table>" : "");
+    var h = t.querySelector(":scope > h2, :scope > .tile-head"); if (h) h.after(el); else t.prepend(el); }
+  doc.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-oid]"); if (!b) return; OIDOL = b.getAttribute("data-oid") === "1"; GR.forEach(paint); });
   function paint(k) {
     var P = doc.getElementById("panel-" + k), sub = P && P.querySelector("[data-subpanel].on"), G = root.DATA && DATA.grains && DATA.grains[k]; if (!sub || !G) return;
     var seen = {}, KEYS = { fan: "grains_settle", pos: "cftc_grains", cftc: "cftc_grains", cockpit: "options", opt: "options", vol: "options", optflow: "optflow", carry: "grains_settle", oi: "options", flow: "options", snap: "model", cost: "inputs", paths: "inputs", sd: "wasde", exp: "exports", dest: "exports", cmp: "sd_hist" };
@@ -112,6 +124,8 @@
       if (sec === "flow") { var hs = [].filter.call(t.querySelectorAll("h3,h4,b,div"), function (x) { return /^What the flow is saying/.test(x.textContent.trim()) && x.children.length < 2; })[0]; if (hs && hs.nextElementSibling) demote(t, [hs, hs.nextElementSibling]); }
       if (t.classList.contains("tr-tile")) { var R = G.roll || [], ex = t.querySelector(".tr-exp"); box(t, ex ? ["The default switched at First Notice Day: " + R[0].contract + " is the front contract across the desk. The expired pair stays here, never as the default."] : [R[0].contract + " stays the default until its First Notice Day, then the desk moves to " + (R[1] || {}).contract + "."], "grains_settle"); return; }
       if (sec === "cftc") cftcView(k, t, G);
+      if (sec === "oi") oiView(t, G);
+      if (t.classList.contains("roll-tile")) futVal(t, G);
       if (seen[sec]) { var two = SECOND[sec] ? SECOND[sec](G, t) : []; if (two.length) box(t, two, KEYS[sec] || "model"); return; }
       if (sec === "snap" && !/dash-head/.test(t.className)) { var R0 = (G.roll || [])[0]; if (R0 && R0.prev) box(t, [R0.contract + " last settled " + (R0.settle > R0.prev ? "higher" : R0.settle < R0.prev ? "lower" : "unchanged") + " on the day."], "grains_settle"); return; }
       var r = RULES[sec], bs = r ? r(G, DATA.optflow && DATA.optflow[k], DATA, k) : domBullets(sec, t);
@@ -122,7 +136,7 @@
   root.renderGrain = function (k) { var r = rg.apply(this, arguments); paint(k); return r; };
   root.setSub = function (p) { var r = ss.apply(this, arguments); if (GR.indexOf(p) >= 0) paint(p); return r; };
   doc.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-cf-pick]"); if (b && root.GRAINS && GRAINS.pick) { var y = b.getBoundingClientRect().top; GRAINS.pick(b.getAttribute("data-cf-pick")); var nb = doc.querySelector('.tab-panel.active [data-cf-pick]'); if (nb) root.scrollBy(0, nb.getBoundingClientRect().top - y); } });
-  doc.addEventListener("click", function (ev) { var t = ev.target.closest && ev.target.closest(".tile button, .tile [data-oiv]"); if (!t) return; var P = t.closest(".tab-panel"), k = P && P.id.replace("panel-", ""); if (GR.indexOf(k) >= 0) setTimeout(function () { paint(k); }, 30); });
+  doc.addEventListener("click", function (ev) { var t = ev.target.closest && ev.target.closest(".tile button, .tile [data-oiv]"); if (!t) return; var P = doc.querySelector(".tab-panel.active"), k = P && P.id.replace("panel-", ""); if (GR.indexOf(k) >= 0) setTimeout(function () { paint(k); }, 30); });
   GR.forEach(paint);
   root.OBSLOG = LOG;
   root.OBSUI = { paint: paint };
