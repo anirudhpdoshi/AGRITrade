@@ -120,7 +120,11 @@
   function settle(k) { if (busy) return; var sub = subOf(k); if (!sub || !sub.classList.contains("on")) return;
     var lastH = null, stray = false; [].forEach.call(sub.children, function (t) { if (t.classList.contains("prow-h")) lastH = t; else if (t.classList.contains("tile") && !t.classList.contains("tr-tile")) { var id = t.getAttribute("data-sec"); if (!id || !lastH || lastH.getAttribute("data-prow") !== id) stray = true; } });
     if (!stray) return; busy = true; if (root.buildSecNav) buildSecNav(k); build(k); if (root.OBSUI) OBSUI.paint(k); setTimeout(function () { busy = false; }, 0); }
-  if (root.MutationObserver) GR.forEach(function (k) { var sub = subOf(k); if (sub) new MutationObserver(function () { settle(k); }).observe(sub, { childList: true }); });
+  function watch(k) { var sub = subOf(k); if (!sub || sub.__rowsWatch || !root.MutationObserver) return; sub.__rowsWatch = 1; new MutationObserver(function () { settle(k); }).observe(sub, { childList: true }); settle(k); }
+  var rg2 = root.renderGrain, ss2 = root.setSub;
+  root.renderGrain = function (k) { var r = rg2.apply(this, arguments); watch(k); return r; };
+  root.setSub = function (p) { var r = ss2.apply(this, arguments); if (GR.indexOf(p) >= 0) watch(p); return r; };
+  GR.forEach(watch);
   GR.forEach(build);
   root.ROWSUI = { build: build };
 })(typeof window !== "undefined" ? window : this);
