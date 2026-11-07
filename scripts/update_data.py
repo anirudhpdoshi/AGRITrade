@@ -695,6 +695,12 @@ def fed_odds(D, N):
                     "ranges": [{"label": rng(n), "prob_pct": round(p / tot * 100, 1)} for n, p in sorted(dist.items())]})
         r_pre = r_post
     fx["policy"]["fed"] = out
+    if out:   # Fed expectations revision: keep a snapshot whenever the next-meeting odds change (owner story)
+        H = D.setdefault("fed_odds_hist", [])
+        snap = {"t": iso(NOW), "meeting": out[0]["meeting"], "hold": out[0]["no_change_pct"], "hike": out[0]["hike_pct"], "ease": out[0]["ease_pct"]}
+        if not H or any(H[-1].get(k) != snap[k] for k in ("meeting", "hold", "hike", "ease")):
+            H.append(snap)
+            del H[:-400]
     fx["policy"]["fed_range"] = f"{int(lo0 * 100)}-{int(hi0 * 100)} (NY Fed target range) · EFFR {effr:.2f}%"
     meta["fedodds_checked"] = iso(NOW)
     meta["asof"]["policy"] = iso(NOW)
