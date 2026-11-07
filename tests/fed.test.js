@@ -16,3 +16,9 @@ test("no surprise is claimed before the forecast's release time", () => {
   const D = { macro: [mk("us_ism", "up", [54, 55], { cons: { at: "2026-12-01T10:00", forecast: 54.5 }, seen_at: "2026-11-02T10:00:00-05:00" })] };
   assert.strictEqual(F.surprises(D).length, 0);
 });
+test("composite weights re-normalise over the inputs on the desk and say what is missing", () => {
+  const D = { macro: [mk("us_nfp", "up", [100, 120, 90, 150]), mk("us_indpro", "up", [0.1, 0.2, 0.1, 0.3])], fx: { rates: [] } };
+  const C = F.compInputs(D, null).coin, have = C.rows.filter(r => r.kind !== "missing");
+  assert.strictEqual(have.length, 2); assert.ok(Math.abs(have.reduce((a, r) => a + r.nw, 0) - 1) < 1e-9);
+  assert.ok(Math.abs(have[0].nw - 0.5411 / (0.5411 + 0.146)) < 1e-9); assert.ok(Math.abs(C.cov - (0.5411 + 0.146) / (0.5411 + 0.1908 + 0.146 + 0.1221)) < 1e-9);
+});

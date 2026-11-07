@@ -4529,7 +4529,7 @@ function renderFX(){
   html+=fxSubnavHTML()+
     subWrap('fx','overview', fxKpiHTML()+T.spot+T.closes+T.model+askTileHTML('fx'))+
     subWrap('fx','deriv', positioningKpiHTML('fx')+T.forwards+T.cftc+T.sentiment.replace('class="tile"','class="tile wide"'))+
-    subWrap('fx','macro', liveFxHTML()+macroDashHTML()+tradeFiscalHTML()+(window.fedIntelHTML?fedIntelHTML():'')+fxMacroHTML()+T.releases)+
+    subWrap('fx','macro', liveFxHTML()+macroDashHTML()+tradeFiscalHTML()+(window.cycleHTML?cycleHTML():'')+(window.fedIntelHTML?fedIntelHTML():'')+fxMacroHTML()+T.releases)+
     subWrap('fx','rates', ylLiveHTML()+T.yields+T.energy.replace('class="tile wide"','class="tile"')+T.policy);
   html+='</div><aside class="rail">'+liveMonitorHTML()+fxAlertsHTML()+'</aside></div>';
   document.getElementById('panel-fx').innerHTML=html;
@@ -4566,7 +4566,7 @@ var SECG={
   fx:{
     overview:[['snap','Snapshot',/kpi-strip/],['spot','Spot & key levels',/spot & key levels/i],['daily','Daily chart',/daily closes/i],['model','Model view',/Model view/],['ask','Ask Claude',/ask-tile/]],
     deriv:[['pos','Positioning KPIs',/poskpi|ckwrap/],['fwd','Forward rates',/Forward rates|Forward curve/],['cftc','CFTC CAD funds',/cftc_fx|CFTC CAD/],['sent','Sentiment & FX options',/Retail sentiment/]],
-    macro:[['live','Live USD/CAD',/live-fx/],['dash','Macro dashboard',/macro dashboard/i],['tf','Trade & fiscal',/Trade & fiscal/i],['fed','Fed policy',/Fed policy intelligence/],['allind','All indicators',/All macro indicators/],['rel','Latest releases',/Latest releases/]],
+    macro:[['live','Live USD/CAD',/live-fx/],['dash','Macro dashboard',/macro dashboard/i],['tf','Trade & fiscal',/Trade & fiscal/i],['cycle','Cycle composites',/Cycle composites/],['fed','Fed policy',/Fed policy intelligence/],['allind','All indicators',/All macro indicators/],['rel','Latest releases',/Latest releases/]],
     rates:[['ys','Yield spreads',/yield spreads/i],['en','Energy',/Energy/],['pol','Policy expectations',/Policy expectations/]]
   }
 };
