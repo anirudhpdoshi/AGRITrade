@@ -213,7 +213,7 @@
       (tabs[L.tab] = tabs[L.tab] || []).push(nm + " " + hm(L.at));
       if (L.tab !== "events" && L.go) (jumps[L.tab] = jumps[L.tab] || []).push({ n: nm, at: L.at, go: L.go, sel: L.sel || "", where: L.where || "" });
       if (L.sel && L.tab !== "events") [].forEach.call(document.querySelectorAll("#panel-" + L.tab + " " + L.sel), function (el) {
-        var c = el.closest(".tile, .mcard, .dash-card, .mk-click") || el; c.classList.add("upd-today"); c.setAttribute("data-upd", "RELEASED TODAY · " + hm(L.at)); }); });
+        var c = el.closest(".mi-tr, .tile, .mcard, .dash-card, .mk-click") || el; c.classList.add("upd-today"); c.setAttribute("data-upd", "RELEASED TODAY · " + hm(L.at)); }); });
     if (tabs.fx || tabs.corn) ["corn", "wheat", "soybeans"].forEach(function (g) { if (tabs.corn && g !== "corn") tabs[g] = tabs.corn; });
     if (jumps.corn) ["wheat", "soybeans"].forEach(function (g) { jumps[g] = jumps.corn.map(function (j) { return { n: j.n, at: j.at, go: j.go.replace(/^corn/, g), sel: j.sel, where: j.where.replace(/^Corn/, g[0].toUpperCase() + g.slice(1)) }; }); });
     /* a strip at the top of each tab: what landed here today, each a button that jumps to the exact card */
