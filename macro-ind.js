@@ -46,6 +46,17 @@
     ["housing", "Housing", ["us_starts", "us_permits", "us_nhs", "ca_starts", "ca_permits"]],
     ["credit", "Credit", []], ["commodities", "Commodities", []], ["geopolitics", "Geopolitics", []],
     ["fincond", "Financial Conditions", ["us_policy", "ca_policy"]]];   /* categories with no series on the desk stay hidden (hide-not-UNAVAILABLE) */
+  /* cycle type (Conference Board convention; inflation pipeline prices count as leading for CPI) */
+  var TY = { us_claims: "lead", us_permits: "lead", us_starts: "lead", us_nhs: "lead", us_ism: "lead", us_ism_svc: "lead", us_umich: "lead", us_factory: "lead", us_durable: "lead", us_jolts: "lead", us_ppi: "lead", us_import: "lead",
+    ca_permits: "lead", ca_starts: "lead", ca_ivey: "lead", ca_vac: "lead", ca_ippi: "lead",
+    us_nfp: "coin", us_adp: "coin", us_indpro: "coin", us_pinc: "coin", us_retail: "coin", us_pspend: "coin", us_gdp: "coin", ca_emp: "coin", ca_gdp: "coin", ca_mfg: "coin", ca_whl: "coin",
+    us_ur: "lag", us_cclaims: "lag", us_cpi: "lag", us_core_cpi: "lag", us_pce: "lag", us_core_pce: "lag", us_ahe: "lag", ca_cpi: "lag", ca_trim: "lag", ca_median: "lag", ca_ur: "lag", us_policy: "lag", ca_policy: "lag" };
+  var TYN = { lead: "Leading", coin: "Coincident", lag: "Lagging" }, TF = "all";
+  try { TF = localStorage.getItem("desk.mtf") || "all"; } catch (e) {}
+  function ty(m) { return TY[m.key] || "coin"; }
+  function tyTag(m, sh) { var t = ty(m); return '<span class="mc-ty ' + t + '" title="' + TYN[t] + ' indicator">' + (sh ? { lead: "LEAD", coin: "COIN", lag: "LAG" }[t] : TYN[t]) + "</span>"; }
+  function tyOk(m) { return TF === "all" || ty(m) === TF; }
+  var CTN = { us: "United States", ca: "Canada" };
   var CV = {}, OPEN = {}, PER = "2Y";
   try { CV = JSON.parse(localStorage.getItem("desk.mcv") || "{}"); OPEN = JSON.parse(localStorage.getItem("desk.mopen") || "{}"); PER = localStorage.getItem("desk.mper") || "2Y"; if (!/^(table|chart|both)$/.test(VIEW)) VIEW = "both"; } catch (e) {}
   function save2() { try { localStorage.setItem("desk.mcv", JSON.stringify(CV)); localStorage.setItem("desk.mopen", JSON.stringify(OPEN)); localStorage.setItem("desk.mper", PER); } catch (e) {} }
@@ -54,15 +65,15 @@
     return CATS.map(function (c) { return { id: c[0], name: c[1], items: c[2].map(function (k) { return by[k]; }).filter(Boolean) }; }).filter(function (c) { return c.items.length; }); }
   /* signal: +1 stronger / hotter, −1 weaker / cooler, 0 unchanged */
   function sig(m) { var c = m.value - m.prior; if (m.prior == null || Math.abs(c) < Math.pow(10, -m.dec) / 2) return 0; return (m.good === "down" ? -1 : 1) * (c > 0 ? 1 : -1); }
-  function strength(c) { var v = c.items.map(sig), n = v.length, sc = v.reduce(function (a, b) { return a + b; }, 0) / (n || 1), up = v.filter(function (x) { return x > 0; }).length, dn = v.filter(function (x) { return x < 0; }).length;
+  function strength(c) { var I = c.items.filter(tyOk); if (!I.length) I = c.items; var v = I.map(sig), n = v.length, sc = v.reduce(function (a, b) { return a + b; }, 0) / (n || 1), up = v.filter(function (x) { return x > 0; }).length, dn = v.filter(function (x) { return x < 0; }).length;
     var heat = c.id === "inflation" || c.id === "fincond", lab = sc >= 0.34 ? (heat ? (c.id === "fincond" ? "Tightening" : "Heating") : "Strengthening") : sc <= -0.34 ? (heat ? (c.id === "fincond" ? "Easing" : "Cooling") : "Weakening") : "Mixed";
     return { lab: lab, k: sc >= 0.34 ? (heat ? "heat" : "up") : sc <= -0.34 ? (heat ? "cool" : "dn") : "neu", tip: up + " of " + n + " " + (heat ? "rising" : "improving") + ", " + dn + " " + (heat ? "falling" : "weakening") + " on the latest print" }; }
   function isOn(m) { return !SEL || SEL.indexOf(m.key) >= 0; }
   function rail(C) {
     return '<aside class="mi-rail"><div class="mi-pt">Categories</div>' + C.map(function (c) { var st = strength(c), on = c.items.filter(isOn).length, op = !!OPEN[c.id];
       return '<div class="mc-cat' + (op ? " open" : "") + '"><button class="mc-h" data-mcat="' + c.id + '" aria-expanded="' + op + '"><span class="mc-n">' + esc(c.name) + '</span><span class="mc-s ' + st.k + '" title="' + esc(st.tip) + '">' + st.lab + '</span><span class="mc-c">' + on + "/" + c.items.length + '</span><span class="mc-ch">' + (op ? "▾" : "▸") + "</span></button>" +
-        (op ? '<div class="mc-body"><div class="mc-qa"><button data-mcall="' + c.id + '">Select all</button><button data-mcnone="' + c.id + '">Clear</button></div>' + c.items.map(function (m) { var mk = mark(m), s = sig(m);
-          return '<button class="mc-i' + (isOn(m) ? " on" : "") + (mk ? " " + mk.k : "") + '" data-mtog="' + esc(m.key) + '" aria-pressed="' + isOn(m) + '">' + flag(m.group, 13) + '<span class="mc-in">' + esc(m.name) + (m.measure ? " <i>" + esc(m.measure) + "</i>" : "") + "</span>" + badge(mk) + '<span class="mc-iv ' + (s > 0 ? (c.id === "inflation" ? "heat" : "up") : s < 0 ? (c.id === "inflation" ? "cool" : "dn") : "") + '">' + mval(m, m.value) + "</span></button>"; }).join("") + "</div>" : "") + "</div>"; }).join("") + "</aside>";
+        (op ? '<div class="mc-body"><div class="mc-qa"><button data-mcall="' + c.id + '">Select all</button><button data-mcnone="' + c.id + '">Clear</button></div>' + ["us", "ca"].map(function (g) { var R = c.items.filter(function (m) { return m.group === g && tyOk(m); }); return R.length ? '<div class="mc-ct">' + flag(g, 13) + " " + CTN[g] + "</div>" + R.map(function (m) { var mk = mark(m), s = sig(m);
+          return '<button class="mc-i' + (isOn(m) ? " on" : "") + (mk ? " " + mk.k : "") + '" data-mtog="' + esc(m.key) + '" aria-pressed="' + isOn(m) + '">' + '<span class="mc-in">' + esc(m.name) + (m.measure ? " <i>" + esc(m.measure) + "</i>" : "") + "</span>" + (mk && mk.k !== "wk" ? badge(mk) : "") + '<span class="mc-iv ' + (s > 0 ? (c.id === "inflation" ? "heat" : "up") : s < 0 ? (c.id === "inflation" ? "cool" : "dn") : "") + '">' + mval(m, m.value) + "</span>" + tyTag(m, 1) + "</button>"; }).join("") : ""; }).join("") + "</div>" : "") + "</div>"; }).join("") + "</aside>";
   }
   /* history for the selected period: points per year by frequency; 5Y uses the long series where the desk holds it */
   var PPY = { M: 12, Q: 4, W: 52, D: 12 };
@@ -73,17 +84,17 @@
   function surprise(m) { var c = m.cons; if (!c || c.forecast == null) return null; var at = Date.parse(c.at + ":00-05:00"), s = seenMs(m); if (!(s && s >= at - HR)) return { fc: c.forecast, d: null }; return { fc: c.forecast, d: m.value - c.forecast }; }
   function tableView(L, cid) {
     var hasC = L.some(function (m) { return m.cons && m.cons.forecast != null; }), heat = cid === "inflation";
-    return '<div class="tbl-scroll"><table class="mi-tbl"><thead><tr><th>Indicator</th><th>Period</th><th>Actual (latest)</th><th>Previous</th><th>Change</th>' + (hasC ? "<th>Consensus</th><th>Surprise</th>" : "") + "<th>History (oldest → latest)</th></tr></thead><tbody>" +
-      L.map(function (m) { var mk = mark(m), ch = m.value - m.prior, s = sig(m), S = surprise(m), H = hist(m).slice(-6), cl = s > 0 ? (heat ? "heat" : "up") : s < 0 ? (heat ? "cool" : "dn") : "neu";
+    return '<div class="tbl-scroll"><table class="mi-tbl"><thead><tr><th>Indicator</th><th>Period</th><th>Actual (latest)</th><th>Previous</th><th>Change</th>' + (hasC ? "<th>Consensus</th><th>Surprise</th>" : "") + "<th>Type</th><th>History (oldest → latest)</th></tr></thead><tbody>" +
+      ["us", "ca"].map(function (g) { var R = L.filter(function (m) { return m.group === g; }); return R.length ? '<tr class="mi-gr"><td colspan="' + (hasC ? 9 : 7) + '">' + flag(g, 13) + " " + CTN[g] + "</td></tr>" + R.map(function (m) { var mk = mark(m), ch = m.value - m.prior, s = sig(m), S = surprise(m), H = hist(m).slice(-6), cl = s > 0 ? (heat ? "heat" : "up") : s < 0 ? (heat ? "cool" : "dn") : "neu";
         var sp = S && S.d != null ? (Math.abs(S.d) < Math.pow(10, -m.dec) / 2 ? '<td class="neu">in line</td>' : '<td class="' + ((m.good === "down" ? -S.d : S.d) > 0 ? (heat ? "heat" : "up") : (heat ? "cool" : "dn")) + '">' + (S.d > 0 ? "beat " : "miss ") + sgn(S.d, m.dec) + "</td>") : "<td>—</td>";
-        return '<tr class="mi-tr' + (mk && mk.k === "new" ? " rel-today" : "") + '" data-mkey="' + esc(m.key) + '"><td>' + (mk && mk.k === "new" ? '<span class="rt-pill">RELEASED TODAY</span> ' : "") + flag(m.group, 13) + " " + esc(m.name) + (m.measure ? " <i>" + esc(m.measure) + "</i>" : "") + "</td><td>" + esc(m.period) + '</td><td class="mi-num">' + mval(m, m.value) + '</td><td class="mi-num">' + (m.prior == null ? "—" : mval(m, m.prior)) + '</td><td class="mi-num ' + cl + '">' + (m.prior == null ? "—" : s === 0 ? "unch." : sgn(ch, m.dec)) + "</td>" +
-          (hasC ? '<td class="mi-num">' + (S ? fmt(S.fc, m.dec) : "—") + "</td>" + sp.replace("<td", '<td class="mi-num"').replace('class="mi-num" class="', 'class="mi-num ') : "") + '<td class="mi-hist">' + H.map(function (h) { return '<span title="' + esc(h[0]) + '">' + fmt(h[1], m.dec) + "</span>"; }).join("") + "</td></tr>"; }).join("") + "</tbody></table></div>";
+        return '<tr class="mi-tr' + (mk && mk.k === "new" ? " rel-today" : "") + '" data-mkey="' + esc(m.key) + '"><td>' + (mk && mk.k === "new" ? '<span class="rt-pill">RELEASED TODAY</span> ' : "") + esc(m.name) + (m.measure ? " <i>" + esc(m.measure) + "</i>" : "") + "</td><td>" + esc(m.period) + '</td><td class="mi-num">' + mval(m, m.value) + '</td><td class="mi-num">' + (m.prior == null ? "—" : mval(m, m.prior)) + '</td><td class="mi-num ' + cl + '">' + (m.prior == null ? "—" : s === 0 ? "unch." : sgn(ch, m.dec)) + "</td>" +
+          (hasC ? '<td class="mi-num">' + (S ? fmt(S.fc, m.dec) : "—") + "</td>" + sp.replace("<td", '<td class="mi-num"').replace('class="mi-num" class="', 'class="mi-num ') : "") + '<td>' + tyTag(m) + '</td><td class="mi-hist">' + H.map(function (h) { return '<span title="' + esc(h[0]) + '">' + fmt(h[1], m.dec) + "</span>"; }).join("") + "</td></tr>"; }).join("") : ""; }).join("") + "</tbody></table></div>";
   }
   function viewSeg(v, attr) { var b = function (x, l) { return '<button ' + attr + ' data-v="' + x + '" aria-pressed="' + (v === x) + '">' + l + "</button>"; }; return '<div class="seg mi-vs">' + b("table", "Table") + b("chart", "Chart") + b("both", "Both") + "</div>"; }
   function workspace(C) {
-    var any = 0, h = C.map(function (c) { var L = c.items.filter(isOn); if (!L.length) return ""; any = 1; var v = CV[c.id] || VIEW, st = strength(c);
+    var any = 0, h = C.map(function (c) { var L = c.items.filter(function (m) { return isOn(m) && tyOk(m); }); if (!L.length) return ""; any = 1; var v = CV[c.id] || VIEW, st = strength(c);
       return '<section class="mc-ws"><div class="mc-wh"><h3>' + esc(c.name) + ' <span class="mc-s ' + st.k + '" title="' + esc(st.tip) + '">' + st.lab + '</span> <small>' + L.length + " selected</small></h3>" + viewSeg(v, 'data-mcv="' + c.id + '"') + "</div>" +
-        (v !== "chart" ? tableView(L, c.id) : "") + (v !== "table" ? chartsView(L) : "") + "</section>"; }).join("");
+        (v !== "chart" ? tableView(L, c.id) : "") + (v !== "table" ? chartsView(L.slice().sort(function (a, b) { return a.group === b.group ? 0 : a.group === "us" ? -1 : 1; })) : "") + "</section>"; }).join("");
     return any ? h : '<p class="note">Nothing selected — open a category on the left and pick its indicators.</p>';
   }
 
@@ -156,7 +167,7 @@
     var all = [].concat.apply([], C.map(function (c) { return c.items; })), sel = all.filter(isOn), nNew = all.filter(function (m) { var k = mark(m); return k && k.k === "new"; }).length;
     var errs = DATA.meta.macro_errors ? Object.keys(DATA.meta.macro_errors).length : 0, P = function (x) { return '<button data-mper="' + x + '" aria-pressed="' + (PER === x) + '">' + x + "</button>"; };
     return '<div class="tile wide mi-tile" data-src="macro"><h2>All macro indicators <span class="h2note">— by category · pick indicators on the left · Table, Chart or Both</span></h2>' +
-      '<div class="mi-bar"><span class="mi-dl">Display selected data</span>' + viewSeg(VIEW, "data-mview") + '<span class="mi-dl">Chart period</span><div class="seg mi-vs">' + P("1Y") + P("2Y") + P("5Y") + "</div>" +
+      '<div class="mi-bar"><span class="mi-dl">Display selected data</span>' + viewSeg(VIEW, "data-mview") + '<span class="mi-dl">Cycle</span><div class="seg mi-vs">' + ["all", "lead", "coin", "lag"].map(function (x) { return '<button data-mtf="' + x + '" aria-pressed="' + (TF === x) + '">' + (x === "all" ? "All" : TYN[x]) + "</button>"; }).join("") + "</div>" + '<span class="mi-dl">Chart period</span><div class="seg mi-vs">' + P("1Y") + P("2Y") + P("5Y") + "</div>" +
       '<span class="mi-cnt">Selected view: ' + VIEW[0].toUpperCase() + VIEW.slice(1) + " · " + sel.length + " of " + all.length + " indicators" + (nNew ? ' · <b class="mi-b new">' + nNew + " TODAY</b>" : "") + "</span>" +
       '<div class="m-legend"><span class="up">▲ stronger</span><span class="dn">▼ weaker</span><span class="heat">▲ inflation hotter</span><span class="cool">▼ inflation cooler</span></div></div>' +
       '<div class="mi-wrap">' + rail(C) + '<div class="mi-main">' + workspace(C) + "</div></div>" +
@@ -175,6 +186,7 @@
     if ((v = t.closest("[data-mview]"))) { VIEW = v.getAttribute("data-v"); CV = {}; save(); save2(); }   /* global selector applies to every category */
     else if ((v = t.closest("[data-mcv]"))) { CV[v.getAttribute("data-mcv")] = v.getAttribute("data-v"); save2(); }
     else if ((v = g("data-mper"))) { PER = v; save2(); }
+    else if ((v = g("data-mtf"))) { TF = v; try { localStorage.setItem("desk.mtf", TF); } catch (e) {} }
     else if ((v = g("data-mcat"))) { if (OPEN[v]) delete OPEN[v]; else OPEN[v] = 1; save2(); }
     else if ((v = g("data-mtog"))) { var L = cur(); set(L.indexOf(v) >= 0 ? L.filter(function (k) { return k !== v; }) : L.concat([v])); }
     else if ((v = g("data-mcall"))) { var A = cur(); keys(v).forEach(function (k) { if (A.indexOf(k) < 0) A.push(k); }); set(A); }
@@ -213,12 +225,15 @@
     ".mc-s{font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.04em;padding:1px 6px;border-radius:4px;border:1px solid currentColor;white-space:nowrap}.mc-s.up{color:#3fb97f}.mc-s.dn{color:#e0655f}.mc-s.heat{color:#e8a33d}.mc-s.cool{color:#6ea8ff}.mc-s.neu{color:#8494ab}" +
     ".mc-n{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mc-c{font:11px 'IBM Plex Mono',monospace;color:var(--faint)}.mc-ch{color:var(--faint);font-size:11px}.mc-body{padding:2px 2px 8px}" +
     ".mc-qa{display:flex;gap:6px;margin:0 4px 6px}.mc-qa button{background:none;border:0;color:#38b6c9;font-size:11.5px;cursor:pointer;padding:0}" +
-    ".mc-i{display:grid;grid-template-columns:18px minmax(0,1fr) auto auto;gap:6px;align-items:center;width:100%;background:none;border:1px solid transparent;border-left:3px solid transparent;border-radius:6px;color:var(--muted);padding:5px 6px;margin:1px 0;cursor:pointer;text-align:left;font-size:12.5px}" +
+    ".mc-i{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:6px;align-items:center;width:100%;background:none;border:1px solid transparent;border-left:3px solid transparent;border-radius:6px;color:var(--muted);padding:5px 6px;margin:1px 0;cursor:pointer;text-align:left;font-size:12.5px}" +
     ".mc-i:hover{background:rgba(110,168,255,.06)}.mc-i.on{color:var(--text);border-left-color:#38b6c9;background:rgba(56,182,201,.07)}.mc-in{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mc-in i{color:var(--faint);font-style:normal}.mc-iv{font:11.5px 'IBM Plex Mono',monospace}" +
     ".mc-i.new{background:#1E40AF;color:#fff}.mc-iv.up,.mi-tbl .up{color:#3fb97f}.mc-iv.dn,.mi-tbl .dn{color:#e0655f}.mc-iv.heat,.mi-tbl .heat{color:#e8a33d}.mc-iv.cool,.mi-tbl .cool{color:#6ea8ff}.mi-tbl .neu{color:#8494ab}" +
     ".mc-ws{margin-bottom:18px}.mc-wh{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:10px}.mc-wh h3{margin:0;font-size:15px;display:flex;align-items:center;gap:8px}.mc-wh small{color:var(--faint);font:11px 'IBM Plex Mono',monospace}" +
     ".mi-tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:12px}.mi-tbl th{font:700 10.5px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}.mi-tbl td{padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}.mi-tbl td i{color:var(--faint);font-style:normal}" +
-    ".mi-num{font-family:'IBM Plex Mono',monospace;text-align:right}.mi-tbl th:nth-child(n+3){text-align:right}.mi-tbl th:last-child{text-align:left}.mi-hist span{font:11px 'IBM Plex Mono',monospace;color:var(--muted);margin-right:8px}.mi-hist span:last-child{color:var(--text);font-weight:600}" +
+    ".mi-num{font-family:'IBM Plex Mono',monospace;text-align:right}.mi-tbl th:nth-child(n+3){text-align:right}.mi-tbl th:last-child,.mi-tbl th:nth-last-child(2){text-align:left}.mi-hist span{font:11px 'IBM Plex Mono',monospace;color:var(--muted);margin-right:8px}.mi-hist span:last-child{color:var(--text);font-weight:600}" +
+    ".mc-ct{font:700 10.5px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin:8px 6px 3px;display:flex;align-items:center;gap:6px}" +
+    ".mc-ty{font:700 9px 'IBM Plex Mono',monospace;letter-spacing:.04em;padding:1px 5px;border-radius:4px;white-space:nowrap;border:1px solid}.mc-ty.lead{color:#38b6c9;border-color:rgba(56,182,201,.5)}.mc-ty.coin{color:#b9c7da;border-color:rgba(185,199,218,.35)}.mc-ty.lag{color:#b18cff;border-color:rgba(177,140,255,.5)}" +
+    ".mi-gr td{font:700 11px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:rgba(110,168,255,.05)}" +
     ".mi-tr.rel-today td{background:#1E40AF;color:#fff}" +
     "@media (max-width:900px){.mi-wrap{grid-template-columns:1fr}.mi-pick,.mi-rail{position:static;max-height:none}.mi-cg{grid-template-columns:1fr}}";
   document.head.appendChild(css);
