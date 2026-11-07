@@ -136,10 +136,15 @@
     }
     return best;
   }
-  function pass(e) { return tracked(e) && (V.grp === "all" || groupOf(e) === V.grp) && (!V.high || e.high); }
+  function srcOf(e) { if (e.kind === "desk" || e.kind === "market") return "desk"; var L = e.t <= Date.now() ? landed(e) : null; return L && L.at && L.txt ? "actual" : "cal"; }
+  function pass(e) { return tracked(e) && (V.grp === "all" || groupOf(e) === V.grp) && (!V.high || e.high) && (!V.src || V.src === "all" || srcOf(e) === V.src); }
 
   /* ---------- rendering ---------- */
-  function flagOf(e) { return e.cc && window.flag ? window.flag(e.cc, 13) + " " : ""; }
+  /* the flag must match the event's own country: a Bank of England row never carries a Canada flag */
+  var CTRY = [[/Bank of England|\bBoE\b|\bUK\b|British/i, "gb"], [/\bECB\b|Euro ?(area|zone)/i, "eu"], [/Bank of Japan|\bBoJ\b|Japan/i, "jp"], [/\bRBA\b|Australia/i, "au"], [/\bRBNZ\b|New Zealand/i, "nz"], [/\bSNB\b|Swiss/i, "ch"], [/\bPBoC\b|China/i, "cn"],
+    [/Bank of Canada|\bBoC\b|Canada|^CAD /i, "ca"], [/\bFed\b|FOMC|Federal Reserve|U\.S\.|^USD /i, "us"]];
+  function ccOf(e) { for (var i = 0; i < CTRY.length; i++) if (CTRY[i][0].test(e.label || "")) return CTRY[i][1]; return e.cc; }
+  function flagOf(e) { var cc = ccOf(e); return cc && window.flag ? window.flag(cc, 13) + " " : ""; }
   function chip(e) { var c = CAT[e.kind] || CAT.desk; return '<span class="evc" style="--ec:' + c.c + '">' + c.l + "</span>"; }
   function deskName(go) { var a = (go || "").split("@")[0].split(":"); if (a[0] === "world") return "World markets"; if (a[0] === "briefing") return "Briefing · legislation"; if (a[0] === "earnings") return "US Earnings"; if (a[0] === "events") return "Events"; if (a[0] === "policy") return "Policy · " + (a[1] ? "evidence" : "calendar"); return ({ corn: "Corn", wheat: "Wheat", soybeans: "Soybeans", fx: "USD/CAD" })[a[0]] + " · " + ({ overview: "Overview", deriv: "Derivatives", fund: "Fundamentals", inputs: "Input costs", macro: "Macro" })[a[1]]; }
   function row(e, now) {
@@ -181,11 +186,12 @@
   function landed(e) {
     var k = relKey(e); if (!k) return null;
     var A = (DATA.meta && DATA.meta.asof) || {};
+    function sameMeasure(ev, mm) { var a = /m\/m/.test(ev.label) ? "m/m" : /y\/y/.test(ev.label) ? "y/y" : "", b = mm.measure || ""; return !a || !b || a === b || (b === "m/m change" && a === "m/m"); }   /* a y/y print is never set against an m/m forecast */
     if (k.macro) { var m = window.mfind && mfind(k.macro); if (!m) return { none: 1 };
       if (k.macro === "us_policy" || k.macro === "ca_policy") { var r = pw()[k.macro === "us_policy" ? "fed" : "boc"];
         if (r && r.status === "out" && r.date === dayIso(e.t)) return { at: Date.parse(r.t_seen), txt: r.decision + " " + rateTxt(r.rate) + " · " + r.tone, go: "events:", sel: ".pw-tile", where: "Events · central-bank card", tab: "fx" }; }
       var seen = m.seen_at ? Date.parse(m.seen_at) : 0;
-      if (seen && seen >= e.t - 5 * MIN) return { at: seen, txt: m.name + " " + m.period + ": " + (window.mval ? mval(m, m.value) : m.value) + (e.fc ? " (fc " + e.fc + ")" : ""), go: "fx:macro", sel: '[data-mkey="' + k.macro + '"]', where: "USD/CAD · Macro · " + m.name, tab: "fx" };
+      if (seen && seen >= e.t - 5 * MIN) return { at: seen, txt: m.name + " " + m.period + ": " + (window.mval ? mval(m, m.value) : m.value) + (e.fc && sameMeasure(e, m) ? " (fc " + e.fc + ")" : ""), go: "fx:macro", sel: '[data-mkey="' + k.macro + '"]', where: "USD/CAD · Macro · " + m.name, tab: "fx" };
       return { pending: 1, where: "USD/CAD · Macro · " + m.name }; }
     if (k.asof) { var w = WHERE[k.asof], at = A[k.asof] ? Date.parse(A[k.asof]) : 0, ok = at >= e.t - 5 * MIN;
       if (k.asof === "cftc_grains") { var c = DATA.grains.corn.cftc, lastD = c[c.length - 1].date; ok = lastD >= new Date(e.t - 4 * 86400000).toISOString().slice(0, 10); at = ok ? e.t : 0; }
@@ -280,10 +286,10 @@
     var t = now, nd = null;
     for (var i = 1; i <= 4 && !nd; i++) { var L = todayEvents(now + i * 86400000).filter(pass).filter(function (e) { return e.kind !== "desk" && e.kind !== "market"; }); if (L.length) { nd = L; t = now + i * 86400000; } }
     if (!nd) return "";
-    var key = nd.filter(function (e) { return e.high || e.impact === "High" || e.impact === "Medium" || /^(usda|wasde|cftc|contract|ca)$/.test(e.kind); });
+    var key = V.tomAll ? nd : nd.filter(function (e) { return e.high || e.impact === "High" || e.impact === "Medium" || /^(usda|wasde|cftc|contract|ca)$/.test(e.kind); });
     var rest = nd.length - key.length;
     return '<div class="tile wide ev-tom"><h2>Coming up ' + (dayIso(t) === dayIso(now + 86400000) ? "tomorrow" : "next") + ' · ' + esc(shortDay(t)) + ' <span class="h2note">— ' + nd.length + ' scheduled' + (rest ? " · showing the " + key.length + " high/medium-impact and agri releases" : "") + '</span></h2>' +
-      '<div class="evlist">' + (key.length ? key : nd).map(function (e) { return row(e, now); }).join("") + "</div></div>";
+      '<div class="evlist">' + (key.length ? key : nd).map(function (e) { return row(e, now); }).join("") + "</div>" + (rest > 0 || V.tomAll ? '<button class="evhi" data-evtomall aria-pressed="' + !!V.tomAll + '">' + (V.tomAll ? "Show key releases only" : "Show all " + nd.length) + "</button>" : "") + "</div>";
   }
   var lastDay = "";
   function mainHTML(now) {
@@ -296,6 +302,7 @@
       '<div class="evf">' + GROUPS.map(function (g) { var n = g[0] === "all" ? all.length : cnt[g[0]] || 0;
         return '<button data-evgrp="' + g[0] + '" aria-pressed="' + (V.grp === g[0]) + '">' + g[1] + " <small>" + n + "</small></button>"; }).join("") +
       '<button class="evhi" data-evhigh aria-pressed="' + !!V.high + '">High impact only</button></div>' +
+      '<div class="evf evsrc">' + [["all", "All"], ["actual", "With actual"], ["cal", "Calendar only"], ["desk", "On desk"]].map(function (x) { return '<button data-evsrc="' + x[0] + '" aria-pressed="' + ((V.src || "all") === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>" +
       '<div class="evtr"><span>Track</span>' + GROUPS.slice(1).map(function (g) { var on = V.track[g[0]] !== false;
         return '<button data-evtrack="' + g[0] + '" aria-pressed="' + on + '" title="' + (on ? "Tracking " : "Not tracking ") + g[1] + ' — click to switch">' + (on ? "✓ " : "") + g[1] + "</button>"; }).join("") + "</div></div>" +
       '<div class="evh-r">' + (nxt ? '<div class="evn-l">Next up · ' + (nxtLater ? esc(shortDay(nxt.t)) + " " : "") + hm(nxt.t) + ' ET</div><div class="evn-t">' + flagOf(nxt) + esc(nxt.label) + '</div><div class="hero-cd countdown" data-t="' + nxt.t + '" data-fmt="hms">' + hms(nxt.t - now) + "</div>"
@@ -345,7 +352,7 @@
   function paintBadge() {
     if (!ready()) return;
     var now = Date.now(), left = todayEvents(now).filter(function (e) { return e.t > now; }).length;
-    var s = BTN.querySelector(".sym"); if (s) s.textContent = left ? "Today · " + left : "Today · none";
+    var tot = todayEvents(now).length, s = BTN.querySelector(".sym"); if (s) s.textContent = tot ? "Today · " + left + " to come" : "Today · no events";   /* BRD s.15: a computed count, never a static word */
     var b = BTN.querySelector(".evbadge");
     if (unseen > 0) { if (!b) { b = document.createElement("span"); b.className = "evbadge"; BTN.appendChild(b); } b.textContent = unseen > 9 ? "9+" : unseen; }
     else if (b) b.remove();
@@ -550,6 +557,8 @@
     var b = t.closest("[data-evgrp]"); if (b) { V.grp = b.getAttribute("data-evgrp"); saveV(); repaintMain(); return; }
     if (t.closest("[data-evhigh]")) { V.high = !V.high; saveV(); repaintMain(); return; }
     var tr = t.closest("[data-evtrack]"); if (tr) { var k = tr.getAttribute("data-evtrack"); V.track[k] = V.track[k] === false; saveV(); repaintMain(); return; }
+    b = t.closest("[data-evsrc]"); if (b) { V.src = b.getAttribute("data-evsrc"); saveV(); repaintMain(); return; }
+    b = t.closest("[data-evtomall]"); if (b) { V.tomAll = !V.tomAll; saveV(); repaintMain(); return; }
     b = t.closest("[data-evfeed]"); if (b) { FV = b.getAttribute("data-evfeed"); paintFeed(); return; }
     if (t.closest("[data-evclear]")) { ev.preventDefault(); feed = []; store.set(FEED_KEY, feed); paintFeed(); }
   });
