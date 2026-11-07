@@ -96,7 +96,7 @@
     var age = now - t, biz = age - weekendMs(t, now), cad = (CADENCE[key] || 1440) * 60000;
     var cls = biz <= cad * 1.5 ? "fresh" : biz <= cad * 4 ? "aging" : "old";
     var tm = new Date(t), day = tm.toLocaleString("en-US", { timeZone: ET, month: "short", day: "numeric" }), clock = tm.toLocaleString("en-US", { timeZone: ET, hour: "numeric", minute: "2-digit" });
-    var word = CADWORD[key] ? " · " + CADWORD[key] : "", label = key === "grains_quote" ? "DELAYED" : key === "fx_spot" && cls === "fresh" ? "LIVE" : "LATEST VERIFIED";
+    var word = CADWORD[key] ? " · " + CADWORD[key] : "", label = key === "grains_quote" ? "DELAYED" : key === "fx_spot" && cls === "fresh" ? "LIVE" : /^(fx_spot|fx_closes|yields_live|energy|crosses)$/.test(key) && cls !== "fresh" ? "CLOSE" : "LATEST VERIFIED";   /* BRD s.15: a close is called a close */
     return { cls: cls, txt: day + ", " + clock + " ET" + word + " · " + dur(age) + " old · " + label, title: "" };
   }
   function paintPills() {
@@ -519,5 +519,6 @@
   window.addEventListener("desk:lock", function () { if (ws) { try { ws.close(); } catch (e) {} ws = null; } });
   if (window.DESK_LOCKED === false) onUnlock();      // live.js arrived after an unlock
 
+  document.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest(".tab-btn")) setTimeout(paintPills, 0); });
   window.DESK_LIVE = { paintPills: paintPills, onTick: onTick, pollData: pollData, pollLive: pollLive, applyLive: applyLive, toast: toast, feedState: feedState }; // handy for testing in the console
 })();
