@@ -367,7 +367,7 @@
     var td = x.date === new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
     return '<div class="cx-prs' + (td ? "" : " old") + '"><span class="cx-new-b">' + (td ? "RELEASED" : "LATEST") + '</span> ' + lab + " · " + esc(nm(k)) + " <b>" + fv(k, x[k]) + "</b>" + yo +
       ' <small>press release ' + esc(new Date(x.date + "T12:00:00Z").toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" })) + ", unaudited · full statements with the " + (n.q === 4 ? "10-K" : "10-Q") +
-      (x.exhibit ? ' · <a href="' + esc(x.exhibit) + '" target="_blank" rel="noopener noreferrer">exhibit 99.1 ↗</a>' : "") + "</small></div>";
+      (x.exhibit ? ' · <a href="' + (window.safeUrl ? safeUrl(x.exhibit) : "#") + '" target="_blank" rel="noopener noreferrer">exhibit 99.1 ↗</a>' : "") + "</small></div>";
   }
   window.addEventListener("desk:earnpr", function () { try { var a = document.getElementById("panel-earnings"); if (a && a.classList.contains("active")) rerender(); } catch (e) {} });
   /* red banner: results out (earnings calendar) before the quarter's 10-Q/10-K reaches XBRL */

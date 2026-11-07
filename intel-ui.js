@@ -231,7 +231,7 @@
       (i.revisions && i.revisions.length ? "<p style=\"margin:0 0 6px\" class=\"it-amb\">Revised: " + i.revisions.map(function (r) { return mon(r.month) + " " + nf(r.prev, 2) + " → " + nf(r.new, 2); }).join("; ") + "</p>" : "") +
       "<h4 style=\"margin-top:8px\">Confirm before treating this as a trade</h4><ul>" + (i.confirm || []).map(function (c) { return "<li>" + esc(c) + "</li>"; }).join("") + "</ul></div></div>" +
       '<div class="it-row" style="margin-top:10px"><span class="it-src">' + (i.spark ? spark(i.spark, 160, 34) + " last 24 months · " : "") + "Category: " + esc(CATN[i.cat]) + "</span>" +
-      (i.url ? '<a href="' + esc(i.url) + '" target="_blank" rel="noopener">Open story ↗</a>' : "") + "</div>";
+      (i.url ? '<a href="' + (window.safeUrl ? safeUrl(i.url) : "#") + '" target="_blank" rel="noopener">Open story ↗</a>' : "") + "</div>";
   }
   function srcUrl(i) { var s = D.sources || {}; return /FAO/.test(i.source) ? (s.fao || {}).url || "" : /IMF/.test(i.source) ? (s.imf || {}).url || "" : (s.worldbank || {}).url || ""; }
 

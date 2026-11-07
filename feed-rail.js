@@ -79,7 +79,7 @@
       var it = itemOf(m), key = it.txt.toLowerCase().slice(0, 80); if (!it.txt || seen[key]) return ""; seen[key] = 1;
       var tm = day(m.t) === day(now) ? hm(m.t) : new Date(m.t).toLocaleDateString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric" }) + " " + hm(m.t);
       var go = !it.url && m.go ? ' data-evgo="' + esc(m.go) + '" role="link" tabindex="0"' : "";
-      var body = it.url ? '<a class="fs-t" href="' + esc(it.url) + '" target="_blank" rel="noopener noreferrer">' + esc(it.txt) + "</a>" : '<div class="fs-t">' + esc(it.txt) + "</div>";
+      var body = it.url ? '<a class="fs-t" href="' + (window.safeUrl ? safeUrl(it.url) : "#") + '" target="_blank" rel="noopener noreferrer">' + esc(it.txt) + "</a>" : '<div class="fs-t">' + esc(it.txt) + "</div>";
       return '<li class="fs-i' + (breaking(m) ? " br" : "") + tone(m, it.txt) + (go ? " go" : "") + '"' + go + '><div class="fs-h"><b>' + esc(it.src) + "</b><span>" + tm + "</span></div>" + body + "</li>";
     }).join("");
     return '<div class="fr-head"><span class="fr-title">Feed</span><span class="fr-live" title="Time of the last live update this page received"><i></i>live · ' + (window.DESK_WIRES && DESK_WIRES.at ? hm(Date.parse(DESK_WIRES.at)) : "—") + "</span></div>" +
@@ -157,7 +157,7 @@
       if (!x || !x.id || !x.title) return;
       var u = /^https?:\/\//.test(x.url || "") ? x.url : "";
       EVENTS.log("wire", '<span class="fr-src">Wire</span> ' + esc(x.title) + (x.tick && x.tick.length ? " <small>(" + esc(x.tick.join(", ")) + ")</small>" : "") +
-        (u ? ' <a class="fr-lnk" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">↗</a>' : ""), "", "wr|" + x.id, Date.parse(x.t) || Date.now());
+        (u ? ' <a class="fr-lnk" href="' + (window.safeUrl ? safeUrl(u) : "#") + '" target="_blank" rel="noopener noreferrer">↗</a>' : ""), "", "wr|" + x.id, Date.parse(x.t) || Date.now());
     });
   }
   window.addEventListener("desk:wires", function (e) { wires(e.detail); paint(true); });

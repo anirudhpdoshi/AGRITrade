@@ -259,7 +259,7 @@
         "</dd><dt>Country</dt><dd>" + esc(p.country || "—") + "</dd><dt>Employees</dt><dd>" + (p.fullTimeEmployees ? num(+p.fullTimeEmployees, 0) : "—") +
         "</dd><dt>Market cap</dt><dd>" + big(q.marketCap || p.marketCap) + "</dd><dt>Beta</dt><dd>" + num(p.beta, 2) + "</dd><dt>Last dividend</dt><dd>" + (p.lastDividend != null ? num(p.lastDividend, 2) : "—") +
         "</dd><dt>50D / 200D avg</dt><dd>" + num(q.priceAvg50, 2) + " / " + num(q.priceAvg200, 2) + "</dd><dt>Listed since</dt><dd>" + esc(p.ipoDate || "—") + "</dd></dl>" +
-      (short ? '<p class="ue-desc">' + esc(short) + "</p>" : "") + (site ? '<a class="ue-btn" href="' + esc(site) + '" target="_blank" rel="noopener noreferrer">Company site ↗</a>' : "") + "</div>";
+      (short ? '<p class="ue-desc">' + esc(short) + "</p>" : "") + (site ? '<a class="ue-btn" href="' + (window.safeUrl ? safeUrl(site) : "#") + '" target="_blank" rel="noopener noreferrer">Company site ↗</a>' : "") + "</div>";
   }
   function todayNY() { return new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" }); }
   function dayLbl(d) { return new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric" }); }
@@ -450,7 +450,7 @@
       "</div>" +
       (q.guidance && q.guidance.length ? '<div class="eb-q"><b>Guidance (quoted from the release)</b>' + q.guidance.map(function (t) { return "<q>" + esc(t) + "</q>"; }).join("") + "</div>" : '<div class="eb-q"><b>Guidance</b> <span class="neu">none stated in the release text read</span></div>') +
       (q.highlights && q.highlights.length ? '<div class="eb-q"><b>Highlights (quoted)</b>' + q.highlights.map(function (t) { return "<q>" + esc(t) + "</q>"; }).join("") + "</div>" : "") +
-      '<div class="eb-src">Sources: ' + (f.url ? '<a href="' + esc(f.url) + '" target="_blank" rel="noopener noreferrer">SEC 8-K filing ↗</a>' : "8-K not yet located") + (p.exhibit ? ' · <a href="' + esc(p.exhibit) + '" target="_blank" rel="noopener noreferrer">earnings release (ex. 99.1) ↗</a>' : "") +
+      '<div class="eb-src">Sources: ' + (f.url ? '<a href="' + (window.safeUrl ? safeUrl(f.url) : "#") + '" target="_blank" rel="noopener noreferrer">SEC 8-K filing ↗</a>' : "8-K not yet located") + (p.exhibit ? ' · <a href="' + (window.safeUrl ? safeUrl(p.exhibit) : "#") + '" target="_blank" rel="noopener noreferrer">earnings release (ex. 99.1) ↗</a>' : "") +
       " · filed " + esc(f.at ? tET(f.at) : "—") + " · verified " + esc(p.read_at ? tET(p.read_at) : x.detected_at ? tET(x.detected_at) : "—") + " · period: quarter ending " + esc(x.fq || "N/A") + ". Estimates are third-party consensus, not company data; GAAP figures are unaudited.</div>";
     var rel = f.at || x.detected_at, epsTxt = p.eps_adj == null && x.av ? "$" + (+x.av.eps).toFixed(2) + ' <small>adj.</small>' : p.eps_adj != null ? "$" + p.eps_adj.toFixed(2) + ' <small>adj.</small>' : a.eps != null ? "$" + (+a.eps).toFixed(2) + ' <small>adj.</small>' : p.eps_d != null ? "$" + p.eps_d.toFixed(2) + ' <small>GAAP</small>' : "N/A";
     return '<details class="eb-c"' + (V.ebo && V.ebo[x.s] ? " open" : "") + ' data-ebc="' + esc(x.s) + '"><summary><div class="eb-ch"><b>' + esc(x.s) + " · " + esc(x.n) + '</b><span class="vd ' + (verdict === "BEAT" ? "beat" : verdict === "MISS" ? "miss" : verdict === "INLINE" ? "inl" : "na") + '">' + verdict + "</span></div>" +

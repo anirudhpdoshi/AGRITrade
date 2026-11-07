@@ -2,6 +2,13 @@
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("desk.theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}</script>
+<script>/* GitHub API budget guard: browsers get 60 unauthenticated api.github.com calls an hour per IP. Every module reads its
+   JSON there first and falls back to the raw CDN (up to ~5 min stale). This tracks the remaining budget from GitHub's own
+   headers and, when it runs low, sends the slower feeds straight to their raw fallback so the live price feed keeps the API. */
+(function(){var F=window.fetch;if(!F)return;var B={left:null,reset:0};window.GH_BUDGET=B;
+window.fetch=function(u,o){var s=typeof u==="string"?u:(u&&u.url)||"";if(s.indexOf("https://api.github.com/")!==0)return F.apply(this,arguments);
+var now=Date.now()/1000,live=/\/live\.json\?ref=live/.test(s);if(B.left!=null&&now<B.reset&&B.left<=(live?1:15))return Promise.reject(new Error("api budget held"));
+return F.apply(this,arguments).then(function(r){var l=r.headers.get("X-RateLimit-Remaining"),t=r.headers.get("X-RateLimit-Reset");if(l!=null){B.left=+l;B.reset=+t||0;}return r;});};})();</script>
 <script>
 /* Always load the newest page: GitHub Pages caches pages ~10 min, so every open is re-requested
    with a unique stamp (bypasses CDN + browser cache), then the address bar is cleaned up. */
@@ -2606,7 +2613,7 @@ var MAPLIB=null;
 function loadScript(src){ return new Promise(function(ok,bad){ var s=document.createElement('script'); s.src=src; s.onload=ok; s.onerror=bad; document.head.appendChild(s); }); }
 function mapLibs(){ if(MAPLIB) return MAPLIB;
   MAPLIB=loadScript('https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js').then(function(){ return loadScript('https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js'); })
-    .then(function(){ return fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(function(r){ return r.json(); }); })
+    .then(function(){ return fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json').then(function(r){ return r.json(); }); })
     .then(function(topo){ return topojson.feature(topo, topo.objects.countries); });
   MAPLIB.catch(function(){ MAPLIB=null; }); return MAPLIB; }
 function placeLabel(placed,x,y,w,W){   /* simple collision avoidance: try below/above offsets, skip if crowded */

@@ -360,6 +360,7 @@
   var refFails = 0, refLastOk = 0;
   function pollRef() {
     if (document.hidden || window.DESK_LOCKED) return;
+    if (!fxSession(new Date()).open) return;   // FX closed: a 24/7 crypto-implied reference would tick a price the market never traded
     if (ws && Date.now() - liveTickAt < 45000) return;   // stream healthy (quiet > 45 s -> reference rate fills in)
     fetch("https://api.coinbase.com/v2/exchange-rates?currency=USD", { cache: "no-store" })
       .then(function (r) { if (!r.ok) throw r.status; return r.json(); })
