@@ -130,7 +130,7 @@
     var nm = new Date().getMonth(), nx = (nm + 1) % 12, A = avg[nm], B = avg[nx], o = [];
     if (A) o.push(MON[nm] + " has averaged " + (A.v >= 0 ? "+" : "−") + Math.abs(A.v).toFixed(1) + " across the " + A.n + " year" + (A.n > 1 ? "s" : "") + " held.");
     if (B) o.push("Next, " + MON[nx] + " has averaged " + (B.v >= 0 ? "+" : "−") + Math.abs(B.v).toFixed(1) + ".");
-    o.push("Only " + Object.keys(S).length + " months are held, so treat this as a tendency, not a pattern.");
+    o.push("About two years are held, so treat this as a tendency, not a pattern.");
     box(t, o, "grains_settle");
   }
   function paint(k) {
