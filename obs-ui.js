@@ -170,6 +170,11 @@
     pol: function (D) { var F = D.fx && D.fx.policy && D.fx.policy.fed && D.fx.policy.fed[0], o = []; if (!F) return o; var hk = F.hike_pct, es = F.ease_pct; o.push("Futures lean to a Fed " + (hk > es ? "hike" : es > hk ? "cut" : "hold") + " at the next meeting."); return o; },
     rel: function (D) { var R = ((D.fx && D.fx.releases) || []).slice().sort(function (a, b) { return a.released < b.released ? 1 : -1; })[0], o = [], h = R && R.history; if (!R || !h || h.length < 2) return o; var a = h[h.length - 1][1], p = h[h.length - 2][1]; o.push(R.name + " came in " + (a > p ? "above" : a < p ? "below" : "level with") + " the prior reading."); return o; }
   };
+  FXR.fwd = function (D, t) { var o = [], tx = spaced(t), L = tx.match(/24M forward[\s\S]*?([+−-][\d.]+) pips/i), M = tx.match(/1M [A-Z][a-z]{2} .{0,40}?Points ([+−-][\d.]+)/);
+    if (L) { var v = +L[1].replace("−", "-"); o.push("The 24-month forward sits " + L[1] + " pips " + (v < 0 ? "below" : "above") + " spot: " + (v < 0 ? "US rates are above Canadian rates, so USD trades at a forward discount" : "Canadian rates are above US rates, so USD trades at a forward premium") + " — hedging US dollar sales forward " + (v < 0 ? "gives up" : "earns") + " that carry."); }
+    if (M) o.push("The 1-month forward is " + M[1] + " points from spot.");
+    o.push("These are covered-interest-parity levels from spot and rates, not dealer quotes.");
+    return o; };
   FXR["more-0"] = function (D) { var R = ((D.fx && D.fx.rates) || []).filter(function (r) { return r.t === "10Y"; })[0], o = []; if (!R || R.dod == null) return o; o.push("The 10Y US-Canada spread " + (R.dod < 0 ? "narrowed" : R.dod > 0 ? "widened" : "held") + " on the day."); return o; };
   function paintFx() { var P = doc.getElementById("panel-fx"), sub = P && P.querySelector("[data-subpanel].on"), D = root.DATA; if (!sub || !D) return; var A = D.meta && D.meta.asof || {};
     [].forEach.call(sub.children, function (t) { var sec = t.getAttribute("data-sec"), r = FXR[sec]; if (!r || !t.classList.contains("tile")) return; var key = t.getAttribute("data-src"), old = t.querySelector(":scope > .obs-box"); if (old) old.remove();
