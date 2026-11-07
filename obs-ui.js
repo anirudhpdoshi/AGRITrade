@@ -132,9 +132,37 @@
       if (!bs.length) return; seen[sec] = 1; box(t, bs, KEYS[sec] || "model");
     });
   }
+  /* USD/CAD Desk (BRD s.15): one Observations box per panel, from the tab's own data */
+  var FXMAX = { fx_spot: 72, fx_closes: 96, model: 96, cftc_fx: 240, macro: 1100, releases: 1100, yields_live: 72, energy: 72, policy: 96, sentiment: 72, ext: 1100 };
+  function grab(t, re) { var m = re.exec(spaced(t)); return m || null; }
+  var FXR = {
+    spot: function (D, t) { var o = [], m = grab(t, /vs prior close ([\d.]+) ([+−-][\d.]+)%/i), r = grab(t, /20D range \(closes\) ([\d.]+) – ([\d.]+)/);
+      if (m) o.push("Spot " + (/^[−-]/.test(m[2]) ? "below" : "above") + " the prior close of " + m[1] + ", " + m[2].replace(/^[+−-]/, "") + "% " + (/^[−-]/.test(m[2]) ? "lower" : "higher") + ".");
+      if (r) o.push("Inside its 20-day close range of " + r[1] + " to " + r[2] + "."); return o; },
+    daily: function (D, t) { var h = grab(t, /HIGH ([\d.]+) · (\w{3} \d+)/), l = grab(t, /LOW ([\d.]+) · (\w{3} \d+)/), z = grab(t, /LAST ([\d.]+)/); var o = [];
+      if (h && l) o.push("The window's high was " + h[1] + " on " + h[2] + " and its low " + l[1] + " on " + l[2] + "."); if (z && h && l) o.push("The last close of " + z[1] + " sits " + (+z[1] - l[1] > h[1] - z[1] ? "nearer the high" : "nearer the low") + "."); return o; },
+    model: function (D, t) { var p = grab(t, /1D P50 ([−-]?[\d.]+)% ([\d.]+)/), b = grab(t, /Base close ([\d.]+)/); var o = [];
+      if (p && b) o.push("Model P50 " + p[2] + " against its base close of " + b[1] + ": a " + p[1].replace(/^[−-]/, "") + "% lean " + (/^[−-]/.test(p[1]) ? "lower" : "higher") + " for the next day.");
+      o.push("Educational read only; it is not a trade signal."); return o; },
+    pos: function (D) { var P = D.fx && D.fx.pos, o = []; if (!P) return o; o.push("Leveraged funds are net " + (P.net < 0 ? "short" : "long") + " CAD."); if (P.label) o.push(P.label + "."); return o; },
+    cftc: function (D) { var P = D.fx && D.fx.pos, o = []; if (!P || P.wow == null) return o; o.push("Funds " + (P.wow > 0 ? (P.net < 0 ? "covered CAD shorts" : "added CAD longs") : (P.net < 0 ? "added CAD shorts" : "cut CAD longs")) + " on the week."); o.push("Weekly data, never read as today's position."); return o; },
+    ys: function (D) { var R = ((D.fx && D.fx.rates) || []).filter(function (r) { return r.t === "2Y"; })[0], o = []; if (!R || R.dod == null) return o; o.push("The 2Y US-Canada spread " + (R.dod < 0 ? "narrowed" : R.dod > 0 ? "widened" : "held") + " on the day: " + (R.dod < 0 ? "less" : "more") + " rate support for USD/CAD."); return o; },
+    en: function (D) { var E = ((D.fx && D.fx.energy) || []).filter(function (e) { return /^WTI/.test(e.name); })[0], o = []; if (!E || !E.pct) return o; o.push("WTI " + (E.pct < 0 ? "fell" : "rose") + " on the session: " + (E.pct < 0 ? "softer oil weighs on CAD." : "firmer oil supports CAD.")); return o; },
+    pol: function (D) { var F = D.fx && D.fx.policy && D.fx.policy.fed && D.fx.policy.fed[0], o = []; if (!F) return o; var hk = F.hike_pct, es = F.ease_pct; o.push("Futures lean to a Fed " + (hk > es ? "hike" : es > hk ? "cut" : "hold") + " at the next meeting."); return o; },
+    rel: function (D) { var R = ((D.fx && D.fx.releases) || []).slice().sort(function (a, b) { return a.released < b.released ? 1 : -1; })[0], o = [], h = R && R.history; if (!R || !h || h.length < 2) return o; var a = h[h.length - 1][1], p = h[h.length - 2][1]; o.push(R.name + " came in " + (a > p ? "above" : a < p ? "below" : "level with") + " the prior reading."); return o; }
+  };
+  FXR["more-0"] = function (D) { var R = ((D.fx && D.fx.rates) || []).filter(function (r) { return r.t === "10Y"; })[0], o = []; if (!R || R.dod == null) return o; o.push("The 10Y US-Canada spread " + (R.dod < 0 ? "narrowed" : R.dod > 0 ? "widened" : "held") + " on the day."); return o; };
+  function paintFx() { var P = doc.getElementById("panel-fx"), sub = P && P.querySelector("[data-subpanel].on"), D = root.DATA; if (!sub || !D) return; var A = D.meta && D.meta.asof || {};
+    [].forEach.call(sub.children, function (t) { var sec = t.getAttribute("data-sec"), r = FXR[sec]; if (!r || !t.classList.contains("tile")) return; var key = t.getAttribute("data-src"), old = t.querySelector(":scope > .obs-box"); if (old) old.remove();
+      var h = FXMAX[key], tt = Date.parse(A[key]); if (h && !(isFinite(tt) && Date.now() - tt <= h * 36e5)) return;
+      var txt = spaced(t), ok = r(D, t).filter(function (b) { return traceable(b, txt); }).slice(0, 3); if (!ok.length) return;
+      var el = doc.createElement("div"); el.className = "obs-box"; el.innerHTML = "<b>OBSERVATIONS</b><ul>" + ok.map(function (b) { return "<li>" + esc(b) + "</li>"; }).join("") + "</ul>"; t.appendChild(el); }); }
   var rg = root.renderGrain, ss = root.setSub;
   root.renderGrain = function (k) { var r = rg.apply(this, arguments); paint(k); return r; };
-  root.setSub = function (p) { var r = ss.apply(this, arguments); if (GR.indexOf(p) >= 0) paint(p); return r; };
+  root.setSub = function (p) { var r = ss.apply(this, arguments); if (GR.indexOf(p) >= 0) paint(p); if (p === "fx") paintFx(); return r; };
+  doc.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("#tabbtn-fx")) setTimeout(paintFx, 0); });
+  var raFx = root.renderAll; if (typeof raFx === "function") root.renderAll = function () { var r = raFx.apply(this, arguments); paintFx(); return r; };
+  setInterval(function () { if (doc.getElementById("panel-fx") && doc.getElementById("panel-fx").classList.contains("active") && !doc.querySelector("#panel-fx [data-subpanel].on .obs-box")) paintFx(); }, 5000);
   doc.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-cf-pick]"); if (b && root.GRAINS && GRAINS.pick) { var y = b.getBoundingClientRect().top; GRAINS.pick(b.getAttribute("data-cf-pick")); var nb = doc.querySelector('.tab-panel.active [data-cf-pick]'); if (nb) root.scrollBy(0, nb.getBoundingClientRect().top - y); } });
   doc.addEventListener("click", function (ev) { var t = ev.target.closest && ev.target.closest(".tile button, .tile [data-oiv]"); if (!t) return; var P = doc.querySelector(".tab-panel.active"), k = P && P.id.replace("panel-", ""); if (GR.indexOf(k) >= 0) setTimeout(function () { paint(k); }, 30); }, true);   /* capture: the panel redraws its own buttons on click */
   GR.forEach(paint);
