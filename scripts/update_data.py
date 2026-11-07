@@ -1327,7 +1327,7 @@ MACRO = [
     ("us_udur",     "Avg duration of unemployment (weeks)", "us", "fred", "UEMPMEAN", "raw", "", 1, "down", (3, 60)),
     ("us_isratio",  "Inventories to sales ratio", "us", "fred", "ISRATIO",  "raw",   "",   2, "down", (0.8, 2.5)),
     ("us_busloans", "Commercial & industrial loans", "us", "fred", "BUSLOANS", "yoy", "%",  1, "up",   (1000, 6000)),
-    ("us_ccinc",    "Consumer credit to income", "us", "fred", "TOTALSL/PI", "raw",  "%",  1, "up",   (5, 60)),
+    ("us_ccinc",    "Consumer credit to income", "us", "fred", "TOTALSL:1000/PI", "raw",  "%",  1, "up",   (5, 60)),
     # chart-only series for the Macro sub-tab (quarterly GDP bars, policy-rate panels)
     ("ca_gdpq",     "Real GDP (q/q ann., chained 2017 $)", "ca", "statcan", 62305752,       "qann",  "%",  1, "up",   (1500000, 3800000)),
     ("us_policy",   "Fed funds target (upper)", "us", "fred", "DFEDTARU",   "level", "%",  2, "heat", (0, 10)),
@@ -1341,8 +1341,9 @@ MACRO_LONG = {"us_cpi", "ca_cpi", "us_core_cpi", "us_ur", "ca_ur", "us_gdp", "ca
 def _fred(sid, start):
     if "/" in sid:   # calculated ratio of two FRED series on matching dates, in % (e.g. TOTALSL/PI)
         a, b = sid.split("/")
+        a, k = (a.split(":") + ["1"])[:2]   # "TOTALSL:1000" = numerator is in millions, divide to match a billions denominator
         den = dict(_fred(b, start))
-        return [(d, v / den[d] * 100) for d, v in _fred(a, start) if den.get(d)]
+        return [(d, v / float(k) / den[d] * 100) for d, v in _fred(a, start) if den.get(d)]
     url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}&cosd={start}"
     rows = list(csv.reader(io.StringIO(get(url).text)))
     return [(r[0], float(r[1])) for r in rows[1:] if len(r) > 1 and _num(r[1]) is not None]
