@@ -91,7 +91,7 @@ async def main():
             await pg.wait_for_timeout(700)
             check(f"[{tag}] 'See it' opens the USD/CAD tab", await pg.evaluate("document.getElementById('panel-fx').classList.contains('active')"))
             await pg.evaluate("document.getElementById('tabbtn-fx').click()"); await pg.wait_for_timeout(300)   # a redraw must keep the marks
-            check(f"[{tag}] the released card carries a NEW-today ribbon (and keeps it after a redraw)", await pg.evaluate("!!document.querySelector('#panel-fx .upd-today[data-upd*=\"NEW today\"]')"))
+            check(f"[{tag}] the released card carries a NEW-today ribbon (and keeps it after a redraw)", await pg.evaluate("!!document.querySelector('#panel-fx .upd-today[data-upd*=\"RELEASED TODAY\"]')"))
             if os.environ.get("SHOT"):
                 await pg.screenshot(path=os.path.join(os.environ["SHOT"], f"e2e_seeit_{tag}.png"), full_page=False)
             check(f"[{tag}] the jumped-to card is flashed", await pg.evaluate("!!document.querySelector('#panel-fx .flash-find')"))

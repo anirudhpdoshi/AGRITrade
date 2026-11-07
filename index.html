@@ -68,6 +68,14 @@ main{max-width:1920px;margin:0 auto;padding:14px 16px 30px}
 .gr-slicer button[aria-pressed="true"]{color:#101825;background:var(--amber);border-color:var(--amber)}
 @media (max-width:760px){.gr-strip{grid-template-columns:1fr}}
 .prow-off{display:none!important}
+/* BRD 16C released-today: blue, never red/green, pill label */
+.upd-today:after{color:#E8C33A!important;background:#10283F!important}.mi-cw.new .mcard.upd-today:after{display:none}.mi-cw.new .mcard{background:#1E40AF!important}.mi-cw.new .mcard *{color:#fff!important}html[data-theme="light"] .mi-cw.new .mcard{background:#DBEAFE!important}html[data-theme="light"] .mi-cw.new .mcard *{color:#10283F!important}
+.mcard.upd-today,.dash-card.upd-today,.mk-click.upd-today,.mkc.upd-today,.evr.rel-today{background:#1E40AF!important;color:#fff!important;outline:0!important}
+.mcard.upd-today *,.dash-card.upd-today *,.mk-click.upd-today *,.mkc.upd-today *,.evr.rel-today *{color:#fff!important}
+.rt-pill{display:inline-block;font:700 9.5px/1.6 "IBM Plex Mono",monospace;letter-spacing:.04em;color:#E8C33A!important;background:#10283F;border-radius:5px;padding:0 6px;margin-right:4px;vertical-align:1px}
+html[data-theme="light"] .mcard.upd-today,html[data-theme="light"] .dash-card.upd-today,html[data-theme="light"] .mk-click.upd-today,html[data-theme="light"] .mkc.upd-today,html[data-theme="light"] .evr.rel-today{background:#DBEAFE!important}
+html[data-theme="light"] .mcard.upd-today *,html[data-theme="light"] .dash-card.upd-today *,html[data-theme="light"] .mk-click.upd-today *,html[data-theme="light"] .mkc.upd-today *,html[data-theme="light"] .evr.rel-today *{color:#10283F!important}
+html[data-theme="light"] .upd-today:after{color:#fff!important}html[data-theme="light"] .mi-row.new{background:#DBEAFE!important;color:#10283F!important}html[data-theme="light"] .mi-b.new,html[data-theme="light"] .mi-cw.new .mi-fl{color:#fff!important}html[data-theme="light"] .rt-pill{color:#fff!important}
 .rs-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 14px!important}.rs-l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:0 4px 0 10px}.rs-l:first-child{margin-left:0}
 .sw-tbl td.sw-flag{color:#E8C33A;font-weight:700}
 .ssn td,.ssn th{text-align:center!important;font-family:"IBM Plex Mono",monospace;font-size:12px;padding:6px 4px!important}.ssn td:first-child,.ssn th:first-child{text-align:left!important}.ssn-avg td{font-weight:700;border-top:2px solid var(--line2)}

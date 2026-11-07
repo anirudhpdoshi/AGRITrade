@@ -156,8 +156,9 @@
       : '<span class="countdown" data-t="' + e.t + '" data-fmt="hms">' + hms(d) + "</span>";
     var meta = [e.impact ? '<span class="evi i-' + esc(e.impact).toLowerCase() + '">' + esc(e.impact) + "</span>" : "",
       e.fc ? "fc <b>" + esc(e.fc) + "</b>" : "", e.prev ? "prev <b>" + esc(e.prev) + "</b>" : ""].filter(Boolean).join(" · ");
-    return '<div class="evr ' + st + (e.high ? " hi" : "") + '"><div class="evt">' + hm(e.t) + '<small>ET</small></div>' +
-      '<div class="evm"><div class="evl">' + flagOf(e) + esc(e.label) + " " + chip(e) + "</div>" + (meta ? '<div class="evx">' + meta + "</div>" : "") + "</div>" +
+    var etd = function (t) { return new Date(t).toLocaleDateString("en-CA", { timeZone: "America/Toronto" }); }, rt = LD && LD.at && etd(LD.at) === etd(now);   /* BRD 16C: ET day of release only */
+    return '<div class="evr ' + st + (e.high ? " hi" : "") + (rt ? " rel-today" : "") + '"><div class="evt">' + hm(e.t) + '<small>ET</small></div>' +
+      '<div class="evm"><div class="evl">' + (rt ? '<span class="rt-pill">RELEASED TODAY</span> ' : "") + flagOf(e) + esc(e.label) + " " + chip(e) + "</div>" + (meta ? '<div class="evx">' + meta + "</div>" : "") + "</div>" +
       '<div class="evr-r">' + right + (LD && LD.at && LD.go ? '<button class="evgo see" data-evgo="' + esc(LD.go) + '" data-evsel="' + esc(LD.sel || "") + '" title="Go to where this number is shown">See it: ' + esc(LD.where) + " →</button>"
         : e.go ? '<button class="evgo" data-evgo="' + e.go + '" title="Open ' + esc(deskName(e.go)) + '">' + esc(deskName(e.go)) + " →</button>" : "") + "</div></div>";
   }
@@ -204,7 +205,7 @@
     return null;
   }
   function lagTxt2(ms) { var m = Math.round(ms / MIN); return m <= 0 ? "on time" : m < 60 ? "+" + m + " min" : "+" + Math.floor(m / 60) + " h " + (m % 60) + " min"; }
-  /* tabs and cards that received a scheduled release today get a colour and a "NEW today" ribbon until midnight */
+  /* tabs and cards that received a scheduled release today get a colour and a "RELEASED TODAY" label (BRD 16C) until midnight */
   function decorate() {
     if (!ready()) return;
     var now = Date.now(), tabs = {}, jumps = {}, today = todayEvents(now).filter(function (e) { return e.t <= now; });
@@ -212,7 +213,7 @@
       (tabs[L.tab] = tabs[L.tab] || []).push(nm + " " + hm(L.at));
       if (L.tab !== "events" && L.go) (jumps[L.tab] = jumps[L.tab] || []).push({ n: nm, at: L.at, go: L.go, sel: L.sel || "", where: L.where || "" });
       if (L.sel && L.tab !== "events") [].forEach.call(document.querySelectorAll("#panel-" + L.tab + " " + L.sel), function (el) {
-        var c = el.closest(".tile, .mcard, .dash-card, .mk-click") || el; c.classList.add("upd-today"); c.setAttribute("data-upd", "NEW today · " + hm(L.at)); }); });
+        var c = el.closest(".tile, .mcard, .dash-card, .mk-click") || el; c.classList.add("upd-today"); c.setAttribute("data-upd", "RELEASED TODAY · " + hm(L.at)); }); });
     if (tabs.fx || tabs.corn) ["corn", "wheat", "soybeans"].forEach(function (g) { if (tabs.corn && g !== "corn") tabs[g] = tabs.corn; });
     if (jumps.corn) ["wheat", "soybeans"].forEach(function (g) { jumps[g] = jumps.corn.map(function (j) { return { n: j.n, at: j.at, go: j.go.replace(/^corn/, g), sel: j.sel, where: j.where.replace(/^Corn/, g[0].toUpperCase() + g.slice(1)) }; }); });
     /* a strip at the top of each tab: what landed here today, each a button that jumps to the exact card */

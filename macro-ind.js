@@ -22,7 +22,7 @@
   function mark(m) {
     var now = Date.now(), s = seenMs(m), n = nextRelease(m.key);
     var dET = function (t) { return new Date(t).toLocaleDateString("en-CA", { timeZone: "America/Toronto" }); };
-    if (s && dET(s) === dET(now)) return { k: "new", t: "NEW · released " + etLabel(s, true) + " ET" };   /* NEW = today's prints only */
+    if (s && dET(s) === dET(now)) return { k: "new", t: "RELEASED TODAY · " + etLabel(s, true) + " ET" };   /* NEW = today's prints only */
     if (n && n.t && n.t - now < 36 * HR && n.t > now) return { k: "due", t: "DUE · " + etLabel(n.t, true) + " ET" };
     if (s && now - s < 7 * 24 * HR) return { k: "wk", t: "Released " + etLabel(s, true) + " ET" };
     return null;
@@ -34,7 +34,7 @@
       return '<span class="mi-cons ' + (Math.abs(d) < 0.05 ? "" : d > 0 ? "beat" : "miss") + '">vs forecast ' + fmt(c.forecast, m.dec) + " (" + sgn(d, m.dec) + ")</span>"; }
     return '<span class="mi-cons">forecast ' + fmt(c.forecast, m.dec) + "</span>";
   }
-  function badge(mk) { return mk ? '<span class="mi-b ' + mk.k + '">' + (mk.k === "new" ? "NEW" : mk.k === "due" ? "DUE" : "THIS WEEK") + "</span>" : ""; }
+  function badge(mk) { return mk ? '<span class="mi-b ' + mk.k + '">' + (mk.k === "new" ? "TODAY" : mk.k === "due" ? "DUE" : "THIS WEEK") + "</span>" : ""; }
 
   /* ---------- picker ---------- */
   function picker(all) {
@@ -95,7 +95,7 @@
     var step = Math.ceil(n / 8);
     H.forEach(function (h, i) {
       var last = i === n - 1, x = X(i), y = Y(h[1]), tip = "<title>" + esc(h[0]) + ": " + fmt(h[1], d) + u + "</title>";
-      if (!bars) s += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (last ? 4.5 : 2.6) + '" fill="' + (last ? (mk && mk.k === "new" ? "#ff5c5c" : "#e8a33d") : "#9fb4cf") + '">' + tip + "</circle>";
+      if (!bars) s += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (last ? 4.5 : 2.6) + '" fill="' + (last ? (mk && mk.k === "new" ? "#E8C33A" : "#e8a33d") : "#9fb4cf") + '">' + tip + "</circle>";
       if (n <= 12 || last || i === hi || i === lo) {
         var ly = bars && h[1] < 0 ? y + 13 : y - 8;
         s += '<text x="' + x.toFixed(1) + '" y="' + ly.toFixed(1) + '" class="mi-pv' + (last ? " l" : "") + '" text-anchor="middle">' + (bars && h[1] > 0 ? "+" : "") + fmt(h[1], d) + "</text>";
@@ -104,7 +104,7 @@
     });
     if (mk && mk.k === "new") { var lx = X(n - 1);
       s += '<circle cx="' + lx.toFixed(1) + '" cy="' + Y(v[n - 1]).toFixed(1) + '" r="8" fill="none" stroke="#ff5c5c" stroke-width="1.6"><animate attributeName="r" values="6;10;6" dur="2s" repeatCount="indefinite"/></circle>' +
-        '<text x="' + Math.min(lx, W - PR - 14).toFixed(1) + '" y="' + (PT - 7) + '" class="mi-new" text-anchor="middle">NEW</text>'; }
+        '<text x="' + Math.min(lx, W - PR - 14).toFixed(1) + '" y="' + (PT - 7) + '" class="mi-new" text-anchor="middle">TODAY</text>'; }
     if (m.cons && m.cons.forecast != null) { var cy = Y(m.cons.forecast).toFixed(1), cx = X(n - 1);
       s += '<line x1="' + (cx - slot * 0.45).toFixed(1) + '" x2="' + (cx + slot * 0.45).toFixed(1) + '" y1="' + cy + '" y2="' + cy + '" stroke="#e8a33d" stroke-width="2.2"/>'; }
     return '<svg viewBox="0 0 ' + W + " " + Ht + '" class="mi-svg" role="img" aria-label="' + esc(m.name) + " — last " + n + ' readings">' + s + "</svg>";
@@ -171,17 +171,17 @@
     ".mi-gh{font:700 11.5px 'IBM Plex Sans',sans-serif;color:var(--text);margin:10px 0 4px;display:flex;align-items:center;gap:6px}" +
     ".mi-row{display:grid;grid-template-columns:16px minmax(0,1fr) auto auto;gap:6px;align-items:center;padding:4px 6px;border-radius:6px;cursor:pointer;font-size:12.5px}.mi-row:hover{background:rgba(110,168,255,.08)}" +
     ".mi-row input{margin:0;accent-color:#3b82f6}.mi-n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mi-n i,.mi-cn i{color:var(--faint);font-style:normal;font-weight:400}.mi-v{font:11.5px 'IBM Plex Mono',monospace;color:var(--muted)}" +
-    ".mi-row.new{background:rgba(255,92,92,.10)}" +
-    ".mi-b{font:700 9.5px 'IBM Plex Mono',monospace;letter-spacing:.05em;padding:1px 5px;border-radius:4px;white-space:nowrap}.mi-b.new{background:#ff5c5c;color:#fff}.mi-b.due{background:rgba(232,163,61,.18);color:#e8a33d;border:1px solid rgba(232,163,61,.5)}.mi-b.wk{background:rgba(56,182,201,.14);color:#38b6c9}" +
+    ".mi-row.new{background:#1E40AF;color:#fff}" +
+    ".mi-b{font:700 9.5px 'IBM Plex Mono',monospace;letter-spacing:.05em;padding:1px 5px;border-radius:4px;white-space:nowrap}.mi-b.new{background:#10283F;color:#E8C33A}.mi-b.due{background:rgba(232,163,61,.18);color:#e8a33d;border:1px solid rgba(232,163,61,.5)}.mi-b.wk{background:rgba(56,182,201,.14);color:#38b6c9}" +
     ".mi-cw{display:flex;flex-direction:column;min-width:0}.mi-cw .mcard{flex:1}.mi-fl{font:600 10.5px 'IBM Plex Mono',monospace;padding:3px 8px;border-radius:7px 7px 0 0;margin-bottom:-1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);border:1px solid var(--line);border-bottom:0;background:var(--panel2)}" +
-    ".mi-cw.new .mi-fl{background:#ff5c5c;color:#fff;border-color:#ff5c5c}.mi-cw.new .mcard{border-color:#ff5c5c;box-shadow:0 0 0 1px rgba(255,92,92,.35)}.mi-cw.due .mi-fl{color:#e8a33d;border-color:rgba(232,163,61,.5)}.mi-cw.due .mcard{border-color:rgba(232,163,61,.5)}.mi-cw.wk .mi-fl{color:#38b6c9}" +
+    ".mi-cw.new .mi-fl{background:#10283F;color:#E8C33A;border-color:#1E40AF}.mi-cw.new .mcard{border-color:#1E40AF;box-shadow:0 0 0 1px rgba(30,64,175,.6)}.mi-cw.due .mi-fl{color:#e8a33d;border-color:rgba(232,163,61,.5)}.mi-cw.due .mcard{border-color:rgba(232,163,61,.5)}.mi-cw.wk .mi-fl{color:#38b6c9}" +
     ".mi-cw.new .mi-cons{color:#fff}.mi-cw .mcard{border-top-left-radius:0;border-top-right-radius:0}.mi-cw:not(.new):not(.due):not(.wk) .mi-fl+.mcard{}" +
     ".mi-cons.beat{color:#3fb97f}.mi-cons.miss{color:#e0655f}" +
     ".mi-cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:14px}" +
-    ".mi-ch{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px 8px;min-width:0}.mi-ch.new{border-color:#ff5c5c;box-shadow:0 0 0 1px rgba(255,92,92,.3)}.mi-ch.due{border-color:rgba(232,163,61,.5)}" +
+    ".mi-ch{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px 8px;min-width:0}.mi-ch.new{border-color:#1E40AF;box-shadow:0 0 0 1px rgba(30,64,175,.6)}.mi-ch.due{border-color:rgba(232,163,61,.5)}" +
     ".mi-chh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.mi-cn{cursor:pointer;font-size:14px}.mi-cn:hover{color:#38b6c9}.mi-cv{margin-left:auto;font:600 17px 'IBM Plex Mono',monospace}.mi-cv small{font-size:11.5px;margin-left:4px}" +
     ".mi-sub{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint);margin:2px 0 4px}.mi-svg{display:block;width:100%;height:auto}" +
-    ".mi-ax{font:10px 'IBM Plex Mono',monospace;fill:#8494ab}.mi-pv{font:600 10.5px 'IBM Plex Mono',monospace;fill:#b9c7da}.mi-pv.l{fill:#e8a33d;font-size:11.5px}.mi-new{font:700 10px 'IBM Plex Mono',monospace;fill:#ff5c5c}" +
+    ".mi-ax{font:10px 'IBM Plex Mono',monospace;fill:#8494ab}.mi-pv{font:600 10.5px 'IBM Plex Mono',monospace;fill:#b9c7da}.mi-pv.l{fill:#e8a33d;font-size:11.5px}.mi-new{font:700 10px 'IBM Plex Mono',monospace;fill:#E8C33A}" +
     ".mi-rd{font-size:12.5px;color:var(--muted);margin:4px 0}" +
     "@media (max-width:900px){.mi-wrap{grid-template-columns:1fr}.mi-pick{position:static;max-height:none}.mi-cg{grid-template-columns:1fr}}";
   document.head.appendChild(css);
