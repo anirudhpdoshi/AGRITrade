@@ -58,16 +58,16 @@
   }
   /* ---------- cycle composites: owner's Conference Board-style weights, re-normalised over the inputs the desk holds ---------- */
   var COMP = {
-    lead: [["Average weekly hours, manufacturing", 0.2781], ["ISM new orders index", 0.1651, "us_ism", "proxy", "Headline ISM PMI: averages new orders with lagging parts like employment, so it leads less sharply than new orders alone."],
+    lead: [["Average weekly hours, manufacturing", 0.2781, "us_hours", "exact"], ["ISM new orders index", 0.1651, "us_ism", "proxy", "Headline ISM PMI: averages new orders with lagging parts like employment, so it leads less sharply than new orders alone."],
       ["Average consumer expectations", 0.1551, "us_umich", "proxy", "Headline UMich sentiment, not the expectations sub-index."], ["Interest rate spread (10Y − fed funds)", 0.1069, "spread", "calc"],
-      ["Manufacturers' new orders, consumer goods", 0.0811, "us_factory", "proxy", "Total factory orders, not consumer goods only."], ["Leading Credit Index", 0.0794],
+      ["Manufacturers' new orders, consumer goods", 0.0811, "us_factory", "proxy", "Total factory orders, not consumer goods only."], ["Leading Credit Index", 0.0794, "us_nfci", "proxy", "Chicago Fed NFCI stands in for the proprietary Conference Board index; higher = tighter, so a rise counts against the leading index."],
       ["Stock prices, S&P 500", 0.0381, "spx", "calc"], ["Manufacturers' new orders, capital goods", 0.0356, "us_durable", "proxy", "Total durable goods orders, not core capital goods."],
       ["Initial jobless claims (inverted)", 0.0334, "us_claims", "exact"], ["Building permits", 0.0272, "us_permits", "exact"]],
     coin: [["Nonfarm payrolls", 0.5411, "us_nfp", "exact"], ["Personal income less transfers", 0.1908, "us_pinc", "proxy", "Total personal income includes counter-cyclical transfers (e.g. jobless benefits), so it looks steadier than it should in a recession."],
       ["Industrial production", 0.146, "us_indpro", "exact"], ["Manufacturing & trade sales", 0.1221, "us_retail", "proxy", "Retail sales only."]],
     lag: [["Average prime rate (fed funds + 3 pp)", 0.2815, "prime", "calc"], ["CPI for services", 0.2404, "us_cpi", "proxy", "Headline CPI includes food and energy, so it reacts faster and with more noise than CPI services."],
-      ["Consumer installment credit to income", 0.2101], ["Inventories to sales ratio", 0.1211], ["Commercial & industrial loans", 0.097],
-      ["Labor cost per unit of output", 0.0587, "us_ahe", "proxy", "Average hourly earnings y/y, not unit labor cost."], ["Average duration of unemployment", 0.0361]] };
+      ["Consumer installment credit to income", 0.2101, "us_ccinc", "calc", "", 1], ["Inventories to sales ratio", 0.1211, "us_isratio", "exact", "", -1], ["Commercial & industrial loans", 0.097, "us_busloans", "exact"],
+      ["Labor cost per unit of output", 0.0587, "us_ahe", "proxy", "Average hourly earnings y/y, not unit labor cost."], ["Average duration of unemployment", 0.0361, "us_udur", "exact"]] };
   var CNAME = { lead: "Leading", coin: "Coincident", lag: "Lagging" };
   function clip(x) { return Math.max(-1, Math.min(1, x)); }
   /* signal in −1…+1: latest change standardised by the series' own typical change (2 sd = full scale) */
@@ -81,7 +81,7 @@
       if (src === "spx") { var I = W && (W.instruments || []).filter(function (i) { return i.id === "spx"; })[0], sp2 = I && I.spark; if (!sp2 || sp2.length < 10) return null; var p = (sp2[sp2.length - 1] / sp2[0] - 1) * 100; return { s: clip(p / 8), txt: (p >= 0 ? "+" : "−") + Math.abs(p).toFixed(1) + "% over the last " + sp2.length + " sessions" }; }
       var m = by[src]; if (!m) return null; var z = zsig(m); if (!z) return null; return { s: z.s, txt: mval(m, m.value) + " " + m.period + " (prior " + mval(m, m.prior) + ")" };
     }
-    var out = {}; Object.keys(COMP).forEach(function (g) { var have = 0, tot = 0, rows = COMP[g].map(function (r) { tot += r[1]; var x = r[2] ? sig(r[2]) : null; if (x) have += r[1]; return { name: r[0], w: r[1], kind: x ? r[3] : "missing", note: r[4] || "", x: x }; });
+    var out = {}; Object.keys(COMP).forEach(function (g) { var have = 0, tot = 0, rows = COMP[g].map(function (r) { tot += r[1]; var x = r[2] ? sig(r[2]) : null; if (x && r[5] === -1) x = { s: -x.s, txt: x.txt }; if (x) have += r[1]; return { name: r[0], w: r[1], kind: x ? r[3] : "missing", note: r[4] || "", x: x }; });
       var score = 0; rows.forEach(function (r) { r.nw = r.x ? r.w / have : 0; r.c = r.x ? r.nw * r.x.s : 0; score += r.c; });
       out[g] = { rows: rows, cov: have / tot, score: score }; });
     return out;

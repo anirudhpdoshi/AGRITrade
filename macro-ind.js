@@ -40,14 +40,14 @@
   var CATS = [
     ["growth", "Growth", ["us_gdp", "ca_gdp"]],
     ["inflation", "Inflation", ["us_cpi", "us_core_cpi", "us_pce", "us_core_pce", "us_ppi", "us_import", "ca_cpi", "ca_trim", "ca_median", "ca_ippi"]],
-    ["employment", "Employment", ["us_nfp", "us_ur", "us_claims", "us_cclaims", "us_ahe", "us_jolts", "us_adp", "ca_emp", "ca_ur", "ca_vac"]],
+    ["employment", "Employment", ["us_nfp", "us_ur", "us_claims", "us_cclaims", "us_hours", "us_udur", "us_ahe", "us_jolts", "us_adp", "ca_emp", "ca_ur", "ca_vac"]],
     ["consumer", "Consumer", ["us_retail", "us_pspend", "us_pinc", "us_umich"]],
-    ["manufacturing", "Manufacturing", ["us_ism", "us_ism_svc", "us_indpro", "us_factory", "us_durable", "ca_ivey", "ca_mfg", "ca_whl"]],
+    ["manufacturing", "Manufacturing", ["us_ism", "us_ism_svc", "us_indpro", "us_factory", "us_durable", "us_isratio", "ca_ivey", "ca_mfg", "ca_whl"]],
     ["housing", "Housing", ["us_starts", "us_permits", "us_nhs", "ca_starts", "ca_permits"]],
-    ["credit", "Credit", []], ["commodities", "Commodities", []], ["geopolitics", "Geopolitics", []],
-    ["fincond", "Financial Conditions", ["us_policy", "ca_policy"]]];   /* categories with no series on the desk stay hidden (hide-not-UNAVAILABLE) */
+    ["credit", "Credit", ["us_busloans", "us_ccinc"]], ["commodities", "Commodities", []], ["geopolitics", "Geopolitics", []],
+    ["fincond", "Financial Conditions", ["us_nfci", "us_policy", "ca_policy"]]];   /* categories with no series on the desk stay hidden (hide-not-UNAVAILABLE) */
   /* cycle type (Conference Board convention; inflation pipeline prices count as leading for CPI) */
-  var TY = { us_claims: "lead", us_permits: "lead", us_starts: "lead", us_nhs: "lead", us_ism: "lead", us_ism_svc: "lead", us_umich: "lead", us_factory: "lead", us_durable: "lead", us_jolts: "lead", us_ppi: "lead", us_import: "lead",
+  var TY = { us_hours: "lead", us_nfci: "lead", us_udur: "lag", us_isratio: "lag", us_busloans: "lag", us_ccinc: "lag", us_claims: "lead", us_permits: "lead", us_starts: "lead", us_nhs: "lead", us_ism: "lead", us_ism_svc: "lead", us_umich: "lead", us_factory: "lead", us_durable: "lead", us_jolts: "lead", us_ppi: "lead", us_import: "lead",
     ca_permits: "lead", ca_starts: "lead", ca_ivey: "lead", ca_vac: "lead", ca_ippi: "lead",
     us_nfp: "coin", us_adp: "coin", us_indpro: "coin", us_pinc: "coin", us_retail: "coin", us_pspend: "coin", us_gdp: "coin", ca_emp: "coin", ca_gdp: "coin", ca_mfg: "coin", ca_whl: "coin",
     us_ur: "lag", us_cclaims: "lag", us_cpi: "lag", us_core_cpi: "lag", us_pce: "lag", us_core_pce: "lag", us_ahe: "lag", ca_cpi: "lag", ca_trim: "lag", ca_median: "lag", ca_ur: "lag", us_policy: "lag", ca_policy: "lag" };
