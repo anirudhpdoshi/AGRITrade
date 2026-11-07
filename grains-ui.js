@@ -65,7 +65,7 @@
     var stale = day && T.date && T.date < day;
     return '<button type="button" class="gr-tile"' + sel + '>' +
       '<span class="gr-n">' + NAME[k] + ' <b>' + T.contract + '</b></span>' +
-      '<span class="gr-v">' + T.settle + '<small> c/bu</small></span>' +
+      '<span class="gr-v"><span class="qt-box' + (T.dir === "up" ? " tk-up-s" : T.dir === "down" ? " tk-dn-s" : "") + '"><span class="qt-v">' + (root.QTFMT ? QTFMT(R.settle * 100, 2) : T.settle) + '</span></span><small> c/bu</small></span>' +
       '<span class="gr-c ' + T.dir + '">' + (T.chg ? T.chg + " · " + T.pct : "") + '</span>' +
       '<span class="gr-f">Front ' + T.expiry + (fndLabel(T.contract) ? ' · FND ' + fndLabel(T.contract) : "") + '</span>' +
       (stale ? '<span class="gr-stale">LATEST VERIFIED ' + shortDate(T.date) + '</span>' : "") + '</button>';

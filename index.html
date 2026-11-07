@@ -68,6 +68,18 @@ main{max-width:1920px;margin:0 auto;padding:14px 16px 30px}
 .gr-slicer button[aria-pressed="true"]{color:#101825;background:var(--amber);border-color:var(--amber)}
 @media (max-width:760px){.gr-strip{grid-template-columns:1fr}}
 .prow-off{display:none!important}
+/* dealing-ticket digits everywhere quotes render */
+.qt-v{align-items:flex-start!important}.qt-pp{font-size:1.55em!important;line-height:1}.qt-fr{font-size:.85em;font-weight:700;margin-left:1px;align-self:flex-start}
+.qt-box.tk-up-s{background:#6dab7f;color:#fff}.qt-box.tk-dn-s{background:#c96a6a;color:#fff}.qt-box.tk-up-s .qt-ar:before,.qt-box.tk-dn-s .qt-ar:before{color:#fff!important}.qt-box.tk-up-s,.qt-box.tk-dn-s{border-radius:8px;padding:4px 10px}.qt-box.tk-up-s .qt-ar,.qt-box.tk-dn-s .qt-ar{display:none}
+.gr-v .qt-box,.wh-v .qt-box{display:inline-flex;margin:2px 0}.gr-v .qt-pp,.wh-v .qt-pp{font-size:28px!important}
+.fl-t .qt-pp{font-size:30px!important}.fl-t .qt-bf{font-size:16px!important;margin-top:6px}.qt .qt-pp{font-size:26px!important}.qt .qt-bf{margin-top:4px}
+.tk{margin:8px 0 12px}.tk-top{position:relative;display:flex;gap:10px}.tk-side{flex:1;border-radius:12px;padding:8px 14px 10px;text-align:center;color:#fff}
+.tk-up{background:#6dab7f}.tk-dn{background:#c96a6a}.tk-nt{background:#3a4f6e}.tk-lab{font-size:15px;font-weight:600}
+.tk-px{background:transparent!important;padding:0!important;margin:0!important;display:flex;justify-content:center}.tk-px .qt-v{font-family:"IBM Plex Sans",system-ui,sans-serif;color:#fff}
+.tk-px .qt-bf{font-size:34px;font-weight:500;margin-top:10px}.tk-px .qt-pp{font-size:64px!important;font-weight:500}.tk-px .qt-fr{font-size:30px;font-weight:500}
+.tk-badge{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);background:#3b3f45;color:#fff;font-weight:700;font-size:17px;padding:3px 9px;border-radius:9px}
+.tk-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:40px;margin-top:14px}.tk-r{display:flex;justify-content:space-between;font-size:15px;padding:3px 0}.tk-r span{color:var(--muted)}.tk-r b{font-weight:500;font-family:"IBM Plex Mono",monospace}
+@media (max-width:760px){.tk-px .qt-bf{font-size:24px}.tk-px .qt-pp{font-size:44px!important}.tk-grid{column-gap:16px}}
 .wh h3{margin:12px 0 6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}.wh h3 small{letter-spacing:0;text-transform:none;font-weight:400}
 .wh-clk{display:flex;flex-wrap:wrap;gap:6px}.wh-c,.wh-t{appearance:none;font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;cursor:pointer;text-align:left}.wh-c small{color:var(--muted)}
 .wh-c.hl,.wh-t.hl,.wh-r.hl{border-color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
@@ -3881,7 +3893,7 @@ function omTime(ms){ var o={timeZone:'America/Toronto'}, today=new Date(ms).toLo
   return (today?'':new Date(ms).toLocaleDateString('en-US',{timeZone:'America/Toronto',month:'short',day:'numeric'})+' ')+new Date(ms).toLocaleTimeString('en-US',{timeZone:'America/Toronto',hour:'numeric',minute:'2-digit'}).replace(' ','').toLowerCase()+' ET'; }
 /* ---------- quote tiles (rate-board style): big figure + large last two digits; motion.js flips changed digits and
    flashes the box green / red on every real change, and keeps the last-tick arrow ---------- */
-function qtPx(v, dec, pre){ var t=(pre||'')+fmt(v,dec), n=dec>=4?2:dec>=2?2:1, i=t.length-n; return '<span class="qt-bf">'+t.slice(0,i)+'</span><span class="qt-pp">'+t.slice(i)+'</span>'; }
+function qtPx(v, dec, pre){ var t=(pre||'')+fmt(v,dec), f=dec>=4?1:0, n=dec>=2?2:1, i=t.length-f-n; return '<span class="qt-bf">'+t.slice(0,i)+'</span><span class="qt-pp">'+t.slice(i,t.length-f)+'</span>'+(f?'<span class="qt-fr">'+t.slice(t.length-f)+'</span>':''); }
 /* market sessions (ET): FX Sun 5pm–Fri 5pm · CBOT grains day 9:30–2:20 + overnight 8pm–8:45am · CME Globex energy/dollar index Sun 6pm–Fri 5pm with a 5–6pm break · CBOE Treasury yield indices weekdays 8am–5pm */
 window.MKT=(function(){
   function et(t){ var p={}; new Intl.DateTimeFormat('en-US',{timeZone:'America/Toronto',weekday:'short',hour:'numeric',minute:'numeric',hourCycle:'h23'}).formatToParts(new Date(t||Date.now())).forEach(function(x){ p[x.type]=x.value; }); return {wd:p.weekday, m:(+p.hour)*60+(+p.minute)}; }
@@ -3891,12 +3903,24 @@ window.MKT=(function(){
     fut:function(t){ var p=et(t); if(p.wd==='Sat'||(p.wd==='Sun'&&p.m<1080)||(p.wd==='Fri'&&p.m>=1020)) return false; return !(p.m>=1020&&p.m<1080); },
     bond:function(t){ var p=et(t); return WK.indexOf(p.wd)>=0&&p.m>=480&&p.m<1020; } };
 })();
+/* Dealing ticket (owner design, Nov 7): two-sided only when the feed carries a real bid and ask; otherwise one mid ticket.
+   Big figure small, pips large, fractional pip raised; colour = vs prior close; stats from the stored session. */
+function fxTicketHTML(mid, bid, ask){
+  var fx=DATA.fx, ref=+fx.spot.ref, p=fxIntradayPoints(), y=p.map(function(x){return x[1];}), d=mid-ref, pc=(mid/ref-1)*100, dir=d>0?'up':d<0?'dn':'';
+  var side=function(lab,v,k,c){ return '<div class="tk-side tk-'+c+'"><div class="tk-lab">'+lab+'</div><div class="qt-box tk-px" data-qt="'+k+'" data-v="'+v+'" data-dec="5"'+(k==='fxmid'?' data-qt-live="usdcad"':'')+'><span class="qt-v">'+qtPx(v,5)+'</span></div></div>'; };
+  var two=bid!=null&&ask!=null&&isFinite(bid)&&isFinite(ask);
+  var row=function(k,v){ return '<div class="tk-r"><span>'+k+'</span><b>'+v+'</b></div>'; };
+  return '<div class="tk" id="fx-ticket"><div class="tk-top">'+(two?side('Sell',bid,'fxbid','dn')+side('Buy',ask,'fxask','up')+'<span class="tk-badge">'+fmt((ask-bid)*10000,1)+'</span>'
+      : side('Mid · delayed, no dealable bid/ask',mid,'fxmid',dir||'nt')+'<span class="tk-badge">MID</span>')+'</div>'+
+    '<div class="tk-grid">'+row('+/-:','<span data-tk="chg">'+(d>=0?'+':'−')+fmt(Math.abs(d),5)+'</span>')+row('%+/-:','<span data-tk="pct">'+(pc>=0?'+':'−')+fmt(Math.abs(pc),2)+'</span>')+
+      (y.length>1?row('Low:',fmt(Math.min.apply(null,y),5))+row('High:',fmt(Math.max.apply(null,y),5))+row('Open:',fmt(y[0],5)):'')+row('Prev. Close:',fmt(ref,5))+'</div></div>';
+}
 function qtTile(o){
   /* one rule on every tab: a quote from a closed market says CLOSED, whatever feed it came from */
   if(o.mkt&&window.MKT&&MKT[o.mkt]&&!MKT[o.mkt]()&&o.tag&&/LIVE|DELAYED|LAST|EST/.test(o.tag)){ o.tag='CLOSED'; o.tagc='cz'; o.title=({fx:'FX market closed (Fri 5pm – Sun 5pm ET)',grain:'CBOT grains closed',fut:'Futures market closed',bond:'Treasury yield indices update weekdays 8am–5pm ET'}[o.mkt])+' — last quote shown'+(o.title?' · '+o.title:''); o.max=1e9; }
   if(!window.__ageQ){ window.__ageQ=1; setTimeout(function(){ window.__ageQ=0; if(typeof ageTick==='function') ageTick(); },0); }   /* ages painted as soon as the tiles are in the page */
   return '<div class="qt" data-qtk="'+o.k+'"'+(o.title?' title="'+esc(o.title)+'"':'')+'><div class="qt-h"><b>'+o.name+'</b><span class="qt-sub">'+(o.sub||'')+'</span></div>'+
-    '<div class="qt-box" data-qt="'+o.k+'" data-v="'+o.v+'" data-dec="'+o.dec+'" data-pre="'+(o.pre||'')+'"'+(o.live?' data-qt-live="'+o.live+'"':'')+'><span class="qt-ar" aria-hidden="true"></span><span class="qt-v">'+qtPx(o.v,o.dec,o.pre)+'</span></div>'+
+    '<div class="qt-box'+(/class="[^"]*\bup\b/.test(o.chg||'')?' tk-up-s':/class="[^"]*\b(dn|down)\b/.test(o.chg||'')?' tk-dn-s':'')+'" data-qt="'+o.k+'" data-v="'+o.v+'" data-dec="'+o.dec+'" data-pre="'+(o.pre||'')+'"'+(o.live?' data-qt-live="'+o.live+'"':'')+'><span class="qt-ar" aria-hidden="true"></span><span class="qt-v">'+qtPx(o.v,o.dec,o.pre)+'</span></div>'+
     '<div class="qt-c">'+(o.chg||'')+'</div><div class="qt-f">'+(o.foot||'')+(o.ts?'<span class="qt-age" data-age="'+esc(o.ts)+'" data-age-max="'+(o.max||1500)+'"></span>':'')+(o.tag?' <span class="om-t '+o.tagc+'">'+o.tag+'</span>':'')+'</div></div>';
 }
 var QT_TIER={delayed:['DELAYED','ok'], last:['LAST QUOTE','warn'], chain:['CHAIN PULL','warn'], settle:['SETTLE','cz']};
@@ -4365,7 +4389,7 @@ function renderFX(){
   /* spot — feed value from data.json; live.js streams over it */
   var fd=fx.feed, avMid=fd.mid, avBid=fd.bid, avAsk=fd.ask;
   var refChg=(avMid/fx.spot.ref-1)*100;
-  T.spot='<div class="tile wide" id="fx-spot-tile" data-src="fx_spot"><h2>USD/CAD spot &amp; key levels <span class="chip frozen" id="fx-spot-chip">FEED VALUE</span></h2>'+
+  T.spot='<div class="tile wide" id="fx-spot-tile" data-src="fx_spot"><h2>USD/CAD spot &amp; key levels <span class="chip frozen" id="fx-spot-chip">FEED VALUE</span></h2>'+fxTicketHTML(+avMid,avBid,avAsk)+
     '<div class="sl-grid"><div>'+
     '<div id="fx-spark" class="intraday">'+fxIntradaySVG(fxIntradayPoints())+'</div>'+
     '<div class="stat-row">'+(avBid!=null&&avAsk!=null?stat("Bid", fmt(avBid,5)) + stat("Ask", fmt(avAsk,5)) + stat("Spread", fmt((avAsk-avBid)*10000,1)+" pips"):'') +
