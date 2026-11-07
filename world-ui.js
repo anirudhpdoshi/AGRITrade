@@ -244,6 +244,46 @@
     }
     return '<div class="tile wide"><h2>52-week watch <span class="h2note">— markets at or within 5% of their 52-week high or low, by asset class · bar = how close (full = at the extreme)</span></h2>' + asOf(L, "blk") + '<div class="w5">' + side(true) + side(false) + "</div></div>";
   }
+  /* BR-WM-1: one count of open venues, computed once and used everywhere */
+  function openCount(now) { var ex = (W && W.exchanges) || {}; return Object.keys(ex).filter(function (k) { var s = status(ex[k], now); return s === "open" || s === "extended"; }).length; }
+  /* World at a glance (BRD s.14): built only from data the tab already carries; the full section stays underneath */
+  var DESK = ["usdcad", "dxy", "corn", "wheat", "soy", "wti", "brent", "gold", "usca2y", "usca10y"], CLK = ["HKEX", "LSE", "NYSE", "TSX", "CBOT", "FX"];
+  function sessionDay(iso) { return new Date(Date.parse(iso) + 6 * 36e5).toLocaleDateString("en-CA", { timeZone: "America/Toronto" }); }   /* evening trade after 6 pm ET belongs to the next session */
+  function moves() {   /* BR-WM-2: one row per market per session, Major and above, arrow from the sign of the move */
+    var best = {}; (W.alerts || []).forEach(function (a) { if (a.tier < 2) return; var k = a.id + "|" + sessionDay(a.at), b = best[k];
+      if (!b || a.tier > b.tier || (a.tier === b.tier && Math.abs(a.move) > Math.abs(b.move))) best[k] = a; });
+    return Object.keys(best).map(function (k) { return best[k]; }).sort(function (a, b) { return b.tier - a.tier || Math.abs(b.move) - Math.abs(a.move); });
+  }
+  function deskTile(i) {
+    var e = W.exchanges[i.ex], st = e ? status(e, Date.now()) : null, closed = st === "closed" || st === "pre";
+    return '<button type="button" class="wh-t' + (V.hl && V.hl === i.ex ? " hl" : "") + '" data-whl="' + esc(i.ex || "") + '"><span class="wh-n">' + esc(i.name.replace(/ \((CBOT|COMEX|NYMEX|ICE) fut\.\)/, "")) + '</span><span class="wh-v">' + last(i) + "</span>" + chgCell(i) +
+      '<small>' + (closed && i.ts ? "Last close " + new Date(i.ts).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/Toronto" }) : age(i)) + "</small></button>";
+  }
+  function heroHTML() {
+    var L = inst(), now = Date.now(), by = {}; L.forEach(function (i) { by[i.id] = i; });
+    var ex = W.exchanges, clocks = CLK.filter(function (k) { return ex[k]; }).map(function (k) { var e = ex[k], st = status(e, now), nx = nextChange(e, now);
+      return '<button type="button" class="wh-c' + (V.hl === k ? " hl" : "") + '" data-whl="' + k + '"><b>' + esc(e.city === "Chicago" && k === "CBOT" ? "CBOT" : k === "FX" ? "FX" : e.city) + '</b> <span class="wst ' + st + '">' + SLAB[st] + "</span>" + (nx ? ' <small>' + (nx.opening ? "opens" : "closes") + ' in <span class="countdown" data-t="' + nx.t + '">' + ago(nx.t - now) + "</span></small>" : "") + "</button>"; }).join("");
+    var idx = L.filter(function (i) { return i.group === "Indices" && i.pct != null; }), up = idx.filter(function (i) { return i.pct > 0; }).length;
+    var reg = ["Americas", "Europe", "Asia-Pacific"].map(function (r) { var xs = idx.filter(function (i) { return i.region === r; }); return xs.length ? [r, xs.reduce(function (a, i) { return a + i.pct; }, 0) / xs.length] : null; }).filter(Boolean);
+    var px = L.filter(function (i) { return i.kind === "price" && i.pct != null && !/^vix/.test(i.id); }).sort(function (a, b) { return Math.abs(b.pct) - Math.abs(a.pct); }).slice(0, 3);
+    var M = moves(), maj = (W.alerts || []).filter(function (a) { return a.tier >= 2; }).length;
+    var rest = GROUPS.map(function (g) { var xs = L.filter(function (i) { return i.group === g && DESK.indexOf(i.id) < 0; }); return xs.length ? '<div class="wh-g"><b>' + g + "</b>" + xs.map(function (i) { return '<span class="wh-r' + (V.hl && V.hl === i.ex ? " hl" : "") + '">' + esc(i.name) + " " + chgCell(i) + "</span>"; }).join("") + "</div>" : ""; }).join("");
+    var H = W.health || {}, miss = (H.failed || []).length, run = tDate(W.updated_at);
+    var obs = [(up > idx.length / 2 ? "Risk-on" : up < idx.length / 2 ? "Risk-off" : "Split") + " session: " + up + " of " + idx.length + " indices up. " + reg.map(function (r) { return r[0] + " " + sg(r[1], 2, "%"); }).join(", ") + ".",
+      "Biggest moves: " + px.map(function (i) { return i.name.replace(/ \(.*\)/, "") + " " + sg(i.pct, 2, "%"); }).join(", ") + "."];
+    return '<div class="tile wide wh"><h2>World at a glance <span class="h2note">' + openCount(now) + " of " + Object.keys(ex).length + " venues open · tap a venue to light up its markets</span></h2>" +
+      '<div class="wh-clk">' + clocks + "</div>" +
+      '<div class="wh-main"><div><h3>Desk first</h3><div class="wh-desk">' + DESK.map(function (id) { return by[id] ? deskTile(by[id]) : ""; }).join("") + "</div>" +
+      '<h3>Regions</h3><div class="wh-reg">' + reg.map(function (r) { return '<span>' + r[0] + ' <b class="' + cl(r[1]) + '">' + sg(r[1], 2, "%") + "</b></span>"; }).join("") + "</div>" +
+      '<details class="wh-rest"><summary>Everything else (' + L.filter(function (i) { return DESK.indexOf(i.id) < 0; }).length + " markets)</summary>" + rest + "</details>" +
+      '<div class="obs-box"><b>OBSERVATIONS</b><ul>' + obs.map(function (o) { return "<li>" + esc(o) + "</li>"; }).join("") + "</ul></div></div>" +
+      '<div class="wh-mv"><h3>What moved <small>Major and above · ' + M.length + " moves from " + maj + " alert rows</small></h3>" + (M.length ? M.slice(0, 14).map(function (a) { var u = a.last > a.ref;
+        return '<div class="wh-m"><span class="' + (u ? "up" : "dn") + '">' + (u ? "▲" : "▼") + " " + sg(a.move, 2, a.unit === "bp" ? " bp" : "%") + "</span> <b>" + esc(a.name) + '</b> <span class="sev s' + a.tier + '">' + esc(a.severity) + "</span><small>" + tDate(a.at) + " ET</small></div>"; }).join("") : '<p class="note">No Major moves this session.</p>') + "</div></div>" +
+      '<details class="wh-hb"><summary>Data health: ' + (H.ok || 0) + " of " + (H.expected || 0) + " returned · last run " + run + " ET" + (miss ? " · " + miss + " missing" : "") + "</summary><p>" +
+      (miss ? (H.failed || []).map(function (f) { return esc(String(f.id).toUpperCase()); }).join(", ") + " did not return on the last run; every other market updated normally." : "Every market returned on the last run.") + "</p>" +
+      (miss ? '<details><summary>Technical detail</summary><pre>' + (H.failed || []).map(function (f) { return esc(f.id + " · " + f.error); }).join("\n") + "</pre></details>" : "") + "</details>" +
+      '<details class="wh-hb"><summary>How to read</summary><p>Moves are against the previous close unless an alert says session open. Severity tiers: Watch 1%, Major 2%, Extreme 3%, Exceptional 5% (yields 5/10/15/25 bp). A closed market shows its last close with its date, never a day range.</p></details></div>';
+  }
   function overviewHTML() {
     var L = inst(), px = L.filter(function (i) { return i.kind === "price" && i.pct != null && !/^vix/.test(i.id); });
     var up = px.slice().sort(function (a, b) { return b.pct - a.pct; }), dn = px.slice().sort(function (a, b) { return a.pct - b.pct; });
@@ -301,7 +341,7 @@
   var WTHEME = { overview: "#38b6c9", sessions: "#6ea8ff", markets: "#e8b93d", alerts: "#ff8a84", health: "#3fb97f", guide: "#9aa8bb" };
   function navHTML() {
     var L = inst(), now = Date.now(), ex = (W && W.exchanges) || {}, al = (W && W.alerts) || [];
-    var openN = Object.keys(ex).filter(function (k) { var s = status(ex[k], now); return s === "open" || s === "extended"; }).length;
+    var openN = openCount(now);
     var sig = L.filter(function (i) { return i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low); }).length;
     var H = (W && W.health) || {};
     var heads = [
@@ -380,12 +420,13 @@
     document.getElementById("wCtx").innerHTML = ctxHTML();
     var B = document.getElementById("wBody");
     if (!W) { B.innerHTML = err ? '<div class="tile wide"><div class="unreach">\u26a0 Sorry, we can\u2019t be reached now <small>\u2014 global market data did not load; retrying every minute</small></div></div>' : '<div class="tile wide"><p class="note">Loading global market data…</p></div>'; return; }
-    B.innerHTML = V.sub === "guide" ? guideHTML() : V.sub === "sessions" ? sessionsHTML() : V.sub === "markets" ? marketsHTML() : V.sub === "alerts" ? alertsHTML() : V.sub === "health" ? healthHTML() : overviewHTML();
+    B.innerHTML = V.sub === "guide" ? guideHTML() : V.sub === "sessions" ? sessionsHTML() : V.sub === "markets" ? marketsHTML() : V.sub === "alerts" ? alertsHTML() : V.sub === "health" ? healthHTML() : heroHTML() + overviewHTML();
     kbDecorateW(B);
     if (window.MOTION) window.MOTION.scan();
   }
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t || !t.closest("#panel-world")) return;
+    var hb = t.closest("[data-whl]"); if (hb) { var x = hb.getAttribute("data-whl"); V.hl = V.hl === x ? null : x; render(); return; }
     var b = t.closest("[data-wsub]"); if (b) { V.sub = b.getAttribute("data-wsub"); save(); render(); return; }
     b = t.closest("[data-wgrp]"); if (b) { V.grp = b.getAttribute("data-wgrp"); if (b.closest("#wNav")) V.flagged = false; save(); render(); return; }
     b = t.closest("[data-wflag]"); if (b) { V.flagged = b.closest("#wNav") ? true : !V.flagged; if (V.flagged && b.closest("#wNav")) V.grp = "all"; save(); render(); return; }
