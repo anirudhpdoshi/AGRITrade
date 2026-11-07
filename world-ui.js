@@ -256,7 +256,7 @@
   }
   function deskTile(i) {
     var e = W.exchanges[i.ex], st = e ? status(e, Date.now()) : null, closed = st === "closed" || st === "pre";
-    return '<button type="button" class="wh-t' + (V.hl && V.hl === i.ex ? " hl" : "") + '" data-whl="' + esc(i.ex || "") + '"><span class="wh-n">' + esc(i.name.replace(/ \((CBOT|COMEX|NYMEX|ICE) fut\.\)/, "")) + '</span><span class="wh-v">' + last(i) + "</span>" + chgCell(i) +
+    return '<button type="button" class="wh-t' + (V.hl && V.hl === i.ex ? " hl" : "") + '" data-whl="' + esc(i.ex || "") + '"><span class="wh-n">' + esc(i.name.replace(/ \((CBOT|COMEX|NYMEX|ICE) fut\.\)/, "")) + '</span><span class="wh-v">' + (window.QTFMT && i.last != null && i.kind !== "yield" && i.kind !== "spread" ? '<span class="qt-box' + (i.pct > 0 ? " tk-up-s" : i.pct < 0 ? " tk-dn-s" : "") + '"><span class="qt-v">' + window.QTFMT(i.last, i.dec) + "</span></span>" : last(i)) + "</span>" + chgCell(i) +
       '<small>' + (closed && i.ts ? "Last close " + new Date(i.ts).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/Toronto" }) : age(i)) + "</small></button>";
   }
   function heroHTML() {

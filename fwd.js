@@ -294,8 +294,8 @@
   function headHTML(res, st) {
     var y2 = res.legs[res.legs.length - 1];
     return '<div class="fl-h"><div><b>USD / CAD</b><small>24-month forward monitor · covered-interest-parity outrights · theoretical, not dealer quotes</small></div></div>' +
-      '<div class="fl-kv"><div><span>Spot reference</span><b class="qt-box" data-qt="flspot" data-v="' + res.spot + '" data-dec="5"><span class="qt-ar" aria-hidden="true"></span><span class="qt-v"><span class="qt-bf">' + px5(res.spot).slice(0, -2) + '</span><span class="qt-pp">' + px5(res.spot).slice(-2) + "</span></span></b><small>" + (st.spotT ? clock(st.spotT) + " ET · " : "") + esc(st.chip.toLowerCase()) + "</small></div>" +
-      '<div><span>24M forward</span><b class="qt-box" data-qt="fl24" data-v="' + (y2.F || 0) + '" data-dec="5"><span class="qt-ar" aria-hidden="true"></span><span class="qt-v">' + (y2.F == null ? "—" : '<span class="qt-bf">' + px5(y2.F).slice(0, -2) + '</span><span class="qt-pp">' + px5(y2.F).slice(-2) + "</span>") + '</span></b><small>' + (y2.F == null ? "" : sg(y2.pts, 1) + " pips · " + lab(y2.vd)) + "</small></div></div>";
+      '<div class="fl-kv"><div><span>Spot reference</span><b class="qt-box" data-qt="flspot" data-v="' + res.spot + '" data-dec="5"><span class="qt-ar" aria-hidden="true"></span><span class="qt-v">' + window.QTFMT(res.spot, 5) + "</span></b><small>" + (st.spotT ? clock(st.spotT) + " ET · " : "") + esc(st.chip.toLowerCase()) + "</small></div>" +
+      '<div><span>24M forward</span><b class="qt-box" data-qt="fl24" data-v="' + (y2.F || 0) + '" data-dec="5"><span class="qt-ar" aria-hidden="true"></span><span class="qt-v">' + (y2.F == null ? "—" : window.QTFMT(y2.F, 5)) + '</span></b><small>' + (y2.F == null ? "" : sg(y2.pts, 1) + " pips · " + lab(y2.vd)) + "</small></div></div>";
   }
   function tilesHTML(res) {
     var by = {}; res.legs.forEach(function (l) { by[l.t] = l; });
@@ -304,7 +304,7 @@
       var l = by[t], y = S.hist1 && S.hist1.by[t], d1 = l && l.F != null && y && y.F != null ? l.pts - y.pts : null, on = t === S.sel;
       if (!l || l.F == null) return '<button type="button" class="qt fl-t" data-flsel="' + t + '"><div class="qt-h"><b>' + tl(t) + '</b></div><div class="qt-c neu">unavailable</div></button>';
       return '<button type="button" class="qt fl-t' + (on ? " on" : "") + '" data-flsel="' + t + '" aria-pressed="' + on + '"><div class="qt-h"><b>' + tl(t) + "</b>" + (on ? '<span class="fl-ck">✓</span>' : '<span class="qt-sub">' + lab(l.vd, true) + "</span>") + "</div>" +
-        '<div class="qt-box" data-qt="fl-' + t + '" data-v="' + l.F + '" data-dec="5"><span class="qt-ar" aria-hidden="true"></span><span class="qt-v"><span class="qt-bf">' + px5(l.F).slice(0, -2) + '</span><span class="qt-pp">' + px5(l.F).slice(-2) + "</span></span></div>" +
+        '<div class="qt-box' + (d1 > 0 ? " tk-up-s" : d1 < 0 ? " tk-dn-s" : "") + '" data-qt="fl-' + t + '" data-v="' + l.F + '" data-dec="5"><span class="qt-ar" aria-hidden="true"></span><span class="qt-v">' + window.QTFMT(l.F, 5) + "</span></div>" +
         '<div class="qt-c"><span class="' + (l.pts < 0 ? "dn" : "up") + '">Points ' + sg(l.pts, 1) + "</span>" + (d1 != null ? ' <span class="sl-k">· 1D</span> <span class="' + (d1 > 0 ? "up" : d1 < 0 ? "dn" : "neu") + '">' + sg(d1, 1) + "</span>" : "") + "</div>" +
         '<div class="qt-f">' + lab(l.vd) + "</div></button>";
     }).join("") + '<button type="button" class="fl-all" data-flall aria-pressed="' + !!S.all + '">' + (S.all ? "Show key maturities" : "All 24 months") + "</button>";

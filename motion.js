@@ -65,23 +65,28 @@
   /* 7 rate-board quote tiles [data-qt]: the box flashes green / red for ~1 s on a real change, only the digits that changed
        flip in (split-flap), and the last-tick arrow persists across re-renders until the next change. */
   var QV = {}, QS = {}, QD = {};
-  function qtFmt(v, dec, pre) { var t = (pre || "") + v.toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec }), i = t.length - (dec >= 2 ? 2 : 1); return [t.slice(0, i), t.slice(i)]; }
+  /* dealing-ticket digits: big figure small, pips large, fractional pip raised (FX, 4+ decimals) */
+  function qtFmt(v, dec, pre) { var t = (pre || "") + v.toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec }), f = dec >= 4 ? 1 : 0, i = t.length - f - (dec >= 2 ? 2 : 1); return [t.slice(0, i), t.slice(i, t.length - f), t.slice(t.length - f)]; }
+  var QCLS = ["qt-bf", "qt-pp", "qt-fr"];
+  function qtHTML(parts) { return parts.map(function (s, i) { return s ? '<span class="' + QCLS[i] + '">' + s.replace(/&/g, "&amp;") + "</span>" : ""; }).join(""); }
+  window.QTFMT = function (v, dec, pre) { return qtHTML(qtFmt(v, dec, pre)); };
   function qtPaint(box, v, animate) {
     var k = box.getAttribute("data-qt"), dec = +box.getAttribute("data-dec"), pre = box.getAttribute("data-pre") || "", p = QV[k], prevS = QS[k];
-    var parts = qtFmt(v, dec, pre), full = parts[0] + parts[1], vEl = box.querySelector(".qt-v");
+    var parts = qtFmt(v, dec, pre), full = parts.join(""), vEl = box.querySelector(".qt-v");
+    if (vEl && dec >= 4 && !vEl.querySelector(".qt-fr")) vEl.innerHTML = qtHTML(parts);
     if (animate && p != null && v !== p && !RM && box.offsetParent !== null) {
       var up = v > p, html = "", n = 0;
-      [parts[0], parts[1]].forEach(function (seg, si) {
+      parts.forEach(function (seg, si) { if (!seg) return;
         var h = "";
         for (var i = 0; i < seg.length; i++, n++) { var ch = seg[i], was = prevS ? prevS[n] : null; h += (was !== ch && /\d/.test(ch)) ? '<span class="qf">' + ch + "</span>" : ch.replace(/&/g, "&amp;"); }
-        html += '<span class="' + (si ? "qt-pp" : "qt-bf") + '">' + h + "</span>";
+        html += '<span class="' + QCLS[si] + '">' + h + "</span>";
       });
       if (vEl) vEl.innerHTML = html;
       QD[k] = up ? "up" : "dn";
       box.classList.remove("fl-up", "fl-dn"); void box.offsetWidth; box.classList.add(up ? "fl-up" : "fl-dn");
       setTimeout(function () { box.classList.remove("fl-up", "fl-dn"); }, 160);   /* drop the class: the .9 s transition fades it out */
     } else if (vEl && p != null && v !== p) {
-      vEl.innerHTML = '<span class="qt-bf">' + parts[0] + '</span><span class="qt-pp">' + parts[1] + "</span>";
+      vEl.innerHTML = qtHTML(parts);
       QD[k] = v > p ? "up" : "dn";
     }
     box.classList.toggle("dir-up", QD[k] === "up"); box.classList.toggle("dir-dn", QD[k] === "dn");
