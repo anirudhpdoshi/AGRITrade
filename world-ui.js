@@ -254,6 +254,22 @@
       if (!b || a.tier > b.tier || (a.tier === b.tier && Math.abs(a.move) > Math.abs(b.move))) best[k] = a; });
     return Object.keys(best).map(function (k) { return best[k]; }).sort(function (a, b) { return b.tier - a.tier || Math.abs(b.move) - Math.abs(a.move); });
   }
+  /* Desk-first tiles mirror the desk's own numbers, so a price never reads differently on two tabs:
+     grains = front-contract settlement, or the newer delayed quote the fan chart uses; WTI / Brent = the desk's energy read */
+  var GMAP = { corn: "corn", wheat: "wheat", soy: "soybeans" }, EMAP = { wti: /^WTI/, brent: /^Brent/ };
+  function deskSync(i) {
+    var D = window.DATA; if (!D) return i; var o = Object.assign({}, i);
+    if (GMAP[i.id] && D.grains && D.grains[GMAP[i.id]]) { var g = D.grains[GMAP[i.id]], R = g.roll && g.roll[0]; if (!R || R.settle == null) return i;
+      var q = g.quotes && g.quotes[R.contract], qd = q && q.ts ? new Date(q.ts).toLocaleDateString("en-CA", { timeZone: "America/Toronto" }) : "", useQ = q && q.px != null && (qd > (R.settle_date || "") || (qd === R.settle_date && Math.abs(q.px - R.settle) > 1e-9));
+      var px = useQ ? q.px : R.settle, pv = useQ ? R.settle : R.prev; o.last = px * 100; o.dec = 2; o.ts = useQ ? q.ts : (D.meta.asof.grains_settle || i.ts);
+      if (pv) { o.chg = (px - pv) * 100; o.pct = (px / pv - 1) * 100; } o.name = i.name + " · " + R.contract; return o; }
+    if (i.id === "usdcad") { var L = window.DESK_LIVE && window.DESK_LIVE.feedState && window.DESK_LIVE.feedState(), lt = L && L.lastTick, fm = D.fx && D.fx.feed;
+      var px2 = L && L.last && lt && lt > Date.parse(i.ts || 0) ? L.last : fm && fm.mid && Date.parse(fm.ts) > Date.parse(i.ts || 0) ? fm.mid : null;
+      if (px2 && i.prev_close) { o.last = px2; o.chg = px2 - i.prev_close; o.pct = (px2 / i.prev_close - 1) * 100; o.ts = lt && L.last === px2 ? new Date(lt).toISOString() : fm.ts; } return o; }
+    if (EMAP[i.id]) { var E = ((D.fx && D.fx.energy) || []).filter(function (e) { return EMAP[i.id].test(e.name); })[0]; if (!E || E.last == null) return i;
+      o.last = E.last; o.chg = E.chg; o.pct = E.pct; o.ts = D.meta.asof.energy || i.ts; return o; }
+    return i;
+  }
   function deskTile(i) {
     var e = W.exchanges[i.ex], st = e ? status(e, Date.now()) : null, closed = st === "closed" || st === "pre";
     return '<button type="button" class="wh-t' + (V.hl && V.hl === i.ex ? " hl" : "") + '" data-whl="' + esc(i.ex || "") + '"><span class="wh-n">' + esc(i.name.replace(/ \((CBOT|COMEX|NYMEX|ICE) fut\.\)/, "")) + '</span><span class="wh-v">' + (window.QTFMT && i.last != null && i.kind !== "yield" && i.kind !== "spread" ? '<span class="qt-box' + (i.pct > 0 ? " tk-up-s" : i.pct < 0 ? " tk-dn-s" : "") + '"><span class="qt-v">' + window.QTFMT(i.last, i.dec) + "</span></span>" : last(i)) + "</span>" + chgCell(i) +
@@ -273,7 +289,7 @@
       "Biggest moves: " + px.map(function (i) { return i.name.replace(/ \(.*\)/, "") + " " + sg(i.pct, 2, "%"); }).join(", ") + "."];
     return '<div class="tile wide wh"><h2>World at a glance <span class="h2note">' + openCount(now) + " of " + Object.keys(ex).length + " venues open · tap a venue to light up its markets</span></h2>" +
       '<div class="wh-clk">' + clocks + "</div>" +
-      '<div class="wh-main"><div><h3>Desk first</h3><div class="wh-desk">' + DESK.map(function (id) { return by[id] ? deskTile(by[id]) : ""; }).join("") + "</div>" +
+      '<div class="wh-main"><div><h3>Desk first</h3><div class="wh-desk">' + DESK.map(function (id) { return by[id] ? deskTile(deskSync(by[id])) : ""; }).join("") + "</div>" +
       '<h3>Regions</h3><div class="wh-reg">' + reg.map(function (r) { return '<span>' + r[0] + ' <b class="' + cl(r[1]) + '">' + sg(r[1], 2, "%") + "</b></span>"; }).join("") + "</div>" +
       '<details class="wh-rest"><summary>Everything else (' + L.filter(function (i) { return DESK.indexOf(i.id) < 0; }).length + " markets)</summary>" + rest + "</details>" +
       '<div class="obs-box"><b>OBSERVATIONS</b><ul>' + obs.map(function (o) { return "<li>" + esc(o) + "</li>"; }).join("") + "</ul></div></div>" +
@@ -443,6 +459,7 @@
   setInterval(function () { if (active()) { paintHead(); var cx = document.getElementById("wCtx"); if (cx) cx.innerHTML = ctxHTML(); if (W && Date.now() > nextRun(Date.parse(W.updated_at) + 60000) + LAND_MS) poll(true); if (W && (V.sub === "sessions" || ((V.sub === "overview" || V.sub === "markets") && !(document.activeElement && document.activeElement.matches && document.activeElement.matches("[data-wq]"))))) render(); } }, 60000);   /* keep source-time ages current */
   window.addEventListener("desk:unlock", function () { poll(true); });
   document.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("#tabbtn-world"); if (b) { render(); poll(); } });
+  var raW = window.renderAll; if (typeof raW === "function") window.renderAll = function () { var r = raW.apply(this, arguments); try { if (active() && W) render(); } catch (e) {} return r; };   /* desk data changed: Desk-first tiles follow */
   window.WORLD = { poll: poll, render: render, status: status, flag: fl, _data: function () { return W; } };
   render(); if (window.DESK_LOCKED === false) poll(true);
 })();

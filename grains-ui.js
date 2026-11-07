@@ -18,13 +18,19 @@
     return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
   }
   /* settle and prev arrive in $/bu; the desk prints c/bu, signed cents AND % together */
-  function tile(row) {
+  /* the strip follows the same delayed quote as the fan chart: once a quote newer than the settlement exists, show it
+     (change measured against that settlement); otherwise the settlement and its change on the day */
+  function live(row, g) { var q = g && g.quotes && g.quotes[row.contract]; if (!q || q.px == null || !q.ts) return null;
+    var qd = new Date(q.ts).toLocaleDateString("en-CA", { timeZone: "America/Toronto" }); return (qd > (row.settle_date || "") || (qd === row.settle_date && Math.abs(q.px - row.settle) > 1e-9)) ? q : null; }
+  function tile(row, g) {
     if (!row || row.settle == null || !row.contract) return null;
+    var q = live(row, g); if (q) row = Object.assign({}, row, { prev: row.settle, settle: q.px, settle_date: new Date(q.ts).toLocaleDateString("en-CA", { timeZone: "America/Toronto" }), qlabel: q.label || "" });
     var o = { contract: row.contract, expiry: row.expiry || "", date: row.settle_date || "", settle: (row.settle * 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), dir: "flat", chg: null, pct: null };
     if (row.prev) {
       var c = (row.settle - row.prev) * 100, p = (row.settle / row.prev - 1) * 100, s = c > 0 ? "+" : c < 0 ? "−" : "";
       o.dir = c > 0 ? "up" : c < 0 ? "down" : "flat"; o.chg = s + Math.abs(c).toFixed(2) + "¢"; o.pct = s + Math.abs(p).toFixed(2) + "%";
     }
+    o.px = row.settle; o.q = row.qlabel || "";
     return o;
   }
   function age(ms) {
@@ -46,9 +52,10 @@
   function shortDate(iso) { var p = (iso || "").split("-"); return p.length === 3 ? new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : ""; }
 
   function asOfLine(now) {
-    var a = root.DATA && DATA.meta && DATA.meta.asof && DATA.meta.asof.grains_settle, t = a ? Date.parse(a) : NaN;
+    var A = root.DATA && DATA.meta && DATA.meta.asof || {}, a = A.grains_settle, t = a ? Date.parse(a) : NaN, q = A.grains_quote ? Date.parse(A.grains_quote) : NaN, kind = "settlement";
+    if (isFinite(q) && (!isFinite(t) || q > t)) { t = q; kind = "delayed quote"; }   /* same clock as the strip prices */
     if (!isFinite(t)) return { text: "", day: "" };
-    return { text: fmtET(t, { month: "short", day: "numeric" }) + ", " + fmtET(t, { hour: "numeric", minute: "2-digit" }) + " ET · settlement · " + age(now - t) + " old",
+    return { text: fmtET(t, { month: "short", day: "numeric" }) + ", " + fmtET(t, { hour: "numeric", minute: "2-digit" }) + " ET · " + kind + " · " + age(now - t) + " old",
              day: new Date(t).toLocaleDateString("en-CA", { timeZone: ET }) };
   }
   /* next scheduled fundamental event (CG-6) from the desk's own WASDE calendar */
@@ -60,14 +67,14 @@
     return "Next: WASDE + Crop Production · " + fmtET(best, { weekday: "short", month: "short", day: "numeric" }) + ", 12:00 PM ET · in " + age(best - now);
   }
   function tileHTML(k, day, on) {
-    var g = root.DATA && DATA.grains && DATA.grains[k], R = g && g.roll && g.roll[0], T = tile(R), sel = ' aria-pressed="' + on + '" data-grain-pick="' + k + '"';
+    var g = root.DATA && DATA.grains && DATA.grains[k], R0 = g && g.roll && g.roll[0], T = tile(R0, g), R = T && T.px != null ? { settle: T.px } : R0, sel = ' aria-pressed="' + on + '" data-grain-pick="' + k + '"';
     if (!T) return '<button type="button" class="gr-tile"' + sel + '><span class="gr-n">' + NAME[k] + '</span></button>';
     var stale = day && T.date && T.date < day;
     return '<button type="button" class="gr-tile"' + sel + '>' +
       '<span class="gr-n">' + NAME[k] + ' <b>' + T.contract + '</b></span>' +
       '<span class="gr-v"><span class="qt-box' + (T.dir === "up" ? " tk-up-s" : T.dir === "down" ? " tk-dn-s" : "") + '"><span class="qt-v">' + (root.QTFMT ? QTFMT(R.settle * 100, 2) : T.settle) + '</span></span><small> c/bu</small></span>' +
       '<span class="gr-c ' + T.dir + '">' + (T.chg ? T.chg + " · " + T.pct : "") + '</span>' +
-      '<span class="gr-f">Front ' + T.expiry + (fndLabel(T.contract) ? ' · FND ' + fndLabel(T.contract) : "") + '</span>' +
+      '<span class="gr-f">' + (T.q ? "Delayed " + T.q + " · " : "") + 'Front ' + T.expiry + (fndLabel(T.contract) ? ' · FND ' + fndLabel(T.contract) : "") + '</span>' +
       (stale ? '<span class="gr-stale">LATEST VERIFIED ' + shortDate(T.date) + '</span>' : "") + '</button>';
   }
   function paint() {

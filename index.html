@@ -9,6 +9,8 @@
 window.fetch=function(u,o){var s=typeof u==="string"?u:(u&&u.url)||"";if(s.indexOf("https://api.github.com/")!==0)return F.apply(this,arguments);
 var now=Date.now()/1000,live=/\/live\.json\?ref=live/.test(s);if(B.left!=null&&now<B.reset&&B.left<=(live?1:15))return Promise.reject(new Error("api budget held"));
 return F.apply(this,arguments).then(function(r){var l=r.headers.get("X-RateLimit-Remaining"),t=r.headers.get("X-RateLimit-Reset");if(l!=null){B.left=+l;B.reset=+t||0;}return r;});};})();</script>
+<script>/* plain price digits until motion.js (loaded async) installs the ticket formatter; a render before it must not throw */
+window.QTFMT=window.QTFMT||function(v,d){v=+v;return isFinite(v)?'<span class="qt-a">'+v.toLocaleString("en-US",{minimumFractionDigits:d==null?2:d,maximumFractionDigits:d==null?2:d})+"</span>":"";};</script>
 <script>
 /* Always load the newest page: GitHub Pages caches pages ~10 min, so every open is re-requested
    with a unique stamp (bypasses CDN + browser cache), then the address bar is cleaned up. */
