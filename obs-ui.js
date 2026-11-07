@@ -210,7 +210,24 @@
     if (o.length) o.push("Trade data moves USD/CAD slowly; read it as background, not a day signal.");
     return o; };
   FXR["more-0"] = function (D) { var R = ((D.fx && D.fx.rates) || []).filter(function (r) { return r.t === "10Y"; })[0], o = []; if (!R || R.dod == null) return o; o.push("The 10Y US-Canada spread " + (R.dod < 0 ? "narrowed" : R.dod > 0 ? "widened" : "held") + " on the day."); return o; };
-  function paintFx() { var P = doc.getElementById("panel-fx"), sub = P && P.querySelector("[data-subpanel].on"), D = root.DATA; if (!sub || !D) return; var A = D.meta && D.meta.asof || {};
+  /* Rates slicers (BRD): country and tenor, applied to the Treasury and US–Canada spread tables; choice kept per viewer */
+  var RS = { c: "all", t: "all" }; try { RS = JSON.parse(localStorage.getItem("desk.rates")) || RS; } catch (e) {}
+  function rateSlice(sub) {
+    var ys = sub.querySelector(":scope > [data-sec=ys]"), us = sub.querySelector(":scope > [data-sec=more-0]"); if (!ys) return;
+    var bar = sub.querySelector(":scope > .rs-bar");
+    if (!bar) { bar = doc.createElement("div"); bar.className = "tile wide rs-bar"; sub.insertBefore(bar, us || ys); }
+    var B = function (g, v, l) { return '<button class="subbtn" data-rs="' + g + '" data-v="' + v + '" aria-selected="' + (RS[g] === v) + '">' + l + "</button>"; };
+    bar.innerHTML = '<b class="rs-l">Country</b>' + B("c", "all", "All") + B("c", "us", "US") + B("c", "ca", "Canada") + '<b class="rs-l">Tenor</b>' + ["all", "3M", "1Y", "2Y", "5Y", "10Y", "20Y", "30Y"].map(function (v) { return B("t", v, v === "all" ? "All" : v); }).join("");
+    [us, ys].forEach(function (t) { if (!t) return; var tb = t.querySelector("table"); if (!tb) return;
+      t.style.display = RS.c === "ca" && t === us ? "none" : "";
+      var H = [].map.call(tb.querySelectorAll("thead th, tr:first-child th"), function (h) { return h.textContent.trim().toUpperCase(); }), hide = RS.c === "us" ? "CANADA" : RS.c === "ca" ? "US" : "";
+      [].forEach.call(tb.rows, function (r) { var c0 = (r.cells[0] && r.cells[0].textContent || "").replace(/^US\s*/, "").trim(), m = c0.match(/^(\d+[MY])/);
+        if (m && r.parentNode.tagName !== "THEAD") r.style.display = RS.t === "all" || m[1] === RS.t ? "" : "none";
+        [].forEach.call(r.cells, function (c, i) { c.style.display = hide && H[i] === hide ? "none" : ""; }); }); });
+  }
+  var rsT; if (root.MutationObserver) new MutationObserver(function (L) { if (L.every(function (m) { return m.target.closest && m.target.closest(".rs-bar"); })) return; clearTimeout(rsT); rsT = setTimeout(function () { var P = doc.getElementById("panel-fx"), sub = P && P.querySelector("[data-subpanel].on"); if (sub && sub.getAttribute("data-subpanel") === "rates") rateSlice(sub); }, 50); }).observe(doc.body || doc.documentElement, { childList: true, subtree: true });
+  doc.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-rs]"); if (!b) return; RS[b.getAttribute("data-rs")] = b.getAttribute("data-v"); try { localStorage.setItem("desk.rates", JSON.stringify(RS)); } catch (e) {} var P = doc.getElementById("panel-fx"), sub = P && P.querySelector("[data-subpanel].on"); if (sub) rateSlice(sub); });
+  function paintFx() { var P = doc.getElementById("panel-fx"), sub = P && P.querySelector("[data-subpanel].on"), D = root.DATA; if (!sub || !D) return; rateSlice(sub); var A = D.meta && D.meta.asof || {};
     [].forEach.call(sub.children, function (t) { var sec = t.getAttribute("data-sec"), r = FXR[sec]; if (!r || !t.classList.contains("tile")) return; var key = t.getAttribute("data-src"), old = t.querySelector(":scope > .obs-box"); if (old) old.remove();
       var h = FXMAX[key], tt = Date.parse(A[key]); if (h && !(isFinite(tt) && Date.now() - tt <= h * 36e5)) return;
       var txt = spaced(t), ok = r(D, t).filter(function (b) { return traceable(b, txt); }).slice(0, 3); if (!ok.length) return;
