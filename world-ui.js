@@ -151,7 +151,7 @@
     }
     var lab = /end-of-day/.test(q) ? "official" : q.replace(" · contract roll", "");
     return '<span class="wq ' + c + '" title="' + esc("source bar time " + tDate(i.ts) + " ET") + '">' +
-      esc(lab) + (when ? ' · <span class="wqtm">' + esc(when) + "</span>" : "") + (ms != null && !/end-of-day/.test(q) ? " · " + ago(ms) : "") + (i.roll ? ' <b title="' + esc(i.roll.note) + '">ROLL</b>' : "") + "</span>";
+      (lab === "closed" ? "" : esc(lab)) + (when ? (lab === "closed" ? "" : " · ") + '<span class="wqtm">' + esc(when) + "</span>" : "") + (ms != null && !/end-of-day/.test(q) ? " · " + ago(ms) : "") + (i.roll ? ' · <span title="' + esc(i.roll.note) + '">contract rolled</span>' : "") + "</span>";
   }
   function spark(a) {
     if (!a || a.length < 3) return "";
