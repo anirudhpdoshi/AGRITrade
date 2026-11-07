@@ -15,6 +15,7 @@ jobs:
       - run: node tests/grains.test.js
       - run: node tests/rows.test.js
       - run: node tests/obs.test.js
+      - run: node tests/swot.test.js
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install -q -r scripts/requirements.txt   # once, before any Python test (briefing/legislation import requests)
