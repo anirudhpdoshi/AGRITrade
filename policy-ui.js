@@ -157,7 +157,7 @@
       return esc(b.toUpperCase()) + " " + ok + "/" + n; }).join(" · ");
     P.innerHTML = '<div class="tile wide pi-head"><h2>Central bank policy intelligence <span class="h2note">— Fed · ECB · BoE · BoC · BoJ, read from the banks’ own sites</span></h2>' + strip() +
       '<div class="pi-nav">' + subs.map(function (s) { return '<button data-pisub="' + s[0] + '" aria-pressed="' + (V.sub === s[0]) + '">' + s[1] + "</button>"; }).join("") +
-      (V.bank !== "all" ? '<button data-pib="all">Show all banks ✕</button>' : "") + '</div><div class="stamp">Updated ' + esc(new Date(J.updated_at).toLocaleString("en-US", { timeZone: TZ, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET · official sources reachable: " + src + "</div></div>" +
+      (V.bank !== "all" ? '<button data-pib="all">Show all banks ✕</button>' : "") + '</div><div class="stamp">Updated ' + esc(new Date(J.updated_at).toLocaleString("en-US", { timeZone: TZ, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET</div></div>" +
       (V.sub === "calendar" ? calendarHTML() : V.sub === "transcript" ? transcriptHTML() : V.sub === "markets" ? marketsHTML() : monitorHTML()) +
       '<div class="tile wide"><div class="stamp">Method: ' + esc(J.method || "") + " Evidence is quoted word-for-word with its paragraph number and the official link; voting status is shown only where it is certain for that date (BoC decides by consensus).</div></div>";
   }
