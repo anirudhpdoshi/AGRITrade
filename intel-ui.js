@@ -247,7 +247,7 @@
       : '<p class="note">Nothing matches these filters.</p>';
     return '<div class="tile wide">' + kp + "</div>" +
       '<div class="tile wide"><h2>Global Commodity Intelligence <span class="h2note">· ' + it.length + " of " + all.length + " items · click a row for “Why this matters”</span></h2>" + filtersHTML() + '<div style="margin-top:12px;overflow-x:auto">' + tbl + "</div>" +
-      '<div class="stamp">Official figures (World Bank, IMF, FAO) are marked VERIFIED. Directional reads are rule-based inference — a fixed transmission map for data, a phrase lexicon for headlines — and are never a trading signal on their own. Amber edge = material surprise (|z| ≥ 1.5 vs the series’ own 24-month history); red edge = supply-disruption alert.</div></div>';
+      '<div class="stamp">Official figures are marked VERIFIED. Directional reads are rule-based inference — a fixed transmission map for data, a phrase lexicon for headlines — and are never a trading signal on their own. Amber edge = material surprise (|z| ≥ 1.5 vs the series’ own 24-month history); red edge = supply-disruption alert.</div></div>';
   }
   function kpi(k, v) { return '<div class="it-kpi"><div class="k">' + k + '</div><div class="v">' + v + "</div></div>"; }
   function indHTML() {
