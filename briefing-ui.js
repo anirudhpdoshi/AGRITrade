@@ -45,7 +45,7 @@
   function story(c, i, big) {
     return '<li class="br-st' + (big ? " big" : "") + '">' + (big ? '<span class="br-n">' + (i + 1) + "</span>" : "") + '<div class="br-sb">' +
       '<a class="br-h" href="' + esc(c.url) + '" target="_blank" rel="noopener noreferrer">' + esc(c.title) + "</a>" +
-      '<div class="br-m">' + esc(c.outlet) + (c.n > 1 ? ' <span class="br-cnt" title="' + esc((c.outlets || []).join(" · ")) + '">+' + (c.n - 1) + " outlet" + (c.n > 2 ? "s" : "") + "</span>" : "") +
+      '<div class="br-m">Wire' + (c.n > 1 ? ' <span class="br-cnt">+' + (c.n - 1) + " more report" + (c.n > 2 ? "s" : "") + "</span>" : "") +
       " · " + ago(c.ts) + (c.section && big ? " · " + esc((SEC.filter(function (s) { return s[0] === c.section; })[0] || [0, ""])[1]) : "") + " " + tagHTML(c.tags) + (c.note ? ' · <i>' + esc(c.note) + "</i>" : "") + "</div>" +
       (big && c.why ? '<div class="br-why"><b>Desk read</b> ' + esc(c.why) + "</div>" : "") + "</div></li>";
   }
@@ -140,8 +140,8 @@
       return '<div class="tile br-sec"><h3 class="br-s">' + s[1] + '</h3><ul class="br-list">' + sec[s[0]].slice(0, 5).map(function (c) { return story(c, 0, false); }).join("") + "</ul></div>"; }).join("") + "</div>";
     var prov = d.provinces ? '<div class="tile wide"><h3 class="br-s">Provinces — one line each</h3><div class="br-prov">' + Object.keys(d.provinces).map(function (k) {
       var p = d.provinces[k], c = p.items && p.items[0];
-      return '<div class="br-pr"><b>' + esc(p.name) + "</b>" + (c ? '<a href="' + esc(c.url) + '" target="_blank" rel="noopener noreferrer">' + esc(c.title) + '</a><small>' + esc(c.outlet) + " · " + ago(c.ts) + "</small>" : '<span class="note">No story in the last ' + (J.window_h || 48) + " h</span>") + "</div>"; }).join("") + "</div></div>" : "";
-    var foot = '<p class="br-foot">Headlines link to the outlet’s own article. Same story from several outlets counts once (+n outlets). Tags show what each story touches on this desk. ' +
+      return '<div class="br-pr"><b>' + esc(p.name) + "</b>" + (c ? '<a href="' + esc(c.url) + '" target="_blank" rel="noopener noreferrer">' + esc(c.title) + '</a><small>' + ago(c.ts) + "</small>" : '<span class="note">No story in the last ' + (J.window_h || 48) + " h</span>") + "</div>"; }).join("") + "</div></div>" : "";
+    var foot = '<p class="br-foot">Headlines link to the outlet’s own article. The same story from several reports counts once (+n more reports). Tags show what each story touches on this desk. ' +
       '“Desk read” is a rule-based note from the headline wording — context for the desk, not reporting and not a forecast.</p>';
     P.innerHTML = head + '<div class="layout br-lay"><div class="main">' + top + legHTML(V.desk) + prov + grid + foot + '</div><aside class="rail">' + pulse() + calendar(V.desk) + "</aside></div>";
   }

@@ -1275,14 +1275,14 @@ function newsBodyHTML(key){
   var lis=(sel==='alert'||sel==='all'?A.map(function(a){ return '<li class="n-desk"><div class="news-meta"><span class="ncat alert">Desk alert</span> computed from the latest CFTC / rates data</div><b>'+esc(a)+'</b></li>'; }):[]).join('')+
     (function(){ var shown=items.slice(0,sel==='all'?14:20), NEWM=newsMark(shown.map(function(o){ return o.n[2]; })); setTimeout(newsCommit,0);
     return shown.map(function(o){ var n=o.n, M=NEWM[n[2]]||{}, isNew=M.isNew, hot=M.anim&&NHOT.test(n[2]);
-      return '<li class="'+(M.anim?'n-new':'')+(hot?' n-hot':'')+'"><div class="news-meta">'+(isNew?'<span class="n-newtag">NEW</span>':'')+'<span class="ncat '+o.cat+'">'+lab[o.cat]+'</span>'+(o.alert?'<span class="ncat alert">Alert</span>':'')+n[0].slice(5,16)+' UTC · '+esc(n[1].replace(/^www\./,''))+'</div><a href="'+safeUrl(n[3])+'" target="_blank" rel="noopener">'+esc(n[2])+'</a></li>'; }).join(''); })();
+      return '<li class="'+(M.anim?'n-new':'')+(hot?' n-hot':'')+'"><div class="news-meta">'+(isNew?'<span class="n-newtag">NEW</span>':'')+'<span class="ncat '+o.cat+'">'+lab[o.cat]+'</span>'+(o.alert?'<span class="ncat alert">Alert</span>':'')+n[0].slice(5,16)+' UTC</div><a href="'+safeUrl(n[3])+'" target="_blank" rel="noopener">'+esc(n[2])+'</a></li>'; }).join(''); })();
   return chips+'<ul class="news-list">'+(lis||'<li class="news-meta">No headlines in this category right now.</li>')+'</ul>'+
     '<div class="stamp">Headlines pulled '+asOf('news',true)+' · pooled across all desks, de-duplicated and tagged by keyword · publish times UTC · titles link out to the publisher</div>';
 }
 function newsRailHTML(items, key){
   key=key||'fx';
   var latest = items[0];
-  var latestHTML = 'Latest: <b>'+esc(latest[2])+'</b><br><span class="news-meta">'+latest[0]+' · '+esc(latest[1])+'</span>';
+  var latestHTML = 'Latest: <b>'+esc(latest[2])+'</b><br><span class="news-meta">'+esc(latest[0].replace(/^(\d{4}-\d\d-\d\d) (\d\d:\d\d)$/,'$1 $2'))+'</span>';
   var auto=isAuto('news');
   return railCard(auto?'News — auto-refreshed':'News — frozen at build', latestHTML, '<div id="newsb-'+key+'">'+newsBodyHTML(key)+'</div>');
 }
