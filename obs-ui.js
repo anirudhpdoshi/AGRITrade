@@ -175,6 +175,18 @@
     if (M) o.push("The 1-month forward is " + M[1] + " points from spot.");
     o.push("These are covered-interest-parity levels from spot and rates, not dealer quotes.");
     return o; };
+  FXR.dash = function (D, t) { var o = [], x = spaced(t), g = function (re) { return x.match(re); };
+    var c = g(/CPI inflation \(y\/y\)[^%]*? US \S+ \S+ ([\d.]+)%[\s\S]*? CA \S+ \S+ ([\d.]+)%/i), u = g(/Unemployment rate[^%]*? US \S+ \S+ ([\d.]+)%[\s\S]*? CA \S+ \S+ ([\d.]+)%/i), p = g(/Policy rate[^%]*? US \S+ \S+ ([\d.]+)%[\s\S]*? CA \S+ \S+ ([\d.]+)%/i);
+    if (p) o.push("Policy rates: Fed " + p[1] + "% vs Bank of Canada " + p[2] + "% — the gap favours holding US dollars, which supports USD/CAD.");
+    if (c) o.push("Inflation runs " + (+c[1] > +c[2] ? "hotter in the US" : "hotter in Canada") + ": " + c[1] + "% vs " + c[2] + "%.");
+    if (u) o.push("Unemployment is " + u[1] + "% in the US vs " + u[2] + "% in Canada.");
+    if (p && +p[1] <= +p[2]) o[0] = "Policy rates: Fed " + p[1] + "% vs Bank of Canada " + p[2] + "%.";
+    return o; };
+  FXR.tf = function (D, t) { var o = [], x = spaced(t), u = x.match(/Trade balance \(goods & services\) (−?\$[\d.,]+B) [A-Z][a-z]{2} ['’]\d\d (−?\$[\d.,]+B) [+−-][\d.]+B (−?\$[\d.,]+B)/), c = x.match(/Merchandise trade balance (−?C\$[\d.,]+B) [A-Z][a-z]{2} ['’]\d\d (−?C\$[\d.,]+B) [+−-][\d.]+B (−?C\$[\d.,]+B)/);
+    if (u) o.push("US trade balance " + u[1] + ", against " + u[3] + " a year ago.");
+    if (c) o.push("Canada's merchandise trade balance " + c[1] + ", against " + c[3] + " a year ago.");
+    if (o.length) o.push("Trade data moves USD/CAD slowly; read it as background, not a day signal.");
+    return o; };
   FXR["more-0"] = function (D) { var R = ((D.fx && D.fx.rates) || []).filter(function (r) { return r.t === "10Y"; })[0], o = []; if (!R || R.dod == null) return o; o.push("The 10Y US-Canada spread " + (R.dod < 0 ? "narrowed" : R.dod > 0 ? "widened" : "held") + " on the day."); return o; };
   function paintFx() { var P = doc.getElementById("panel-fx"), sub = P && P.querySelector("[data-subpanel].on"), D = root.DATA; if (!sub || !D) return; var A = D.meta && D.meta.asof || {};
     [].forEach.call(sub.children, function (t) { var sec = t.getAttribute("data-sec"), r = FXR[sec]; if (!r || !t.classList.contains("tile")) return; var key = t.getAttribute("data-src"), old = t.querySelector(":scope > .obs-box"); if (old) old.remove();
