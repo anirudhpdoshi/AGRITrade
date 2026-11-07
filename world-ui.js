@@ -247,7 +247,7 @@
   /* BR-WM-1: one count of open venues, computed once and used everywhere */
   function openCount(now) { var ex = (W && W.exchanges) || {}; return Object.keys(ex).filter(function (k) { var s = status(ex[k], now); return s === "open" || s === "extended"; }).length; }
   /* World at a glance (BRD s.14): built only from data the tab already carries; the full section stays underneath */
-  var DESK = ["usdcad", "dxy", "corn", "wheat", "soy", "wti", "brent", "gold", "usca2y", "usca10y"], CLK = ["HKEX", "LSE", "NYSE", "TSX", "CBOT", "FX"];
+  var DESK = ["usdcad", "dxy", "corn", "wheat", "soy", "wti", "brent", "gold", "usca2y", "usca10y", "spx", "vix"], CLK = ["HKEX", "LSE", "NYSE", "TSX", "CBOT", "FX"];
   function sessionDay(iso) { return new Date(Date.parse(iso) + 6 * 36e5).toLocaleDateString("en-CA", { timeZone: "America/Toronto" }); }   /* evening trade after 6 pm ET belongs to the next session */
   function moves() {   /* BR-WM-2: one row per market per session, Major and above, arrow from the sign of the move */
     var best = {}; (W.alerts || []).forEach(function (a) { if (a.tier < 2) return; var k = a.id + "|" + sessionDay(a.at), b = best[k];
@@ -295,14 +295,12 @@
     }).join("");
     var w52 = L.filter(function (i) { return i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low); })
       .sort(function (a, b) { return (b.w52.new_high || b.w52.new_low) - (a.w52.new_high || a.w52.new_low); });
-    var al = (W.alerts || []).slice(0, 6);
-    return '<div class="tile wide kpi-strip">' + '<div class="kpi"><div class="kpi-k">Index breadth</div><div class="kpi-v">' + adv + "<small> / " + idx.length + ' up</small></div><div class="kpi-s">' + (idx.length - adv) + " down · vs previous close</div>" + asOf(idx) + "</div>" +
-      k("spx", "S&P 500") + k("dxy", "US dollar (DXY)") + k("vix", "VIX") + k("gold", "Gold") + k("wti", "WTI crude") + "</div>" +
+    /* the headline strip (breadth, S&P, DXY, VIX, gold, WTI) and the raw alert rows were removed: World at a glance above carries them (owner OK, Nov 7) */
+    return '' +
       '<div class="tile"><h2>Biggest gainers <span class="h2note">— % vs previous close</span></h2>' + asOf(up.slice(0, 6), "blk") + up.slice(0, 6).map(moverRow).join("") + "</div>" +
       '<div class="tile"><h2>Biggest decliners <span class="h2note">— % vs previous close</span></h2>' + asOf(dn.slice(0, 6), "blk") + dn.slice(0, 6).map(moverRow).join("") + "</div>" +
       '<div class="tile wide"><h2>Regional equity performance <span class="h2note">— average index move by region, latest session</span></h2><div class="regs">' + regs + "</div></div>" +
-      w52WatchHTML(L) +
-      '<div class="tile wide"><h2>Latest alerts <span class="h2note">— from the server engine (runs every 15 min, also while this page is closed)</span></h2>' + (al.length ? alertRows(al) : '<p class="note">No alerts yet this session.</p>') + "</div>";
+      w52WatchHTML(L);
   }
   function alertRows(list) {
     return '<div class="wtw"><table class="wt wa"><thead><tr><th>Time (ET)</th><th>Market</th><th>Move</th><th>Severity</th><th>Compared with</th><th>Reference → current</th><th>Data</th><th>Delivery</th></tr></thead><tbody>' +
