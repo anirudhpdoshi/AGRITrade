@@ -26,4 +26,16 @@ ok(U.roll_fronts(D, date(2026, 10, 29)) == [], "still on the desk on the hard-ex
 ok(U.roll_fronts(D, date(2026, 10, 30)) == [("soybeans", "ZSX26", "ZSF27")], "gone the day after")
 ok([r["contract"] for r in D["grains"]["soybeans"]["roll"]] == ["ZSF27", "ZSH27", "ZSK27"], "curve refilled")
 ok("ZSX26" not in (D["grains"]["soybeans"].get("quotes") or {}), "expired quote dropped")
+# BLS fast lane: parse the API reply into dated monthly points (annual averages M13 dropped), key never in an error
+class _R:
+    def raise_for_status(self): pass
+    def json(self): return {"Results": {"series": [{"seriesID": "CES0000000001", "data": [
+        {"year": "2026", "period": "M10", "value": "160123"}, {"year": "2026", "period": "M09", "value": "159958"},
+        {"year": "2025", "period": "M13", "value": "158000"}]}]}}
+_post = U.requests.post
+U.requests.post = lambda *a, **k: _R()
+B = U._bls_batch(["CES0000000001"])
+U.requests.post = _post
+ok(B["CES0000000001"] == [("2026-09-01", 159958.0), ("2026-10-01", 160123.0)], "BLS points sorted, M13 dropped")
+ok(set(U.BLS_SRC) == {"us_nfp", "us_ur", "us_ahe", "us_cpi", "us_core_cpi", "us_ppi"}, "BLS fast-lane series")
 print(f"{n}/{n} passed")

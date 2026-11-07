@@ -1338,6 +1338,33 @@ VALET_TO_STATCAN = {"V41690973": 41690973}   # CPI all-items, 2002=100, NSA (Sta
 MACRO_LONG = {"us_cpi", "ca_cpi", "us_core_cpi", "us_ur", "ca_ur", "us_gdp", "ca_gdpq", "us_policy", "ca_policy"}
 
 
+# BLS straight from the source on release mornings. FRED re-posts BLS data with a lag (Nov 6 payrolls: released 8:30 ET,
+# on FRED ~10:45 ET), so for these series the desk asks BLS itself while a release is fresh and keeps FRED for history.
+BLS_SRC = {"us_nfp": "CES0000000001", "us_ur": "LNS14000000", "us_ahe": "CES0500000003",
+           "us_cpi": "CUSR0000SA0", "us_core_cpi": "CUSR0000SA0L1E", "us_ppi": "WPSFD4"}   # identical series to the FRED ids used
+BLS_KEY = os.environ.get("BLS_API_KEY", "").strip()
+
+
+def _bls_batch(ids):
+    """{series id: [(YYYY-MM-01, value)]} in one request; v2 with BLS_API_KEY (never printed), else keyless v1 (25/day per IP)."""
+    body = {"seriesid": list(ids), "startyear": str(NOW.year - 2), "endyear": str(NOW.year)}
+    if BLS_KEY:
+        body["registrationkey"] = BLS_KEY
+    url = "https://api.bls.gov/publicAPI/" + ("v2" if BLS_KEY else "v1") + "/timeseries/data/"
+    try:
+        r = requests.post(url, headers={**UA, "Content-Type": "application/json"}, data=json.dumps(body), timeout=25)
+        r.raise_for_status()
+        j = r.json()
+    except Exception as e:   # scrub: the key is in the body, never the message
+        raise RuntimeError(f"BLS request failed ({type(e).__name__})") from None
+    out = {}
+    for ser in (j.get("Results") or {}).get("series", []):
+        pts = [(f"{d['year']}-{d['period'][1:]}-01", float(d["value"])) for d in ser.get("data", [])
+               if str(d.get("period", "")).startswith("M") and d["period"] != "M13" and _num(d.get("value")) is not None]
+        out[ser["seriesID"]] = sorted(pts)
+    return out
+
+
 def _fred(sid, start):
     if "/" in sid:   # calculated ratio of two FRED series on matching dates, in % (e.g. TOTALSL/PI)
         a, b = sid.split("/")
@@ -1696,6 +1723,22 @@ def macro(D, N, only=None):
     except Exception as e:
         print(f"  pmi calendar: {type(e).__name__}")
     start = (NOW - timedelta(days=2650)).date().isoformat()   # ~7 years: 5-yr averages of y/y series
+    bls_box = {}
+    bls_ok = any(NOW - timedelta(hours=6) <= datetime.fromisoformat(t).replace(tzinfo=TOR) <= NOW
+                 for k in BLS_SRC for t in ((D.get("release_cal") or {}).get(k, {}).get("dates") or []))   # a BLS release in the last 6 h
+
+    def bls_new_for(key):
+        """Lazy, at most one BLS call per run and one per 4 min across runs (keyless v1 = 25 calls/day)."""
+        if "j" not in bls_box:
+            bls_box["j"] = None
+            lastb = meta.get("bls_fast_at")
+            if bls_ok and not (lastb and NOW - datetime.fromisoformat(lastb) < timedelta(minutes=4)):
+                meta["bls_fast_at"] = iso(NOW)
+                try:
+                    bls_box["j"] = _bls_batch(sorted(set(BLS_SRC.values())))
+                except Exception as e:
+                    print(f"  BLS fast lane unavailable: {e}")
+        return (bls_box["j"] or {}).get(BLS_SRC[key], [])
     out, errs = [], {}
     for key, name, group, src, sid, how, unit, dec, good, (lo, hi) in MACRO:
         if only and key not in only:
@@ -1722,6 +1765,13 @@ def macro(D, N, only=None):
                     raw = _statcan(VALET_TO_STATCAN[sid], 90)
             elif raw is None:
                 raw = (_fred(sid, start) if src == "fred" else _ism(sid) if src == "ism" else _ivey(sid) if src == "ivey" else _valet_series(sid, 0, start) if src == "valet" else _statcan(sid, 90))
+            prevp = (old.get(key) or {}).get("obs_date") or ""
+            if src == "fred" and key in BLS_SRC and bls_ok and raw[-1][0] <= prevp:   # FRED has nothing new yet: ask BLS itself
+                extra = [(d, v) for d, v in bls_new_for(key) if d > raw[-1][0]]
+                if extra:
+                    raw = raw + extra
+                    label = "BLS (release) + FRED history"
+                    print(f"  {key}: {len(extra)} newer month(s) straight from BLS")
             if len(raw) < 3:
                 raise RuntimeError("too few points")
             if not all(lo <= v <= hi for _, v in raw[-6:]):
