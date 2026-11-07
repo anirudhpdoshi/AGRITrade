@@ -27,7 +27,7 @@
     return { n: all.length, o: o }; }
   function policy() { var J = root.POLICY && POLICY._data && POLICY._data(); if (!J || !J.stance) return { o: [], next: "" };
     var o = [], now = Date.now(), st = Object.keys(J.stance).map(function (b) { var s = J.stance[b].statement; return s ? [b, s.label] : null; }).filter(Boolean);
-    var hk = st.filter(function (x) { return /HAWK/.test(x[1]); }).map(function (x) { return NAMES[x[0]]; }), dv = st.filter(function (x) { return /DOV/.test(x[1]); }).map(function (x) { return NAMES[x[0]]; });
+    var hk = st.filter(function (x) { return /HAWK/.test(x[1]); }).map(function (x) { return NAMES[x[0]] + (/LEANING/.test(x[1]) ? " (leaning)" : ""); }), dv = st.filter(function (x) { return /DOV/.test(x[1]); }).map(function (x) { return NAMES[x[0]] + (/LEANING/.test(x[1]) ? " (leaning)" : ""); });
     if (hk.length || dv.length) o.push("Latest statements read " + (hk.length ? "hawkish at " + hk.join(", ") : "") + (hk.length && dv.length ? "; " : "") + (dv.length ? "dovish at " + dv.join(", ") : "") + ".");
     var nx = (J.calendar || []).filter(function (c) { return c.kind === "decision" && Date.parse(c.date + "T23:59:00Z") > now; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; })[0];
     if (nx) o.push("Next decision: " + (NAMES[nx.bank] || nx.bank) + " on " + day(nx.date) + ".");
