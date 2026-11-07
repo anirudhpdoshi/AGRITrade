@@ -826,6 +826,52 @@ def expired_track(D, N):
                 print(f"  expired pair {e['front']}: kept last copy ({type(ex).__name__})")
 
 
+def season_contract(grain, y, m):
+    """The contract that is front for the whole of month (y, m): the nearest listed month at least two months out (its FND falls after month end)."""
+    best = None
+    for yy in (y, y + 1):
+        for L in GRAIN_MONTHS[grain]:
+            k = yy * 12 + MCODE.index(L) + 1
+            if k >= y * 12 + m + 2 and (best is None or k < best[0]):
+                best = (k, {"corn": "ZC", "wheat": "ZW", "soybeans": "ZS"}[grain] + L + str(yy)[-2:])
+    return best[1]
+
+
+def season_month(closes, y, m):
+    """% change over month (y, m) on one contract: its last close of the month against its last close of the month before."""
+    py, pm = (y, m - 1) if m > 1 else (y - 1, 12)
+    end = [v for d, v in closes if d[:7] == f"{y}-{m:02d}"]
+    prev = [v for d, v in closes if d[:7] == f"{py}-{pm:02d}"]
+    if not end or not prev:
+        return None
+    return round((end[-1] / prev[-1] - 1) * 100, 2)
+
+
+def seasonality_track(D, N):
+    """Seasonality grid (BRD G2): seeded once from two years of month-end closes, then one new month added after each month ends."""
+    S = D.get("seasonality")
+    if not S:
+        seed = Path(__file__).with_name("seasonality_seed.json")
+        if not seed.exists():
+            return
+        S = D["seasonality"] = json.loads(seed.read_text(encoding="utf-8"))
+    now = datetime.now(TOR)
+    y, m = (now.year, now.month - 1) if now.month > 1 else (now.year - 1, 12)   # the month just finished
+    key = f"{y}-{m:02d}"
+    for g in ("corn", "wheat", "soybeans"):
+        G = S.setdefault(g, {})
+        if key in G:
+            continue
+        c = season_contract(g, y, m)
+        try:
+            v = season_month(_yahoo_settles(c, "3mo"), y, m)
+        except Exception as ex:
+            print(f"  seasonality {g} {key}: kept last copy ({type(ex).__name__})")
+            continue
+        if v is not None:
+            G[key] = [v, c]
+
+
 def roll_fronts(D, today=None):
     """Drop fronts past the desk's hard exit; returns [(grain, old, new)]."""
     today = today or NOW.astimezone(TOR).date()
@@ -2727,7 +2773,7 @@ def ust(D, N):
     return True
 
 
-BLOCKS = [("expired_track", expired_track), ("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
+BLOCKS = [("seasonality_track", seasonality_track), ("expired_track", expired_track), ("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("yields_live", yields_live), ("energy", energy),
           ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow), ("ust", ust)]
 

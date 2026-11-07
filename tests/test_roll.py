@@ -10,6 +10,8 @@ def ok(c, m):
     n += 1
 ok(U.contract_dates("ZSX26") == (date(2026, 10, 30), date(2026, 10, 29)), "ZSX26 FND Oct 30, hard exit Oct 29")
 ok(U.contract_dates("ZCZ26") == (date(2026, 11, 30), date(2026, 11, 27)), "Dec corn: Thanksgiving skipped")
+ok(U.season_contract("corn", 2026, 10) == "ZCZ26" and U.season_contract("corn", 2026, 11) == "ZCH27" and U.season_contract("soybeans", 2026, 9) == "ZSX26" and U.season_contract("soybeans", 2026, 10) == "ZSF27", "seasonality uses the contract front for the whole month")
+ok(U.season_month([("2026-09-29", 5.0), ("2026-09-30", 5.0), ("2026-10-30", 5.5)], 2026, 10) == 10.0 and U.season_month([("2026-10-30", 5.5)], 2026, 10) is None, "month change needs both month-ends")
 ok(U.last_trade("ZSX26") == date(2026, 11, 13), "Nov soybeans last trade: Nov 14 is a Saturday, so Fri Nov 13")
 _e = {"fnd": "Fri Oct 30, 2026", "last_trade": "2026-11-13", "follow": [], "done": False}
 U.merge_follow(_e, [("2026-10-29", 1.0), ("2026-10-30", 12.0), ("2026-11-02", 12.1)], [("2026-10-30", 12.1), ("2026-11-02", 12.2)], date(2026, 11, 5))
