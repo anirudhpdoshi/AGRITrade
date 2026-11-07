@@ -184,6 +184,6 @@
     ".pm-r:hover{background:rgba(56,182,201,.07)}.pm-dt{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint)}.pm-ty{font:600 11px 'IBM Plex Mono',monospace;color:var(--cyan);text-transform:uppercase;letter-spacing:.04em}" +
     ".pm-ti{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}.pm-ti b{color:var(--ink);font-weight:600}.pm-sc{text-align:right}.pm-vs{font:12px 'IBM Plex Mono',monospace;text-align:right}.pm-vs small{color:var(--faint)}" +
     ".pm-more{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint);margin-top:6px}" +
-    "@media (max-width:760px){.pm-grid{grid-template-columns:1fr}.pm-r{grid-template-columns:48px minmax(0,1fr) 52px}.pm-ty,.pm-vs{display:none}}";
+    "@media (max-width:760px){.pm-grid{grid-template-columns:minmax(0,1fr)}.pm-card{min-width:0;overflow-wrap:anywhere}.pm-r{grid-template-columns:48px minmax(0,1fr) 52px}.pm-ty,.pm-vs{display:none}}";
   document.head.appendChild(pmcss);
 })();
