@@ -15,7 +15,7 @@
   /* compares each input with its reading about a year earlier, by date */
   function yearAgo(D, list) { var S = D && D.inputs && D.inputs.series, o = []; if (!S) return o; list.forEach(function (x) { var p = S[x[0]] && S[x[0]].pts; if (!p || p.length < 2) return; var L = p[p.length - 1], cut = Date.parse(L[0]) - 365 * 864e5, B = null; p.forEach(function (q) { if (Date.parse(q[0]) <= cut) B = q; }); if (!B) return; var up = L[1] > B[1]; o.push(x[1] + " " + (up ? "higher" : "lower") + " than a year ago, " + (up ? "raising" : "easing") + " grower costs."); }); return o; }
   /* each rule returns plain-English bullets for one panel */
-  function tx(k, sec) { var t = doc.querySelector("#panel-" + k + " [data-sec=" + sec + "]"); return t ? spaced(t).replace(/\b([A-Z][\w,]*(?: [A-Z][\w,]*)*) \1\b/g, "$1") : ""; }
+  function tx(k, sec) { var t = doc && doc.querySelector("#panel-" + k + " [data-sec=" + sec + "]"); return t ? spaced(t).replace(/\b([A-Z][\w,]*(?: [A-Z][\w,]*)*) \1\b/g, "$1") : ""; }
   var RULES = {
     fan: function (g) { var F = g.fan, o = []; if (!F) return o;
       if (F.r10) o.push("The market's own volatility implies a 10-session range of about " + d2(F.r10[0]) + " to " + d2(F.r10[1]) + ".");
@@ -69,7 +69,7 @@
     wexp: function (g, of, D, k) { var x = tx(k, "wexp"), m = x.match(/world ([\d.,]+) MMT \(([+−-][\d.]+)% YoY\)/i), R = x.match(/OWN CROP ([A-Za-z ,]+?) [\d.]+ ([\d.]+)% [+−-][\d.]+% \d+% ([A-Za-z ,]+?) [\d.]+ ([\d.]+)% [+−-][\d.]+% \d+% ([A-Za-z ,]+?) [\d.]+ ([\d.]+)%/i), o = [];
       if (m) o.push("World exports " + m[1] + " MMT (" + m[2] + "% YoY)."); if (R) o.push("The top three supply most of it: " + R[1] + " " + R[2] + "%, " + R[3] + " " + R[4] + "%, " + R[5] + " " + R[6] + "%."); return o; },
     wdet: function (g, of, D, k) { var x = tx(k, "wdet"), m = x.match(/ENDING STOCKS ([\d.]+) MMT stocks-to-use ([\d.]+)%[\s\S]*?Ending stocks ([\d.]+) ([\d.]+) MMT/i), c = x.match(/^\s*(.+?) — /); return m ? [(c ? c[1].replace(/\b\w+/g, function (w) { return w[0] + w.slice(1).toLowerCase(); }) + ": e" : "E") + "nding stocks " + m[3] + " MMT vs " + m[4] + " a year earlier, stocks-to-use " + m[2] + "%."] : []; },
-    xcmp: function (g, of, D, k) { var t = doc.querySelector("#panel-" + k + " [data-sec=xcmp]"), o = []; if (!t) return o; var x = spaced(t), row = function (nm) { var m = x.match(new RegExp(nm + " [\\d.]+ [\\d.]+ [+−-][\\d.]+% [\\d.]+ [+−-][\\d.]+% ([\\d.]+) ([+−-][\\d.]+)% ([\\d.]+)% (\\d+)%")); return m && { v: m[1], ch: m[2], sh: m[3], own: m[4] }; };
+    xcmp: function (g, of, D, k) { var t = doc && doc.querySelector("#panel-" + k + " [data-sec=xcmp]"), o = []; if (!t) return o; var x = spaced(t), row = function (nm) { var m = x.match(new RegExp(nm + " [\\d.]+ [\\d.]+ [+−-][\\d.]+% [\\d.]+ [+−-][\\d.]+% ([\\d.]+) ([+−-][\\d.]+)% ([\\d.]+)% (\\d+)%")); return m && { v: m[1], ch: m[2], sh: m[3], own: m[4] }; };
       var U = row("United States"), B = row("Brazil"), C = row("Canada");
       if (U) o.push("The US ships " + U.sh + "% of world exports in 2026/27 at " + U.v + " MMT (" + U.ch + "% on the year)" + (B ? ", against Brazil's " + B.sh + "% at " + B.v + " MMT" : "") + ".");
       if (C) o.push("Canada exports " + C.own + "% of its own crop, " + C.v + " MMT (" + C.ch + "% on the year).");
