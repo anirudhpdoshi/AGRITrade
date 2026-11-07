@@ -27,3 +27,9 @@ test("US rows carry a tag per target and never pre-tag an upcoming release", () 
   assert.deepStrictEqual([r.us, r.ca, r.fx, r.bucket, r.bucketCty], ["-", "Negative", "Up pressure", "Weakness", "Canada"]);
   assert.strictEqual(R.upcoming[0].label, "US CPI Nov 10"); assert.ok(!("tag" in R.upcoming[0]));
 });
+
+test("a spread that does not reconcile to its yields is flagged, not judged (BR-UB-2)", () => {
+  const D = { macro: [], fx: { rates: [{ t: "2Y", us: 4.46, ca: 3.14, sp: 135.0 }, { t: "5Y", us: 4.5, ca: 3.3, sp: 120.0 }] } };
+  const R = S.usRows(D, "2026-11-07T09:00").rows;
+  assert.equal(R.length, 1); assert.equal(R[0].fx, "Data flag"); assert.match(R[0].label, /135\.0 bp does not reconcile to 132\.0 bp/);
+});
