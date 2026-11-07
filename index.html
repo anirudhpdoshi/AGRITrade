@@ -3619,7 +3619,7 @@ window.addEventListener('scroll', function(){ if(!EVPIN) evHide(); }, {passive:t
 var MAPLE='50,5 56,22 65,17 62,40 76,28 79,36 93,33 87,48 95,52 72,68 75,77 53,74 53,95 47,95 47,74 25,77 28,68 5,52 13,48 7,33 21,36 24,28 38,40 35,17 44,22';
 function flag(cc, h){
   h=h||14;
-  if(cc!=='us'&&cc!=='ca') return '';   /* only US and Canada flags are drawn: any other country gets none, never a wrong one */
+  if(cc!=='us'&&cc!=='ca') return window.WORLD&&WORLD.flag?WORLD.flag(cc,h):'';   /* other countries use the World flag set; never a wrong country's flag */
   if(cc==='us'){ var w=Math.round(h*1.9), st=''; for(var i=0;i<13;i++) st+='<rect y="'+(i*10/13).toFixed(3)+'" width="19" height="'+(10/13+0.01).toFixed(3)+'" fill="'+(i%2?'#fff':'#B22234')+'"/>';
     var dots=''; for(var yy=0;yy<4;yy++) for(var xx=0;xx<5;xx++) dots+='<circle cx="'+(0.8+xx*1.5+(yy%2?0.75:0)).toFixed(2)+'" cy="'+(0.75+yy*1.35).toFixed(2)+'" r="0.32" fill="#fff"/>';
     return '<svg class="flag" width="'+w+'" height="'+h+'" style="width:'+w+'px;height:'+h+'px" viewBox="0 0 19 10" role="img" aria-label="United States"><title>United States</title>'+st+'<rect width="7.6" height="'+(70/13).toFixed(3)+'" fill="#3C3B6E"/>'+dots+'</svg>'; }
