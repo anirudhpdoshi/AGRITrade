@@ -223,6 +223,11 @@
       if (!bar) { bar = document.createElement("div"); bar.className = "today-bar"; P.insertBefore(bar, P.firstChild); }
       var h = '<span class="tb-k">Updated today</span>' + J.map(function (j) { return '<button class="tb-go" data-evgo="' + esc(j.go) + '" data-evsel="' + esc(j.sel) + '" title="Go to ' + esc(j.where) + '">' + esc(j.n) + ' <small>' + hm(j.at) + '</small> →</button>'; }).join("");
       if (bar.innerHTML !== h) bar.innerHTML = h; });
+    /* BRD 16D red dots (owner amendment: clear at 00:00 ET, matching 16C): every menu item whose data landed today */
+    var dots = {}; Object.keys(jumps).forEach(function (k) { jumps[k].forEach(function (j) { var sec = (j.go.split("@")[0].split(":")[1]) || ""; dots[k + ":"] = 1; if (sec) dots[k + ":" + sec] = 1; }); });
+    Object.keys(tabs).forEach(function (k) { dots[k + ":"] = 1; if (/^(corn|wheat|soybeans)$/.test(k)) dots["grains:"] = 1; });
+    [].forEach.call(document.querySelectorAll(".tab-btn[data-tab], .subbtn[data-subp][data-sub], .tn-h[data-subp][data-sub], #tabbtn-grains"), function (b) { var k = b.id === "tabbtn-grains" ? "grains" : b.getAttribute("data-tab") || b.getAttribute("data-subp"), sec = b.getAttribute("data-sub") || "";
+      b.classList.toggle("md-dot", !!dots[k + ":" + sec]); });
     [].forEach.call(document.querySelectorAll(".tab-btn"), function (b) { var k = b.getAttribute("data-tab"), L = tabs[k]; if (!k) return;
       b.classList.toggle("tab-today", !!L); if (L) b.title = "Updated today: " + L.join(" · "); else b.removeAttribute("title"); });
   }

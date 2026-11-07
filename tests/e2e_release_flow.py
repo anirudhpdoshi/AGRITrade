@@ -85,6 +85,7 @@ async def main():
             check(f"[{tag}] upcoming release still counts down", ":" in fed and "On the desk" not in fed, fed)
             check(f"[{tag}] tab with a landed release is coloured NEW", await pg.evaluate("document.getElementById('tabbtn-fx').classList.contains('tab-today')"))
             check(f"[{tag}] tab title lists what landed", "GDP" in (await pg.evaluate("document.getElementById('tabbtn-fx').title")))
+            check(f"[{tag}] menu red dot on the USD/CAD tab and its Macro menu item (BRD 16D)", await pg.evaluate("document.getElementById('tabbtn-fx').classList.contains('md-dot') && !!document.querySelector('#panel-fx .md-dot[data-sub=\"macro\"]')"))
             check(f"[{tag}] options run marks the grain tabs NEW", await pg.evaluate("document.getElementById('tabbtn-corn').classList.contains('tab-today')"))
             # "See it" jumps to the exact card and marks it
             await pg.evaluate("[].filter.call(document.querySelectorAll('#panel-events .evgo.see'),b=>/Macro/.test(b.textContent))[0].click()")
