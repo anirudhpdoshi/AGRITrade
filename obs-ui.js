@@ -115,8 +115,27 @@
       (OIDOL ? '<table class="cf-tbl"><thead><tr><th>Strike</th><th>Call OI</th><th>Call notional</th><th>Put OI</th><th>Put notional</th></tr></thead><tbody>' + tops.map(function (r) { return "<tr><td>" + d2(r[0]) + "</td><td>" + cnt(r[1]) + "</td><td>" + f(r[1] || 0) + "</td><td>" + cnt(r[2]) + "</td><td>" + f(r[2] || 0) + "</td></tr>"; }).join("") + "<tr><td><b>Month total</b></td><td>" + cnt(c) + "</td><td>" + f(c) + "</td><td>" + cnt(p) + "</td><td>" + f(p) + "</td></tr></tbody></table>" : "");
     var h = t.querySelector(":scope > h2, :scope > .tile-head"); if (h) h.after(el); else t.prepend(el); }
   doc.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-oid]"); if (!b) return; OIDOL = b.getAttribute("data-oid") === "1"; GR.forEach(paint); });
+  /* Seasonality grid (BRD G2): month-end % change of the contract that was front for the whole month; months not held stay blank */
+  var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function seasonTile(k, sub) {
+    var old = sub.querySelector(":scope > .ssn-tile"); if (old) old.remove();
+    var S = root.DATA && DATA.seasonality && DATA.seasonality[k]; if (!S || !Object.keys(S).length) return;
+    var yrs = {}; Object.keys(S).forEach(function (key) { yrs[key.slice(0, 4)] = 1; }); yrs = Object.keys(yrs).sort();
+    var cell = function (v, c) { if (v == null) return "<td></td>"; var a = Math.min(1, Math.abs(v) / 8); return '<td title="' + esc(c || "") + '" style="background:' + (v >= 0 ? "rgba(95,214,138," : "rgba(242,125,125,") + (0.12 + a * 0.5).toFixed(2) + ')">' + (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + "</td>"; };
+    var avg = MON.map(function (x, i) { var L = yrs.map(function (y) { var r = S[y + "-" + (i < 9 ? "0" : "") + (i + 1)]; return r ? r[0] : null; }).filter(function (v) { return v != null; }); return L.length ? { v: L.reduce(function (a, b) { return a + b; }, 0) / L.length, n: L.length } : null; });
+    var h = '<h2>Seasonality <span class="h2note">— month-end % change of the contract front for the whole month · hover a cell for the contract</span></h2><div class="tbl-scroll"><table class="cf-tbl ssn"><thead><tr><th>Year</th>' + MON.map(function (m) { return "<th>" + m + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      yrs.map(function (y) { return "<tr><td>" + y + "</td>" + MON.map(function (x, i) { var r = S[y + "-" + (i < 9 ? "0" : "") + (i + 1)]; return cell(r ? r[0] : null, r && r[1]); }).join("") + "</tr>"; }).join("") +
+      '<tr class="ssn-avg"><td>Average</td>' + MON.map(function (x, i) { return avg[i] ? cell(+avg[i].v.toFixed(1), avg[i].n + " year" + (avg[i].n > 1 ? "s" : "")) : "<td></td>"; }).join("") + "</tr></tbody></table></div>";
+    var t = doc.createElement("div"); t.className = "tile wide ssn-tile"; t.setAttribute("data-src", "grains_settle"); t.setAttribute("data-sec", "season"); t.innerHTML = h; var ask = [].filter.call(sub.children, function (x) { return /ASK CLAUDE/i.test((x.querySelector("h2") || {}).textContent || ""); })[0]; sub.insertBefore(t, ask || null);
+    var nm = new Date().getMonth(), nx = (nm + 1) % 12, A = avg[nm], B = avg[nx], o = [];
+    if (A) o.push(MON[nm] + " has averaged " + (A.v >= 0 ? "+" : "−") + Math.abs(A.v).toFixed(1) + " across the " + A.n + " year" + (A.n > 1 ? "s" : "") + " held.");
+    if (B) o.push("Next, " + MON[nx] + " has averaged " + (B.v >= 0 ? "+" : "−") + Math.abs(B.v).toFixed(1) + ".");
+    o.push("Only " + Object.keys(S).length + " months are held, so treat this as a tendency, not a pattern.");
+    box(t, o, "grains_settle");
+  }
   function paint(k) {
     var P = doc.getElementById("panel-" + k), sub = P && P.querySelector("[data-subpanel].on"), G = root.DATA && DATA.grains && DATA.grains[k]; if (!sub || !G) return;
+    if (sub.getAttribute("data-subpanel") === "overview") seasonTile(k, sub);
     var seen = {}, KEYS = { fan: "grains_settle", pos: "cftc_grains", cftc: "cftc_grains", cockpit: "options", opt: "options", vol: "options", optflow: "optflow", carry: "grains_settle", oi: "options", flow: "options", snap: "model", cost: "inputs", paths: "inputs", sd: "wasde", exp: "exports", dest: "exports", cmp: "sd_hist" };
     [].forEach.call(sub.children, function (t) {
       if (!t.classList.contains("tile")) return; var sec = t.getAttribute("data-sec");
