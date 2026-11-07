@@ -22,7 +22,7 @@
   function brief() { var J = root.BRIEFING && BRIEFING._data && BRIEFING._data(); if (!J || !J.desks) return { n: 0, o: [] }; var all = [];
     Object.keys(J.desks).forEach(function (k) { var S = J.desks[k].sections || {}; Object.keys(S).forEach(function (s) { (S[s] || []).forEach(function (x) { all.push({ t: x.title, n: x.n || 1, d: J.desks[k].name, s: s }); }); }); });
     all.sort(function (a, b) { return b.n - a.n; }); var o = [];
-    if (all[0]) o.push("Most widely reported: " + all[0].t + " (" + all[0].n + " outlets).");
+    if (all[0]) o.push("Most widely reported: " + all[0].t + " (" + all[0].n + " reports).");
     var L = J.legislation, bills = L && L.us && L.us.floor && L.us.floor.items; if (bills && bills.length) o.push(bills.length + " US House floor items this week.");
     return { n: all.length, o: o }; }
   function policy() { var J = root.POLICY && POLICY._data && POLICY._data(); if (!J || !J.stance) return { o: [], next: "" };
