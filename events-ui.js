@@ -48,10 +48,12 @@
   /* ---------- today's events from every source on the page ---------- */
   /* speed: a day's event list is built once and reused until the desk data changes or a minute passes (it was rebuilt for
      every day of every range on each click: ~40 rebuilds per redraw) */
-  var MEMO = {}, MEMO_STAMP = "";
+  var MEMO = {}, MEMO_STAMP = "", MEMO_REF = [];
   function todayEvents(now) {
-    var st = ((window.DATA && DATA.meta && DATA.meta.updated_at) || "") + "|" + Math.floor(Date.now() / 60000), k = dayIso(now);
-    if (st !== MEMO_STAMP) { MEMO = {}; MEMO_STAMP = st; }
+    var d = window.DATA || {}, fx = d.fx || {}, ev = fx.events || [], k = dayIso(now);
+    var ref = [d, fx, ev, d.release_cal, window.POLICY && POLICY._data && POLICY._data(), window.BRIEFING && BRIEFING._data && BRIEFING._data(), window.EARNINGS && EARNINGS._data && EARNINGS._data()];   /* any source object replaced → rebuild */
+    var st = ((d.meta && d.meta.updated_at) || "") + "|" + ev.length + "|" + Math.floor(Date.now() / 60000);
+    if (st !== MEMO_STAMP || ref.some(function (r, i) { return r !== MEMO_REF[i]; })) { MEMO = {}; MEMO_STAMP = st; MEMO_REF = ref; }
     if (!MEMO[k]) MEMO[k] = todayEvents0(now);
     return MEMO[k].map(function (e) { return e; });
   }
