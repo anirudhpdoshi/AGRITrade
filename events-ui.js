@@ -40,6 +40,7 @@
   var GROUPS = [["all", "All"], ["agri", "Agri"], ["macro", "Macro"], ["cb", "Central banks"], ["leg", "Legislation"], ["earn", "Earnings"], ["market", "Markets"], ["desk", "Desk data"]];
   function groupOf(e) { return e.kind === "cb" ? "cb" : e.kind === "leg" ? "leg" : e.kind === "earn" ? "earn" : e.kind === "macro" || e.kind === "energy" ? "macro" : e.kind === "market" ? "market" : e.kind === "desk" ? "desk" : "agri"; }
   var V = store.get("desk.eventsView") || { grp: "all", high: false };
+  V.day = V.day || "today"; V.imp = V.imp || { H: true, M: true, L: true }; V.ccs = V.ccs || { us: true, ca: true }; V.cat = V.cat || "all"; V.q = ""; V.open = V.open || "";
   V.track = V.track || {};   /* categories switched off by the user (default: everything tracked) */
   function tracked(e) { return V.track[groupOf(e)] !== false; }
   function saveV() { store.set("desk.eventsView", V); }
@@ -137,7 +138,12 @@
     return best;
   }
   function srcOf(e) { if (e.kind === "desk" || e.kind === "market") return "desk"; var L = e.t <= Date.now() ? landed(e) : null; return L && L.at && L.txt ? "actual" : "cal"; }
-  function pass(e) { return tracked(e) && (V.grp === "all" || groupOf(e) === V.grp) && (!V.high || e.high) && (!V.src || V.src === "all" || srcOf(e) === V.src); }
+  /* calendar view (owner redesign): importance H/M/L, US + Canada only, one category filter, free-text search */
+  function imp(e) { if (e.impact) return e.impact[0]; if (e.kind === "wasde" || e.kind === "contract") return "H"; if (/^(usda|cftc|ca|earn|energy)$/.test(e.kind)) return "M";
+    if (e.kind === "cb") return e.high ? "H" : "M"; if (e.kind === "leg" || e.kind === "market") return e.high ? "M" : "L"; return "L"; }
+  function ccIn(e) { var c = ccOf(e); return !c || c === "us" || c === "ca"; }
+  function pass(e) { var c = ccOf(e); return ccIn(e) && (!c || V.ccs[c] !== false) && (V.cat === "all" || groupOf(e) === V.cat) && V.imp[imp(e)] !== false &&
+    (!V.q || (e.label + " " + (CAT[e.kind] || {}).l).toLowerCase().indexOf(V.q.toLowerCase()) >= 0); }
 
   /* ---------- rendering ---------- */
   /* the flag must match the event's own country: a Bank of England row never carries a Canada flag */
@@ -147,22 +153,70 @@
   function flagOf(e) { var cc = ccOf(e); return cc && window.flag ? window.flag(cc, 13) + " " : ""; }
   function chip(e) { var c = CAT[e.kind] || CAT.desk; return '<span class="evc" style="--ec:' + c.c + '">' + c.l + "</span>"; }
   function deskName(go) { var a = (go || "").split("@")[0].split(":"); if (a[0] === "world") return "World markets"; if (a[0] === "briefing") return "Briefing · legislation"; if (a[0] === "earnings") return "US Earnings"; if (a[0] === "events") return "Events"; if (a[0] === "policy") return "Policy · " + (a[1] ? "evidence" : "calendar"); return ({ corn: "Corn", wheat: "Wheat", soybeans: "Soybeans", fx: "USD/CAD" })[a[0]] + " · " + ({ overview: "Overview", deriv: "Derivatives", fund: "Fundamentals", inputs: "Input costs", macro: "Macro" })[a[1]]; }
+  /* one calendar row: time · country · importance · event · actual · forecast · previous · status; click to expand */
+  var IMPN = { H: "High", M: "Medium", L: "Low" };
+  function actualOf(e, LD) { var k = relKey(e); if (!LD || !LD.at || !k || !k.macro) return LD && LD.at && LD.txt && !k.macro ? "" : ""; var m = window.mfind && mfind(k.macro); return m ? (window.mval ? mval(m, m.value) : m.value) : ""; }
   function row(e, now) {
     var d = e.t - now, st = d > 15 * MIN ? "up" : d > 0 ? "soon" : d > -10 * MIN ? "due" : "out";
     var LD = st === "out" || st === "due" ? landed(e) : null;
-    var right = LD && LD.at ? '<span class="evs land">✓ On the desk ' + hm(LD.at) + " <small>(" + lagTxt2(LD.at - e.t) + ")</small></span>" + (LD.txt ? '<span class="evs val">' + esc(LD.txt) + "</span>" : "")
+    var stat = LD && LD.at ? '<span class="evs land">✓ On the desk ' + hm(LD.at) + " <small>(" + lagTxt2(LD.at - e.t) + ")</small></span>"
       : st === "out" ? '<span class="evs out">' + (LD && LD.pending ? "Released " + hm(e.t) + " · awaiting desk" : LD && LD.none ? "Out · " + hm(e.t) : "Out · " + hm(e.t) + " · calendar only") + "</span>"
       : st === "due" ? '<span class="evs due">Due now' + (LD && LD.pending ? " — desk checking the source" : "") + "</span>"
       : '<span class="countdown" data-t="' + e.t + '" data-fmt="hms">' + hms(d) + "</span>";
-    var meta = [e.impact ? '<span class="evi i-' + esc(e.impact).toLowerCase() + '">' + esc(e.impact) + "</span>" : "",
-      e.fc ? "fc <b>" + esc(e.fc) + "</b>" : "", e.prev ? "prev <b>" + esc(e.prev) + "</b>" : ""].filter(Boolean).join(" · ");
+    var see = LD && LD.at && LD.go ? '<button class="evgo see" data-evgo="' + esc(LD.go) + '" data-evsel="' + esc(LD.sel || "") + '" title="Go to where this number is shown">See it: ' + esc(LD.where) + " →</button>" : "";
     var etd = function (t) { return new Date(t).toLocaleDateString("en-CA", { timeZone: "America/Toronto" }); }, rt = LD && LD.at && etd(LD.at) === etd(now);   /* BRD 16C: ET day of release only */
-    return '<div class="evr ' + st + (e.high ? " hi" : "") + (rt ? " rel-today" : "") + '"><div class="evt">' + hm(e.t) + '<small>ET</small></div>' +
-      '<div class="evm"><div class="evl">' + (rt ? '<span class="rt-pill">RELEASED TODAY</span> ' : "") + flagOf(e) + esc(e.label) + " " + chip(e) + "</div>" + (meta ? '<div class="evx">' + meta + "</div>" : "") + "</div>" +
-      '<div class="evr-r">' + right + (LD && LD.at && LD.go ? '<button class="evgo see" data-evgo="' + esc(LD.go) + '" data-evsel="' + esc(LD.sel || "") + '" title="Go to where this number is shown">See it: ' + esc(LD.where) + " →</button>"
-        : e.go ? '<button class="evgo" data-evgo="' + e.go + '" title="Open ' + esc(deskName(e.go)) + '">' + esc(deskName(e.go)) + " →</button>" : "") + "</div></div>";
+    var k = relKey(e), m = k && k.macro && window.mfind ? mfind(k.macro) : null, act = actualOf(e, LD), I = imp(e), cc = ccOf(e);
+    var prev = e.prev || (m && LD && LD.at && m.prior != null && window.mval ? mval(m, m.prior) : "");
+    var open = V.open === e.id, ctry = cc === "ca" ? "Canada" : cc === "us" ? "United States" : "—";
+    var h = '<tr class="evr st-' + st + (e.high ? " hi" : "") + (rt ? " rel-today" : "") + (open ? " open" : "") + '" data-evopen="' + esc(e.id) + '" tabindex="0" aria-expanded="' + open + '">' +
+      '<td class="evtm">' + hm(e.t) + "</td><td class=\"evcc\">" + (cc && window.flag ? window.flag(cc, 13) + " " : "") + ctry + '</td><td><span class="evimp i' + I + '">' + IMPN[I] + "</span></td>" +
+      '<td class="evev">' + (rt ? '<span class="rt-pill">RELEASED TODAY</span> ' : "") + esc(e.label.replace(/^(USD|CAD) /, "")) + " " + chip(e) + "</td>" +
+      '<td class="evn">' + esc(act) + '</td><td class="evn">' + esc(e.fc || "") + '</td><td class="evn">' + esc(prev) + '</td><td class="evst">' + stat + see + "</td></tr>";
+    if (open) h += '<tr class="evx-row"><td colspan="8">' + expand(e, LD, m) + "</td></tr>";
+    return h;
   }
-
+  /* expanded row: history chart where the desk holds the series, what it measures and why it matters here, recent prints, where to look */
+  var SUM = {
+    us_cpi: "US consumer prices, all items. Hotter prints push Treasury yields and the US dollar up, which lifts USD/CAD and makes US grain exports dearer abroad.",
+    us_core_cpi: "CPI excluding food and energy — the Fed's read on underlying inflation. A key driver of rate expectations, the US dollar and USD/CAD.",
+    us_core_pce: "The Fed's preferred inflation gauge (personal consumption prices, ex food and energy). Directly shapes the Fed path and the US–Canada rate gap.",
+    us_nfp: "Monthly change in US payrolls. Strong hiring supports the US dollar and yields; a big miss tends to weaken USD/CAD.",
+    us_ur: "US unemployment rate. A rising rate signals slack and raises the odds of Fed cuts.",
+    us_ahe: "Average hourly earnings — wage inflation. Feeds services inflation and the Fed's view.",
+    us_gdp: "US real GDP, annualised. Sets the growth backdrop for demand, the dollar and risk appetite.",
+    us_retail: "US retail sales — consumer demand. Surprises move the dollar and yields.",
+    us_claims: "Weekly initial jobless claims — the timeliest labour indicator; a leading signal for layoffs.",
+    us_umich: "University of Michigan consumer sentiment, with inflation expectations the Fed watches.",
+    us_policy: "Federal Reserve policy rate decision. The single biggest driver of the US–Canada rate gap and USD/CAD.",
+    ca_cpi: "Canadian consumer prices. Drives Bank of Canada expectations and the Canadian dollar side of USD/CAD.",
+    ca_trim: "Bank of Canada CPI-trim — a core inflation measure the Bank uses to set policy.",
+    ca_median: "Bank of Canada CPI-median — the other core measure the Bank relies on.",
+    ca_emp: "Monthly change in Canadian employment (Labour Force Survey). Moves the Canadian dollar and BoC odds.",
+    ca_ur: "Canadian unemployment rate.",
+    ca_gdp: "Canadian monthly real GDP — growth momentum for the BoC and the loonie.",
+    ca_retail: "Canadian retail sales — household demand.",
+    ca_retail_ex: "Canadian retail sales excluding autos.",
+    ca_policy: "Bank of Canada overnight-rate decision. Sets the Canadian side of the rate gap that drives USD/CAD." };
+  var SUMK = { wasde: "USDA's monthly World Agricultural Supply and Demand Estimates — US and world balance sheets for corn, soybeans and wheat. The month's biggest scheduled grain-price event.",
+    usda: "USDA weekly report (export sales or inspections) — the pace of US export demand for grain.", cftc: "CFTC Commitments of Traders — managed-money positioning as of Tuesday, released Friday 3:30 PM ET.",
+    contract: "CBOT contract milestone (first notice / last trade). Positions roll before it; spreads and open interest move around it.", ca: "Canadian agriculture release (AAFC / Statistics Canada) — Canadian crop supply.",
+    energy: "Energy report — diesel, propane and natural gas feed farm input costs.", cb: "Central-bank event — decisions and speeches move rate expectations and currencies.",
+    earn: "Company earnings for a watchlist name.", leg: "Legislative calendar item with possible trade, farm or fiscal impact.", market: "Market session time.", desk: "The desk's own scheduled data refresh." };
+  function spark(m) { var H = ((m.hist24 && m.hist24.length > 2) ? m.hist24 : m.history || []).slice(-24); if (H.length < 3) return "";
+    var v = H.map(function (x) { return x[1]; }), mn = Math.min.apply(null, v), mx = Math.max.apply(null, v), w = 420, h = 120, sp = mx - mn || 1;
+    var pts = v.map(function (x, i) { return [8 + i / (v.length - 1) * (w - 60), 10 + (1 - (x - mn) / sp) * (h - 30)]; });
+    var path = pts.map(function (p, i) { return (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(" "), last = pts[pts.length - 1];
+    return '<svg class="evx-ch" viewBox="0 0 ' + w + " " + h + '" role="img" aria-label="' + esc(m.name) + ' history"><path d="' + path + " L" + last[0].toFixed(1) + " " + (h - 20) + " L8 " + (h - 20) + ' Z" fill="rgba(110,168,255,.15)"/><path d="' + path + '" fill="none" stroke="#9fc1ff" stroke-width="2"/>' +
+      '<text x="' + (w - 48) + '" y="14" class="evx-ax">' + (window.mval ? mval(m, mx) : mx) + '</text><text x="' + (w - 48) + '" y="' + (h - 22) + '" class="evx-ax">' + (window.mval ? mval(m, mn) : mn) + "</text>" +
+      '<circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="3.5" fill="#fff"/><text x="8" y="' + (h - 4) + '" class="evx-ax">' + esc(H[0][0]) + '</text><text x="' + (w - 110) + '" y="' + (h - 4) + '" class="evx-ax">' + esc(H[H.length - 1][0]) + "</text></svg>"; }
+  function expand(e, LD, m) {
+    var k = relKey(e), sum = (k && k.macro && SUM[k.macro]) || SUMK[e.kind] || "Scheduled economic release from the US / Canada calendar. The desk does not track this series, so no history or actual is held — forecast and previous come from the calendar.";
+    var hist = m ? ((m.hist24 && m.hist24.length > 2) ? m.hist24 : m.history || []).slice(-6).reverse() : [];
+    var go = LD && LD.at && LD.go ? '<button class="evgo see" data-evgo="' + esc(LD.go) + '" data-evsel="' + esc(LD.sel || "") + '">See it: ' + esc(LD.where) + " →</button>" : e.go ? '<button class="evgo" data-evgo="' + e.go + '">Open ' + esc(deskName(e.go)) + " →</button>" : "";
+    return '<div class="evx">' + (m ? '<div class="evx-c">' + spark(m) + "</div>" : "") + '<div class="evx-t"><b>Summary</b><p>' + esc(sum) + "</p>" +
+      (hist.length ? '<table class="evx-h"><thead><tr><th>Period</th><th>Value</th></tr></thead><tbody>' + hist.map(function (x) { return "<tr><td>" + esc(x[0]) + "</td><td>" + (window.mval ? mval(m, x[1]) : x[1]) + "</td></tr>"; }).join("") + "</tbody></table>" : "") +
+      (LD && LD.at ? '<p class="evx-l">On the desk ' + hm(LD.at) + " ET (" + lagTxt2(LD.at - e.t) + " after the scheduled time)" + (LD.txt ? " · " + esc(LD.txt) : "") + "</p>" : "") + go + "</div></div>";
+  }
 
   /* ---------- release → desk link: did the number land, when, and exactly where to look ---------- */
   var MAPU = [[/^(Advance|Prelim|Final) GDP q\/q|^GDP q\/q/, "us_gdp"], [/Core PCE/, "us_core_pce"], [/^Unemployment Claims/, "us_claims"], [/^Core CPI/, "us_core_cpi"], [/^CPI (y\/y|m\/m)/, "us_cpi"],
@@ -298,35 +352,39 @@
       '<div class="evlist">' + (key.length ? key : nd).map(function (e) { return row(e, now); }).join("") + "</div>" + (rest > 0 || V.tomAll ? '<button class="evhi" data-evtomall aria-pressed="' + !!V.tomAll + '">' + (V.tomAll ? "Show key releases only" : "Show all " + nd.length) + "</button>" : "") + "</div>";
   }
   var lastDay = "";
-  function mainHTML(now) {
-    var all = todayEvents(now), list = all.filter(pass), up = list.filter(function (e) { return e.t > now - 10 * MIN; }), done = list.filter(function (e) { return e.t <= now - 10 * MIN; });
-    var nxt = up.filter(function (e) { return e.t > now; })[0], nxtLater = !nxt && nextAfterToday(now);
-    if (nxtLater) nxt = nxtLater;
-    var cnt = {}; all.forEach(function (e) { var g = groupOf(e); cnt[g] = (cnt[g] || 0) + 1; });
-    var head = '<div class="tile wide ev-head"><div class="evh-l"><h2>Today’s events <span class="h2note">— everything scheduled to land on the desk today, in one place</span></h2>' +
-      '<div class="evh-d">' + esc(dayLabel(now)) + ' · Toronto time</div>' +
-      '<div class="evf">' + GROUPS.map(function (g) { var n = g[0] === "all" ? all.length : cnt[g[0]] || 0;
-        return '<button data-evgrp="' + g[0] + '" aria-pressed="' + (V.grp === g[0]) + '">' + g[1] + " <small>" + n + "</small></button>"; }).join("") +
-      '<button class="evhi" data-evhigh aria-pressed="' + !!V.high + '">High impact only</button></div>' +
-      '<div class="evf evsrc">' + [["all", "All"], ["actual", "With actual"], ["cal", "Calendar only"], ["desk", "On desk"]].map(function (x) { return '<button data-evsrc="' + x[0] + '" aria-pressed="' + ((V.src || "all") === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>" +
-      '<div class="evtr"><span>Track</span>' + GROUPS.slice(1).map(function (g) { var on = V.track[g[0]] !== false;
-        return '<button data-evtrack="' + g[0] + '" aria-pressed="' + on + '" title="' + (on ? "Tracking " : "Not tracking ") + g[1] + ' — click to switch">' + (on ? "✓ " : "") + g[1] + "</button>"; }).join("") + "</div></div>" +
-      '<div class="evh-r">' + (nxt ? '<div class="evn-l">Next up · ' + (nxtLater ? esc(shortDay(nxt.t)) + " " : "") + hm(nxt.t) + ' ET</div><div class="evn-t">' + flagOf(nxt) + esc(nxt.label) + '</div><div class="hero-cd countdown" data-t="' + nxt.t + '" data-fmt="hms">' + hms(nxt.t - now) + "</div>"
-        : '<div class="evn-l">Next up</div><div class="evn-t">Nothing left today</div>') +
-      '<div class="evn-s"><b>' + up.length + "</b> to come · <b>" + done.length + "</b> out</div></div></div>";
-    var body;
-    if (!list.length) {
-      var nx = nextAfterToday(now);
-      body = '<div class="tile wide ev-empty"><div class="eve-i">◷</div><h3>No events today</h3><p>' + (all.length ? "Nothing matches this filter today." : "Nothing is scheduled for " + esc(shortDay(now)) + ".") + "</p>" +
-        (nx ? '<p class="eve-n">Next: <b>' + flagOf(nx) + esc(nx.label) + "</b> · " + esc(shortDay(nx.t)) + " " + hm(nx.t) + ' ET · in <span class="countdown" data-t="' + nx.t + '" data-fmt="hms">' + hms(nx.t - now) + "</span></p>" : "") + "</div>";
-    } else {
-      body = '<div class="tile wide"><h2>Still to come <span class="h2note">— ' + up.length + " today · counting down live</span></h2>" +
-        (up.length ? '<div class="evlist">' + up.map(function (e) { return row(e, now); }).join("") + "</div>"
-          : '<div class="ev-empty in"><h3>No more events today</h3><p>Everything scheduled for today is out.' + (function () { var nx = nextAfterToday(now); return nx ? ' Next: <b>' + flagOf(nx) + esc(nx.label) + "</b> · " + esc(shortDay(nx.t)) + " " + hm(nx.t) + ' ET · in <span class="countdown" data-t="' + nx.t + '" data-fmt="hms">' + hms(nx.t - now) + "</span>" : ""; })() + "</p></div>") + "</div>" +
-        (done.length ? '<div class="tile wide ev-done"><h2>Already out today <span class="h2note">— ' + done.length + "</span></h2><div class=\"evlist\">" + done.slice().reverse().map(function (e) { return row(e, now); }).join("") + "</div></div>" : "");
-    }
-    return head + policyHTML(now) + body + tomorrowHTML(now) + '<div class="tile wide"><div class="stamp">Sources combined here: USDA weekly reports and WASDE, CFTC, CBOT contract dates and sessions, Canada (AAFC / StatCan), the US + Canada macro calendar, official release calendars, EIA energy reports and the desk’s own data runs. The list resets at midnight Toronto time. Holiday closures follow the source calendars; CBOT session times assume a normal trading day.</div></div>';
+  var RANGES = [["yday", "Yesterday", -1, 1], ["today", "Today", 0, 1], ["tom", "Tomorrow", 1, 1], ["d7", "Next 7 days", 0, 7], ["d14", "Next 14 days", 0, 14], ["custom", "Custom date", null, 1]];
+  function rangeDays(id, now) { var r = RANGES.filter(function (x) { return x[0] === id; })[0] || RANGES[1], out = [];
+    if (id === "custom") { var c = V.custom || dayIso(now), p = c.split("-"); return [window.zonedMs(+p[0], +p[1], +p[2], 12, 0, TZ)]; }
+    for (var i = 0; i < r[3]; i++) out.push(now + (r[2] + i) * 86400000); return out; }
+  function rangeEvents(id, now) { var seen = {}, out = []; rangeDays(id, now).forEach(function (d) { todayEvents(d).forEach(function (e) { if (!seen[e.id]) { seen[e.id] = 1; out.push(e); } }); }); return out; }
+  function counts(L) { var c = { H: 0, M: 0, L: 0 }; L.forEach(function (e) { c[imp(e)]++; }); return c; }
+  function topHTML(now) {
+    var cf = function (e) { var c = ccOf(e); return ccIn(e) && (!c || V.ccs[c] !== false) && (V.cat === "all" || groupOf(e) === V.cat); };
+    var tabs = RANGES.map(function (r) { var c = r[0] === "custom" && !V.custom ? null : counts(rangeEvents(r[0], now).filter(cf));
+      return '<button class="evday" data-evday="' + r[0] + '" aria-pressed="' + (V.day === r[0]) + '"><span>' + r[1] + "</span>" + (c ? '<span class="evcnt"><i class="iH">' + c.H + '</i><i class="iM">' + c.M + '</i><i class="iL">' + c.L + "</i></span>" : '<span class="evcnt">📅</span>') + "</button>"; }).join("");
+    var tg = function (attr, v, on, lab) { return '<button data-' + attr + '="' + v + '" aria-pressed="' + on + '">' + lab + "</button>"; };
+    return '<div class="tile wide ev-cal-top"><div class="evdays">' + tabs + "</div>" +
+      (V.day === "custom" ? '<div class="evcust"><label>Date <input type="date" data-evcustom value="' + esc(V.custom || dayIso(now)) + '"></label><small>The macro calendar covers this week and next; USDA, CFTC, contract dates and official release calendars go further.</small></div>' : "") +
+      '<div class="evfilters"><div class="evfg"><span>Importance</span>' + ["H", "M", "L"].map(function (k) { return tg("evimp", k, V.imp[k] !== false, '<i class="evimp-b i' + k + '">' + k + "</i>"); }).join("") + "</div>" +
+      '<div class="evfg"><span>Country</span>' + tg("evcc", "us", V.ccs.us !== false, (window.flag ? flag("us", 13) : "") + " US") + tg("evcc", "ca", V.ccs.ca !== false, (window.flag ? flag("ca", 13) : "") + " Canada") + "</div>" +
+      '<div class="evfg"><span>Category</span><select data-evcat>' + GROUPS.map(function (g) { return '<option value="' + g[0] + '"' + (V.cat === g[0] ? " selected" : "") + ">" + g[1] + "</option>"; }).join("") + "</select></div>" +
+      '<input class="evq" type="search" placeholder="Search for events" data-evq value="' + esc(V.q) + '" aria-label="Search for events"></div></div>';
   }
+  function mainHTML(now) {
+    var all = rangeEvents(V.day, now), list = all.filter(pass), today = dayIso(now);
+    var up = todayEvents(now).filter(pass).filter(function (e) { return e.t > now; }), nxt = up[0] || nextAfterToday(now);
+    var byDay = {}; list.forEach(function (e) { (byDay[dayIso(e.t)] = byDay[dayIso(e.t)] || []).push(e); });
+    var days = Object.keys(byDay).sort();
+    var nextBar = nxt ? '<div class="ev-next">Next · ' + (dayIso(nxt.t) !== today ? esc(shortDay(nxt.t)) + " " : "") + hm(nxt.t) + " ET · " + flagOf(nxt) + "<b>" + esc(nxt.label.replace(/^(USD|CAD) /, "")) + '</b> · in <span class="countdown" data-t="' + nxt.t + '" data-fmt="hms">' + hms(nxt.t - now) + "</span></div>" : "";
+    var head = "<thead><tr><th>Time</th><th>Country</th><th>Importance</th><th>Event</th><th>Actual</th><th>Forecast</th><th>Previous</th><th>Status</th></tr></thead>";
+    var body = days.length ? days.map(function (d) { var L = byDay[d], t0 = L[0].t;
+        return '<div class="tile wide ev-day"><h2>' + esc(new Date(t0).toLocaleDateString("en-US", { timeZone: TZ, month: "short", day: "numeric", year: "numeric" })) + (d === today ? " (Today)" : d === dayIso(now + 86400000) ? " (Tomorrow)" : d === dayIso(now - 86400000) ? " (Yesterday)" : " (" + esc(wdOf(t0)) + ")") +
+          ' <span class="h2note">— ' + L.length + " event" + (L.length > 1 ? "s" : "") + ' · Toronto time</span></h2><div class="tbl-scroll"><table class="ev-tbl">' + head + "<tbody>" + L.map(function (e) { return row(e, now); }).join("") + "</tbody></table></div></div>"; }).join("")
+      : '<div class="tile wide ev-empty"><div class="eve-i">◷</div><h3>No events</h3><p>' + (all.length ? "Nothing matches these filters." : "Nothing is scheduled in this range.") + "</p></div>";
+    return '<div id="evTop">' + topHTML(now) + "</div>" + '<div id="evBody">' + nextBar + (V.day === "today" ? policyHTML(now) : "") + body +
+      '<div class="tile wide"><div class="stamp">US and Canada only. Sources: the US + Canada macro calendar (this week and next; forecast and previous), official release calendars, USDA, WASDE, CFTC, CBOT contract dates and sessions, AAFC / StatCan, EIA, central banks, legislation, watchlist earnings and the desk’s own refreshes. Actual is shown for the releases the desk tracks, once the number is on the desk; other rows keep forecast and previous. Click a row for its history, what it measures and where to see it.</div></div></div>';
+  }
+  function bodyHTML(now) { var w = document.createElement("div"); w.innerHTML = mainHTML(now); var b = w.querySelector("#evBody"); return b ? b.innerHTML : ""; }
 
   /* ---------- milestone feed (right rail) ---------- */
   var FEED_KEY = "desk.milestones", feed = store.get(FEED_KEY) || [], unseen = 0;
@@ -370,7 +428,8 @@
     P.innerHTML = '<div class="layout ev-lay"><div class="grid" id="evMain">' + mainHTML(now) + '</div><aside class="rail" id="evRail">' + feedHTML() + "</aside></div>";
     if (window.MOTION) window.MOTION.scan();
   }
-  function repaintMain() { var m = document.getElementById("evMain"); if (m) m.innerHTML = mainHTML(Date.now()); else render(); }
+  function repaintMain(full) { var m = document.getElementById("evMain"); if (!m) return render(); var b = document.getElementById("evBody");
+    if (!full && b) { b.innerHTML = bodyHTML(Date.now()); var t = document.getElementById("evTop"); if (t && !t.contains(document.activeElement)) t.innerHTML = topHTML(Date.now()); } else m.innerHTML = mainHTML(Date.now()); }
 
   /* ---------- milestone detectors (read-only diffs of the page's data) ---------- */
   var ASOF = { cftc_grains: ["CFTC Commitments of Traders — grains", "corn:deriv"], cftc_fx: ["CFTC Commitments of Traders — CAD", "fx:deriv"], options: ["Options open interest, IV & walls", "corn:deriv"],
@@ -555,11 +614,19 @@
     if (a[0] === "policy") { if (a[1] && window.POLICY && POLICY.open) POLICY.open(a[1]); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
     if (a[1] && window.setSub) setTimeout(function () { window.setSub(a[0], a[1]); if (!sel) window.scrollTo({ top: 0, behavior: "smooth" }); }, 30);
   }
-  document.addEventListener("keydown", function (ev) { if (ev.key !== "Enter") return; var g = ev.target && ev.target.closest && ev.target.closest(".evfi-go"); if (g) { ev.preventDefault(); go(g.getAttribute("data-evgo")); } });
+  document.addEventListener("input", function (ev) { var q = ev.target && ev.target.getAttribute && ev.target.hasAttribute("data-evq") ? ev.target : null; if (!q) return; V.q = q.value; var b = document.getElementById("evBody"); if (b) b.innerHTML = bodyHTML(Date.now()); });
+  document.addEventListener("change", function (ev) { var el = ev.target; if (!el || !el.getAttribute) return;
+    if (el.hasAttribute("data-evcat")) { V.cat = el.value; saveV(); repaintMain(true); } else if (el.hasAttribute("data-evcustom")) { V.custom = el.value; saveV(); repaintMain(true); } });
+  document.addEventListener("keydown", function (ev) { if (ev.key === "Enter" && ev.target && ev.target.closest && ev.target.closest("tr[data-evopen]") && !ev.target.closest("button")) { var r = ev.target.closest("tr[data-evopen]"), id = r.getAttribute("data-evopen"); V.open = V.open === id ? "" : id; saveV(); repaintMain(); return; }
+    if (ev.key !== "Enter") return; var g = ev.target && ev.target.closest && ev.target.closest(".evfi-go"); if (g) { ev.preventDefault(); go(g.getAttribute("data-evgo")); } });
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t) return;
     var g = t.closest("[data-evgo]"); if (g) { ev.preventDefault(); go(g.getAttribute("data-evgo"), g.getAttribute("data-evsel")); return; }
     if (!t.closest("#panel-events")) { if (t.closest("#tabbtn-events")) { unseen = 0; render(); paintBadge(); } return; }
+    var b = t.closest("[data-evday]"); if (b) { V.day = b.getAttribute("data-evday"); V.open = ""; saveV(); repaintMain(true); return; }
+    b = t.closest("[data-evimp]"); if (b) { var ki = b.getAttribute("data-evimp"); V.imp[ki] = V.imp[ki] === false; saveV(); repaintMain(true); return; }
+    b = t.closest("[data-evcc]"); if (b) { var kc = b.getAttribute("data-evcc"); V.ccs[kc] = V.ccs[kc] === false; saveV(); repaintMain(true); return; }
+    b = t.closest("[data-evopen]"); if (b && !t.closest("button,a,input,select")) { var id = b.getAttribute("data-evopen"); V.open = V.open === id ? "" : id; saveV(); repaintMain(); return; }
     var b = t.closest("[data-evgrp]"); if (b) { V.grp = b.getAttribute("data-evgrp"); saveV(); repaintMain(); return; }
     if (t.closest("[data-evhigh]")) { V.high = !V.high; saveV(); repaintMain(); return; }
     var tr = t.closest("[data-evtrack]"); if (tr) { var k = tr.getAttribute("data-evtrack"); V.track[k] = V.track[k] === false; saveV(); repaintMain(); return; }
@@ -584,4 +651,18 @@
   window.addEventListener("desk:unlock", function () { base = null; setTimeout(function () { diff(); render(); paintBadge(); }, 800); });
   window.EVENTS = { today: function () { return todayEvents(Date.now()); }, on: todayEvents, landed: landed, decorate: decorate, render: render, log: log, _feed: function () { return feed; }, _diff: diff, _snap: snap, _base: function () { return base; } };
   if (ready()) { lastDay = dayIso(Date.now()); render(); paintBadge(); diff(); hookToast(); }
+  var evcss = document.createElement("style");
+  evcss.textContent = ".evdays{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border-bottom:1px solid var(--line);margin:-4px -4px 10px}.evday{background:none;border:0;border-bottom:2px solid transparent;color:var(--text);padding:8px 4px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;font:600 13.5px 'IBM Plex Sans',sans-serif}.evday[aria-pressed=true]{background:rgba(110,168,255,.08);border-bottom-color:#6ea8ff}" +
+    ".evcnt{display:flex;gap:3px}.evcnt i,.evimp-b{font:700 10px 'IBM Plex Mono',monospace;font-style:normal;padding:1px 5px;border-radius:3px;color:#fff}.iH{background:#d6453d}.iM{background:#c99a1e;color:#1b1400!important}.iL{background:#2c4a7a}" +
+    ".evfilters{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.evfg{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:4px 8px}.evfg>span{font:700 10px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:4px}" +
+    ".evfg button{background:none;border:1px solid transparent;border-radius:5px;color:var(--muted);padding:2px 6px;cursor:pointer;font-size:12.5px}.evfg button[aria-pressed=true]{color:var(--text);border-color:var(--line2);background:rgba(110,168,255,.08)}.evfg button[aria-pressed=false]{opacity:.45}.evfg select{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:5px;padding:2px 6px}" +
+    ".evq{flex:1;min-width:180px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13.5px}.evcust{margin:0 0 10px;font-size:13px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.evcust input{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:5px;padding:3px 6px}.evcust small{color:var(--faint)}" +
+    ".ev-next{font-size:13px;color:var(--muted);margin:0 0 10px}.ev-next b{color:var(--text)}" +
+    ".ev-tbl{width:100%;border-collapse:collapse;font-size:13px}.ev-tbl th{font:700 10.5px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}" +
+    ".ev-tbl td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}.ev-tbl tr.evr{cursor:pointer}.ev-tbl tr.evr:hover td{background:rgba(110,168,255,.05)}.ev-tbl tr.evr.open td{background:rgba(110,168,255,.08)}.ev-tbl tr.evr.st-out td{opacity:.75}.ev-tbl td,.ev-tbl th{text-align:left!important;white-space:normal}.ev-tbl .evev{min-width:260px}.evx-t p{white-space:normal}#evTop,#evBody{grid-column:1/-1;min-width:0}#evBody{display:flex;flex-direction:column;gap:14px}.ev-tbl tr.evr{display:table-row!important;grid-template-columns:none!important;padding:0!important;border:0!important;background:none!important}.ev-tbl tr.evr.rel-today td{background:#1E40AF;color:#fff}.ev-tbl tr.evr.st-soon td{background:rgba(232,185,61,.10)}.ev-tbl tr.evr.st-due td{background:rgba(63,185,127,.12)}.ev-tbl tr.evr.st-soon td:first-child{box-shadow:inset 3px 0 0 #e8b93d}.ev-tbl tr.evr.st-due td:first-child{box-shadow:inset 3px 0 0 #3fb97f}html[data-theme=light] .ev-tbl tr.evr.rel-today td{background:#DBEAFE;color:#10283F}" +
+    ".ev-tbl .evtm{font-family:'IBM Plex Mono',monospace;white-space:nowrap}.ev-tbl .evcc{white-space:nowrap}.ev-tbl .evev{font-weight:600;font-family:'IBM Plex Sans',sans-serif}.ev-tbl .evn{font-family:'IBM Plex Mono',monospace;white-space:nowrap}.ev-tbl .evst{font-size:12px}.ev-tbl .evst .evgo{display:block;margin-top:4px}" +
+    ".evimp{display:inline-block;min-width:66px;text-align:center;font:700 11px 'IBM Plex Sans',sans-serif;padding:3px 8px;border-radius:4px;color:#fff}.evimp.iH{background:#d6453d}.evimp.iM{background:#c99a1e;color:#1b1400}.evimp.iL{background:#24406b}" +
+    ".evx{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:18px;padding:6px 4px 10px}.evx-ch{width:100%;height:auto}.evx-ax{font:10px 'IBM Plex Mono',monospace;fill:var(--muted)}.evx-t p{margin:4px 0 10px;font-size:13px;line-height:1.55;color:var(--muted)}.evx-h{border-collapse:collapse;font-size:12px;margin-bottom:8px}.evx-h td,.evx-h th{padding:3px 10px 3px 0;text-align:left}.evx-l{font-size:12.5px}" +
+    "@media (max-width:760px){.evdays{grid-template-columns:repeat(3,1fr)}.evx{grid-template-columns:1fr}.ev-tbl{min-width:820px}}";
+  document.head.appendChild(evcss);
 })();
