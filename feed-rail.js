@@ -68,6 +68,8 @@
     var t = plain(m.h || "") + " " + txt;
     if (/\bmixed\b|inconclusive/i.test(t)) return ""; if (/\bbullish\b/i.test(t)) return " pos"; if (/\bbearish\b/i.test(t)) return " neg";
     if (/\bbeat\b|\bbeats\b/i.test(t) && !/\bmiss/i.test(t)) return " pos"; if (/\bmiss(es|ed)?\b/i.test(t) && !/\bbeat/i.test(t)) return " neg";
+    var pm = t.match(/(^|[\s(])([+\u2212-])\d[\d.,]*\s?(%|bps?|pips|¢)/);   /* a printed signed move decides the colour; words only when there is none */
+    if (pm) return pm[2] === "+" ? " pos" : " neg";
     var up = /(^|[\s(])\+\d/.test(t) || /\b(surge|soar|jump|rall(y|ies)|gain|rise|rises|rose|climb|higher|boost|upgrade|record high|week high)/i.test(t),
         dn = /(^|[\s(])[−-]\d/.test(t) || /\b(plunge|tumble|slump|sink|sank|drop|fall|falls|fell|decline|lower|cut|cuts|downgrade|crash|week low|lowest)/i.test(t);
     return up && !dn ? " pos" : dn && !up ? " neg" : "";

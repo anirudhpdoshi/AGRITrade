@@ -629,7 +629,7 @@ def data_items(merged, sources_used, snaps):
         src = sources_used[k]
         dirn = "unchanged" if abs(mv["chg_pct"] or 0) < NEUTRAL_PCT else ("up" if mv["chg_pct"] > 0 else "down")
         mname = dt.date(int(mv["month"][:4]), int(mv["month"][5:]), 1).strftime("%b %Y")
-        title = f"{ind['name']} {dirn} {abs(mv['chg_pct'] or 0):.1f}% in {mname}" if dirn != "unchanged" else f"{ind['name']} unchanged in {mname} ({mv['chg_pct']:+.1f}%)"
+        title = f"{ind['name']} {dirn} {abs(mv['chg_pct'] or 0):.1f}% in {mname}" if dirn != "unchanged" else (f"{ind['name']} little changed in {mname} ({mv['chg_pct']:+.1f}%)" if round(mv['chg_pct'] or 0, 1) else f"{ind['name']} unchanged in {mname}")
         if mv["material"]:
             title += " — material move"
         items.append({

@@ -28,9 +28,15 @@
     var d = pts.map(function (v, i) { return (i ? "L" : "M") + (i / (pts.length - 1) * w).toFixed(1) + " " + (h - 2 - (v - mn) / (mx - mn || 1) * (h - 4)).toFixed(1); }).join(" ");
     return '<svg class="hl-sp" viewBox="0 0 ' + w + " " + h + '" preserveAspectRatio="none" aria-hidden="true"><path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="1.6"/></svg>';
   }
-  function card(id, title, big, sub, st, built) {
+  /* the status word always names what turned it amber/red, so "Failing" never sits unexplained next to "100% providers up" */
+  function whyApi(A) { var F = (A.feeds || []).filter(function (f) { return f.status === "stale" || f.status === "missing"; }), P = (A.providers || []).filter(function (p) { return p.ok === false; });
+    var w = F.map(function (f) { return esc(f.label || f.id) + " " + (f.status === "missing" ? "missing" : "stale" + (f.age_min != null ? " (" + age(f.age_min) + " old)" : "")); }).concat(P.map(function (p) { return esc(p.name || p.id) + " down"; }));
+    return w.length ? w.slice(0, 2).join(", ") + (w.length > 2 ? " +" + (w.length - 2) + " more" : "") : ""; }
+  function whySch(S) { var J = (S.jobs || []).filter(function (j) { return j.status === "red" || j.status === "amber"; }).map(function (j) { return esc(j.label) + (j.failed ? " failed" : j.missed ? " missed" : " late"); }), X = (S.special || []).filter(function (x) { return x.status === "red" || x.status === "amber"; }).map(function (x) { return esc(x.label); });
+    var w = J.concat(X); return w.length ? w.slice(0, 2).join(", ") + (w.length > 2 ? " +" + (w.length - 2) + " more" : "") : ""; }
+  function card(id, title, big, sub, st, built, why) {
     return '<button class="hl-card' + (SEL === id ? " on" : "") + (built ? "" : " dim") + '" data-hl="' + id + '"' + (built ? "" : " disabled") + '><div class="hl-ct">' + title + "</div>" +
-      '<div class="hl-cv">' + big + '</div><div class="hl-cs">' + sub + '</div><div class="hl-cst">' + (built ? dot(st) + word(st) : "Next phase") + "</div></button>";
+      '<div class="hl-cv">' + big + '</div><div class="hl-cs">' + sub + '</div><div class="hl-cst">' + (built ? dot(st) + word(st) + (why && st !== "green" ? ": " + why : "") : "Next phase") + "</div></button>";
   }
   function apiDetail(A, hist) {
     var P = A.providers || [], F = A.feeds || [], B = A.blocks || {}, Q = A.quota || [];
@@ -64,8 +70,8 @@
     var okJobs = (S.jobs || []).filter(function (j) { return j.status === "green" || j.status === "idle"; }).length;
     var h = '<div class="tile wide hl-tile"><h2>System health <span class="h2note">— each panel has its own check; a green deploy never makes data green</span></h2><div class="hl-meta">Report ' + et(H.updated_at, true) + " (" + ago(H.updated_at) + ") · alerts " + esc((H.alerts || {}).webhook || "not configured") + "</div>" +
       '<div class="hl-cards">' +
-      card("api", "Live data &amp; API", (sc.success_rate != null ? sc.success_rate + "%" : "—"), "providers up · " + (sc.stale || 0) + " stale feed" + (sc.stale === 1 ? "" : "s") + (sc.median_ms ? " · " + sc.median_ms + " ms median" : ""), A.status, true) +
-      card("sch", "Scheduler &amp; automation", okJobs + " / " + (S.jobs || []).length, "jobs healthy · " + (t.missed || 0) + " missed · " + (t.failed || 0) + " failed (24 h)", S.status, true) +
+      card("api", "Live data &amp; API", (sc.success_rate != null ? sc.success_rate + "%" : "—"), "providers up · " + (sc.stale || 0) + " stale feed" + (sc.stale === 1 ? "" : "s") + (sc.median_ms ? " · " + sc.median_ms + " ms median" : ""), A.status, true, whyApi(A)) +
+      card("sch", "Scheduler &amp; automation", okJobs + " / " + (S.jobs || []).length, "jobs healthy · " + (t.missed || 0) + " missed · " + (t.failed || 0) + " failed (24 h)", S.status, true, whySch(S)) +
       card("dq", "Data quality", "—", "OI, price, macro and calendar validation", null, false) +
       card("app", "Application", "—", "site, deploys, files, page errors", null, false) + "</div>" +
       '<div class="hl-detail">' + (SEL === "sch" ? schDetail(S, hist) : apiDetail(A, hist)) + "</div>" +

@@ -118,7 +118,7 @@
   }
 
   /* ---------- views ---------- */
-  function inst() { return (W && W.instruments) || []; }
+  function inst() { return ((W && W.instruments) || []).map(function (i) { return i.id === "usdcad" ? deskSync(i) : i; }); }   // USD/CAD reads the same in every World view
   function badges(i) {
     var w = i.w52, b = []; if (!w) return "";
     if (w.new_high) b.push('<span class="wb nh">NEW 52W HIGH</span>');
@@ -225,7 +225,7 @@
   /* 52-week watch: two sides (highs | lows), each grouped by asset class, nearest first */
   function w52WatchHTML(L) {
     function side(hi) {
-      var xs = L.filter(function (i) { var w = i.w52; return w && (hi ? (w.new_high || w.near_high) : (w.new_low || w.near_low)); });
+      var xs = L.filter(function (i) { var w = i.w52; return w && (hi ? (w.new_high || (w.near_high && w.pos >= 50)) : (w.new_low || (w.near_low && w.pos < 50))) && !(hi && w.new_low) && !(!hi && w.new_high); });   /* one market sits on one list only */
       var dist = function (i) { return hi ? (i.w52.new_high ? -1 : i.w52.pct_from_high) : (i.w52.new_low ? -1 : i.w52.pct_from_low); };
       var body = GROUPS.map(function (g) {
         var r = xs.filter(function (i) { return i.group === g; }).sort(function (a, b) { return dist(a) - dist(b); });
@@ -265,7 +265,9 @@
       if (pv) { o.chg = (px - pv) * 100; o.pct = (px / pv - 1) * 100; } o.name = i.name + " · " + R.contract; return o; }
     if (i.id === "usdcad") { var L = window.DESK_LIVE && window.DESK_LIVE.feedState && window.DESK_LIVE.feedState(), lt = L && L.lastTick, fm = D.fx && D.fx.feed;
       var px2 = L && L.last && lt && lt > Date.parse(i.ts || 0) ? L.last : fm && fm.mid && Date.parse(fm.ts) > Date.parse(i.ts || 0) ? fm.mid : null;
-      if (px2 && i.prev_close) { o.last = px2; o.chg = px2 - i.prev_close; o.pct = (px2 / i.prev_close - 1) * 100; o.ts = lt && L.last === px2 ? new Date(lt).toISOString() : fm.ts; } return o; }
+      var ref = D.fx && D.fx.spot && D.fx.spot.ref ? +D.fx.spot.ref : i.prev_close;   // one prior close everywhere: the desk's reference close
+      if (px2 == null && ref !== i.prev_close) px2 = i.last;
+      if (px2 && ref) { o.last = px2; o.prev_close = ref; o.chg = px2 - ref; o.pct = (px2 / ref - 1) * 100; o.ts = lt && L.last === px2 ? new Date(lt).toISOString() : fm && px2 === fm.mid ? fm.ts : i.ts; } return o; }
     if (EMAP[i.id]) { var E = ((D.fx && D.fx.energy) || []).filter(function (e) { return EMAP[i.id].test(e.name); })[0]; if (!E || E.last == null) return i;
       o.last = E.last; o.chg = E.chg; o.pct = E.pct; o.ts = D.meta.asof.energy || i.ts; return o; }
     return i;
@@ -293,7 +295,7 @@
       '<h3>Regions</h3><div class="wh-reg">' + reg.map(function (r) { return '<span>' + r[0] + ' <b class="' + cl(r[1]) + '">' + sg(r[1], 2, "%") + "</b></span>"; }).join("") + "</div>" +
       '<details class="wh-rest"><summary>Everything else (' + L.filter(function (i) { return DESK.indexOf(i.id) < 0; }).length + " markets)</summary>" + rest + "</details>" +
       '<div class="obs-box"><b>OBSERVATIONS</b><ul>' + obs.map(function (o) { return "<li>" + esc(o) + "</li>"; }).join("") + "</ul></div></div>" +
-      '<div class="wh-mv"><h3>What moved <small>Major and above · ' + M.length + " moves from " + maj + " alert rows</small></h3>" + (M.length ? M.slice(0, 14).map(function (a) { var u = a.last > a.ref;
+      '<div class="wh-mv"><h3>What moved <small>Major and above · ' + M.length + " moves from " + maj + " alert rows</small></h3>" + (M.length ? M.slice(0, 14).map(function (a) { var u = a.move > 0;   /* arrow, colour and sign all come from the printed move */
         return '<div class="wh-m"><span class="' + (u ? "up" : "dn") + '">' + (u ? "▲" : "▼") + " " + sg(a.move, 2, a.unit === "bp" ? " bp" : "%") + "</span> <b>" + esc(a.name) + '</b> <span class="sev s' + a.tier + '">' + esc(a.severity) + "</span><small>" + tDate(a.at) + " ET</small></div>"; }).join("") : '<p class="note">No Major moves this session.</p>') + "</div></div>" +
       '<details class="wh-hb"><summary>Data health: ' + (H.ok || 0) + " of " + (H.expected || 0) + " returned · last run " + run + " ET" + (miss ? " · " + miss + " missing" : "") + "</summary><p>" +
       (miss ? (H.failed || []).map(function (f) { return esc(String(f.id).toUpperCase()); }).join(", ") + " did not return on the last run; every other market updated normally." : "Every market returned on the last run.") + "</p>" +
@@ -320,12 +322,12 @@
   }
   function alertRows(list) {
     return '<div class="wtw"><table class="wt wa"><thead><tr><th>Time (ET)</th><th>Market</th><th>Move</th><th>Severity</th><th>Compared with</th><th>Reference → current</th><th>Data</th><th>Delivery</th></tr></thead><tbody>' +
-      list.map(function (a) { return "<tr><td>" + tDate(a.at) + "</td><td><b>" + esc(a.name) + "</b><small> " + esc(a.group || "") + '</small></td><td class="' + (a.dir === "up" ? "up" : "dn") + '"><b>' + sg(a.move, 2, a.unit === "bp" ? " bp" : "%") + "</b></td>" +
-        '<td><span class="sev s' + a.tier + '">' + esc(a.severity) + (a.kind === "escalation" ? " ↑" : "") + "</span></td><td>" + (a.basis === "prev_close" ? "Previous close" : "Session open") + "</td><td>" + nf(a.ref, 4) + " → " + nf(a.last, 4) + "</td>" +
+      list.map(function (a) { return "<tr><td>" + tDate(a.at) + "</td><td><b>" + esc(a.name) + "</b><small> " + esc(a.group || "") + '</small></td><td class="' + (a.move > 0 ? "up" : a.move < 0 ? "dn" : "") + '"><b>' + sg(a.move, 2, a.unit === "bp" ? " bp" : "%") + "</b></td>" +
+        '<td><span class="sev s' + a.tier + '">' + esc(a.severity) + (a.kind === "escalation" ? " · escalated" : "") + "</span></td><td>" + (a.basis === "prev_close" ? "Previous close" : "Session open") + "</td><td>" + nf(a.ref, 4) + " → " + nf(a.last, 4) + "</td>" +
         "<td><small>" + esc(a.status || "") + (a.delay_min != null ? " · " + nf(a.delay_min, 0) + " min old" : "") + "</small></td><td><small>" + esc(a.delivery || "") + "</small></td></tr>"; }).join("") + "</tbody></table></div>";
   }
   function alertsHTML() {
-    var list = (W.alerts || []).filter(function (a) { return V.sev === "all" || (V.sev === "major" ? a.tier >= 2 : V.sev === "up" ? a.dir === "up" : V.sev === "down" ? a.dir === "down" : true); });
+    var list = (W.alerts || []).filter(function (a) { return V.sev === "all" || (V.sev === "major" ? a.tier >= 2 : V.sev === "up" ? a.move > 0 : V.sev === "down" ? a.move < 0 : true); });
     var t = W.thresholds || {};
     return '<div class="tile wide"><h2>Alert feed <span class="h2note">— ' + (W.alerts || []).length + " stored · tiers " + (t.pct || []).map(function (x, k) { return (t.names || [])[k] + " ±" + x + "%"; }).join(", ") + " (yields " + (t.bp || []).join("/") + " bp)</span></h2>" + '<span class="wasof blk">server engine last ran ' + tDate(W.updated_at) + " ET (" + ago(Date.now() - Date.parse(W.updated_at)) + " ago)" + ((W.alerts || [])[0] ? " · newest alert " + tDate(W.alerts[0].at) + " ET" : "") + "</span>" +
       '<div class="wfil">' + [["all", "All"], ["major", "Major and above"], ["up", "Upward"], ["down", "Downward"]].map(function (x) { return '<button class="nchip" data-wsev="' + x[0] + '" aria-pressed="' + (V.sev === x[0]) + '">' + x[1] + "</button>"; }).join("") +
@@ -371,7 +373,7 @@
       if (id === "markets") return kid("data-wgrp", "all", V.grp === "all" && !V.flagged, "All markets", L.length) +
         GROUPS.map(function (g) { return kid("data-wgrp", g, V.grp === g && !V.flagged, g, L.filter(function (i) { return i.group === g; }).length); }).join("") +
         kid("data-wflag", "1", V.flagged, "52-week signals only", sig);
-      if (id === "alerts") return [["all", "All alerts", al.length], ["major", "Major and above", al.filter(function (a) { return a.tier >= 2; }).length], ["up", "Upward", al.filter(function (a) { return a.dir === "up"; }).length], ["down", "Downward", al.filter(function (a) { return a.dir === "down"; }).length]]
+      if (id === "alerts") return [["all", "All alerts", al.length], ["major", "Major and above", al.filter(function (a) { return a.tier >= 2; }).length], ["up", "Upward", al.filter(function (a) { return a.move > 0; }).length], ["down", "Downward", al.filter(function (a) { return a.move < 0; }).length]]
         .map(function (x) { return kid("data-wsev", x[0], V.sev === x[0], x[1], x[2]); }).join("");
       return "";
     }

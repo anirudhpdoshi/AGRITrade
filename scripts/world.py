@@ -149,7 +149,8 @@ def week52(highs, lows, last, today_high=None, today_low=None):
     pos = (last - L) / (H - L) * 100 if H > L else 50.0
     return {"high": H, "low": L, "new_high": bool(new_hi), "new_low": bool(new_lo),
             "pct_from_high": from_hi, "pct_from_low": from_lo,
-            "near_high": (from_hi is not None and from_hi <= 5.0), "near_low": (from_lo is not None and from_lo <= 5.0), "pos": pos}
+            # a market is "near" only one end: within 5% of it AND in that end's fifth of the range (low-volatility FX spans < 10%)
+            "near_high": (from_hi is not None and from_hi <= 5.0 and pos >= 80), "near_low": (from_lo is not None and from_lo <= 5.0 and pos <= 20), "pos": pos}
 
 
 def _hm(s):
@@ -278,6 +279,14 @@ def _fetch_batch(universe, now_utc):
             if not len(prior):
                 raise RuntimeError("no prior session")
             prev_close = float(prior["Close"].iloc[-1])
+            if EXCHANGES[u["ex"]].get("fx") and it is not None and len(it):
+                # FX: Yahoo's daily FX bar can carry a stale close; use the last 5-min bar before the latest 5pm New York roll
+                ny = ZoneInfo("America/New_York"); ln = last_ts.astimezone(ny)
+                cut = ln.replace(hour=17, minute=0, second=0, microsecond=0)
+                if ln < cut: cut -= timedelta(days=1)
+                while cut.weekday() == 5: cut -= timedelta(days=1)   # Saturday 5pm -> Friday 5pm
+                pre = it[[x.astimezone(ny) < cut for x in it.index.to_pydatetime()]]
+                if len(pre): prev_close = float(pre["Close"].iloc[-1])
             if len(drow):
                 o, h, l = float(drow["Open"].iloc[-1]), float(drow["High"].iloc[-1]), float(drow["Low"].iloc[-1])
             elif it is not None and len(it):

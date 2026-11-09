@@ -2970,8 +2970,11 @@ function macroDashHTML(){
   var cpi=(showUS?macroLinePanel(uc,{country:'U.S.',what:'CPI',color:'#38b6c9',target:2,yLabel:'Inflation rate (%)',headline:cpiHead('U.S.')}):'')+(showCA?macroLinePanel(cc,{country:'Canada',what:'CPI',color:'#e0655f',target:2,yLabel:'Inflation rate (%)',headline:cpiHead('Canada')}):'');
   var ur=(showUS?macroLinePanel(uu,{country:'U.S.',what:'unemployment',color:'#38b6c9',yLabel:'Unemployment rate (%)',headline:urHead('U.S.')}):'')+(showCA?macroLinePanel(cu,{country:'Canada',what:'unemployment',color:'#e0655f',yLabel:'Unemployment rate (%)',headline:urHead('Canada')}):'');
   function pol(m,country,color){ if(!m||!m.long) return '<div class="mpanel"><h3 class="mp-h">'+country+' policy rate</h3><p class="note">Policy-rate history loads on the next macro refresh.</p></div>';
-    var p=m.long, l=p[p.length-1][1], y1=p.length>12?p[p.length-13][1]:null;
-    return '<div class="mpanel has-flag">'+cflag(m.group)+'<h3 class="mp-h">'+country+' policy rate: <b>'+fmt(l,2)+'%</b>'+(y1!=null?', '+(l<y1?'down '+fmt((y1-l)*100,0)+' bps':l>y1?'up '+fmt((l-y1)*100,0)+' bps':'unchanged')+' in 12 months':'')+'</h3>'+
+    /* 12-month change by date (not by row count), and a net-zero year that moved in between says so, so the words match the chart */
+    var p=m.long, l=p[p.length-1][1], t0=Date.parse(p[p.length-1][0])-365*864e5, yr=p.filter(function(x){ return Date.parse(x[0])>=t0; }), b4=p.filter(function(x){ return Date.parse(x[0])<t0; }),
+      y1=b4.length?b4[b4.length-1][1]:null, vs=yr.map(function(x){ return x[1]; }), hi=Math.max.apply(null,vs), lo=Math.min.apply(null,vs);
+    var chg=y1==null?'':', '+(l<y1-1e-9?'down '+fmt((y1-l)*100,0)+' bps':l>y1+1e-9?'up '+fmt((l-y1)*100,0)+' bps':(hi-lo>1e-9?'back where it was':'unchanged'))+' in 12 months'+(hi-lo>1e-9&&Math.abs(l-y1)<1e-9?' (ranged '+fmt(lo,2)+'–'+fmt(hi,2)+'%)':'');
+    return '<div class="mpanel has-flag">'+cflag(m.group)+'<h3 class="mp-h">'+country+' policy rate: <b>'+fmt(l,2)+'%</b>'+chg+'</h3>'+
       lineChartSVG({series:[{pts:p.slice(-60),color:color,label:'Rate'}],yLabel:'Policy rate (%)',dec:2,H:200})+'<div class="stamp">Month-end readings</div></div>'; }
   var polH=(showUS?pol(up,'Fed funds (upper)','#38b6c9'):'')+(showCA?pol(cp,'BoC overnight','#e0655f'):'');
   function gdp(m,country){ if(!m) return ''; var src=m.long||m.history.map(function(h){ return [h[0],h[1]]; });
