@@ -1602,7 +1602,13 @@ function fanSVG2(g, meta, FL){
   });
   merged.forEach(function(l){ if(!l.lines&&(l.value>hi||l.value<lo)) l.label=(l.value>hi?'\u25b2 ':'\u25bc ')+l.label;
     if(!l.lines&&l.key!=='market'&&l.key!=='ctr') l.label=l.label+' '+cts(l.value-L); else if(l.lines) l.lines=[(l.off?(l.value>L?'\u25b2 ':'\u25bc ')+'off-scale \u00b7 ':'')+l.lines[0], l.lines[1]+' \u00b7 '+cts(l.value-L)]; });
-  var items=merged.map(function(l){ return { l:l, trueY:Math.min(Math.max(Y(l.value),PT),PT+ph), h:l.lines?27:15 }; })
+  /* right-edge labels wrap onto extra lines instead of being cut (fan fix): every word stays readable inside the chart */
+  var room=W-(rx+13)-4, LH=12.5;
+  function wrap(t,fs){ t=String(t); var mx=Math.max(8,Math.floor(room/(fs*0.62))), out=[], cur='';
+    t.split(' ').forEach(function(w){ if(!cur) cur=w; else if((cur+' '+w).length<=mx) cur+=' '+w; else { out.push(cur); cur=w; } });
+    if(cur) out.push(cur); return out.map(function(x){ return x.length>mx?x.slice(0,mx):x; }); }
+  var items=merged.map(function(l){ var rows=l.lines?wrap(l.lines[0],11).concat(wrap(l.lines[1],11)):wrap(l.label,11.5);
+      return { l:l, rows:rows, trueY:Math.min(Math.max(Y(l.value),PT),PT+ph), h:rows.length*LH+2 }; })
     .filter(function(it){ return it.trueY>=top-60 && it.trueY<=bot+60; })
     .sort(function(a,b){ return a.trueY-b.trueY; });
   var ys=items.map(function(it){ return Math.min(Math.max(it.trueY, top), bot); });
@@ -1613,18 +1619,12 @@ function fanSVG2(g, meta, FL){
     if(ys[0]<top){ ys[0]=top;
       for(i=1;i<items.length;i++){ need=items[i-1].h/2+items[i].h/2+3; ys[i]=Math.max(ys[i], ys[i-1]+need); } }
   }
-  /* labels never run past the right edge (UI-FIX-07): cut to the room left at this font size, full text on hover */
-  var room=W-(rx+13)-4;
-  function fit(t,fs){ t=String(t); var mx=Math.floor(room/(fs*0.62)); return t.length<=mx?t:t.slice(0,mx-1).replace(/[\s\u00b7\u2014-]+$/,'')+'\u2026'; }
   items.forEach(function(it,idx){
-    var ly=ys[idx];
+    var ly=ys[idx], y0=ly-(it.rows.length-1)*LH/2+3.5, fs=it.l.lines?11:11.5, fw=it.l.lines?600:(it.l.bold?700:500);
     s+='<line x1="'+(rx-1)+'" y1="'+it.trueY.toFixed(1)+'" x2="'+(rx+9)+'" y2="'+ly.toFixed(1)+'" stroke="'+it.l.color+'" stroke-width="1"/>';
     s+='<circle cx="'+(rx-1)+'" cy="'+it.trueY.toFixed(1)+'" r="2" fill="'+it.l.color+'"/>';
-    if(it.l.lines){
-      s+='<text x="'+(rx+13)+'" y="'+(ly-2).toFixed(1)+'" fill="'+it.l.color+'" font-size="11" font-weight="600" font-family="IBM Plex Mono"><title>'+esc(it.l.lines.join(' \u00b7 '))+'</title><tspan x="'+(rx+13)+'">'+fit(it.l.lines[0],11)+'</tspan><tspan x="'+(rx+13)+'" dy="12">'+fit(it.l.lines[1],11)+'</tspan></text>';
-    } else {
-      s+='<text x="'+(rx+13)+'" y="'+(ly+3.5).toFixed(1)+'" fill="'+it.l.color+'" font-size="11.5" font-weight="'+(it.l.bold?700:500)+'" font-family="IBM Plex Mono"><title>'+esc(it.l.label)+'</title>'+fit(it.l.label,11.5)+'</text>';
-    }
+    s+='<text x="'+(rx+13)+'" y="'+y0.toFixed(1)+'" fill="'+it.l.color+'" font-size="'+fs+'" font-weight="'+fw+'" font-family="IBM Plex Mono">'+
+      it.rows.map(function(r,k){ return '<tspan x="'+(rx+13)+'"'+(k?' dy="'+LH+'"':'')+'>'+r+'</tspan>'; }).join('')+'</text>';
   });
   s+='<text x="'+PL+'" y="'+(PT+ph+18)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono">'+hist[0].d.slice(0,10)+'</text>';
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Settlement history with settle-anchored and live-re-anchored 10-day sigma fans for '+meta.name+', right-edge labeled levels at day 10, and the market marker frozen at the build-time delayed quote">'+s+'</svg>';
