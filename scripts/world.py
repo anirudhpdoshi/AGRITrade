@@ -244,12 +244,13 @@ def fetch_yahoo(universe, now_utc):
     """Batch daily (1y) + intraday (5m, 5d) bars; returns {id: record} and a list of failed symbols.
     Symbols that return nothing are retried with their verified alternates (u['alts'])."""
     recs, failed = _fetch_batch(universe, now_utc)
-    retry = [dict(u, sym=alt, alt_of=u["sym"]) for u in universe if u["id"] in {f["id"] for f in failed} for alt in u.get("alts", [])[:1]]
-    if retry:
-        r2, f2 = _fetch_batch(retry, now_utc)
+    for n in range(3):   # each verified alternate in turn (one batch per round), not only the first
+        retry = [dict(u, sym=u["alts"][n], alt_of=u["sym"]) for u in universe if u["id"] in {f["id"] for f in failed} and len(u.get("alts", [])) > n]
+        if not retry:
+            break
+        r2, _ = _fetch_batch(retry, now_utc)
         recs.update(r2)
-        ok = set(r2)
-        failed = [f for f in failed if f["id"] not in ok] + [f for f in f2 if f["id"] not in ok and f["id"] not in {x["id"] for x in failed}]
+        failed = [f for f in failed if f["id"] not in r2]
     return recs, failed
 
 

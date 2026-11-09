@@ -41,7 +41,7 @@
       return '<button class="pi-card ' + (V.bank === b ? "on" : "") + '" data-pib="' + b + '"><div class="pi-ch">' + fl(J.banks[b].cc) + " " + esc(bname(b)) + "</div>" +
         (st ? '<div class="pi-sc ' + lcls(st.label) + '">' + sgn(st.score) + ' <small>' + esc(st.label.toLowerCase()) + "</small></div><div class=\"pi-sub\">last statement " + day(st.published_at) + "</div>" : '<div class="pi-sc neu">—</div><div class="pi-sub">no statement read yet</div>') +
         '<div class="pi-sub">' + (s.speeches_since ? s.speeches_since + " remark" + (s.speeches_since > 1 ? "s" : "") + " since: " + chg(chgS) : "no remarks since") + "</div>" +
-        '<div class="pi-sub">next decision <b>' + (nx ? esc(day(nx.date + "T12:00:00Z")) : "—") + "</b></div></button>"; }).join("") + "</div>";
+        '<div class="pi-sub">next decision <b>' + (nx ? esc(day(nx.date + "T12:00:00Z")) : '<span title="The stored calendar has no later decision for this bank yet">not yet scheduled in the desk calendar</span>') + "</b></div></button>"; }).join("") + "</div>";
   }
 
   /* ---------- 1. calendar ---------- */

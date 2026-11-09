@@ -11,9 +11,9 @@ test("the BRD example: Negative tag, price -1% on the week is played out", () =>
   const it = { dir: -1, bucket: "Weakness", tr: { p0: {}, day: { pct: -0.4, d: "x" }, week: { pct: -1, d: "y" }, month: null } };
   assert.strictEqual(S.judge(it, "week").status, "Played out - week"); assert.strictEqual(S.judge(it, "week").bucket, "Weakness");
 });
-test("price against a Positive tag moves it to Threat with its trace", () => {
+test("price against a Positive tag keeps it in Strength, flagged 'Price disagreed' with its trace (amended BRD SW-3)", () => {
   const j = S.judge({ dir: 1, bucket: "Strength", tr: { day: { pct: -0.5, d: "a" }, week: { pct: -1.6, d: "2026-11-05" } } }, "week");
-  assert.strictEqual(j.bucket, "Threat"); assert.deepStrictEqual([j.moved.from, j.moved.to, j.moved.d], ["Strength", "Threat", "2026-11-05"]);
+  assert.strictEqual(j.bucket, "Strength"); assert.strictEqual(j.status, "Price disagreed - week"); assert.deepStrictEqual([j.moved.from, j.moved.to, j.moved.d], ["Strength", "Threat", "2026-11-05"]);
 });
 test("disagreeing horizons are Mixed and stay put", () => { const j = S.judge({ dir: -1, bucket: "Weakness", tr: { day: { pct: 0.3 }, week: { pct: -1.2 } } }, "week"); assert.strictEqual(j.status, "Mixed horizons"); assert.strictEqual(j.bucket, "Weakness"); });
 test("month horizon clamps to month end", () => { assert.strictEqual(S.addMonth("2026-01-31"), "2026-02-28"); assert.strictEqual(S.addMonth("2026-12-15"), "2027-01-15"); });

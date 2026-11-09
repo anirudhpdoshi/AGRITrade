@@ -27,7 +27,8 @@
     if (sg.length > 1 && sg.some(function (s) { return s !== sg[0]; })) { o.status = "Mixed horizons"; return o; }
     var c = T[h]; if (!c) return o;
     if (c.pct * up > 0) o.status = "Played out - " + h;
-    else if (-c.pct * up >= MAT) { o.moved = { from: item.bucket, to: MOVE[item.bucket], pct: c.pct, d: c.d }; o.bucket = o.moved.to; o.status = "Reclassified - " + h; }
+    /* the box stays the item's own fundamental read (strong export sales stay a Strength); a price that went the other way is a badge, not a move (UI-FIX-11) */
+    else if (-c.pct * up >= MAT) { o.moved = { from: item.bucket, to: MOVE[item.bucket], pct: c.pct, d: c.d }; o.status = "Price disagreed - " + h; }
     else o.status = "Not played out - " + h;
     return o;
   }
@@ -93,11 +94,11 @@
     var T = it.tr, L = []; if (it.why) L.push(esc(it.why));
     if (T) { L.push("Price at announcement: " + money(T.p0.v, fx) + " (" + day(T.p0.d) + " close)");
       ["day", "week", "month"].forEach(function (h) { var c = T[h]; if (c) L.push("<b>" + h[0].toUpperCase() + h.slice(1) + "</b>: " + money(c.v, fx) + " on " + day(c.d) + " · " + chg(c, fx)); }); }
-    if (it.j && it.j.moved) L.push("Moved from " + it.j.moved.from + " to " + it.j.moved.to + " on " + day(it.j.moved.d) + ": price " + (it.j.moved.pct > 0 ? "+" : "−") + Math.abs(it.j.moved.pct).toFixed(2) + "% against the " + it.tag + " tag");
+    if (it.j && it.j.moved) L.push("Price went the other way by " + day(it.j.moved.d) + ": " + (it.j.moved.pct > 0 ? "+" : "−") + Math.abs(it.j.moved.pct).toFixed(2) + "% against the " + it.tag + " read, so the market is treating it as a " + it.j.moved.to.toLowerCase());
     return L.length ? "<ul>" + L.map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul>" : "";
   }
   function itemHTML(it, fx) {
-    var st = it.j && it.j.status ? ' · <span class="sw-st' + (/^Played/.test(it.j.status) ? " up" : /^Reclass/.test(it.j.status) ? " dn" : "") + '">' + esc(it.j.status) + "</span>" : "";
+    var st = it.j && it.j.status ? ' · <span class="sw-st' + (/^Played/.test(it.j.status) ? " up" : /^Price disagreed/.test(it.j.status) ? " dn" : "") + '">' + esc(it.j.status) + "</span>" : "";
     var tag = it.tag ? ' · <span class="sw-tag ' + (it.tag === "Positive" ? "up" : it.tag === "Negative" ? "dn" : "") + '">' + it.tag + "</span>" : "", body = expand(it, fx);
     return body ? '<details class="sw-it"><summary>' + esc(it.label) + tag + st + "</summary>" + body + "</details>" : '<div class="sw-it">' + esc(it.label) + tag + st + "</div>";
   }
@@ -108,11 +109,13 @@
   function intelHTML() {
     var D = root.DATA; if (!D || !D.grains) return ""; var k = grain(), now = nowET(), I = intelItems(D, k, now);
     I.forEach(function (i) { if (!i.upcoming) i.j = judge(i, V.h); });
+    var UP = I.filter(function (i) { return i.upcoming; }); I = I.filter(function (i) { return !i.upcoming; });   /* a scheduled report is not yet good or bad news: listed under the grid, not as an Opportunity */
     var played = I.filter(function (i) { return i.j && /^Played/.test(i.j.status); }).length, w = I.filter(function (i) { return (i.j ? i.j.bucket : i.bucket) === "Weakness"; }).length, s = I.filter(function (i) { return (i.j ? i.j.bucket : i.bucket) === "Strength"; }).length;
     var c = (D.grains[k].roll || [])[0];
     return '<div class="tile wide sw-win" id="sw-intel"><h2>Intel Brief - SWOT <span class="h2note">fed from the current dataset · price is ' + (c ? c.contract : "the front contract") + " settlement</span></h2>" +
       '<div class="sw-ctl"><span>Commodity</span>' + seg("data-sw-k", ORDER.map(function (x) { return [x, NM[x]]; }), k) + "<span>Horizon</span>" + seg("data-sw-h", [["day", "Day"], ["week", "Week"], ["month", "Month"]], V.h) + "</div>" +
-      grid(I, false, { Strength: "No supportive item", Weakness: "No pressuring item", Opportunity: "Nothing scheduled", Threat: "Items move here when price disproves a positive tag" }) +
+      grid(I, false, { Strength: "No supportive item", Weakness: "No pressuring item", Opportunity: "No supportive outside factor", Threat: "No pressuring outside factor" }) +
+      (UP.length ? '<div class="sw-up"><b>Coming up</b> — tagged when released: ' + UP.map(function (u) { return esc(u.label); }).join(" · ") + "</div>" : "") +
       '<div class="obs-box"><b>OBSERVATIONS</b><ul><li>' + NM[k] + ": " + w + " item" + (w === 1 ? "" : "s") + " in Weakness against " + s + " in Strength on the " + V.h + " view.</li><li>" + played + " item" + (played === 1 ? " has" : "s have") + " played out on the " + V.h + " horizon; click an item for its Day, Week and Month prices.</li></ul></div></div>";
   }
   function usHTML() {

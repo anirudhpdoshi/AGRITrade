@@ -59,9 +59,10 @@ CALENDAR = [
     ("fed", "2026-12-09", "14:00", "America/New_York", "FOMC decision + press conference (Dec 8–9)", "decision"),
     ("boc", "2026-12-09", "09:45", "America/Toronto", "Rate announcement", "decision"),
     ("ecb", "2026-12-17", "14:15", "Europe/Berlin", "Policy decision + press conference (Dec 16–17)", "decision"),
+    ("boe", "2026-12-17", "12:00", "Europe/London", "MPC decision + minutes", "decision"),   # BoE 'MPC dates for 2026' release
     ("boj", "2026-12-18", None, "Asia/Tokyo", "Policy statement (meeting Dec 17–18)", "decision"),
 ]
-CAL_ASOF = "2026-10-29"
+CAL_ASOF = "2026-11-09"
 
 # ---------------------------------------------------------------- Layer A: themes and context
 THEMES = {

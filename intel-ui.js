@@ -75,6 +75,7 @@
       ".it-t col.c-tm{width:104px}.it-t col.c-kc{width:150px}.it-t col.c-im{width:178px}.it-t col.c-cf{width:62px}.it-t col.c-sr{width:120px}",
       ".it-det td{display:table-cell}.it-det td::before{display:none!important}",
       ".it-t tr.r{cursor:pointer}.it-t tr.r:hover td{background:color-mix(in srgb,var(--cyan) 5%,transparent)}",
+      ".it-t tr.r.vf td{background:color-mix(in srgb,var(--green) 6%,transparent)}.it-t tr.r.vf td:first-child{box-shadow:inset 3px 0 0 var(--green)}",
       ".it-t tr.r.mat td:first-child{box-shadow:inset 3px 0 0 var(--amber)}.it-t tr.r.alr td:first-child{box-shadow:inset 3px 0 0 var(--red)}",
       ".it-t .tm{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--faint);white-space:nowrap}",
       ".it-t .ev{color:var(--ink);line-height:1.4}.it-t .ev small{display:block;color:var(--faint);font-size:11.5px;margin-top:2px}",
@@ -203,7 +204,7 @@
   }
   function vflag(i) { return i.verified ? '<span class="it-vf y" title="Official published figure">VERIFIED</span>' : i.official_src ? '<span class="it-vf s" title="Official source, but the read is from the headline only">OFFICIAL SRC</span>' : '<span class="it-vf n" title="Third-party headline; not verified">UNVERIFIED</span>'; }
   function rowHTML(i) {
-    var cls = "r" + (i.alert ? " alr" : i.material ? " mat" : "");
+    var cls = "r" + (i.alert ? " alr" : i.material ? " mat" : "") + (i.verified ? " vf" : "");
     var srcTxt = i.kind === "data" ? esc(i.source) : esc(i.source) + (i.also && i.also.length ? ' <small>+' + i.also.length + "</small>" : "");
     var r = '<tr class="' + cls + '" data-iid="' + esc(i.id) + '" tabindex="0" aria-expanded="' + (V.open === i.id) + '">' +
       '<td class="tm" data-l="Time">' + esc(et(i.ts || i.seen)) + "</td>" +
@@ -236,9 +237,27 @@
   function srcUrl(i) { var s = D.sources || {}; return /FAO/.test(i.source) ? (s.fao || {}).url || "" : /IMF/.test(i.source) ? (s.imf || {}).url || "" : (s.worldbank || {}).url || ""; }
 
   /* ---------- views ---------- */
+  /* near-duplicate headlines (same story from several outlets within 2 days) fold into one row; its other sources show as +N (UI-FIX-15) */
+  var STOP = { the: 1, a: 1, an: 1, of: 1, in: 1, on: 1, to: 1, for: 1, and: 1, as: 1, at: 1, by: 1, with: 1, from: 1, is: 1, its: 1, after: 1 };
+  function words(t) { return (t || "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(function (w) { return w.length > 2 && !STOP[w]; }); }
+  function fold(L) {
+    var out = [];
+    L.forEach(function (i) {
+      if (i.kind === "data") { out.push(i); return; }
+      var w = words(i.title), t = Date.parse(i.ts || i.seen || 0), hit = null;
+      for (var k = 0; k < out.length && !hit; k++) { var o = out[k]; if (o.kind === "data" || Math.abs(Date.parse(o.ts || o.seen || 0) - t) > 1728e5) continue;
+        var ow = o._w || (o._w = words(o.title)), inter = w.filter(function (x) { return ow.indexOf(x) >= 0; }).length, uni = w.length + ow.length - inter;
+        if (uni && inter / uni >= 0.5) hit = o; }
+      if (hit) { hit._dup = (hit._dup || 0) + 1; hit.also = (hit.also || []).concat([i.source]); } else out.push(Object.assign({}, i, { _w: w }));
+    });
+    return out;
+  }
   function feedHTML() {
     var it = items().filter(match);
-    it.sort(function (a, b) { return (b.ts || b.seen || "").localeCompare(a.ts || a.seen || ""); });
+    /* verified official figures from the last 7 days lead; everything else by time, duplicates folded */
+    var wk = Date.now() - 7 * 864e5, rank = function (i) { return i.verified && Date.parse(i.ts || i.seen || 0) >= wk ? 0 : 1; };
+    it.sort(function (a, b) { return rank(a) - rank(b) || (b.ts || b.seen || "").localeCompare(a.ts || a.seen || ""); });
+    it = fold(it);
     var all = items(), dataN = all.filter(function (i) { return i.kind === "data"; }).length;
     var kp = '<div class="it-kpis">' +
       kpi("Supply alerts", all.filter(function (i) { return i.alert; }).length) + kpi("Material moves", all.filter(function (i) { return i.material; }).length) +

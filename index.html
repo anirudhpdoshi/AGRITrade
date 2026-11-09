@@ -116,6 +116,7 @@ html[data-theme="light"] .upd-today:after{color:#fff!important}html[data-theme="
 .sw-strength h3{color:var(--green)}.sw-weakness h3{color:var(--red)}.sw-opportunity h3{color:var(--cyan)}.sw-threat h3{color:var(--amber)}
 .sw-it{font-size:13.5px;padding:5px 0;border-top:1px solid var(--line)}.sw-it:first-of-type{border-top:0}.sw-it summary{cursor:pointer}.sw-it ul{margin:6px 0 2px;padding-left:18px;color:var(--muted);font-size:12.5px}
 .sw-tag.up,.sw-st.up,.sw-tbl td.up{color:var(--green)}.sw-tag.dn,.sw-st.dn,.sw-tbl td.dn{color:var(--red)}.sw-st{font-weight:600}.sw-none{color:var(--muted);font-size:12.5px}.sw-up{margin-top:10px;font-size:13px;color:var(--muted)}.sw-up b{color:var(--ink)}
+.sw-up{margin-top:10px;padding:8px 12px;border:1px dashed var(--line2);border-radius:8px;font-size:13px;color:var(--muted)}.sw-up b{color:var(--ink)}
 @media (max-width:760px){.sw-grid{grid-template-columns:1fr}}
 .oid{margin:10px 0 14px;padding:12px 14px;border:1px solid var(--line2);border-radius:8px}.oid-sum{font-family:"IBM Plex Mono",monospace;font-size:14px;margin:8px 0}.oid-tog button[aria-pressed="true"]{color:#101825;background:var(--amber)}.oi-usd{margin:8px 0;font-size:13px;color:var(--muted)}.oi-usd b{color:var(--ink);letter-spacing:.04em}
 .tr-sec{margin-top:12px}.tr-sec h3{margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.tr-exp{color:var(--amber);font-weight:700}
@@ -313,10 +314,10 @@ table.es-tbl{font-size:12.5px} table.es-tbl tr.hl-row td{color:var(--amber)}
 .intraday svg{margin-top:6px}
 @media (max-width:760px){
   .topbar .sub{display:none}
-  .tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:6px;padding:8px 16px;border-bottom:1px solid var(--line)}
-  .tabs::-webkit-scrollbar{display:none}
-  .tab-btn{flex:0 0 auto;padding:8px 12px;font-size:13px}
-  .tab-btn .sym{margin-left:5px;font-size:11px}
+  /* phones: every tab visible — the bar wraps instead of scrolling sideways (UI-FIX-16); not sticky, so wrapped rows never cover the page */
+  .tabs{position:static;flex-wrap:wrap;overflow:visible;gap:6px;padding:8px 16px;border-bottom:1px solid var(--line)}
+  .tab-btn{flex:0 0 auto;padding:7px 10px;font-size:12.5px}
+  .tab-btn .sym{display:none}
   .ss-row{gap:2px 10px;font-size:11.5px}
 }
 
@@ -3501,7 +3502,7 @@ function streakText(m){
   var h=(m.hist24||m.history).map(function(x){ return x[1]; }), n=h.length, L=h[n-1];
   var isChange=/m\/m|q\/q/.test(m.measure)||m.unit==='K'&&m.measure;
   var out=[];
-  if(isChange){ var k=0; for(var i=n-1;i>=0&&((L>0&&h[i]>0)||(L<0&&h[i]<0));i--) k++; if(k>=2) out.push(k+(k===2?'nd':k===3?'rd':'th')+' straight '+(L>0?'gain':'decline'));
+  if(isChange){ var k=0; for(var i=n-1;i>=0&&((L>0&&h[i]>0)||(L<0&&h[i]<0));i--) k++; if(k>=2) out.push(ordn(k)+' straight '+(L>0?'gain':'decline'));
     var pos=h.filter(function(v){ return v>0; }).length; out.push(pos+' gains in last '+n); }
   else { var u=0,d=0; for(var j=n-1;j>0&&h[j]>h[j-1];j--) u++; for(var j2=n-1;j2>0&&h[j2]<h[j2-1];j2--) d++; if(u>=2) out.push('rising '+u+' readings in a row'); if(d>=2) out.push('falling '+d+' readings in a row'); }
   for(var b=n-2;b>=0;b--){ if((L>=0&&h[b]>=L)||(L<0&&h[b]<=L)){ if(n-2-b>=2) out.push((L>=h[n-2]?'highest':'lowest')+' since '+(m.hist24||m.history)[b][0]); break; } if(b===0) out.push((L>=h[n-2]?'highest':'lowest')+' in '+n+' readings'); }
@@ -4290,7 +4291,7 @@ function fxCftcHTML(){
   return '<div class="tile wide" data-src="cftc_fx"><h2>CFTC CAD — leveraged funds <span class="h2note">— weekly, every bar labeled, trend line across the weekly nets</span></h2>'+
     '<div class="big" style="color:'+(p.net>=0?'var(--green)':'var(--red)')+'">'+(p.net>=0?'+':'−')+fmt(Math.abs(p.net))+' <span style="font-size:14px;color:var(--muted)">net contracts</span></div>'+
     '<div class="stat-row">'+stat("Long", fmt(p.long))+stat("Short", fmt(p.short))+stat("Week over week", '<span class="'+cls(p.wow)+'">'+sgn(p.wow,0)+'</span>')+
-    stat("% of OI", fmt(p.pct_oi,1)+'%')+stat("1Y / 3Y percentile", fmt(p.p1y,0)+'th / '+fmt(p.p3y,0)+'th')+stat("Report date", asOf('cftc_fx'))+'</div>'+
+    stat("% of OI", fmt(p.pct_oi,1)+'%')+stat("1Y / 3Y percentile", (p.p1y==null?'n/a':ordn(p.p1y))+' / '+(p.p3y==null?'n/a':ordn(p.p3y)))+stat("Report date", asOf('cftc_fx'))+'</div>'+
     '<div class="posread">'+esc(p.label)+'</div>'+chart+
     '<div class="stamp">CFTC Traders in Financial Futures · CAD · leveraged funds long minus short · positions as of Tuesday, published Friday 3:30pm ET</div></div>';
 }
@@ -4454,7 +4455,7 @@ function renderFX(){
     '<td data-l="Spread"><b>'+fmt(r.sp,1)+'</b></td>'+
     '<td data-l="Δ 1D"><span class="'+cls(r.dod)+'">'+sgn(r.dod,1)+'</span></td>'+
     '<td data-l="Δ WoW"><span class="'+cls(r.wow)+'">'+sgn(r.wow,1)+'</span></td>'+
-    '<td data-l="20D %ile">'+(r.pct==null?'n/a':fmt(r.pct,0)+'th')+'</td></tr>';
+    '<td data-l="20D %ile">'+(r.pct==null?'n/a':ordn(r.pct))+'</td></tr>';
   }).join("");
   /* US–Canada spreads: each leg live where a delayed source exists, otherwise its official close — and says which */
   var YLU=fx.yields_live||{}, YLC=fx.yields_live_ca||{};
@@ -4478,7 +4479,7 @@ function renderFX(){
       '<td data-l="Close spread">'+fmt(x.cs,1)+'</td>'+
       '<td data-l="Δ 1D (close)" class="'+cls(r.dod)+'">'+(r.dod==null?'—':sgn(r.dod,1))+'</td>'+
       '<td data-l="Δ week (close)" class="'+cls(r.wow)+'">'+(r.wow==null?'—':sgn(r.wow,1))+'</td>'+
-      '<td data-l="20D %ile">'+(r.pct==null?'n/a':fmt(r.pct,0)+'th')+'</td></tr>'; }).join('');
+      '<td data-l="20D %ile">'+(r.pct==null?'n/a':ordn(r.pct))+'</td></tr>'; }).join('');
   T.yields='<div class="tile wide" data-src="yields_live"><h2>US–Canada yield spreads <span class="h2note">— '+(nLive?'live (delayed) on '+nLive+' of '+SP.length+' tenors, official close otherwise':'official closes, '+asOf('yields'))+' · spreads in bps</span></h2>'+
     barChartSVG({bars:SP.map(function(x){ return [x.r.t, x.sp, x===wideL]; }), line:SP.map(function(x){ return [x.r.t, x.cs]; }), lineLabel:'close', yLabel:'US−CA spread (bps)', dec:0, H:190, aria:'US minus Canada yield spread by tenor, live vs official close'})+
     '<div style="overflow-x:auto"><table class="sp-tbl"><thead><tr><th>Tenor</th><th>US</th><th>Canada</th><th>Spread</th><th>Δ today</th><th>Close</th><th>Δ 1D</th><th>Δ wk</th><th>%ile</th></tr></thead><tbody>'+srows+'</tbody></table></div>'+

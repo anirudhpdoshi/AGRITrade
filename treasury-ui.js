@@ -28,7 +28,7 @@
       kpi("Weighted avg maturity", Math.round(U.wam_months) + " mos", (U.wam_months / 12).toFixed(2) + " years") +
       kpi("WA interest rate", U.wa_rate != null ? U.wa_rate.toFixed(3) + "%" : "N/A", "marketable, " + esc(dLbl(U.rates_date))) + "</div>";
     /* 24-month maturity concentration: months as rows, calendar years as columns */
-    var W = U.wall || {}, keys = Object.keys(W).sort().slice(0, 25), yrs = [], mx = 0;
+    var W = U.wall || {}, keys = Object.keys(W).sort().slice(0, 24)   /* exactly the 24 months the 24M header counts, so the column totals add up to it */, yrs = [], mx = 0;
     /* months already behind us (ET) matured after the statement date: shown greyed as rolled over, not as a coming wall */
     var nowM = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" }).slice(0, 7), past = keys.filter(function (k) { return k < nowM; });
     keys.forEach(function (k) { var y = k.slice(0, 4); if (yrs.indexOf(y) < 0) yrs.push(y); mx = Math.max(mx, W[k]); });
