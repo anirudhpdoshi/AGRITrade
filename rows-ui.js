@@ -29,7 +29,9 @@
     o.optflow = (tot ? "Est. premium " + usd(tot) + " · calls " + Math.round(pc / tot * 100) + "% / puts " + Math.round(pp / tot * 100) + "%" : "Est. premium " + UNA) + (pos && pos.conf ? " · conviction " + pos.conf : "");
     o.flow = UNA;   /* read from the panel itself, so the headline can never disagree with its signal */
     if (R[0] && R[1] && R[0].settle != null && R[1].settle != null) o.carry = R[0].contract + " to " + R[1].contract + " · spread " + sign((R[0].settle - R[1].settle) * 100, function (x) { return x.toFixed(2) + "¢"; }) + (fnd ? " · FND " + fnd(R[0].contract) : ""); else o.carry = UNA;
-    o.oi = near.call_wall ? "Call wall " + strike(near.call_wall) + " (" + n(near.call_wall[1]) + " contracts) · put wall " + strike(near.put_wall) + " (" + n(near.put_wall[1]) + " contracts)" : UNA;
+    var VV = typeof window !== "undefined" && window.OIVALUE ? window.OIVALUE(g) : null, vw = VV && VV.walls;   /* levels by value first (owner), contract count after */
+    o.oi = vw && vw.cD && vw.pD ? "By value: call wall " + (+vw.cD.k).toFixed(2) + " (" + usdB(vw.cD.cdel) + ") · put wall " + (+vw.pD.k).toFixed(2) + " (" + usdB(vw.pD.pdel) + ")" + (near.call_wall ? " · by contracts " + strike(near.call_wall) + " / " + strike(near.put_wall) : "")
+      : near.call_wall ? "Call wall " + strike(near.call_wall) + " (" + n(near.call_wall[1]) + " contracts) · put wall " + strike(near.put_wall) + " (" + n(near.put_wall[1]) + " contracts)" : UNA;
     return o;
   }
   if (typeof module !== "undefined" && module.exports) { module.exports = { headlines: headlines, ROWS: ROWS, notional: notional, usdB: usdB }; return; }

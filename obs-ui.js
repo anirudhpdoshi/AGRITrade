@@ -77,7 +77,9 @@
     cmp: function (g, of, D, k) { var Y = D && D.sd_hist && D.sd_hist[k] && D.sd_hist[k].years, o = []; if (!Y) return o; var a = Y["2026"], b = Y["2025"]; if (!a || !b || a.Production == null || b.Production == null) return o; o.push("US production is " + (a.Production > b.Production ? "larger" : "smaller") + " than the prior crop year."); return o; },
     oi: function (g) { var N = g.near, o = []; if (!N || !N.rows || !N.underlying) return o; var c = 0, p = 0, top = null; N.rows.forEach(function (r) { var a = r[1] || 0, b = r[2] || 0; c += a; p += b; if (!top || a + b > top.t) top = { t: a + b, k: r[0] }; });
       var tot = c + p; if (!tot) return o; o.push("Exposure is most concentrated at the " + d2(top.k) + " strike.");
-      o.push("Calls hold " + Math.round(c / tot * 100) + "% of " + N.chain + " notional exposure and puts " + Math.round(p / tot * 100) + "%, on notional only since no verified premium is held.");
+      var V = root.OIVALUE && root.OIVALUE(g), U = root.ROWSUI;
+      if (V && U && V.walls.cD && V.walls.cC) o.push("By value the call wall is " + d2(V.walls.cD.k) + " (" + U.usdB(V.walls.cD.cdel) + " delta value)" + (V.walls.cD.k !== V.walls.cC.k ? ", not " + d2(V.walls.cC.k) + " by contract count" : ", the same strike as by contract count") + ".");
+      if (V && U && V.walls.pD && V.walls.pC) o.push("By value the put wall is " + d2(V.walls.pD.k) + " (" + U.usdB(V.walls.pD.pdel) + " delta value)" + (V.walls.pD.k !== V.walls.pC.k ? ", not " + d2(V.walls.pC.k) + " by contract count" : ", the same strike as by contract count") + ".");
       var P = N.rows_prev && N.rows_prev.rows; if (P) { var M = {}, was = 0, now = 0; P.forEach(function (r) { M[r[0]] = r; }); N.rows.forEach(function (r) { var q = M[r[0]]; if (q) { was += (q[1] || 0) + (q[2] || 0); now += (r[1] || 0) + (r[2] || 0); } }); if (was && now !== was) o.push("Exposure is " + (now > was ? "building" : "unwinding") + " versus the prior session."); }
       return o; }
   };
@@ -125,16 +127,45 @@
       "<tr><td>Positioning trend (last " + Tr.length + ' reports)</td><td colspan="3">' + svg + "</td></tr></tbody></table>";
     var h = t.querySelector(":scope > h2, :scope > .tile-head"); if (h) h.after(el); else t.prepend(el);
   }
-  var OIDOL = false;
+  var OIDOL = true;   /* value view by default (owner)*/
   function futVal(t, G) { var old = t.querySelector(":scope > .oi-usd"); if (old) old.remove(); var R = G.roll || [], U = root.ROWSUI, A = R[0], B = R[1]; if (!U || !A || !B) return;
     var D = typeof rollData === "function" ? rollData(t.closest(".tab-panel").id.replace("panel-", "")) : null, N = D && D.dailyN && D.dailyN[D.dailyN.length - 1]; if (!N || !A.settle || !B.settle) return;
     var el = doc.createElement("div"); el.className = "oi-usd"; el.innerHTML = "<b>FUTURES OI VALUE ($)</b> " + A.contract + " " + U.usdB(U.notional(N[1], A.settle)) + " · " + B.contract + " " + U.usdB(U.notional(N[2], B.settle)) + " · contracts × 5,000 bu × settle"; var h = t.querySelector(":scope > .tile-head"); if (h) h.after(el); else t.prepend(el); }
+  /* OI by VALUE (owner): each strike's open interest priced with Black-76 from its own IV (chain ATM IV where a strike has none),
+     at today's futures price. Premium value = OI × option price × 5,000 bu; delta value = OI × |delta| × 5,000 bu × futures —
+     the futures-equivalent exposure. Walls by value sit on the same sides as the contract walls (calls at/above, puts at/below). */
+  function ncdf(x) { var t = 1 / (1 + 0.2316419 * Math.abs(x)), d = 0.3989423 * Math.exp(-x * x / 2), p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return x > 0 ? 1 - p : p; }
+  function b76(F, K, T, iv, call) { var r = 0.04, df = Math.exp(-r * T); if (T <= 0 || !iv) { var iv0 = Math.max(0, call ? F - K : K - F); return { px: iv0, d: call ? (F > K ? 1 : 0) : (F < K ? -1 : 0) }; }
+    var s = iv / 100 * Math.sqrt(T), d1 = (Math.log(F / K) + s * s / 2) / s, d2 = d1 - s;
+    return call ? { px: df * (F * ncdf(d1) - K * ncdf(d2)), d: df * ncdf(d1) } : { px: df * (K * ncdf(-d2) - F * ncdf(-d1)), d: -df * ncdf(-d1) }; }
+  function oiValue(G) {
+    var N = G.near; if (!N || !N.rows || !N.expires) return null;
+    var R0 = G.roll && G.roll[0], q = G.quotes && N.contract && G.quotes[N.contract], F = q && q.px ? q.px : R0 && R0.contract === N.contract && R0.settle ? R0.settle : N.underlying;
+    var T = Math.max(0, (Date.parse(N.expires + "T13:15:00-06:00") - Date.now()) / (365 * 864e5)), out = [];
+    N.rows.forEach(function (r) { var K = r[0], cv = r[3] > 0 ? r[3] : null, pv = r[4] > 0 ? r[4] : null, C = b76(F, K, T, cv || N.iv, true), P = b76(F, K, T, pv || N.iv, false);
+      out.push({ k: K, coi: r[1] || 0, poi: r[2] || 0, est: !(cv && pv), cprem: (r[1] || 0) * C.px * 5000, pprem: (r[2] || 0) * P.px * 5000, cdel: (r[1] || 0) * Math.abs(C.d) * 5000 * F, pdel: (r[2] || 0) * Math.abs(P.d) * 5000 * F }); });
+    var pick = function (side, key) { var L = out.filter(function (x) { return side === "c" ? x.k >= F : x.k <= F; }); return L.length ? L.reduce(function (a, b) { return b[key] > a[key] ? b : a; }) : null; };
+    return { F: F, T: T, rows: out, walls: { cC: pick("c", "coi"), pC: pick("p", "poi"), cP: pick("c", "cprem"), pP: pick("p", "pprem"), cD: pick("c", "cdel"), pD: pick("p", "pdel") },
+      tot: out.reduce(function (a, x) { a.cprem += x.cprem; a.pprem += x.pprem; a.cdel += x.cdel; a.pdel += x.pdel; return a; }, { cprem: 0, pprem: 0, cdel: 0, pdel: 0 }) };
+  }
+  root.OIVALUE = oiValue;
   function oiView(t, G) { var old = t.querySelector(":scope > .oid"); if (old) old.remove(); var N = G.near, U = root.ROWSUI; if (!N || !N.rows || !N.underlying || !U) return; var px = N.underlying, c = 0, p = 0; N.rows.forEach(function (r) { c += r[1] || 0; p += r[2] || 0; });
-    var f = function (v) { return U.usdB(U.notional(v, px)); }, cnt = function (v) { return Math.round(v || 0).toLocaleString("en-US"); }, tops = N.rows.slice().sort(function (a, b) { return ((b[1] || 0) + (b[2] || 0)) - ((a[1] || 0) + (a[2] || 0)); }).slice(0, 12).sort(function (a, b) { return a[0] - b[0]; });
-    var el = doc.createElement("div"); el.className = "oid"; el.innerHTML = '<div class="cf-head"><b>Underlying notional exposure ($) · ' + esc(N.chain) + "</b><span>Contracts × 5,000 bu × futures " + esc(N.contract || "") + " $" + (+px).toFixed(4) + (N.oi_label ? " · " + esc(String(N.oi_label).split(" · ")[0]) : "") + "</span></div>" +
-      '<div class="oid-sum">Calls ' + f(c) + " (" + Math.round(c / (c + p) * 100) + "%) · Puts " + f(p) + " (" + Math.round(p / (c + p) * 100) + "%) · Month total " + f(c + p) + "</div>" +
-      '<div class="toggle oid-tog" role="group"><button type="button" data-oid="0" aria-pressed="' + !OIDOL + '">Contracts</button><button type="button" data-oid="1" aria-pressed="' + OIDOL + '">Dollars</button></div>' +
-      (OIDOL ? '<table class="cf-tbl"><thead><tr><th>Strike</th><th>Call OI</th><th>Call notional</th><th>Put OI</th><th>Put notional</th></tr></thead><tbody>' + tops.map(function (r) { return "<tr><td>" + d2(r[0]) + "</td><td>" + cnt(r[1]) + "</td><td>" + f(r[1] || 0) + "</td><td>" + cnt(r[2]) + "</td><td>" + f(r[2] || 0) + "</td></tr>"; }).join("") + "<tr><td><b>Month total</b></td><td>" + cnt(c) + "</td><td>" + f(c) + "</td><td>" + cnt(p) + "</td><td>" + f(p) + "</td></tr></tbody></table>" : "");
+    var V = oiValue(G), $ = function (v) { return v == null ? "—" : U.usdB(v); }, cnt = function (v) { return Math.round(v || 0).toLocaleString("en-US"); };
+    var el = doc.createElement("div"); el.className = "oid";
+    var head = '<div class="cf-head"><b>Open interest by value · ' + esc(N.chain) + " " + esc(N.contract || "") + "</b><span>" + (N.oi_label ? esc(String(N.oi_label).split(" · ").slice(-1)[0]) : "") + (V ? " · priced at futures $" + V.F.toFixed(4) + " · " + Math.max(0, Math.round(V.T * 365)) + " days to expiry" : "") + "</span></div>";
+    var tog = '<div class="toggle oid-tog" role="group"><button type="button" data-oid="1" aria-pressed="' + OIDOL + '">Value ($)</button><button type="button" data-oid="0" aria-pressed="' + !OIDOL + '">Contracts</button></div>';
+    var body = "";
+    if (V) { var W = V.walls, wl = function (lab, w, key, fmt) { return w ? "<td>" + d2(w.k) + '<small> · ' + fmt(w[key]) + "</small></td>" : "<td>—</td>"; };
+      body += '<table class="cf-tbl oid-w"><thead><tr><th>Level</th><th>By contracts</th><th>By premium value</th><th>By delta value</th></tr></thead><tbody>' +
+        "<tr><td>Call wall <small>at/above $" + V.F.toFixed(2) + "</small></td>" + wl("", W.cC, "coi", cnt) + wl("", W.cP, "cprem", $) + wl("", W.cD, "cdel", $) + "</tr>" +
+        "<tr><td>Put wall <small>at/below $" + V.F.toFixed(2) + "</small></td>" + wl("", W.pC, "poi", cnt) + wl("", W.pP, "pprem", $) + wl("", W.pD, "pdel", $) + "</tr></tbody></table>" +
+        '<div class="oid-sum">Premium held in the chain: calls ' + $(V.tot.cprem) + " · puts " + $(V.tot.pprem) + " · delta value calls " + $(V.tot.cdel) + " · puts " + $(V.tot.pdel) + "</div>"; }
+    var tops = (V ? V.rows : []).slice().sort(function (a, b) { return OIDOL ? Math.abs(a.k - V.F) - Math.abs(b.k - V.F) : (b.coi + b.poi) - (a.coi + a.poi); }).slice(0, 12).sort(function (a, b) { return a.k - b.k; });   /* value view: the 12 strikes nearest the money */
+    if (V) body += tog + (OIDOL ? '<table class="cf-tbl"><thead><tr><th>Strike</th><th>Call OI</th><th>Call premium $</th><th>Call delta $</th><th>Put OI</th><th>Put premium $</th><th>Put delta $</th></tr></thead><tbody>' +
+        tops.map(function (r) { var it = r.est ? ' style="font-style:italic" title="no IV for this strike — priced at the chain ATM IV"' : ""; return "<tr" + (Math.abs(r.k - V.F) < 0.05 ? ' class="oid-atm"' : "") + "><td>" + d2(r.k) + "</td><td>" + cnt(r.coi) + "</td><td" + it + ">" + $(r.cprem) + "</td><td" + it + ">" + $(r.cdel) + "</td><td>" + cnt(r.poi) + "</td><td" + it + ">" + $(r.pprem) + "</td><td" + it + ">" + $(r.pdel) + "</td></tr>"; }).join("") + "</tbody></table>"
+      : '<table class="cf-tbl"><thead><tr><th>Strike</th><th>Call OI</th><th>Put OI</th><th>Call notional</th><th>Put notional</th></tr></thead><tbody>' +
+        tops.map(function (r) { return "<tr><td>" + d2(r.k) + "</td><td>" + cnt(r.coi) + "</td><td>" + cnt(r.poi) + "</td><td>" + $(U.notional(r.coi, V.F)) + "</td><td>" + $(U.notional(r.poi, V.F)) + "</td></tr>"; }).join("") + "</tbody></table>");
+    el.innerHTML = head + body + '<div class="stamp">Premium value = OI × Black-76 option price (each strike’s own IV; italic = chain ATM IV) × 5,000 bu. Delta value = OI × |delta| × 5,000 bu × futures — the futures-equivalent position. Contract notional (OI × 5,000 × futures) ranks exactly like contract counts, so it cannot move a level; value does. Estimates, not traded prices.</div>';
     var h = t.querySelector(":scope > h2, :scope > .tile-head"); if (h) h.after(el); else t.prepend(el); }
   doc.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-oid]"); if (!b) return; OIDOL = b.getAttribute("data-oid") === "1"; GR.forEach(paint); });
   /* Seasonality grid (BRD G2): month-end % change of the contract that was front for the whole month; months not held stay blank */
