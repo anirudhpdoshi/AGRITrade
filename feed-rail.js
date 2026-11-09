@@ -26,7 +26,7 @@
     if (/\bcorn\b/i.test(h)) t.corn = 1; if (/\bwheat\b/i.test(h)) t.wheat = 1; if (/soybean|\bsoy\b|\bbeans\b/i.test(h)) t.soybeans = 1;
     if (/CBOT|grains?\b|WASDE|export sales|Commitments of Traders — grains|Options open interest|fundamentals|settlements/i.test(h)) { t.corn = t.wheat = t.soybeans = 1; }
     if (g === "fx" || /USD\/CAD|Canadian dollar|\bCAD\b/.test(h)) t.fx = 1;
-    if (m.k === "release" || /fx:macro/.test(m.go || "") || /^\s*(US|Canada) /.test(h)) t.macro = 1;
+    if (m.k === "release" || /^macro:/.test(m.go || "") || /^\s*(US|Canada) /.test(h)) t.macro = 1;
     if (m.k === "policy" || g === "policy" || /Federal Reserve|Bank of Canada|ECB|Bank of England|Bank of Japan|central bank/i.test(h)) t.cb = 1;
     if (m.k === "world" || g === "world") t.world = 1;
     if (g === "briefing" || /Commons|Congress|hearing|House floor|Senate/i.test(h)) t.leg = 1;

@@ -266,17 +266,17 @@
   }
   var rsT; if (root.MutationObserver) new MutationObserver(function (L) { if (L.every(function (m) { return m.target.closest && m.target.closest(".rs-bar"); })) return; clearTimeout(rsT); rsT = setTimeout(function () { var P = doc.getElementById("panel-fx"), sub = P && P.querySelector("[data-subpanel].on"); if (sub && sub.getAttribute("data-subpanel") === "rates") rateSlice(sub); }, 50); }).observe(doc.body || doc.documentElement, { childList: true, subtree: true });
   doc.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-rs]"); if (!b) return; RS[b.getAttribute("data-rs")] = b.getAttribute("data-v"); try { localStorage.setItem("desk.rates", JSON.stringify(RS)); } catch (e) {} var P = doc.getElementById("panel-fx"), sub = P && P.querySelector("[data-subpanel].on"); if (sub) rateSlice(sub); });
-  function paintFx() { var P = doc.getElementById("panel-fx"), sub = P && P.querySelector("[data-subpanel].on"), D = root.DATA; if (!sub || !D) return; rateSlice(sub); var A = D.meta && D.meta.asof || {};
+  function paintFx(pid) { var P = doc.getElementById("panel-" + (pid || "fx")), sub = P && P.querySelector("[data-subpanel].on"), D = root.DATA; if (!sub || !D) return; rateSlice(sub); var A = D.meta && D.meta.asof || {};
     [].forEach.call(sub.children, function (t) { var sec = t.getAttribute("data-sec"), r = FXR[sec]; if (!r || !t.classList.contains("tile")) return; var key = t.getAttribute("data-src"), old = t.querySelector(":scope > .obs-box"); if (old) old.remove();
       var h = FXMAX[key], tt = Date.parse(A[key]); if (h && !(isFinite(tt) && Date.now() - tt <= h * 36e5)) return;
       var txt = spaced(t), ok = r(D, t).filter(function (b) { return traceable(b, txt); }).slice(0, 3); if (!ok.length) return;
       var el = doc.createElement("div"); el.className = "obs-box"; el.innerHTML = "<b>OBSERVATIONS</b><ul>" + ok.map(function (b) { return "<li>" + esc(b) + "</li>"; }).join("") + "</ul>"; t.appendChild(el); }); }
   var rg = root.renderGrain, ss = root.setSub;
   root.renderGrain = function (k) { var r = rg.apply(this, arguments); paint(k); return r; };
-  root.setSub = function (p) { var r = ss.apply(this, arguments); if (GR.indexOf(p) >= 0) paint(p); if (p === "fx") paintFx(); return r; };
-  doc.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("#tabbtn-fx")) setTimeout(paintFx, 0); });
-  var raFx = root.renderAll; if (typeof raFx === "function") root.renderAll = function () { var r = raFx.apply(this, arguments); paintFx(); return r; };
-  setInterval(function () { if (doc.getElementById("panel-fx") && doc.getElementById("panel-fx").classList.contains("active") && !doc.querySelector("#panel-fx [data-subpanel].on .obs-box")) paintFx(); }, 5000);
+  root.setSub = function (p) { var r = ss.apply(this, arguments); if (GR.indexOf(p) >= 0) paint(p); if (p === "fx" || p === "macro") paintFx(p); return r; };
+  doc.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("#tabbtn-fx, #tabbtn-macro")) setTimeout(function () { paintFx("fx"); paintFx("macro"); }, 0); });
+  var raFx = root.renderAll; if (typeof raFx === "function") root.renderAll = function () { var r = raFx.apply(this, arguments); paintFx("fx"); paintFx("macro"); return r; };
+  setInterval(function () { ["fx", "macro"].forEach(function (k) { var P = doc.getElementById("panel-" + k); if (P && P.classList.contains("active") && !P.querySelector("[data-subpanel].on .obs-box")) paintFx(k); }); }, 5000);
   doc.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-cf-pick]"); if (b && root.GRAINS && GRAINS.pick) { var y = b.getBoundingClientRect().top; GRAINS.pick(b.getAttribute("data-cf-pick")); var nb = doc.querySelector('.tab-panel.active [data-cf-pick]'); if (nb) root.scrollBy(0, nb.getBoundingClientRect().top - y); } });
   doc.addEventListener("click", function (ev) { var t = ev.target.closest && ev.target.closest(".tile button, .tile [data-oiv]"); if (!t) return; var P = doc.querySelector(".tab-panel.active"), k = P && P.id.replace("panel-", ""); if (GR.indexOf(k) >= 0) setTimeout(function () { paint(k); }, 30); }, true);   /* capture: the panel redraws its own buttons on click */
   GR.forEach(paint);

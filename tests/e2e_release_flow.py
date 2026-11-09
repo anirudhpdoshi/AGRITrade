@@ -76,26 +76,26 @@ async def main():
             rows = await pg.evaluate("[].map.call(document.querySelectorAll('#panel-events .evr'),r=>r.innerText.replace(/\\s+/g,' '))")
             gdp = next((r for r in rows if "Advance GDP" in r), "")
             check(f"[{tag}] landed release shows time, lag and value", "On the desk 9:12" in gdp and "+42 min" in gdp and "2.9" in gdp, gdp)
-            check(f"[{tag}] landed release says where to look", "See it: USD/CAD · Macro" in gdp, gdp)
+            check(f"[{tag}] landed release says where to look", "See it: Macro · " in gdp, gdp)
             cpi = next((r for r in rows if "CPI m/m" in r), "")
             check(f"[{tag}] released but not on the desk says 'awaiting desk'", "awaiting desk" in cpi, cpi)
             phs = next((r for r in rows if "Pending Home Sales" in r), "")
             check(f"[{tag}] untracked release is marked calendar-only", "calendar only" in phs, phs)
             fed = next((r for r in rows if "Federal Funds Rate" in r), "")
             check(f"[{tag}] upcoming release still counts down", ":" in fed and "On the desk" not in fed, fed)
-            check(f"[{tag}] tab with a landed release is coloured NEW", await pg.evaluate("document.getElementById('tabbtn-fx').classList.contains('tab-today')"))
-            check(f"[{tag}] tab title lists what landed", "GDP" in (await pg.evaluate("document.getElementById('tabbtn-fx').title")))
-            check(f"[{tag}] menu red dot on the USD/CAD tab and its Macro menu item (BRD 16D)", await pg.evaluate("document.getElementById('tabbtn-fx').classList.contains('md-dot') && !!document.querySelector('#panel-fx .md-dot[data-sub=\"macro\"]')"))
+            check(f"[{tag}] tab with a landed release is coloured NEW", await pg.evaluate("document.getElementById('tabbtn-macro').classList.contains('tab-today')"))
+            check(f"[{tag}] tab title lists what landed", "GDP" in (await pg.evaluate("document.getElementById('tabbtn-macro').title")))
+            check(f"[{tag}] menu red dot on the Macro tab and its Dashboard menu item (BRD 16D)", await pg.evaluate("document.getElementById('tabbtn-macro').classList.contains('md-dot') && !!document.querySelector('#panel-macro .md-dot[data-sub=\"dash\"]')"))
             check(f"[{tag}] options run marks the grain tabs NEW", await pg.evaluate("document.getElementById('tabbtn-corn').classList.contains('tab-today')"))
             # "See it" jumps to the exact card and marks it
             await pg.evaluate("[].filter.call(document.querySelectorAll('#panel-events .evgo.see'),b=>/Macro/.test(b.textContent))[0].click()")
             await pg.wait_for_timeout(700)
-            check(f"[{tag}] 'See it' opens the USD/CAD tab", await pg.evaluate("document.getElementById('panel-fx').classList.contains('active')"))
-            await pg.evaluate("document.getElementById('tabbtn-fx').click()"); await pg.wait_for_timeout(300)   # a redraw must keep the marks
-            check(f"[{tag}] the released card carries a NEW-today ribbon (and keeps it after a redraw)", await pg.evaluate("!!document.querySelector('#panel-fx .upd-today[data-upd*=\"RELEASED TODAY\"]')"))
+            check(f"[{tag}] 'See it' opens the Macro tab", await pg.evaluate("document.getElementById('panel-macro').classList.contains('active')"))
+            await pg.evaluate("document.getElementById('tabbtn-macro').click()"); await pg.wait_for_timeout(300)   # a redraw must keep the marks
+            check(f"[{tag}] the released card carries a NEW-today ribbon (and keeps it after a redraw)", await pg.evaluate("!!document.querySelector('#panel-macro .upd-today[data-upd*=\"RELEASED TODAY\"]')"))
             if os.environ.get("SHOT"):
                 await pg.screenshot(path=os.path.join(os.environ["SHOT"], f"e2e_seeit_{tag}.png"), full_page=False)
-            check(f"[{tag}] the jumped-to card is flashed", await pg.evaluate("!!document.querySelector('#panel-fx .flash-find')"))
+            check(f"[{tag}] the jumped-to card is flashed", await pg.evaluate("!!document.querySelector('#panel-macro .flash-find')"))
             # a release arriving with the next data refresh reaches the Milestones feed
             await pg.evaluate("""(function(){ window.DESK_LOCKED=false; EVENTS._diff(); var c=mfind('us_cpi'); c.period="Sep '26"; c.value=3.9; c.seen_at='2026-10-29T10:59:00-04:00';
               DATA.meta.asof.options='2026-10-29T10:58:00-04:00'; DATA.grains.corn.near.rows[5][1]+=777; EVENTS._diff(); EVENTS.decorate(); return 1; })()""")

@@ -15,6 +15,12 @@ window.KB = {
       macro: { t: "Macro", d: "The US and Canadian data that drive the currency — jobs, inflation, GDP, trade and fiscal balances — with the latest prints and release calendar.", q: ["Which economy is surprising to the upside?", "What was the last CPI / jobs print and what's next?"] },
       rates: { t: "Rates, policy & energy", d: "The interest-rate gap between the US and Canada, what futures imply for the Fed and Bank of Canada, and oil — the three biggest drivers of USD/CAD.", q: ["Is the US–Canada yield spread widening (USD-supportive) or narrowing?", "What do markets expect at the next Fed / BoC meeting?", "Is oil helping or hurting the CAD?"] }
     },
+    macro: {
+      dash: { t: "Dashboard", d: "US and Canadian data by category — growth, jobs, inflation, consumer, manufacturing, credit — each marked leading, coincident or lagging, as a table, chart or both.", q: ["Which economy is surprising to the upside?", "What was the last CPI / jobs print?"] },
+      cycle: { t: "Cycle & Fed policy", d: "Leading, coincident and lagging composites for the business cycle, and the Fed read: inflation risk, surprises, revisions and market odds for the next meeting.", q: ["Where is the US in the cycle?", "What is priced for the next Fed meeting?"] },
+      trade: { t: "Trade & fiscal", d: "Merchandise trade and government budget balances for both countries — the flows behind the currency.", q: ["Is Canada's trade surplus growing or shrinking?", "How large is the US deficit over 12 months?"] },
+      rel: { t: "Releases & consensus", d: "The latest US and Canada prints against their forecasts, with the next releases and their consensus.", q: ["Which print beat consensus today?", "What is due next and what is expected?"] }
+    },
     world: {
       overview: { t: "Overview", d: "What happened across world markets: index breadth, biggest gainers and decliners, average move by region, the 52-week watch and the latest alerts.", q: ["Is it a risk-on or risk-off day?", "Which region is leading or lagging?", "What is close to a 52-week high or low?"] },
       sessions: { t: "Sessions", d: "Which exchanges are open right now, on one 24-hour Toronto-time bar per venue, with countdowns to the next open or close.", q: ["Is Asia or Europe still trading?", "How long until the US close or the next open?"] },

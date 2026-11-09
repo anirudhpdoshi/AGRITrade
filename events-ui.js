@@ -79,7 +79,7 @@
       var energy = /crude|oil|natural gas|petroleum|gasoline|distillate|API Weekly|EIA/i.test(e.event);
       macroAt[e.ccy + "|" + t] = 1;
       add({ t: t, label: e.ccy + " " + e.event, kind: energy ? "energy" : "macro", cc: e.ccy === "CAD" ? "ca" : "us", impact: e.impact, high: e.impact === "High",
-        fc: e.fc, prev: e.prev, go: energy ? "corn:inputs" : "fx:macro" });
+        fc: e.fc, prev: e.prev, go: energy ? "corn:inputs" : "macro:dash" });
     });
     /* official release calendars the desk tracks directly (only where the macro calendar has no entry at that minute) */
     var RC = DATA.release_cal || {}, names = {};
@@ -89,7 +89,7 @@
       (RC[k].dates || []).forEach(function (d) {
         var a = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/.exec(d); if (!a) return;
         var t = zms(a[1], +a[2], +a[3]); if (macroAt[ccy + "|" + t]) return;
-        add({ t: t, label: ccy + " " + (m ? m.name : k.replace(/^(us|ca)_/, "").toUpperCase()), kind: "macro", cc: ccy === "CAD" ? "ca" : "us", impact: "High", high: true, go: "fx:macro" });
+        add({ t: t, label: ccy + " " + (m ? m.name : k.replace(/^(us|ca)_/, "").toUpperCase()), kind: "macro", cc: ccy === "CAD" ? "ca" : "us", impact: "High", high: true, go: "macro:dash" });
       });
     });
     try {
@@ -163,7 +163,7 @@
   function ccOf(e) { for (var i = 0; i < CTRY.length; i++) if (CTRY[i][0].test(e.label || "")) return CTRY[i][1]; return e.cc; }
   function flagOf(e) { var cc = ccOf(e); return cc && window.flag ? window.flag(cc, 13) + " " : ""; }
   function chip(e) { var c = CAT[e.kind] || CAT.desk; return '<span class="evc" style="--ec:' + c.c + '">' + c.l + "</span>"; }
-  function deskName(go) { var a = (go || "").split("@")[0].split(":"); if (a[0] === "world") return "World markets"; if (a[0] === "briefing") return "Briefing · legislation"; if (a[0] === "earnings") return "US Earnings"; if (a[0] === "events") return "Events"; if (a[0] === "policy") return "Policy · " + (a[1] ? "evidence" : "calendar"); return ({ corn: "Corn", wheat: "Wheat", soybeans: "Soybeans", fx: "USD/CAD" })[a[0]] + " · " + ({ overview: "Overview", deriv: "Derivatives", fund: "Fundamentals", inputs: "Input costs", macro: "Macro" })[a[1]]; }
+  function deskName(go) { var a = (go || "").split("@")[0].split(":"); if (a[0] === "world") return "World markets"; if (a[0] === "briefing") return "Briefing · legislation"; if (a[0] === "earnings") return "US Earnings"; if (a[0] === "events") return "Events"; if (a[0] === "policy") return "Policy · " + (a[1] ? "evidence" : "calendar"); return ({ corn: "Corn", wheat: "Wheat", soybeans: "Soybeans", fx: "USD/CAD", macro: "Macro" })[a[0]] + " · " + ({ overview: "Overview", deriv: "Derivatives", fund: "Fundamentals", inputs: "Input costs", macro: "Macro", dash: "Dashboard", cycle: "Cycle & Fed policy", trade: "Trade & fiscal", rel: "Releases" })[a[1]]; }
   /* one calendar row: time · country · importance · event · actual · forecast · previous · status; click to expand */
   var IMPN = { H: "High", M: "Medium", L: "Low" };
   function actualOf(e, LD) { var k = relKey(e); if (!LD || !LD.at || !k || !k.macro) return LD && LD.at && LD.txt && !k.macro ? "" : ""; var m = window.mfind && mfind(k.macro); return m ? (window.mval ? mval(m, m.value) : m.value) : ""; }
@@ -261,8 +261,8 @@
       if (k.macro === "us_policy" || k.macro === "ca_policy") { var r = pw()[k.macro === "us_policy" ? "fed" : "boc"];
         if (r && r.status === "out" && r.date === dayIso(e.t)) return { at: Date.parse(r.t_seen), txt: r.decision + " " + rateTxt(r.rate) + " · " + r.tone, go: "events:", sel: ".pw-tile", where: "Events · central-bank card", tab: "fx" }; }
       var seen = m.seen_at ? Date.parse(m.seen_at) : 0;
-      if (seen && seen >= e.t - 5 * MIN) return { at: seen, txt: m.name + " " + m.period + ": " + (window.mval ? mval(m, m.value) : m.value) + (e.fc && sameMeasure(e, m) ? " (fc " + e.fc + ")" : ""), go: "fx:macro", sel: '[data-mkey="' + k.macro + '"]', where: "USD/CAD · Macro · " + m.name, tab: "fx" };
-      return { pending: 1, where: "USD/CAD · Macro · " + m.name }; }
+      if (seen && seen >= e.t - 5 * MIN) return { at: seen, txt: m.name + " " + m.period + ": " + (window.mval ? mval(m, m.value) : m.value) + (e.fc && sameMeasure(e, m) ? " (fc " + e.fc + ")" : ""), go: "macro:dash", sel: '[data-mkey="' + k.macro + '"]', where: "Macro · " + m.name, tab: "macro" };
+      return { pending: 1, where: "Macro · " + m.name }; }
     if (k.asof) { var w = WHERE[k.asof], at = A[k.asof] ? Date.parse(A[k.asof]) : 0, ok = at >= e.t - 5 * MIN;
       if (k.asof === "cftc_grains") { var c = DATA.grains.corn.cftc, lastD = c[c.length - 1].date; ok = lastD >= new Date(e.t - 4 * 86400000).toISOString().slice(0, 10); at = ok ? e.t : 0; }
       if (k.asof === "exports") { var E = (DATA.exports && DATA.exports.corn && DATA.exports.corn.weeks) || [], wk = E.length ? E[E.length - 1][1] : ""; ok = wk >= new Date(e.t - 8 * 86400000).toISOString().slice(0, 10); }
@@ -457,7 +457,7 @@
   var ASOF = { cftc_grains: ["CFTC Commitments of Traders — grains", "corn:deriv"], cftc_fx: ["CFTC Commitments of Traders — CAD", "fx:deriv"], options: ["Options open interest, IV & walls", "corn:deriv"],
     grains_settle: ["CBOT grain settlements", "corn:overview"], exports: ["USDA weekly export sales", "corn:fund"], wasde: ["WASDE balance sheets", "corn:fund"], canada: ["Statistics Canada field-crop tables", "corn:fund"],
     sd_hist: ["Supply & demand history", "corn:fund"], inputs: ["Input costs (fertilizer, chemicals, energy)", "corn:inputs"], yields: ["Government bond yields", "fx:rates"], policy: ["Central-bank policy & rate odds", "fx:rates"],
-    sentiment: ["Positioning sentiment", "fx:deriv"], fxopt: ["USD/CAD options (risk reversals)", "fx:deriv"], releases: ["Macro release consensus", "fx:macro"], fx_closes: ["USD/CAD daily closes", "fx:overview"] };
+    sentiment: ["Positioning sentiment", "fx:deriv"], fxopt: ["USD/CAD options (risk reversals)", "fx:deriv"], releases: ["Macro release consensus", "macro:rel"], fx_closes: ["USD/CAD daily closes", "fx:overview"] };
   delete ASOF.policy;   /* re-checked every run; real policy moves arrive as macro releases */
   /* content fingerprints: a milestone fires only when the data itself changes, not when the server merely re-checks a source */
   function fp(o) { var t = JSON.stringify(o) || "", h = 0; for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return t.length + ":" + h; }
@@ -534,13 +534,13 @@
     if (first) (window.macroAll ? macroAll() : []).forEach(function (m) {   /* prints that landed today before the page opened */
       var t = m.seen_at ? Date.parse(m.seen_at) : NaN; if (isNaN(t) || Date.now() - t > 18 * 3600000 || !printable(m)) return;
       var u = m.unit === "K" ? "K" : m.unit || "";
-      log("release", relHTML(m), "fx:macro@[data-mkey=\"" + m.key + "\"]", "mac|" + m.key + "|" + s.macro[m.key], t);
+      log("release", relHTML(m), "macro:dash@[data-mkey=\"" + m.key + "\"]", "mac|" + m.key + "|" + s.macro[m.key], t);
     });
     if (first) { delete s.pol; base = s; return; }   /* policy items are seeded on the next pass */
     (window.macroAll ? macroAll() : []).forEach(function (m) {
       if (base.macro[m.key] && s.macro[m.key] !== base.macro[m.key] && printable(m)) {
         var u = m.unit === "K" ? "K" : m.unit || "";
-        log("release", relHTML(m), "fx:macro@[data-mkey=\"" + m.key + "\"]", "mac|" + m.key + "|" + s.macro[m.key]);
+        log("release", relHTML(m), "macro:dash@[data-mkey=\"" + m.key + "\"]", "mac|" + m.key + "|" + s.macro[m.key]);
       }
     });
     Object.keys(s.walls).forEach(function (k) {
@@ -581,7 +581,7 @@
       var r = pw()[b]; if (!r || r.status !== "out" || s.pw[b] === base.pw[b] || r.date !== dayIso(Date.now())) return;
       var msg = "<b>" + BANK[b].n + ": " + r.decision + (r.change_bp ? " " + (r.change_bp > 0 ? "+" : "") + r.change_bp + " bp" : "") + " to " + rateTxt(r.rate) + " — " + r.tone + "</b> (score " + (r.score > 0 ? "+" : "") + r.score + ")" +
         (r.surprise_bp ? " · " + (r.surprise_bp > 0 ? "+" : "") + r.surprise_bp + " bp vs forecast" : "") + "<br><small>on the desk " + lagTxt(r.lag_min) + " after the scheduled time</small>";
-      log("release", msg, "fx:macro", "pw|" + b + "|" + r.date, Date.parse(r.t_seen));
+      log("release", msg, "macro:cycle", "pw|" + b + "|" + r.date, Date.parse(r.t_seen));
       if (window.DESK_LIVE && DESK_LIVE.toast) { window.__evNoLog = 1; try { DESK_LIVE.toast(msg); } finally { window.__evNoLog = 0; } }
       try { if (localStorage.getItem("desk.worldNotify") === "1" && "Notification" in window && Notification.permission === "granted") new Notification(BANK[b].n + " — " + r.decision + " " + rateTxt(r.rate) + " · " + r.tone, { body: "On the desk " + lagTxt(r.lag_min) + " after the scheduled time" }); } catch (e) {}
       screenSeen(b, r); if (active()) repaintMain();

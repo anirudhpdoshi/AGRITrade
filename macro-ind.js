@@ -237,5 +237,5 @@
     ".mi-tr.rel-today td{background:#1E40AF;color:#fff}" +
     "@media (max-width:900px){.mi-wrap{grid-template-columns:1fr}.mi-pick,.mi-rail{position:static;max-height:none}.mi-cg{grid-template-columns:1fr}}";
   document.head.appendChild(css);
-  try { if (window.DATA && typeof renderFX === "function" && document.getElementById("panel-fx")) renderFX(); } catch (e) {}
+  try { if (window.DATA && typeof renderMacro === "function" && document.getElementById("panel-macro")) renderMacro(); } catch (e) {}
 })();
