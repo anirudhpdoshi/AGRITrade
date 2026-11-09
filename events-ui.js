@@ -413,7 +413,8 @@
     return head + '<div class="rail-body mon-body evfb">' + body + '<div class="stamp">Recorded while the desk is open (kept 36 h on this browser) · newest first' + (feed.length ? ' · <a href="#" data-evclear>clear</a>' : "") + "</div></div></div>";
   }
   function paintFeed() { var r = document.getElementById("evRail"); if (r) r.innerHTML = feedHTML(); }
-  function paintBadge() {
+  function paintBadge() { try { paintBadge0(); } catch (x) { if (window.console) console.error("events badge", x); } }
+  function paintBadge0() {
     if (!ready()) return;
     var now = Date.now(), left = todayEvents(now).filter(function (e) { return e.t > now; }).length;
     var tot = todayEvents(now).length, s = BTN.querySelector(".sym"); if (s) s.textContent = tot ? "Today · " + left + " to come" : "Today · no events";   /* BRD s.15: a computed count, never a static word */
@@ -425,10 +426,16 @@
   function render() {
     if (!ready()) { P.innerHTML = '<div class="tile wide"><p class="note">Loading events…</p></div>'; return; }
     hookToast(); var now = Date.now(); lastDay = dayIso(now);
-    P.innerHTML = '<div class="layout ev-lay"><div class="grid" id="evMain">' + mainHTML(now) + '</div><aside class="rail" id="evRail">' + feedHTML() + "</aside></div>";
+    var mh, fh;
+    try { mh = mainHTML(now); } catch (x) {   /* a saved view from an older layout must never blank the tab: reset it and retry once */
+      try { V.day = "today"; V.imp = { H: true, M: true, L: true }; V.ccs = { us: true, ca: true }; V.cat = "all"; V.q = ""; V.open = ""; saveV(); mh = mainHTML(now); }
+      catch (y) { mh = '<div class="tile wide"><h2>Events</h2><p class="note">The calendar could not be drawn (' + esc(y && y.message || y) + '). Reload the page; if it persists, tell the desk owner this message.</p></div>'; if (window.console) console.error("events render", y); } }
+    try { fh = feedHTML(); } catch (x) { fh = ""; }
+    P.innerHTML = '<div class="layout ev-lay"><div class="grid" id="evMain">' + mh + '</div><aside class="rail" id="evRail">' + fh + "</aside></div>";
     if (window.MOTION) window.MOTION.scan();
   }
-  function repaintMain(full) { var m = document.getElementById("evMain"); if (!m) return render(); var b = document.getElementById("evBody");
+  function repaintMain(full) { try { repaintMain0(full); } catch (x) { render(); } }
+  function repaintMain0(full) { var m = document.getElementById("evMain"); if (!m) return render(); var b = document.getElementById("evBody");
     if (!full && b) { b.innerHTML = bodyHTML(Date.now()); var t = document.getElementById("evTop"); if (t && !t.contains(document.activeElement)) t.innerHTML = topHTML(Date.now()); } else m.innerHTML = mainHTML(Date.now()); }
 
   /* ---------- milestone detectors (read-only diffs of the page's data) ---------- */
