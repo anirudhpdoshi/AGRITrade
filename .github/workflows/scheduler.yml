@@ -12,6 +12,7 @@ name: Scheduler (keepalive)
 #   Intelligence        hourly at :50, 10:50–22:50 UTC Mon–Fri
 #   Briefing            every 30 min at :07/:37, every day
 #   Policy intelligence every 15 min at :04/:19/:34/:49, Sun–Fri
+#   System health       every 15 min at :10/:25/:40/:55, every day
 #   US earnings         :17 at 14/16/18/20 UTC Mon–Fri; release watch (calendar only, when due) every 15 min 12–14 and 21–00 UTC
 on:
   schedule:
@@ -65,6 +66,8 @@ jobs:
               if [ $((m % 30)) -eq 7 ]; then fire briefing.yml; fi
               # policy-intel: :04 :19 :34 :49 Sun–Fri (its own cron fired ~4x/day instead of 96)
               if [ $((m % 15)) -eq 4 ] && { [ "$dow" -le 5 ] || [ "$dow" -eq 7 ]; }; then fire policy-intel.yml; fi
+              # system health: :10 :25 :40 :55 every day
+              if [ $((m % 15)) -eq 10 ]; then fire health.yml; fi
               # us-earnings: full run ~9:17, 11:17, 1:17, 3:17 ET (14/16/18/20 UTC) weekdays; release watch (calendar call only, and
               # only when a watchlist / top-100 report is out without actuals) every 15 min 12–14 UTC (pre-market) and 21–00 UTC (after the close)
               if [ "$m" -eq 17 ] && [ "$dow" -le 5 ] && { [ "$h" -eq 14 ] || [ "$h" -eq 16 ] || [ "$h" -eq 18 ] || [ "$h" -eq 20 ]; }; then fire us-earnings.yml; fi

@@ -32,7 +32,7 @@ jobs:
       - run: python tests/test_pr_parse.py
       - run: python tests/test_wires.py
       - run: python tests/test_sp_schedule.py
-      - run: python tests/test_bea_fastlane.py && python tests/test_roll.py
+      - run: python tests/test_bea_fastlane.py && python tests/test_roll.py && python tests/test_health.py
       - run: python tests/test_yields.py
   e2e:
     # the release flow end to end in a real browser: landed / awaiting / calendar-only rows, "See it" jump, NEW tabs and
