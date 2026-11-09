@@ -46,7 +46,16 @@
   function saveV() { store.set("desk.eventsView", V); }
 
   /* ---------- today's events from every source on the page ---------- */
+  /* speed: a day's event list is built once and reused until the desk data changes or a minute passes (it was rebuilt for
+     every day of every range on each click: ~40 rebuilds per redraw) */
+  var MEMO = {}, MEMO_STAMP = "";
   function todayEvents(now) {
+    var st = ((window.DATA && DATA.meta && DATA.meta.updated_at) || "") + "|" + Math.floor(Date.now() / 60000), k = dayIso(now);
+    if (st !== MEMO_STAMP) { MEMO = {}; MEMO_STAMP = st; }
+    if (!MEMO[k]) MEMO[k] = todayEvents0(now);
+    return MEMO[k].map(function (e) { return e; });
+  }
+  function todayEvents0(now) {
     var today = dayIso(now), out = [], seen = {};
     function add(e) {
       if (!isFinite(e.t) || dayIso(e.t) !== today) return;
