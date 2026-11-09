@@ -10797,11 +10797,11 @@
     "6M": 4.23
    },
    "fxcross": {
-    "dxy": 101.677,
-    "dxy_chg": -0.609,
-    "eurusd": 1.1222,
-    "usdjpy": 157.86,
-    "usdcad_ref": 1.4122
+    "dxy": 101.683,
+    "dxy_chg": -0.603,
+    "eurusd": 1.1227,
+    "usdjpy": 157.91,
+    "usdcad_ref": 1.4116
    },
    "closes": [
     [
@@ -12531,10 +12531,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.4121,
+    "mid": 1.41158,
     "bid": null,
     "ask": null,
-    "ts": "2026-11-09T17:14:00-05:00",
+    "ts": "2026-11-09T17:30:00-05:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -12674,18 +12674,6 @@
     }
    ],
    "intraday": [
-    [
-     "2026-11-09T02:20+00:00",
-     1.41114
-    ],
-    [
-     "2026-11-09T02:25+00:00",
-     1.41105
-    ],
-    [
-     "2026-11-09T02:30+00:00",
-     1.41102
-    ],
     [
      "2026-11-09T02:35+00:00",
      1.41082
@@ -12976,7 +12964,7 @@
     ],
     [
      "2026-11-09T08:35+00:00",
-     1.40846
+     1.40842
     ],
     [
      "2026-11-09T08:40+00:00",
@@ -13008,7 +12996,7 @@
     ],
     [
      "2026-11-09T09:15+00:00",
-     1.4082
+     1.40847
     ],
     [
      "2026-11-09T09:20+00:00",
@@ -13268,7 +13256,7 @@
     ],
     [
      "2026-11-09T14:40+00:00",
-     1.41089
+     1.4109
     ],
     [
      "2026-11-09T14:45+00:00",
@@ -13629,6 +13617,22 @@
     [
      "2026-11-09T22:10+00:00",
      1.4121
+    ],
+    [
+     "2026-11-09T22:15+00:00",
+     1.41194
+    ],
+    [
+     "2026-11-09T22:20+00:00",
+     1.41196
+    ],
+    [
+     "2026-11-09T22:25+00:00",
+     1.41148
+    ],
+    [
+     "2026-11-09T22:30+00:00",
+     1.41158
     ]
    ],
    "fwd_inputs": {
@@ -14038,10 +14042,10 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-11-09T17:15:21-05:00",
+   "updated_at": "2026-11-09T17:30:27-05:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-11-09T17:14:00-05:00",
+    "fx_spot": "2026-11-09T17:30:00-05:00",
     "fx_closes": "2026-11-09T16:30:00-04:00",
     "yields": "2026-11-06T17:00:00-04:00",
     "policy": "2026-11-09T17:00:25-05:00",
@@ -14049,11 +14053,11 @@
     "cftc_fx": "2026-11-03T15:30:00-04:00",
     "cftc_grains": "2026-11-03T15:30:00-04:00",
     "energy": "2026-11-09T16:55:00-05:00",
-    "crosses": "2026-11-09T17:05:00-05:00",
+    "crosses": "2026-11-09T17:20:00-05:00",
     "grains_settle": "2026-11-09T14:20:00-05:00",
     "grains_quote": "2026-11-09T14:15:00-05:00",
     "options": "2026-11-05T08:39:59-05:00",
-    "news": "2026-11-09T17:15:21-05:00",
+    "news": "2026-11-09T17:30:27-05:00",
     "calendar": "2026-11-09T17:00:25-05:00",
     "releases": "2026-11-06T08:30:00-05:00",
     "macro": "2026-11-09T16:45:28-05:00",
@@ -14069,7 +14073,7 @@
     "model": "2026-11-09T15:15:23-05:00",
     "policy_watch": "2026-10-28T14:00:21-04:00",
     "yields_live": "2026-11-09T16:55:00-05:00",
-    "optflow": "2026-11-09T17:15:21-05:00",
+    "optflow": "2026-11-09T17:30:27-05:00",
     "ust": "2026-11-09T12:00:29-05:00"
    },
    "sources": {
@@ -14112,7 +14116,7 @@
      "ust"
     ],
     "failed": [],
-    "at": "2026-11-09T17:15:21-05:00"
+    "at": "2026-11-09T17:30:27-05:00"
    },
    "releases_checked": "2026-11-09T15:15:23-05:00",
    "exports_checked": "2026-11-09T12:00:29-05:00",
@@ -14149,7 +14153,7 @@
    },
    "canada_checked": "2026-11-09T06:00:24-05:00",
    "ca_calendar_checked": "2026-11-09T12:00:29-05:00",
-   "canada_watch": "2026-11-09T17:15:21-05:00",
+   "canada_watch": "2026-11-09T17:30:27-05:00",
    "canada_new_release": {
     "tables": [
      "32100359",
@@ -34723,7 +34727,7 @@
   },
   "optflow": {
    "corn": {
-    "asof": "2026-11-09T22:15:21.646571+00:00",
+    "asof": "2026-11-09T22:30:27.983583+00:00",
     "price": 4.3875,
     "settle": 4.3875,
     "settle_date": "2026-11-09",
@@ -34894,17 +34898,17 @@
       "calls_oi": 602941,
       "puts_oi": 448728,
       "pcr": 0.74,
-      "em": 0.1649,
+      "em": 0.1648,
       "em_pct": 3.76,
-      "lo": 4.2226,
-      "hi": 4.5524,
-      "gex": -185628722,
-      "dex": -279205,
+      "lo": 4.2227,
+      "hi": 4.5523,
+      "gex": -185667425,
+      "dex": -279219,
       "has_vol": true,
       "vol_c": 114,
       "vol_p": 112,
       "prem_c": 67,
-      "prem_p": 287041,
+      "prem_p": 287040,
       "flip": 4.7567,
       "top_oi": [
        {
@@ -34913,7 +34917,7 @@
         "poi": 41440,
         "cvol": null,
         "pvol": null,
-        "gex": 53961,
+        "gex": 53673,
         "prem": 0,
         "voi": 0.0
        },
@@ -34923,7 +34927,7 @@
         "poi": 30187,
         "cvol": 114,
         "pvol": 112,
-        "gex": 759824,
+        "gex": 757546,
         "prem": 287107,
         "voi": 0.003
        },
@@ -34933,7 +34937,7 @@
         "poi": 15951,
         "cvol": null,
         "pvol": null,
-        "gex": 189,
+        "gex": 186,
         "prem": 0,
         "voi": 0.0
        },
@@ -34943,7 +34947,7 @@
         "poi": 15565,
         "cvol": null,
         "pvol": null,
-        "gex": 1545,
+        "gex": 1531,
         "prem": 0,
         "voi": 0.0
        },
@@ -34953,7 +34957,7 @@
         "poi": 26097,
         "cvol": null,
         "pvol": null,
-        "gex": -11896198,
+        "gex": -11898775,
         "prem": 0,
         "voi": 0.0
        },
@@ -34973,7 +34977,7 @@
         "poi": 19822,
         "cvol": null,
         "pvol": null,
-        "gex": 461236,
+        "gex": 461405,
         "prem": 0,
         "voi": 0.0
        },
@@ -34983,7 +34987,7 @@
         "poi": 23124,
         "cvol": null,
         "pvol": null,
-        "gex": -8995501,
+        "gex": -8992933,
         "prem": 0,
         "voi": 0.0
        }
@@ -34995,7 +34999,7 @@
         "poi": 22317,
         "cvol": null,
         "pvol": null,
-        "gex": -35826255,
+        "gex": -35843448,
         "prem": 0,
         "voi": 0.0
        },
@@ -35005,7 +35009,7 @@
         "poi": 17751,
         "cvol": null,
         "pvol": null,
-        "gex": -29994510,
+        "gex": -30005087,
         "prem": 0,
         "voi": 0.0
        },
@@ -35015,7 +35019,7 @@
         "poi": 15110,
         "cvol": null,
         "pvol": null,
-        "gex": -28205480,
+        "gex": -28217059,
         "prem": 0,
         "voi": 0.0
        },
@@ -35025,7 +35029,7 @@
         "poi": 19351,
         "cvol": null,
         "pvol": null,
-        "gex": -21553227,
+        "gex": -21552005,
         "prem": 0,
         "voi": 0.0
        },
@@ -35035,7 +35039,7 @@
         "poi": 8064,
         "cvol": null,
         "pvol": null,
-        "gex": -15463196,
+        "gex": -15470280,
         "prem": 0,
         "voi": 0.0
        }
@@ -35047,7 +35051,7 @@
         "poi": 30187,
         "cvol": 114,
         "pvol": 112,
-        "gex": 759824,
+        "gex": 757546,
         "prem": 287107,
         "voi": 0.003
        },
@@ -35129,7 +35133,7 @@
         "poi": 30187,
         "cvol": 114,
         "pvol": 112,
-        "gex": 759824,
+        "gex": 757546,
         "prem": 287107,
         "voi": 0.003
        },
@@ -35189,8 +35193,8 @@
       "em_pct": 9.97,
       "lo": 4.1392,
       "hi": 5.0558,
-      "gex": -24773367,
-      "dex": -70230,
+      "gex": -24776826,
+      "dex": -70233,
       "has_vol": false,
       "vol_c": null,
       "vol_p": null,
@@ -35204,7 +35208,7 @@
         "poi": 22371,
         "cvol": null,
         "pvol": null,
-        "gex": 983875,
+        "gex": 983899,
         "prem": 0,
         "voi": null
        },
@@ -35214,7 +35218,7 @@
         "poi": 6421,
         "cvol": null,
         "pvol": null,
-        "gex": 3610768,
+        "gex": 3610354,
         "prem": 0,
         "voi": null
        },
@@ -35224,7 +35228,7 @@
         "poi": 543,
         "cvol": null,
         "pvol": null,
-        "gex": 668108,
+        "gex": 667897,
         "prem": 0,
         "voi": null
        },
@@ -35234,7 +35238,7 @@
         "poi": 0,
         "cvol": null,
         "pvol": null,
-        "gex": 3039,
+        "gex": 3037,
         "prem": 0,
         "voi": null
        },
@@ -35244,7 +35248,7 @@
         "poi": 8477,
         "cvol": null,
         "pvol": null,
-        "gex": 2223316,
+        "gex": 2223426,
         "prem": 0,
         "voi": null
        },
@@ -35254,7 +35258,7 @@
         "poi": 10321,
         "cvol": null,
         "pvol": null,
-        "gex": -1459256,
+        "gex": -1459317,
         "prem": 0,
         "voi": null
        },
@@ -35264,7 +35268,7 @@
         "poi": 49,
         "cvol": null,
         "pvol": null,
-        "gex": 218351,
+        "gex": 218261,
         "prem": 0,
         "voi": null
        },
@@ -35274,7 +35278,7 @@
         "poi": 12809,
         "cvol": null,
         "pvol": null,
-        "gex": -6690007,
+        "gex": -6690352,
         "prem": 0,
         "voi": null
        }
@@ -35286,7 +35290,7 @@
         "poi": 11815,
         "cvol": null,
         "pvol": null,
-        "gex": -8626465,
+        "gex": -8626890,
         "prem": 0,
         "voi": null
        },
@@ -35296,7 +35300,7 @@
         "poi": 12809,
         "cvol": null,
         "pvol": null,
-        "gex": -6690007,
+        "gex": -6690352,
         "prem": 0,
         "voi": null
        },
@@ -35306,7 +35310,7 @@
         "poi": 7800,
         "cvol": null,
         "pvol": null,
-        "gex": -5974633,
+        "gex": -5974845,
         "prem": 0,
         "voi": null
        },
@@ -35316,7 +35320,7 @@
         "poi": 9085,
         "cvol": null,
         "pvol": null,
-        "gex": -5941902,
+        "gex": -5942041,
         "prem": 0,
         "voi": null
        },
@@ -35326,7 +35330,7 @@
         "poi": 6876,
         "cvol": null,
         "pvol": null,
-        "gex": -5445073,
+        "gex": -5445299,
         "prem": 0,
         "voi": null
        }
@@ -35362,7 +35366,7 @@
        "divp": 0.13,
        "lc": "long calls",
        "lp": "long puts",
-       "gex": -35826255,
+       "gex": -35843448,
        "role": "weak",
        "why": [
         "puts likely bought — protection or bearish bets",
@@ -35394,7 +35398,7 @@
        "divp": 0.0,
        "lc": "closing",
        "lp": "closing",
-       "gex": -28205480,
+       "gex": -28217059,
        "role": "weak",
        "why": [
         "traded through 3× in the last 20 sessions; closes held as support 0×, as resistance 3×"
@@ -35424,7 +35428,7 @@
        "divp": 0.34,
        "lc": "steady",
        "lp": "closing",
-       "gex": -29994510,
+       "gex": -30005087,
        "role": "support",
        "why": [
         "put-heavy below price"
@@ -35454,7 +35458,7 @@
        "divp": -0.23,
        "lc": "steady",
        "lp": "closing",
-       "gex": -11896198,
+       "gex": -11898775,
        "role": "acceleration",
        "why": [
         "short-gamma strike — hedging can speed a move through it",
@@ -35485,7 +35489,7 @@
        "divp": -0.21,
        "lc": "long calls",
        "lp": "steady",
-       "gex": -4412895,
+       "gex": -4412919,
        "role": "weak",
        "why": [
         "calls likely bought — upside bets",
@@ -35516,7 +35520,7 @@
        "divp": -0.21,
        "lc": "steady",
        "lp": "short puts",
-       "gex": -21553227,
+       "gex": -21552005,
        "role": "support",
        "why": [
         "put-heavy below price",
@@ -35528,7 +35532,7 @@
        "vol": 0,
        "prem_c": null,
        "prem_p": null,
-       "p_touch": 25,
+       "p_touch": 24,
        "p_touch_1d": 0
       },
       {
@@ -35547,7 +35551,7 @@
        "divp": -0.11,
        "lc": "steady",
        "lp": "closing",
-       "gex": -8995501,
+       "gex": -8992933,
        "role": "weak",
        "why": [
         "traded through 3× in the last 20 sessions; closes held as support 2×, as resistance 1×"
@@ -35577,7 +35581,7 @@
        "divp": -0.37,
        "lc": "steady",
        "lp": "steady",
-       "gex": -2186572,
+       "gex": -2185115,
        "role": "weak",
        "why": [
         "traded through 2× in the last 20 sessions; closes held as support 0×, as resistance 2×"
@@ -35607,7 +35611,7 @@
        "divp": 0.25,
        "lc": "steady",
        "lp": "steady",
-       "gex": -10016124,
+       "gex": -10010508,
        "role": "support",
        "why": [
         "put-heavy below price"
@@ -35637,7 +35641,7 @@
        "divp": -0.14,
        "lc": "steady",
        "lp": "steady",
-       "gex": 1152082,
+       "gex": 1151239,
        "role": "resistance",
        "why": [
         "call-heavy above price",
@@ -35668,7 +35672,7 @@
        "divp": null,
        "lc": "steady",
        "lp": "steady",
-       "gex": 53961,
+       "gex": 53673,
        "role": "resistance",
        "why": [
         "call-heavy above price"
@@ -35698,7 +35702,7 @@
        "divp": 0.0,
        "lc": "steady",
        "lp": "steady",
-       "gex": 759824,
+       "gex": 757546,
        "role": "resistance",
        "why": [
         "call-heavy above price"
@@ -35708,7 +35712,7 @@
        "in_em": false,
        "vol": 226,
        "prem_c": 67,
-       "prem_p": 287041,
+       "prem_p": 287040,
        "p_touch": 0,
        "p_touch_1d": 0
       },
@@ -35728,7 +35732,7 @@
        "divp": null,
        "lc": "steady",
        "lp": "steady",
-       "gex": 189,
+       "gex": 186,
        "role": "resistance",
        "why": [
         "call-heavy above price"
@@ -35819,8 +35823,8 @@
       "puts: 4.30 → 4.20 (≈1,071 contracts)",
       "puts: 4.45 → 4.20 (≈665 contracts)"
      ],
-     "vanna": 170787071,
-     "charm": -794973444,
+     "vanna": 170692680,
+     "charm": -795328518,
      "prev_date": "2026-11-03",
      "top_calls": [
       [
@@ -35938,7 +35942,7 @@
      },
      {
       "q": "What to watch next session?",
-      "a": "Expected range 4.3273–4.4477 · touch odds 4.20: 25%, 5.00: 0% · whether new OI confirms or reverses today's changes."
+      "a": "Expected range 4.3273–4.4477 · touch odds 4.20: 24%, 5.00: 0% · whether new OI confirms or reverses today's changes."
      }
     ],
     "hist": [
@@ -36222,7 +36226,7 @@
       "lo": 4.3273,
       "hi": 4.4477,
       "pcr": 0.74,
-      "gex": -185628722,
+      "gex": -185667425,
       "flip": 4.7567,
       "contract": "ZCZ26"
      }
@@ -36276,7 +36280,7 @@
     }
    },
    "soybeans": {
-    "asof": "2026-11-09T22:15:21.646571+00:00",
+    "asof": "2026-11-09T22:30:27.983583+00:00",
     "price": 11.87,
     "settle": 11.87,
     "settle_date": "2026-11-09",
@@ -36447,16 +36451,16 @@
       "calls_oi": 80088,
       "puts_oi": 74444,
       "pcr": 0.93,
-      "em": 0.5973,
+      "em": 0.5972,
       "em_pct": 5.03,
-      "lo": 11.2727,
-      "hi": 12.4673,
-      "gex": -122647619,
-      "dex": -40646,
+      "lo": 11.2728,
+      "hi": 12.4672,
+      "gex": -122657936,
+      "dex": -40648,
       "has_vol": true,
       "vol_c": 248,
       "vol_p": 0,
-      "prem_c": 10675,
+      "prem_c": 10668,
       "prem_p": 0,
       "flip": 12.8761,
       "top_oi": [
@@ -36466,7 +36470,7 @@
         "poi": 5872,
         "cvol": null,
         "pvol": null,
-        "gex": -2208273,
+        "gex": -2208034,
         "prem": 0,
         "voi": 0.0
        },
@@ -36476,7 +36480,7 @@
         "poi": 4754,
         "cvol": 5,
         "pvol": 0,
-        "gex": 806816,
+        "gex": 806701,
         "prem": 331,
         "voi": 0.0
        },
@@ -36486,7 +36490,7 @@
         "poi": 5573,
         "cvol": null,
         "pvol": null,
-        "gex": -4223426,
+        "gex": -4223413,
         "prem": 0,
         "voi": 0.0
        },
@@ -36496,7 +36500,7 @@
         "poi": 7594,
         "cvol": null,
         "pvol": null,
-        "gex": -31647644,
+        "gex": -31651172,
         "prem": 0,
         "voi": 0.0
        },
@@ -36506,7 +36510,7 @@
         "poi": 4628,
         "cvol": null,
         "pvol": null,
-        "gex": -2408182,
+        "gex": -2408111,
         "prem": 0,
         "voi": 0.0
        },
@@ -36516,7 +36520,7 @@
         "poi": 8012,
         "cvol": null,
         "pvol": null,
-        "gex": -29825391,
+        "gex": -29827517,
         "prem": 0,
         "voi": 0.0
        },
@@ -36526,7 +36530,7 @@
         "poi": 0,
         "cvol": null,
         "pvol": null,
-        "gex": 706,
+        "gex": 704,
         "prem": 0,
         "voi": 0.0
        },
@@ -36536,7 +36540,7 @@
         "poi": 4605,
         "cvol": null,
         "pvol": null,
-        "gex": -11142734,
+        "gex": -11143414,
         "prem": 0,
         "voi": 0.0
        }
@@ -36548,7 +36552,7 @@
         "poi": 7594,
         "cvol": null,
         "pvol": null,
-        "gex": -31647644,
+        "gex": -31651172,
         "prem": 0,
         "voi": 0.0
        },
@@ -36558,7 +36562,7 @@
         "poi": 8012,
         "cvol": null,
         "pvol": null,
-        "gex": -29825391,
+        "gex": -29827517,
         "prem": 0,
         "voi": 0.0
        },
@@ -36568,7 +36572,7 @@
         "poi": 4605,
         "cvol": null,
         "pvol": null,
-        "gex": -11142734,
+        "gex": -11143414,
         "prem": 0,
         "voi": 0.0
        },
@@ -36578,7 +36582,7 @@
         "poi": 1915,
         "cvol": null,
         "pvol": null,
-        "gex": -7191232,
+        "gex": -7192061,
         "prem": 0,
         "voi": 0.0
        },
@@ -36588,7 +36592,7 @@
         "poi": 3859,
         "cvol": null,
         "pvol": null,
-        "gex": -6609823,
+        "gex": -6610032,
         "prem": 0,
         "voi": 0.0
        }
@@ -36600,8 +36604,8 @@
         "poi": 1840,
         "cvol": 243,
         "pvol": 0,
-        "gex": 673539,
-        "prem": 10344,
+        "gex": 673351,
+        "prem": 10337,
         "voi": 0.054
        },
        {
@@ -36610,7 +36614,7 @@
         "poi": 4754,
         "cvol": 5,
         "pvol": 0,
-        "gex": 806816,
+        "gex": 806701,
         "prem": 331,
         "voi": 0.0
        },
@@ -36682,8 +36686,8 @@
         "poi": 1840,
         "cvol": 243,
         "pvol": 0,
-        "gex": 673539,
-        "prem": 10344,
+        "gex": 673351,
+        "prem": 10337,
         "voi": 0.054
        },
        {
@@ -36712,7 +36716,7 @@
         "poi": 255,
         "cvol": null,
         "pvol": null,
-        "gex": -772,
+        "gex": -771,
         "prem": 0,
         "voi": 0.0
        },
@@ -36722,7 +36726,7 @@
         "poi": 311,
         "cvol": null,
         "pvol": null,
-        "gex": -2000,
+        "gex": -1997,
         "prem": 0,
         "voi": 0.0
        }
@@ -36742,13 +36746,13 @@
       "em_pct": 7.7,
       "lo": 11.2072,
       "hi": 13.0778,
-      "gex": 938728,
-      "dex": -6553,
+      "gex": 935319,
+      "dex": -6554,
       "has_vol": true,
       "vol_c": 17,
       "vol_p": 100,
-      "prem_c": 15191,
-      "prem_p": 366215,
+      "prem_c": 15190,
+      "prem_p": 366206,
       "flip": 12.1287,
       "top_oi": [
        {
@@ -36757,7 +36761,7 @@
         "poi": 19,
         "cvol": null,
         "pvol": null,
-        "gex": 8422890,
+        "gex": 8421843,
         "prem": 0,
         "voi": 0.0
        },
@@ -36767,7 +36771,7 @@
         "poi": 2830,
         "cvol": null,
         "pvol": null,
-        "gex": 8342248,
+        "gex": 8342620,
         "prem": 0,
         "voi": 0.0
        },
@@ -36777,7 +36781,7 @@
         "poi": 1061,
         "cvol": null,
         "pvol": null,
-        "gex": 9922592,
+        "gex": 9922739,
         "prem": 0,
         "voi": 0.0
        },
@@ -36787,7 +36791,7 @@
         "poi": 4269,
         "cvol": null,
         "pvol": null,
-        "gex": -7484627,
+        "gex": -7485004,
         "prem": 0,
         "voi": 0.0
        },
@@ -36797,7 +36801,7 @@
         "poi": 4656,
         "cvol": null,
         "pvol": null,
-        "gex": -10737419,
+        "gex": -10737894,
         "prem": 0,
         "voi": 0.0
        },
@@ -36807,7 +36811,7 @@
         "poi": 101,
         "cvol": null,
         "pvol": null,
-        "gex": 5496049,
+        "gex": 5495719,
         "prem": 0,
         "voi": 0.0
        },
@@ -36817,7 +36821,7 @@
         "poi": 2939,
         "cvol": null,
         "pvol": null,
-        "gex": -3689403,
+        "gex": -3689552,
         "prem": 0,
         "voi": 0.0
        },
@@ -36827,7 +36831,7 @@
         "poi": 1304,
         "cvol": null,
         "pvol": null,
-        "gex": 3183364,
+        "gex": 3183362,
         "prem": 0,
         "voi": 0.0
        }
@@ -36839,7 +36843,7 @@
         "poi": 4656,
         "cvol": null,
         "pvol": null,
-        "gex": -10737419,
+        "gex": -10737894,
         "prem": 0,
         "voi": 0.0
        },
@@ -36849,7 +36853,7 @@
         "poi": 1061,
         "cvol": null,
         "pvol": null,
-        "gex": 9922592,
+        "gex": 9922739,
         "prem": 0,
         "voi": 0.0
        },
@@ -36859,7 +36863,7 @@
         "poi": 19,
         "cvol": null,
         "pvol": null,
-        "gex": 8422890,
+        "gex": 8421843,
         "prem": 0,
         "voi": 0.0
        },
@@ -36869,7 +36873,7 @@
         "poi": 2830,
         "cvol": null,
         "pvol": null,
-        "gex": 8342248,
+        "gex": 8342620,
         "prem": 0,
         "voi": 0.0
        },
@@ -36879,7 +36883,7 @@
         "poi": 4269,
         "cvol": null,
         "pvol": null,
-        "gex": -7484627,
+        "gex": -7485004,
         "prem": 0,
         "voi": 0.0
        }
@@ -36891,8 +36895,8 @@
         "poi": 1689,
         "cvol": 17,
         "pvol": 100,
-        "gex": -1146440,
-        "prem": 381406,
+        "gex": -1146479,
+        "prem": 381396,
         "voi": 0.04
        },
        {
@@ -36901,7 +36905,7 @@
         "poi": 1034,
         "cvol": null,
         "pvol": null,
-        "gex": -1343584,
+        "gex": -1343540,
         "prem": 0,
         "voi": 0.0
        },
@@ -36911,7 +36915,7 @@
         "poi": 682,
         "cvol": null,
         "pvol": null,
-        "gex": -217600,
+        "gex": -217599,
         "prem": 0,
         "voi": 0.0
        },
@@ -36921,7 +36925,7 @@
         "poi": 1158,
         "cvol": null,
         "pvol": null,
-        "gex": 154548,
+        "gex": 154551,
         "prem": 0,
         "voi": 0.0
        },
@@ -36931,7 +36935,7 @@
         "poi": 1685,
         "cvol": null,
         "pvol": null,
-        "gex": -2989839,
+        "gex": -2989911,
         "prem": 0,
         "voi": 0.0
        },
@@ -36941,7 +36945,7 @@
         "poi": 2015,
         "cvol": null,
         "pvol": null,
-        "gex": -2039493,
+        "gex": -2039559,
         "prem": 0,
         "voi": 0.0
        },
@@ -36951,7 +36955,7 @@
         "poi": 1713,
         "cvol": null,
         "pvol": null,
-        "gex": -3497188,
+        "gex": -3497325,
         "prem": 0,
         "voi": 0.0
        },
@@ -36961,7 +36965,7 @@
         "poi": 4656,
         "cvol": null,
         "pvol": null,
-        "gex": -10737419,
+        "gex": -10737894,
         "prem": 0,
         "voi": 0.0
        }
@@ -36973,8 +36977,8 @@
         "poi": 1689,
         "cvol": 17,
         "pvol": 100,
-        "gex": -1146440,
-        "prem": 381406,
+        "gex": -1146479,
+        "prem": 381396,
         "voi": 0.04
        },
        {
@@ -36983,7 +36987,7 @@
         "poi": 1034,
         "cvol": null,
         "pvol": null,
-        "gex": -1343584,
+        "gex": -1343540,
         "prem": 0,
         "voi": 0.0
        },
@@ -36993,7 +36997,7 @@
         "poi": 682,
         "cvol": null,
         "pvol": null,
-        "gex": -217600,
+        "gex": -217599,
         "prem": 0,
         "voi": 0.0
        },
@@ -37003,7 +37007,7 @@
         "poi": 1158,
         "cvol": null,
         "pvol": null,
-        "gex": 154548,
+        "gex": 154551,
         "prem": 0,
         "voi": 0.0
        },
@@ -37013,7 +37017,7 @@
         "poi": 1685,
         "cvol": null,
         "pvol": null,
-        "gex": -2989839,
+        "gex": -2989911,
         "prem": 0,
         "voi": 0.0
        }
@@ -37049,7 +37053,7 @@
        "divp": 0.31,
        "lc": "steady",
        "lp": "long puts",
-       "gex": -2910607,
+       "gex": -2910947,
        "role": "weak",
        "why": [
         "puts likely bought — protection or bearish bets",
@@ -37080,7 +37084,7 @@
        "divp": 0.4,
        "lc": "steady",
        "lp": "long puts",
-       "gex": -7191232,
+       "gex": -7192061,
        "role": "support",
        "why": [
         "put-heavy below price",
@@ -37111,7 +37115,7 @@
        "divp": 0.33,
        "lc": "steady",
        "lp": "closing",
-       "gex": -31647644,
+       "gex": -31651172,
        "role": "acceleration",
        "why": [
         "short-gamma strike — hedging can speed a move through it",
@@ -37142,7 +37146,7 @@
        "divp": 0.36,
        "lc": "long calls",
        "lp": "long puts",
-       "gex": -5522566,
+       "gex": -5523119,
        "role": "weak",
        "why": [
         "puts likely bought — protection or bearish bets",
@@ -37174,7 +37178,7 @@
        "divp": 0.45,
        "lc": "steady",
        "lp": "closing",
-       "gex": -6361642,
+       "gex": -6362171,
        "role": "weakening",
        "why": [
         "open interest down more than 10% day over day",
@@ -37205,7 +37209,7 @@
        "divp": 0.02,
        "lc": "steady",
        "lp": "steady",
-       "gex": -29825391,
+       "gex": -29827517,
        "role": "support",
        "why": [
         "put-heavy below price",
@@ -37236,7 +37240,7 @@
        "divp": 0.41,
        "lc": "steady",
        "lp": "steady",
-       "gex": -11142734,
+       "gex": -11143414,
        "role": "acceleration",
        "why": [
         "short-gamma strike — hedging can speed a move through it",
@@ -37267,7 +37271,7 @@
        "divp": 0.01,
        "lc": "steady",
        "lp": "steady",
-       "gex": -3328151,
+       "gex": -3328298,
        "role": "support",
        "why": [
         "put-heavy below price"
@@ -37297,7 +37301,7 @@
        "divp": 0.33,
        "lc": "long calls",
        "lp": "long puts",
-       "gex": -6609823,
+       "gex": -6610032,
        "role": "weak",
        "why": [
         "puts likely bought — protection or bearish bets",
@@ -37329,7 +37333,7 @@
        "divp": 0.4,
        "lc": "long calls",
        "lp": "steady",
-       "gex": -4223426,
+       "gex": -4223413,
        "role": "weak",
        "why": [
         "calls likely bought — upside bets",
@@ -37360,7 +37364,7 @@
        "divp": 0.53,
        "lc": "long calls",
        "lp": "steady",
-       "gex": -2408182,
+       "gex": -2408111,
        "role": "weak",
        "why": [
         "calls likely bought — upside bets",
@@ -37391,7 +37395,7 @@
        "divp": 0.43,
        "lc": "steady",
        "lp": "closing",
-       "gex": -874068,
+       "gex": -874000,
        "role": "weak",
        "why": [
         "traded through 5× in the last 20 sessions; closes held as support 1×, as resistance 4×"
@@ -37421,7 +37425,7 @@
        "divp": 0.0,
        "lc": "steady",
        "lp": "steady",
-       "gex": 806816,
+       "gex": 806701,
        "role": "resistance",
        "why": [
         "call-heavy above price",
@@ -37505,8 +37509,8 @@
      "rolls": [
       "puts: 12.00 → 11.80 (≈735 contracts)"
      ],
-     "vanna": 7757512,
-     "charm": -3833527,
+     "vanna": 7738723,
+     "charm": -3823470,
      "prev_date": "2026-11-02",
      "top_calls": [
       [
@@ -37908,7 +37912,7 @@
       "lo": 11.7627,
       "hi": 11.9773,
       "pcr": 0.93,
-      "gex": -122647619,
+      "gex": -122657936,
       "flip": 12.8761,
       "contract": "ZSF27"
      }
@@ -37962,7 +37966,7 @@
     }
    },
    "wheat": {
-    "asof": "2026-11-09T22:15:21.646571+00:00",
+    "asof": "2026-11-09T22:30:27.983583+00:00",
     "price": 5.875,
     "settle": 5.875,
     "settle_date": "2026-11-09",
@@ -38133,12 +38137,12 @@
       "calls_oi": 184428,
       "puts_oi": 104382,
       "pcr": 0.57,
-      "em": 0.2819,
+      "em": 0.2818,
       "em_pct": 4.8,
-      "lo": 5.5931,
-      "hi": 6.1569,
-      "gex": -44073105,
-      "dex": -68251,
+      "lo": 5.5932,
+      "hi": 6.1568,
+      "gex": -44089777,
+      "dex": -68258,
       "has_vol": true,
       "vol_c": 0,
       "vol_p": 0,
@@ -38152,7 +38156,7 @@
         "poi": 4102,
         "cvol": null,
         "pvol": null,
-        "gex": 17586,
+        "gex": 17482,
         "prem": 0,
         "voi": 0.0
        },
@@ -38172,7 +38176,7 @@
         "poi": 6939,
         "cvol": null,
         "pvol": null,
-        "gex": -488428,
+        "gex": -487618,
         "prem": 0,
         "voi": 0.0
        },
@@ -38182,7 +38186,7 @@
         "poi": 3995,
         "cvol": null,
         "pvol": null,
-        "gex": 3249495,
+        "gex": 3248367,
         "prem": 0,
         "voi": 0.0
        },
@@ -38192,7 +38196,7 @@
         "poi": 6171,
         "cvol": null,
         "pvol": null,
-        "gex": -4859081,
+        "gex": -4860985,
         "prem": 0,
         "voi": 0.0
        },
@@ -38202,7 +38206,7 @@
         "poi": 4653,
         "cvol": null,
         "pvol": null,
-        "gex": 565124,
+        "gex": 565170,
         "prem": 0,
         "voi": 0.0
        },
@@ -38212,7 +38216,7 @@
         "poi": 4662,
         "cvol": null,
         "pvol": null,
-        "gex": 32277,
+        "gex": 32201,
         "prem": 0,
         "voi": 0.0
        },
@@ -38222,7 +38226,7 @@
         "poi": 5295,
         "cvol": null,
         "pvol": null,
-        "gex": -1715823,
+        "gex": -1715773,
         "prem": 0,
         "voi": 0.0
        }
@@ -38234,7 +38238,7 @@
         "poi": 4587,
         "cvol": null,
         "pvol": null,
-        "gex": -11322017,
+        "gex": -11327438,
         "prem": 0,
         "voi": 0.0
        },
@@ -38244,7 +38248,7 @@
         "poi": 3405,
         "cvol": null,
         "pvol": null,
-        "gex": -8622317,
+        "gex": -8626444,
         "prem": 0,
         "voi": 0.0
        },
@@ -38254,7 +38258,7 @@
         "poi": 3169,
         "cvol": null,
         "pvol": null,
-        "gex": -7152668,
+        "gex": -7155867,
         "prem": 0,
         "voi": 0.0
        },
@@ -38264,7 +38268,7 @@
         "poi": 2167,
         "cvol": null,
         "pvol": null,
-        "gex": -5353059,
+        "gex": -5355433,
         "prem": 0,
         "voi": 0.0
        },
@@ -38274,7 +38278,7 @@
         "poi": 6171,
         "cvol": null,
         "pvol": null,
-        "gex": -4859081,
+        "gex": -4860985,
         "prem": 0,
         "voi": 0.0
        }
@@ -38356,7 +38360,7 @@
         "poi": 100,
         "cvol": null,
         "pvol": null,
-        "gex": -2,
+        "gex": -1,
         "prem": 0,
         "voi": 0.0
        }
@@ -38368,7 +38372,7 @@
         "poi": 578,
         "cvol": null,
         "pvol": null,
-        "gex": -1010,
+        "gex": -1004,
         "prem": 0,
         "voi": 0.0
        },
@@ -38378,7 +38382,7 @@
         "poi": 250,
         "cvol": null,
         "pvol": null,
-        "gex": -956,
+        "gex": -951,
         "prem": 0,
         "voi": 0.0
        },
@@ -38388,7 +38392,7 @@
         "poi": 1933,
         "cvol": null,
         "pvol": null,
-        "gex": -15354,
+        "gex": -15278,
         "prem": 0,
         "voi": 0.0
        },
@@ -38398,7 +38402,7 @@
         "poi": 660,
         "cvol": null,
         "pvol": null,
-        "gex": -10352,
+        "gex": -10307,
         "prem": 0,
         "voi": 0.0
        },
@@ -38408,7 +38412,7 @@
         "poi": 351,
         "cvol": null,
         "pvol": null,
-        "gex": -10350,
+        "gex": -10312,
         "prem": 0,
         "voi": 0.0
        }
@@ -38428,14 +38432,14 @@
       "em_pct": 13.05,
       "lo": 5.3341,
       "hi": 6.9359,
-      "gex": -6789494,
+      "gex": -6790473,
       "dex": -6680,
       "has_vol": false,
       "vol_c": null,
       "vol_p": null,
       "prem_c": null,
       "prem_p": null,
-      "flip": 6.4818,
+      "flip": 6.4819,
       "top_oi": [
        {
         "k": 8.0,
@@ -38443,7 +38447,7 @@
         "poi": 52,
         "cvol": null,
         "pvol": null,
-        "gex": 943864,
+        "gex": 943712,
         "prem": 0,
         "voi": null
        },
@@ -38453,7 +38457,7 @@
         "poi": 9,
         "cvol": null,
         "pvol": null,
-        "gex": 67215,
+        "gex": 67189,
         "prem": 0,
         "voi": null
        },
@@ -38463,7 +38467,7 @@
         "poi": 4256,
         "cvol": null,
         "pvol": null,
-        "gex": -3919900,
+        "gex": -3920096,
         "prem": 0,
         "voi": null
        },
@@ -38473,7 +38477,7 @@
         "poi": 35,
         "cvol": null,
         "pvol": null,
-        "gex": 2996,
+        "gex": 2994,
         "prem": 0,
         "voi": null
        },
@@ -38483,7 +38487,7 @@
         "poi": 42,
         "cvol": null,
         "pvol": null,
-        "gex": 823890,
+        "gex": 823832,
         "prem": 0,
         "voi": null
        },
@@ -38493,7 +38497,7 @@
         "poi": 19,
         "cvol": null,
         "pvol": null,
-        "gex": 606586,
+        "gex": 606533,
         "prem": 0,
         "voi": null
        },
@@ -38503,7 +38507,7 @@
         "poi": 660,
         "cvol": null,
         "pvol": null,
-        "gex": 624588,
+        "gex": 624614,
         "prem": 0,
         "voi": null
        },
@@ -38513,7 +38517,7 @@
         "poi": 46,
         "cvol": null,
         "pvol": null,
-        "gex": 88223,
+        "gex": 88199,
         "prem": 0,
         "voi": null
        }
@@ -38525,7 +38529,7 @@
         "poi": 4256,
         "cvol": null,
         "pvol": null,
-        "gex": -3919900,
+        "gex": -3920096,
         "prem": 0,
         "voi": null
        },
@@ -38535,7 +38539,7 @@
         "poi": 1498,
         "cvol": null,
         "pvol": null,
-        "gex": -1357399,
+        "gex": -1357470,
         "prem": 0,
         "voi": null
        },
@@ -38545,7 +38549,7 @@
         "poi": 1471,
         "cvol": null,
         "pvol": null,
-        "gex": -985387,
+        "gex": -985436,
         "prem": 0,
         "voi": null
        },
@@ -38555,7 +38559,7 @@
         "poi": 52,
         "cvol": null,
         "pvol": null,
-        "gex": 943864,
+        "gex": 943712,
         "prem": 0,
         "voi": null
        },
@@ -38565,7 +38569,7 @@
         "poi": 1020,
         "cvol": null,
         "pvol": null,
-        "gex": -941085,
+        "gex": -941122,
         "prem": 0,
         "voi": null
        }
@@ -38601,7 +38605,7 @@
        "divp": 0.3,
        "lc": "steady",
        "lp": "closing",
-       "gex": -11322017,
+       "gex": -11327438,
        "role": "weakening",
        "why": [
         "open interest down more than 10% day over day",
@@ -38632,7 +38636,7 @@
        "divp": 0.38,
        "lc": "steady",
        "lp": "steady",
-       "gex": -8622317,
+       "gex": -8626444,
        "role": "support",
        "why": [
         "put-heavy below price",
@@ -38663,7 +38667,7 @@
        "divp": 0.08,
        "lc": "steady",
        "lp": "long puts",
-       "gex": -7152668,
+       "gex": -7155867,
        "role": "weak",
        "why": [
         "puts likely bought — protection or bearish bets",
@@ -38694,7 +38698,7 @@
        "divp": 0.38,
        "lc": "steady",
        "lp": "steady",
-       "gex": -4859081,
+       "gex": -4860985,
        "role": "weak",
        "why": [
         "traded through 7× in the last 20 sessions; closes held as support 2×, as resistance 5×"
@@ -38724,7 +38728,7 @@
        "divp": 0.49,
        "lc": "steady",
        "lp": "steady",
-       "gex": -528559,
+       "gex": -528725,
        "role": "weak",
        "why": [
         "traded through 7× in the last 20 sessions; closes held as support 1×, as resistance 6×"
@@ -38754,7 +38758,7 @@
        "divp": 0.46,
        "lc": "new calls",
        "lp": "steady",
-       "gex": 565124,
+       "gex": 565170,
        "role": "resistance",
        "why": [
         "call-heavy above price",
@@ -38785,7 +38789,7 @@
        "divp": 0.31,
        "lc": "steady",
        "lp": "steady",
-       "gex": 936168,
+       "gex": 936246,
        "role": "resistance",
        "why": [
         "call-heavy above price",
@@ -38816,7 +38820,7 @@
        "divp": 0.47,
        "lc": "closing",
        "lp": "long puts",
-       "gex": -1715823,
+       "gex": -1715773,
        "role": "weak",
        "why": [
         "puts likely bought — protection or bearish bets",
@@ -38847,7 +38851,7 @@
        "divp": 0.27,
        "lc": "long calls",
        "lp": "long puts",
-       "gex": 2206260,
+       "gex": 2205826,
        "role": "resistance",
        "why": [
         "call-heavy above price",
@@ -38880,7 +38884,7 @@
        "divp": null,
        "lc": "steady",
        "lp": "steady",
-       "gex": -2675469,
+       "gex": -2674321,
        "role": "support",
        "why": [
         "put-heavy below price"
@@ -38910,7 +38914,7 @@
        "divp": 0.12,
        "lc": "long calls",
        "lp": "steady",
-       "gex": 3249495,
+       "gex": 3248367,
        "role": "resistance",
        "why": [
         "call-heavy above price",
@@ -38942,7 +38946,7 @@
        "divp": null,
        "lc": "steady",
        "lp": "steady",
-       "gex": 17586,
+       "gex": 17482,
        "role": "resistance",
        "why": [
         "call-heavy above price"
@@ -39002,7 +39006,7 @@
        "divp": null,
        "lc": "steady",
        "lp": "steady",
-       "gex": -488428,
+       "gex": -487618,
        "role": "weak",
        "why": [
         "traded through 1× in the last 20 sessions; closes held as support 0×, as resistance 1×"
@@ -39089,8 +39093,8 @@
       }
      ],
      "rolls": [],
-     "vanna": 37510844,
-     "charm": -172654902,
+     "vanna": 37483924,
+     "charm": -172694814,
      "prev_date": "2026-11-03",
      "top_calls": [
       [
@@ -39492,7 +39496,7 @@
       "lo": 5.7721,
       "hi": 5.9779,
       "pcr": 0.57,
-      "gex": -44073105,
+      "gex": -44089777,
       "flip": 6.2977,
       "contract": "ZWZ26"
      }
@@ -40117,16 +40121,16 @@
     "https://news.google.com/rss/articles/CBMiiAFBVV95cUxQYWJ4QUFuUVZXaURMNUhtb28tXzhNOGhVNnVxanQyN21lY2cwTkJBaHJhQ0pLZW9hZTZOM3dxeHRSelFmVEJQRW1QVzdVMC1RRDllVVBRRnFWbThpR3RGT1VJYUNTTkNaamlIVnRVYkRMQnlvSXlQbDA5cGZhVlB0azZ0aTZ4QUFS?oc=5"
    ],
    [
-    "2026-11-09 11:48 UTC",
-    "www.agrolatam.com",
-    "US Agriculture Faces Critical Week as Congress Returns and USDA WASDE Looms",
-    "https://news.google.com/rss/articles/CBMimAFBVV95cUxPYXY3Ql9acC1rUkxHeGRSRGtsX3h2bWo4X0RBM3ZQcWpWRlMwNkVIWGNNRjJwU2R0cmZQYldnTkZQRUo2UTJ5c0l2bW1kZnlWRVNEc2dVRVRPUndWdnlQLVNnU1ZubWZZM25sN0c5S0kxQjR0eEJ1emZTWEtkSUE4cUhlRmZYY1RzVkRmYXgweWo2d0U3QXVXWQ?oc=5"
-   ],
-   [
     "2026-11-09 11:34 UTC",
     "ukragroconsult.com",
     "Wheat falls, corn rises and soybeans trade mixed in Chicago on Friday",
     "https://news.google.com/rss/articles/CBMipwFBVV95cUxQUjZMYXFUTnJIU25vTW8tOVNrNnJmbmdDOXdRNjNJSGFDd1JmNkFsLVhlVmQwRzlJdTc2ZzM0cW1EcmFfdGpROVBYNmVZQkNaY0RFMnpvVjJCRHRiQzBjWUo2NmU5c0I5bGs5bzVlaFdaa1dTWnRUOW5jYi1Sd3JmV2N3UFd1eEZ3YXhhUFItWFJlbC1yZFhIUDBtUkVfTksyMVFnakhocw?oc=5"
+   ],
+   [
+    "2026-11-09 09:15 UTC",
+    "www.stonex.com",
+    "Grain & Oilseeds with Craig Turner - Premium Producer | Export Sales Bullish Soybeans, Bearish Corn",
+    "https://news.google.com/rss/articles/CBMizAFBVV95cUxONTY0cW90dWNJM0ZSdmVKeFk4VjJSSUlPLVRHcllocmp2RUdheS1GZGhFMkNpSzh6N28xd3luZXJrZlc5NUFKQXBlRF91RnRtM1VZd180X01WeThfTkNXR1FPOUN0ZnRGX2t2QVFYRnZZZERpMjZhZ0M0bmZpblk5Z3VWMjVhTWxaSVljUTFSNlkyUmJGSDVwSV9XejU2eGhxQWo4RmhPY1ppaXZoSTQ3R0kxM2lsdWJZMmU0SHVaS2pGVnpaZE1NZ3dHcGE?oc=5"
    ],
    [
     "2026-11-09 07:51 UTC",
@@ -40135,10 +40139,10 @@
     "https://news.google.com/rss/articles/CBMingFBVV95cUxQOXFjRUFNNWdjZHNiXzZ6VnYxSTNvYXkzeU9fUkJGYlJGWXRNTExNMTJ4UjBvVHdtVHphNUViVnUzU0l1QXB1b1lPMXFWSVNSclh2aXdMbHVwekppN251Ylg1dVkxNE02cVlqOXc0TERjZjZmVjUxR2N6Uks2WmZHazdVLVpYa1BMOUxYcXJyTFRZeXU1bGNqMmtWV3hNZw?oc=5"
    ],
    [
-    "2026-11-08 05:46 UTC",
-    "www.cmegroup.com",
-    "CONNECT WITH MARKET-MAKING FIRMS FOR GRAINS AND OILSEED PRODUCTS",
-    "https://news.google.com/rss/articles/CBMib0FVX3lxTE9vTVo0MlZvdFhKSmpLQlVucjB1aGlDMFF1LWlNVFJUOHdPejBYM1pLd012ZFBtbVhpU0tfT1c2TWc0cUxqek5Ld0ZKQlc1cWJwbzZfa1doaDVqNUI3ejBINEVCaTdXX1hFQ1Njanpadw?oc=5"
+    "2026-11-07 21:33 UTC",
+    "www.brecorder.com",
+    "Euronext to launch Black Sea wheat, corn futures with Romania delivery in 2027",
+    "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPUUhwdnQ0akc5NlZEYXliR2dyTU1qSWY5OFJQR1BBX2duWEsydkdpazB1SFZHM1FWbDJzMk5BWlFTNzdXeTFETzhmY0EzYlp4dklTQm9SOW9kTzl5Ny1GREFsMHIyMXZvWUI0OTZ3MFlIandiNlhIM2NvbHliWlJNaHZsOGs1ZUNFRTdPQ2w2akUwZUJQaENTeEhmSzJrMlpEUGhLZXdOVmVoOXdWNFBsUURoVC1MVVcw0gFWQVVfeXFMT3RJQ0tJRzFPdEQtbnV2akpEMTBzeXRmMUR5Y1VpcUZ5UE5rNGxvbXk1V0d2c1RYZjRUbVlXX0tGTGFZNXd6NE1fUGgzYnhNV3FyTUl4X3c?oc=5"
    ]
   ],
   "wheat": [
@@ -40243,6 +40247,12 @@
   ],
   "fx": [
    [
+    "2026-11-09 21:18 UTC",
+    "www.americanbanker.com",
+    "How Canada's real-time payment rail challenges bank innovation",
+    "https://news.google.com/rss/articles/CBMimwFBVV95cUxQX21tbzE4eHFIcTJoS2M0ZnVZZWZUbGZYemQwX1BaVVduRlJTQ1BYd0ZSNkVQaGtnSnFfazZBYXp5c1ZRMUh4TUNuNkEzV1FuMkhvMUQzVWNhc1VQc0NfajNIREdQOUFpbVRVZk02ZElNYmE4MmZtak1veGZOZlM2MDlRbWZ1TWk4a0NpSFowRDRqby1pRnoxeGstbw?oc=5"
+   ],
+   [
     "2026-11-09 20:38 UTC",
     "www.bnnbloomberg.ca",
     "Canada launches instant payments network after years of delay",
@@ -40283,12 +40293,6 @@
     "betakit.com",
     "Canada’s long-awaited Real-Time Rail payments system launches without Big Six banks",
     "https://news.google.com/rss/articles/CBMipgFBVV95cUxPUzFiUTVOOTdwT0tfaExYNGItdnZUdmF3cGcxLWlqNlpxRkpfbHlnZFQ2bU1kcXBYRmJsMVNxdjU1ZGV1TS1nX3ZMQTVmUEwtLW1zMC00Yy1YWXNnMkRZN2VQVldEM2hiVHhzSHRNYzZ3UDNtOWt4S3BQRWR6eDIxSUdyclJmcmswLVlJS0o0YW85Z1RHNm92RFl1WkQ2YmtMYmZGcWxn?oc=5"
-   ],
-   [
-    "2026-11-09 15:44 UTC",
-    "globalnews.ca",
-    "Transferring money between accounts is about to get faster in Canada - National",
-    "https://news.google.com/rss/articles/CBMidkFVX3lxTE5EdWh5dXRtcTBlS2g4VXlXdnBhR0pKb1N3UHdNc3lMRGZHTkFtN2dRaDBBeXVVc1RvSGNUR1VWQnllaDhhZmlaeUdXR1pLWVlvbVpoMUJvZEhhM014Mnd6WnBLekVYb19Fb2tNZjR4RkV5YUphSlE?oc=5"
    ]
   ],
   "geo": [
