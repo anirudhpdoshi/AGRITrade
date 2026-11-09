@@ -213,9 +213,13 @@
     var k = relKey(e), sum = (k && k.macro && SUM[k.macro]) || SUMK[e.kind] || "Scheduled economic release from the US / Canada calendar. The desk does not track this series, so no history or actual is held — forecast and previous come from the calendar.";
     var hist = m ? ((m.hist24 && m.hist24.length > 2) ? m.hist24 : m.history || []).slice(-6).reverse() : [];
     var go = LD && LD.at && LD.go ? '<button class="evgo see" data-evgo="' + esc(LD.go) + '" data-evsel="' + esc(LD.sel || "") + '">See it: ' + esc(LD.where) + " →</button>" : e.go ? '<button class="evgo" data-evgo="' + e.go + '">Open ' + esc(deskName(e.go)) + " →</button>" : "";
+    var src = e.kind === "macro" || e.kind === "energy" ? (e.fc || e.prev ? "Forecast and previous: Forex Factory weekly calendar feed (consensus as published), refreshed hourly. Blank = none published — never estimated." : "No forecast published for this release.")
+      : "No forecast applies — this is a scheduled " + ((CAT[e.kind] || {}).l || "desk").toLowerCase() + " item.";
+    sum += "";
+    var srcHTML = '<p class="evx-s">' + esc(src) + (k && k.macro ? " Actual: official source via the desk (" + esc(k.macro) + ")." : "") + "</p>";
     return '<div class="evx">' + (m ? '<div class="evx-c">' + spark(m) + "</div>" : "") + '<div class="evx-t"><b>Summary</b><p>' + esc(sum) + "</p>" +
       (hist.length ? '<table class="evx-h"><thead><tr><th>Period</th><th>Value</th></tr></thead><tbody>' + hist.map(function (x) { return "<tr><td>" + esc(x[0]) + "</td><td>" + (window.mval ? mval(m, x[1]) : x[1]) + "</td></tr>"; }).join("") + "</tbody></table>" : "") +
-      (LD && LD.at ? '<p class="evx-l">On the desk ' + hm(LD.at) + " ET (" + lagTxt2(LD.at - e.t) + " after the scheduled time)" + (LD.txt ? " · " + esc(LD.txt) : "") + "</p>" : "") + go + "</div></div>";
+      srcHTML + (LD && LD.at ? '<p class="evx-l">On the desk ' + hm(LD.at) + " ET (" + lagTxt2(LD.at - e.t) + " after the scheduled time)" + (LD.txt ? " · " + esc(LD.txt) : "") + "</p>" : "") + go + "</div></div>";
   }
 
   /* ---------- release → desk link: did the number land, when, and exactly where to look ---------- */
@@ -365,7 +369,7 @@
     var tg = function (attr, v, on, lab) { return '<button data-' + attr + '="' + v + '" aria-pressed="' + on + '">' + lab + "</button>"; };
     return '<div class="tile wide ev-cal-top"><div class="evdays">' + tabs + "</div>" +
       (V.day === "custom" ? '<div class="evcust"><label>Date <input type="date" data-evcustom value="' + esc(V.custom || dayIso(now)) + '"></label><small>The macro calendar covers this week and next; USDA, CFTC, contract dates and official release calendars go further.</small></div>' : "") +
-      '<div class="evfilters"><div class="evfg"><span>Importance</span>' + ["H", "M", "L"].map(function (k) { return tg("evimp", k, V.imp[k] !== false, '<i class="evimp-b i' + k + '">' + k + "</i>"); }).join("") + "</div>" +
+      '<div class="evfilters"><div class="evfg"><span>Importance</span>' + ["H", "M", "L"].map(function (k) { return '<label class="evchk"><input type="checkbox" data-evimpc="' + k + '"' + (V.imp[k] !== false ? " checked" : "") + '><i class="evimp-b i' + k + '">' + k + "</i> " + IMPN[k] + "</label>"; }).join("") + "</div>" +
       '<div class="evfg"><span>Country</span>' + tg("evcc", "us", V.ccs.us !== false, (window.flag ? flag("us", 13) : "") + " US") + tg("evcc", "ca", V.ccs.ca !== false, (window.flag ? flag("ca", 13) : "") + " Canada") + "</div>" +
       '<div class="evfg"><span>Category</span><select data-evcat>' + GROUPS.map(function (g) { return '<option value="' + g[0] + '"' + (V.cat === g[0] ? " selected" : "") + ">" + g[1] + "</option>"; }).join("") + "</select></div>" +
       '<input class="evq" type="search" placeholder="Search for events" data-evq value="' + esc(V.q) + '" aria-label="Search for events"></div></div>';
@@ -376,13 +380,13 @@
     var byDay = {}; list.forEach(function (e) { (byDay[dayIso(e.t)] = byDay[dayIso(e.t)] || []).push(e); });
     var days = Object.keys(byDay).sort();
     var nextBar = nxt ? '<div class="ev-next">Next · ' + (dayIso(nxt.t) !== today ? esc(shortDay(nxt.t)) + " " : "") + hm(nxt.t) + " ET · " + flagOf(nxt) + "<b>" + esc(nxt.label.replace(/^(USD|CAD) /, "")) + '</b> · in <span class="countdown" data-t="' + nxt.t + '" data-fmt="hms">' + hms(nxt.t - now) + "</span></div>" : "";
-    var head = "<thead><tr><th>Time</th><th>Country</th><th>Importance</th><th>Event</th><th>Actual</th><th>Forecast</th><th>Previous</th><th>Status</th></tr></thead>";
+    var head = "<thead><tr><th>Time</th><th>Country</th><th>Importance</th><th>Event</th><th>Actual</th><th title='Consensus forecast as published on the Forex Factory weekly calendar feed; blank when none is published'>Forecast</th><th>Previous</th><th>Status</th></tr></thead>";
     var body = days.length ? days.map(function (d) { var L = byDay[d], t0 = L[0].t;
         return '<div class="tile wide ev-day"><h2>' + esc(new Date(t0).toLocaleDateString("en-US", { timeZone: TZ, month: "short", day: "numeric", year: "numeric" })) + (d === today ? " (Today)" : d === dayIso(now + 86400000) ? " (Tomorrow)" : d === dayIso(now - 86400000) ? " (Yesterday)" : " (" + esc(wdOf(t0)) + ")") +
           ' <span class="h2note">— ' + L.length + " event" + (L.length > 1 ? "s" : "") + ' · Toronto time</span></h2><div class="tbl-scroll"><table class="ev-tbl">' + head + "<tbody>" + L.map(function (e) { return row(e, now); }).join("") + "</tbody></table></div></div>"; }).join("")
       : '<div class="tile wide ev-empty"><div class="eve-i">◷</div><h3>No events</h3><p>' + (all.length ? "Nothing matches these filters." : "Nothing is scheduled in this range.") + "</p></div>";
     return '<div id="evTop">' + topHTML(now) + "</div>" + '<div id="evBody">' + nextBar + (V.day === "today" ? policyHTML(now) : "") + body +
-      '<div class="tile wide"><div class="stamp">US and Canada only. Sources: the US + Canada macro calendar (this week and next; forecast and previous), official release calendars, USDA, WASDE, CFTC, CBOT contract dates and sessions, AAFC / StatCan, EIA, central banks, legislation, watchlist earnings and the desk’s own refreshes. Actual is shown for the releases the desk tracks, once the number is on the desk; other rows keep forecast and previous. Click a row for its history, what it measures and where to see it.</div></div></div>';
+      '<div class="tile wide"><div class="stamp">US and Canada only. Sources: the US + Canada macro calendar (this week and next; forecast and previous), official release calendars, USDA, WASDE, CFTC, CBOT contract dates and sessions, AAFC / StatCan, EIA, central banks, legislation, watchlist earnings and the desk’s own refreshes. Forecast and previous come from the Forex Factory weekly calendar feed (published consensus, refreshed hourly; blank when none is published — nothing is estimated). Actual is shown for the releases the desk tracks, from the official source once the number is on the desk. Click a row for its history, what it measures and where to see it.</div></div></div>';
   }
   function bodyHTML(now) { var w = document.createElement("div"); w.innerHTML = mainHTML(now); var b = w.querySelector("#evBody"); return b ? b.innerHTML : ""; }
 
@@ -623,6 +627,7 @@
   }
   document.addEventListener("input", function (ev) { var q = ev.target && ev.target.getAttribute && ev.target.hasAttribute("data-evq") ? ev.target : null; if (!q) return; V.q = q.value; var b = document.getElementById("evBody"); if (b) b.innerHTML = bodyHTML(Date.now()); });
   document.addEventListener("change", function (ev) { var el = ev.target; if (!el || !el.getAttribute) return;
+    if (el.hasAttribute("data-evimpc")) { V.imp[el.getAttribute("data-evimpc")] = el.checked; saveV(); repaintMain(true); return; }
     if (el.hasAttribute("data-evcat")) { V.cat = el.value; saveV(); repaintMain(true); } else if (el.hasAttribute("data-evcustom")) { V.custom = el.value; saveV(); repaintMain(true); } });
   document.addEventListener("keydown", function (ev) { if (ev.key === "Enter" && ev.target && ev.target.closest && ev.target.closest("tr[data-evopen]") && !ev.target.closest("button")) { var r = ev.target.closest("tr[data-evopen]"), id = r.getAttribute("data-evopen"); V.open = V.open === id ? "" : id; saveV(); repaintMain(); return; }
     if (ev.key !== "Enter") return; var g = ev.target && ev.target.closest && ev.target.closest(".evfi-go"); if (g) { ev.preventDefault(); go(g.getAttribute("data-evgo")); } });
@@ -663,6 +668,7 @@
     ".evcnt{display:flex;gap:3px}.evcnt i,.evimp-b{font:700 10px 'IBM Plex Mono',monospace;font-style:normal;padding:1px 5px;border-radius:3px;color:#fff}.iH{background:#d6453d}.iM{background:#c99a1e;color:#1b1400!important}.iL{background:#2c4a7a}" +
     ".evfilters{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.evfg{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:4px 8px}.evfg>span{font:700 10px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:4px}" +
     ".evfg button{background:none;border:1px solid transparent;border-radius:5px;color:var(--muted);padding:2px 6px;cursor:pointer;font-size:12.5px}.evfg button[aria-pressed=true]{color:var(--text);border-color:var(--line2);background:rgba(110,168,255,.08)}.evfg button[aria-pressed=false]{opacity:.45}.evfg select{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:5px;padding:2px 6px}" +
+    ".evchk{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--text);margin-right:8px;cursor:pointer}.evchk input{accent-color:#6ea8ff;width:15px;height:15px;cursor:pointer}.evx-s{font-size:11.5px!important;color:var(--faint)!important}" +
     ".evq{flex:1;min-width:180px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13.5px}.evcust{margin:0 0 10px;font-size:13px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.evcust input{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:5px;padding:3px 6px}.evcust small{color:var(--faint)}" +
     ".ev-next{font-size:13px;color:var(--muted);margin:0 0 10px}.ev-next b{color:var(--text)}" +
     ".ev-tbl{width:100%;border-collapse:collapse;font-size:13px}.ev-tbl th{font:700 10.5px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}" +
