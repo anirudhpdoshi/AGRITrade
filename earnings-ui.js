@@ -68,6 +68,7 @@
     ".ue-st.no{color:var(--red);border-color:rgba(224,101,95,.5)}.ue-st.unk{color:var(--faint);border-color:var(--line2)}" +
     ".ue-log{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--faint);line-height:1.6}" +
     ".ut-hdr{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:10px}" +
+    ".ut-degr{grid-column:1/-1;background:#3d1a18;border:1px solid #6e2b26;color:#ff9d97;border-radius:6px;padding:10px 12px;font-size:13px}.ut-degr b{color:#ffb4ae}" +
     ".ut-ix{appearance:none;text-align:left;font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:8px 11px;min-width:0}" +
     ".ut-ix:hover,.ut-ix.on{border-color:#3d5a80}.ut-ix .n{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
     ".ut-ix .v{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;margin:1px 0}.ut-ix .c{font-family:'IBM Plex Mono',monospace;font-size:12px}" +
@@ -309,7 +310,13 @@
   function wInst(id) { var W = window.WORLD && WORLD._data ? WORLD._data() : null; if (!W || !W.instruments) return null;
     var L = W.instruments; return Array.isArray(L) ? L.filter(function (x) { return x.id === id; })[0] || null : L[id] || null; }
   function stDot(st) { var c = st === "open" ? "var(--green)" : st === "pre" || st === "post" ? "var(--amber)" : "var(--faint)"; return '<span class="ut-dot" style="background:' + c + '"></span>'; }
+  var openedAt = 0;
   function header() {
+    /* no World snapshot yet: skeleton for up to 10 s, then a red degraded line with the last good time and a retry — never silent "Unavailable" cards */
+    var Wd = window.WORLD && WORLD._data ? WORLD._data() : null;
+    if (!Wd) { var late = openedAt && Date.now() - openedAt > 10000, e = window.WORLD && WORLD._err ? WORLD._err() : null;
+      return '<div class="ut-hdr">' + (late || e ? '<div class="ut-degr" role="alert"><b>Index feed down</b> — the market snapshot has not loaded' + (e ? " (network or GitHub)" : "") + '; retrying every 15 s. <button class="ue-btn" data-utworld>Retry now</button></div>'
+        : HDR.map(function (h) { return '<div class="ut-ix" aria-busy="true"><div class="n">' + h[1] + " · " + h[2] + '</div><div class="v neu">…</div><div class="m">loading</div></div>'; }).join("")) + "</div>"; }
     return '<div class="ut-hdr">' + HDR.map(function (h) { var x = wInst(h[0]), d = x ? (x.dec != null ? x.dec : 2) : 2;
       if (!x || x.last == null) return '<div class="ut-ix" aria-disabled="true"><div class="n">' + h[1] + ' · ' + h[2] + '</div><div class="v neu">—</div><div class="m">' +
         (h[0] === "ixic" && x == null ? "added to the World feed — appears after its next run" : "unavailable from the free feed") + "</div></div>";
@@ -635,7 +642,10 @@
   /* header values come from the World feed (already polled by world-ui.js) — repaint it each minute while the tab is open, no extra fetch */
   setInterval(function () { if (P.classList.contains("active") && !window.DESK_LOCKED) { var h = P.querySelector(".ut-hdr"); if (h) { var d = document.createElement("div"); d.innerHTML = header(); h.replaceWith(d.firstChild); } } }, 60000);
   /* the JSON only changes when someone runs the Action, so fetch on open (at most once a minute) — no background polling */
-  BTN.addEventListener("click", function () { render(); poll(); });
+  BTN.addEventListener("click", function () { openedAt = Date.now(); render(); poll(); setTimeout(function () { if (P.classList.contains("active")) paintHdr(); }, 10500); });
+  function paintHdr() { var h = P.querySelector(".ut-hdr"); if (h) { var d = document.createElement("div"); d.innerHTML = header(); h.replaceWith(d.firstChild); } }
+  window.addEventListener("desk:world", function () { if (P.classList.contains("active")) paintHdr(); });
+  document.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("[data-utworld]") && window.WORLD) { WORLD.poll(true); paintHdr(); } });
   /* fast-lane release watch (10 s / 30 s around each company's slot): merge its numbers straight into the calendar */
   function mergeLive(L) {
     if (!L || !J || !J.calendar || !J.calendar.rows) return;

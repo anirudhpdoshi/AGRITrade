@@ -23,6 +23,7 @@
   if (!CATS.some(function (c) { return c[0] === cat; })) cat = "c1";
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  var T0 = Date.now();
   function W() { return window.WORLD && WORLD._data ? WORLD._data() : null; }
   function bySym(s) { var w = W(); return w && (w.instruments || []).filter(function (i) { return i.sym === s; })[0] || null; }
   function num(v, d) { return v == null || isNaN(v) ? "—" : (+v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }); }
@@ -67,7 +68,8 @@
       '<div class="usm-rd"><div><b>Magnitude</b>' + num(s.last, dec(s)) + " · " + sg(s.chg, dec(s)) + " pts" + (wk && wk.week != null ? " · week " + sg(wk.week, 2, "%") : "") + "</div><div><b>Breadth</b>" + up + " of " + idx.length + " US indexes up</div><div><b>Driver</b>" + esc(bits.join(" · ")) + "</div></div></section>";
   }
   function snapshot() {
-    var w = W(); if (!w) return '<section class="usm-card"><p class="note">Loading the market read…</p></section>';
+    var w = W(); if (!w) { var e = window.WORLD && WORLD._err ? WORLD._err() : null, late = Date.now() - T0 > 10000;
+      return '<section class="usm-card">' + (e || late ? '<p class="usm-degr" role="alert"><b>Market snapshot not loaded</b> — the index feed did not answer' + (e ? " (network or GitHub)" : " within 10 s") + '; retrying every 15 s. <button class="usm-mini" data-usmworld>Retry now</button></p>' : '<p class="note">Loading the market read…</p>') + "</section>"; }
     var A = w.instruments || [], g = function (name, f) { return A.filter(function (i) { return i.group === name && (!f || f(i)); }); };
     var fut = function (i) { return /=F$/.test(i.sym || ""); };
     return glance() + '<div class="usm-2">' +
@@ -420,6 +422,7 @@
     '.usm-b-rail button{appearance:none;border:0;background:none;color:var(--muted);text-align:left;font:inherit;font-size:13px;padding:7px 8px;border-radius:5px;cursor:pointer;display:flex;gap:7px}.usm-b-rail button i{font:600 11px/18px "IBM Plex Mono",monospace;font-style:normal;color:var(--faint);min-width:18px}.usm-b-rail button:hover{background:var(--panel2);color:var(--ink)}.usm-b-rail button[aria-current]{background:#1a2a42;color:#fff;box-shadow:inset 2px 0 0 var(--green)}.usm-b-rail button[aria-current] i{color:#9db8d8}.usm-b-rail button:focus-visible{outline:2px solid var(--cyan)}.usm-b-rail hr{border:0;border-top:1px solid var(--line2);margin:5px 2px}' +
     '.usm-d{grid-area:d;min-width:0}.usm-crumb{font-size:12px;color:var(--faint);margin:2px 0 8px}.usm-crumb b{color:var(--muted);font-weight:600}.usm-crumb button{appearance:none;border:0;background:none;padding:0;font:inherit;color:var(--faint);cursor:pointer}.usm-crumb button:hover{color:var(--ink);text-decoration:underline}#usm:not([data-v="intel"]) #panel-earnings{display:none!important}' +
     '#usm[data-v="intel"] #usmView{display:none}#usmWlB{display:none}#usm[data-cat="c6"] #usmWlB{display:block}#usmSub{display:none;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px}#usm[data-cat="c6"] #usmSub{display:flex}#panel-earnings .ut-hdr,#panel-earnings [data-utgo="plan"]{display:none!important}' +
+    '.usm-degr{background:#3d1a18;border:1px solid #6e2b26;color:#ff9d97;border-radius:6px;padding:10px 12px;margin:0}' +
     '.usm-card{background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:12px 14px;margin-bottom:10px;min-width:0}.usm-card h3{margin:0 0 8px;font-size:14px;color:var(--ink)}.usm-card h3 small{font-weight:500;color:var(--faint);margin-left:4px}.usm-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.usm-2 .usm-card{margin:0}' +
     '.usm-tw{overflow-x:auto}.usm-tb{width:100%;border-collapse:collapse;font-size:12.5px}.usm-tb th{text-align:left;color:var(--faint);font-weight:500;padding:3px 8px 5px 0;white-space:nowrap}.usm-tb td{padding:5px 8px 5px 0;border-top:1px solid var(--line);color:var(--ink);white-space:nowrap}.usm-tb td:nth-child(2),.usm-tb td:nth-child(3){font-family:"IBM Plex Mono",monospace}.usm-tb:not(.usm-mx):not(.usm-ev) td:nth-child(4){min-width:108px}.usm-tb:not(.usm-mx):not(.usm-ev) td:first-child{white-space:normal}.usm-tb:not(.usm-mx):not(.usm-ev) td,.usm-tb:not(.usm-mx):not(.usm-ev) th{padding-right:6px}.usm-tb .usm-rg .lh{gap:4px;font-size:10px}' +
     '.usm-gl .h{display:flex;justify-content:space-between;align-items:center}.usm-gl h3{margin:0}.usm-gl .big{font:600 34px "IBM Plex Mono",monospace;margin:2px 0 8px}.usm-gl .usm-rd{display:grid;grid-template-columns:1fr 1fr 2.4fr;gap:14px;font-size:13px;color:var(--ink)}.usm-gl .usm-rd b{display:block;font-size:11.5px;font-weight:500;color:var(--faint)}' +
@@ -557,5 +560,9 @@
   window.addEventListener("desk:earnboard", function () { if (cat === "c6" && C6.sub === "cal" && P.classList.contains("active")) paintC6(); if (sel && sel.t === "s") paintE(); paintLock(); });
   ["desk:earnlive", "desk:earnpr"].forEach(function (n) { window.addEventListener(n, paintLock); });
   setInterval(function () { if (P.classList.contains("active") && !document.hidden) paintLock(); }, 15000);
+  /* one snapshot drives every count on the tab: repaint everything the moment the World feed lands (UI-FIX-01/04) */
+  window.addEventListener("desk:world", function () { if (P.classList.contains("active")) paintLive(); });
+  document.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("[data-usmworld]") && window.WORLD) WORLD.poll(true); });
+  setTimeout(function () { if (!W() && P.classList.contains("active")) paintLive(); }, 10500);
   window.USM = { go: go };
 })();
