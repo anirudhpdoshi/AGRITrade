@@ -70,6 +70,7 @@
     ".cx-ai{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.cx-ai>div{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.5;background:var(--panel2)}" +
     ".cx-ai b{display:block;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);margin-bottom:3px}.cx-ai .hyp{color:var(--muted);font-style:italic}" +
     ".cx-st{font-family:'IBM Plex Mono',monospace;font-size:9.5px;padding:1px 5px;border-radius:7px;border:1px solid var(--line2);color:var(--faint);white-space:nowrap}.cx-st.C{border-style:dashed}" +
+    "table.mx-t td,table.mx-t th{white-space:nowrap;font-size:12px}table.mx-t .mx-h td{font-weight:700;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:rgba(110,168,255,.05);text-align:left}table.mx-t .mx-fy{background:rgba(56,182,201,.06);font-weight:600}table.mx-t td.pos{color:#3fb97f}table.mx-t td.neg{color:#e0655f}" +
     "table.cx-t{width:100%;border-collapse:collapse}table.cx-t td:first-child,table.cx-t th:first-child{text-align:left;font-family:'Libre Franklin',sans-serif}" +
     "details.cx-evd{border:1px solid var(--line);border-radius:8px;padding:8px 11px;margin-top:14px}details.cx-evd summary{cursor:pointer;font-size:12.5px;color:var(--muted)}" +
     ".cx-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin:2px 0 4px}.cx-leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}" +
@@ -342,7 +343,7 @@
     ["Company overview", [["snap", "Company snapshot", "Size, growth, profitability and financial structure at a glance.", "rev"], ["verdicts", "Four financial verdicts", "Earnings quality · outlook · resilience · market implication.", null], ["health", "Eight-quarter health history", "Consistently strong, weak, or changing?", null]]],
     ["Valuation & market", [["val-snap", "Investment snapshot", "Valuation, positives, concerns and what to watch.", null], ["val-scn", "Scenario values", "Bear / base / bull on assumptions you can edit.", null],
       ["val-pe", "Multiple sensitivity", "What each turn of P/E is worth per share.", null], ["val-rx", "Earnings-day reactions", "How the stock moved on each report, and its worst days.", null]]],
-    ["Earnings & financial statements", [["revenue", "Revenue intelligence", "Is growth accelerating or slowing?", "rev"], ["gross", "Cost of revenue & gross profit", "Is the company keeping more of each dollar after direct costs?", "gm"], ["operating", "Operating profitability", "Is growth producing operating leverage?", "opm"], ["eps", "Net income & EPS", "Is earnings growth operating, tax, buyback or adjustment driven?", "eps_d"]]],
+    ["Earnings & financial statements", [["matrix", "Quarterly matrix", "Every line, every quarter: YoY, QoQ and fiscal-year totals in one grid.", "rev"], ["revenue", "Revenue intelligence", "Is growth accelerating or slowing?", "rev"], ["gross", "Cost of revenue & gross profit", "Is the company keeping more of each dollar after direct costs?", "gm"], ["operating", "Operating profitability", "Is growth producing operating leverage?", "opm"], ["eps", "Net income & EPS", "Is earnings growth operating, tax, buyback or adjustment driven?", "eps_d"]]],
     ["Working capital", [["wc-ar", "Receivables & collection", "Are customers taking longer to pay?", "dso"], ["wc-inv", "Inventory efficiency", "Is inventory building faster than demand?", "dio"], ["wc-ap", "Payables & supplier financing", "Better terms, or delayed payments?", "dpo"], ["wc-ccc", "Cash conversion cycle", "How long is cash tied up in operations?", "ccc"]]],
     ["Cash flow & capital allocation", [["cfo", "Operating cash flow", "Does accounting profit turn into cash?", "cfo"], ["fcf", "Free cash flow", "Cash left after investing in the asset base?", "fcf"], ["capex", "Capital expenditure", "Investing for growth or maintaining?", "capex"], ["alloc", "Capital allocation", "Where is the cash going?", "shret"]]],
     ["Debt & financing", [["debt", "Debt structure", "How is the company financed?", "gdebt"], ["costdebt", "Blended cost of debt", "Is borrowing getting more expensive?", "effcost"], ["maturity", "Maturities & refinancing", "Is a large refinancing coming?", null], ["service", "Debt servicing capacity", "Can earnings and cash carry the debt?", "int_cov"]]],
@@ -350,7 +351,7 @@
     ["Industry comparison", [["peers", "Peer benchmarks", "Industry median, percentile and named competitors."]]],
     ["Earnings intelligence", [["street", "Street vs actual"], ["guide", "Guidance & revisions"], ["mgmt", "Management commentary"], ["aieco", "AI economics"]]],
   ];
-  var BUILT = { "val-snap": 1, "val-scn": 1, "val-pe": 1, "val-rx": 1, snap: 1, verdicts: 1, health: 1, revenue: 1, gross: 1, operating: 1, eps: 1, cfo: 1, fcf: 1, "wc-ar": 1, "wc-inv": 1, "wc-ap": 1, "wc-ccc": 1, capex: 1, alloc: 1, debt: 1, costdebt: 1, maturity: 1, service: 1, liq: 1, returns: 1, lev: 1, eff: 1, warn: 1 };
+  var BUILT = { matrix: 1, "val-snap": 1, "val-scn": 1, "val-pe": 1, "val-rx": 1, snap: 1, verdicts: 1, health: 1, revenue: 1, gross: 1, operating: 1, eps: 1, cfo: 1, fcf: 1, "wc-ar": 1, "wc-inv": 1, "wc-ap": 1, "wc-ccc": 1, capex: 1, alloc: 1, debt: 1, costdebt: 1, maturity: 1, service: 1, liq: 1, returns: 1, lev: 1, eff: 1, warn: 1 };
   function cardTitle(id) { var t = ""; PARTS.forEach(function (p) { p[1].forEach(function (c) { if (c[0] === id) t = c[1]; }); }); return t; }
 
   /* press-release figures (8-K exhibit 99.1, read by the fast lane minutes after filing) for a quarter not yet in XBRL */
@@ -461,6 +462,66 @@
       (annualKeys ? '<div class="cx-sec"><div class="pi-l">Annual history (10-K)</div>' + annualT(M, annualKeys) + "</div>" : "") +
       '<div class="cx-sec"><div class="pi-l">Industry comparison</div><div class="ue-ph">No peer benchmark yet — industry median, percentile and named competitors arrive with the industry-comparison phase. Nothing is shown rather than an invented benchmark.</div></div>' +
       '<div class="cx-sec"><div class="pi-l">Interpretation — rule-based, from the figures above</div>' + aiHTML(interp(M, k, extra)) + "</div>" + evidence(M, evKeys || tableKeys));
+  }
+  /* ---------------- quarterly matrix (owner's workbook view): metrics × quarters, fiscal-year totals, YoY / QoQ, FY vs FY ---------------- */
+  var MX = "pl";
+  var MXROWS = { pl: [["rev", "Total revenue", "$"], ["gp", "Gross profit", "$"], ["gm", "Gross margin %", "%"], ["rnd", "R&D", "$"], ["sga", "SG&A", "$"], ["opx", "Total operating expenses", "$"],
+      ["opinc", "Operating income", "$"], ["opm", "Operating margin %", "%"], ["oth", "Other income / (expense)", "$d"], ["pretax", "Pre-tax income", "$"], ["tax", "Tax provision", "$"], ["etr", "Effective tax rate %", "%"],
+      ["ni", "Net income", "$"], ["nm", "Net margin %", "%"], ["eps_d", "Diluted EPS", "eps"]],
+    cf: [["cfo", "Operating cash flow", "$"], ["capex", "Capex (PP&E payments)", "$"], ["fcf", "Free cash flow", "$"], ["fcfm", "FCF margin %", "%"]] };
+  function mxv(m, k) {   /* value + whether derived; operating expenses and other income are calculated when not tagged */
+    var g = function (x) { return m[x] && m[x].v != null ? m[x].v : null; };
+    if (k === "opx") { if (g("opex") != null) return { v: g("opex"), c: m.opex.st === "CALCULATED" }; if (g("gp") != null && g("opinc") != null) return { v: g("gp") - g("opinc"), c: true }; return null; }
+    if (k === "oth") return g("pretax") != null && g("opinc") != null ? { v: g("pretax") - g("opinc"), c: true } : null;
+    return g(k) == null ? null : { v: g(k), c: m[k].st === "CALCULATED" };
+  }
+  function fyTotals(M) {   /* a fiscal year counts only when all four quarters are on file; reported 10-K totals win where they exist */
+    var by = {}; M.quarters.forEach(function (q) { (by[q.fl.fy] = by[q.fl.fy] || []).push(q); });
+    return Object.keys(by).sort().filter(function (y) { return by[y].length === 4; }).map(function (y) {
+      var Q4 = by[y], m = {}, sum = function (k) { var t = 0; for (var i = 0; i < 4; i++) { var x = mxv(Q4[i].m, k); if (!x) return null; t += x.v; } return t; };
+      ["rev", "gp", "rnd", "sga", "opx", "opinc", "oth", "pretax", "tax", "ni", "eps_d", "cfo", "capex", "fcf"].forEach(function (k) { var v = sum(k); if (v != null) m[k] = { v: v, st: "CALCULATED" }; });
+      var A = (M.annual || []).filter(function (a) { return String(a.fy) === String(y); })[0];
+      if (A) Object.keys(A.m).forEach(function (k) { m[k] = { v: A.m[k].v, st: "REPORTED" }; });
+      var r = m.rev && m.rev.v; if (r) [["gm", "gp"], ["opm", "opinc"], ["nm", "ni"], ["fcfm", "fcf"]].forEach(function (x) { if (m[x[1]]) m[x[0]] = { v: m[x[1]].v / r * 100, st: "CALCULATED" }; });
+      if (m.tax && m.pretax && m.pretax.v) m.etr = { v: m.tax.v / m.pretax.v * 100, st: "CALCULATED" };
+      return { fl: { label: "FY" + String(y).slice(2) }, fy: y, m: m, annual: !!A };
+    });
+  }
+  function mxf(t, v) { if (v == null) return "—"; if (t === "%") return v.toFixed(1) + "%"; if (t === "eps") return (v < 0 ? "−$" : "$") + Math.abs(v).toFixed(2);
+    var a = Math.abs(v), s = v < 0 ? "−" : ""; return s + (a >= 1e9 ? (a / 1e9).toFixed(2) + "B" : a >= 1e6 ? (a / 1e6).toFixed(0) + "M" : a >= 1e3 ? (a / 1e3).toFixed(1) + "K" : a.toFixed(0)); }
+  function mxd(t, a, b) {   /* change cell: % for amounts, pp for ratios, $ for small sign-flipping lines (other income) */
+    if (a == null || b == null) return { s: "", v: null };
+    if (t === "%") { var d = a - b; return { s: (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(1) + " pp", v: d }; }
+    if (t === "$d" || b === 0 || (a < 0) !== (b < 0)) { var d2 = a - b; return { s: (d2 > 0 ? "+" : d2 < 0 ? "−" : "") + mxf("$", Math.abs(d2)).replace("−", ""), v: d2 }; }
+    var p = (a / b - 1) * 100 * (b < 0 ? -1 : 1); return { s: (p > 0 ? "+" : p < 0 ? "−" : "") + Math.abs(p).toFixed(1) + "%", v: p };
+  }
+  function matrixCard(M) {
+    var Q = M.quarters.slice(-10), FY = fyTotals(M).slice(-2), rows = MXROWS[MX === "cf" ? "cf" : "pl"].filter(function (r) { return Q.some(function (q) { return mxv(q.m, r[0]); }); });   /* lines the company never files stay hidden */
+    var yo = function (q) { var i = M.quarters.indexOf(q); for (var j = i - 1; j >= 0; j--) { var d = (Date.parse(q.end) - Date.parse(M.quarters[j].end)) / 864e5; if (d >= 350 && d <= 380) return M.quarters[j]; if (d > 380) break; } return null; };
+    var pq = function (q) { var i = M.quarters.indexOf(q); return i > 0 ? M.quarters[i - 1] : null; };
+    var tone = function (k, v) { return v == null || Math.abs(v) < 0.05 ? "" : (/^(rnd|sga|opx|tax|capex|etr)$/.test(k) ? -v : v) > 0 ? "pos" : "neg"; };
+    var tabs = '<div class="seg mi-vs" style="margin:2px 0 10px">' + [["pl", "P&L"], ["cf", "Cash flow"], ["fy", "FY vs FY"]].map(function (x) { return '<button data-mxtab="' + x[0] + '" aria-pressed="' + (MX === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>";
+    var body;
+    if (MX === "fy") {
+      if (FY.length < 2) body = '<div class="ue-ph">Two complete fiscal years (all four quarters on file) are needed for this view.</div>';
+      else { var a = FY[0], b = FY[1], all = MXROWS.pl.concat(MXROWS.cf);
+        body = '<div class="tbl-scroll"><table class="cx-t mx-t"><thead><tr><th>Metric</th><th>' + a.fl.label + "</th><th>" + b.fl.label + "</th><th>Change</th><th>Change %</th></tr></thead><tbody>" +
+          all.map(function (r) { var x = a.m[r[0]], y = b.m[r[0]]; if (!x && !y) return ""; var xv = x && x.v, yv = y && y.v, d = xv != null && yv != null ? yv - xv : null, ch = mxd(r[2], yv, xv);
+            return "<tr><td>" + esc(r[1]) + "</td><td>" + mxf(r[2], xv) + "</td><td>" + mxf(r[2], yv) + '</td><td class="' + tone(r[0], d) + '">' + (d == null ? "—" : r[2] === "%" ? ch.s : (d > 0 ? "+" : d < 0 ? "−" : "") + mxf(r[2], Math.abs(d)).replace("−", "")) + '</td><td class="' + tone(r[0], ch.v) + '">' + (r[2] === "%" || r[2] === "$d" ? "—" : ch.s || "—") + "</td></tr>"; }).join("") + "</tbody></table></div>"; }
+    } else {
+      var cols = Q.concat(FY), head = "<tr><th>Metric</th>" + cols.map(function (q) { return "<th" + (q.fy ? ' class="mx-fy"' : "") + ">" + esc(q.fl.label) + "</th>"; }).join("") + "</tr>";
+      var blk = function (title, f) { return '<tr class="mx-h"><td colspan="' + (cols.length + 1) + '">' + title + "</td></tr>" + rows.map(function (r) { return "<tr><td>" + esc(r[1]) + "</td>" + cols.map(function (q) { return f(q, r); }).join("") + "</tr>"; }).join(""); };
+      var cell = function (q, r) { var x = mxv(q.m, r[0]); return "<td" + (q.fy ? ' class="mx-fy"' : "") + (x && x.c ? ' style="font-style:italic"' : "") + ">" + mxf(r[2], x && x.v) + "</td>"; };
+      var chg = function (ref) { return function (q, r) { var p = q.fy ? (ref === "y" ? FY.filter(function (f) { return f.fy === q.fy - 1; })[0] || fyTotals(M).filter(function (f) { return +f.fy === +q.fy - 1; })[0] : null) : ref === "y" ? yo(q) : pq(q);
+        var x = mxv(q.m, r[0]), y = p && mxv(p.m, r[0]), c = mxd(r[2], x && x.v, y && y.v); return "<td" + (q.fy ? ' class="mx-fy ' : ' class="') + tone(r[0], c.v) + '">' + (c.s || "") + "</td>"; }; };
+      body = '<div class="tbl-scroll"><table class="cx-t mx-t"><thead>' + head + "</thead><tbody>" + blk("Reported", cell) + blk("YoY — vs same quarter a year earlier", chg("y")) + blk("QoQ — vs prior quarter", chg("q")) + "</tbody></table></div>";
+    }
+    var lq = Q[Q.length - 1], ly = lq && yo(lq), rv = lq && mxv(lq.m, "rev"), ry = ly && mxv(ly.m, "rev"), notes = [];
+    if (rv && ry) notes.push("Latest quarter " + lq.fl.label + ": revenue " + mxf("$", rv.v) + ", " + mxd("$", rv.v, ry.v).s + " YoY.");
+    if (FY.length === 2 && FY[0].m.rev && FY[1].m.rev) notes.push(FY[1].fl.label + " revenue " + mxf("$", FY[1].m.rev.v) + " vs " + mxf("$", FY[0].m.rev.v) + " in " + FY[0].fl.label + " (" + mxd("$", FY[1].m.rev.v, FY[0].m.rev.v).s + ").");
+    return shell(M, "matrix", tabs + body + (notes.length ? '<div class="obs-box"><b>OBSERVATIONS</b><ul>' + notes.map(function (n) { return "<li>" + esc(n) + "</li>"; }).join("") + "</ul></div>" : "") +
+      '<div class="stamp">From SEC 10-Q/10-K filings. Italic = calculated (fourth quarter = annual less nine months; other income = pre-tax less operating income). Fiscal-year columns need all four quarters on file and use the 10-K total where one is reported. ' +
+      "YoY on a margin is in percentage points; on other income it is the dollar change, since % moves on small, sign-flipping numbers mislead. Blank = no comparable period on file, never estimated. Segment and geography splits are not in SEC’s free data feed.</div>");
   }
   function revenueCard(M) {
     return page(M, "revenue", "rev",
@@ -865,7 +926,7 @@
   /* ---------------- public ---------------- */
   var CARDS = { snap: snapCard, verdicts: verdictCard, health: healthCard, revenue: revenueCard, gross: grossCard, operating: operatingCard, eps: epsCard, cfo: cfoCard, fcf: fcfCard,
     "wc-ar": arCard, "wc-inv": invCard, "wc-ap": apCard, "wc-ccc": cccCard, capex: capexCard, alloc: allocCard, debt: debtCard, costdebt: costCard, maturity: maturityCard, service: serviceCard,
-    liq: liqCard, returns: returnsCard, lev: levCard, eff: effCard, warn: warnCard, "val-snap": vsnapCard, "val-scn": vscnCard, "val-pe": vpeCard, "val-rx": vrxCard };
+    matrix: matrixCard, liq: liqCard, returns: returnsCard, lev: levCard, eff: effCard, warn: warnCard, "val-snap": vsnapCard, "val-scn": vscnCard, "val-pe": vpeCard, "val-rx": vrxCard };
   function html(t) {
     if (!worker()) return '<div class="tile"><h2>Company research</h2><div class="ue-ph">Live search needs the AGRITrade SEC Worker. Once it is deployed, open the desk once with <code>?worker=https://&lt;name&gt;.workers.dev</code> — the address is remembered in this browser.</div></div>';
     var D = MEM[t]; if (!D) { load(t); D = MEM[t]; }
@@ -877,6 +938,7 @@
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t) return;
     var b = t.closest("[data-cocard]"); if (b && b.closest("#panel-earnings")) { card = b.getAttribute("data-cocard") || null; rerender(); var m = document.querySelector("#panel-earnings .ut-main"); if (m) m.scrollIntoView({ block: "start", behavior: "smooth" }); return; }
+    b = t.closest("[data-mxtab]"); if (b && b.closest("#panel-earnings")) { MX = b.getAttribute("data-mxtab"); rerender(); return; }
     b = t.closest("[data-coretry]"); if (b) { delete MEM[b.getAttribute("data-coretry")]; rerender(); }
     b = t.closest("[data-scnreset]"); if (b) { delete SCN[b.getAttribute("data-scnreset")]; rerender(); }
   });
