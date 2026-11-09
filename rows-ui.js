@@ -30,7 +30,7 @@
     o.flow = UNA;   /* read from the panel itself, so the headline can never disagree with its signal */
     if (R[0] && R[1] && R[0].settle != null && R[1].settle != null) o.carry = R[0].contract + " to " + R[1].contract + " · spread " + sign((R[0].settle - R[1].settle) * 100, function (x) { return x.toFixed(2) + "¢"; }) + (fnd ? " · FND " + fnd(R[0].contract) : ""); else o.carry = UNA;
     var VV = typeof window !== "undefined" && window.OIVALUE ? window.OIVALUE(g) : null, vw = VV && VV.walls;   /* levels by value first (owner), contract count after */
-    o.oi = vw && vw.cD && vw.pD ? "By value: call wall " + (+vw.cD.k).toFixed(2) + " (" + usdB(vw.cD.cdel) + ") · put wall " + (+vw.pD.k).toFixed(2) + " (" + usdB(vw.pD.pdel) + ")" + (near.call_wall ? " · by contracts " + strike(near.call_wall) + " / " + strike(near.put_wall) : "")
+    o.oi = vw && vw.cD && vw.pD ? "By value: call wall " + (+vw.cD.k).toFixed(2) + " (" + usdB(vw.cD.cdel) + ") · put wall " + (+vw.pD.k).toFixed(2) + " (" + usdB(vw.pD.pdel) + ")" + (vw.cC && vw.pC ? " · by contracts " + (+vw.cC.k).toFixed(2) + " / " + (+vw.pC.k).toFixed(2) : "")
       : near.call_wall ? "Call wall " + strike(near.call_wall) + " (" + n(near.call_wall[1]) + " contracts) · put wall " + strike(near.put_wall) + " (" + n(near.put_wall[1]) + " contracts)" : UNA;
     return o;
   }

@@ -144,8 +144,16 @@
     var T = Math.max(0, (Date.parse(N.expires + "T13:15:00-06:00") - Date.now()) / (365 * 864e5)), out = [];
     N.rows.forEach(function (r) { var K = r[0], cv = r[3] > 0 ? r[3] : null, pv = r[4] > 0 ? r[4] : null, C = b76(F, K, T, cv || N.iv, true), P = b76(F, K, T, pv || N.iv, false);
       out.push({ k: K, coi: r[1] || 0, poi: r[2] || 0, est: !(cv && pv), cprem: (r[1] || 0) * C.px * 5000, pprem: (r[2] || 0) * P.px * 5000, cdel: (r[1] || 0) * Math.abs(C.d) * 5000 * F, pdel: (r[2] || 0) * Math.abs(P.d) * 5000 * F }); });
-    var pick = function (side, key) { var L = out.filter(function (x) { return side === "c" ? x.k >= F : x.k <= F; }); return L.length ? L.reduce(function (a, b) { return b[key] > a[key] ? b : a; }) : null; };
-    return { F: F, T: T, rows: out, walls: { cC: pick("c", "coi"), pC: pick("p", "poi"), cP: pick("c", "cprem"), pP: pick("p", "pprem"), cD: pick("c", "cdel"), pD: pick("p", "pdel") },
+    var ks = out.map(function (x) { return x.k; }).sort(function (a, b) { return a - b; }), step = 1;
+    for (var i = 1; i < ks.length; i++) { var d = +(ks[i] - ks[i - 1]).toFixed(4); if (d > 0 && d < step) step = d; }
+    var tol = step / 2 + 1e-9;   /* at-the-money: within half a strike step, eligible on both sides */
+    out.forEach(function (x) { x.side = x.k >= F - tol && x.k <= F + tol ? "atm" : x.k > F ? "c" : "p"; });
+    var pick = function (side, key) { var L = out.filter(function (x) { return side === "c" ? x.k >= F - tol : x.k <= F + tol; }); return L.length ? L.reduce(function (a, b) { return b[key] > a[key] ? b : a; }) : null; };
+    var rank = function (side) { var L = out.filter(function (x) { return side === "c" ? x.k >= F - tol : x.k <= F + tol; }), kc = side === "c" ? "coi" : "poi", kd = side === "c" ? "cdel" : "pdel";
+      var byC = L.slice().sort(function (a, b) { return b[kc] - a[kc]; }), byD = L.slice().sort(function (a, b) { return b[kd] - a[kd]; });
+      var pickS = {}; byC.slice(0, 3).concat(byD.slice(0, 3)).forEach(function (x) { pickS[x.k] = x; });
+      return Object.keys(pickS).map(function (k) { var x = pickS[k]; return { x: x, rc: byC.indexOf(x) + 1, rd: byD.indexOf(x) + 1 }; }).sort(function (a, b) { return a.rd - b.rd; }); };
+    return { F: F, T: T, tol: tol, rows: out, top: { c: rank("c"), p: rank("p") }, walls: { cC: pick("c", "coi"), pC: pick("p", "poi"), cP: pick("c", "cprem"), pP: pick("p", "pprem"), cD: pick("c", "cdel"), pD: pick("p", "pdel") },
       tot: out.reduce(function (a, x) { a.cprem += x.cprem; a.pprem += x.pprem; a.cdel += x.cdel; a.pdel += x.pdel; return a; }, { cprem: 0, pprem: 0, cdel: 0, pdel: 0 }) };
   }
   root.OIVALUE = oiValue;
@@ -155,10 +163,10 @@
     var head = '<div class="cf-head"><b>Open interest by value · ' + esc(N.chain) + " " + esc(N.contract || "") + "</b><span>" + (N.oi_label ? esc(String(N.oi_label).split(" · ").slice(-1)[0]) : "") + (V ? " · priced at futures $" + V.F.toFixed(4) + " · " + Math.max(0, Math.round(V.T * 365)) + " days to expiry" : "") + "</span></div>";
     var tog = '<div class="toggle oid-tog" role="group"><button type="button" data-oid="1" aria-pressed="' + OIDOL + '">Value ($)</button><button type="button" data-oid="0" aria-pressed="' + !OIDOL + '">Contracts</button></div>';
     var body = "";
-    if (V) { var W = V.walls, wl = function (lab, w, key, fmt) { return w ? "<td>" + d2(w.k) + '<small> · ' + fmt(w[key]) + "</small></td>" : "<td>—</td>"; };
-      body += '<table class="cf-tbl oid-w"><thead><tr><th>Level</th><th>By contracts</th><th>By premium value</th><th>By delta value</th></tr></thead><tbody>' +
-        "<tr><td>Call wall <small>at/above $" + V.F.toFixed(2) + "</small></td>" + wl("", W.cC, "coi", cnt) + wl("", W.cP, "cprem", $) + wl("", W.cD, "cdel", $) + "</tr>" +
-        "<tr><td>Put wall <small>at/below $" + V.F.toFixed(2) + "</small></td>" + wl("", W.pC, "poi", cnt) + wl("", W.pP, "pprem", $) + wl("", W.pD, "pdel", $) + "</tr></tbody></table>" +
+    if (V) { var lv = function (side) { var kc = side === "c" ? "coi" : "poi", kp = side === "c" ? "cprem" : "pprem", kd = side === "c" ? "cdel" : "pdel";
+        return V.top[side].map(function (r) { var x = r.x; return '<tr' + (r.rd === 1 || r.rc === 1 ? ' class="oid-top"' : "") + "><td>" + (side === "c" ? "Call" : "Put") + "</td><td><b>" + d2(x.k) + "</b>" + (x.side === "atm" ? " <small>at the money</small>" : "") + "</td><td>" + cnt(x[kc]) + ' <small class="oid-rk">#' + r.rc + "</small></td><td>" + $(x[kp]) + "</td><td>" + $(x[kd]) + ' <small class="oid-rk">#' + r.rd + "</small></td></tr>"; }).join(""); };
+      body += '<table class="cf-tbl oid-w"><thead><tr><th>Side</th><th>Strike</th><th>Contracts · rank</th><th>Premium value</th><th>Delta value · rank</th></tr></thead><tbody>' + lv("c") + lv("p") + "</tbody></table>" +
+        '<div class="oid-sum">Walls — calls: ' + d2(V.walls.cC.k) + " by contracts, " + d2(V.walls.cD.k) + " by value · puts: " + d2(V.walls.pC.k) + " by contracts, " + d2(V.walls.pD.k) + " by value. A strike within " + (V.tol * 100).toFixed(1) + "¢ of $" + V.F.toFixed(4) + " counts as at the money on both sides.</div>" +
         '<div class="oid-sum">Premium held in the chain: calls ' + $(V.tot.cprem) + " · puts " + $(V.tot.pprem) + " · delta value calls " + $(V.tot.cdel) + " · puts " + $(V.tot.pdel) + "</div>"; }
     var tops = (V ? V.rows : []).slice().sort(function (a, b) { return OIDOL ? Math.abs(a.k - V.F) - Math.abs(b.k - V.F) : (b.coi + b.poi) - (a.coi + a.poi); }).slice(0, 12).sort(function (a, b) { return a.k - b.k; });   /* value view: the 12 strikes nearest the money */
     if (V) body += tog + (OIDOL ? '<table class="cf-tbl"><thead><tr><th>Strike</th><th>Call OI</th><th>Call premium $</th><th>Call delta $</th><th>Put OI</th><th>Put premium $</th><th>Put delta $</th></tr></thead><tbody>' +
