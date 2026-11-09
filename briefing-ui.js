@@ -49,13 +49,17 @@
       " · " + ago(c.ts) + (c.section && big ? " · " + esc((SEC.filter(function (s) { return s[0] === c.section; })[0] || [0, ""])[1]) : "") + " " + tagHTML(c.tags) + (c.note ? ' · <i>' + esc(c.note) + "</i>" : "") + "</div>" +
       (big && c.why ? '<div class="br-why"><b>Desk read</b> ' + esc(c.why) + "</div>" : "") + "</div></li>";
   }
+  /* as-of on the pulse: the newest of its inputs, with its age (UI-FIX-05) */
+  function pulseAsOf(D) { var A = (D.meta && D.meta.asof) || {}, t = [D.fx.feed && D.fx.feed.ts, A.yields_live || A.fx_spot, A.energy].filter(Boolean).map(Date.parse).filter(isFinite);
+    if (!t.length) return "as of —"; var m = Math.max.apply(null, t), a = Math.round((Date.now() - m) / 60000);
+    return "as of " + new Date(m).toLocaleTimeString("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit" }) + " ET · " + (a < 60 ? a + " min" : Math.round(a / 60) + " h") + " old"; }
   function pulse() {
     var D = window.DATA; if (!D || !D.fx) return "";
     var fx = D.fx, Y = fx.yields_live || {}, y10 = Y["10Y"] || {}, y2 = Y["2Y"] || {}, w = (fx.energy || [])[0] || {}, x = fx.fxcross || {}, P = fx.policy || {};
     var spot = +fx.feed.mid, ch = (spot / fx.spot.ref - 1) * 100;
     var fedM = /(\d{3})-(\d{3})/.exec(P.fed_range || ""), boc = P.boc_decided && P.boc_decided.rate != null ? P.boc_decided.rate : P.corra_now;
     function k(n, v, c, sub) { return '<div class="br-k"><div class="br-kn">' + n + '</div><div class="br-kv">' + v + '</div><div class="br-kc ' + (c || "") + '">' + (sub || "") + "</div></div>"; }
-    return '<div class="rail-card br-card"><div class="rail-title"><span>Markets pulse</span><span class="hint">desk data</span></div><div class="br-kg">' +
+    return '<div class="rail-card br-card"><div class="rail-title"><span>Markets pulse</span><span class="hint">desk data · ' + pulseAsOf(D) + '</span></div><div class="br-kg">' +
       k("USD/CAD", nf(spot, 4), cls(ch), sg(ch, 2, "%")) +
       (y10.y != null ? k("US 10Y", nf(+y10.y, 3) + "%", cls(y10.chg_bp), sg(y10.chg_bp, 1, " bp")) : "") +
       (y10.sp_ca != null ? k("US–CA 10Y", nf(+y10.sp_ca, 1) + " bp", "", "spread") : "") +

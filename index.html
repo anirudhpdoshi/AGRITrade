@@ -617,6 +617,7 @@ table.dest-tbl{font-size:13px}
 .age-pill.fresh{background:#123626;color:#5fd598;border-color:#1f5c3d}
 .age-pill.aging{background:#3a2a10;color:#f2c169;border-color:#6e5518}
 .age-pill.old{background:#3d1a18;color:#ff9d97;border-color:#6e2b26}
+.age-pill.p2{margin-left:6px}
 .chip.live{background:#123626;color:#5fd598;border:1px solid #1f5c3d}
 .flash-up{animation:fup .9s ease-out} .flash-dn{animation:fdn .9s ease-out}
 @keyframes fup{0%{color:#7dffb8;text-shadow:0 0 14px rgba(63,185,127,.8)}100%{color:inherit;text-shadow:none}}
@@ -1516,6 +1517,8 @@ function fanSVG2(g, meta, FL){
      ("off-scale") instead of squashing the whole chart */
   if(FANV.ci!==false){ lo=Math.min(lo, f.r10_99[0]); hi=Math.max(hi, f.r10_99[1]); }
   FL.levels.forEach(function(l){ if(fanOn(l.key)&&!l.lines){ lo=Math.min(lo,l.value); hi=Math.max(hi,l.value); } });
+  /* the drawn moving-average history stays inside the plot too, not just its last value (UI-FIX-07) */
+  for(i=0;i<NH;i++) ['ma20','ma50'].forEach(function(k){ if(fanOn(k)&&hist[i][k]!=null){ lo=Math.min(lo,hist[i][k]); hi=Math.max(hi,hist[i][k]); } });
   var core=hi-lo;
   FL.levels.forEach(function(l){ if(fanOn(l.key)&&l.lines){ if(l.value>=lo-core*0.25&&l.value<=hi+core*0.25){ lo=Math.min(lo,l.value); hi=Math.max(hi,l.value); } else l.off=true; } else delete l.off; });
   var pad=(hi-lo)*0.05; lo-=pad; hi+=pad;
@@ -1609,14 +1612,17 @@ function fanSVG2(g, meta, FL){
     if(ys[0]<top){ ys[0]=top;
       for(i=1;i<items.length;i++){ need=items[i-1].h/2+items[i].h/2+3; ys[i]=Math.max(ys[i], ys[i-1]+need); } }
   }
+  /* labels never run past the right edge (UI-FIX-07): cut to the room left at this font size, full text on hover */
+  var room=W-(rx+13)-4;
+  function fit(t,fs){ t=String(t); var mx=Math.floor(room/(fs*0.62)); return t.length<=mx?t:t.slice(0,mx-1).replace(/[\s\u00b7\u2014-]+$/,'')+'\u2026'; }
   items.forEach(function(it,idx){
     var ly=ys[idx];
     s+='<line x1="'+(rx-1)+'" y1="'+it.trueY.toFixed(1)+'" x2="'+(rx+9)+'" y2="'+ly.toFixed(1)+'" stroke="'+it.l.color+'" stroke-width="1"/>';
     s+='<circle cx="'+(rx-1)+'" cy="'+it.trueY.toFixed(1)+'" r="2" fill="'+it.l.color+'"/>';
     if(it.l.lines){
-      s+='<text x="'+(rx+13)+'" y="'+(ly-2).toFixed(1)+'" fill="'+it.l.color+'" font-size="11" font-weight="600" font-family="IBM Plex Mono"><tspan x="'+(rx+13)+'">'+it.l.lines[0]+'</tspan><tspan x="'+(rx+13)+'" dy="12">'+it.l.lines[1]+'</tspan></text>';
+      s+='<text x="'+(rx+13)+'" y="'+(ly-2).toFixed(1)+'" fill="'+it.l.color+'" font-size="11" font-weight="600" font-family="IBM Plex Mono"><title>'+esc(it.l.lines.join(' \u00b7 '))+'</title><tspan x="'+(rx+13)+'">'+fit(it.l.lines[0],11)+'</tspan><tspan x="'+(rx+13)+'" dy="12">'+fit(it.l.lines[1],11)+'</tspan></text>';
     } else {
-      s+='<text x="'+(rx+13)+'" y="'+(ly+3.5).toFixed(1)+'" fill="'+it.l.color+'" font-size="11.5" font-weight="'+(it.l.bold?700:500)+'" font-family="IBM Plex Mono">'+it.l.label+'</text>';
+      s+='<text x="'+(rx+13)+'" y="'+(ly+3.5).toFixed(1)+'" fill="'+it.l.color+'" font-size="11.5" font-weight="'+(it.l.bold?700:500)+'" font-family="IBM Plex Mono"><title>'+esc(it.l.label)+'</title>'+fit(it.l.label,11.5)+'</text>';
     }
   });
   s+='<text x="'+PL+'" y="'+(PT+ph+18)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono">'+hist[0].d.slice(0,10)+'</text>';
@@ -4035,7 +4041,7 @@ function renderGrain(key){
   var html='<div class="layout"><div class="grid">'+grainSubnavHTML(key), OV=grainKpiHTML(key)+grainDashboardHTML(key), DV='', FU='';
   /* fan tile */
   var FL=fanLevels(g, meta);
-  OV+='<div class="tile wide" data-src="grains_quote" data-grain="'+key+'"><h2>'+meta.name+' '+meta.contract+' — 10-day σ fan <span class="h2note">double-click the chart to zoom · settle fan anchored '+fmtDate(f.settle_date)+' · live fan re-anchored on the latest delayed quote</span></h2>'+
+  OV+='<div class="tile wide" data-src="grains_quote" data-src2="options" data-grain="'+key+'"><h2>'+meta.name+' '+meta.contract+' — 10-day σ fan <span class="h2note">double-click the chart to zoom · settle fan anchored '+fmtDate(f.settle_date)+' · live fan re-anchored on the latest delayed quote</span></h2>'+
     '<div class="stat-row" style="margin:6px 0 10px">'+
     stat("Daily σ", "$"+fmt(f.sig,4)) +
     stat("Chain IV", fmt(f.iv_chain_iv,2)+"%") +
@@ -4519,7 +4525,7 @@ function renderFX(){
       ' \u00b7 CORRA futures (3-month, Montreal Exchange) '+(fx.policy.corra_asof?'as of '+esc(fmtDate(fx.policy.corra_asof))+(fx.policy.corra_asof.length>10?' '+tHM(fx.policy.corra_asof):''):'date unknown')+(fx.policy.corra_asof?'<span class="qt-age" data-age="'+esc(fx.policy.corra_asof)+'" data-age-max="30000"></span>':'')+' \u00b7 delayed quote, refreshed once each weekday (8:23 ET) \u00b7 implied rate = 100 \u2212 price \u00b7 futures-implied, not forecasts</div></div>';
   /* positioning & sentiment */
   T.cftc=fxCftcHTML();
-  T.sentiment='<div class="tile" data-src="sentiment"><h2>Retail sentiment &amp; FX options</h2>'+
+  T.sentiment='<div class="tile" data-src="sentiment" data-src2="fxopt"><h2>Retail sentiment &amp; FX options</h2>'+
     '<div class="kv"><span class="kk">Retail traders ('+asOf('sentiment')+' pull)</span><span class="vv">'+fx.sent.traders.long_pct+'% long / '+fx.sent.traders.short_pct+'% short</span></div>'+
     '<div class="kv"><span class="kk">Retail lots</span><span class="vv">'+fx.sent.lots.long_pct+'% long / '+fx.sent.lots.short_pct+'% short</span></div>'+
     '<div class="kv"><span class="kk">Avg entry · long / short</span><span class="vv">'+fmt(fx.sent.avg_entries.long,4)+' / '+fmt(fx.sent.avg_entries.short,4)+'</span></div>'+

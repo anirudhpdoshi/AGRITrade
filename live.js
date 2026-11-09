@@ -88,29 +88,40 @@
 
   /* ------------------------------------------------------ freshness pills */
   var liveTickAt = 0;
+  /* as-of for keys the data job does not stamp in meta.asof */
+  var ASOF_X = { fxopt: function (D) { return D.fx && D.fx.fxopt && D.fx.fxopt.asof; } };
+  function ageWords(ms) { var m = Math.round(ms / 60000); return m < 60 ? m + " min" : m < 2880 ? Math.round(m / 60) + " h" : Math.round(m / 1440) + " days"; }
   function ageInfo(key, now) {
-    var meta = (window.DATA && DATA.meta) || {}, iso = meta.asof && meta.asof[key];
+    var meta = (window.DATA && DATA.meta) || {}, iso = (meta.asof && meta.asof[key]) || (ASOF_X[key] && window.DATA && ASOF_X[key](DATA));
     if (key === "fx_spot" && liveTickAt && now - liveTickAt < 90000) return { cls: "fresh", txt: "live" };
     if (!iso) return null;
     var t = new Date(iso).getTime();
     var age = now - t, biz = age - weekendMs(t, now), cad = (CADENCE[key] || 1440) * 60000;
-    var cls = biz <= cad * 1.5 ? "fresh" : biz <= cad * 4 ? "aging" : "old";
+    var cls = biz <= cad * 1.5 ? "fresh" : biz <= cad * (HARD[key] || 4) ? "aging" : "old";
     var tm = new Date(t), day = tm.toLocaleString("en-US", { timeZone: ET, month: "short", day: "numeric" }), clock = tm.toLocaleString("en-US", { timeZone: ET, hour: "numeric", minute: "2-digit" });
-    var word = CADWORD[key] ? " · " + CADWORD[key] : "", label = key === "grains_quote" ? "DELAYED" : key === "fx_spot" && cls === "fresh" ? "LIVE" : /^(fx_spot|fx_closes|yields_live|energy|crosses)$/.test(key) && cls !== "fresh" ? "CLOSE" : "LATEST VERIFIED";   /* BRD s.15: a close is called a close */
-    return { cls: cls, txt: day + ", " + clock + " ET" + word + " · " + dur(age) + " old · " + label, title: "" };
+    /* one state word for every tile: it escalates with age, so an old read can never say "LATEST VERIFIED" (UI-FIX-05/12); BRD s.15: a close is called a close */
+    var word = CADWORD[key] ? " · " + CADWORD[key] : "", label = cls === "old" ? "STALE" : cls === "aging" ? (key === "grains_quote" ? "DELAYED" : /^(fx_spot|fx_closes|yields_live|energy|crosses)$/.test(key) ? "CLOSE" : "AGING")
+      : key === "grains_quote" ? "DELAYED" : key === "fx_spot" ? "LIVE" : /^(fx_closes|yields_live|energy|crosses)$/.test(key) ? "CLOSE" : "LATEST VERIFIED";
+    return { cls: cls, txt: (NAME2[key] ? NAME2[key] + " " : "") + day + ", " + clock + " ET" + word + " · " + (age < 2880 * 60000 ? dur(age) : ageWords(age)) + " old · " + label, title: "" };
   }
+  /* tighter red line where a missed run matters: the daily OI snapshot is red once a business day is skipped */
+  var HARD = { options: 1.6, fxopt: 2 };
+  var NAME2 = { options: "Options/OI", fxopt: "FX options IV" };
   function paintPills() {
     var now = Date.now();
     document.querySelectorAll("[data-src]").forEach(function (tile) {
       var h2 = tile.querySelector("h2"); if (!h2) return;
-      var a = ageInfo(tile.getAttribute("data-src"), now);
-      if (a && a.txt === "live" && tile.id === "fx-spot-tile") a = null;   // the LIVE chip already says it
-      var pill = h2.querySelector(".age-pill");
-      if (!a) { if (pill) pill.remove(); return; }
-      if (!pill) { pill = document.createElement("span"); h2.appendChild(pill); }
-      pill.className = "age-pill " + a.cls;
-      pill.textContent = a.txt;
-      pill.removeAttribute("title");
+      /* data-src2: a second input the tile also leans on (e.g. the fan's OI walls) gets its own badge when it is behind */
+      [["data-src", "age-pill"], ["data-src2", "age-pill p2"]].forEach(function (k) {
+        var src = tile.getAttribute(k[0]), pill = h2.querySelector(k[0] === "data-src" ? ".age-pill:not(.p2)" : ".age-pill.p2");
+        var a = src ? ageInfo(src, now) : null;
+        if (a && a.txt === "live" && tile.id === "fx-spot-tile") a = null;   // the LIVE chip already says it
+        if (a && k[0] === "data-src2" && a.cls === "fresh") a = null;
+        if (!a) { if (pill) pill.remove(); return; }
+        if (!pill) { pill = document.createElement("span"); h2.appendChild(pill); }
+        var c = k[1] + " " + a.cls; if (pill.className !== c) pill.className = c;
+        if (pill.textContent !== a.txt) pill.textContent = a.txt;
+      });
     });
   }
 
@@ -144,8 +155,9 @@
   }
   function syncStripHeight() {
     var el = $("status-strip");
-    if (el) document.documentElement.style.setProperty("--strip-h", el.offsetHeight + "px");
+    if (el && el.offsetHeight !== stripH) { stripH = el.offsetHeight; document.documentElement.style.setProperty("--strip-h", stripH + "px"); }
   }
+  var stripH = -1;
   function paintStrip() {
     var el = $("status-strip"); if (!el || !window.DATA) return;
     var now = new Date(), fx = fxSession(now), gr = grainSession(now), meta = DATA.meta || {};
@@ -160,14 +172,21 @@
       : mode === "live" ? "<b>AUTO-REFRESH</b> · data " + dur(upd) + " old"
       : "<b>SNAPSHOT</b> · data " + (isFinite(upd) ? dur(upd) + " old" : "frozen at build");
     var nx = nextEvent(now.getTime());
-    el.innerHTML = '<div class="ss-row">' +
+    var clk = etClock(now), cd = nx ? dur(nx.t - now) : "";
+    var html = '<div class="ss-row">' +
       '<span class="ss-item"><span class="dot ' + (streaming || mode === "live" ? "on" : mode === "stale" ? "warm" : "off") + '"></span>' + head + '</span>' +
-      '<span class="ss-item">' + etClock(now) + ' ET</span>' +
+      '<span class="ss-item"><span class="ss-clk">' + clk + '</span> ET</span>' +
       '<span class="ss-item"><span class="dot ' + (fx.open ? "on" : "off") + '"></span>' + fx.label + '</span>' +
       '<span class="ss-item"><span class="dot ' + gr.state + '"></span>' + gr.label + '</span>' +
-      (nx ? '<span class="ss-item">Next high-impact: ' + nx.names + ' in <span class="countdown">' + dur(nx.t - now) + '</span></span>' : '') +
+      (nx ? '<span class="ss-item">Next high-impact: ' + nx.names + ' in <span class="countdown">' + cd + '</span></span>' : '') +
       '</div>' + policyBanner(now.getTime());
+    /* the 1-second tick only rewrites the clock and countdown text; the strip (and its buttons) is rebuilt only when
+       something else changed, so a click never lands on an element that was just replaced (UI-FIX-08) */
+    var key = html.split(clk).join("").split('<span class="countdown">' + cd).join("");
+    if (key === stripKey) { var c = el.querySelector(".ss-clk"), d = el.querySelector(".ss-row .countdown"); if (c) c.textContent = clk; if (d) d.textContent = cd; return; }
+    stripKey = key; el.innerHTML = html;
   }
+  var stripKey = "";
 
   /* ------------------------------------------------------ central-bank decision banner (every tab)
      pre      15 min before: countdown, current vs forecast
@@ -500,7 +519,8 @@
     pollRef();
     setInterval(function () { paintStrip(); paintCountdowns(); syncStripHeight(); }, 1000);
     window.addEventListener("resize", syncStripHeight);
-    setInterval(paintPills, 30000);
+    setInterval(paintPills, 5000);   /* change-only writes; tiles drawn by a sub-tab click get their badge at once */
+    document.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("[data-sub],[data-subp]")) setTimeout(paintPills, 50); });
     setInterval(pollData, (CFG.dataPollSec || 300) * 1000);
     pollLive();
     setInterval(pollLive, (CFG.livePollSec || 60) * 1000);
