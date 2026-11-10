@@ -471,6 +471,8 @@ table.fwd-in td.fi-src{text-align:left;color:var(--faint);font-size:11.5px;white
 .evp-f{margin-top:8px;font-size:11.5px;color:#8494ab}.evp-link{display:inline-block;margin-top:8px;padding:5px 10px;border:1px solid #38b6c9;border-radius:6px;color:#7dd8e6;text-decoration:none;font-size:12px}.evp-link:hover{background:#1a3350;color:#fff}
 .mk-click{cursor:pointer}.mk-click:hover{color:#fff}
 .mcard{cursor:pointer;transition:border-color .15s,transform .15s}.mcard:hover{border-color:#38b6c9;transform:translateY(-1px)}
+.mdh-ctl{float:right;display:inline-flex;gap:8px;text-transform:none;letter-spacing:0}.mdh-seg{display:inline-flex}.mdh-b{font:600 11.5px 'IBM Plex Sans',sans-serif;padding:3px 9px;border:1px solid var(--line2);background:transparent;color:var(--muted);cursor:pointer}.mdh-seg .mdh-b:first-child{border-radius:6px 0 0 6px}.mdh-seg .mdh-b:last-child{border-radius:0 6px 6px 0}.mdh-seg .mdh-b+.mdh-b{margin-left:-1px}.mdh-b[aria-pressed="true"]{background:rgba(56,182,201,.16);color:var(--ink);border-color:rgba(56,182,201,.6)}
+.mdh-tw{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:8px}.mdh-t{width:100%;border-collapse:collapse;font:12.5px 'IBM Plex Mono',monospace}.mdh-t th{position:sticky;top:0;background:var(--panel);text-align:right;padding:6px 10px;font:700 10.5px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}.mdh-t th:first-child,.mdh-t td:first-child{text-align:left}.mdh-t td{padding:5px 10px;text-align:right;border-top:1px solid var(--line)}
 #mdc-overlay{position:fixed;inset:0;background:rgba(4,8,14,.72);z-index:9000;display:none;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto}
 #mdc-overlay.on{display:flex}
 .mdc-wrap{position:relative;width:100%;max-width:760px;background:#0f1a2c;border-top:5px solid #e8b93d;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
@@ -3511,6 +3513,30 @@ function streakText(m){
   for(var b=n-2;b>=0;b--){ if((L>=0&&h[b]>=L)||(L<0&&h[b]<=L)){ if(n-2-b>=2) out.push((L>=h[n-2]?'highest':'lowest')+' since '+(m.hist24||m.history)[b][0]); break; } if(b===0) out.push((L>=h[n-2]?'highest':'lowest')+' in '+n+' readings'); }
   return out;
 }
+/* ---- full history inside the detail pop-up: Chart | Table, 1Y / 2Y / 5Y (from the stored long series, else the last readings) ---- */
+var MDH={v:'chart',r:24}; try{ var _m=JSON.parse(localStorage.getItem('desk.mdh')||'{}'); if(_m.v) MDH.v=_m.v; if(_m.r) MDH.r=+_m.r; }catch(e){}
+function mdHistPts(m){ var L=m.long&&m.long.length>13?m.long.map(function(x){ return [x[0],x[1]]; }):(m.hist24||m.history).map(function(x){ return [x[0],x[1]]; }); return L.slice(-MDH.r); }
+function mdLabel(d){ return /^\d{4}-\d{2}/.test(d)?new Date(d+(d.length===10?'T12:00:00Z':'')).toLocaleDateString('en-US',{month:'short',year:'numeric',timeZone:'UTC'}):d; }
+function mdLineSVG(P,m){
+  var W=640,H=230,PL=46,PR=14,PT=14,PB=30,pw=W-PL-PR,ph=H-PT-PB,v=P.map(function(x){return x[1];}),mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),rg=(mx-mn)||Math.abs(mx)||1; mn-=rg*.08; mx+=rg*.08;
+  var X=function(i){ return PL+(P.length<2?pw/2:i/(P.length-1)*pw); }, Y=function(y){ return PT+(mx-y)/(mx-mn)*ph; }, s='';
+  for(var g=0;g<=4;g++){ var gv=mn+(mx-mn)*g/4; s+='<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+Y(gv).toFixed(1)+'" y2="'+Y(gv).toFixed(1)+'" stroke="var(--line)" stroke-width="1"/><text x="'+(PL-6)+'" y="'+(Y(gv)+4).toFixed(1)+'" text-anchor="end" font-size="10.5" fill="var(--faint)" font-family="IBM Plex Mono">'+fmt(gv,m.dec)+'</text>'; }
+  if(mn<0&&mx>0) s+='<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+Y(0).toFixed(1)+'" y2="'+Y(0).toFixed(1)+'" stroke="var(--line2)" stroke-dasharray="3 3"/>';
+  var step=Math.max(1,Math.ceil(P.length/6)); P.forEach(function(x,i){ if(i%step===0||i===P.length-1) s+='<text x="'+X(i).toFixed(1)+'" y="'+(H-10)+'" text-anchor="'+(i===0?'start':i===P.length-1?'end':'middle')+'" font-size="10.5" fill="var(--faint)" font-family="IBM Plex Mono">'+esc(mdLabel(x[0]))+'</text>'; });
+  s+='<polyline fill="none" stroke="#38b6c9" stroke-width="2" stroke-linejoin="round" points="'+P.map(function(x,i){ return X(i).toFixed(1)+','+Y(x[1]).toFixed(1); }).join(' ')+'"/>';
+  P.forEach(function(x,i){ s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(x[1]).toFixed(1)+'" r="'+(i===P.length-1?4.5:7)+'" fill="'+(i===P.length-1?'#38b6c9':'transparent')+'"><title>'+esc(mdLabel(x[0]))+': '+mval(m,x[1])+'</title></circle>'; });
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="'+esc(m.name)+' history">'+s+'</svg>';
+}
+function mdHistHTML(m){
+  var P=mdHistPts(m), btn=function(k,v,t){ return '<button class="mdh-b" data-mdh="'+k+':'+v+'" aria-pressed="'+(MDH[k]==v)+'">'+t+'</button>'; };
+  var long=m.long&&m.long.length>13, tbl='<div class="mdh-tw"><table class="mdh-t"><thead><tr><th>Period</th><th>'+esc(m.measure||'Value')+'</th><th>Change</th></tr></thead><tbody>'+
+    P.slice().reverse().map(function(x,i,a){ var p=a[i+1]; return '<tr><td>'+esc(mdLabel(x[0]))+'</td><td>'+mval(m,x[1])+'</td><td class="'+(p?(x[1]>p[1]?'up':x[1]<p[1]?'dn':''):'')+'">'+(p?sgn(+(x[1]-p[1]).toFixed(m.dec+1),m.dec):'')+'</td></tr>'; }).join('')+'</tbody></table></div>';
+  return '<h4 class="mdc-h">History <span class="mdh-ctl"><span class="mdh-seg">'+btn('v','chart','Chart')+btn('v','table','Table')+'</span>'+(long?'<span class="mdh-seg">'+btn('r',12,'1Y')+btn('r',24,'2Y')+btn('r',60,'5Y')+'</span>':'')+'</span></h4>'+
+    '<div class="mdh-body">'+(MDH.v==='table'?tbl:'<div class="mdc-chart">'+mdLineSVG(P,m)+'</div>')+'</div><p class="mdc-read" style="margin-top:4px">'+P.length+' readings · '+esc(mdLabel(P[0][0]))+' to '+esc(mdLabel(P[P.length-1][0]))+(m.src?' · source '+esc(m.src):'')+'</p>';
+}
+document.addEventListener('click', function(ev){ var b=ev.target.closest&&ev.target.closest('[data-mdh]'); if(!b) return; ev.stopPropagation();
+  var kv=b.getAttribute('data-mdh').split(':'); MDH[kv[0]]=kv[0]==='r'?+kv[1]:kv[1]; try{ localStorage.setItem('desk.mdh',JSON.stringify(MDH)); }catch(e){}
+  var o=document.getElementById('mdc-overlay'), k=o&&o.getAttribute('data-key'), H=o&&o.querySelector('.mdh-wrap'); if(k&&H) H.innerHTML=mdHistHTML(k.indexOf('cpi:')===0&&window.cpiAsMacro?cpiAsMacro(k.slice(4)):mfind(k)); }, true);
 function macroDetailHTML(key){
   var m=mfind(key); if(!m) return '<div class="unreach">\u26a0 Sorry, we can\u2019t be reached now <small>\u2014 no data for this indicator yet</small></div>';
   var pend=(typeof awaitingList==='function'?awaitingList():[]).filter(function(x){ return x.sel==='.mcard[data-mkey="'+key+'"]'; })[0], pendHTML='';
@@ -3545,6 +3571,7 @@ function macroDetailHTML(key){
       '<div class="mdc-box"><div class="mdc-k">12-reading range</div><div class="mdc-v2">'+mval(m,lo)+' → '+mval(m,hi)+'</div><div class="mdc-l">latest sits at '+fmt(hi>lo?(m.value-lo)/(hi-lo)*100:50,0)+'% of the range</div></div></div>'+
     (extra.concat(st.slice(1)).length?'<div class="mdc-band">'+extra.concat(st.slice(1)).map(function(t){ return '<div>'+t+'</div>'; }).join('')+'</div>':'')+
     '<h4 class="mdc-h">What it is &amp; why it matters for USD/CAD</h4><p class="mdc-p">'+esc(info[0])+' '+esc(info[1])+'</p>'+
+    '<div class="mdh-wrap">'+mdHistHTML(m)+'</div>'+
     '<h4 class="mdc-h">Trend — '+esc(m.name)+(m.measure?', '+m.measure:'')+', last '+Math.min(12,n)+' readings</h4><div class="mdc-chart">'+chart1+'</div>'+
     (chart2?'<h4 class="mdc-h">Change vs prior reading</h4><div class="mdc-chart">'+chart2+'</div>':'')+
     '<p class="mdc-read">Read: '+st.concat([m.value>a3?'latest above its 3-reading average':'latest below its 3-reading average']).join('; ')+'.</p>'+
@@ -4259,34 +4286,31 @@ function releaseRead(rel){
   return 'Trend over '+n+' readings: <b>'+dir+'</b> ('+sgn(b,rel.unit==='K'?0:2,' '+u+'/mo')+') · up in '+ups+' of '+(n-1)+' months · '+
     'latest '+(last>=prev?'<b>above</b>':'<b>below</b>')+' prior ('+sgn(last-prev,d,rel.unit==='K'?'K':' pp')+') · 3-mo avg '+fmt(a3,d+(rel.unit==='K'?0:1))+(rel.unit==='K'?'K':'%')+' vs '+n+'-mo avg '+fmt(avg,d+(rel.unit==='K'?0:1))+(rel.unit==='K'?'K':'%')+'.';
 }
+/* Latest releases — built from DATA.macro (the same numbers as the Macro dashboard), so a new print shows here the moment the desk has it.
+   Release time = latest official calendar date that has passed; a print still awaited is marked. Click a card for its full history (chart / table). */
+var RELN=12;
+function lastRelMs(key){ var C=DATA.release_cal&&DATA.release_cal[key]; if(!C) return null; var now=Date.now(), best=null;
+  (C.dates||[]).forEach(function(x){ var p=x.split('T'), d=p[0].split('-'), h=(p[1]||'08:30').split(':'), t=zonedMs(+d[0],+d[1],+d[2],+h[0],+h[1],'America/Toronto'); if(t<=now&&(best==null||t>best)) best=t; });
+  return best; }
 function fxReleasesHTML(){
-  var rels=(DATA.fx.releases||[]).slice().sort(function(a,b){ return new Date(b.released)-new Date(a.released); });
-  var now=Date.now();
-  var body=rels.map(function(r){
-    var t=new Date(r.released), days=Math.floor((now-t)/86400000);
-    var when=t.toLocaleString('en-US',{timeZone:'America/Toronto',weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET';
-    var u=r.unit==='K'?'K':'%', score='';
-    if(r.consensus!=null && r.history.length && r.history[r.history.length-1][0]===r.period){
-      var diff=r.actual-r.consensus;
-      score=' <span class="chip '+(diff>0?'beat':diff<0?'miss':'inline')+'">'+(diff>0?'ABOVE':diff<0?'BELOW':'IN LINE')+' CONSENSUS</span>';
-    }
-    var sub='';
-    if(r.sub && r.sub.history && r.sub.history.length){
-      sub='<div class="rel-sub"><span class="kk">'+esc(r.sub.name)+'</span> '+r.sub.history.map(function(h,i,arr){
-        return '<span class="'+(i===arr.length-1?'hl':'')+'">'+h[0].slice(0,3)+' '+fmt(h[1],1)+r.sub.unit+'</span>'; }).join(' ')+'</div>';
-    }
-    return '<div class="rel">'+
-      '<div class="rel-when"><span class="rel-date">'+when+'</span><span class="rel-ago">'+(days<=0?'today':days===1?'yesterday':days+' days ago')+'</span><span class="chip inline">'+r.ccy+'</span> '+flagCcy(r.ccy,14)+'</div>'+
-      '<div class="med">'+esc(r.name)+' ('+r.period.slice(0,3)+') — '+(r.unit==='K'&&r.actual>0?'+':'')+fmt(r.actual,r.dec)+u+(r.measure==='y/y'?' y/y':'')+score+'</div>'+
-      '<div class="read" style="margin-top:4px">'+(r.consensus!=null?'Consensus '+fmt(r.consensus,r.dec)+u+' · ':'')+(r.history.length>1?'prior '+fmt(r.history[r.history.length-2][1],r.dec)+u:'')+'</div>'+
-      releaseSVG(r)+'<p class="read" style="font-size:13px">'+releaseRead(r)+'</p>'+sub+
-      '<div class="legend"><span><span class="sw" style="background:#b18cff"></span>OLS trend</span>'+(r.consensus!=null?'<span><span class="sw" style="background:#e8a33d"></span>latest / consensus tick</span>':'')+'</div>'+
-      '</div>';
-  }).join('');
-  return '<div class="tile wide" data-src="releases"><h2>Latest releases <span class="h2note">— newest first by release date · last '+8+' readings, trend and plot</span></h2>'+
-    '<div class="rel-grid">'+body+'</div>'+
-    '<div class="stamp">Actuals refresh automatically from the official series · consensus is the desk’s stored figure for the latest print only · release time shown in Toronto time</div></div>';
+  var now=Date.now(), M=(DATA.macro||[]).filter(function(m){ return !m.chart_only&&(MGEO==='both'||m.group===MGEO); });
+  var L=M.map(function(m){ var rt=lastRelMs(m.key), seen=m.seen_at?Date.parse(m.seen_at):null, t=rt||seen; return {m:m, t:t, waiting:!!(rt&&(!seen||seen<rt-5*60000))}; })
+    .filter(function(x){ return x.t; }).sort(function(a,b){ return b.t-a.t; });
+  var body=L.slice(0,RELN).map(function(x){ var m=x.m, t=new Date(x.t), days=Math.floor((now-x.t)/864e5), H=(m.hist24||m.history).slice(-8);
+    var C=typeof consensusFor==='function'?consensusFor(m):null, cons=C&&C.consensus!=null?C.consensus:null;
+    var r={unit:m.unit==='K'?'K':'%', dec:m.dec, consensus:x.waiting?null:cons, target:/cpi|pce|trim|median/.test(m.key)?2:null, history:H};
+    var diff=cons!=null&&!x.waiting?m.value-cons:null, better=diff!=null&&(m.good==='down'?diff<0:diff>0), inl=diff!=null&&Math.abs(diff)<Math.pow(10,-m.dec)/2;
+    return '<div class="rel mk-click" data-mkey="'+m.key+'" role="button" tabindex="0" title="Click for the full history — chart or table">'+
+      '<div class="rel-when"><span class="rel-date">'+t.toLocaleString('en-US',{timeZone:'America/Toronto',weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET</span><span class="rel-ago">'+(days<=0?'today':days===1?'yesterday':days+' days ago')+'</span><span class="chip inline">'+(m.group==='us'?'USD':'CAD')+'</span> '+flagCcy(m.group==='us'?'USD':'CAD',14)+'</div>'+
+      '<div class="med">'+esc((m.group==='us'?'US ':'Canada ')+m.name)+' ('+esc(m.period)+') — '+mval(m,m.value)+(m.measure?' '+esc(m.measure):'')+
+        (x.waiting?' <span class="chip miss">NEW PRINT AWAITED</span>':diff!=null?' <span class="chip '+(inl?'inline':better?'beat':'miss')+'">'+(inl?'IN LINE':diff>0?'ABOVE':'BELOW')+' CONSENSUS</span>':'')+'</div>'+
+      '<div class="read" style="margin-top:4px">'+(x.waiting?'Released by the agency; the desk still shows the previous print until the source posts it · ':'')+(cons!=null&&!x.waiting?'Consensus '+mval(m,cons)+' · ':'')+'prior '+mval(m,m.prior)+'</div>'+
+      (H.length>1?releaseSVG(r)+'<p class="read" style="font-size:13px">'+releaseRead(r)+'</p>':'')+'</div>'; }).join('');
+  return '<div class="tile wide" data-src="macro"><h2>Latest releases <span class="h2note">— newest first by official release time · same data as the Macro dashboard · click any card for its full history</span></h2>'+
+    '<div class="rel-grid">'+body+'</div>'+(L.length>RELN?'<button class="ue-btn rel-more" data-relmore>Show '+Math.min(12,L.length-RELN)+' more</button>':'')+
+    '<div class="stamp">'+L.length+' indicators · '+(MGEO==='both'?'US + Canada':MGEO==='us'?'US':'Canada')+' (follows the Dashboard switch) · release times from the official calendars, Toronto time</div></div>';
 }
+document.addEventListener('click', function(ev){ if(ev.target.closest&&ev.target.closest('[data-relmore]')){ RELN+=12; renderMacro(); } });
 function fxCftcHTML(){
   var fx=DATA.fx, p=fx.pos, S=p.series||[];
   var chart = S.length>=5 ? cftcSVG(S, Object.assign({},FXPX,{basis:p.basis, series0:S})).replace('MANAGED MONEY','LEVERAGED FUNDS').replace(/Managed money/,'Leveraged funds')+'<p class="read">'+cftcRead(S, Object.assign({},FXPX,{basis:p.basis,F:+fx.feed.mid}))+'</p>'

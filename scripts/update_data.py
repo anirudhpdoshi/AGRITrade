@@ -1345,6 +1345,10 @@ BLS_SRC = {"us_nfp": "CES0000000001", "us_ur": "LNS14000000", "us_ahe": "CES0500
 BLS_KEY = os.environ.get("BLS_API_KEY", "").strip()
 
 
+class _KeepNewer(Exception):
+    """A source is behind what the desk already shows: keep the newer stored print (not a failure)."""
+
+
 def _bls_batch(ids):
     """{series id: [(YYYY-MM-01, value)]} in one request; v2 with BLS_API_KEY (never printed), else keyless v1 (25/day per IP)."""
     body = {"seriesid": list(ids), "startyear": str(NOW.year - 2), "endyear": str(NOW.year)}
@@ -1772,6 +1776,8 @@ def macro(D, N, only=None):
                     raw = raw + extra
                     label = "BLS (release) + FRED history"
                     print(f"  {key}: {len(extra)} newer month(s) straight from BLS")
+            if prevp and raw[-1][0][:10] < prevp[:10]:   # never step back: a lagging source (FRED before its re-post) cannot replace a newer print
+                raise _KeepNewer(f"source still at {raw[-1][0][:10]}; the desk already holds {prevp[:10]}")
             if len(raw) < 3:
                 raise RuntimeError("too few points")
             if not all(lo <= v <= hi for _, v in raw[-6:]):
@@ -1815,6 +1821,9 @@ def macro(D, N, only=None):
                         break
             if key in ("ca_gdpq", "us_policy", "ca_policy"):
                 out[-1]["chart_only"] = True
+        except _KeepNewer as e:
+            print(f"  {key}: {e} — kept")
+            out.append(old[key])
         except Exception as e:
             errs[key] = f"{type(e).__name__}: {e}"[:200]
             if key in old:
