@@ -2963,9 +2963,36 @@ def cpi_detail_ca(D, N):
     print(f"  cpi_detail_ca: {len(items)} categories for {month}")
 
 
+def grain_long(D, N):
+    """~18 months of daily bars per grain for the interactive price chart (chunk 5): Yahoo continuous front month
+    (ZC=F / ZW=F / ZS=F, $/bu). It rolls to the next contract, so it is a reference series, not one executable contract.
+    Refreshed once per day after the close (or when missing)."""
+    G = D.get("grain_long") or {}
+    today = datetime.now(TOR).date().isoformat()
+    if G.get("day") == today and datetime.now(TOR).hour < 15 or (G.get("day") == today and G.get("after_close")):
+        return
+    out = {}
+    for k, sym in GRAIN_YF.items():
+        h = yf().Ticker(sym).history(period="18mo", interval="1d")
+        rows = []
+        for idx, r in h.iterrows():
+            if r["Close"] != r["Close"]:
+                continue
+            rows.append([idx.date().isoformat(), round(float(r["Open"]) / 100, 4), round(float(r["High"]) / 100, 4), round(float(r["Low"]) / 100, 4),
+                         round(float(r["Close"]) / 100, 4), int(r["Volume"]) if r["Volume"] == r["Volume"] else None])
+        if len(rows) > 30:
+            out[k] = rows
+    if not out:
+        raise RuntimeError("no grain history from Yahoo")
+    D["grain_long"] = {"day": today, "after_close": datetime.now(TOR).hour >= 15, "asof": NOW.isoformat(timespec="seconds"),
+                       "src": "Yahoo Finance continuous front month (ZC=F, ZW=F, ZS=F), daily bars, $/bu", "series": out,
+                       "wasde": sorted(WASDE_DATES)}
+    print("  grain_long:", {k: len(v) for k, v in out.items()})
+
+
 BLOCKS = [("seasonality_track", seasonality_track), ("expired_track", expired_track), ("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("yields_live", yields_live), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("cpi_detail", cpi_detail), ("cpi_detail_ca", cpi_detail_ca), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow), ("ust", ust)]
+          ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("cpi_detail", cpi_detail), ("grain_long", grain_long), ("cpi_detail_ca", cpi_detail_ca), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow), ("ust", ust)]
 
 
 def main():
