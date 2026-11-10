@@ -471,6 +471,7 @@ table.fwd-in td.fi-src{text-align:left;color:var(--faint);font-size:11.5px;white
 .evp-f{margin-top:8px;font-size:11.5px;color:#8494ab}.evp-link{display:inline-block;margin-top:8px;padding:5px 10px;border:1px solid #38b6c9;border-radius:6px;color:#7dd8e6;text-decoration:none;font-size:12px}.evp-link:hover{background:#1a3350;color:#fff}
 .mk-click{cursor:pointer}.mk-click:hover{color:#fff}
 .mcard{cursor:pointer;transition:border-color .15s,transform .15s}.mcard:hover{border-color:#38b6c9;transform:translateY(-1px)}
+.cpi-go{margin-top:8px}
 .mdh-ctl{float:right;display:inline-flex;gap:8px;text-transform:none;letter-spacing:0}.mdh-seg{display:inline-flex}.mdh-b{font:600 11.5px 'IBM Plex Sans',sans-serif;padding:3px 9px;border:1px solid var(--line2);background:transparent;color:var(--muted);cursor:pointer}.mdh-seg .mdh-b:first-child{border-radius:6px 0 0 6px}.mdh-seg .mdh-b:last-child{border-radius:0 6px 6px 0}.mdh-seg .mdh-b+.mdh-b{margin-left:-1px}.mdh-b[aria-pressed="true"]{background:rgba(56,182,201,.16);color:var(--ink);border-color:rgba(56,182,201,.6)}
 .mdh-tw{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:8px}.mdh-t{width:100%;border-collapse:collapse;font:12.5px 'IBM Plex Mono',monospace}.mdh-t th{position:sticky;top:0;background:var(--panel);text-align:right;padding:6px 10px;font:700 10.5px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}.mdh-t th:first-child,.mdh-t td:first-child{text-align:left}.mdh-t td{padding:5px 10px;text-align:right;border-top:1px solid var(--line)}
 #mdc-overlay{position:fixed;inset:0;background:rgba(4,8,14,.72);z-index:9000;display:none;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto}
@@ -3571,6 +3572,7 @@ function macroDetailHTML(key){
       '<div class="mdc-box"><div class="mdc-k">12-reading range</div><div class="mdc-v2">'+mval(m,lo)+' → '+mval(m,hi)+'</div><div class="mdc-l">latest sits at '+fmt(hi>lo?(m.value-lo)/(hi-lo)*100:50,0)+'% of the range</div></div></div>'+
     (extra.concat(st.slice(1)).length?'<div class="mdc-band">'+extra.concat(st.slice(1)).map(function(t){ return '<div>'+t+'</div>'; }).join('')+'</div>':'')+
     '<h4 class="mdc-h">What it is &amp; why it matters for USD/CAD</h4><p class="mdc-p">'+esc(info[0])+' '+esc(info[1])+'</p>'+
+    (/^(us|ca)_(core_)?cpi|^ca_(trim|median)$/.test(key)&&cpiHas(m.group)?'<button class="ue-btn cpi-go" data-cpigo="'+m.group+'">See '+(m.group==='us'?'US':'Canada')+' CPI by category →</button>':'')+
     '<div class="mdh-wrap">'+mdHistHTML(m)+'</div>'+
     '<h4 class="mdc-h">Trend — '+esc(m.name)+(m.measure?', '+m.measure:'')+', last '+Math.min(12,n)+' readings</h4><div class="mdc-chart">'+chart1+'</div>'+
     (chart2?'<h4 class="mdc-h">Change vs prior reading</h4><div class="mdc-chart">'+chart2+'</div>':'')+
@@ -4289,6 +4291,11 @@ function releaseRead(rel){
 /* Latest releases — built from DATA.macro (the same numbers as the Macro dashboard), so a new print shows here the moment the desk has it.
    Release time = latest official calendar date that has passed; a print still awaited is marked. Click a card for its full history (chart / table). */
 var RELN=12;
+function cpiHas(g){ var C=g==='ca'?DATA.cpi_detail_ca:DATA.cpi_detail; return !!(C&&C.items&&C.items.length); }
+document.addEventListener('click', function(ev){ var b=ev.target.closest&&ev.target.closest('[data-cpigo]'); if(!b) return; ev.stopPropagation();
+  if(window.CPI_SHOW) CPI_SHOW(b.getAttribute('data-cpigo')); if(typeof closeMacroDetail==='function') closeMacroDetail();
+  var t=document.getElementById('tabbtn-macro'); if(t) t.click(); setSub('macro','dash'); renderMacro();
+  setTimeout(function(){ var c=document.getElementById('cpi-internals'); if(c){ var th=(document.querySelector('.tabs')||{}).offsetHeight||0, sh=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--strip-h'))||0; window.scrollTo({top:c.getBoundingClientRect().top+window.scrollY-th-sh-12,behavior:'smooth'}); c.classList.add('flash-find'); setTimeout(function(){ c.classList.remove('flash-find'); },2400); } },120); }, true);
 function lastRelMs(key){ var C=DATA.release_cal&&DATA.release_cal[key]; if(!C) return null; var now=Date.now(), best=null;
   (C.dates||[]).forEach(function(x){ var p=x.split('T'), d=p[0].split('-'), h=(p[1]||'08:30').split(':'), t=zonedMs(+d[0],+d[1],+d[2],+h[0],+h[1],'America/Toronto'); if(t<=now&&(best==null||t>best)) best=t; });
   return best; }
@@ -4305,8 +4312,11 @@ function fxReleasesHTML(){
       '<div class="med">'+esc((m.group==='us'?'US ':'Canada ')+m.name)+' ('+esc(m.period)+') — '+mval(m,m.value)+(m.measure?' '+esc(m.measure):'')+
         (x.waiting?' <span class="chip miss">NEW PRINT AWAITED</span>':diff!=null?' <span class="chip '+(inl?'inline':better?'beat':'miss')+'">'+(inl?'IN LINE':diff>0?'ABOVE':'BELOW')+' CONSENSUS</span>':'')+'</div>'+
       '<div class="read" style="margin-top:4px">'+(x.waiting?'Released by the agency; the desk still shows the previous print until the source posts it · ':'')+(cons!=null&&!x.waiting?'Consensus '+mval(m,cons)+' · ':'')+'prior '+mval(m,m.prior)+'</div>'+
-      (H.length>1?releaseSVG(r)+'<p class="read" style="font-size:13px">'+releaseRead(r)+'</p>':'')+'</div>'; }).join('');
-  return '<div class="tile wide" data-src="macro"><h2>Latest releases <span class="h2note">— newest first by official release time · same data as the Macro dashboard · click any card for its full history</span></h2>'+
+      (H.length>1?releaseSVG(r)+'<p class="read" style="font-size:13px">'+releaseRead(r)+'</p>':'')+
+      (/^(us|ca)_(core_)?cpi$/.test(m.key)&&cpiHas(m.group)?'<button class="ue-btn cpi-go" data-cpigo="'+m.group+'">Category breakdown →</button>':'')+'</div>'; }).join('');
+  var gb=function(v,l){ return '<button data-mgeo="'+v+'" aria-pressed="'+(MGEO===v)+'">'+l+'</button>'; };
+  return '<div class="tile wide" data-src="macro"><div class="tile-head"><h2>Latest releases <span class="h2note">— newest first by official release time · same data as the Macro dashboard · click any card for its full history</span></h2>'+
+    '<span class="toggle" role="group" aria-label="Country">'+gb('both',flag('us',11)+' + '+flag('ca',11))+gb('us',flag('us',11)+' US')+gb('ca',flag('ca',11)+' CANADA')+'</span></div>'+
     '<div class="rel-grid">'+body+'</div>'+(L.length>RELN?'<button class="ue-btn rel-more" data-relmore>Show '+Math.min(12,L.length-RELN)+' more</button>':'')+
     '<div class="stamp">'+L.length+' indicators · '+(MGEO==='both'?'US + Canada':MGEO==='us'?'US':'Canada')+' (follows the Dashboard switch) · release times from the official calendars, Toronto time</div></div>';
 }
