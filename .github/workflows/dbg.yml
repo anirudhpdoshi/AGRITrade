@@ -1,0 +1,26 @@
+name: dbg (temporary)
+on:
+  push:
+    branches: [dbg-cpi2]
+jobs:
+  d:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -q -r scripts/requirements.txt
+      - env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: |
+          cd scripts && python3 - <<'P'
+          import json, update_data as U
+          J = json.load(open("../data.json")); D = J["DATA"]
+          from datetime import timedelta
+          start = (U.NOW - timedelta(days=2650)).date().isoformat()
+          raw = U._fred("CPIAUCSL", start); print("DBG raw tail", raw[-3:], len(raw))
+          how = [m for m in U.MACRO if m[0] == "us_cpi"][0][5]
+          pts = U._transform(raw, how); print("DBG transformed tail", pts[-3:])
+          U.macro(D, None, only={"us_cpi"})
+          c = [m for m in D["macro"] if m["key"] == "us_cpi"][0]; print("DBG stored", c["period"], c["value"], c["obs_date"], c["src"])
+          P
