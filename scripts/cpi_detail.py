@@ -20,3 +20,19 @@ CPI_ITEMS = [
     ("SETG01", "Airline fares", "services"), ("SAS4", "Transportation services", "services"), ("SEHG", "Water, sewer & trash", "services"),
     ("SAE", "Education & communication", "services"), ("SAR", "Recreation", "services"),
 ]
+
+# Canada — Statistics Canada table 18-10-0004-01 (CPI, monthly, not seasonally adjusted; Geography 2 = Canada).
+# (product member id, label, group). Seasonally adjusted data exist only for the 8 main components, so both reads are NSA, as StatCan headlines them.
+CA_ITEMS = [
+    (2, "All items", "agg"), (285, "All items ex food & energy", "agg"), (3, "Food", "agg"), (288, "Energy", "agg"), (274, "Goods", "agg"), (282, "Services", "agg"),
+    (79, "Shelter", "main"), (176, "Transportation", "main"), (96, "Household operations & furnishings", "main"), (139, "Clothing & footwear", "main"),
+    (201, "Health & personal care", "main"), (219, "Recreation, education & reading", "main"), (256, "Alcohol, tobacco & cannabis", "main"),
+    (4, "Food purchased from stores", "food"), (75, "Food from restaurants", "food"), (29, "Bakery & cereal products", "food"), (30, "Bakery products", "food"),
+    (34, "Cereal products", "food"), (5, "Meat", "food"), (7, "Fresh or frozen beef", "food"), (11, "Fresh or frozen chicken", "food"), (22, "Dairy products", "food"),
+    (28, "Eggs", "food"), (40, "Fresh fruit", "food"), (50, "Fresh vegetables", "food"), (53, "Lettuce", "food"), (59, "Sugar & confectionery", "food"),
+    (62, "Edible fats & oils", "food"), (66, "Coffee", "food"),
+    (184, "Gasoline", "energy"), (92, "Electricity", "energy"), (94, "Natural gas", "energy"), (95, "Fuel oil & other fuels", "energy"),
+    (180, "Purchase of passenger vehicles", "goods"), (233, "Home entertainment equipment & services", "goods"),
+    (81, "Rent", "services"), (85, "Mortgage interest cost", "services"), (84, "Owned accommodation", "services"), (189, "Vehicle insurance premiums", "services"),
+    (199, "Air transportation", "services"), (241, "Traveller accommodation", "services"), (249, "Tuition fees", "services"), (99, "Telephone services", "services"), (93, "Water", "services"),
+]

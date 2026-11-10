@@ -2897,9 +2897,51 @@ def cpi_detail(D, N):
     print(f"  cpi_detail: {len(items)} categories for {month}")
 
 
+def cpi_detail_ca(D, N):
+    """Canada CPI internals by category (StatCan 18-10-0004-01, NSA; scripts/cpi_detail.py CA_ITEMS). Fetched when a Canada CPI release has landed
+    that the desk does not hold yet (one WDS call), retried at most every 20 min."""
+    from cpi_detail import CA_ITEMS
+    C = D.get("cpi_detail_ca") or {}
+    rel = [datetime.fromisoformat(t).replace(tzinfo=TOR) for t in ((D.get("release_cal") or {}).get("ca_cpi", {}).get("dates") or [])]
+    landed = [t for t in rel if t <= NOW]
+    want = None
+    if landed:
+        r = max(landed); y, m = (r.year, r.month - 1) if r.month > 1 else (r.year - 1, 12); want = f"{y}-{m:02d}"
+    if C.get("month") and (want is None or C["month"] >= want):
+        return
+    if C.get("tried") and NOW - datetime.fromisoformat(C["tried"]) < timedelta(minutes=20):
+        return
+    C["tried"] = NOW.isoformat(timespec="seconds"); D["cpi_detail_ca"] = C
+    body = [{"productId": 18100004, "coordinate": f"2.{m}.0.0.0.0.0.0.0.0", "latestN": 27} for m, _, _ in CA_ITEMS]
+    r = requests.post("https://www150.statcan.gc.ca/t1/wds/rest/getDataFromCubePidCoordAndLatestNPeriods",
+                      headers={**UA, "Content-Type": "application/json"}, data=json.dumps(body), timeout=40)
+    r.raise_for_status()
+    got = {}
+    for o in r.json():
+        if o.get("status") != "SUCCESS":
+            continue
+        ob = o["object"]; mem = int(ob["coordinate"].split(".")[1])
+        got[mem] = sorted((p["refPer"][:7], float(p["value"])) for p in ob.get("vectorDataPoint", []) if _num(p.get("value")) is not None)
+    items, month = [], None
+    for mem, name, grp in CA_ITEMS:
+        pts = got.get(mem) or []
+        if len(pts) < 14:
+            continue
+        mm = [(pts[i][0], round((pts[i][1] / pts[i - 1][1] - 1) * 100, 1)) for i in range(1, len(pts))][-13:]
+        yy = [(pts[i][0], round((pts[i][1] / pts[i - 12][1] - 1) * 100, 1)) for i in range(12, len(pts))][-13:]
+        month = max(month or "", mm[-1][0])
+        items.append({"c": str(mem), "n": name, "g": grp, "mm": [v for _, v in mm], "yy": [v for _, v in yy], "m": [d for d, _ in mm]})
+    if not items:
+        raise RuntimeError("StatCan returned no CPI category series")
+    D["cpi_detail_ca"] = {"month": month, "asof": NOW.isoformat(timespec="seconds"), "items": items,
+                          "src": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1810000401",
+                          "note": "Statistics Canada CPI, not seasonally adjusted (both 1-month and 12-month)."}
+    print(f"  cpi_detail_ca: {len(items)} categories for {month}")
+
+
 BLOCKS = [("seasonality_track", seasonality_track), ("expired_track", expired_track), ("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("yields_live", yields_live), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("cpi_detail", cpi_detail), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow), ("ust", ust)]
+          ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("cpi_detail", cpi_detail), ("cpi_detail_ca", cpi_detail_ca), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow), ("ust", ust)]
 
 
 def main():

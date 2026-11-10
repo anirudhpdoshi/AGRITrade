@@ -1,11 +1,22 @@
-/* US CPI internals — category breakdown of the latest CPI (BLS CPI-U items, DATA.cpi_detail from scripts/cpi_detail.py).
+/* CPI internals — category breakdown of the latest CPI, US (BLS CPI-U items, DATA.cpi_detail) or Canada (StatCan 18-10-0004, DATA.cpi_detail_ca).
    Diverging bars around zero: warm = prices rose, cool = fell (same heat/cool tokens as the macro dashboard).
    Two reads: 1-month (seasonally adjusted) or 12-month (not adjusted), each as BLS publishes; two layouts: biggest movers or by group.
    BLS figures only, no desk interpretation added. Lives on Macro → Dashboard. Hidden when the data is absent (BRD amendment 1). */
 (function (root) {
-  var V = { m: "mm", v: "movers" };
-  try { var s = JSON.parse(localStorage.getItem("desk.cpi") || "{}"); if (s.m) V.m = s.m; if (s.v) V.v = s.v; } catch (e) {}
-  var GRP = [["agg", "Headline & core"], ["food", "Food"], ["energy", "Energy"], ["goods", "Core goods"], ["services", "Core services"]];
+  var V = { m: "mm", v: "movers", cc: "us" };
+  try { var s = JSON.parse(localStorage.getItem("desk.cpi") || "{}"); if (s.m) V.m = s.m; if (s.v) V.v = s.v; if (s.cc) V.cc = s.cc; } catch (e) {}
+  /* per country: data, headline codes, groups, source line, how each measure is adjusted */
+  var CC = {
+    us: { name: "US", data: function () { return root.DATA && DATA.cpi_detail; }, all: "SA0", core: "SA0L1E", coreName: "core",
+      grp: [["agg", "Headline & core"], ["food", "Food"], ["energy", "Energy"], ["goods", "Core goods"], ["services", "Core services"]],
+      src: "BLS CPI-U", srcUrl: "https://www.bls.gov/cpi/", adj: { mm: "seasonally adjusted", yy: "not seasonally adjusted" },
+      note: "1-month changes are seasonally adjusted; 12-month changes are not, as BLS reports them." },
+    ca: { name: "Canada", data: function () { return root.DATA && DATA.cpi_detail_ca; }, all: "2", core: "285", coreName: "ex food & energy",
+      grp: [["agg", "Headline & core"], ["main", "Main components"], ["food", "Food"], ["energy", "Energy"], ["goods", "Other goods"], ["services", "Services"]],
+      src: "Statistics Canada CPI, table 18-10-0004-01", srcUrl: "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1810000401", adj: { mm: "not seasonally adjusted", yy: "not seasonally adjusted" },
+      note: "Both measures are not seasonally adjusted, the basis Statistics Canada headlines (its seasonally adjusted series cover only the 8 main components)." }
+  };
+  function cur() { var c = CC[V.cc] || CC.us; return c.data() && c.data().items && c.data().items.length ? c : null; }
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   function esc(t) { return String(t == null ? "" : t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function mon(ym) { var a = (ym || "").split("-"); return a.length > 1 ? MON[+a[1] - 1] + " " + a[0] : ym; }
@@ -32,13 +43,13 @@
     var L, html = "";
     if (V.v === "movers") {
       L = I.filter(function (i) { return i.g !== "agg"; }).sort(function (a, b) { return Math.abs(last(b[V.m])) - Math.abs(last(a[V.m])); }).slice(0, 20);
-      var all = I.filter(function (i) { return i.c === "SA0"; });
+      var all = I.filter(function (i) { return i.c === (cur() || CC.us).all; });
       L = all.concat(L);
       var mx = scale(L);
       html = L.map(function (i) { return row(i, mx, d); }).join("");
     } else {
       var mx2 = scale(I);
-      GRP.forEach(function (g) {
+      (cur() || CC.us).grp.forEach(function (g) {
         var G = I.filter(function (i) { return i.g === g[0]; });
         if (g[0] !== "agg") G.sort(function (a, b) { return last(b[V.m]) - last(a[V.m]); });
         if (G.length) html += '<div class="cpi-gh">' + g[1] + "</div>" + G.map(function (i) { return row(i, mx2, d); }).join("");
@@ -47,39 +58,45 @@
     return '<div class="cpi-hd"><span>Category</span><span class="cpi-axis"><span>fell</span><span>0</span><span>rose</span></span><span>' + mon(C.month) + '</span><span>Prior</span></div>' + html;
   }
 
+  var lastGeo = null;
   function cpiInternalsHTML() {
-    var C = root.DATA && DATA.cpi_detail;
-    if (!C || !C.items || !C.items.length) return "";
+    var g = root.MGEO; if (g !== lastGeo) { if (g === "us" || g === "ca") V.cc = g; lastGeo = g; }   // the Dashboard's US / Canada switch picks the country too
+    if (!CC[V.cc] || !CC[V.cc].data()) V.cc = CC.us.data() ? "us" : "ca";   // the chosen country has no data yet: show the other
+    var X = cur(); if (!X) return "";
+    var C = X.data();
     var f = function (c) { for (var i = 0; i < C.items.length; i++) if (C.items[i].c === c) return C.items[i]; return null; };
-    var A = f("SA0"), K = f("SA0L1E");
-    var lead = (A ? "All items <b>" + sg(last(A.mm), 1) + "</b> m/m, <b>" + sg(last(A.yy), 1) + "</b> y/y" : "") + (K ? " · core <b>" + sg(last(K.mm), 1) + "</b> m/m, <b>" + sg(last(K.yy), 1) + "</b> y/y" : "");
-    var btn = function (k, val, t) { return '<button class="cpi-tg' + (V[k] === val ? " on" : "") + '" data-cpi="' + k + ":" + val + '" aria-pressed="' + (V[k] === val) + '">' + t + "</button>"; };
-    return '<div class="tile wide" id="cpi-internals" data-cpi-tile><h2>US CPI internals — ' + mon(C.month) + ' by category</h2>' +
+    var A = f(X.all), K = f(X.core);
+    var lead = (A ? "All items <b>" + sg(last(A.mm), 1) + "</b> m/m, <b>" + sg(last(A.yy), 1) + "</b> y/y" : "") + (K ? " · " + X.coreName + " <b>" + sg(last(K.mm), 1) + "</b> m/m, <b>" + sg(last(K.yy), 1) + "</b> y/y" : "");
+    var btn = function (k, val, t, dis) { return '<button class="cpi-tg' + (V[k] === val ? " on" : "") + '" data-cpi="' + k + ":" + val + '" aria-pressed="' + (V[k] === val) + '"' + (dis ? " disabled title=\"No data yet\"" : "") + ">" + t + "</button>"; };
+    return '<div class="tile wide" id="cpi-internals" data-cpi-tile><h2>' + X.name + ' CPI internals — ' + mon(C.month) + ' by category</h2>' +
       '<p class="cpi-lead">' + lead + "</p>" +
-      '<div class="cpi-ctl"><span class="cpi-seg" role="group" aria-label="Change measured">' + btn("m", "mm", "1-month") + btn("m", "yy", "12-month") + "</span>" +
+      '<div class="cpi-ctl"><span class="cpi-seg" role="group" aria-label="Country">' + btn("cc", "us", "\ud83c\uddfa\ud83c\uddf8 US", !CC.us.data()) + btn("cc", "ca", "\ud83c\udde8\ud83c\udde6 Canada", !CC.ca.data()) + "</span>" +
+      '<span class="cpi-seg" role="group" aria-label="Change measured">' + btn("m", "mm", "1-month") + btn("m", "yy", "12-month") + "</span>" +
       '<span class="cpi-seg" role="group" aria-label="Layout">' + btn("v", "movers", "Biggest movers") + btn("v", "groups", "By group") + "</span></div>" +
       '<div class="cpi-body">' + body(C) + "</div>" +
-      '<p class="note">Source: <a href="' + esc(C.src || "https://www.bls.gov/cpi/") + '" target="_blank" rel="noopener">BLS CPI-U</a>. 1-month changes are seasonally adjusted; 12-month changes are not, as BLS reports them. ' +
+      '<p class="note">Source: <a href="' + esc(X.srcUrl) + '" target="_blank" rel="noopener">' + esc(X.src) + "</a>. " + esc(X.note) + " " +
       "Bars marked \u203a\u203a run past the scale; the figure is exact. " + (V.v === "movers" ? "Biggest movers: the 20 categories with the largest change either way, after All items. " : "") + "Fetched " +
       new Date(C.asof).toLocaleString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " ET.</p></div>";
   }
   root.cpiInternalsHTML = cpiInternalsHTML;
+  root.CPI_SHOW = function (cc) { if (CC[cc]) V.cc = cc; try { localStorage.setItem("desk.cpi", JSON.stringify(V)); } catch (e) {} };
 
   /* click a category: the desk's detail pop-up with its history as chart or table, in the measure the card is showing */
-  function item(c) { var C = root.DATA && DATA.cpi_detail; if (!C) return null; for (var i = 0; i < C.items.length; i++) if (C.items[i].c === c) return C.items[i]; return null; }
+  function item(c) { var C = (CC[V.cc] || CC.us).data(); if (!C) return null; for (var i = 0; i < C.items.length; i++) if (C.items[i].c === c) return C.items[i]; return null; }
   function cpiAsMacro(c) {
     var it = item(c); if (!it) return null;
     var a = it[V.m], months = it.m || [], n = a.length, lab = months.slice(-n);
     var H = a.map(function (v, i) { return [lab[i] || "", v]; });
-    return { key: "cpi:" + c, name: it.n, group: "us", unit: "%", dec: 1, measure: V.m === "mm" ? "m/m" : "y/y", good: "down", value: a[n - 1], prior: a[n - 2],
-      history: H, hist24: H, src: "BLS CPI-U (" + (V.m === "mm" ? "seasonally adjusted" : "not seasonally adjusted") + ")" };
+    var X = CC[V.cc] || CC.us;
+    return { key: "cpi:" + c, name: it.n, group: V.cc, unit: "%", dec: 1, measure: V.m === "mm" ? "m/m" : "y/y", good: "down", value: a[n - 1], prior: a[n - 2],
+      history: H, hist24: H, src: X.src + " (" + X.adj[V.m] + ")" };
   }
   root.cpiAsMacro = cpiAsMacro;
   function openCpi(c) {
     var m = cpiAsMacro(c); if (!m || !root.mdHistHTML) return;
     var o = document.getElementById("mdc-overlay");
     if (!o) { o = document.createElement("div"); o.id = "mdc-overlay"; o.innerHTML = '<div class="mdc-wrap" role="dialog" aria-modal="true"><button class="mdc-x" aria-label="Close">×</button><div class="mdc-body"></div></div>'; document.body.appendChild(o); }
-    o.querySelector(".mdc-body").innerHTML = '<div class="mdc"><div class="mdc-top"><div class="mdc-ttl">US CPI · ' + esc(m.name.toUpperCase()) + "</div><div class=\"mdc-sub\">" + (V.m === "mm" ? "1-month change, seasonally adjusted" : "12-month change, not seasonally adjusted") + "</div></div>" +
+    o.querySelector(".mdc-body").innerHTML = '<div class="mdc"><div class="mdc-top"><div class="mdc-ttl">' + (CC[V.cc] || CC.us).name.toUpperCase() + " CPI · " + esc(m.name.toUpperCase()) + "</div><div class=\"mdc-sub\">" + (V.m === "mm" ? "1-month change, " : "12-month change, ") + (CC[V.cc] || CC.us).adj[V.m] + "</div></div>" +
       '<div class="mdc-main"><div class="mdc-k">' + esc(m.name) + " — " + esc(mon(lastM(c))) + '</div><div class="mdc-v">' + sg(m.value, 1) + " <small>" + m.measure + '</small></div><div class="mdc-l">Prior: ' + sg(m.prior, 1) + "</div></div>" +
       '<div class="mdh-wrap">' + mdHistHTML(m) + "</div></div>";
     o.classList.add("on"); o.setAttribute("data-key", m.key); o.querySelector(".mdc-wrap").scrollTop = 0;
