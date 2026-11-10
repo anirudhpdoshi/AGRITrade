@@ -18,7 +18,7 @@
     if (v == null) return "";
     var over = max && Math.abs(v) > max, w = max ? Math.min(50, Math.abs(v) / max * 50) : 0, cls = v > 0 ? "heat" : v < 0 ? "cool" : "";
     var tip = it.n + ": " + sg(v, d) + (V.m === "mm" ? " in the month" : " over 12 months") + (p != null ? " (prior " + sg(p, d) + ")" : "");
-    return '<div class="cpi-r' + (it.g === "agg" ? " agg" : "") + '" title="' + esc(tip) + '">' +
+    return '<div class="cpi-r' + (it.g === "agg" ? " agg" : "") + '" data-cpic="' + esc(it.c) + '" role="button" tabindex="0" title="' + esc(tip + " · click for its history") + '">' +
       '<span class="cpi-n">' + esc(it.n) + "</span>" +
       '<span class="cpi-bw"><span class="cpi-z"></span><span class="cpi-b ' + cls + '" style="' + (v >= 0 ? "left:50%" : "right:50%") + ";width:" + w.toFixed(2) + '%"></span>' + (over ? '<span class="cpi-ov" style="' + (v >= 0 ? "right:0" : "left:0") + '" title="Beyond the scale">' + (v >= 0 ? "››" : "‹‹") + "</span>" : "") + "</span>" +
       '<span class="cpi-v">' + sg(v, d) + "</span>" +
@@ -65,7 +65,29 @@
   }
   root.cpiInternalsHTML = cpiInternalsHTML;
 
+  /* click a category: the desk's detail pop-up with its history as chart or table, in the measure the card is showing */
+  function item(c) { var C = root.DATA && DATA.cpi_detail; if (!C) return null; for (var i = 0; i < C.items.length; i++) if (C.items[i].c === c) return C.items[i]; return null; }
+  function cpiAsMacro(c) {
+    var it = item(c); if (!it) return null;
+    var a = it[V.m], months = it.m || [], n = a.length, lab = months.slice(-n);
+    var H = a.map(function (v, i) { return [lab[i] || "", v]; });
+    return { key: "cpi:" + c, name: it.n, group: "us", unit: "%", dec: 1, measure: V.m === "mm" ? "m/m" : "y/y", good: "down", value: a[n - 1], prior: a[n - 2],
+      history: H, hist24: H, src: "BLS CPI-U (" + (V.m === "mm" ? "seasonally adjusted" : "not seasonally adjusted") + ")" };
+  }
+  root.cpiAsMacro = cpiAsMacro;
+  function openCpi(c) {
+    var m = cpiAsMacro(c); if (!m || !root.mdHistHTML) return;
+    var o = document.getElementById("mdc-overlay");
+    if (!o) { o = document.createElement("div"); o.id = "mdc-overlay"; o.innerHTML = '<div class="mdc-wrap" role="dialog" aria-modal="true"><button class="mdc-x" aria-label="Close">×</button><div class="mdc-body"></div></div>'; document.body.appendChild(o); }
+    o.querySelector(".mdc-body").innerHTML = '<div class="mdc"><div class="mdc-top"><div class="mdc-ttl">US CPI · ' + esc(m.name.toUpperCase()) + "</div><div class=\"mdc-sub\">" + (V.m === "mm" ? "1-month change, seasonally adjusted" : "12-month change, not seasonally adjusted") + "</div></div>" +
+      '<div class="mdc-main"><div class="mdc-k">' + esc(m.name) + " — " + esc(mon(lastM(c))) + '</div><div class="mdc-v">' + sg(m.value, 1) + " <small>" + m.measure + '</small></div><div class="mdc-l">Prior: ' + sg(m.prior, 1) + "</div></div>" +
+      '<div class="mdh-wrap">' + mdHistHTML(m) + "</div></div>";
+    o.classList.add("on"); o.setAttribute("data-key", m.key); o.querySelector(".mdc-wrap").scrollTop = 0;
+  }
+  function lastM(c) { var it = item(c), M = it && it.m; return M && M.length ? M[M.length - 1] : ""; }
+
   document.addEventListener("click", function (ev) {
+    var r = ev.target.closest && ev.target.closest("[data-cpic]"); if (r) { openCpi(r.getAttribute("data-cpic")); return; }
     var b = ev.target.closest && ev.target.closest("[data-cpi]"); if (!b) return;
     var kv = b.getAttribute("data-cpi").split(":"); V[kv[0]] = kv[1];
     try { localStorage.setItem("desk.cpi", JSON.stringify(V)); } catch (e) {}
@@ -81,7 +103,7 @@
     ".cpi-hd,.cpi-r{display:grid;grid-template-columns:minmax(150px,240px) minmax(120px,1fr) 64px 56px;gap:10px;align-items:center}" +
     ".cpi-hd{font:700 10.5px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:0 4px 6px;border-bottom:1px solid var(--line)}" +
     ".cpi-hd span:nth-child(n+3){text-align:right}.cpi-axis{display:flex;justify-content:space-between}" +
-    ".cpi-r{padding:3px 4px;min-height:24px;border-radius:4px}.cpi-r:hover{background:rgba(110,168,255,.07)}.cpi-r.agg .cpi-n{font-weight:700;color:var(--ink)}" +
+    ".cpi-r{padding:3px 4px;min-height:24px;border-radius:4px;cursor:pointer}.cpi-r:hover{background:rgba(110,168,255,.07)}.cpi-r.agg .cpi-n{font-weight:700;color:var(--ink)}" +
     ".cpi-n{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
     ".cpi-bw{position:relative;height:12px}.cpi-z{position:absolute;left:50%;top:-4px;bottom:-4px;width:1px;background:var(--line2)}" +
     ".cpi-b{position:absolute;top:0;height:12px;min-width:2px}.cpi-b.heat{background:#e8a33d;border-radius:0 4px 4px 0}.cpi-b.cool{background:#6ea8ff;border-radius:4px 0 0 4px}" +
