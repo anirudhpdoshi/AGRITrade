@@ -85,20 +85,43 @@
     var now = Date.now(), A = asOfLine(now), ev = nextEvent(now);
     var h = '<div class="gr-top"><span class="gr-asof">' + A.text + '</span>' + (ev ? '<span class="gr-next">' + ev + '</span>' : "") + '</div>' +
       '<div class="gr-strip">' + ORDER.map(function (k) { return tileHTML(k, A.day, k === on); }).join("") + '</div>' +
-      '<div class="gr-slicer" role="group" aria-label="Commodity"><span>Commodity</span>' + ORDER.map(function (k) { return '<button type="button" data-grain-pick="' + k + '" aria-pressed="' + (k === on) + '">' + NAME[k] + '</button>'; }).join("") + '</div>';
+      '<div class="gr-slicer" role="group" aria-label="Commodity"><span>Commodity</span>' + ORDER.map(function (k) { return '<button type="button" data-grain-pick="' + k + '" aria-pressed="' + (k === on) + '">' + NAME[k] + '</button>'; }).join("") +
+      '<button type="button" class="gr-lock" data-grain-lock aria-pressed="' + LOCK + '" title="' + (LOCK ? "View locked: switching commodity keeps the same menu, section, geography, crop year and place on the page" : "View unlocked: each commodity opens where you last left it") + '">' + (LOCK ? "\ud83d\udd12 View locked" : "\ud83d\udd13 Lock view") + "</button>" + '</div>';
     if (head.innerHTML !== h) head.innerHTML = h;
   }
   root.GRAINS.pick = function (k) { pick(k); };
   function section(k) { var s = doc.querySelector("#panel-" + k + ' [data-sub][aria-selected="true"]'); return s ? s.getAttribute("data-sub") : null; }
+  /* View lock (default on): Corn / Soybeans / Wheat keep the same route — menu, section filter, geography, crop year, map/table —
+     and the same tile at the same height on screen, so you can flip commodities on e.g. WASDE without losing your place */
+  var LOCK = true; try { LOCK = localStorage.getItem("desk.grlock") !== "0"; } catch (e) {}
+  var ROUTE_KEYS = ["crop", "view", "basis", "fgeo"];
+  function anchor(k) {   /* first tile still on screen: its index in the open menu and its distance from the top */
+    var T = doc.querySelectorAll("#panel-" + k + " [data-subpanel].on .tile"), top = (doc.querySelector(".tabs") || {}).offsetHeight || 0;
+    for (var i = 0; i < T.length; i++) { var r = T[i].getBoundingClientRect(); if (r.height && r.bottom > top + 40) return { i: i, off: r.top }; }
+    return null;
+  }
   function pick(k) {
-    var from = active(), sub = from && from !== k ? section(from) : null, y = root.scrollY, b = btn(k); if (!b) return;
+    var from = active(), same = from === k, sub = from && !same ? section(from) : null, y = root.scrollY, b = btn(k); if (!b) return;
+    var A = LOCK && from && !same ? anchor(from) : null;
+    if (LOCK && from && !same) {
+      try {
+        if (root.SEC && root.SUB) { var sv = SEC[from + "." + SUB[from]]; if (sv != null) { SEC[k + "." + sub] = sv; localStorage.setItem("desk.sec", JSON.stringify(SEC)); } }
+        if (root.DASH_STATE && root.dstate) { var f = dstate(from), t = dstate(k); ROUTE_KEYS.forEach(function (q) { if (f[q] != null) t[q] = f[q]; }); }
+      } catch (e) {}
+    }
     b.click();
-    if (sub && root.setSub) root.setSub(k, sub);      /* the section holds when the commodity changes */
-    root.scrollTo(0, y);                              /* CG-2: same scroll position */
+    if (sub && root.setSub) root.setSub(k, sub);      /* the menu holds when the commodity changes */
+    if (LOCK && from && !same && root.renderGrain) { try { renderGrain(k); if (root.buildSecNav) buildSecNav(k); if (root.drawDestMaps) drawDestMaps(); } catch (e) {} }
+    function place() { var T = A ? doc.querySelectorAll("#panel-" + k + " [data-subpanel].on .tile")[A.i] : null;
+      if (T) root.scrollTo(0, Math.max(0, T.getBoundingClientRect().top + root.scrollY - A.off));   /* same tile, same height on screen */
+      else root.scrollTo(0, y); }                     /* CG-2: same scroll position */
+    place(); setTimeout(place, 0); setTimeout(place, 150);   /* again after the tab switch and section nav settle */
     if (root.DESK_LIVE && DESK_LIVE.paintPills) DESK_LIVE.paintPills();
   }
   parent.addEventListener("click", function () { pick(active() || saved()); });
-  head.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-grain-pick]"); if (b) pick(b.getAttribute("data-grain-pick")); });
+  head.addEventListener("click", function (ev) {
+    if (ev.target.closest && ev.target.closest("[data-grain-lock]")) { LOCK = !LOCK; try { localStorage.setItem("desk.grlock", LOCK ? "1" : "0"); } catch (e) {} paint(); return; }
+    var b = ev.target.closest && ev.target.closest("[data-grain-pick]"); if (b) pick(b.getAttribute("data-grain-pick")); });
   doc.addEventListener("click", function (ev) {
     if (!ev.target.closest || !ev.target.closest(".tab-btn")) return;
     var k = active(); if (k) remember(k); paint();
