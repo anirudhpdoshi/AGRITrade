@@ -514,8 +514,8 @@ def main():
             time.sleep(1)
             if not h:
                 continue
-            if it["type"] == "minutes":   # announcement pages link to the full minutes / account / summary
-                m = re.search(r'href="([^"]*(?:fomcminutes\d+\.htm|/press/accounts/\d{4}/html/[^"]+\.en\.html|summary-governing-council-deliberations[^"]*))"', h)
+            if it["type"] == "minutes" and bank != "boc":   # Fed/ECB announcement pages link to the full minutes / account; a BoC summary page IS the document
+                m = re.search(r'href="([^"]*(?:fomcminutes\d+\.htm|/press/accounts/\d{4}/html/[^"]+\.en\.html))"', h)
                 if m:
                     u = m.group(1) if m.group(1).startswith("http") else re.match(r"https://[^/]+", it["link"]).group(0) + m.group(1)
                     h2 = get(u, 25)

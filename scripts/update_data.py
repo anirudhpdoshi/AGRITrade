@@ -1361,6 +1361,8 @@ def _bls_batch(ids):
         j = r.json()
     except Exception as e:   # scrub: the key is in the body, never the message
         raise RuntimeError(f"BLS request failed ({type(e).__name__})") from None
+    if j.get("status") != "REQUEST_SUCCEEDED":   # e.g. keyless daily limit reached: say so instead of returning nothing
+        raise RuntimeError(f"BLS {j.get('status')}: {' '.join(j.get('message') or [])[:160]}")
     out = {}
     for ser in (j.get("Results") or {}).get("series", []):
         pts = [(f"{d['year']}-{d['period'][1:]}-01", float(d["value"])) for d in ser.get("data", [])
@@ -1771,7 +1773,10 @@ def macro(D, N, only=None):
                 raw = (_fred(sid, start) if src == "fred" else _ism(sid) if src == "ism" else _ivey(sid) if src == "ivey" else _valet_series(sid, 0, start) if src == "valet" else _statcan(sid, 90))
             prevp = (old.get(key) or {}).get("obs_date") or ""
             if src == "fred" and key in BLS_SRC and bls_ok and raw[-1][0] <= prevp:   # FRED has nothing new yet: ask BLS itself
-                extra = [(d, v) for d, v in bls_new_for(key) if d > raw[-1][0]]
+                got = bls_new_for(key)
+                extra = [(d, v) for d, v in got if d > raw[-1][0]]
+                if not extra:
+                    print(f"  {key}: BLS has nothing newer than {raw[-1][0][:7]} yet ({len(got)} points read)")
                 if extra:
                     raw = raw + extra
                     label = "BLS (release) + FRED history"
