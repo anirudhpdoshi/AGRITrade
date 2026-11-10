@@ -2984,15 +2984,38 @@ def grain_long(D, N):
             out[k] = rows
     if not out:
         raise RuntimeError("no grain history from Yahoo")
-    D["grain_long"] = {"day": today, "after_close": datetime.now(TOR).hour >= 15, "asof": NOW.isoformat(timespec="seconds"),
+    # other markets for the macro-release window (daily closes, same 18 months)
+    other = {}
+    for k, (sym, sc) in {"usdcad": ("CAD=X", 1.0), "wti": ("CL=F", 1.0), "us10y": ("^TNX", 1.0), "dxy": ("DX-Y.NYB", 1.0)}.items():
+        try:
+            other[k] = [[d, round(v, 5)] for d, v in sorted(_closes_yf(sym, "18mo", sc).items())]
+        except Exception as e:
+            print(f"  grain_long: {k} failed: {e}")
+    D["grain_long"] = {"other": other, "day": today, "after_close": datetime.now(TOR).hour >= 15, "asof": NOW.isoformat(timespec="seconds"),
                        "src": "Yahoo Finance continuous front month (ZC=F, ZW=F, ZS=F), daily bars, $/bu", "series": out,
                        "wasde": sorted(WASDE_DATES)}
     print("  grain_long:", {k: len(v) for k, v in out.items()})
 
 
+def release_hist(D, N):
+    """Past release dates per indicator, for 'Markets around this release' (chunk 6): the official 2026 schedules
+    (scripts/release_hist_seed.json: BLS, BEA, Statistics Canada) plus every release_cal date that has passed since."""
+    seed = json.loads((Path(__file__).parent / "release_hist_seed.json").read_text())
+    H = {k: set(v) for k, v in (D.get("release_hist") or {}).items() if isinstance(v, list)}
+    for k, v in seed.items():
+        if not k.startswith("_"):
+            H.setdefault(k, set()).update(v)
+    now = datetime.now(TOR).strftime("%Y-%m-%dT%H:%M")
+    for k, c in (D.get("release_cal") or {}).items():
+        for x in (c.get("dates") or []) if isinstance(c, dict) else []:
+            if x <= now:
+                H.setdefault(k, set()).add(x)
+    D["release_hist"] = {k: sorted(v)[-24:] for k, v in H.items()}
+
+
 BLOCKS = [("seasonality_track", seasonality_track), ("expired_track", expired_track), ("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("yields_live", yields_live), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("cpi_detail", cpi_detail), ("grain_long", grain_long), ("cpi_detail_ca", cpi_detail_ca), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow), ("ust", ust)]
+          ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("cpi_detail", cpi_detail), ("grain_long", grain_long), ("release_hist", release_hist), ("cpi_detail_ca", cpi_detail_ca), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow), ("ust", ust)]
 
 
 def main():

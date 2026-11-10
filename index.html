@@ -482,6 +482,8 @@ table.fwd-in td.fi-src{text-align:left;color:var(--faint);font-size:11.5px;white
 .cpi-dd-btn:hover{background:#e8a33d;color:#101825}
 html[data-theme="light"] .cpi-dd-btn{color:#7a4a00;background:rgba(232,163,61,.18)}
 .cpi-dd-btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.mw-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;clear:both}@media(max-width:640px){.mw-g{grid-template-columns:1fr 1fr;gap:6px}.mw-c{padding:6px 7px}.mw-wrap .mdh-ctl{float:none;display:flex;margin-top:6px;overflow-x:auto}}.mw-c{border:1px solid var(--line);border-radius:8px;padding:8px 10px}.mw-n{font:700 11px 'IBM Plex Sans',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.mw-v{display:flex;justify-content:space-between;gap:6px;font:11.5px 'IBM Plex Mono',monospace;color:var(--faint)}.mw-v b{color:var(--ink)}.mw-v b.up{color:#3fb97f}.mw-v b.dn{color:#e0655f}.mw-na{font-size:12px;color:var(--faint);padding:14px 0}
 .mdh-ctl{float:right;display:inline-flex;gap:8px;text-transform:none;letter-spacing:0}.mdh-seg{display:inline-flex}.mdh-b{font:600 11.5px 'IBM Plex Sans',sans-serif;padding:3px 9px;border:1px solid var(--line2);background:transparent;color:var(--muted);cursor:pointer}.mdh-seg .mdh-b:first-child{border-radius:6px 0 0 6px}.mdh-seg .mdh-b:last-child{border-radius:0 6px 6px 0}.mdh-seg .mdh-b+.mdh-b{margin-left:-1px}.mdh-b[aria-pressed="true"]{background:rgba(56,182,201,.16);color:var(--ink);border-color:rgba(56,182,201,.6)}
 .mdh-tw{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:8px}.mdh-t{width:100%;border-collapse:collapse;font:12.5px 'IBM Plex Mono',monospace}.mdh-t th{position:sticky;top:0;background:var(--panel);text-align:right;padding:6px 10px;font:700 10.5px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}.mdh-t th:first-child,.mdh-t td:first-child{text-align:left}.mdh-t td{padding:5px 10px;text-align:right;border-top:1px solid var(--line)}
 #mdc-overlay{position:fixed;inset:0;background:rgba(4,8,14,.72);z-index:9000;display:none;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto}
@@ -3561,6 +3563,41 @@ function mdHistHTML(m){
 document.addEventListener('click', function(ev){ var b=ev.target.closest&&ev.target.closest('[data-mdh]'); if(!b) return; ev.stopPropagation();
   var kv=b.getAttribute('data-mdh').split(':'); MDH[kv[0]]=kv[0]==='r'?+kv[1]:kv[1]; try{ localStorage.setItem('desk.mdh',JSON.stringify(MDH)); }catch(e){}
   var o=document.getElementById('mdc-overlay'), k=o&&o.getAttribute('data-key'), H=o&&o.querySelector('.mdh-wrap'); if(k&&H) H.innerHTML=mdHistHTML(k.indexOf('cpi:')===0&&window.cpiAsMacro?cpiAsMacro(k.slice(4)):mfind(k)); }, true);
+/* ---- chunk 6 (MAC-09 / CH-05): markets around a release — daily closes from 3 sessions before to 5 after, each market on its own
+   scale (small multiples, never one shared axis), moves measured from the close before the release. Correlation, not causation. ---- */
+var MW={i:0};
+var MWK=[['corn','Corn','g','¢'],['wheat','Wheat','g','¢'],['soybeans','Soybeans','g','¢'],['usdcad','USD/CAD','o','pips'],['wti','WTI crude','o','$'],['us10y','US 10Y yield','o','bp'],['dxy','Dollar index','o','']];
+function mwSeries(k,t){ var G=DATA.grain_long; if(!G) return null; if(t==='g') return G.series&&G.series[k]?G.series[k].map(function(r){ return [r[0],r[4]]; }):null; return G.other&&G.other[k]||null; }
+function mwRelDates(key){ var C=DATA.release_cal&&DATA.release_cal[key], H=(DATA.release_hist&&DATA.release_hist[key])||[], now=Date.now(), seen={};
+  var L=H.concat(C&&C.dates||[]).filter(function(x){ if(seen[x]) return false; seen[x]=1; return true; });
+  return L.map(function(x){ var p=x.split('T'), d=p[0].split('-'), h=(p[1]||'08:30').split(':'); return {s:x, t:zonedMs(+d[0],+d[1],+d[2],+h[0],+h[1],'America/Toronto'), d:p[0]}; })
+    .filter(function(x){ return x.t<=now; }).sort(function(a,b){ return b.t-a.t; }).slice(0,6); }
+function mwMove(k,unit,a,b){ if(a==null||b==null) return null; var d=b-a;
+  return unit==='bp'?d*100:unit==='pips'?d*1e4:unit==='¢'?d*100:unit==='$'?d:(b/a-1)*100; }
+function mwFmt(v,unit){ if(v==null) return '—'; var s=v>0?'+':v<0?'\u2212':''; var a=Math.abs(v);
+  return unit==='bp'?s+a.toFixed(1)+' bp':unit==='pips'?s+a.toFixed(0)+' pips':unit==='¢'?s+a.toFixed(1)+'¢':unit==='$'?s+'$'+a.toFixed(2):s+a.toFixed(2)+'%'; }
+function mwinHTML(key){
+  var R=mwRelDates(key); if(!R.length||!DATA.grain_long) return '';
+  if(MW.i>=R.length) MW.i=0; var rel=R[MW.i], late=new Date(rel.t).toLocaleTimeString('en-US',{timeZone:'America/Toronto',hour:'numeric',minute:'2-digit'});
+  var cards=MWK.map(function(K){ var S=mwSeries(K[0],K[2]); if(!S||S.length<10) return '';
+    var r0=-1; for(var i=0;i<S.length;i++){ if(S[i][0]>=rel.d){ r0=i; break; } } if(r0<1) return '<div class="mw-c"><div class="mw-n">'+K[1]+'</div><div class="mw-na">no session after this release yet</div></div>';
+    var a=Math.max(0,r0-3), b=Math.min(S.length-1,r0+5), base=S[r0-1][1], P=S.slice(a,b+1), lo=Math.min.apply(null,P.map(function(x){return x[1];})), hi=Math.max.apply(null,P.map(function(x){return x[1];})), rg=(hi-lo)||Math.abs(hi)*0.001||1;
+    var W=170,H=58,X=function(i){ return 4+(i-a)/Math.max(1,b-a)*(W-8); }, Y=function(v){ return 6+(hi-v)/rg*(H-12); };
+    var d0=mwMove(K[0],K[3],base,S[r0][1]), d5=b>r0?mwMove(K[0],K[3],base,S[b][1]):null;
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="'+H+'" aria-hidden="true"><line x1="'+X(r0).toFixed(1)+'" x2="'+X(r0).toFixed(1)+'" y1="0" y2="'+H+'" stroke="#e8b93d" stroke-dasharray="3 3"/>'+
+      '<line x1="4" x2="'+(W-4)+'" y1="'+Y(base).toFixed(1)+'" y2="'+Y(base).toFixed(1)+'" stroke="var(--line2)" stroke-dasharray="2 3"/>'+
+      '<polyline fill="none" stroke="#38b6c9" stroke-width="1.8" points="'+P.map(function(x,j){ return X(a+j).toFixed(1)+','+Y(x[1]).toFixed(1); }).join(' ')+'"/>'+
+      '<circle cx="'+X(r0).toFixed(1)+'" cy="'+Y(S[r0][1]).toFixed(1)+'" r="3" fill="#e8b93d"/></svg>';
+    var cls=function(v){ return v>0?'up':v<0?'dn':''; };
+    return '<div class="mw-c" title="'+esc(K[1])+': close '+S[r0-1][0]+' '+S[r0-1][1]+' → release day '+S[r0][0]+' '+S[r0][1]+(b>r0?' → '+S[b][0]+' '+S[b][1]:'')+'"><div class="mw-n">'+K[1]+'</div>'+svg+
+      '<div class="mw-v"><span>'+(r0===S.length-1&&S[r0][0]===new Date().toLocaleDateString('en-CA',{timeZone:'America/Toronto'})?'Today so far':'Release day')+' <b class="'+cls(d0)+'">'+mwFmt(d0,K[3])+'</b></span><span>'+(b>r0?(b-r0)+'d later <b class="'+cls(d5)+'">'+mwFmt(d5,K[3])+'</b>':'after: pending')+'</span></div></div>'; }).join('');
+  return '<h4 class="mdc-h">Markets around this release <span class="mdh-ctl"><span class="mdh-seg">'+R.map(function(x,i){ return '<button class="mdh-b" data-mw="'+i+'" aria-pressed="'+(i===MW.i)+'">'+esc(new Date(x.d+'T12:00:00Z').toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'}))+'</button>'; }).join('')+'</span></span></h4>'+
+    '<div class="mw-g">'+cards+'</div>'+
+    '<p class="mdc-read" style="margin-top:4px">Released '+esc(new Date(rel.t).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'America/Toronto'}))+', '+esc(late)+' ET. Daily closes, 3 sessions before to 5 after; each market on its own scale; moves measured from the close before the release (dashed line), yellow = release-day close. '+
+    '<b>Correlation, not causation:</b> other news on the same day moves these markets too. Sources: Yahoo Finance daily closes (grains: continuous front month).</p>';
+}
+document.addEventListener('click', function(ev){ var b=ev.target.closest&&ev.target.closest('[data-mw]'); if(!b) return; ev.stopPropagation(); MW.i=+b.getAttribute('data-mw');
+  var o=document.getElementById('mdc-overlay'), k=o&&o.getAttribute('data-key'), H=o&&o.querySelector('.mw-wrap'); if(k&&H) H.innerHTML=mwinHTML(k); }, true);
 function macroDetailHTML(key){
   var m=mfind(key); if(!m) return '<div class="unreach">\u26a0 Sorry, we can\u2019t be reached now <small>\u2014 no data for this indicator yet</small></div>';
   var pend=(typeof awaitingList==='function'?awaitingList():[]).filter(function(x){ return x.sel==='.mcard[data-mkey="'+key+'"]'; })[0], pendHTML='';
@@ -3597,7 +3634,7 @@ function macroDetailHTML(key){
     (extra.concat(st.slice(1)).length?'<div class="mdc-band">'+extra.concat(st.slice(1)).map(function(t){ return '<div>'+t+'</div>'; }).join('')+'</div>':'')+
     '<h4 class="mdc-h">What it is &amp; why it matters for USD/CAD</h4><p class="mdc-p">'+esc(info[0])+' '+esc(info[1])+'</p>'+
     (/^(us|ca)_(core_)?cpi|^ca_(trim|median)$/.test(key)&&cpiHas(m.group)?cpiDeepBtn(m.group):'')+
-    '<div class="mdh-wrap">'+mdHistHTML(m)+'</div>'+
+    '<div class="mdh-wrap">'+mdHistHTML(m)+'</div>'+(function(){ MW.i=0; var h=mwinHTML(key); return h?'<div class="mw-wrap">'+h+'</div>':''; })()+
     '<h4 class="mdc-h">Trend — '+esc(m.name)+(m.measure?', '+m.measure:'')+', last '+Math.min(12,n)+' readings</h4><div class="mdc-chart">'+chart1+'</div>'+
     (chart2?'<h4 class="mdc-h">Change vs prior reading</h4><div class="mdc-chart">'+chart2+'</div>':'')+
     '<p class="mdc-read">Read: '+st.concat([m.value>a3?'latest above its 3-reading average':'latest below its 3-reading average']).join('; ')+'.</p>'+
