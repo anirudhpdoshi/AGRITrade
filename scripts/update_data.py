@@ -2190,11 +2190,11 @@ def wasde(D, N):
         print("  checked <6h ago — skipping")
         return False
     H = {"X-Api-Key": key}
-    today = datetime.now(TOR).date().isoformat()
-    latest = max(d for d in WASDE_DATES if d <= today)
+    # a report only counts once its 12:00 ET release time has passed — not from midnight of release day
+    latest = max(d for d in WASDE_DATES if datetime.fromisoformat(d + "T12:00").replace(tzinfo=TOR) <= NOW)
     label = datetime.fromisoformat(latest).strftime("%b %Y")
     W = D.get("wasde") or {}
-    changed = []
+    changed, pending = [], False
     for k, code in PSD_CODE.items():
         w = W.get(k)
         if not w:
@@ -2211,6 +2211,14 @@ def wasde(D, N):
                     raise RuntimeError(f"{k} {crop} {yr}: PSD {lab} {a} vs stored {b} — not used; PSD lines: {names}"[:900])
             cur[crop] = vals
         same_month = (w.get("report") == label)
+        if not same_month:
+            # a new month is taken only when USDA's PSD actually carries it: if every line still equals the stored report,
+            # PSD has not been updated yet — keep the old month and look again on the next run (no "Nov" label on Oct numbers)
+            stale = all(cur[c].get(r[0]) == r[2] for c in ("new", "old") for r in w[c]["rows"] if cur[c].get(r[0]) is not None)
+            if stale:
+                print(f"  {k}: PSD not yet updated for {label} — holding {w.get('report')}")
+                pending = True
+                continue
         for crop in ("new", "old"):
             rows = []
             for lab, prior, current, *_ in w[crop]["rows"]:
@@ -2226,7 +2234,8 @@ def wasde(D, N):
             w["prior_report"], w["report"] = w["report"], label
         w["source"] = "USDA PSD (FAS Open Data) · converted from metric to U.S. units"
         changed.append(k)
-    meta["wasde_checked"] = iso(NOW)
+    if not pending:
+        meta["wasde_checked"] = iso(NOW)   # while a new report is still pending in PSD, keep checking every run
     if changed:
         meta["asof"]["wasde"] = iso(NOW)
     print("  wasde:", changed, label)
