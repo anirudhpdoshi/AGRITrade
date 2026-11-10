@@ -142,7 +142,7 @@ def feeds(A):
         ("fx_spot", "USD/CAD spot (desk copy)", "Yahoo Finance", "Delayed / reference", fx_open, 20, asof.get("fx_spot")),
         ("grains_quote", "Grain futures quotes", "Yahoo Finance (CBOT)", "Delayed ~10 min", cbot_day, 30, asof.get("grains_quote")),
         ("grains_settle", "Grain settlements", "Yahoo Finance (CBOT)", "End of day", lambda t: True, "settle", asof.get("grains_settle")),
-        ("options", "Grain options / OI (8:23 AM)", "Interactive Brokers", "Daily snapshot", lambda t: True, "oi", asof.get("options")),
+        ("options", "Grain options / OI (runs 8:23, due 8:45 AM)", "Interactive Brokers", "Daily snapshot", lambda t: True, "oi", asof.get("options")),
         ("macro", "US & Canada macro", "FRED / BLS / BEA / StatCan / BoC", "Official release", weekday_et, 60 * 3, meta.get("macro_checked")),
         ("energy", "Energy (WTI, Brent, WCS)", "Yahoo Finance", "Delayed", fx_open, 60, asof.get("energy")),
         ("data", "Desk data (data.json)", "All blocks", "Mixed", weekday_et, 45, meta.get("updated_at")),
@@ -324,7 +324,7 @@ def panel_sched(A):
     et = NOW.astimezone(TOR)
     o = P(asof.get("options"))
     due823 = et.weekday() < 5 and (et.hour, et.minute) >= (8, 45)
-    special.append({"id": "oi823", "label": "8:23 AM options / OI snapshot", "at": asof.get("options"),
+    special.append({"id": "oi823", "label": "Options / OI snapshot (runs 8:23, due 8:45 AM ET)", "at": asof.get("options"),
                     "status": "green" if (o and o.astimezone(TOR).date() == et.date()) else ("red" if due823 else "idle"),
                     "note": "today's snapshot is on the desk" if (o and o.astimezone(TOR).date() == et.date()) else ("not on the desk yet for today" if due823 else "next run 8:23 AM ET on the next weekday")})
     mc = P(meta.get("model_checked"))

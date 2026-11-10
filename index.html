@@ -382,6 +382,8 @@ li.n-desk b{color:#ffd0cc;font-size:12.5px}
 .fwd-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 0 8px}
 .fwd-chip{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:700;letter-spacing:.08em;padding:2px 8px;border-radius:4px;border:1px solid;transition:color .3s,border-color .3s,background-color .3s}
 .fwd-chip.live{color:#5fd598;border-color:#2b6b4c;background:rgba(63,185,127,.12)}.fwd-chip.ref{color:#7fd3e0;border-color:#2a5d66;background:rgba(56,182,201,.1)}
+.oi-snap-row{margin:6px 0 2px;font-size:12px;color:var(--muted)}.oi-snap{display:inline-block;font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.06em;padding:2px 7px;border-radius:4px;border:1px solid rgba(232,185,61,.55);color:#e8b93d;background:rgba(232,185,61,.1)}.oi-snap-t b{color:var(--ink)}
+.qt-src{display:block;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);margin-top:2px}
 .fwd-chip.delayed{color:#e8c069;border-color:#6e5a2a}.fwd-chip.stale{color:#f0a35a;border-color:#7a5224;background:rgba(232,163,61,.12)}
 .fwd-chip.down{color:#ff9d97;border-color:#7a3a36;background:rgba(224,101,95,.12)}.fwd-chip.closed{color:#9aa8bb;border-color:#34445a;background:#121c2c}
 .fwd-dim .fwd-chart svg{opacity:.55;transition:opacity .4s}.fwd-chart svg{transition:opacity .4s}
@@ -2377,12 +2379,12 @@ function oiTileHTML(key){
   }).join('');
   var leg=view==='chg'?'<span><span class="sw" style="background:var(--call)"></span>Calls added</span><span><span class="sw" style="background:#1f7a52"></span>Calls closed</span><span><span class="sw" style="background:var(--put)"></span>Puts added</span><span><span class="sw" style="background:#7a2f2b"></span>Puts closed</span>':
     (cp!=='put'?'<span><span class="sw" style="background:var(--call)"></span>Call OI</span><span><span class="sw" style="background:#ffd27a"></span>Call wall strike</span>':'')+(cp!=='call'?'<span><span class="sw" style="background:var(--put)"></span>Put OI</span><span><span class="sw" style="background:#ff9d97"></span>Put wall strike</span>':'');
-  return '<div class="tile-head"><h2>Open interest by strike <span class="h2note">— hover or tap a strike for its numbers</span></h2><div class="oi-ctl">'+ctl+'</div></div>'+
+  return '<div class="tile-head"><h2>Open interest by strike <span class="h2note">— hover or tap a strike for its numbers</span></h2><div class="oi-ctl">'+ctl+'</div></div>'+'<div class="oi-snap-row">'+oiBadgeHTML()+'</div>'+
     '<p class="note oi-gate'+(unlocked?' on':'')+'" style="margin:4px 0 0">'+(unlocked
       ? '✓ Next month open — '+esc(RL.def)+' holds <b>'+fmt(RL.pct,1)+'%</b> of '+esc(RL.front)+'+'+esc(RL.def)+' open interest (≥ 40% liquidity threshold, crossed '+esc(RL.crossed||'')+')'+(dF!=null&&dF>0?' · '+dF+' day'+(dF===1?'':'s')+' to first notice':'')
       : '🔒 Next option month opens when the futures roll passes <b>40%</b> — '+esc(RL.def)+' holds '+fmt(RL.pct,1)+'% of open interest ('+fmt(40-RL.pct,1)+' pp to go'+(RL.pace>0?', ~'+Math.ceil((40-RL.pct)/RL.pace)+' sessions at the current pace':'')+')')+'</p>'+
     charts+'<div class="legend">'+leg+(view==='chg'?'':'<span>faded bars = in the money · white line = live price</span>')+'</div>'+oiMonthsHTML(key)+oiWeekliesHTML(key)+
-    '<div class="stamp">Pulled '+esc(asofStamp('options'))+' · open interest is the prior session’s close as published before the open (exchange preliminary; on this desk it has matched the ~10:30 AM final within about 0.2% of each chain), pulled by the 8:23 ET daily run · change = latest pull vs the previous stored pull for that month</div>';
+    '<div class="stamp">Pulled '+esc(asofStamp('options'))+' · open interest is the prior session’s close as published before the open (exchange preliminary; on this desk it has matched the ~10:30 AM final within about 0.2% of each chain), pulled by the daily options run (8:23 AM ET, due on the desk by 8:45 AM ET) · change = latest pull vs the previous stored pull for that month</div>';
 }
 /* weekly / short-dated option expiries (pulled by the morning run): totals, biggest strikes, and any strike whose open
    interest is large next to the monthly chain's biggest strike gets highlighted */
@@ -2443,6 +2445,11 @@ function oiDeltaSVG(ds, prev, cp, key, lab){
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Change in open interest by strike">'+s+'</svg>';
 }
 /* "Mon DD h:mm AM ET" for a data block's as-of time */
+/* open interest is a once-a-day exchange figure: name the CME trade date it describes and when the desk pulled it (OI-01/02) */
+function oiTradeDate(){ var a=DATA.meta&&DATA.meta.asof&&DATA.meta.asof.options; if(!a) return null; var d=new Date(Date.parse(a)), et=new Date(d.toLocaleString('en-US',{timeZone:'America/Toronto'}));
+  do { et.setDate(et.getDate()-1); } while(et.getDay()===0||et.getDay()===6); return et; }
+function oiBadgeHTML(){ var td=oiTradeDate(), a=DATA.meta&&DATA.meta.asof&&DATA.meta.asof.options;
+  return '<span class="oi-snap" title="Open interest is published by CME once a day for the prior session. It is not live and does not show who bought or sold.">DAILY SNAPSHOT</span> <span class="oi-snap-t">CME trade date <b>'+(td?td.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'n/a')+'</b> · pulled '+(a?esc(asofStamp('options')):'n/a')+' · runs 8:23 AM ET, due by 8:45 AM ET</span>'; }
 function asofStamp(k){ var a=DATA.meta&&DATA.meta.asof&&DATA.meta.asof[k]; if(!a) return 'n/a';
   return new Date(a).toLocaleString('en-US',{timeZone:'America/Toronto',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET'; }
 function kAsof(txt){ return '<div class="kasof">⏱ '+txt+'</div>'; }
@@ -3997,6 +4004,8 @@ function qtTile(o){
     '<div class="qt-box'+(/class="[^"]*\bup\b/.test(o.chg||'')?' tk-up-s':/class="[^"]*\b(dn|down)\b/.test(o.chg||'')?' tk-dn-s':'')+'" data-qt="'+o.k+'" data-v="'+o.v+'" data-dec="'+o.dec+'" data-pre="'+(o.pre||'')+'"'+(o.live?' data-qt-live="'+o.live+'"':'')+'><span class="qt-ar" aria-hidden="true"></span><span class="qt-v">'+qtPx(o.v,o.dec,o.pre)+'</span></div>'+
     '<div class="qt-c">'+(o.chg||'')+'</div><div class="qt-f">'+(o.foot||'')+(o.ts?'<span class="qt-age" data-age="'+esc(o.ts)+'" data-age-max="'+(o.max||1500)+'"></span>':'')+(o.tag?' <span class="om-t '+o.tagc+'">'+o.tag+'</span>':'')+'</div></div>';
 }
+/* one line under each grain price: where it comes from and how late it is */
+function qtSrc(tier){ return '<span class="qt-src">'+({delayed:'Yahoo · CBOT · ~10 min delayed', last:'Yahoo · last good quote (refresh failed)', chain:'IBKR options-chain pull (morning)', settle:'prior close · Yahoo daily bar'}[tier]||'')+'</span>'; }
 var QT_TIER={delayed:['DELAYED','ok'], last:['LAST QUOTE','warn'], chain:['CHAIN PULL','warn'], settle:['SETTLE','cz']};
 function grainTilesHTML(key){
   var g=DATA.grains[key], f=g.fan, meta=GMETA[key], fx=+DATA.fx.feed.mid, out=[], front=(g.roll&&g.roll[0]&&g.roll[0].contract)||meta.contract;
@@ -4007,13 +4016,13 @@ function grainTilesHTML(key){
   /* front futures: the strip's own delayed quote (same price as the fan and KPIs) */
   var L=+f.intraday[0], A=+f.anchor, nearSame=legs.near.contract===front;
   out.push(qtTile({k:'fut-'+key, name:esc(front), sub:nearSame?optSub(legs.near):'front', v:L, dec:4, pre:'$', chg:chg(L,A),
-    foot:'<span class="qt-t">'+esc(f.intraday[1]||'')+'</span>', ts:f.intraday_ts, mkt:'grain', tag:isAuto('grains_quote')?'DELAYED':'SNAPSHOT', tagc:isAuto('grains_quote')?'ok':'cz',
-    title:'Change vs '+front+' settle '+fmt(A,4)+(f.settle_date?' ('+fmtShortDate(f.settle_date)+')':'')}));
+    foot:'<span class="qt-t">'+(MKT.grain()?'':'last trade ')+esc(f.intraday[1]||'')+'</span>'+qtSrc('delayed'), ts:f.intraday_ts, mkt:'grain', tag:isAuto('grains_quote')?'DELAYED':'SNAPSHOT', tagc:isAuto('grains_quote')?'ok':'cz',
+    title:'Yahoo Finance delayed quote (CBOT, about 10 minutes behind). Change vs '+front+' prior close '+fmt(A,4)+(f.settle_date?' ('+fmtShortDate(f.settle_date)+')':'')+'. Not an executable price; the official CME settlement can differ.'}));
   ['near','far'].forEach(function(leg){
     var o=legs[leg]; if(!o.contract||(leg==='near'&&nearSame)) return;
     var Q=optLegQuote(g, leg); if(!Q) return; var T=QT_TIER[Q.tier];
     out.push(qtTile({k:leg+'-'+key, name:esc(o.contract), sub:optSub(o), v:Q.px, dec:4, pre:'$', chg:(Q.tier==='settle'?'<span class="neu">settle</span>':chg(Q.px,Q.settle)),
-      foot:'<span class="qt-t">'+esc(Q.when)+'</span>', mkt:'grain', tag:T[0]==='LAST QUOTE'?'LAST':T[0], tagc:T[1], title:(Q.why?'Latest refresh failed — ':'')+'Futures under the '+o.chain+' options'}));
+      foot:'<span class="qt-t">'+esc(Q.when)+'</span>'+qtSrc(Q.tier), mkt:'grain', tag:T[0]==='LAST QUOTE'?'LAST':T[0], tagc:T[1], title:(Q.why?'Latest refresh failed — ':'')+'Futures under the '+o.chain+' options'}));
   });
   out.push(qtTile({k:'cad-'+key, name:'C$/t', sub:'cash equiv.', title:'Front futures × '+fmt(BU_PER_MT[key],3)+' bu/t × USD/CAD — no basis', v:L*BU_PER_MT[key]*fx, dec:2, chg:'', foot:'<span class="qt-t">'+esc(f.intraday[1]||'')+'</span>', ts:f.intraday_ts}));
   out.push(qtTile({k:'usdcad', name:'USD/CAD', sub:'spot', v:fx, dec:5, live:'usdcad', mkt:'fx', chg:fxChgHTML(), foot:spotStamp(), tag:isAuto('fx_spot')?'LIVE':'SNAPSHOT', tagc:isAuto('fx_spot')?'ok':'cz'}));
