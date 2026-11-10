@@ -1361,7 +1361,7 @@ def _bls_batch(ids):
         j = r.json()
     except Exception as e:   # scrub: the key is in the body, never the message
         raise RuntimeError(f"BLS request failed ({type(e).__name__})") from None
-    if j.get("status") != "REQUEST_SUCCEEDED":   # e.g. keyless daily limit reached: say so instead of returning nothing
+    if j.get("status") and j["status"] != "REQUEST_SUCCEEDED":   # e.g. keyless daily limit reached: say so instead of returning nothing
         raise RuntimeError(f"BLS {j.get('status')}: {' '.join(j.get('message') or [])[:160]}")
     out = {}
     for ser in (j.get("Results") or {}).get("series", []):
@@ -1792,6 +1792,13 @@ def macro(D, N, only=None):
             if age > {"D": 10, "W": 30, "M": 130, "Q": 250}.get(fq, 130):
                 raise RuntimeError(f"latest observation {raw[-1][0]} is {age} days old — discontinued series?")
             pts = _transform(raw, how)
+            gap = None
+            if how == "yoy" and pts and raw[-1][0][:7] > pts[-1][0][:7]:
+                # the agency published a newer month, but its year-earlier index does not exist (e.g. BLS did not collect Oct 2025),
+                # so no 12-month change exists for it: keep the latest y/y and say what the new month shows
+                pm_ = raw[-2][0][:7]; y_, m_ = int(raw[-1][0][:4]), int(raw[-1][0][5:7]); want_ = f"{y_ - 1}-12" if m_ == 1 else f"{y_}-{m_ - 1:02d}"
+                gap = {"period": raw[-1][0][:7], "mm": round((raw[-1][1] / raw[-2][1] - 1) * 100, 1) if pm_ == want_ else None,
+                       "why": "no 12-month change is published for this month: the year-earlier index was not collected"}
             if how == "diff" or (unit == "K" and how == "level"):
                 pts = [(d, v / 1000 if (how == "level" and src == "fred") else v) for d, v in pts]  # FRED claims are persons -> K
             longp = None
@@ -1826,6 +1833,8 @@ def macro(D, N, only=None):
                         break
             if key in ("ca_gdpq", "us_policy", "ca_policy"):
                 out[-1]["chart_only"] = True
+            if gap:
+                out[-1]["gap"] = gap
         except _KeepNewer as e:
             print(f"  {key}: {e} — kept")
             out.append(old[key])
@@ -2875,9 +2884,9 @@ def cpi_detail(D, N):
     want = None
     if landed:
         r = max(landed); y, m = (r.year, r.month - 1) if r.month > 1 else (r.year - 1, 12); want = f"{y}-{m:02d}"
-    if C.get("month") and (want is None or C["month"] >= want):
+    if C.get("month") and C.get("v") == 2 and (want is None or C["month"] >= want):   # v2: changes matched by date
         return
-    if C.get("tried") and NOW - datetime.fromisoformat(C["tried"]) < timedelta(minutes=20):
+    if C.get("tried") and C.get("v") == 2 and NOW - datetime.fromisoformat(C["tried"]) < timedelta(minutes=20):
         return
     C["tried"] = NOW.isoformat(timespec="seconds"); D["cpi_detail"] = C
     ids = [p + c for c, _, _ in CPI_ITEMS for p in ("CUSR0000", "CUUR0000")]
@@ -2891,13 +2900,20 @@ def cpi_detail(D, N):
         ks, kn = sorted(sa), sorted(nsa)
         if len(ks) < 2:
             continue
-        mm = [(ks[i][:7], round((sa[ks[i]] / sa[ks[i - 1]] - 1) * 100, 1)) for i in range(1, len(ks))][-13:]   # one rounding, from the published 3-decimal indexes, as BLS does (no 7.95 -> 8.0 double rounding)
-        yy = [(kn[i][:7], round((nsa[kn[i]] / nsa[kn[i - 12]] - 1) * 100, 1)) for i in range(12, len(kn))][-13:]
+        sam = {k[:7]: v for k, v in sa.items()}
+        def prevm(m):
+            y, mo = int(m[:4]), int(m[5:7]); return f"{y - 1}-12" if mo == 1 else f"{y}-{mo - 1:02d}"
+        # one rounding from the published 3-decimal indexes, as BLS does; by date — a month after a gap (Oct 2025 not collected) has no 1-month change
+        mm = [(m, round((sam[m] / sam[prevm(m)] - 1) * 100, 1) if prevm(m) in sam else None) for m in sorted(sam)][1:][-13:]
+        nsm = {k[:7]: v for k, v in nsa.items()}
+        def ago(m):
+            y, mo = int(m[:4]), int(m[5:7]); return f"{y - 1}-{mo:02d}"
+        yy = [(m, round((nsm[m] / nsm[ago(m)] - 1) * 100, 1) if ago(m) in nsm else None) for m in sorted(nsm)][-13:]   # None: year-earlier index not published
         month = max(month or "", mm[-1][0])
-        items.append({"c": c, "n": name, "g": grp, "mm": [v for _, v in mm], "yy": [v for _, v in yy], "m": [d for d, _ in mm]})
+        items.append({"c": c, "n": name, "g": grp, "mm": [v for _, v in mm], "yy": [v for _, v in yy], "m": [d for d, _ in mm], "ym": [d for d, _ in yy]})
     if not items:
         raise RuntimeError("BLS returned no CPI category series")
-    D["cpi_detail"] = {"month": month, "asof": NOW.isoformat(timespec="seconds"), "items": items,
+    D["cpi_detail"] = {"v": 2, "month": month, "asof": NOW.isoformat(timespec="seconds"), "items": items,
                        "src": "https://www.bls.gov/cpi/", "note": "CPI-U. m/m seasonally adjusted; 12-month not seasonally adjusted."}
     print(f"  cpi_detail: {len(items)} categories for {month}")
 
@@ -2912,9 +2928,9 @@ def cpi_detail_ca(D, N):
     want = None
     if landed:
         r = max(landed); y, m = (r.year, r.month - 1) if r.month > 1 else (r.year - 1, 12); want = f"{y}-{m:02d}"
-    if C.get("month") and (want is None or C["month"] >= want):
+    if C.get("month") and C.get("v") == 2 and (want is None or C["month"] >= want):   # v2: changes matched by date
         return
-    if C.get("tried") and NOW - datetime.fromisoformat(C["tried"]) < timedelta(minutes=20):
+    if C.get("tried") and C.get("v") == 2 and NOW - datetime.fromisoformat(C["tried"]) < timedelta(minutes=20):
         return
     C["tried"] = NOW.isoformat(timespec="seconds"); D["cpi_detail_ca"] = C
     body = [{"productId": 18100004, "coordinate": f"2.{m}.0.0.0.0.0.0.0.0", "latestN": 27} for m, _, _ in CA_ITEMS]
@@ -2932,13 +2948,16 @@ def cpi_detail_ca(D, N):
         pts = got.get(mem) or []
         if len(pts) < 14:
             continue
-        mm = [(pts[i][0], round((pts[i][1] / pts[i - 1][1] - 1) * 100, 1)) for i in range(1, len(pts))][-13:]
-        yy = [(pts[i][0], round((pts[i][1] / pts[i - 12][1] - 1) * 100, 1)) for i in range(12, len(pts))][-13:]
+        pm = dict(pts)
+        def prevm2(m):
+            y, mo = int(m[:4]), int(m[5:7]); return f"{y - 1}-12" if mo == 1 else f"{y}-{mo - 1:02d}"
+        mm = [(m, round((pm[m] / pm[prevm2(m)] - 1) * 100, 1) if prevm2(m) in pm else None) for m in sorted(pm)][1:][-13:]
+        yy = [(m, round((pm[m] / pm[f"{int(m[:4]) - 1}{m[4:]}"] - 1) * 100, 1) if f"{int(m[:4]) - 1}{m[4:]}" in pm else None) for m in sorted(pm)][-13:]
         month = max(month or "", mm[-1][0])
-        items.append({"c": str(mem), "n": name, "g": grp, "mm": [v for _, v in mm], "yy": [v for _, v in yy], "m": [d for d, _ in mm]})
+        items.append({"c": str(mem), "n": name, "g": grp, "mm": [v for _, v in mm], "yy": [v for _, v in yy], "m": [d for d, _ in mm], "ym": [d for d, _ in yy]})
     if not items:
         raise RuntimeError("StatCan returned no CPI category series")
-    D["cpi_detail_ca"] = {"month": month, "asof": NOW.isoformat(timespec="seconds"), "items": items,
+    D["cpi_detail_ca"] = {"v": 2, "month": month, "asof": NOW.isoformat(timespec="seconds"), "items": items,
                           "src": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1810000401",
                           "note": "Statistics Canada CPI, not seasonally adjusted (both 1-month and 12-month)."}
     print(f"  cpi_detail_ca: {len(items)} categories for {month}")

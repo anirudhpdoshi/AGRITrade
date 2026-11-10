@@ -238,6 +238,7 @@
       : "No forecast applies — this is a scheduled " + ((CAT[e.kind] || {}).l || "desk").toLowerCase() + " item.";
     sum += "";
     var srcHTML = '<p class="evx-s">' + esc(src) + (k && k.macro ? " Actual: official source via the desk (" + esc(k.macro) + ")." : "") + "</p>";
+    if (/^(us|ca)_(core_)?cpi$|^ca_(trim|median)$/.test((k && k.macro) || "")) go += ' <button class="evgo" data-cpigo="' + (k.macro.slice(0, 2)) + '">CPI deep dive — every category →</button>';
     return '<div class="evx">' + (m ? '<div class="evx-c">' + spark(m) + "</div>" : "") + '<div class="evx-t"><b>Summary</b><p>' + esc(sum) + "</p>" +
       (hist.length ? '<table class="evx-h"><thead><tr><th>Period</th><th>Value</th></tr></thead><tbody>' + hist.map(function (x) { return "<tr><td>" + esc(x[0]) + "</td><td>" + (window.mval ? mval(m, x[1]) : x[1]) + "</td></tr>"; }).join("") + "</tbody></table>" : "") +
       srcHTML + (LD && LD.at ? '<p class="evx-l">On the desk ' + hm(LD.at) + " ET (" + lagTxt2(LD.at - e.t) + " after the scheduled time)" + (LD.txt ? " · " + esc(LD.txt) : "") + "</p>" : "") + go + "</div></div>";

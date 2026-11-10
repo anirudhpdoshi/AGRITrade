@@ -17,6 +17,7 @@ window.KB = {
     },
     macro: {
       dash: { t: "Dashboard", d: "US and Canadian data by category — growth, jobs, inflation, consumer, manufacturing, credit — each marked leading, coincident or lagging, as a table, chart or both.", q: ["Which economy is surprising to the upside?", "What was the last CPI / jobs print?"] },
+      cpi: { t: "CPI deep dive", d: "Every CPI category for the latest US (BLS) and Canada (Statistics Canada) release — biggest movers or by group, 1-month or 12-month; click a category for its history.", q: ["What drove this month's CPI?", "Which categories rose most over 12 months?"] },
       cycle: { t: "Cycle & Fed policy", d: "Leading, coincident and lagging composites for the business cycle, and the Fed read: inflation risk, surprises, revisions and market odds for the next meeting.", q: ["Where is the US in the cycle?", "What is priced for the next Fed meeting?"] },
       trade: { t: "Trade & fiscal", d: "Merchandise trade and government budget balances for both countries — the flows behind the currency.", q: ["Is Canada's trade surplus growing or shrinking?", "How large is the US deficit over 12 months?"] },
       rel: { t: "Releases & consensus", d: "The latest US and Canada prints against their forecasts, with the next releases and their consensus.", q: ["Which print beat consensus today?", "What is due next and what is expected?"] }

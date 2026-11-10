@@ -3561,6 +3561,7 @@ function macroDetailHTML(key){
   var extra=[];
   if(m.level_b!=null) extra.push('Level: C$'+fmt(m.level_b,1)+' billion'+(m.yoy!=null?' · '+sgn(m.yoy,1,'%')+' y/y':''));
   if(m.ecom_b!=null) extra.push('E-commerce C$'+fmt(m.ecom_b,1)+'B'+(m.ecom_share!=null?' ('+fmt(m.ecom_share,1)+'% of retail)':''));
+  if(m.gap) extra.push('<b>'+esc(mdLabel(m.gap.period+'-01'))+' released'+(m.gap.mm!=null?': '+sgn(m.gap.mm,1)+'% m/m':'')+'</b> — '+esc(m.gap.why)+(m.group==='us'&&/cpi/.test(key)?' (BLS did not collect October 2025 during the government shutdown)':'')+'. The y/y shown is the latest that exists.');
   if(m.rev) extra.push('Revision: '+esc(m.rev.period)+' '+mval(m,m.rev.from)+' → '+mval(m,m.rev.to));
   if(/cpi|pce|trim|median/.test(key)) extra.push((m.value>2.05?'Above':m.value<1.95?'Below':'At')+' the 2% '+(m.group==='us'?'Fed':'BoC')+' target by '+fmt(Math.abs(m.value-2),1)+' pp');
   var nx=nextRelease(key);
@@ -4294,7 +4295,7 @@ var RELN=12;
 function cpiHas(g){ var C=g==='ca'?DATA.cpi_detail_ca:DATA.cpi_detail; return !!(C&&C.items&&C.items.length); }
 document.addEventListener('click', function(ev){ var b=ev.target.closest&&ev.target.closest('[data-cpigo]'); if(!b) return; ev.stopPropagation();
   if(window.CPI_SHOW) CPI_SHOW(b.getAttribute('data-cpigo')); if(typeof closeMacroDetail==='function') closeMacroDetail();
-  var t=document.getElementById('tabbtn-macro'); if(t) t.click(); setSub('macro','dash'); renderMacro();
+  var t=document.getElementById('tabbtn-macro'); if(t) t.click(); setSub('macro','cpi'); renderMacro();
   setTimeout(function(){ var c=document.getElementById('cpi-internals'); if(c){ var th=(document.querySelector('.tabs')||{}).offsetHeight||0, sh=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--strip-h'))||0; window.scrollTo({top:c.getBoundingClientRect().top+window.scrollY-th-sh-12,behavior:'smooth'}); c.classList.add('flash-find'); setTimeout(function(){ c.classList.remove('flash-find'); },2400); } },120); }, true);
 function lastRelMs(key){ var C=DATA.release_cal&&DATA.release_cal[key]; if(!C) return null; var now=Date.now(), best=null;
   (C.dates||[]).forEach(function(x){ var p=x.split('T'), d=p[0].split('-'), h=(p[1]||'08:30').split(':'), t=zonedMs(+d[0],+d[1],+d[2],+h[0],+h[1],'America/Toronto'); if(t<=now&&(best==null||t>best)) best=t; });
@@ -4311,6 +4312,7 @@ function fxReleasesHTML(){
       '<div class="rel-when"><span class="rel-date">'+t.toLocaleString('en-US',{timeZone:'America/Toronto',weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET</span><span class="rel-ago">'+(days<=0?'today':days===1?'yesterday':days+' days ago')+'</span><span class="chip inline">'+(m.group==='us'?'USD':'CAD')+'</span> '+flagCcy(m.group==='us'?'USD':'CAD',14)+'</div>'+
       '<div class="med">'+esc((m.group==='us'?'US ':'Canada ')+m.name)+' ('+esc(m.period)+') — '+mval(m,m.value)+(m.measure?' '+esc(m.measure):'')+
         (x.waiting?' <span class="chip miss">NEW PRINT AWAITED</span>':diff!=null?' <span class="chip '+(inl?'inline':better?'beat':'miss')+'">'+(inl?'IN LINE':diff>0?'ABOVE':'BELOW')+' CONSENSUS</span>':'')+'</div>'+
+      (m.gap?'<div class="read" style="margin-top:4px"><b>'+esc(mdLabel(m.gap.period+'-01'))+' released'+(m.gap.mm!=null?': '+sgn(m.gap.mm,1)+'% m/m':'')+'</b> — no 12-month change published (year-earlier index not collected)</div>':'')+
       '<div class="read" style="margin-top:4px">'+(x.waiting?'Released by the agency; the desk still shows the previous print until the source posts it · ':'')+(cons!=null&&!x.waiting?'Consensus '+mval(m,cons)+' · ':'')+'prior '+mval(m,m.prior)+'</div>'+
       (H.length>1?releaseSVG(r)+'<p class="read" style="font-size:13px">'+releaseRead(r)+'</p>':'')+
       (/^(us|ca)_(core_)?cpi$/.test(m.key)&&cpiHas(m.group)?'<button class="ue-btn cpi-go" data-cpigo="'+m.group+'">Category breakdown →</button>':'')+'</div>'; }).join('');
@@ -4600,6 +4602,7 @@ function macroSubnavHTML(){
   var ev=fxEvList(), cb=/Overnight Rate|Federal Funds Rate/, geo=function(e){ return MGEO==='both'||e.ccy===(MGEO==='us'?'USD':'CAD'); }, hi=function(e){ return e.impact==='High'&&(e.ccy==='USD'||e.ccy==='CAD'); };
   return subnavHTML('macro', [
     {id:'dash', label:'Dashboard · '+(MGEO==='both'?'US + Canada':MGEO==='us'?'US':'Canada'), ev:nextOf(ev, function(e){ return hi(e)&&!cb.test(e.label)&&geo(e); })},
+    {id:'cpi', label:'CPI deep dive · US + Canada', ev:nextOf(ev, function(e){ return /\bCPI\b/.test(e.label)&&(e.ccy==='USD'||e.ccy==='CAD'); })},
     {id:'cycle', label:'Cycle & Fed policy', ev:nextOf(ev, function(e){ return e.ccy==='USD'&&(cb.test(e.label)||/CPI|PCE|Payrolls|Employment/i.test(e.label)); })},
     {id:'trade', label:'Trade & fiscal', ev:nextOf(ev, function(e){ return (e.ccy==='USD'||e.ccy==='CAD')&&/Trade|Balance|Budget|Current Account/i.test(e.label); })},
     {id:'rel', label:'Releases & consensus', ev:nextOf(ev, function(e){ return hi(e); })}
@@ -4613,7 +4616,8 @@ function renderMacro(){
   var P=document.getElementById('panel-macro'); if(!P||!window.DATA||!DATA.fx) return;
   if(!FXT.releases) renderFX();
   var html='<div class="layout"><div class="grid">'+macroSubnavHTML()+
-    subWrap('macro','dash', macroDashHTML()+(window.cpiInternalsHTML?cpiInternalsHTML():'')+fxMacroHTML())+
+    subWrap('macro','dash', macroDashHTML()+fxMacroHTML())+
+    subWrap('macro','cpi', window.cpiInternalsHTML?cpiInternalsHTML():'')+
     subWrap('macro','cycle', (window.cycleHTML?cycleHTML():'')+(window.fedIntelHTML?fedIntelHTML():''))+
     subWrap('macro','trade', tradeFiscalHTML())+
     subWrap('macro','rel', FXT.releases||'')+
@@ -4649,9 +4653,10 @@ var SECG={
     inputs:[['cost','Input cost summary',/input costs/i],['paths','Price paths & events',/price paths/i]]
   },
   macro:{
-    dash:[['dash','Macro dashboard',/macro dashboard/i],['cpi','CPI internals',/CPI internals/],['allind','All indicators',/All macro indicators/]],
+    dash:[['dash','Macro dashboard',/macro dashboard/i],['allind','All indicators',/All macro indicators/]],
     cycle:[['cycle','Cycle composites',/Cycle composites/],['fed','Fed policy',/Fed policy intelligence/]],
     trade:[['tf','Trade & fiscal',/Trade & fiscal/i]],
+    cpi:[['cpi','CPI by category',/CPI internals/]],
     rel:[['rel','Latest releases',/Latest releases|releases/i]]
   },
   fx:{
@@ -4661,7 +4666,7 @@ var SECG={
     rates:[['ys','Yield spreads',/yield spreads/i],['en','Energy',/Energy/],['pol','Policy expectations',/Policy expectations/]]
   }
 };
-var SUBTHEME={overview:'#38b6c9',deriv:'#a78bfa',macro:'#e8b93d',fund:'#e8b93d',rates:'#3fb97f',inputs:'#f08a5d',dash:'#e8b93d',cycle:'#a78bfa',trade:'#38b6c9',rel:'#3fb97f'};
+var SUBTHEME={overview:'#38b6c9',deriv:'#a78bfa',macro:'#e8b93d',fund:'#e8b93d',rates:'#3fb97f',inputs:'#f08a5d',dash:'#e8b93d',cycle:'#a78bfa',trade:'#38b6c9',rel:'#3fb97f',cpi:'#e8a33d'};
 var GTITLE={corn:'Corn · ZCZ26',wheat:'Wheat · ZWZ26',soybeans:'Soybeans · ZSF27',fx:'USD/CAD desk',macro:'Macro · US & Canada'};
 
 /* ---------- left-panel collapse, knowledge bank, per-menu guide ---------- */

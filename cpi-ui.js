@@ -24,8 +24,14 @@
   function prev(a) { return a && a.length > 1 ? a[a.length - 2] : null; }
   function sg(v, d) { return v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + (Math.round(Math.abs(v) * 10) / 10).toFixed(d) + "%"; }
 
+  /* values are read by MONTH, not position: a month the agency did not publish stays empty (US: Oct 2025 was not collected, so Oct 2026 has no 12-month change) */
+  function months(it) { return V.m === "yy" ? (it.ym || it.m) : it.m; }
+  function at(it, mo, back) { var ms = months(it), i = ms.lastIndexOf(mo); if (i < 0) return null; i -= back || 0; return i >= 0 && it[V.m][i] != null ? it[V.m][i] : null; }
+  var MO = null;   // the month shown for the current measure
+  function showMonth(C, X) { var A = null; for (var i = 0; i < C.items.length; i++) if (C.items[i].c === X.all) A = C.items[i]; A = A || C.items[0];
+    var ms = months(A), a = A[V.m]; for (var j = a.length - 1; j >= 0; j--) if (a[j] != null) return ms[j]; return ms[ms.length - 1]; }
   function row(it, max, d) {
-    var a = it[V.m], v = last(a), p = prev(a);
+    var v = at(it, MO), p = at(it, MO, 1);
     if (v == null) return "";
     var over = max && Math.abs(v) > max, w = max ? Math.min(50, Math.abs(v) / max * 50) : 0, cls = v > 0 ? "heat" : v < 0 ? "cool" : "";
     var tip = it.n + ": " + sg(v, d) + (V.m === "mm" ? " in the month" : " over 12 months") + (p != null ? " (prior " + sg(p, d) + ")" : "");
@@ -36,13 +42,13 @@
       '<span class="cpi-p">' + (p != null ? sg(p, d) : "") + "</span></div>";
   }
 
-  function scale(L) { var a = L.map(function (i) { return Math.abs(last(i[V.m])); }).sort(function (x, y) { return x - y; }); if (!a.length) return 0.1;
+  function scale(L) { var a = L.map(function (i) { return Math.abs(at(i, MO)); }).sort(function (x, y) { return x - y; }); if (!a.length) return 0.1;
     var p = a[Math.min(a.length - 1, Math.floor(a.length * 0.9))]; return Math.max(0.1, a[a.length - 1] <= p * 1.6 ? a[a.length - 1] : p * 1.25); }
   function body(C) {
-    var d = V.m === "mm" ? 1 : 1, I = C.items.filter(function (i) { return last(i[V.m]) != null; });
+    var d = 1, I = C.items.filter(function (i) { return at(i, MO) != null; });
     var L, html = "";
     if (V.v === "movers") {
-      L = I.filter(function (i) { return i.g !== "agg"; }).sort(function (a, b) { return Math.abs(last(b[V.m])) - Math.abs(last(a[V.m])); }).slice(0, 20);
+      L = I.filter(function (i) { return i.g !== "agg"; }).sort(function (a, b) { return Math.abs(at(b, MO)) - Math.abs(at(a, MO)); }).slice(0, 20);
       var all = I.filter(function (i) { return i.c === (cur() || CC.us).all; });
       L = all.concat(L);
       var mx = scale(L);
@@ -51,11 +57,11 @@
       var mx2 = scale(I);
       (cur() || CC.us).grp.forEach(function (g) {
         var G = I.filter(function (i) { return i.g === g[0]; });
-        if (g[0] !== "agg") G.sort(function (a, b) { return last(b[V.m]) - last(a[V.m]); });
+        if (g[0] !== "agg") G.sort(function (a, b) { return at(b, MO) - at(a, MO); });
         if (G.length) html += '<div class="cpi-gh">' + g[1] + "</div>" + G.map(function (i) { return row(i, mx2, d); }).join("");
       });
     }
-    return '<div class="cpi-hd"><span>Category</span><span class="cpi-axis"><span>fell</span><span>0</span><span>rose</span></span><span>' + mon(C.month) + '</span><span>Prior</span></div>' + html;
+    return '<div class="cpi-hd"><span>Category</span><span class="cpi-axis"><span>fell</span><span>0</span><span>rose</span></span><span>' + mon(MO) + '</span><span>Prior</span></div>' + html;
   }
 
   var lastGeo = null;
@@ -66,10 +72,16 @@
     var C = X.data();
     var f = function (c) { for (var i = 0; i < C.items.length; i++) if (C.items[i].c === c) return C.items[i]; return null; };
     var A = f(X.all), K = f(X.core);
-    var lead = (A ? "All items <b>" + sg(last(A.mm), 1) + "</b> m/m, <b>" + sg(last(A.yy), 1) + "</b> y/y" : "") + (K ? " · " + X.coreName + " <b>" + sg(last(K.mm), 1) + "</b> m/m, <b>" + sg(last(K.yy), 1) + "</b> y/y" : "");
+    MO = showMonth(C, X);
+    var M0 = V.m; V.m = "mm"; var mmA = A && at(A, C.month), mmK = K && at(K, C.month); V.m = "yy"; var yyA = A && at(A, C.month), yyK = K && at(K, C.month); V.m = M0;
+    var yt = function (v) { return v == null ? "<b>—</b> y/y" : "<b>" + sg(v, 1) + "</b> y/y"; };
+    var lead = mon(C.month) + ": " + (A ? "All items <b>" + sg(mmA, 1) + "</b> m/m, " + yt(yyA) : "") + (K ? " · " + X.coreName + " <b>" + sg(mmK, 1) + "</b> m/m, " + yt(yyK) : "");
+    var y0 = C.month.slice(0, 4), ya = (+y0 - 1) + C.month.slice(4);
+    var gap = MO !== C.month ? '<div class="cpi-gap">No ' + (V.m === "yy" ? "12-month" : "1-month") + " change is published for " + mon(C.month) + ": the " + (V.m === "yy" ? "year-earlier index (" + mon(ya) + ")" : "prior month's index") +
+      (V.cc === "us" && ya === "2025-10" ? " was not collected by BLS during the 2025 government shutdown" : " was not published") + ". Showing " + mon(MO) + ", the latest " + (V.m === "yy" ? "12-month" : "1-month") + " change available.</div>" : "";
     var btn = function (k, val, t, dis) { return '<button class="cpi-tg' + (V[k] === val ? " on" : "") + '" data-cpi="' + k + ":" + val + '" aria-pressed="' + (V[k] === val) + '"' + (dis ? " disabled title=\"No data yet\"" : "") + ">" + t + "</button>"; };
     return '<div class="tile wide" id="cpi-internals" data-cpi-tile><h2>' + X.name + ' CPI internals — ' + mon(C.month) + ' by category</h2>' +
-      '<p class="cpi-lead">' + lead + "</p>" +
+      '<p class="cpi-lead">' + lead + "</p>" + gap +
       '<div class="cpi-ctl"><span class="cpi-seg" role="group" aria-label="Country">' + btn("cc", "us", "\ud83c\uddfa\ud83c\uddf8 US", !CC.us.data()) + btn("cc", "ca", "\ud83c\udde8\ud83c\udde6 Canada", !CC.ca.data()) + "</span>" +
       '<span class="cpi-seg" role="group" aria-label="Change measured">' + btn("m", "mm", "1-month") + btn("m", "yy", "12-month") + "</span>" +
       '<span class="cpi-seg" role="group" aria-label="Layout">' + btn("v", "movers", "Biggest movers") + btn("v", "groups", "By group") + "</span></div>" +
@@ -86,9 +98,11 @@
   function cpiAsMacro(c) {
     var it = item(c); if (!it) return null;
     var a = it[V.m], months = it.m || [], n = a.length, lab = months.slice(-n);
-    var H = a.map(function (v, i) { return [lab[i] || "", v]; });
+    lab = months(it).slice(-n);
+    var H = a.map(function (v, i) { return [lab[i] || "", v]; }).filter(function (x) { return x[1] != null; });
+    n = H.length; if (n < 1) return null;
     var X = CC[V.cc] || CC.us;
-    return { key: "cpi:" + c, name: it.n, group: V.cc, unit: "%", dec: 1, measure: V.m === "mm" ? "m/m" : "y/y", good: "down", value: a[n - 1], prior: a[n - 2],
+    return { key: "cpi:" + c, name: it.n, group: V.cc, unit: "%", dec: 1, measure: V.m === "mm" ? "m/m" : "y/y", good: "down", value: H[n - 1][1], prior: n > 1 ? H[n - 2][1] : null,
       history: H, hist24: H, src: X.src + " (" + X.adj[V.m] + ")" };
   }
   root.cpiAsMacro = cpiAsMacro;
@@ -97,7 +111,7 @@
     var o = document.getElementById("mdc-overlay");
     if (!o) { o = document.createElement("div"); o.id = "mdc-overlay"; o.innerHTML = '<div class="mdc-wrap" role="dialog" aria-modal="true"><button class="mdc-x" aria-label="Close">×</button><div class="mdc-body"></div></div>'; document.body.appendChild(o); }
     o.querySelector(".mdc-body").innerHTML = '<div class="mdc"><div class="mdc-top"><div class="mdc-ttl">' + (CC[V.cc] || CC.us).name.toUpperCase() + " CPI · " + esc(m.name.toUpperCase()) + "</div><div class=\"mdc-sub\">" + (V.m === "mm" ? "1-month change, " : "12-month change, ") + (CC[V.cc] || CC.us).adj[V.m] + "</div></div>" +
-      '<div class="mdc-main"><div class="mdc-k">' + esc(m.name) + " — " + esc(mon(lastM(c))) + '</div><div class="mdc-v">' + sg(m.value, 1) + " <small>" + m.measure + '</small></div><div class="mdc-l">Prior: ' + sg(m.prior, 1) + "</div></div>" +
+      '<div class="mdc-main"><div class="mdc-k">' + esc(m.name) + " — " + esc(mon(m.history[m.history.length - 1][0])) + '</div><div class="mdc-v">' + sg(m.value, 1) + " <small>" + m.measure + '</small></div><div class="mdc-l">Prior: ' + sg(m.prior, 1) + "</div></div>" +
       '<div class="mdh-wrap">' + mdHistHTML(m) + "</div></div>";
     o.classList.add("on"); o.setAttribute("data-key", m.key); o.querySelector(".mdc-wrap").scrollTop = 0;
   }
@@ -116,6 +130,7 @@
   css.textContent =
     "#cpi-internals .cpi-lead{margin:2px 0 10px;color:var(--muted);font-size:13px}#cpi-internals .cpi-lead b{color:var(--ink);font-family:'IBM Plex Mono',monospace}" +
     ".cpi-tg{font:600 12px 'IBM Plex Sans',sans-serif;padding:5px 10px;border:1px solid var(--line2);background:transparent;color:var(--muted);cursor:pointer}.cpi-seg .cpi-tg:first-child{border-radius:6px 0 0 6px}.cpi-seg .cpi-tg:last-child{border-radius:0 6px 6px 0;margin-left:-1px}.cpi-tg.on{background:rgba(232,185,61,.14);color:var(--ink);border-color:rgba(232,185,61,.6)}" +
+    ".cpi-gap{margin:0 0 10px;padding:8px 12px;border:1px solid rgba(232,185,61,.5);background:rgba(232,185,61,.08);border-radius:8px;font-size:13px;color:var(--text)}" +
     ".cpi-ctl{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}.cpi-seg{display:inline-flex}" +
     ".cpi-hd,.cpi-r{display:grid;grid-template-columns:minmax(150px,240px) minmax(120px,1fr) 64px 56px;gap:10px;align-items:center}" +
     ".cpi-hd{font:700 10.5px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:0 4px 6px;border-bottom:1px solid var(--line)}" +
