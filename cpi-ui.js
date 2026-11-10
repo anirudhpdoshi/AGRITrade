@@ -1,12 +1,11 @@
 /* US CPI internals — category breakdown of the latest CPI (BLS CPI-U items, DATA.cpi_detail from scripts/cpi_detail.py).
    Diverging bars around zero: warm = prices rose, cool = fell (same heat/cool tokens as the macro dashboard).
    Two reads: 1-month (seasonally adjusted) or 12-month (not adjusted), each as BLS publishes; two layouts: biggest movers or by group.
-   Lives on Macro → Dashboard. Hidden when the data is absent (BRD amendment 1). */
+   BLS figures only, no desk interpretation added. Lives on Macro → Dashboard. Hidden when the data is absent (BRD amendment 1). */
 (function (root) {
   var V = { m: "mm", v: "movers" };
   try { var s = JSON.parse(localStorage.getItem("desk.cpi") || "{}"); if (s.m) V.m = s.m; if (s.v) V.v = s.v; } catch (e) {}
   var GRP = [["agg", "Headline & core"], ["food", "Food"], ["energy", "Energy"], ["goods", "Core goods"], ["services", "Core services"]];
-  var GRAIN = { SAF111: 1, SEFA: 1, SEFB: 1, SEFS: 1, SAF112: 1, SEFC: 1, SEFF: 1, SEFH: 1, SEFJ: 1 };   // categories fed by grain/oilseed costs
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   function esc(t) { return String(t == null ? "" : t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function mon(ym) { var a = (ym || "").split("-"); return a.length > 1 ? MON[+a[1] - 1] + " " + a[0] : ym; }
@@ -20,7 +19,7 @@
     var over = max && Math.abs(v) > max, w = max ? Math.min(50, Math.abs(v) / max * 50) : 0, cls = v > 0 ? "heat" : v < 0 ? "cool" : "";
     var tip = it.n + ": " + sg(v, d) + (V.m === "mm" ? " in the month" : " over 12 months") + (p != null ? " (prior " + sg(p, d) + ")" : "");
     return '<div class="cpi-r' + (it.g === "agg" ? " agg" : "") + '" title="' + esc(tip) + '">' +
-      '<span class="cpi-n">' + esc(it.n) + (GRAIN[it.c] ? ' <i class="cpi-gl" title="Grain- or oilseed-linked food category">grain-linked</i>' : "") + "</span>" +
+      '<span class="cpi-n">' + esc(it.n) + "</span>" +
       '<span class="cpi-bw"><span class="cpi-z"></span><span class="cpi-b ' + cls + '" style="' + (v >= 0 ? "left:50%" : "right:50%") + ";width:" + w.toFixed(2) + '%"></span>' + (over ? '<span class="cpi-ov" style="' + (v >= 0 ? "right:0" : "left:0") + '" title="Beyond the scale">' + (v >= 0 ? "››" : "‹‹") + "</span>" : "") + "</span>" +
       '<span class="cpi-v">' + sg(v, d) + "</span>" +
       '<span class="cpi-p">' + (p != null ? sg(p, d) : "") + "</span></div>";
@@ -84,12 +83,11 @@
     ".cpi-hd span:nth-child(n+3){text-align:right}.cpi-axis{display:flex;justify-content:space-between}" +
     ".cpi-r{padding:3px 4px;min-height:24px;border-radius:4px}.cpi-r:hover{background:rgba(110,168,255,.07)}.cpi-r.agg .cpi-n{font-weight:700;color:var(--ink)}" +
     ".cpi-n{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
-    ".cpi-gl{font:600 9px 'IBM Plex Mono',monospace;font-style:normal;color:#e8b93d;border:1px solid rgba(232,185,61,.45);border-radius:3px;padding:0 4px;margin-left:4px}" +
     ".cpi-bw{position:relative;height:12px}.cpi-z{position:absolute;left:50%;top:-4px;bottom:-4px;width:1px;background:var(--line2)}" +
     ".cpi-b{position:absolute;top:0;height:12px;min-width:2px}.cpi-b.heat{background:#e8a33d;border-radius:0 4px 4px 0}.cpi-b.cool{background:#6ea8ff;border-radius:4px 0 0 4px}" +
     ".cpi-v{font-family:'IBM Plex Mono',monospace;font-size:12.5px;text-align:right;color:var(--ink)}.cpi-p{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-align:right;color:var(--faint)}" +
     ".cpi-gh{font:700 11px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:10px 4px 2px}" +
     ".cpi-ov{position:absolute;top:-2px;font:700 11px 'IBM Plex Mono',monospace;color:var(--ink)}" +
-    "@media (max-width:640px){.cpi-gl{display:none}.cpi-hd,.cpi-r{grid-template-columns:minmax(110px,1.2fr) 1fr 58px}.cpi-p,.cpi-hd span:last-child{display:none}}";
+    "@media (max-width:640px){.cpi-hd,.cpi-r{grid-template-columns:minmax(110px,1.2fr) 1fr 58px}.cpi-p,.cpi-hd span:last-child{display:none}}";
   document.head.appendChild(css);
 })(window);
