@@ -80,7 +80,7 @@
       var V = root.OIVALUE && root.OIVALUE(g), U = root.ROWSUI;
       if (V && U && V.walls.cD && V.walls.cC) o.push("By value the call wall is " + d2(V.walls.cD.k) + " (" + U.usdB(V.walls.cD.cdel) + " delta value)" + (V.walls.cD.k !== V.walls.cC.k ? ", not " + d2(V.walls.cC.k) + " by contract count" : ", the same strike as by contract count") + ".");
       if (V && U && V.walls.pD && V.walls.pC) o.push("By value the put wall is " + d2(V.walls.pD.k) + " (" + U.usdB(V.walls.pD.pdel) + " delta value)" + (V.walls.pD.k !== V.walls.pC.k ? ", not " + d2(V.walls.pC.k) + " by contract count" : ", the same strike as by contract count") + ".");
-      var P = N.rows_prev && N.rows_prev.rows; if (P) { var M = {}, was = 0, now = 0; P.forEach(function (r) { M[r[0]] = r; }); N.rows.forEach(function (r) { var q = M[r[0]]; if (q) { was += (q[1] || 0) + (q[2] || 0); now += (r[1] || 0) + (r[2] || 0); } }); if (was && now !== was) o.push("Exposure is " + (now > was ? "building" : "unwinding") + " versus the prior session."); }
+      var P = N.rows_prev && N.rows_prev.rows; if (P) { var M = {}, was = 0, now = 0; P.forEach(function (r) { M[r[0]] = r; }); N.rows.forEach(function (r) { var q = M[r[0]]; if (q) { was += (q[1] || 0) + (q[2] || 0); now += (r[1] || 0) + (r[2] || 0); } }); if (was && now !== was) o.push("Exposure is " + (now > was ? "building" : "unwinding") + " versus the " + (N._prev_sessions > 1 ? "pull " + N._prev_sessions + " sessions earlier (no pulls in between)" : "prior session") + "."); }
       return o; }
   };
   /* one box per panel: the Volatility and Carry rows hold two panels, and the box goes under the first */

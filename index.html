@@ -382,6 +382,8 @@ li.n-desk b{color:#ffd0cc;font-size:12.5px}
 .fwd-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 0 8px}
 .fwd-chip{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:700;letter-spacing:.08em;padding:2px 8px;border-radius:4px;border:1px solid;transition:color .3s,border-color .3s,background-color .3s}
 .fwd-chip.live{color:#5fd598;border-color:#2b6b4c;background:rgba(63,185,127,.12)}.fwd-chip.ref{color:#7fd3e0;border-color:#2a5d66;background:rgba(56,182,201,.1)}
+.oi-gapn{color:#f0a35a;font-weight:600}
+.oi-chk-row{font-size:12px;color:var(--muted);margin:2px 0 6px}.oi-chk{color:#7fd6a4}.oi-chk.warn{color:#f0a35a}.oi-prev b{color:#f0a35a}
 .oi-snap-row{margin:6px 0 2px;font-size:12px;color:var(--muted)}.oi-snap{display:inline-block;font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.06em;padding:2px 7px;border-radius:4px;border:1px solid rgba(232,185,61,.55);color:#e8b93d;background:rgba(232,185,61,.1)}.oi-snap-t b{color:var(--ink)}
 .qt-src{display:block;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);margin-top:2px}
 .fwd-chip.delayed{color:#e8c069;border-color:#6e5a2a}.fwd-chip.stale{color:#f0a35a;border-color:#7a5224;background:rgba(232,163,61,.12)}
@@ -1374,7 +1376,7 @@ function applyWalls(k){
     if(W0&&W0.pw&&Math.abs(W0.pw[0]-n.put_wall[0])>1e-6) sh.put={from:W0.pw[0], to:n.put_wall[0], why:U<W0.pw[0]-1e-9?'price broke below '+money2(W0.pw[0])+' — support moves down':'price rose — the nearest heavy put strike below is now higher'};
     if(W0&&W0.cw&&Math.abs(W0.cw[0]-n.call_wall[0])>1e-6) sh.call={from:W0.cw[0], to:n.call_wall[0], why:U>W0.cw[0]+1e-9?'price broke above '+money2(W0.cw[0])+' — resistance moves up':'price fell — the nearest heavy call strike above is now lower'};
     n.wall_shift=(sh.put||sh.call)?sh:null;
-    if(side==='near'){ g.fan.call_wall=[n.call_wall[0], fmt(n.call_wall[1])]; g.fan.put_wall=[n.put_wall[0], fmt(n.put_wall[1])]; if(n.pcr!=null) g.fan.pcr=(+n.pcr).toFixed(2); }
+    if(side==='near'){ g.fan.call_wall=[n.call_wall[0], fmt(n.call_wall[1])]; g.fan.put_wall=[n.put_wall[0], fmt(n.put_wall[1])]; g.fan.pcr=n.pcr!=null?(+n.pcr).toFixed(2):'N/A'; }
   });
   g.oishift=oiShift(g);
 }
@@ -2327,7 +2329,7 @@ function positioningHTML(key){
     '<button data-grain="'+key+'" data-side="far" aria-pressed="'+(!isNear)+'">FAR · '+meta.chainFar.toUpperCase()+'</button></span></div>'+
     '<div class="stat-row">'+
     stat("Call OI", fmt(ds.calls)) + stat("Put OI", fmt(ds.puts)) +
-    stat("Put/Call (OI)", fmt(ds.pcr,2)) +
+    stat("Put/Call (OI)", ds.pcr==null?'N/A':fmt(ds.pcr,2)) +
     stat("Call wall", money2(ds.call_wall[0]), fmt(ds.call_wall[1])+" OI \u00b7 at/above "+money2(ds.wall_ref||0)) +
     stat("Put wall", money2(ds.put_wall[0]), fmt(ds.put_wall[1])+" OI \u00b7 at/below "+money2(ds.wall_ref||0)) + extra +
     '</div>'+
@@ -2374,6 +2376,7 @@ function oiTileHTML(key){
     var itmNote=Uh?((bp[0]>Uh+1e-9&&cp!=='call'?'<div class="oi-itm">Largest put open interest is at <b>'+fmt(bp[0],2)+'</b> ('+fmt(bp[2])+') — that strike is <b>in the money</b> with price at '+fmt(Uh,4)+': protection bought when the market was higher, not support below today’s price. The put wall below price is <b>'+fmt(ds.put_wall[0],2)+'</b>.</div>':'')+
       (bc[0]<Uh-1e-9&&cp!=='put'?'<div class="oi-itm">Largest call open interest is at <b>'+fmt(bc[0],2)+'</b> ('+fmt(bc[1])+') — <b>in the money</b> with price at '+fmt(Uh,4)+'. The call wall above price is <b>'+fmt(ds.call_wall[0],2)+'</b>.</div>':'')):'';
     var head='<div class="oi-mh"><b>'+esc(lab)+' monthly options</b> on '+esc(ds.contract||'')+' <span class="h2note">· standard monthly expiry'+(ex?' <b>'+esc(ex)+'</b>':'')+' (weeklies listed below) · '+(m==='near'?'near month':'far month')+' · '+esc(oiLabel(ds))+'</span></div>'+itmNote;
+    head+='<div class="oi-chk-row">'+oiChkHTML(ds)+(oiPrevText(ds)?' · <span class="oi-prev">'+oiPrevText(ds)+'</span>':'')+'</div>';
     if(view==='chg') return head+(prev?oiDeltaSVG(ds, prev, cp, key, lab):'<p class="note oi-nochg">Change by strike for '+esc(lab)+' needs two pulls — the previous pull was not stored for this month yet. It appears after the next 8:23 ET daily options run.</p>');
     return head+oiSVG(ds.rows, ds, cp, prev, lab);
   }).join('');
@@ -2415,9 +2418,9 @@ function oiMonthsHTML(key){
     var ds=g[m], S=oiMonthSum(ds), lab=m==='near'?meta.chainNear:meta.chainFar;
     function d(v){ return v==null?'<span class="neu">—</span>':'<span class="'+cls(v)+'">'+sgn(v,0)+'</span>'; }
     var mv=function(old,now,word){ return old&&Math.abs(old[0]-now[0])>1e-6?' <span class="oi-mv">moved from '+fmt(old[0],2)+' — new '+word+'</span>':''; };
-    return '<tr><td><b>'+esc(lab)+'</b><small>'+(m==='near'?'near':'far')+'</small></td><td>'+fmt(ds.calls)+'<br>'+d(S.dc)+'</td><td>'+fmt(ds.puts)+'<br>'+d(S.dp)+'</td><td>'+fmt(ds.pcr,2)+'</td>'+
+    return '<tr><td><b>'+esc(lab)+'</b><small>'+(m==='near'?'near':'far')+'</small></td><td>'+fmt(ds.calls)+'<br>'+d(S.dc)+'</td><td>'+fmt(ds.puts)+'<br>'+d(S.dp)+'</td><td>'+(ds.pcr==null?'<span title="No call open interest: the ratio is undefined">N/A</span>':fmt(ds.pcr,2))+'</td>'+
       '<td>'+fmt(ds.call_wall[0],2)+' · '+fmt(ds.call_wall[1])+mv(S.cw0,ds.call_wall,'resistance')+'</td><td>'+fmt(ds.put_wall[0],2)+' · '+fmt(ds.put_wall[1])+mv(S.pw0,ds.put_wall,'support')+'</td>'+
-      '<td class="oi-asof">'+esc(oiLabel(ds).replace(/^.*OI as of /,'OI ').replace(' close (preliminary)',' close · prelim'))+(S.from?'<br>Δ vs '+esc(fmtShortDate(S.from))+' close':'<br>Δ from next pull')+'</td></tr>';
+      '<td class="oi-asof">'+esc(oiLabel(ds).replace(/^.*OI as of /,'OI ').replace(' close (preliminary)',' close · prelim'))+(S.from?'<br>Δ vs '+esc(fmtShortDate(S.from))+' pull'+(ds._prev_sessions>1?' <b class="oi-gapn">('+ds._prev_sessions+' sessions)</b>':''):ds._prev_bad?'<br>Δ n/a — '+esc(ds._prev_bad):'<br>Δ from next pull')+'</td></tr>';
   }).join('');
   return '<div class="oi-months"><div class="oi-mt">What happened in each option month</div><table class="oi-mtab"><thead><tr><th>Month</th><th>Calls · Δ</th><th>Puts · Δ</th><th>P/C</th><th>Call wall</th><th>Put wall</th><th>Data</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
@@ -2505,7 +2508,7 @@ function grainInsight(key){
   function rel(v,n){ return v==null?'':(a>=v?'above':'below')+' the '+n+' ($'+fmt(v,2)+')'; }
   var mas=[rel(m20,'20-day'),rel(m50,'50-day'),m100?rel(m100,'100-day'):''].filter(Boolean);
   var band=Math.abs(z)>=2?'beyond '+(z<0?'−':'+')+'2σ — statistically stretched':Math.abs(z)>=1?'between 1σ and 2σ '+(z<0?'below':'above')+' the mean':'within 1σ of the mean';
-  var pc=+f.pcr, lean=pc<0.8?'call-heavy':pc>1.2?'put-heavy':'balanced';
+  var pc=+f.pcr, lean=!isFinite(pc)?'undefined (no call open interest)':pc<0.8?'call-heavy':pc>1.2?'put-heavy':'balanced';
   var last=g.cftc[g.cftc.length-1];
   return 'Settle <b>'+money2(a)+'</b> ('+fmtShortDate(f.settle_date)+') sits '+mas.join(', ')+'; z-score <b>'+f.z+'</b> — '+band+'. '+
     meta.chainNear+' options: call wall $'+fmt(f.call_wall[0],2)+' ('+f.call_wall[1]+'), put wall $'+fmt(f.put_wall[0],2)+' ('+f.put_wall[1]+'), P/C '+f.pcr+' reads '+lean+'. '+
@@ -4082,7 +4085,7 @@ function grainSubnavHTML(key){
     {id:'fund', label:'Fundamentals · '+({us:'USDA',on:'Ontario',ca:'Canada',br:'Brazil',world:'World'}[geo]||'USDA'), ev:(geo==='ca'||geo==='on')?nextOf(ca):nextOf(us, function(e){ return e.kind==='usda'||e.kind==='wasde'; })}
   ], live);
 }
-function renderGrain(key){
+function renderGrain(key){ try{ oiSanitize(DATA); }catch(e){} 
   var g=DATA.grains[key], meta=GMETA[key], f=g.fan, last=g.cftc[g.cftc.length-1], prev=g.cftc[g.cftc.length-2];
   var MA50=f.ma50||{corn:"5.10", soybeans:"12.75", wheat:"7.05"}[key];
   var wow = last.net - prev.net;
@@ -4821,7 +4824,42 @@ document.addEventListener('click', function(ev){
    FND − 1 business day) — names on tabs, titles, tiles and charts follow it */
 function syncFronts(){ ['corn','wheat','soybeans'].forEach(function(k){ var g=DATA.grains&&DATA.grains[k], R=g&&g.roll, c=R&&R[0]&&R[0].contract; if(!c||!GMETA[k]) return;
   GTITLE[k]=GMETA[k].name+' · '+c; var b=document.querySelector('#tabbtn-'+k+' .sym'); if(b&&b.textContent!==c) b.textContent=c; }); }
-function renderAll(){ syncFronts(); renderGrain('corn'); renderGrain('wheat'); renderGrain('soybeans'); renderFX(); renderMacro(); drawDestMaps(); if(typeof paintAwaiting==='function') paintAwaiting(); }
+/* ---- OI integrity (chunk 2: OI-03/04/05): every total is re-derived from the strike rows the desk received.
+   Duplicate strikes (first kept), non-numeric or negative open interest are rejected and counted; P/C with zero calls is N/A;
+   the previous pull is used for 'change' only if it is the same contract and mostly the same strikes. ---- */
+function oiSanitize(D){
+  ['corn','wheat','soybeans'].forEach(function(k){ var g=D.grains&&D.grains[k]; if(!g) return;
+    ['near','far'].forEach(function(leg){ var ds=g[leg]; if(!ds||!ds.rows||ds._chk) return;
+      var seen={}, keep=[], dup=0, bad=0;
+      ds.rows.forEach(function(r){ var k2=+r[0], c=r[1], p=r[2];
+        if(!isFinite(k2)||k2<=0||!(c==null||isFinite(c))||!(p==null||isFinite(p))||(c||0)<0||(p||0)<0){ bad++; return; }
+        if(seen[k2]){ dup++; return; } seen[k2]=1; keep.push(r); });
+      var C=0, P=0; keep.forEach(function(r){ C+=r[1]||0; P+=r[2]||0; });
+      var mis=(ds.calls!=null&&ds.calls!==C)||(ds.puts!=null&&ds.puts!==P);
+      ds._chk={strikes:keep.length, dup:dup, bad:bad, mismatch:mis?{c:ds.calls,p:ds.puts}:null};
+      ds.rows=keep; ds.calls=C; ds.puts=P; ds.pcr=C>0?Math.round(P/C*100)/100:null;   /* zero calls: no ratio, never Infinity */
+      var pv=ds.rows_prev;
+      if(pv&&pv.rows){
+        var why=null;
+        if(pv.contract&&ds.contract&&pv.contract!==ds.contract) why='previous pull was '+pv.contract+', a different contract';
+        else if(pv.chain&&ds.chain&&pv.chain!==ds.chain) why='previous pull was the '+pv.chain+' chain';
+        else { var ks={}; keep.forEach(function(r){ ks[+r[0]]=1; }); var ov=pv.rows.filter(function(r){ return ks[+r[0]]; }).length; if(ov<0.5*Math.min(pv.rows.length,keep.length)) why='previous pull shares too few strikes to be the same chain'; }
+        if(why){ ds._prev_bad=why; delete ds.rows_prev; }
+        else if(pv.date){   /* sessions between the two snapshots' trade dates (each pull holds the prior session's close) */
+          var bd=function(d){ do { d.setUTCDate(d.getUTCDate()-1); } while(d.getUTCDay()===0||d.getUTCDay()===6); return d; };
+          var pt=bd(new Date(pv.date+'T12:00:00Z')), ct=oiTradeDate(), n=0;
+          if(ct){ var cs=new Date(Date.UTC(ct.getFullYear(),ct.getMonth(),ct.getDate(),12)); for(var t=new Date(pt); t<cs;){ t.setUTCDate(t.getUTCDate()+1); if(t.getUTCDay()%6) n++; } }
+          ds._prev_sessions=n; }
+      }
+    });
+  });
+}
+function oiChkHTML(ds){ var c=ds&&ds._chk; if(!c) return '';
+  return '<span class="oi-chk'+(c.dup||c.bad||c.mismatch?' warn':'')+'">'+(c.dup||c.bad||c.mismatch?'⚠ ':'✓ ')+c.strikes+' strikes checked'+(c.dup?' · '+c.dup+' duplicate strike'+(c.dup>1?'s':'')+' dropped':'')+(c.bad?' · '+c.bad+' invalid row'+(c.bad>1?'s':'')+' rejected':'')+
+    (c.mismatch?' · stored totals ('+fmt(c.mismatch.c)+' C / '+fmt(c.mismatch.p)+' P) differed from the strikes — showing the strike totals':' · totals reconcile')+'</span>'; }
+function oiPrevText(ds){ if(ds._prev_bad) return 'no change shown: '+ds._prev_bad; var p=ds.rows_prev; if(!p||!p.date) return '';
+  var n=ds._prev_sessions; return 'change vs the '+fmtShortDate(p.date)+' pull'+(n!=null?(n<=1?' (previous session)':' — <b>'+n+' sessions back</b>, not one day'):''); }
+function renderAll(){ try{ oiSanitize(DATA); }catch(e){} syncFronts(); renderGrain('corn'); renderGrain('wheat'); renderGrain('soybeans'); renderFX(); renderMacro(); drawDestMaps(); if(typeof paintAwaiting==='function') paintAwaiting(); }
 renderAll();
 /* speed: after the first full paint, a data refresh repaints only the tab on screen (~0.1 s instead of ~0.5 s);
    hidden desks are marked stale and repaint the moment they are opened */
