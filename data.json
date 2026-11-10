@@ -14098,7 +14098,7 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-11-10T12:00:23-05:00",
+   "updated_at": "2026-11-10T12:04:34-05:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
     "fx_spot": "2026-11-10T12:00:00-05:00",
@@ -14118,7 +14118,7 @@
     "releases": "2026-11-06T08:30:00-05:00",
     "macro": "2026-11-10T11:15:27-05:00",
     "exports": "2026-11-10T08:45:23-05:00",
-    "wasde": "2026-11-10T11:55:32-05:00",
+    "wasde": "2026-11-10T12:04:34-05:00",
     "canada": "2026-11-10T08:30:20-05:00",
     "ca_calendar": "2026-11-10T08:45:23-05:00",
     "sd_hist": "2026-11-10T06:00:25-05:00",
@@ -14140,40 +14140,10 @@
    },
    "last_run": {
     "ok": [
-     "seasonality_track",
-     "expired_track",
-     "policy_watch",
-     "fx_spot",
-     "fx_alpha",
-     "fx_closes",
-     "yields",
-     "cftc_fx",
-     "cftc_grains",
-     "grains_quote",
-     "yields_live",
-     "energy",
-     "crosses",
-     "news",
-     "calendar",
-     "fed_odds",
-     "releases",
-     "macro",
-     "cpi_detail",
-     "settles",
-     "exports",
-     "wasde",
-     "canada",
-     "ca_calendar",
-     "sd_hist",
-     "inputs",
-     "ext",
-     "ca_retail",
-     "fx_model",
-     "optflow",
-     "ust"
+     "wasde"
     ],
     "failed": [],
-    "at": "2026-11-10T12:00:23-05:00"
+    "at": "2026-11-10T12:04:34-05:00"
    },
    "releases_checked": "2026-11-10T09:15:21-05:00",
    "exports_checked": "2026-11-10T08:45:23-05:00",
@@ -14286,7 +14256,7 @@
    "ust_checked": "2026-11-10T08:45:23-05:00",
    "macro_checked": "2026-11-10T11:15:27-05:00",
    "bls_fast_at": "2026-11-10T11:15:27-05:00",
-   "wasde_checked": "2026-11-10T11:55:32-05:00"
+   "wasde_checked": "2026-11-10T12:04:34-05:00"
   },
   "macro": [
    {
@@ -25322,15 +25292,15 @@
   },
   "wasde": {
    "corn": {
-    "report": "Oct 2026",
-    "prior_report": "Sep 2026",
+    "report": "Nov 2026",
+    "prior_report": "Oct 2026",
     "unit_note": "Acres in millions, yield in bu/ac, price in $/bu, otherwise million bushels",
     "new": {
      "my": "2026/27",
      "rows": [
       [
        "Area Planted",
-       96.8,
+       null,
        null
       ],
       [
@@ -25340,18 +25310,18 @@
       ],
       [
        "Yield per Acre",
-       178.5,
-       181.2
+       181.2,
+       179.6
       ],
       [
        "Beginning Stocks",
-       1922,
+       2095,
        2095
       ],
       [
        "Production",
-       15800,
-       16034
+       16034,
+       15893
       ],
       [
        "Imports",
@@ -25360,42 +25330,42 @@
       ],
       [
        "Total Supply",
-       17747,
-       18154
+       18154,
+       18013
       ],
       [
        "Feed & Residual",
-       5950,
-       6000
+       6000,
+       5975
       ],
       [
        "Food, Seed & Industrial",
-       6955,
+       7005,
        7005
       ],
       [
        "Domestic Total",
-       12905,
-       13005
+       13005,
+       12980
       ],
       [
        "Exports",
-       3275,
-       3300
+       3300,
+       3275
       ],
       [
        "Total Use",
-       16180,
-       16305
+       16305,
+       16255
       ],
       [
        "Ending Stocks",
-       1567,
-       1849
+       1849,
+       1758
       ],
       [
        "Avg Farm Price",
-       4.8,
+       null,
        null
       ]
      ]
@@ -25405,12 +25375,12 @@
      "rows": [
       [
        "Area Planted",
-       98.8,
+       null,
        null
       ],
       [
        "Area Harvested",
-       91.3,
+       90.9,
        90.9
       ],
       [
@@ -25425,52 +25395,52 @@
       ],
       [
        "Production",
-       17021,
+       16963,
        16963
       ],
       [
        "Imports",
-       30,
+       31,
        31
       ],
       [
        "Total Supply",
-       18602,
+       18546,
        18546
       ],
       [
        "Feed & Residual",
-       6350,
-       6119
+       6119,
+       6118
       ],
       [
        "Food, Seed & Industrial",
-       6905,
-       6902
+       6902,
+       6904
       ],
       [
        "Domestic Total",
-       13255,
+       13022,
        13022
       ],
       [
        "Exports",
-       3425,
+       3429,
        3429
       ],
       [
        "Total Use",
-       16680,
+       16451,
        16451
       ],
       [
        "Ending Stocks",
-       1922,
+       2095,
        2095
       ],
       [
        "Avg Farm Price",
-       4.15,
+       null,
        null
       ]
      ]
@@ -25478,15 +25448,15 @@
     "source": "USDA PSD (FAS Open Data) · converted from metric to U.S. units"
    },
    "soybeans": {
-    "report": "Oct 2026",
-    "prior_report": "Sep 2026",
+    "report": "Nov 2026",
+    "prior_report": "Oct 2026",
     "unit_note": "Acres in millions, yield in bu/ac, price in $/bu, otherwise million bushels",
     "new": {
      "my": "2026/27",
      "rows": [
       [
        "Area Planted",
-       86.9,
+       null,
        null
       ],
       [
@@ -25496,18 +25466,18 @@
       ],
       [
        "Yield per Acre",
-       52.8,
-       53.1
+       53.1,
+       53.3
       ],
       [
        "Beginning Stocks",
-       325,
+       315,
        315
       ],
       [
        "Production",
-       4535,
-       4562
+       4562,
+       4574
       ],
       [
        "Imports",
@@ -25516,8 +25486,8 @@
       ],
       [
        "Total Supply",
-       4885,
-       4902
+       4902,
+       4914
       ],
       [
        "Crushings",
@@ -25526,27 +25496,27 @@
       ],
       [
        "Exports",
-       1685,
-       1695
+       1695,
+       1720
       ],
       [
        "Seed & Residual",
-       111,
-       112
+       112,
+       114
       ],
       [
        "Total Use",
-       4575,
-       4587
+       4587,
+       4614
       ],
       [
        "Ending Stocks",
-       310,
-       315
+       315,
+       300
       ],
       [
        "Avg Farm Price",
-       12.0,
+       null,
        null
       ]
      ]
@@ -25556,7 +25526,7 @@
      "rows": [
       [
        "Area Planted",
-       81.2,
+       null,
        null
       ],
       [
@@ -25576,47 +25546,47 @@
       ],
       [
        "Production",
-       4262,
+       4261,
        4261
       ],
       [
        "Imports",
-       25,
+       22,
        22
       ],
       [
        "Total Supply",
-       4612,
+       4608,
        4608
       ],
       [
        "Crushings",
-       2655,
+       2646,
        2646
       ],
       [
        "Exports",
-       1520,
+       1515,
        1515
       ],
       [
        "Seed & Residual",
-       112,
+       132,
        132
       ],
       [
        "Total Use",
-       4287,
+       4293,
        4293
       ],
       [
        "Ending Stocks",
-       325,
+       315,
        315
       ],
       [
        "Avg Farm Price",
-       10.5,
+       null,
        null
       ]
      ]
@@ -25624,25 +25594,25 @@
     "source": "USDA PSD (FAS Open Data) · converted from metric to U.S. units"
    },
    "wheat": {
-    "report": "Oct 2026",
-    "prior_report": "Sep 2026",
+    "report": "Nov 2026",
+    "prior_report": "Oct 2026",
     "unit_note": "Acres in millions, yield in bu/ac, price in $/bu, otherwise million bushels",
     "new": {
      "my": "2026/27",
      "rows": [
       [
        "Area Planted",
-       42.7,
+       null,
        null
       ],
       [
        "Area Harvested",
-       32.1,
+       31.9,
        31.9
       ],
       [
        "Yield per Acre",
-       47.8,
+       48.1,
        48.1
       ],
       [
@@ -25652,52 +25622,52 @@
       ],
       [
        "Production",
-       1531,
+       1534,
        1534
       ],
       [
        "Imports",
-       140,
+       145,
        145
       ],
       [
        "Total Supply",
-       2591,
+       2599,
        2599
       ],
       [
        "Food, Seed & Industrial",
        1019,
-       1019
+       1016
       ],
       [
        "Feed & Residual",
-       80,
+       90,
        90
       ],
       [
        "Domestic Total",
-       1099,
-       1109
+       1109,
+       1106
       ],
       [
        "Exports",
-       775,
+       750,
        750
       ],
       [
        "Total Use",
-       1874,
-       1859
+       1859,
+       1856
       ],
       [
        "Ending Stocks",
-       717,
-       740
+       740,
+       743
       ],
       [
        "Avg Farm Price",
-       6.4,
+       null,
        null
       ]
      ]
@@ -25707,12 +25677,12 @@
      "rows": [
       [
        "Area Planted",
-       45.3,
+       null,
        null
       ],
       [
        "Area Harvested",
-       37.2,
+       37.3,
        37.3
       ],
       [
@@ -25727,7 +25697,7 @@
       ],
       [
        "Production",
-       1985,
+       1989,
        1989
       ],
       [
@@ -25737,7 +25707,7 @@
       ],
       [
        "Total Supply",
-       2964,
+       2969,
        2969
       ],
       [
@@ -25747,12 +25717,12 @@
       ],
       [
        "Feed & Residual",
-       119,
+       124,
        124
       ],
       [
        "Domestic Total",
-       1136,
+       1141,
        1141
       ],
       [
@@ -25762,7 +25732,7 @@
       ],
       [
        "Total Use",
-       2044,
+       2049,
        2049
       ],
       [
@@ -25772,7 +25742,7 @@
       ],
       [
        "Avg Farm Price",
-       5.06,
+       null,
        null
       ]
      ]
