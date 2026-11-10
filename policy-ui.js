@@ -150,15 +150,44 @@
       '</div><div class="stamp">A hawkish-sounding speech that markets already expected moves pricing little; a genuine surprise reprices the path. Scores are a phrase-based reading of official text, not a forecast or trading advice.</div></div>';
   }
 
+  /* ---- Minutes & summaries (Fed FOMC minutes, BoC Summary of Governing Council deliberations) ----
+     The summary is one verbatim sentence per topic from the official text (scripts/policy_intel.py summarize) — nothing paraphrased. */
+  var MBANKS = [["fed", "Federal Reserve", "FOMC minutes"], ["boc", "Bank of Canada", "Summary of Governing Council deliberations"]];
+  function minutesDocs(bank) { return ((J && J.docs) || []).filter(function (d) { return d.bank === bank && d.type === "minutes"; })
+    .sort(function (a, b) { return (b.published_at || "").localeCompare(a.published_at || ""); }); }
+  function nextMinutes(bank) { var now = Date.now(); return ((J && J.calendar) || []).filter(function (c) { return c.bank === bank && c.kind === "minutes" && calMs(c) > now; })
+    .sort(function (a, b) { return calMs(a) - calMs(b); })[0]; }
+  function calMs(c) { var p = c.date.split("-"), h = (c.time || "12:00").split(":"); try { return window.zonedMs(+p[0], +p[1], +p[2], +h[0], +h[1], c.tz); } catch (e) { return Date.parse(c.date); } }
+  function summaryHTML(d) {
+    var S = d.summary || [];
+    return '<div class="mn-doc"><div class="mn-t"><a href="' + esc(d.url) + '" target="_blank" rel="noopener">' + esc(d.title) + "</a></div>" +
+      '<div class="mn-m">Published ' + esc(new Date(d.published_at).toLocaleString("en-US", { timeZone: TZ, month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })) + " ET" +
+      (d.label ? " · tone <b>" + esc(d.label) + "</b>" + (d.score != null ? " (" + (d.score > 0 ? "+" : "") + d.score + ")" : "") : "") + " · " + (d.words || 0).toLocaleString() + " words</div>" +
+      (S.length ? '<ul class="mn-s">' + S.map(function (b) { return '<li><span class="mn-k">' + esc(b.topic) + "</span>“" + esc(b.text) + "”</li>"; }).join("") + "</ul>"
+        : '<p class="note">Summary is being prepared from the official text — it appears within a few minutes of publication.</p>') + "</div>";
+  }
+  function minutesHTML() {
+    return '<div class="tile wide"><h2>Minutes &amp; summaries <span class="h2note">— Fed FOMC minutes and BoC Summary of deliberations · each line is quoted word-for-word from the official document</span></h2><div class="mn-grid">' +
+      MBANKS.map(function (b) {
+        var D = minutesDocs(b[0]), nx = nextMinutes(b[0]), last = D[0];
+        return '<div class="mn-col"><h3 class="mp-h">' + esc(b[1]) + " · " + esc(b[2]) + "</h3>" +
+          (nx ? '<div class="mn-next">Next: <b>' + esc(nx.what) + "</b> · " + esc(new Date(calMs(nx)).toLocaleString("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET</div>" : "") +
+          (last ? summaryHTML(last) : '<p class="note">No document read yet.</p>') +
+          (D.length > 1 ? '<details class="mn-old"><summary>Earlier (' + (D.length - 1) + ")</summary>" + D.slice(1, 4).map(summaryHTML).join("") + "</details>" : "") + "</div>";
+      }).join("") + "</div></div>";
+  }
+  /* for Events: the minutes document published for a calendar entry (same bank, within a day of the scheduled time) */
+  function minutesFor(bank, t) { return minutesDocs(bank).filter(function (d) { var p = Date.parse(d.published_at); return Math.abs(p - t) < 36 * 3600e3; })[0] || null; }
+
   function render() {
     if (!J) { P.innerHTML = '<div class="tile wide">' + (err ? '<div class="unreach">⚠ Sorry, we can’t be reached now <small>— policy intelligence did not load; retrying every minute</small></div>' : '<p class="note">Loading policy intelligence…</p>') + "</div>"; return; }
-    var subs = [["monitor", "Stance monitor"], ["transcript", "Transcript intelligence"], ["calendar", "Policy calendar"], ["markets", "Policy & markets"]];
+    var subs = [["monitor", "Stance monitor"], ["minutes", "Minutes & summaries"], ["transcript", "Transcript intelligence"], ["calendar", "Policy calendar"], ["markets", "Policy & markets"]];
     var src = Object.keys(J.status || {}).map(function (b) { var s = J.status[b], ok = Object.keys(s.sources || {}).filter(function (u) { return s.sources[u] === 200; }).length, n = Object.keys(s.sources || {}).length;
       return esc(b.toUpperCase()) + " " + ok + "/" + n; }).join(" · ");
     P.innerHTML = '<div class="tile wide pi-head"><h2>Central bank policy intelligence <span class="h2note">— Fed · ECB · BoE · BoC · BoJ, read from the banks’ own sites</span></h2>' + strip() +
       '<div class="pi-nav">' + subs.map(function (s) { return '<button data-pisub="' + s[0] + '" aria-pressed="' + (V.sub === s[0]) + '">' + s[1] + "</button>"; }).join("") +
       (V.bank !== "all" ? '<button data-pib="all">Show all banks ✕</button>' : "") + '</div><div class="stamp">Updated ' + esc(new Date(J.updated_at).toLocaleString("en-US", { timeZone: TZ, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET</div></div>" +
-      (V.sub === "calendar" ? calendarHTML() : V.sub === "transcript" ? transcriptHTML() : V.sub === "markets" ? marketsHTML() : monitorHTML()) +
+      (V.sub === "minutes" ? minutesHTML() : V.sub === "calendar" ? calendarHTML() : V.sub === "transcript" ? transcriptHTML() : V.sub === "markets" ? marketsHTML() : monitorHTML()) +
       '<div class="tile wide"><div class="stamp">Method: ' + esc(J.method || "") + " Evidence is quoted word-for-word with its paragraph number and the official link; voting status is shown only where it is certain for that date (BoC decides by consensus).</div></div>";
   }
   P.addEventListener("click", function (ev) {
@@ -173,11 +202,12 @@
   /* every minute while the tab is open; every 5 minutes in the background so new statements reach the Events feed */
   setInterval(function () { if (P.classList.contains("active") || Date.now() - lastTry > 300000) poll(); }, 60000);
   window.addEventListener("desk:unlock", function () { poll(true); });
-  window.POLICY = { render: render, poll: poll, _data: function () { return J; },
-    open: function (id) { V.doc = id; V.sub = "transcript"; save(); render(); } };
+  window.POLICY = { render: render, poll: poll, _data: function () { return J; }, minutesFor: minutesFor, summaryHTML: function (d) { return summaryHTML(d); },
+    open: function (id) { if (id === "minutes" || id === "calendar" || id === "monitor") V.sub = id; else { V.doc = id; V.sub = "transcript"; } save(); render(); } };
   render(); if (window.DESK_LOCKED === false) poll(true);
   var pmcss = document.createElement("style");
-  pmcss.textContent = ".pg{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:8px 0;background:rgba(155,140,255,.05)}.pg-h{font:700 11px 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#b9aefc}.pg-x{font-size:13px;margin-top:4px}.pg-m{font:11.5px 'IBM Plex Mono',monospace;color:var(--muted);margin-top:3px}.pg-l{list-style:none;margin:6px 0 0;padding:0;max-height:260px;overflow:auto}.pg-r{display:grid;grid-template-columns:120px 1fr auto auto;gap:4px 8px;align-items:center;padding:5px 0;border-top:1px dashed var(--line);font-size:12.5px}.pg-t{font:11px 'IBM Plex Mono',monospace;color:var(--faint)}.pg-g{font:700 10.5px 'IBM Plex Mono',monospace}.pg-g.hawk,.pg-x b.hawk{color:#ff8a84}.pg-g.dove,.pg-x b.dove{color:#7dd8e6}.pg-g.neu{color:var(--muted);font-weight:400}.pg-q{grid-column:1/-1;color:#d4deea;font-style:italic}.pm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(560px,1fr));gap:14px}.pm-card{border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:12px 14px}" +
+  pmcss.textContent = ".mn-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media (max-width:900px){.mn-grid{grid-template-columns:1fr}}.mn-next{font-size:13px;color:var(--muted);margin:0 0 8px}.mn-next b{color:var(--ink)}.mn-doc{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:10px}.mn-t a{color:var(--ink);font-weight:600}.mn-m{font-size:12px;color:var(--faint);margin:3px 0 8px}.mn-s{margin:0;padding-left:0;list-style:none}.mn-s li{font-size:13px;line-height:1.45;color:var(--text);padding:5px 0;border-top:1px solid var(--line)}.mn-k{display:inline-block;min-width:150px;font:700 10.5px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#e8b93d;margin-right:6px}.mn-old summary{cursor:pointer;color:var(--muted);font-size:13px;margin:4px 0 8px}" +
+    ".pg{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:8px 0;background:rgba(155,140,255,.05)}.pg-h{font:700 11px 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#b9aefc}.pg-x{font-size:13px;margin-top:4px}.pg-m{font:11.5px 'IBM Plex Mono',monospace;color:var(--muted);margin-top:3px}.pg-l{list-style:none;margin:6px 0 0;padding:0;max-height:260px;overflow:auto}.pg-r{display:grid;grid-template-columns:120px 1fr auto auto;gap:4px 8px;align-items:center;padding:5px 0;border-top:1px dashed var(--line);font-size:12.5px}.pg-t{font:11px 'IBM Plex Mono',monospace;color:var(--faint)}.pg-g{font:700 10.5px 'IBM Plex Mono',monospace}.pg-g.hawk,.pg-x b.hawk{color:#ff8a84}.pg-g.dove,.pg-x b.dove{color:#7dd8e6}.pg-g.neu{color:var(--muted);font-weight:400}.pg-q{grid-column:1/-1;color:#d4deea;font-style:italic}.pm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(560px,1fr));gap:14px}.pm-card{border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:12px 14px}" +
     ".pm-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}.pm-b{font-size:15px;display:flex;align-items:center;gap:6px}" +
     ".pm-s{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:12.5px}.pm-l{font:600 11.5px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.06em}.pm-g{color:var(--muted)}.pm-d{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint)}" +
     ".pm-list{list-style:none;margin:6px 0 0;padding:0}.pm-r{display:grid;grid-template-columns:52px 112px minmax(0,1fr) 54px 84px;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px dashed var(--line);cursor:pointer;font-size:13px}" +

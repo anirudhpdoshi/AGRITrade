@@ -42,7 +42,8 @@ BANKS = {
     "boe": {"name": "Bank of England", "cc": "gb", "feeds": ["https://www.bankofengland.co.uk/rss/speeches", "https://www.bankofengland.co.uk/rss/news"],
             # the news feed keeps only ~25 items, so an MPC decision drops out within weeks: read the summaries index too
             "lists": ["https://www.bankofengland.co.uk/monetary-policy-summary-and-minutes/monetary-policy-summary-and-minutes"]},
-    "boc": {"name": "Bank of Canada", "cc": "ca", "feeds": ["https://www.bankofcanada.ca/content_type/speeches/feed/"],
+    "boc": {"name": "Bank of Canada", "cc": "ca", "feeds": ["https://www.bankofcanada.ca/content_type/speeches/feed/",
+             "https://www.bankofcanada.ca/content_type/summary-of-deliberations/feed/"],   # Summary of Governing Council deliberations (BoC's minutes)
             "lists": ["https://www.bankofcanada.ca/press/speeches/", "https://www.bankofcanada.ca/press/press-releases/"]},
     "boj": {"name": "Bank of Japan", "cc": "jp", "feeds": ["https://www.boj.or.jp/en/rss/whatsnew.xml"],
             "lists": ["https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm"]},   # MPM table: statement, Outlook Report, Summary of Opinions, minutes
@@ -59,10 +60,12 @@ CALENDAR = [
     ("fed", "2026-12-09", "14:00", "America/New_York", "FOMC decision + press conference (Dec 8–9)", "decision"),
     ("boc", "2026-12-09", "09:45", "America/Toronto", "Rate announcement", "decision"),
     ("ecb", "2026-12-17", "14:15", "Europe/Berlin", "Policy decision + press conference (Dec 16–17)", "decision"),
-    ("boe", "2026-12-17", "12:00", "Europe/London", "MPC decision + minutes", "decision"),   # BoE 'MPC dates for 2026' release
+    ("boe", "2026-12-17", "12:00", "Europe/London", "MPC decision + minutes", "decision"),
+    ("boc", "2026-12-23", "13:30", "America/Toronto", "Summary of deliberations (Dec 9 decision) — expected, two weeks after the decision", "minutes"),
+    ("fed", "2026-12-30", "14:00", "America/New_York", "FOMC minutes (Dec 8–9 meeting)", "minutes"),   # federalreserve.gov December 2026 calendar   # BoE 'MPC dates for 2026' release
     ("boj", "2026-12-18", None, "Asia/Tokyo", "Policy statement (meeting Dec 17–18)", "decision"),
 ]
-CAL_ASOF = "2026-11-09"
+CAL_ASOF = "2026-11-10"
 
 # ---------------------------------------------------------------- Layer A: themes and context
 THEMES = {
@@ -207,6 +210,39 @@ def pdf_text(raw):
     return re.sub(r"[ \t]+", " ", t).strip()
 
 
+# ---- minutes summary: one verbatim sentence per topic from the official text (no paraphrase, nothing invented) ----
+SUM_TOPICS = [
+    ("Decision", r"policy rate|target range|federal funds rate|basis points?|(?:raise|lower|cut|hold|maintain)(?:d|ed|ing)? (?:the|its) (?:policy )?rate"),
+    ("Inflation", r"inflation|\bCPI\b|core (?:measures|inflation)|price pressures"),
+    ("Jobs & wages", r"labou?r market|employment|unemployment|wage|job"),
+    ("Growth", r"\bGDP\b|economic (?:growth|activity)|consumption|consumer spending|business investment|demand"),
+    ("Trade & tariffs", r"tariff|trade|exports?|imports?"),
+    ("Financial conditions", r"financial conditions|bond yields?|credit|housing|mortgage|equity prices|exchange rate"),
+    ("Outlook for policy", r"going forward|future (?:rate|policy|decisions)|further (?:increase|reduction|adjust)|path for|data[- ]dependent|over the coming|appropriate stance|next (?:meeting|decision)"),
+    ("Differing views", r"some (?:members|participants)|several (?:members|participants)|a few (?:members|participants)|many participants|a number of (?:members|participants)|range of views|differ|dissent|voted against"),
+]
+def summarize(text):
+    t = re.sub(r"\s+", " ", text)
+    sents = [x.strip() for x in re.split(r"(?<=[.!?])\s+(?=[A-Z])", t) if 70 <= len(x.strip()) <= 420]
+    sents = [x for x in sents if not re.search(r"cookie|subscribe|share this|for release at|Please contact|reproduce|copyright|Last updated", x, re.I)]
+    sents = [re.sub(r"^(?:Committee Policy Actions|Policy decision|Participants\u2019? ?'?s? Views on [^.]{0,80}?Outlook|Staff Economic Outlook|Developments in Financial Markets[^.]{0,40}?)\s+(?=[A-Z])", "", x) for x in sents]   # section headings glued to the first sentence
+    out, used = [], set()
+    for name, rx in SUM_TOPICS:
+        best, bs = None, 0
+        for i, x in enumerate(sents):
+            if i in used:
+                continue
+            n = len(re.findall(rx, x, re.I))
+            if n and name == "Decision" and re.search(r"(?:Committee|Governing Council|members) (?:decided|agreed|voted)|decided to (?:raise|lower|maintain|hold|keep|increase|reduce)|voted (?:to|for)|agreed to (?:raise|lower|maintain|hold|increase|reduce)", x, re.I):
+                n += 5   # the sentence stating the decision itself
+            sc = n * 10 - abs(len(x) - 220) / 40 - i / max(1, len(sents)) * 2   # topic hits first, then a readable length, then earlier in the text
+            if n and sc > bs:
+                best, bs = i, sc
+        if best is not None:
+            used.add(best); out.append({"topic": name, "text": sents[best]})
+    return out
+
+
 def page_text(h):
     if h.startswith(PDF_MARK):
         return h[len(PDF_MARK):]
@@ -244,7 +280,7 @@ def parse_date(s):
 
 
 TYPES = [("statement", r"outlook for economic activity and prices|monetary policy summary|statement on monetary policy|fomc statement|monetary policy decision|policy rate|interest rate decision|bank rate (?:maintained|increased|reduced|cut|raised)|statement on monetary policy|\b(?:maintains|lowers|raises|holds|cuts|hikes|keeps|leaves)\b(?= (?:its |the )?(?:policy |key |benchmark |interest |the target )?(?:rates?|range))"),
-         ("minutes", r"minutes|account of the monetary|summary of (?:deliberations|opinions)"),
+         ("minutes", r"minutes|account of the monetary|summary of (?:governing council )?(?:deliberations|opinions)"),
          ("testimony", r"standing committee|testimony|before the (?:house|senate)|parliamentary committee|committee on (?:finance|banking)|semiannual monetary policy report to the congress"),
          ("press_conference", r"press conference|opening statement"),
          ("testimony", r"testimony|before the committee"),
@@ -469,7 +505,8 @@ def main():
         status[bank] = {"checked_at": NOW.isoformat(), "found": len(found), "sources": dict(DIAG)}
         for it in found:
             did = hashlib.sha1(it["link"].encode()).hexdigest()[:12]
-            if did in docs and docs[did].get("hash") and docs[did].get("av") == AV and (NOW - dt.datetime.fromisoformat(docs[did]["fetched_at"])) < dt.timedelta(days=2):
+            if did in docs and docs[did].get("hash") and docs[did].get("av") == AV and (NOW - dt.datetime.fromisoformat(docs[did]["fetched_at"])) < dt.timedelta(days=2) \
+                    and (it["type"] != "minutes" or docs[did].get("summary")):
                 continue      # re-read recent items for revisions; older items are kept as stored
             if new >= cap:
                 break         # per-bank, per-run budget: be gentle with the banks' sites
@@ -489,7 +526,7 @@ def main():
                 continue
             hsh = hashlib.sha256(text.encode()).hexdigest()[:16]
             old = docs.get(did)
-            if old and old.get("hash") == hsh and old.get("av") == AV:
+            if old and old.get("hash") == hsh and old.get("av") == AV and (it["type"] != "minutes" or old.get("summary")):
                 old["fetched_at"] = NOW.isoformat(); continue
             a = analyse(text)
             d = {"id": did, "bank": bank, "title": it["title"][:200], "type": it["type"], "url": it.get("link_full") or it["link"], "page": it["link"], "published_at": it.get("published_at"),
@@ -498,6 +535,8 @@ def main():
                  "excerpt": re.sub(r"\s+", " ", text)[:600],
                  "voting_status": "NOT_APPLICABLE" if it["type"] in ("statement", "minutes") and bank != "boc" else VOTE.get(bank, "UNKNOWN"),
                  **a}
+            if it["type"] == "minutes":
+                d["summary"] = summarize(text)
             if old and old.get("hash") and old.get("hash") != hsh:
                 d["revised_from"] = {"hash": old["hash"], "fetched_at": old["fetched_at"], "score": old["score"]}
             docs[did] = d

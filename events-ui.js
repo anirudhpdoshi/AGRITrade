@@ -78,6 +78,8 @@
       var t = window.evEpoch ? window.evEpoch(e) : NaN; if (!isFinite(t)) return;
       var energy = /crude|oil|natural gas|petroleum|gasoline|distillate|API Weekly|EIA/i.test(e.event);
       macroAt[e.ccy + "|" + t] = 1;
+      /* FOMC minutes / BoC Summary of deliberations: one row, from the central-bank calendar below (it carries the summary) */
+      if (/FOMC (?:meeting )?minutes|summary of (?:governing council )?deliberations/i.test(e.event)) return;
       add({ t: t, label: e.ccy + " " + e.event, kind: energy ? "energy" : "macro", cc: e.ccy === "CAD" ? "ca" : "us", impact: e.impact, high: e.impact === "High",
         fc: e.fc, prev: e.prev, go: energy ? "corn:inputs" : "macro:dash" });
     });
@@ -99,7 +101,8 @@
         var p = c.date.split("-"), tz = c.tz === "Europe/Frankfurt" ? "Europe/Berlin" : c.tz, hm2 = (c.time || "12:00").split(":"), t;
         try { t = window.zonedMs(+p[0], +p[1], +p[2], +hm2[0], +hm2[1], tz); } catch (x) { return; }
         var B = (PJ.banks || {})[c.bank] || {};
-        add({ t: t, label: (B.name || c.bank.toUpperCase()) + ": " + c.what + (c.time ? "" : " (time TBA)"), kind: "cb", cc: B.cc, high: c.kind === "decision", go: "policy" });
+        add({ t: t, label: (B.name || c.bank.toUpperCase()) + ": " + c.what + (c.time ? "" : " (time TBA)"), kind: "cb", cc: B.cc, high: c.kind === "decision", go: "policy",
+          bank: c.bank, mins: c.kind === "minutes" });
       });
     } catch (x) {}
     /* legislation: Commons sitting days, U.S. committee hearings and House floor week (Briefing tab data) */
@@ -221,6 +224,13 @@
       '<text x="' + (w - 48) + '" y="14" class="evx-ax">' + (window.mval ? mval(m, mx) : mx) + '</text><text x="' + (w - 48) + '" y="' + (h - 22) + '" class="evx-ax">' + (window.mval ? mval(m, mn) : mn) + "</text>" +
       '<circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="3.5" fill="#fff"/><text x="8" y="' + (h - 4) + '" class="evx-ax">' + esc(H[0][0]) + '</text><text x="' + (w - 110) + '" y="' + (h - 4) + '" class="evx-ax">' + esc(H[H.length - 1][0]) + "</text></svg>"; }
   function expand(e, LD, m) {
+    /* minutes (FOMC minutes, BoC Summary of deliberations): once published, the official summary right here */
+    if (e.mins && window.POLICY && POLICY.minutesFor) {
+      var dm = POLICY.minutesFor(e.bank, e.t);
+      return '<div class="evx"><div class="evx-t" style="flex:1">' + (dm ? "<b>Published — summary</b>" + POLICY.summaryHTML(dm)
+          : "<b>Summary</b><p>" + (e.t > Date.now() ? "Scheduled. The summary appears here once the bank publishes the document — each line quoted from the official text." : "Due now: the desk reads the bank\u2019s site every 15 minutes; the summary appears here once the document is read.") + "</p>") +
+        '<button class="evgo" data-evgo="policy:minutes">Open Policy · Minutes &amp; summaries →</button></div></div>';
+    }
     var k = relKey(e), sum = (k && k.macro && SUM[k.macro]) || SUMK[e.kind] || "Scheduled economic release from the US / Canada calendar. The desk does not track this series, so no history or actual is held — forecast and previous come from the calendar.";
     var hist = m ? ((m.hist24 && m.hist24.length > 2) ? m.hist24 : m.history || []).slice(-6).reverse() : [];
     var go = LD && LD.at && LD.go ? '<button class="evgo see" data-evgo="' + esc(LD.go) + '" data-evsel="' + esc(LD.sel || "") + '">See it: ' + esc(LD.where) + " →</button>" : e.go ? '<button class="evgo" data-evgo="' + e.go + '">Open ' + esc(deskName(e.go)) + " →</button>" : "";
