@@ -1,0 +1,24 @@
+name: dbg (temporary)
+on:
+  push:
+    branches: [dbg-cpi]
+jobs:
+  d:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -q -r scripts/requirements.txt
+      - env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: |
+          cd scripts && python3 - <<'P'
+          import json, update_data as U
+          D = json.load(open("../data.json"))["DATA"]
+          old = {m["key"]: m for m in D["macro"]}
+          for k, sid in (("us_cpi", "CPIAUCSL"), ("us_nfp", "PAYEMS")):
+              raw = U._fred(sid, "2024-01-01")
+              print("DBG", k, "raw tail", raw[-2:], "| stored obs_date", repr(old[k]["obs_date"]), "| cmp", raw[-1][0] <= old[k]["obs_date"])
+          print("DBG bls", {k: v[-1:] for k, v in U._bls_batch(["CUSR0000SA0"]).items()})
+          P
