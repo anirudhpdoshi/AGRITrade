@@ -472,6 +472,10 @@ table.fwd-in td.fi-src{text-align:left;color:var(--faint);font-size:11.5px;white
 .mk-click{cursor:pointer}.mk-click:hover{color:#fff}
 .mcard{cursor:pointer;transition:border-color .15s,transform .15s}.mcard:hover{border-color:#38b6c9;transform:translateY(-1px)}
 .cpi-go{margin-top:8px}
+.cpi-dd-btn{display:inline-flex;align-items:center;gap:6px;margin:10px 0 4px;padding:8px 14px;border-radius:8px;border:1px solid #e8a33d;background:linear-gradient(180deg,rgba(232,163,61,.28),rgba(232,163,61,.14));color:#ffd28a;font:700 13px 'IBM Plex Sans',sans-serif;letter-spacing:.01em;cursor:pointer;box-shadow:0 0 0 0 rgba(232,163,61,.5)}
+.cpi-dd-btn:hover{background:#e8a33d;color:#101825}
+html[data-theme="light"] .cpi-dd-btn{color:#7a4a00;background:rgba(232,163,61,.18)}
+.cpi-dd-btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .mdh-ctl{float:right;display:inline-flex;gap:8px;text-transform:none;letter-spacing:0}.mdh-seg{display:inline-flex}.mdh-b{font:600 11.5px 'IBM Plex Sans',sans-serif;padding:3px 9px;border:1px solid var(--line2);background:transparent;color:var(--muted);cursor:pointer}.mdh-seg .mdh-b:first-child{border-radius:6px 0 0 6px}.mdh-seg .mdh-b:last-child{border-radius:0 6px 6px 0}.mdh-seg .mdh-b+.mdh-b{margin-left:-1px}.mdh-b[aria-pressed="true"]{background:rgba(56,182,201,.16);color:var(--ink);border-color:rgba(56,182,201,.6)}
 .mdh-tw{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:8px}.mdh-t{width:100%;border-collapse:collapse;font:12.5px 'IBM Plex Mono',monospace}.mdh-t th{position:sticky;top:0;background:var(--panel);text-align:right;padding:6px 10px;font:700 10.5px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}.mdh-t th:first-child,.mdh-t td:first-child{text-align:left}.mdh-t td{padding:5px 10px;text-align:right;border-top:1px solid var(--line)}
 #mdc-overlay{position:fixed;inset:0;background:rgba(4,8,14,.72);z-index:9000;display:none;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto}
@@ -2948,6 +2952,7 @@ function divBarsHTML(rows, dec, unit){
 /* ---------- MACRO dashboard (US vs Canada) ---------- */
 function mget(k){ return macroAll().filter(function(m){ return m.key===k; })[0]; }
 function trailAvg(pts, n){ if(!pts||pts.length<n) return null; var v=pts.slice(-n).map(function(p){ return p[1]; }); return v.reduce(function(a,b){ return a+b; },0)/v.length; }
+function cpiDeepBtn(g){ return '<button class="cpi-dd-btn" data-cpigo="'+g+'" title="Every CPI category for the latest '+(g==='us'?'US':'Canada')+' release">\ud83d\udd0d CPI deep dive \u2014 every category \u2192</button>'; }
 function macroLinePanel(m, opt){
   if(!m||!m.long) return '<div class="mpanel"><h3 class="mp-h">'+esc(opt.country+' '+opt.what)+'</h3><p class="note">Five-year history loads on the next macro refresh.</p></div>';
   var pts=m.long, last=pts[pts.length-1][1], refs=[];
@@ -2956,7 +2961,7 @@ function macroLinePanel(m, opt){
   var head=opt.headline(last, m);
   return '<div class="mpanel has-flag">'+cflag(m.group)+'<h3 class="mp-h mk-click" data-mkey="'+m.key+'" title="Click for the full breakdown">'+head+' <span class="h2note">\u24d8</span></h3>'+
     lineChartSVG({series:[{pts:pts.slice(-60),color:opt.color,label:'Actual',width:2.2}], refs:refs, yLabel:opt.yLabel, dec:1, aria:head.replace(/<[^>]+>/g,'')})+
-    nextReleaseHTML(m.key)+'<div class="stamp">Latest '+esc(m.period)+' · dashed = trailing 2/3/5-yr averages'+(opt.target!=null?' · dotted = 2% target':'')+'</div></div>';
+    nextReleaseHTML(m.key)+(opt.what==='CPI'&&cpiHas(m.group)?cpiDeepBtn(m.group):'')+'<div class="stamp">Latest '+esc(m.period)+' · dashed = trailing 2/3/5-yr averages'+(opt.target!=null?' · dotted = 2% target':'')+'</div></div>';
 }
 function macroKpiCard(title, us, ca, dec, unit){
   function row(flag, m){ if(!m) return ''; var ch=m.chg, flat=Math.abs(ch)<Math.pow(10,-dec)/2;
@@ -3573,7 +3578,7 @@ function macroDetailHTML(key){
       '<div class="mdc-box"><div class="mdc-k">12-reading range</div><div class="mdc-v2">'+mval(m,lo)+' → '+mval(m,hi)+'</div><div class="mdc-l">latest sits at '+fmt(hi>lo?(m.value-lo)/(hi-lo)*100:50,0)+'% of the range</div></div></div>'+
     (extra.concat(st.slice(1)).length?'<div class="mdc-band">'+extra.concat(st.slice(1)).map(function(t){ return '<div>'+t+'</div>'; }).join('')+'</div>':'')+
     '<h4 class="mdc-h">What it is &amp; why it matters for USD/CAD</h4><p class="mdc-p">'+esc(info[0])+' '+esc(info[1])+'</p>'+
-    (/^(us|ca)_(core_)?cpi|^ca_(trim|median)$/.test(key)&&cpiHas(m.group)?'<button class="ue-btn cpi-go" data-cpigo="'+m.group+'">See '+(m.group==='us'?'US':'Canada')+' CPI by category →</button>':'')+
+    (/^(us|ca)_(core_)?cpi|^ca_(trim|median)$/.test(key)&&cpiHas(m.group)?cpiDeepBtn(m.group):'')+
     '<div class="mdh-wrap">'+mdHistHTML(m)+'</div>'+
     '<h4 class="mdc-h">Trend — '+esc(m.name)+(m.measure?', '+m.measure:'')+', last '+Math.min(12,n)+' readings</h4><div class="mdc-chart">'+chart1+'</div>'+
     (chart2?'<h4 class="mdc-h">Change vs prior reading</h4><div class="mdc-chart">'+chart2+'</div>':'')+
@@ -4315,7 +4320,7 @@ function fxReleasesHTML(){
       (m.gap?'<div class="read" style="margin-top:4px"><b>'+esc(mdLabel(m.gap.period+'-01'))+' released'+(m.gap.mm!=null?': '+sgn(m.gap.mm,1)+'% m/m':'')+'</b> — no 12-month change published (year-earlier index not collected)</div>':'')+
       '<div class="read" style="margin-top:4px">'+(x.waiting?'Released by the agency; the desk still shows the previous print until the source posts it · ':'')+(cons!=null&&!x.waiting?'Consensus '+mval(m,cons)+' · ':'')+'prior '+mval(m,m.prior)+'</div>'+
       (H.length>1?releaseSVG(r)+'<p class="read" style="font-size:13px">'+releaseRead(r)+'</p>':'')+
-      (/^(us|ca)_(core_)?cpi$/.test(m.key)&&cpiHas(m.group)?'<button class="ue-btn cpi-go" data-cpigo="'+m.group+'">Category breakdown →</button>':'')+'</div>'; }).join('');
+      (/^(us|ca)_(core_)?cpi$/.test(m.key)&&cpiHas(m.group)?cpiDeepBtn(m.group):'')+'</div>'; }).join('');
   var gb=function(v,l){ return '<button data-mgeo="'+v+'" aria-pressed="'+(MGEO===v)+'">'+l+'</button>'; };
   return '<div class="tile wide" data-src="macro"><div class="tile-head"><h2>Latest releases <span class="h2note">— newest first by official release time · same data as the Macro dashboard · click any card for its full history</span></h2>'+
     '<span class="toggle" role="group" aria-label="Country">'+gb('both',flag('us',11)+' + '+flag('ca',11))+gb('us',flag('us',11)+' US')+gb('ca',flag('ca',11)+' CANADA')+'</span></div>'+
@@ -4612,12 +4617,19 @@ function macroRailHTML(){
   var now=Date.now(), L=fxEvList().filter(function(e){ return e.t>now-6e4&&(e.ccy==='USD'||e.ccy==='CAD')&&e.impact==='High'; }).sort(function(a,b){ return a.t-b.t; }).slice(0,8);
   return '<div class="rail-card"><div class="rail-title"><span>Next high-impact US &amp; Canada releases</span></div>'+(L.length?L.map(function(e){ return '<div class="kv"><span class="kk">'+esc(e.label)+'</span><span class="vv">'+etLabel(e.t,true)+' · <span class="countdown" data-t="'+e.t+'" data-fmt="hms">'+hmsText(e.t-now)+'</span></span></div>'; }).join(''):'<p class="note">No high-impact US or Canada release in the stored calendar.</p>')+'</div>';
 }
+/* CPI deep dive never renders blank: if the breakdown script or its data has not loaded, say so with a reload */
+function cpiCardSafe(){
+  var h=''; try{ h=window.cpiInternalsHTML?cpiInternalsHTML():''; }catch(e){ h=''; }
+  if(h) return h;
+  var why=!window.cpiInternalsHTML?'the CPI breakdown script did not load (an older copy of the page may be cached)':!(DATA.cpi_detail||DATA.cpi_detail_ca)?'the CPI category data has not loaded yet':'the breakdown could not be drawn';
+  return '<div class="tile wide" id="cpi-internals"><h2>CPI deep dive</h2><div class="cpi-gap" style="margin:6px 0 10px;padding:10px 12px;border:1px solid rgba(232,185,61,.5);background:rgba(232,185,61,.08);border-radius:8px">Not shown: '+why+'.</div><button class="cpi-dd-btn" onclick="location.reload()">Reload the desk</button></div>';
+}
 function renderMacro(){
   var P=document.getElementById('panel-macro'); if(!P||!window.DATA||!DATA.fx) return;
   if(!FXT.releases) renderFX();
   var html='<div class="layout"><div class="grid">'+macroSubnavHTML()+
     subWrap('macro','dash', macroDashHTML()+fxMacroHTML())+
-    subWrap('macro','cpi', window.cpiInternalsHTML?cpiInternalsHTML():'')+
+    subWrap('macro','cpi', cpiCardSafe())+
     subWrap('macro','cycle', (window.cycleHTML?cycleHTML():'')+(window.fedIntelHTML?fedIntelHTML():''))+
     subWrap('macro','trade', tradeFiscalHTML())+
     subWrap('macro','rel', FXT.releases||'')+
@@ -4898,16 +4910,16 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="intel-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="briefing-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="glossary.js?v="+Date.now();document.body.appendChild(f);})();</script>
-<script src="grains-ui.js"></script>
-<script src="rows-ui.js"></script>
-<script src="obs-ui.js"></script>
-<script src="swot-ui.js"></script>
-<script src="tabs-ui.js"></script>
+<script src="grains-ui.js?v=20261110c"></script>
+<script src="rows-ui.js?v=20261110c"></script>
+<script src="obs-ui.js?v=20261110c"></script>
+<script src="swot-ui.js?v=20261110c"></script>
+<script src="tabs-ui.js?v=20261110c"></script>
 <script>(function(){var f=document.createElement("script");f.src="feed-rail.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="optflow-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
-<script src="fed-ui.js"></script>
-<script src="cpi-ui.js"></script>
-<script src="health-ui.js"></script>
+<script src="fed-ui.js?v=20261110c"></script>
+<script src="cpi-ui.js?v=20261110c"></script>
+<script src="health-ui.js?v=20261110c"></script>
 <script>(function(){var f=document.createElement("script");f.src="macro-ind.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="policy-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="earnings-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
