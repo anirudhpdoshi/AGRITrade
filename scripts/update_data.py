@@ -2841,9 +2841,47 @@ def ust(D, N):
     return True
 
 
+def cpi_detail(D, N):
+    """US CPI internals by category (BLS CPI-U items; scripts/cpi_detail.py). m/m from the seasonally adjusted index, 12-month from the
+    unadjusted one, as BLS publishes them. Fetched only when a CPI release has landed that the desk does not hold yet (5 keyless BLS calls),
+    retried at most every 20 min; otherwise the stored month is kept."""
+    from cpi_detail import CPI_ITEMS
+    C = D.get("cpi_detail") or {}
+    rel = [datetime.fromisoformat(t).replace(tzinfo=TOR) for t in ((D.get("release_cal") or {}).get("us_cpi", {}).get("dates") or [])]
+    landed = [t for t in rel if t <= NOW]
+    want = None
+    if landed:
+        r = max(landed); y, m = (r.year, r.month - 1) if r.month > 1 else (r.year - 1, 12); want = f"{y}-{m:02d}"
+    if C.get("month") and (want is None or C["month"] >= want):
+        return
+    if C.get("tried") and NOW - datetime.fromisoformat(C["tried"]) < timedelta(minutes=20):
+        return
+    C["tried"] = NOW.isoformat(timespec="seconds"); D["cpi_detail"] = C
+    ids = [p + c for c, _, _ in CPI_ITEMS for p in ("CUSR0000", "CUUR0000")]
+    got = {}
+    step = 50 if BLS_KEY else 25
+    for i in range(0, len(ids), step):
+        got.update(_bls_batch(ids[i:i + step]))
+    items, month = [], None
+    for c, name, grp in CPI_ITEMS:
+        sa, nsa = dict(got.get("CUSR0000" + c) or []), dict(got.get("CUUR0000" + c) or [])
+        ks, kn = sorted(sa), sorted(nsa)
+        if len(ks) < 2:
+            continue
+        mm = [(ks[i][:7], round((sa[ks[i]] / sa[ks[i - 1]] - 1) * 100, 1)) for i in range(1, len(ks))][-13:]   # one rounding, from the published 3-decimal indexes, as BLS does (no 7.95 -> 8.0 double rounding)
+        yy = [(kn[i][:7], round((nsa[kn[i]] / nsa[kn[i - 12]] - 1) * 100, 1)) for i in range(12, len(kn))][-13:]
+        month = max(month or "", mm[-1][0])
+        items.append({"c": c, "n": name, "g": grp, "mm": [v for _, v in mm], "yy": [v for _, v in yy], "m": [d for d, _ in mm]})
+    if not items:
+        raise RuntimeError("BLS returned no CPI category series")
+    D["cpi_detail"] = {"month": month, "asof": NOW.isoformat(timespec="seconds"), "items": items,
+                       "src": "https://www.bls.gov/cpi/", "note": "CPI-U. m/m seasonally adjusted; 12-month not seasonally adjusted."}
+    print(f"  cpi_detail: {len(items)} categories for {month}")
+
+
 BLOCKS = [("seasonality_track", seasonality_track), ("expired_track", expired_track), ("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("yields_live", yields_live), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow), ("ust", ust)]
+          ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("cpi_detail", cpi_detail), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow), ("ust", ust)]
 
 
 def main():

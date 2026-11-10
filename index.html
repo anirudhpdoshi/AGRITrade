@@ -4578,7 +4578,7 @@ function renderMacro(){
   var P=document.getElementById('panel-macro'); if(!P||!window.DATA||!DATA.fx) return;
   if(!FXT.releases) renderFX();
   var html='<div class="layout"><div class="grid">'+macroSubnavHTML()+
-    subWrap('macro','dash', macroDashHTML()+fxMacroHTML())+
+    subWrap('macro','dash', macroDashHTML()+(window.cpiInternalsHTML?cpiInternalsHTML():'')+fxMacroHTML())+
     subWrap('macro','cycle', (window.cycleHTML?cycleHTML():'')+(window.fedIntelHTML?fedIntelHTML():''))+
     subWrap('macro','trade', tradeFiscalHTML())+
     subWrap('macro','rel', FXT.releases||'')+
@@ -4614,7 +4614,7 @@ var SECG={
     inputs:[['cost','Input cost summary',/input costs/i],['paths','Price paths & events',/price paths/i]]
   },
   macro:{
-    dash:[['dash','Macro dashboard',/macro dashboard/i],['allind','All indicators',/All macro indicators/]],
+    dash:[['dash','Macro dashboard',/macro dashboard/i],['cpi','CPI internals',/CPI internals/],['allind','All indicators',/All macro indicators/]],
     cycle:[['cycle','Cycle composites',/Cycle composites/],['fed','Fed policy',/Fed policy intelligence/]],
     trade:[['tf','Trade & fiscal',/Trade & fiscal/i]],
     rel:[['rel','Latest releases',/Latest releases|releases/i]]
@@ -4866,6 +4866,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="feed-rail.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="optflow-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script src="fed-ui.js"></script>
+<script src="cpi-ui.js"></script>
 <script src="health-ui.js"></script>
 <script>(function(){var f=document.createElement("script");f.src="macro-ind.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="policy-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
