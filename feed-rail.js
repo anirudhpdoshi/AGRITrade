@@ -27,7 +27,7 @@
     if (/CBOT|grains?\b|WASDE|export sales|Commitments of Traders — grains|Options open interest|fundamentals|settlements/i.test(h)) { t.corn = t.wheat = t.soybeans = 1; }
     if (g === "fx" || /USD\/CAD|Canadian dollar|\bCAD\b/.test(h)) t.fx = 1;
     if (m.k === "release" || /^macro:/.test(m.go || "") || /^\s*(US|Canada) /.test(h)) t.macro = 1;
-    if (m.k === "policy" || g === "policy" || /Federal Reserve|Bank of Canada|ECB|Bank of England|Bank of Japan|central bank/i.test(h)) t.cb = 1;
+    if (m.k === "policy" || g === "policy" || /Federal Reserve|Bank of Canada|ECB|Bank of England|Bank of Japan|central bank|\bFed\b|\bFed's|\bFOMC\b|\bBoC\b/i.test(h)) t.cb = 1;
     if (m.k === "world" || g === "world") t.world = 1;
     if (g === "briefing" || /Commons|Congress|hearing|House floor|Senate/i.test(h)) t.leg = 1;
     if (g === "earnings" || /earnings/i.test(h)) t.earn = 1;
@@ -38,8 +38,13 @@
     if (!Object.keys(t).length) t.macro = 1;
     return t;
   }
+  /* item metadata (chunk 3): when it happened vs when the desk got it, why it matters, where it came from */
+  var META = {};
+  var BREAK_H = 3;   /* "breaking" lasts 3 hours from the event, then the item is a plain entry */
   function breaking(m) {
-    var h = (m.h || "").replace(/<[^>]+>/g, " ");
+    var h = (m.h || "").replace(/<[^>]+>/g, " "), mt = META[m.id] || {};
+    if (mt.undated) return false;                                  /* no publication time: never breaking */
+    if (Date.now() - m.t > BREAK_H * 3600e3) return false;
     /* desk rule: only confirmed intraday breaks, new market-moving announcements, macro prints and central-bank decisions */
     if (day(m.t) !== day(Date.now())) return false;   /* breaking means today's (ET) news only; older items stay in the feed as plain entries */
     return m.k === "alert" || m.k === "release" || (m.k === "policy" && /statement|decision|HIKE|CUT|HOLD|minutes/i.test(h)) || /Federal Reserve: |Bank of Canada: /.test(h);
@@ -74,15 +79,37 @@
         dn = /(^|[\s(])[−-]\d/.test(t) || /\b(plunge|tumble|slump|sink|sank|drop|fall|falls|fell|decline|lower|cut|cuts|downgrade|crash|week low|lowest)/i.test(t);
     return up && !dn ? " pos" : dn && !up ? " neg" : "";
   }
+  var STOP = { the: 1, a: 1, an: 1, of: 1, in: 1, on: 1, to: 1, for: 1, and: 1, as: 1, at: 1, by: 1, with: 1, from: 1, is: 1, its: 1, after: 1, says: 1, said: 1 };
+  function words(t) { return t.toLowerCase().replace(/[^a-z0-9% ]/g, " ").split(/\s+/).filter(function (w) { return w.length > 2 && !STOP[w]; }); }
+  var CHIP = { corn: "Corn", wheat: "Wheat", soybeans: "Soybeans", fx: "USD/CAD", cb: "Central banks", energy: "Energy", metals: "Metals", earn: "Earnings", leg: "Legislation" };
+  function chips(m) { var t = m._t || (m._t = tagsOf(m)), o = [];
+    if (t.corn && t.wheat && t.soybeans) o.push("Grains"); else ["corn", "wheat", "soybeans"].forEach(function (k) { if (t[k]) o.push(CHIP[k]); });
+    ["fx", "cb", "energy", "metals", "earn", "leg"].forEach(function (k) { if (t[k]) o.push(CHIP[k]); });
+    if (!o.length && t.macro && m.k !== "wire") o.push("Macro");
+    return o.slice(0, 3).map(function (c) { return '<i class="fs-c">' + c + "</i>"; }).join(""); }
   function cardHTML(ctx) {
-    var now = Date.now(), seen = {};
+    var now = Date.now(), seen = {}, kept = [];
     var L = feed().filter(function (m) { return m.t <= now + 60000; }).slice().sort(function (a, b) { return b.t - a.t; });
-    var rows = L.map(function (m) {
-      var it = itemOf(m), key = it.txt.toLowerCase().slice(0, 80); if (!it.txt || seen[key]) return ""; seen[key] = 1;
-      var tm = day(m.t) === day(now) ? hm(m.t) : new Date(m.t).toLocaleDateString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric" }) + " " + hm(m.t);
+    /* the same story from several sources within 3 hours is one row with "+N" (FEED-05/08) */
+    L.forEach(function (m) {
+      var it = itemOf(m); if (!it.txt) return;
+      var key = it.txt.toLowerCase().slice(0, 80); if (seen[key]) return; seen[key] = 1;
+      var w = words(it.txt), nums = (it.txt.match(/\d[\d.,]*/g) || []).sort().join("|"), hit = null;
+      if (m.k === "wire" || m.k === "alert") for (var i = 0; i < kept.length && !hit; i++) { var o = kept[i]; if (o.m.k !== "wire" && o.m.k !== "alert") continue; if (Math.abs(o.m.t - m.t) > 3 * 3600e3) continue;
+        if (nums && o.nums && nums !== o.nums) continue;   /* different figures = a different print (corn vs soybean stocks), never folded */
+        var inter = w.filter(function (x) { return o.w.indexOf(x) >= 0; }).length, uni = w.length + o.w.length - inter; if (uni && inter / uni >= 0.4) hit = o; }
+      if (hit) { var ms = (META[m.id] || {}).src || it.src; if (hit.more.indexOf(ms) < 0) hit.more.push(ms); hit.n = (hit.n || 0) + 1; return; }
+      kept.push({ m: m, it: it, w: w, nums: nums, more: [] });
+    });
+    var rows = kept.map(function (K) {
+      var m = K.m, it = K.it, mt = META[m.id] || {};
+      var tm = mt.undated ? "time unknown" : day(m.t) === day(now) ? hm(m.t) : new Date(m.t).toLocaleDateString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric" }) + " " + hm(m.t);
+      var lag = mt.seen && !mt.undated && mt.seen - m.t > 10 * 60000 ? '<span class="fs-lag" title="When the desk detected it">· seen ' + hm(mt.seen) + "</span>" : "";
+      var extra = (mt.why ? '<div class="fs-why"><b>Why it matters</b> ' + esc(mt.why) + "</div>" : "") + (mt.src && m.k === "alert" ? '<div class="fs-s">Source: ' + esc(mt.src) + "</div>" : "") +
+        (K.n ? '<div class="fs-s">+' + K.n + " more report" + (K.n > 1 ? "s" : "") + " of the same story" + (K.more.length ? " (" + esc(K.more.slice(0, 3).join(", ")) + ")" : "") + "</div>" : "");
       var go = !it.url && m.go ? ' data-evgo="' + esc(m.go) + '" role="link" tabindex="0"' : "";
       var body = it.url ? '<a class="fs-t" href="' + (window.safeUrl ? safeUrl(it.url) : "#") + '" target="_blank" rel="noopener noreferrer">' + esc(it.txt) + "</a>" : '<div class="fs-t">' + esc(it.txt) + "</div>";
-      return '<li class="fs-i' + (breaking(m) ? " br" : "") + tone(m, it.txt) + (go ? " go" : "") + '"' + go + '><div class="fs-h"><b>' + esc(it.src) + "</b><span>" + tm + "</span></div>" + body + "</li>";
+      return '<li class="fs-i' + (breaking(m) ? " br" : "") + tone(m, it.txt) + (go ? " go" : "") + '"' + go + '><div class="fs-h"><b>' + esc(it.src) + "</b>" + chips(m) + "<span>" + tm + lag + "</span></div>" + body + extra + "</li>";
     }).join("");
     return '<div class="fr-head"><span class="fr-title">Feed</span><span class="fr-live" title="Time of the last live update this page received"><i></i>live · ' + (window.DESK_WIRES && DESK_WIRES.at ? hm(Date.parse(DESK_WIRES.at)) : "—") + "</span></div>" +
       '<ul class="fr-list fs">' + (rows || '<li class="fr-empty">Waiting for the first items…</li>') + "</ul>";
@@ -152,7 +179,12 @@
   function ingest(list) {
     if (!window.EVENTS || !EVENTS.log || !list) return;
     WIRE_OK = {}; list.forEach(function (a) { if (a && a.id) WIRE_OK["al|" + a.id] = 1; });
-    list.forEach(function (a) { if (a && a.id && a.head) EVENTS.log("alert", alertHTML(a), GO[a.tag] || "", "al|" + a.id, Date.parse(a.t) || Date.now()); });
+    list.forEach(function (a) {
+      if (!a || !a.id || !a.head) return;
+      var ev = Date.parse(a.mt), seen = Date.parse(a.t), t = isFinite(ev) ? ev : isFinite(seen) ? seen : null;   /* order by when it happened, not when it was detected */
+      META["al|" + a.id] = { seen: isFinite(seen) ? seen : null, why: a.why || "", src: a.src || "", undated: t == null, impact: a.impact || "" };
+      EVENTS.log("alert", alertHTML(a), GO[a.tag] || "", "al|" + a.id, t == null ? Date.parse((window.DESK_WIRES && DESK_WIRES.at) || "") || Date.now() : t);
+    });
   }
   window.addEventListener("desk:alerts", function (e) { ingest(e.detail); });
   /* newswires and official press rooms (fast lane, every ~2 min): plain items, linked to the release */
@@ -160,9 +192,10 @@
     if (!window.EVENTS || !EVENTS.log || !W || !W.items) return;
     W.items.slice(0, 80).reverse().forEach(function (x) {
       if (!x || !x.id || !x.title) return;
+      var pt = Date.parse(x.t); META["wr|" + x.id] = { undated: !isFinite(pt), src: x.src || "", tags: x.tags || [] };
       var u = /^https?:\/\//.test(x.url || "") ? x.url : "";
       EVENTS.log("wire", '<span class="fr-src">Wire</span> ' + esc(x.title) + (x.tick && x.tick.length ? " <small>(" + esc(x.tick.join(", ")) + ")</small>" : "") +
-        (u ? ' <a class="fr-lnk" href="' + (window.safeUrl ? safeUrl(u) : "#") + '" target="_blank" rel="noopener noreferrer">↗</a>' : ""), "", "wr|" + x.id, Date.parse(x.t) || Date.now());
+        (u ? ' <a class="fr-lnk" href="' + (window.safeUrl ? safeUrl(u) : "#") + '" target="_blank" rel="noopener noreferrer">↗</a>' : ""), "", "wr|" + x.id, isFinite(pt) ? pt : (Date.parse(W.at) || Date.now()));
     });
   }
   window.addEventListener("desk:wires", function (e) { wires(e.detail); paint(true); });
@@ -185,9 +218,11 @@
     ".fr-i.br{background:rgba(224,69,58,.10);border:1px solid rgba(224,69,58,.45);border-left:3px solid #e0453a;margin:6px 0}.fr-i.br .fr-h{color:#ffd9d4;font-weight:600}.fr-i.br .fr-h b{color:#fff}" +
     ".fr-bk,.fr-tbk{display:inline-block;font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#fff;background:#e0453a;border-radius:3px;padding:1px 6px;margin-bottom:4px}" +
     ".fr-src{font:700 10px 'IBM Plex Mono',monospace;color:#9fb4cf;border:1px solid var(--line2);border-radius:3px;padding:0 4px;margin-right:3px}.fr-lnk{color:#7dd8e6;text-decoration:none}" +
-    ".fs .fs-i{padding:9px 4px;border-bottom:1px solid var(--line)}.fs .fs-i.go{cursor:pointer}.fs .fs-i.br{border-left:3px solid #e0453a;padding-left:8px}.fs-h{display:flex;justify-content:space-between;gap:8px;font-size:12.5px}.fs-h b{color:#fff}.fs-h span{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint)}" +
+    ".fs .fs-i{padding:9px 4px;border-bottom:1px solid var(--line)}.fs .fs-i.go{cursor:pointer}.fs .fs-i.br{border-left:3px solid #e0453a;padding-left:8px}.fs-h{display:flex;justify-content:space-between;gap:6px;font-size:12.5px;align-items:baseline}.fs-h b{color:#fff}.fs-h span{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint)}" +
     ".fs-t{display:block;font-size:13.5px;line-height:1.45;color:#d4deea;margin-top:3px;text-decoration:none}a.fs-t:hover{color:#7dd8e6}" +
     ".fr-empty{font-size:13px;color:var(--muted);padding:10px 0}" +
+    ".fs-h b{margin-right:auto}.fs-c{font:600 9.5px 'IBM Plex Mono',monospace;font-style:normal;color:#9fb3c8;border:1px solid var(--line2);border-radius:3px;padding:0 4px;align-self:center;white-space:nowrap}.fs-lag{margin-left:4px;color:#f0a35a}" +
+    ".fs-why{font-size:12px;line-height:1.4;color:var(--muted);margin-top:4px}.fs-why b{font:700 9.5px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#e8b93d;margin-right:4px}.fs-s{font-size:11px;color:var(--faint);margin-top:2px}" +
     ".fr-mode{display:inline-flex;border:1px solid var(--line2);border-radius:12px;overflow:hidden}.fr-mode button{appearance:none;border:0;background:transparent;color:var(--muted);font:600 11px 'IBM Plex Mono',monospace;padding:3px 8px;cursor:pointer}.fr-mode button[aria-pressed=true]{background:#e0453a;color:#fff}.fr-mode button[data-frmode='0'][aria-pressed=true]{background:#13304a}" +
     ".fr-al{margin-top:4px;display:grid;gap:3px;font-size:12.5px;font-weight:400;color:#d4deea}.fr-al i{display:inline-block;min-width:96px;font:normal 600 10.5px 'IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;color:#ff9d94;margin-right:6px}.fr-al a{color:#7dd8e6}" +
     ".fs-i.pos{background:rgba(63,185,127,.14)!important}.fs-i.neg{background:rgba(224,101,95,.14)!important}" +

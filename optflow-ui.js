@@ -163,17 +163,19 @@
       var n = P.querySelector("#of-" + key); if (n) n._sig = DATA.meta.asof.optflow;
     });
   }
+  /* feed items carry the time of the data behind them (settlement / options pull), not the moment the page opened */
+  function tAt(k) { var a = DATA.meta && DATA.meta.asof && DATA.meta.asof[k], t = Date.parse(a || ""); return isFinite(t) ? t : undefined; }
   function alerts() {
     if (!window.EVENTS || !EVENTS.log || window.DESK_LOCKED) return;
     ["corn", "wheat", "soybeans"].forEach(function (key) {
       var O = DATA.optflow && DATA.optflow[key]; if (!O || !O.hist) return;
       var H = O.hist, last = H.filter(function (h) { return h.out; }).slice(-1)[0];
-      if (last && last.out.breach_close) EVENTS.log("level", "<b>" + NAME[key] + "</b> closed outside the options-implied range (" + sd(last.d) + " ±" + (last.em * 100).toFixed(1) + "¢) — " + pc(last.out.ret), key + ":deriv@#of-" + key, "ofb|" + key + "|" + last.d);
+      if (last && last.out.breach_close) EVENTS.log("level", "<b>" + NAME[key] + "</b> closed outside the options-implied range (" + sd(last.d) + " ±" + (last.em * 100).toFixed(1) + "¢) — " + pc(last.out.ret), key + ":deriv@#of-" + key, "ofb|" + key + "|" + last.d, tAt("grains_settle"));
       var PSx = O.positioning;
-      if (PSx && PSx.score != null) EVENTS.log("oi", "<b>" + NAME[key] + " options positioning: " + esc(PSx.label) + "</b> (score " + (PSx.score > 0 ? "+" : "") + PSx.score + ") · " + esc(PSx.vol_view) + (PSx.adds[0] && PSx.adds[0].d > 0 ? " · most added at " + PSx.adds[0].k.toFixed(2) + " (+" + n0(PSx.adds[0].d) + ")" : ""), key + ":deriv@#of-" + key, "ofp|" + key + "|" + (PSx.prev_date || "") + "|" + PSx.label);
-      (PSx ? PSx.strikes : []).forEach(function (x) { if (/^broken/.test(x.role)) EVENTS.log("level", "<b>" + NAME[key] + " " + x.role + " at " + x.k.toFixed(2) + "</b> — " + n0(x.coi + x.poi) + " contracts of open interest; last close crossed the strike", key + ":deriv@#of-" + key, "ofx|" + key + "|" + x.k + "|" + (O.settle_date || "")); });
+      if (PSx && PSx.score != null) EVENTS.log("oi", "<b>" + NAME[key] + " options positioning: " + esc(PSx.label) + "</b> (score " + (PSx.score > 0 ? "+" : "") + PSx.score + ") · " + esc(PSx.vol_view) + (PSx.adds[0] && PSx.adds[0].d > 0 ? " · most added at " + PSx.adds[0].k.toFixed(2) + " (+" + n0(PSx.adds[0].d) + ")" : ""), key + ":deriv@#of-" + key, "ofp|" + key + "|" + (PSx.prev_date || "") + "|" + PSx.label, tAt("options"));
+      (PSx ? PSx.strikes : []).forEach(function (x) { if (/^broken/.test(x.role)) EVENTS.log("level", "<b>" + NAME[key] + " " + x.role + " at " + x.k.toFixed(2) + "</b> — " + n0(x.coi + x.poi) + " contracts of open interest; last close crossed the strike", key + ":deriv@#of-" + key, "ofx|" + key + "|" + x.k + "|" + (O.settle_date || ""), tAt("grains_settle")); });
       var a = H[H.length - 1], b = H[H.length - 2];
-      if (a && b && a.iv && b.iv && a.iv / b.iv - 1 >= 0.1) EVENTS.log("oi", "<b>" + NAME[key] + " expected move expands</b> — near IV " + b.iv.toFixed(1) + "% → " + a.iv.toFixed(1) + "% (next-day ±" + (a.em * 100).toFixed(1) + "¢)", key + ":deriv@#of-" + key, "ofi|" + key + "|" + a.d);
+      if (a && b && a.iv && b.iv && a.iv / b.iv - 1 >= 0.1) EVENTS.log("oi", "<b>" + NAME[key] + " expected move expands</b> — near IV " + b.iv.toFixed(1) + "% → " + a.iv.toFixed(1) + "% (next-day ±" + (a.em * 100).toFixed(1) + "¢)", key + ":deriv@#of-" + key, "ofi|" + key + "|" + a.d, tAt("options"));
     });
   }
   var t = 0;
