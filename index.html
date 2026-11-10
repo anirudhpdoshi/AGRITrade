@@ -383,6 +383,8 @@ li.n-desk b{color:#ffd0cc;font-size:12.5px}
 .fwd-chip{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:700;letter-spacing:.08em;padding:2px 8px;border-radius:4px;border:1px solid;transition:color .3s,border-color .3s,background-color .3s}
 .fwd-chip.live{color:#5fd598;border-color:#2b6b4c;background:rgba(63,185,127,.12)}.fwd-chip.ref{color:#7fd3e0;border-color:#2a5d66;background:rgba(56,182,201,.1)}
 .oi-gapn{color:#f0a35a;font-weight:600}
+.ev-ctx{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px;padding:9px 40px 9px 12px;position:relative;border:1px solid rgba(232,185,61,.6);background:rgba(232,185,61,.1);border-radius:8px;font-size:13px;color:var(--text)}
+.ev-ctx-k{font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#e8b93d}.ev-ctx-w{color:#f0a35a}.ev-ctx-x{position:absolute;right:8px;top:6px;border:0;background:transparent;color:var(--muted);font-size:18px;cursor:pointer}
 .oi-chk-row{font-size:12px;color:var(--muted);margin:2px 0 6px}.oi-chk{color:#7fd6a4}.oi-chk.warn{color:#f0a35a}.oi-prev b{color:#f0a35a}
 .oi-snap-row{margin:6px 0 2px;font-size:12px;color:var(--muted)}.oi-snap{display:inline-block;font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.06em;padding:2px 7px;border-radius:4px;border:1px solid rgba(232,185,61,.55);color:#e8b93d;background:rgba(232,185,61,.1)}.oi-snap-t b{color:var(--ink)}
 .qt-src{display:block;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);margin-top:2px}
@@ -1600,6 +1602,12 @@ function fanSVG2(g, meta, FL){
   var mly=Y(L)-8; if(mly<PT+12) mly=Y(L)+16;
   s+='<text x="'+(PL+6)+'" y="'+mly.toFixed(1)+'" fill="#ff9d9d" font-size="10.5" font-weight="600" font-family="IBM Plex Mono">MARKET (delayed) '+money2(L)+' · as of '+f.intraday[1]+'</text>';
   s+='<circle cx="'+X(span)+'" cy="'+Y(L)+'" r="4" fill="#ff6b6b"/>';
+  var FE=window.FAN_EVENT; if(FE&&DATA.grains[FE.key]===g&&Date.now()-FE.at<30*60000){
+    var ed=new Date(FE.t).toLocaleDateString('en-CA',{timeZone:'America/Toronto'}), ei=-1;
+    for(var q=0;q<NH;q++) if(String(hist[q].d).slice(0,10)<=ed) ei=q;
+    if(ei>=0){ var ex=X(ei), el=new Date(FE.t).toLocaleString('en-US',{timeZone:'America/Toronto',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+      s+='<line x1="'+ex.toFixed(1)+'" y1="'+PT+'" x2="'+ex.toFixed(1)+'" y2="'+(PT+ph)+'" stroke="#e8b93d" stroke-width="1.5" stroke-dasharray="4 3"/>'+
+        '<text x="'+(ex-4).toFixed(1)+'" y="'+(PT+11)+'" text-anchor="end" fill="#e8b93d" font-size="10.5" font-weight="700" font-family="IBM Plex Mono">⚑ alert '+esc(el)+' ET</text>'; } }
   s+='</g>';
   /* right-edge label stack with de-collision (the app's algorithm):
      labels sit at their true price unless a neighbour is too close, in
@@ -4859,6 +4867,20 @@ function oiChkHTML(ds){ var c=ds&&ds._chk; if(!c) return '';
     (c.mismatch?' · stored totals ('+fmt(c.mismatch.c)+' C / '+fmt(c.mismatch.p)+' P) differed from the strikes — showing the strike totals':' · totals reconcile')+'</span>'; }
 function oiPrevText(ds){ if(ds._prev_bad) return 'no change shown: '+ds._prev_bad; var p=ds.rows_prev; if(!p||!p.date) return '';
   var n=ds._prev_sessions; return 'change vs the '+fmtShortDate(p.date)+' pull'+(n!=null?(n<=1?' (previous session)':' — <b>'+n+' sessions back</b>, not one day'):''); }
+/* ---- arriving from the feed (chunk 4, NAV-04): a banner on the destination says which alert, when, which contract;
+   it stays until closed or 30 minutes pass; the fan chart marks the alert's session ---- */
+function evCtxShow(o){ window.FAN_EVENT=o.key?{key:o.key,t:o.t,at:Date.now()}:null; window.EV_CTX=Object.assign({at:Date.now()},o);
+  if(o.key&&typeof renderGrain==='function') try{ renderGrain(o.key); }catch(e){}
+  setTimeout(evCtxPaint,340); }
+function evCtxPaint(){ var C=window.EV_CTX; document.querySelectorAll('.ev-ctx').forEach(function(x){ x.remove(); });
+  if(!C||Date.now()-C.at>30*60000) return; var P=document.getElementById('panel-'+C.tab); if(!P||!P.classList.contains('active')) return;
+  var b=document.createElement('div'); b.className='ev-ctx'; b.setAttribute('role','status');
+  b.innerHTML='<span class="ev-ctx-k">FROM THE FEED</span> <b>'+esc(C.src||'Alert')+'</b> · '+esc(new Date(C.t).toLocaleString('en-US',{timeZone:'America/Toronto',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+' ET · '+esc(C.txt||'')+
+    (C.contract?' · contract <b>'+esc(C.contract)+'</b>'+(C.shown&&C.shown!==C.contract?' <span class="ev-ctx-w">(this page shows '+esc(C.shown)+')</span>':''):'')+
+    '<button class="ev-ctx-x" aria-label="Close" onclick="window.EV_CTX=null;window.FAN_EVENT=null;this.parentNode.remove()">×</button>';
+  var anchor=P.querySelector('.grid')||P; anchor.insertBefore(b, anchor.firstChild); }
+document.addEventListener('click', function(ev){ if(ev.target.closest&&ev.target.closest('.tab-btn')&&!ev.target.closest('[data-evgo]')) setTimeout(evCtxPaint,60); });
+setInterval(function(){ var C=window.EV_CTX; if(!C) return; var P=document.getElementById('panel-'+C.tab); if(P&&P.classList.contains('active')&&!P.querySelector('.ev-ctx')) evCtxPaint(); }, 1500);   /* survives a re-render */
 function renderAll(){ try{ oiSanitize(DATA); }catch(e){} syncFronts(); renderGrain('corn'); renderGrain('wheat'); renderGrain('soybeans'); renderFX(); renderMacro(); drawDestMaps(); if(typeof paintAwaiting==='function') paintAwaiting(); }
 renderAll();
 /* speed: after the first full paint, a data refresh repaints only the tab on screen (~0.1 s instead of ~0.5 s);

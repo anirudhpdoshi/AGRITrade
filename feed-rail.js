@@ -109,7 +109,7 @@
         (K.n ? '<div class="fs-s">+' + K.n + " more report" + (K.n > 1 ? "s" : "") + " of the same story" + (K.more.length ? " (" + esc(K.more.slice(0, 3).join(", ")) + ")" : "") + "</div>" : "");
       var go = !it.url && m.go ? ' data-evgo="' + esc(m.go) + '" role="link" tabindex="0"' : "";
       var body = it.url ? '<a class="fs-t" href="' + (window.safeUrl ? safeUrl(it.url) : "#") + '" target="_blank" rel="noopener noreferrer">' + esc(it.txt) + "</a>" : '<div class="fs-t">' + esc(it.txt) + "</div>";
-      return '<li class="fs-i' + (breaking(m) ? " br" : "") + tone(m, it.txt) + (go ? " go" : "") + '"' + go + '><div class="fs-h"><b>' + esc(it.src) + "</b>" + chips(m) + "<span>" + tm + lag + "</span></div>" + body + extra + "</li>";
+      return '<li class="fs-i' + (breaking(m) ? " br" : "") + tone(m, it.txt) + (go ? " go" : "") + '"' + go + ' data-id="' + esc(m.id) + '" data-t="' + m.t + '"><div class="fs-h"><b>' + esc(it.src) + "</b>" + chips(m) + "<span>" + tm + lag + "</span></div>" + body + extra + "</li>";
     }).join("");
     return '<div class="fr-head"><span class="fr-title">Feed</span><span class="fr-live" title="Time of the last live update this page received"><i></i>live · ' + (window.DESK_WIRES && DESK_WIRES.at ? hm(Date.parse(DESK_WIRES.at)) : "—") + "</span></div>" +
       '<ul class="fr-list fs">' + (rows || '<li class="fr-empty">Waiting for the first items…</li>') + "</ul>";
@@ -159,6 +159,10 @@
     if (sig !== lastSig) { lastSig = sig; paint(true); } else paint(false);
   }
   document.addEventListener("click", function (e) {
+    var it = e.target.closest && e.target.closest(".fs-i[data-evgo]");
+    if (it && window.evCtxShow) { var id = it.getAttribute("data-id"), mt = META[id] || {}, go = it.getAttribute("data-evgo") || "", tb = go.split(/[:@]/)[0];
+      var key = /^(corn|wheat|soybeans)$/.test(tb) ? tb : null, sh = key && window.DATA && DATA.grains[key] && DATA.grains[key].fan ? (DATA.grains[key].near || {}).contract : null;
+      evCtxShow({ tab: tb, key: key, t: +it.getAttribute("data-t"), src: (it.querySelector(".fs-h b") || {}).textContent, txt: mt.txt || (it.querySelector(".fs-t") || {}).textContent, contract: mt.contract, shown: (window.DATA && key && DATA.grains[key].fan && DATA.grains[key].fan.contract) || sh }); }
     var b = e.target.closest && e.target.closest("[data-frf]"); if (b) { e.preventDefault(); e.stopPropagation(); pick[tab()] = b.getAttribute("data-frf"); paint(true); return; }
     var md = e.target.closest && e.target.closest("[data-frmode]"); if (md) { e.preventDefault(); e.stopPropagation(); ONLY = md.getAttribute("data-frmode") === "1"; try { localStorage.setItem("desk.feedall", ONLY ? "0" : "1"); } catch (x) {} paint(true); return; }
     if (e.target.closest && e.target.closest(".fr-close")) { setOpen(false); return; }
@@ -167,6 +171,14 @@
   setInterval(watch, 1000); setTimeout(watch, 800);
 
   /* alert engine (server, fast lane) -> feed, in the desk format */
+  /* chunk 4: each alert opens the card that shows its evidence */
+  function dest(a) {
+    var g = a.tag, x = ((a.head || "") + " " + (a.trigger || "")).toLowerCase();
+    if (/^(corn|wheat|soybeans)$/.test(g)) return /open interest|\bwall\b|options/.test(x) ? g + ":deriv@.oi-snap-row" : g + ':overview@[data-src="grains_quote"]';
+    if (g === "fx") return "fx:overview@#fx-spot-tile";
+    if (g === "cb") return "policy:monitor";
+    return GO[g] || "";
+  }
   var GO = { corn: "corn:overview", wheat: "wheat:overview", soybeans: "soybeans:overview", fx: "fx:overview", energy: "fx:rates", metals: "world", world: "world", cb: "policy", macro: "briefing", earn: "earnings" };
   function etHM(iso) { var t = Date.parse(iso); return isNaN(t) ? "" : hm(t) + " ET"; }
   function alertHTML(a) {
@@ -182,8 +194,9 @@
     list.forEach(function (a) {
       if (!a || !a.id || !a.head) return;
       var ev = Date.parse(a.mt), seen = Date.parse(a.t), t = isFinite(ev) ? ev : isFinite(seen) ? seen : null;   /* order by when it happened, not when it was detected */
-      META["al|" + a.id] = { seen: isFinite(seen) ? seen : null, why: a.why || "", src: a.src || "", undated: t == null, impact: a.impact || "" };
-      EVENTS.log("alert", alertHTML(a), GO[a.tag] || "", "al|" + a.id, t == null ? Date.parse((window.DESK_WIRES && DESK_WIRES.at) || "") || Date.now() : t);
+      META["al|" + a.id] = { seen: isFinite(seen) ? seen : null, why: a.why || "", src: a.src || "", undated: t == null, impact: a.impact || "", tag: a.tag, kind: a.kind,
+        contract: ((a.head || "") + " " + (a.trigger || "")).match(/\b(Z[CSWM]|KE|ZL)[FGHJKMNQUVXZ]\d{2}\b/) ? RegExp.lastMatch : "", txt: (a.head || "").replace(/^(BREAKING|PRICE ALERT) – /, "") };
+      EVENTS.log("alert", alertHTML(a), dest(a), "al|" + a.id, t == null ? Date.parse((window.DESK_WIRES && DESK_WIRES.at) || "") || Date.now() : t);
     });
   }
   window.addEventListener("desk:alerts", function (e) { ingest(e.detail); });
