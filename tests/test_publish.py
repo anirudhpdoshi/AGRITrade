@@ -10,7 +10,7 @@ refs = set(re.findall(r'src="([a-z0-9-]+\.js)', html)) | set(re.findall(r'\.src=
 refs.discard("config.js")   # written by build_site.py itself
 missing = sorted(r for r in refs if r not in files)
 # the passcode check is the sealed vault; no passcode hash may ship in the page (unsalted SHA-256 was removed Nov 10)
-if re.search(r"var HASH=|\b[0-9a-f]{64}\b", html[html.find("gateOverlay") - 2000:html.find("gateOverlay") + 8000]):
+if "gateOverlay" in html and re.search(r"var HASH=|\b[0-9a-f]{64}\b", html[html.find("gateOverlay") - 2000:html.find("gateOverlay") + 8000]):
     print("FAIL passcode hash found near the gate"); missing.append("gate-hash")
 for r in sorted(refs):
     print(("FAIL " if r in missing else "PASS ") + r)

@@ -85,7 +85,10 @@ def main():
     stamp_version()
     key = os.environ.get("FINNHUB_API_KEY", "").strip()
     pw = os.environ.get("DESK_PASSCODE", "").strip()
-    vault = seal(pw, key)
+    # Passcode gate removed (owner, Nov 11 2026). Without a passcode nothing can be sealed, and the stream key must never
+    # be published in the clear, so no vault is written: the live tick stream stays off and the desk uses its delayed feeds.
+    vault = None
+    print("::notice title=desk gate::removed - desk opens without a passcode; live stream key not published")
     (OUT / "config.js").write_text("window.DESK_VAULT=" + json.dumps(vault) + ";\n")
     # hard guard: no secret may appear in anything we publish
     secrets_ = [key, pw, os.environ.get("ALPHAVANTAGE_API_KEY", "").strip()]
