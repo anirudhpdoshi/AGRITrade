@@ -260,6 +260,46 @@ def runs_of(wf, since):
     return out
 
 
+ART = {"refresh-data.yml": ("main", "data.json"), "world-markets.yml": ("world", "world.json"), "policy-intel.yml": ("policyintel", "policy.json"),
+       "briefing.yml": ("briefing", "briefing.json"), "intel.yml": ("intel", "intel.json"), "global-grains.yml": ("ggrain", "gg.json"),
+       "us-earnings.yml": ("earnings", "earnings.json")}   # live-feed publishes every ~60 s: measured by live.json age instead
+
+
+def landed_times(wf, since):
+    """Commit times of the job's published artifact (when the data actually landed), oldest first."""
+    if wf not in ART:
+        return None
+    br, path = ART[wf]
+    try:
+        j = gh(f"/commits?sha={br}&path={path}&per_page=100&since={since.strftime('%Y-%m-%dT%H:%M:%SZ')}")
+        return sorted(P(c["commit"]["committer"]["date"]) for c in j)
+    except Exception:
+        return None
+
+
+def timeline(S, starts, tol, L, n=10, keep=True):
+    """Last n intended slots: expected time, actual start, finish, duration, result and when the data landed (US-08)."""
+    out = []
+    for s in S[-n:]:
+        m = [(t, r) for t, r in starts if timedelta(minutes=-2) <= t - s <= timedelta(minutes=tol)]
+        row = {"slot": iso(s)}
+        if not m:
+            row["result"] = "missed"
+            out.append(row)
+            continue
+        t, r = m[0]
+        st_ = P(r.get("run_started_at")) or t
+        fin = P(r["updated_at"]) if r.get("status") == "completed" else None
+        row.update(start=iso(st_), finish=iso(fin) if fin else None, dur_s=round((fin - st_).total_seconds()) if fin else None,
+                   result=(r.get("conclusion") or r.get("status") or "?"), url=r.get("html_url"), start_lag_s=round((st_ - s).total_seconds()))
+        if L is not None and fin:
+            ld = [c for c in L if st_ - timedelta(seconds=30) <= c <= fin + timedelta(minutes=3)]
+            row["landed"] = iso(ld[-1]) if ld else (None if keep else "n/a")
+            row["landed_lag_s"] = round((ld[-1] - s).total_seconds()) if ld else None
+        out.append(row)
+    return out[::-1]
+
+
 def panel_sched(A):
     t0, t1 = NOW - timedelta(hours=24), NOW - timedelta(minutes=3)
     jobs, tot = [], {"expected": 0, "ran": 0, "ok": 0, "failed": 0, "missed": 0, "late": 0, "dup": 0}
@@ -296,6 +336,17 @@ def panel_sched(A):
                 bad = bad + [{"created_at": iso(NOW), "html_url": None}]
         last = R[-1] if R else None
         nxt = _slots(wf, NOW, NOW + timedelta(days=2))
+        L = landed_times(wf, t0 - timedelta(minutes=30))
+        keep = not (L is not None and len(L) <= 1 and len(ok) > 2)   # branch is force-pushed as one commit: only the latest landing is known
+        TL = timeline(S, starts, tol, L, keep=keep)
+        if not keep:
+            extra["history_kept"] = False
+        extra["timeline"] = TL
+        if L is not None:
+            extra["published_24h"] = len([c for c in L if c >= t0]) if keep else None
+            extra["last_published"] = iso(L[-1]) if L else None
+            okr = [x for x in TL if x.get("result") == "success"]
+            extra["no_new_data"] = len([x for x in okr if x.get("landed") is None])
         st = "red" if (bad and bad[-1] is (done[-1] if done else None)) or (S and len(missed) > max(1, len(S) // 5)) else "amber" if (missed or bad or late > len(S) // 4) else "green"
         if not S and not R:
             st = "idle"
