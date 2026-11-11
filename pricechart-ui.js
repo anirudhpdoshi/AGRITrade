@@ -86,6 +86,8 @@
     var b = ev.target.closest && ev.target.closest("[data-pxc]"); if (!b) return;
     var p = b.getAttribute("data-pxc").split("|"), k = p[0], s = st(k);
     if (p[1] === "r") { s.r = p[2]; s.z = null; } else if (p[1] === "ma") s.ma[p[2]] = !s.ma[p[2]]; else if (p[1] === "v") s.v = p[2]; else if (p[1] === "reset") s.z = null;
+    /* timeframe, averages and view follow the trader across Corn / Wheat / Soybeans (zoom stays per chart) */
+    if (p[1] === "r" || p[1] === "ma" || p[1] === "v") ["corn", "wheat", "soybeans"].forEach(function (o) { if (o === k) return; var t = st(o); t.r = s.r; t.ma = JSON.parse(JSON.stringify(s.ma)); t.v = s.v; if (p[1] === "r") t.z = null; try { mount(o); } catch (e) {} });
     save(); mount(k);
   });
   /* crosshair + tooltip; drag to zoom */

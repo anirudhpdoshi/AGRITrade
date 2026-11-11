@@ -4740,7 +4740,7 @@ var GTITLE={corn:'Corn · ZCZ26',wheat:'Wheat · ZWZ26',soybeans:'Soybeans · ZS
 
 /* ---------- left-panel collapse, knowledge bank, per-menu guide ---------- */
 var NAVSHUT={}, NAVMIN=false, KBON=false;
-try{ NAVSHUT=JSON.parse(localStorage.getItem('desk.navshut')||'{}')||{}; NAVMIN=localStorage.getItem('desk.navmin')==='1'; KBON=localStorage.getItem('desk.kb')==='1'; }catch(e){}
+try{ NAVSHUT=JSON.parse(localStorage.getItem('desk.navshut')||'{}')||{}; NAVMIN=localStorage.getItem('desk.navmin')!=='0'; KBON=localStorage.getItem('desk.kb')==='1'; }catch(e){}
 document.body.classList.toggle('nav-min', NAVMIN); document.body.classList.toggle('kb-on', KBON);
 function kbSwitchHTML(){ return '<button class="kb-sw" data-kbsw role="switch" aria-checked="'+KBON+'" title="Show a plain-language explanation on every card"><i></i><span>Knowledge bank</span><b>'+(KBON?'ON':'OFF')+'</b></button>'; }
 function kbBox(e){
@@ -5025,8 +5025,10 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="optflow-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script src="fed-ui.js?v=20261110c"></script>
 <script src="cpi-ui.js?v=20261110c"></script>
-<script src="pricechart-ui.js?v=20261110d"></script>
+<script src="pricechart-ui.js?v=20261110e"></script>
 <script src="narrative-ui.js?v=20261110a"></script>
+<script src="macro-table.js?v=20261110a"></script>
+<script src="nav-ui.js?v=20261110a"></script>
 <script src="health-ui.js?v=20261110d"></script>
 <script>(function(){var f=document.createElement("script");f.src="macro-ind.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="policy-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
