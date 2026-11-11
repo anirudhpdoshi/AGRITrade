@@ -29,20 +29,32 @@
     if (!worker()) return Promise.resolve(null);
     return fetch(worker() + "/search?q=" + encodeURIComponent(q)).then(function (r) { return r.json(); }).then(function (j) { return j.results || []; });
   }
+  /* the company record must be the one asked for (guards against a mixed-up or cached reply) */
+  function co_ok(co, t) { if (!co) return false; var k = String(t).toUpperCase(); return String(co.ticker || "").toUpperCase() === k || (co.tickers || []).map(function (x) { return String(x).toUpperCase(); }).indexOf(k) >= 0; }
+  /* switching company cancels every request still in flight for the previous one */
+  function cancelAll(keep) { Object.keys(MEM).forEach(function (k) { var m = MEM[k]; if (k !== keep && m && m.loading) { try { m.ac && m.ac.abort(); } catch (e) {} delete MEM[k]; } }); }
   function load(t) {
     if (MEM[t] && (MEM[t].M || MEM[t].loading)) return;
-    MEM[t] = { loading: true };
+    var ac = typeof AbortController === "function" ? new AbortController() : null, sig = ac ? { signal: ac.signal } : {};
+    MEM[t] = { loading: true, ac: ac, t0: Date.now() };
     if (!worker()) { MEM[t] = { err: "nowk" }; return; }
-    var a = fetch(worker() + "/company?t=" + encodeURIComponent(t)).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || r.status); return j; }); });
-    var b = fetch(worker() + "/prices?r=5y&t=" + encodeURIComponent(t)).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    var a = fetch(worker() + "/company?t=" + encodeURIComponent(t), sig).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || r.status); return j; }); });
+    var b = fetch(worker() + "/prices?r=5y&t=" + encodeURIComponent(t), sig).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
     Promise.all([a, b]).then(function (x) {
+      if (MEM[t] && MEM[t].ac !== ac) return;   /* superseded or cancelled: never paint a stale reply */
+      if (!co_ok(x[0], t)) { MEM[t] = { err: "the reply was for a different company (" + esc(x[0] && x[0].ticker) + ")" }; rerender(); return; }
       var co = x[0], M = E.build(co); MEM[t] = { co: co, M: M, P: x[1], V: E.verdicts(M, x[1]), at: new Date().toISOString() }; rerender();
-    }).catch(function (e) { MEM[t] = { err: String(e.message || e) }; rerender(); });
+    }).catch(function (e) { if (e && e.name === "AbortError") return; if (MEM[t] && MEM[t].ac !== ac) return; MEM[t] = { err: String(e.message || e) }; rerender(); });
   }
 
   /* ---------------- CSS ---------------- */
   var css = document.createElement("style");
-  css.textContent =
+  css.textContent = ".co-skel{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--panel)}.co-skh{margin-bottom:10px;font-size:15px}.co-skt{color:var(--muted);font-size:12.5px;margin-left:6px}" +
+    ".co-skg{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}.co-skc{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}.co-skc.wide{grid-column:1/-1}" +
+    ".co-skl{font:700 11px 'IBM Plex Sans',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}" +
+    ".co-skc .sk{display:block;height:14px;border-radius:5px;background:linear-gradient(90deg,rgba(255,255,255,.05) 25%,rgba(255,255,255,.13) 37%,rgba(255,255,255,.05) 63%);background-size:400% 100%;animation:coSk 1.3s ease infinite}" +
+    ".co-skc .sk:nth-child(2){width:70%}.co-skc .sk:nth-child(3){width:85%}.co-skc .sk.ch{height:140px}@keyframes coSk{0%{background-position:100% 50%}100%{background-position:0 50%}}" +
+    "@media (prefers-reduced-motion:reduce){.co-skc .sk{animation:none}}" +
     ".cx-prs{border:1px solid rgba(224,69,58,.55);border-left:4px solid #e0453a;background:rgba(224,69,58,.08);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:13px}.cx-prs small{color:var(--muted)}.cx-prs a{color:#7dd8e6}.cx-new.old,.cx-prs.old{border-color:var(--line2);border-left-color:#38b6c9;background:var(--panel2)}.cx-new.old .cx-new-b,.cx-prs.old .cx-new-b{background:#38b6c9;color:#06222a}.cx-new{border:1px solid rgba(224,69,58,.6);border-left:4px solid #e0453a;background:rgba(224,69,58,.09);border-radius:10px;padding:12px 14px;margin-bottom:12px}.cx-new-h{font-weight:700;font-size:14px}.cx-new-b{display:inline-block;font:700 10.5px \"IBM Plex Mono\",monospace;letter-spacing:.1em;background:#e0453a;color:#fff;border-radius:3px;padding:1px 6px;margin-right:6px}.cx-new-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:8px}.cx-new .lab{font:600 10.5px \"IBM Plex Mono\",monospace;text-transform:uppercase;color:var(--muted)}.cx-new .m{font:600 20px \"IBM Plex Mono\",monospace}.cx-new .n{font-size:12.5px;color:var(--muted)}.cx-new .pos{color:#3fb97f}.cx-new .neg{color:#ff8a84}.cx-h{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:4px}.cx-h h2{margin:0}.cx-sub{font-size:12.5px;color:var(--muted)}" +
     ".cx-part{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:16px 0 6px}" +
     ".cx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:10px}" +
@@ -927,10 +939,17 @@
   var CARDS = { snap: snapCard, verdicts: verdictCard, health: healthCard, revenue: revenueCard, gross: grossCard, operating: operatingCard, eps: epsCard, cfo: cfoCard, fcf: fcfCard,
     "wc-ar": arCard, "wc-inv": invCard, "wc-ap": apCard, "wc-ccc": cccCard, capex: capexCard, alloc: allocCard, debt: debtCard, costdebt: costCard, maturity: maturityCard, service: serviceCard,
     matrix: matrixCard, liq: liqCard, returns: returnsCard, lev: levCard, eff: effCard, warn: warnCard, "val-snap": vsnapCard, "val-scn": vscnCard, "val-pe": vpeCard, "val-rx": vrxCard };
+  /* every new company opens on animated placeholders, one per section — never the previous company's numbers */
+  function skeleton(t) {
+    var sec = [["Company profile", 2], ["Price & valuation", 3], ["Revenue & profitability", 3], ["Cash flow", 3], ["Balance sheet", 3], ["Financial verdicts", 4], ["Historical charts", 0]];
+    return '<div class="co-skel" aria-busy="true" aria-label="Loading ' + esc(t) + '"><div class="co-skh"><b>' + esc(t) + '</b> <span class="co-skt">Loading filings and prices for ' + esc(t) + "…</span></div>" +
+      '<div class="co-skg">' + sec.map(function (x) { return '<div class="co-skc' + (x[1] ? "" : " wide") + '"><div class="co-skl">' + x[0] + "</div>" +
+        (x[1] ? new Array(x[1] + 1).join('<i class="sk"></i>') : '<i class="sk ch"></i>') + "</div>"; }).join("") + "</div></div>";
+  }
   function html(t) {
     if (!worker()) return '<div class="tile"><h2>Company research</h2><div class="ue-ph">Live search needs the AGRITrade SEC Worker. Once it is deployed, open the desk once with <code>?worker=https://&lt;name&gt;.workers.dev</code> — the address is remembered in this browser.</div></div>';
     var D = MEM[t]; if (!D) { load(t); D = MEM[t]; }
-    if (D.loading) return '<div class="tile"><h2>' + esc(t) + '</h2><div class="usm-skg" aria-label="Loading"><i></i><i></i><i></i><i></i></div><p class="note">Loading latest filings for ' + esc(t) + "…</p></div>";
+    if (D.loading) return skeleton(t);
     if (D.err) return '<div class="tile"><h2>' + esc(t) + '</h2><div class="unreach">⚠ Could not load ' + esc(t) + " <small>— " + esc(D.err) + '</small></div><button class="ue-btn" data-coretry="' + esc(t) + '" style="margin-top:8px">Try again</button></div>';
     if (!D.M.quarters.length) return '<div class="tile"><h2>' + esc(t) + '</h2><div class="ue-ph">' + esc(D.co.name) + " has no US-GAAP quarterly figures in SEC XBRL" + (D.co.ifrs ? " (it files under IFRS)" : "") + ".</div></div>";
     return card && CARDS[card] ? CARDS[card](D.M, D.V) : grid(D.M, D.V);
@@ -948,5 +967,5 @@
     var a = parts[1].split(":"), st = SCN[tk]; if (!st) return;
     var c = st.cases.filter(function (x) { return x.id === a[0]; })[0], v = parseFloat(el.value); if (c && isFinite(v)) { c[a[1]] = v; rerender(); }
   });
-  window.COMPANY = { html: html, search: search, configured: function () { return !!worker(); }, reset: function () { card = null; }, _mem: MEM };
+  window.COMPANY = { html: html, search: search, configured: function () { return !!worker(); }, reset: function (keep) { card = null; cancelAll(keep); }, retry: function (t) { delete MEM[t]; rerender(); }, _mem: MEM };
 })();

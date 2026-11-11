@@ -662,6 +662,8 @@
   setInterval(function () { if (!document.hidden) poll(true, !P.classList.contains("active")); }, 300000); setTimeout(function () { poll(true, !P.classList.contains("active")); }, 4000);
   window.addEventListener("desk:unlock", function () { if (P.classList.contains("active")) poll(true); });
   window.EARNINGS = { render: render, poll: poll, choose: choose, _view: function () { return V; },
+    /* explicit company switch from the US Markets search: no confirmation step, previous company cancelled first */
+    switchTo: function (s, name, ex) { V.pend = { s: s, name: name || "", ex: ex || "" }; V.lock = true; V.sel = s; V.view = "company"; q = ""; ask = null; if (window.COMPANY) COMPANY.reset(); save(); render(); },
     lockTo: function (s) { if (V.lock && V.sel && V.sel !== s) { choose(s); return; } V.pend = V.pend && V.pend.s === s ? V.pend : { s: s, name: "", ex: "" }; V.lock = true; V.sel = s; V.view = "company"; q = ""; if (window.COMPANY) COMPANY.reset(); save(); render(); }, _market: function () { return M; }, _data: function () { return J; } };
   render();
 })();

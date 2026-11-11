@@ -11,7 +11,8 @@
     ["positioning", "Positioning / OI", ["grains"], "Open interest, CFTC funds, options, volatility"],
     ["macro", "Macro", ["macro", "fx", "treasury", "world"], "Macro table, CPI, USD/CAD, Treasury, world markets"],
     ["events", "Events", ["events"], "Today's and upcoming releases"],
-    ["intel", "Intelligence", ["intel", "policy", "earnings"], "Global intel, central banks, US earnings"],
+    ["intel", "Intelligence", ["intel", "policy"], "Global intel, central banks and policy"],
+    ["usm", "US Markets", ["earnings"], "Market overview, stock search, company analysis, earnings calendar"],
     ["health", "Health", ["health"], "Data, API and scheduler health"]
   ];
   var LAST = {}; try { LAST = JSON.parse(localStorage.getItem("desk.gnav") || "{}") || {}; } catch (e) {}
@@ -35,6 +36,9 @@
   var chips = doc.createElement("div"); chips.id = "gsub"; chips.className = "gsub"; chips.setAttribute("aria-label", "Sections of this page");
   tabs.parentNode.insertBefore(chips, tabs.nextSibling);
   function paintChips(p) {
+    var X = root.GNAV_CHIPS && GNAV_CHIPS[p];
+    if (X) { var XL = X.list(), xh = XL.map(function (x) { return '<button type="button" class="gsub-b" data-gx="' + p + "|" + x[0] + '" aria-pressed="' + !!x[2] + '">' + x[1] + "</button>"; }).join("");
+      if (chips.innerHTML !== xh) chips.innerHTML = xh; chips.hidden = false; return; }
     var P = doc.getElementById("panel-" + p), seen = {}, L = [];
     if (P) [].forEach.call(P.querySelectorAll(".tn-h[data-sub]"), function (h) { var id = h.getAttribute("data-sub"); if (seen[id]) return; seen[id] = 1; L.push([id, h.getAttribute("data-name") || id, h.classList.contains("md-dot")]); });
     if (L.length < 2) { chips.innerHTML = ""; chips.hidden = true; return; }
@@ -42,6 +46,7 @@
     if (chips.innerHTML !== h) chips.innerHTML = h; chips.hidden = false;
   }
   chips.addEventListener("click", function (ev) {
+    var x = ev.target.closest("[data-gx]"); if (x) { var xq = x.getAttribute("data-gx").split("|"); if (root.GNAV_CHIPS && GNAV_CHIPS[xq[0]]) GNAV_CHIPS[xq[0]].go(xq[1]); setTimeout(paint, 40); return; }
     var b = ev.target.closest("[data-gsub]"); if (!b) return; var q = b.getAttribute("data-gsub").split("|"), P = doc.getElementById("panel-" + q[0]);
     var t = P && (P.querySelector('.subbtn[data-sub="' + q[1] + '"]') || P.querySelector('.tn-h[data-sub="' + q[1] + '"]'));
     if (t) t.click(); else if (root.setSub) setSub(q[0], q[1]);
