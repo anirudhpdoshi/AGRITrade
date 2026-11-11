@@ -110,6 +110,12 @@
     var D = dedupe(rows).filter(function (r) { return !r.s && Math.abs(days(r.e, e)) <= 6; }).sort(function (a, b) { return a.d < b.d ? 1 : -1; });
     return D[0] ? { v: D[0].v, st: "REPORTED", src: D[0], how: "period-end balance as filed" } : null;
   }
+  /* revenue: companies such as ADM file both a total ("Revenues") and a subset (contract revenue under ASC 606, $6.6B
+     against $22.3B total). Take the largest tag for the period so the subset is never shown as total revenue. */
+  function pickMax(facts, tags, fn) {
+    var best = null; tags.forEach(function (t) { var rows = unitRows(facts, t); if (!rows) return; var r = fn(rows); if (r && (!best || Math.abs(r.v) > Math.abs(best.v))) { r.tag = t; best = r; } });
+    return best;
+  }
   function pick(facts, tags, fn) {
     for (var i = 0; i < tags.length; i++) { var rows = unitRows(facts, tags[i]); if (!rows) continue; var r = fn(rows); if (r) { r.tag = tags[i]; return r; } }
     return null;
@@ -133,7 +139,7 @@
     ends = ends.slice(-N);
     var Q = ends.map(function (e, i) {
       var pe = i > 0 ? ends[i - 1] : null, row = { end: e, fl: fiscalLabel(e, co.fiscalYearEnd), m: {} };
-      Object.keys(DUR).forEach(function (k) { var r = pick(F, DUR[k], function (rows) { return quarterFromTag(rows, e, pe, SHARES[k] ? "shares" : PER_SHARE[k]); }); if (r) row.m[k] = r; });
+      Object.keys(DUR).forEach(function (k) { var r = (k === "rev" ? pickMax : pick)(F, DUR[k], function (rows) { return quarterFromTag(rows, e, pe, SHARES[k] ? "shares" : PER_SHARE[k]); }); if (r) row.m[k] = r; });
       Object.keys(INST).forEach(function (k) { var r = pick(F, INST[k], function (rows) { return instantAt(rows, e); }); if (r) row.m[k] = r; });
       return row;
     });
@@ -195,8 +201,8 @@
   function annual(F, fye) {
     var out = {};
     ["rev", "gp", "opinc", "ni", "cfo", "capex", "eps_d"].forEach(function (k) {
-      DUR[k].some(function (tag) { var rows = unitRows(F, tag); if (!rows) return false; var A = annualFromTag(rows); if (!A.length) return false;
-        A.forEach(function (r) { var y = fiscalLabel(r.e, fye).fy; (out[y] = out[y] || { fy: y, end: r.e, m: {} }).m[k] = { v: r.v, st: "REPORTED", tag: tag, src: r }; }); return true; });
+      DUR[k][k === "rev" ? "forEach" : "some"](function (tag) { var rows = unitRows(F, tag); if (!rows) return false; var A = annualFromTag(rows); if (!A.length) return false;
+        A.forEach(function (r) { var y = fiscalLabel(r.e, fye).fy, o = (out[y] = out[y] || { fy: y, end: r.e, m: {} }); if (k === "rev" && o.m.rev && Math.abs(o.m.rev.v) >= Math.abs(r.v)) return; o.m[k] = { v: r.v, st: "REPORTED", tag: tag, src: r }; }); return true; });
     });
     var L = Object.keys(out).sort().map(function (y) { return out[y]; });
     L.forEach(function (a) { if (a.m.cfo && a.m.capex) a.m.fcf = { v: a.m.cfo.v - a.m.capex.v, st: "CALCULATED", how: "CFO − capex" }; });

@@ -33,6 +33,7 @@
   function co_ok(co, t) { if (!co) return false; var k = String(t).toUpperCase(); return String(co.ticker || "").toUpperCase() === k || (co.tickers || []).map(function (x) { return String(x).toUpperCase(); }).indexOf(k) >= 0; }
   /* switching company cancels every request still in flight for the previous one */
   function cancelAll(keep) { Object.keys(MEM).forEach(function (k) { var m = MEM[k]; if (k !== keep && m && m.loading) { try { m.ac && m.ac.abort(); } catch (e) {} delete MEM[k]; } }); }
+  function ping(t) { delete READY[t]; try { window.dispatchEvent(new CustomEvent("desk:company", { detail: t })); } catch (e) {} }
   function load(t) {
     if (MEM[t] && (MEM[t].M || MEM[t].loading)) return;
     var ac = typeof AbortController === "function" ? new AbortController() : null, sig = ac ? { signal: ac.signal } : {};
@@ -43,8 +44,8 @@
     Promise.all([a, b]).then(function (x) {
       if (MEM[t] && MEM[t].ac !== ac) return;   /* superseded or cancelled: never paint a stale reply */
       if (!co_ok(x[0], t)) { MEM[t] = { err: "the reply was for a different company (" + esc(x[0] && x[0].ticker) + ")" }; rerender(); return; }
-      var co = x[0], M = E.build(co); MEM[t] = { co: co, M: M, P: x[1], V: E.verdicts(M, x[1]), at: new Date().toISOString() }; rerender();
-    }).catch(function (e) { if (e && e.name === "AbortError") return; if (MEM[t] && MEM[t].ac !== ac) return; MEM[t] = { err: String(e.message || e) }; rerender(); });
+      var co = x[0], M = E.build(co); MEM[t] = { co: co, M: M, P: x[1], V: E.verdicts(M, x[1]), at: new Date().toISOString() }; rerender(); ping(t);
+    }).catch(function (e) { if (e && e.name === "AbortError") return; if (MEM[t] && MEM[t].ac !== ac) return; MEM[t] = { err: String(e.message || e) }; rerender(); ping(t); });
   }
 
   /* ---------------- CSS ---------------- */
@@ -967,5 +968,21 @@
     var a = parts[1].split(":"), st = SCN[tk]; if (!st) return;
     var c = st.cases.filter(function (x) { return x.id === a[0]; })[0], v = parseFloat(el.value); if (c && isFinite(v)) { c[a[1]] = v; rerender(); }
   });
-  window.COMPANY = { html: html, search: search, configured: function () { return !!worker(); }, reset: function (keep) { card = null; cancelAll(keep); }, retry: function (t) { delete MEM[t]; rerender(); }, _mem: MEM };
+  /* section tabs for the US Markets search bar: grey skeleton while loading, green once that section has data */
+  var GROUPS = [["snap", "Overview", ["snap"]], ["verdicts", "Verdicts", ["verdicts", "warn"]], ["growth", "Revenue & margins", ["revenue", "gross", "operating", "eps"]],
+    ["cash", "Cash flow", ["cfo", "fcf", "capex", "alloc"]], ["wc", "Working capital", ["wc-ar", "wc-inv", "wc-ap", "wc-ccc"]], ["bs", "Balance sheet & debt", ["debt", "costdebt", "maturity", "service", "liq", "lev"]],
+    ["ratios", "Ratios & KPIs", ["matrix", "returns", "eff", "health"]], ["val", "Valuation", ["val-snap", "val-pe", "val-rx", "val-scn"]]];
+  var READY = {};
+  /* a section "has data" when its headline value is filled (not "—"); cards without a headline need a figure outside placeholders */
+  function hasData(h) { if (!h) return false; var m = /class="big">([^<]*)/.exec(h); if (m) return !!m[1].trim() && m[1].trim() !== "—";
+    var t = h.replace(/<div class="(ue-ph|unreach)"[\s\S]*?<\/div>/g, "").replace(/<[^>]+>/g, " "); return /[$%]\s?\d|\d\s?(%|x|d\b)|\d\.\d/.test(t); }
+  function status(t) {
+    var D = MEM[t]; if (!D || D.loading) return { state: "loading", groups: GROUPS.map(function (g) { return { id: g[0], label: g[1], first: g[2][0], ready: null }; }) };
+    if (D.err) return { state: "err", err: D.err, groups: [] };
+    var R = READY[t] || (READY[t] = {});
+    return { state: "ready", at: D.at, groups: GROUPS.map(function (g) {
+      if (R[g[0]] === undefined) { var ok = null; g[2].some(function (k) { try { var h = CARDS[k] && CARDS[k](D.M, D.V); if (hasData(h)) { ok = k; return true; } } catch (e) {} return false; }); R[g[0]] = ok; }
+      return { id: g[0], label: g[1], first: R[g[0]] || g[2][0], ready: !!R[g[0]] }; }) };
+  }
+  window.COMPANY = { status: status, show: function (key) { card = key || null; rerender(); }, html: html, search: search, configured: function () { return !!worker(); }, reset: function (keep) { card = null; cancelAll(keep); }, retry: function (t) { delete MEM[t]; delete READY[t]; rerender(); }, _mem: MEM };
 })();

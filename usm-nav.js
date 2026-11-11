@@ -102,6 +102,17 @@
       wire(bar);
     }
     var L = locked(), ctx = doc.getElementById("usmXc");
+    /* section tabs above the search: skeleton while the company loads, green once each section has data */
+    var tb = doc.getElementById("usmXt");
+    if (!tb) { tb = doc.createElement("div"); tb.id = "usmXt"; tb.className = "ux-tabs"; bar.insertBefore(tb, bar.firstChild); }
+    var th = "";
+    if (L && root.COMPANY && COMPANY.status) {
+      var st = COMPANY.status(L), cur = view().view === "company";
+      th = '<span class="ux-tl">' + esc(L) + (st.state === "loading" ? ' <i class="ux-spin"></i>' : st.state === "err" ? ' <span class="ux-err">load failed</span> <button class="ue-btn" data-coretry="' + esc(L) + '">Retry</button>' : "") + "</span>" +
+        st.groups.map(function (g) { var c = g.ready === null ? "sk" : g.ready ? "ok" : "na";
+          return '<button type="button" class="ux-tb ' + c + '" data-uxtab="' + esc(g.first) + '"' + (c === "sk" ? ' disabled aria-busy="true"' : c === "na" ? ' title="No figures for this section in the company\'s SEC filings"' : ' title="Open ' + esc(g.label) + '"') + ">" + esc(g.label) + "</button>"; }).join("");
+    }
+    if (tb.innerHTML !== th) tb.innerHTML = th; tb.hidden = !th;
     if (L) u.setAttribute("data-co", L); else u.removeAttribute("data-co");
     var h = L ? 'Company: <b>' + esc(L) + "</b> " + esc(nameOf(L)) + ' <button class="ue-btn" data-uxmode="company">Open analysis</button> <button class="ux-star" data-uxsave="' + esc(L) + '" aria-pressed="' + (saved().indexOf(L) >= 0) + '">' + (saved().indexOf(L) >= 0 ? "★ Saved" : "☆ Save") + "</button>" +
         (root.ELOCK ? ' <button class="ue-btn ux-elk" data-ellock="' + esc(L) + '" data-eln="' + esc(nameOf(L)) + '" aria-pressed="' + lockedE(L) + '">' + (lockedE(L) ? "🔔 Locked for earnings" : "🔕 Lock for earnings") + "</button>" : "")
@@ -132,6 +143,7 @@
     var b = t.closest("[data-uxpick]"); if (b) { open({ s: b.getAttribute("data-uxpick"), n: b.getAttribute("data-uxn"), x: b.getAttribute("data-uxx") }); return; }
     b = t.closest("[data-uxsave]"); if (b) { ev.stopPropagation(); toggleSave(b.getAttribute("data-uxsave")); paintDD(); return; }
     b = t.closest("[data-uxmode]"); if (b) { setMode(b.getAttribute("data-uxmode")); return; }
+    b = t.closest("[data-uxtab]"); if (b && !b.disabled) { setMode("company"); if (root.COMPANY && COMPANY.show) COMPANY.show(b.getAttribute("data-uxtab")); setTimeout(function () { var m = doc.querySelector("#panel-earnings .ut-main"); if (m) m.scrollIntoView({ block: "start", behavior: "smooth" }); }, 80); return; }
     if (t.closest("[data-uxretry]")) { search(Q.q); return; }
     /* anything inside the tracker that opens a company also means Company Analysis */
     if (t.closest("[data-usmopen],[data-utswitch],[data-utlock]")) setTimeout(function () { if (locked()) { mode = "company"; try { localStorage.setItem(MK, mode); } catch (e) {} } paint(); if (root.GNAV) GNAV.paint(); }, 60);
@@ -156,6 +168,11 @@
     ".ux-msg{padding:10px;color:var(--muted);font-size:13px}.ux-err{color:var(--red)}.ux-spin{display:inline-block;width:12px;height:12px;border:2px solid var(--line2);border-top-color:var(--cyan);border-radius:50%;margin-right:8px;vertical-align:-2px;animation:uxs .8s linear infinite}@keyframes uxs{to{transform:rotate(360deg)}}" +
     ".ux-lists{display:grid;grid-template-columns:1fr 1fr;gap:12px}.ux-h{font:700 11px 'IBM Plex Sans',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:4px 8px 4px}.ux-h small{text-transform:none;letter-spacing:0;font-weight:500}.ux-none{color:var(--muted);font-size:12.5px;margin:4px 8px}" +
     ".ux-page{flex:1 1 100%;order:10;box-sizing:border-box}" +
+    ".ux-tabs{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.ux-tabs[hidden]{display:none}.ux-tl{font:700 13px 'IBM Plex Mono',monospace;color:#fff;margin-right:4px;display:inline-flex;align-items:center;gap:6px}" +
+    ".ux-tb{appearance:none;font:600 12.5px 'IBM Plex Sans',sans-serif;border-radius:999px;padding:5px 12px;border:1px solid var(--line2);background:transparent;color:var(--muted);cursor:pointer}" +
+    ".ux-tb.ok{color:#d9f7e8;background:rgba(63,185,127,.18);border-color:rgba(63,185,127,.75)}.ux-tb.ok:hover{background:rgba(63,185,127,.3)}.ux-tb.na{opacity:.45;cursor:default}" +
+    ".ux-tb.sk{color:var(--faint);cursor:progress;background:linear-gradient(90deg,rgba(255,255,255,.05) 25%,rgba(255,255,255,.14) 37%,rgba(255,255,255,.05) 63%);background-size:400% 100%;animation:coSk 1.3s ease infinite;position:relative}@keyframes coSk{0%{background-position:100% 50%}100%{background-position:0 50%}}" +
+    "@media (prefers-reduced-motion:reduce){.ux-tb.sk{animation:none}}" +
     "#usmB [data-usmcat=c4],#usmB [data-usmcat=c6],#usmB [data-usmcat=c9],#usmWlB{display:none!important}#usm[data-mode=company]:not([data-co]) .usm-d{display:none!important}.ux-lk{background:none;border:0;cursor:pointer;font-size:14px;padding:0 8px;opacity:.55}.ux-lk[aria-pressed=true]{opacity:1}.ux-elk[aria-pressed=true]{border-color:#e8b93d;color:#e8b93d}" +
     "#usm[data-mode=company] #usmWlB{display:none!important}#usm[data-mode=search] #usmC,#usm[data-mode=search] #usmB,#usm[data-mode=search] .usm-d,#usm[data-mode=company] #usmC,#usm[data-mode=company] #usmB,#usm[data-mode=calendar] #usmC,#usm[data-mode=calendar] #usmB,#usm[data-mode=calendar] .usm-d{display:none!important}" +
     "@media (max-width:760px){.ux-lists{grid-template-columns:1fr}.ux-ex{display:none}.ux-in{flex-basis:100%}}";
@@ -165,6 +182,7 @@
     if (ready()) { paint(); if (mode !== "overview") setMode(mode); if (root.GNAV) GNAV.paint(); root.addEventListener("desk:earnboard", paint); return; }
     if (n > 0) setTimeout(function () { boot(n - 1); }, 400);
   })(60);
+  root.addEventListener("desk:company", function () { paint(); });
   doc.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("[data-ellock],[data-elunlock]")) setTimeout(function () { paint(); paintDD(); }, 30); });
   root.USMNAV = { mode: function () { return mode; }, setMode: setMode, open: open, paint: paint, _q: Q };
 })(window);
