@@ -1,0 +1,14 @@
+name: dbg (temporary)
+on: { push: { branches: [wk-check] } }
+jobs:
+  f:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          W=https://agritrade-sec.anirudh-p-doshi.workers.dev; O="Origin: https://anirudhpdoshi.github.io"
+          curl -s -H "$O" "$W/health"; echo
+          curl -s -H "$O" "$W/filings?t=TDG" | head -c 400; echo
+          A=$(curl -s -H "$O" "$W/filings?t=TDG" | python3 -c "import json,sys;print(json.load(sys.stdin)['releases'][0]['accn'])")
+          curl -s -H "$O" "$W/exhibit?t=TDG&acc=$A" | python3 -c "import json,sys;j=json.load(sys.stdin);print('exhibit',j.get('url'),len(j.get('html','')),j.get('error'))"
+          curl -s -H "$O" "$W/search?q=adm" | head -c 200; echo
+          curl -s -H "$O" "$W/company?t=ADM" | head -c 150; echo
