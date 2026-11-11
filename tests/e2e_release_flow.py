@@ -66,7 +66,7 @@ async def main():
             await pg.route("**/data.json*", lambda r: r.fulfill(status=200, content_type="application/json", body=data))
             await pg.goto(f"http://127.0.0.1:{PORT}/index.html")
             await pg.wait_for_timeout(1200)
-            await pg.evaluate("document.getElementById('gateOverlay').style.display='none';document.body.classList.remove('locked');window.DESK_LOCKED=false;window.dispatchEvent(new Event('desk:unlock'));0")
+            await pg.evaluate("var g=document.getElementById('gateOverlay'); if(g) g.style.display='none';document.body.classList.remove('locked');window.DESK_LOCKED=false;window.dispatchEvent(new Event('desk:unlock'));0")
             await pg.wait_for_timeout(1500)
             await pg.evaluate("window.DESK_LOCKED=false;0")
             await pg.evaluate(SETUP + "(" + json.dumps(EVENTS) + ")")

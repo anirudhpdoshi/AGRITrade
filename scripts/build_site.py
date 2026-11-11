@@ -91,9 +91,7 @@ def main():
     print("::notice title=desk gate::removed - desk opens without a passcode; live stream key not published")
     (OUT / "config.js").write_text("window.DESK_VAULT=" + json.dumps(vault) + ";\n")
     # hard guard: no secret may appear in anything we publish
-    secrets_ = [key, pw, os.environ.get("ALPHAVANTAGE_API_KEY", "").strip()]
-    if pw:   # nor any plain hash of the passcode
-        secrets_ += [hashlib.sha256(pw.encode()).hexdigest(), hashlib.sha1(pw.encode()).hexdigest(), hashlib.md5(pw.encode()).hexdigest()]
+    secrets_ = [key, os.environ.get("ALPHAVANTAGE_API_KEY", "").strip()]   # passcode no longer used (gate removed)
     for s in filter(None, secrets_):
         for p in OUT.rglob("*"):
             if p.is_file() and s in p.read_text(errors="ignore"):
