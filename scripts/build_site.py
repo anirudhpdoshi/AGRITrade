@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "_site"
-FILES = ["index.html", "live.js", "direct.js", "motion.js", "fwd.js", "world-ui.js", "kb.js", "gg-ui.js", "events-ui.js", "fed-ui.js", "cpi-ui.js", "pricechart-ui.js", "health-ui.js", "intel-ui.js", "policy-ui.js", "briefing-ui.js", "glossary.js", "season.js", "feed-rail.js", "grains-ui.js", "rows-ui.js", "obs-ui.js", "swot-ui.js", "tabs-ui.js", "optflow-ui.js", "macro-ind.js", "earnings-ui.js", "tracker-ui.js", "treasury-ui.js", "co-engine.js", "company-ui.js", "world-paths.json", "data.json"]
+FILES = ["index.html", "live.js", "direct.js", "motion.js", "fwd.js", "world-ui.js", "kb.js", "gg-ui.js", "events-ui.js", "fed-ui.js", "cpi-ui.js", "pricechart-ui.js", "narrative-ui.js", "health-ui.js", "intel-ui.js", "policy-ui.js", "briefing-ui.js", "glossary.js", "season.js", "feed-rail.js", "grains-ui.js", "rows-ui.js", "obs-ui.js", "swot-ui.js", "tabs-ui.js", "optflow-ui.js", "macro-ind.js", "earnings-ui.js", "tracker-ui.js", "treasury-ui.js", "co-engine.js", "company-ui.js", "world-paths.json", "data.json"]
 
 
 def b64(b):
