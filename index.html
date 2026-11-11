@@ -1068,7 +1068,7 @@ table.pi-tab td{vertical-align:top}table.pi-tab small{display:block;color:var(--
 </style>
 </head>
 <body class="locked">
-<!-- owner passcode gate · SHA-256 of the passcode only (no plain text) · re-locks after 20 min idle -->
+<!-- owner passcode gate · the passcode must decrypt the sealed vault (config.js: PBKDF2 600k + AES-256-GCM); no passcode hash is published · re-locks after 20 min idle -->
 <style>
 body.locked{overflow:hidden}
 body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-select:none}
@@ -1095,7 +1095,6 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
 <script>
 (function(){
   "use strict";
-  var HASH="5d7c5b4e5343d38fe8c3de0956bce9d031848ed6373d05ee6110cc87811347bf";
   var IDLE_MS=20*60*1000, KEY="deskGateAt", ACT="deskGateActive";
   var ov=document.getElementById("gateOverlay"), lk=document.getElementById("gateLockBtn"),
       inp=document.getElementById("gateInput"), btn=document.getElementById("gateBtn"),
@@ -1117,28 +1116,26 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
     document.body.classList.remove("locked"); ov.style.display="none"; lk.style.display="block"; err.textContent="";
     try{ window.dispatchEvent(new Event("desk:unlock")); }catch(e){}
   }
-  /* unseal browser keys (config.js, written only by the publishing job) with the passcode just entered */
+  /* the passcode check: it must decrypt the vault (authenticated, so a wrong passcode fails); the stream key comes out with it */
   async function unseal(pw){
-    var V=window.DESK_VAULT; if(!V||V.v!==1||!crypto.subtle) return;
+    var V=window.DESK_VAULT; if(!V||V.v!==1||!window.crypto||!crypto.subtle) return null;
     try{
       var d=function(s){ return Uint8Array.from(atob(s), function(c){ return c.charCodeAt(0); }); };
       var base=await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
       var k=await crypto.subtle.deriveKey({name:"PBKDF2", salt:d(V.salt), iterations:V.iter, hash:"SHA-256"}, base, {name:"AES-GCM", length:256}, false, ["decrypt"]);
       var pt=await crypto.subtle.decrypt({name:"AES-GCM", iv:d(V.iv), additionalData:new TextEncoder().encode("desk-vault-v1")}, k, d(V.ct));
-      var o=JSON.parse(new TextDecoder().decode(pt));
-      if(window.LIVE_CONFIG && o.finnhub) window.LIVE_CONFIG.finnhubKey=o.finnhub;
-      window.dispatchEvent(new Event("desk:keys"));
-    }catch(e){ /* wrong vault / tampered: stay on the keyless feeds */ }
+      return JSON.parse(new TextDecoder().decode(pt));
+    }catch(e){ return false; }
   }
-  async function sha(t){ var b=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)); return Array.from(new Uint8Array(b)).map(function(x){ return x.toString(16).padStart(2,"0"); }).join(""); }
   document.getElementById("gateBox").addEventListener("submit", async function(e){
     e.preventDefault();
     if(Date.now()<coolUntil){ err.textContent="Too many attempts — wait "+Math.ceil((coolUntil-Date.now())/1000)+" s."; return; }
     var v=inp.value.trim(); if(!v) return;
-    btn.disabled=true;
-    var ok=(await sha(v))===HASH;
-    btn.disabled=false;
-    if(ok){ fails=0; unlock(); unseal(v); }
+    btn.disabled=true; err.textContent="Checking…";
+    var o=await unseal(v);
+    btn.disabled=false; err.textContent="";
+    if(o===null){ err.textContent="Desk passcode is not configured on this site (sealed vault missing) — it stays locked."; return; }
+    if(o){ fails=0; unlock(); if(window.LIVE_CONFIG && o.finnhub) window.LIVE_CONFIG.finnhubKey=o.finnhub; if(o.finnhub){ try{ window.dispatchEvent(new Event("desk:keys")); }catch(e){} } }
     else { fails++; inp.value=""; err.textContent="Incorrect passcode."+(fails>=5?" Locked for 30 s.":""); if(fails>=5){ coolUntil=Date.now()+30000; fails=0; } }
   });
   lk.addEventListener("click", function(){ lock("manual"); });
