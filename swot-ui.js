@@ -127,7 +127,7 @@
     var up = R.upcoming.filter(function (r) { return V.f === "both" || r.cty === V.f; }), push = rows.filter(function (r) { return r.fx === "Up pressure"; }).length, dn = rows.filter(function (r) { return r.fx === "Down pressure"; }).length;
     return '<div class="tile wide sw-win" id="sw-us"><h2>US Brief - SWOT <span class="h2note">USD/CAD up = CAD weaker · fed from the current dataset</span></h2>' +
       '<div class="sw-ctl"><span>Filter</span>' + seg("data-sw-f", [["both", "US + Canada"], ["us", "US only"], ["ca", "Canada only"]], V.f) + "<span>Horizon</span>" + seg("data-sw-h", [["day", "Day"], ["week", "Week"], ["month", "Month"]], V.h) + "</div>" +
-      '<table class="cf-tbl sw-tbl"><thead><tr><th>Driver (latest print)</th><th>US GDP</th><th>Canada GDP</th><th>USD/CAD</th><th>Commodity</th><th>Bucket</th></tr></thead><tbody>' + tb + "</tbody></table>" +
+      '<div class="tbl-scroll"><table class="cf-tbl sw-tbl"><thead><tr><th>Driver (latest print)</th><th>US GDP</th><th>Canada GDP</th><th>USD/CAD</th><th>Commodity</th><th>Bucket</th></tr></thead><tbody>' + tb + "</tbody></table></div>" +
       (up.length ? '<div class="sw-up"><b>Upcoming, tagged only when the actual prints:</b> ' + up.map(function (u) { return esc(u.label); }).join(" · ") + "</div>" : "") +
       '<div class="obs-box"><b>OBSERVATIONS</b><ul><li>' + push + " of " + rows.length + " rows push USD/CAD up (CAD weaker) and " + dn + " push it down.</li>" + (up[0] ? "<li>Next test: " + esc(up[0].label) + "; rows re-tag when the actual prints, never before.</li>" : "") + "</ul></div></div>";
   }

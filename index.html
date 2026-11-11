@@ -219,8 +219,8 @@ details.rail-card{background:var(--panel);border:1px solid var(--line);border-ra
 details.rail-card>summary{cursor:pointer;padding:13px 15px;list-style:none}
 details.rail-card>summary::-webkit-details-marker{display:none}
 details.rail-card>summary:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
-.rail-title{font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:8px;align-items:baseline}
-.rail-title .hint{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--cyan);font-weight:500;white-space:nowrap}
+.rail-title{font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.rail-title .hint{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--cyan);font-weight:500;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 details.rail-card .hint-open{display:none}
 details.rail-card[open ] .hint-open{display:inline}
 details.rail-card[open ] .hint-closed{display:none}
@@ -387,7 +387,7 @@ li.n-desk b{color:#ffd0cc;font-size:12.5px}
 .ev-ctx-k{font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#e8b93d}.ev-ctx-w{color:#f0a35a}.ev-ctx-x{position:absolute;right:8px;top:6px;border:0;background:transparent;color:var(--muted);font-size:18px;cursor:pointer}
 .oi-chk-row{font-size:12px;color:var(--muted);margin:2px 0 6px}.oi-chk{color:#7fd6a4}.oi-chk.warn{color:#f0a35a}.oi-prev b{color:#f0a35a}
 .oi-snap-row{margin:6px 0 2px;font-size:12px;color:var(--muted)}.oi-snap{display:inline-block;font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.06em;padding:2px 7px;border-radius:4px;border:1px solid rgba(232,185,61,.55);color:#e8b93d;background:rgba(232,185,61,.1)}.oi-snap-t b{color:var(--ink)}
-.qt-src{display:block;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);margin-top:2px}
+.qt-src{display:block;overflow-wrap:anywhere;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);margin-top:2px}
 .fwd-chip.delayed{color:#e8c069;border-color:#6e5a2a}.fwd-chip.stale{color:#f0a35a;border-color:#7a5224;background:rgba(232,163,61,.12)}
 .fwd-chip.down{color:#ff9d97;border-color:#7a3a36;background:rgba(224,101,95,.12)}.fwd-chip.closed{color:#9aa8bb;border-color:#34445a;background:#121c2c}
 .fwd-dim .fwd-chart svg{opacity:.55;transition:opacity .4s}.fwd-chart svg{transition:opacity .4s}
@@ -1770,7 +1770,7 @@ function exportTileHTML(key){
     : '';
   return '<div class="tile wide" data-src="exports"><h2>'+flag('us',15)+' Export Sales — 10-week trend <span class="h2note">weekly net sales · current marketing year</span></h2>'+
     '<div class="es-head"><div class="k">Latest release · week ending '+fmtDate(latest[0])+' · released '+fmtDate(latest[1])+'</div>'+
-    '<div class="es-big">Latest actual (w/e '+fmtShortDate(latest[0])+'): '+fmtFullMT(latest[2])+' <span class="chip '+chipCls+'">'+verdict+'</span></div>'+
+    '<div class="es-big">Latest actual (w/e '+fmtShortDate(latest[0])+'): '+fmtFullMT(latest[2])+(verdict?' <span class="chip '+chipCls+'">'+verdict+'</span>':'')+'</div>'+
     '<p class="read" style="margin-top:4px">'+vline+'</p></div>'+ consBlock +
     '<p class="trendline-note">Trendline: start '+fmtFullMT(tl[1])+' (w/e '+fmtShortDate(weeks[0][0])+') → end '+fmtFullMT(tl[2])+' (w/e '+fmtShortDate(latest[0])+') · '+fmtTrendSlope(tl[0])+'</p>'+
     '<div class="legend"><span><span class="sw" style="background:#3fb97f"></span>Actual above range</span><span><span class="sw" style="background:#38b6c9"></span>Inside range</span><span><span class="sw" style="background:#e0655f"></span>Below range</span><span><span class="sw" style="background:#4b6584"></span>No estimate</span><span><span class="sw" style="background:transparent;border:1px dashed #8494ab"></span>Consensus range</span><span>\u25C7 Consensus midpoint</span><span><span class="sw" style="background:#b18cff"></span>Trendline</span></div>'+
@@ -4368,7 +4368,7 @@ function fxReleasesHTML(){
     .filter(function(x){ return x.t; }).sort(function(a,b){ return b.t-a.t; });
   var body=L.slice(0,RELN).map(function(x){ var m=x.m, t=new Date(x.t), days=Math.floor((now-x.t)/864e5), H=(m.hist24||m.history).slice(-8);
     var C=typeof consensusFor==='function'?consensusFor(m):null, cons=C&&C.consensus!=null?C.consensus:null;
-    var r={unit:m.unit==='K'?'K':'%', dec:m.dec, consensus:x.waiting?null:cons, target:/cpi|pce|trim|median/.test(m.key)?2:null, history:H};
+    var r={unit:m.unit==='K'?'K':'%', dec:m.dec, consensus:x.waiting?null:cons, target:/cpi|pce|trim|median/.test(m.key)?2:null, target_label:m.group==='ca'?'BoC 2% target':'Fed 2% target', history:H};
     var diff=cons!=null&&!x.waiting?m.value-cons:null, better=diff!=null&&(m.good==='down'?diff<0:diff>0), inl=diff!=null&&Math.abs(diff)<Math.pow(10,-m.dec)/2;
     return '<div class="rel mk-click" data-mkey="'+m.key+'" role="button" tabindex="0" title="Click for the full history — chart or table">'+
       '<div class="rel-when"><span class="rel-date">'+t.toLocaleString('en-US',{timeZone:'America/Toronto',weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET</span><span class="rel-ago">'+(days<=0?'today':days===1?'yesterday':days+' days ago')+'</span><span class="chip inline">'+(m.group==='us'?'USD':'CAD')+'</span> '+flagCcy(m.group==='us'?'USD':'CAD',14)+'</div>'+
@@ -4623,7 +4623,7 @@ function renderFX(){
     '<div class="kv"><span class="kk">Fed funds target</span><span class="vv">'+(function(){ var f=/(\d{3})-(\d{3})/.exec(fx.policy.fed_range||''); return f?fmt(f[1]/100,2)+'\u2013'+fmt(f[2]/100,2)+'%':esc(fx.policy.fed_range); })()+'</span></div>'+corRows+
     '<div class="kv"><span class="kk">BoC overnight (current)</span><span class="vv">'+fmt(fx.policy.corra_now,2)+'%'+(fx.policy.boc_decided&&fx.policy.corra_date===fx.policy.boc_decided.date?' <span class="sl-k">\u00b7 from the '+fmtShortDate(fx.policy.corra_date)+' statement</span>':'')+'</span></div>'+
     '<div class="stamp">Fed probabilities '+(fx.policy.fed_range&&/NY Fed/.test(fx.policy.fed_range)?'computed '+asOf('policy',true)+' from CBOT fed funds futures + NY Fed effective rate (FedWatch-style)':'pulled '+asOf('policy',true))+
-      ' \u00b7 CORRA futures (3-month, Montreal Exchange) '+(fx.policy.corra_asof?'as of '+esc(fmtDate(fx.policy.corra_asof))+(fx.policy.corra_asof.length>10?' '+tHM(fx.policy.corra_asof):''):'date unknown')+(fx.policy.corra_asof?'<span class="qt-age" data-age="'+esc(fx.policy.corra_asof)+'" data-age-max="30000"></span>':'')+' \u00b7 delayed quote, refreshed once each weekday (8:23 ET) \u00b7 implied rate = 100 \u2212 price \u00b7 futures-implied, not forecasts</div></div>';
+      ' \u00b7 CORRA futures (3-month, Montreal Exchange) '+(fx.policy.corra_asof?'as of '+esc(fmtDate(String(fx.policy.corra_asof).slice(0,10)))+(fx.policy.corra_asof.length>10?' '+tHM(fx.policy.corra_asof):''):'date unknown')+(fx.policy.corra_asof?'<span class="qt-age" data-age="'+esc(fx.policy.corra_asof)+'" data-age-max="30000"></span>':'')+' \u00b7 delayed quote, refreshed once each weekday (8:23 ET) \u00b7 implied rate = 100 \u2212 price \u00b7 futures-implied, not forecasts</div></div>';
   /* positioning & sentiment */
   T.cftc=fxCftcHTML();
   T.sentiment='<div class="tile" data-src="sentiment" data-src2="fxopt"><h2>Retail sentiment &amp; FX options</h2>'+
@@ -5012,14 +5012,14 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="fwd.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="world-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="gg-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
-<script>(function(){var f=document.createElement("script");f.src="events-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
+<script>(function(){var f=document.createElement("script");f.src="events-ui.js?v=20261110z"+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="intel-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="briefing-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="glossary.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script src="grains-ui.js?v=20261110c"></script>
 <script src="rows-ui.js?v=20261110c"></script>
 <script src="obs-ui.js?v=20261110c"></script>
-<script src="swot-ui.js?v=20261110c"></script>
+<script src="swot-ui.js?v=20261110z"></script>
 <script src="tabs-ui.js?v=20261110c"></script>
 <script>(function(){var f=document.createElement("script");f.src="feed-rail.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="optflow-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
