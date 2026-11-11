@@ -2969,7 +2969,7 @@ def grain_long(D, N):
     Refreshed once per day after the close (or when missing)."""
     G = D.get("grain_long") or {}
     today = datetime.now(TOR).date().isoformat()
-    if G.get("day") == today and datetime.now(TOR).hour < 15 or (G.get("day") == today and G.get("after_close")):
+    if G.get("other") and (G.get("day") == today and datetime.now(TOR).hour < 15 or (G.get("day") == today and G.get("after_close"))):
         return
     out = {}
     for k, sym in GRAIN_YF.items():
