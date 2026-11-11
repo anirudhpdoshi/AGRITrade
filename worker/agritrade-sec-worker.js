@@ -10,6 +10,9 @@
      /company?t=ADM           SEC submissions (identity, SIC, fiscal year-end, filings) + all US-GAAP XBRL facts from
                               10-Q/10-K filings, last ~5 years
      /prices?t=ADM&r=5y       Yahoo daily closes (r = 1y default, 2y, 5y, 10y, max) for the ticker and the S&P 500
+     /filings?t=ADM           the company's earnings-release 8-Ks (Item 2.02), newest first, with SEC acceptance time
+                              (fresh: 60 s cache) — the desk polls this only for the up-to-3 stocks a user locks for earnings
+     /exhibit?t=ADM&acc=…     that 8-K's press release (exhibit 99.1) as HTML, scripts and styles removed (cached 1 day)
      /health                  {ok:true}
 
    SEC fair-access policy: every request names a contact in the User-Agent, and SEC allows ≤10 requests/second; a
@@ -118,6 +121,43 @@ async function company(req, t) {
   }, 200, 3600);
 }
 
+async function getText(url, ttl) {
+  const r = await fetch(url, { headers: { "User-Agent": CONTACT, "Accept-Encoding": "gzip, deflate" }, cf: { cacheTtl: ttl, cacheEverything: true, cacheTtlByStatus: { "200-299": ttl, "400-599": 0 } } });
+  if (!r.ok) throw new Error(`${new URL(url).host} HTTP ${r.status}`);
+  return r.text();
+}
+async function hitFor(t) {
+  t = (t || "").trim().toUpperCase();
+  return (await tickers()).find((x) => x.ticker === t) || null;
+}
+async function filings8k(req, t) {
+  const hit = await hitFor(t);
+  if (!hit) return json(req, { error: `${t} is not in SEC's list of US-listed companies` }, 404);
+  const cik = String(hit.cik).padStart(10, "0");
+  const sub = await getJSON(`https://data.sec.gov/submissions/CIK${cik}.json`, 60);
+  const rf = sub.filings && sub.filings.recent ? sub.filings.recent : {}, out = [];
+  for (let i = 0; i < (rf.form || []).length && out.length < 12; i++) {
+    if (rf.form[i] !== "8-K" || !String(rf.items[i] || "").includes("2.02")) continue;
+    out.push({ filed: rf.filingDate[i], accepted: (rf.acceptanceDateTime || [])[i] || null, period: rf.reportDate[i], accn: rf.accessionNumber[i], items: rf.items[i] || "",
+      url: `https://www.sec.gov/Archives/edgar/data/${hit.cik}/${rf.accessionNumber[i].replace(/-/g, "")}/${rf.primaryDocument[i]}` });
+  }
+  return json(req, { ticker: hit.ticker, name: sub.name || hit.name, exchange: hit.exchange, cik, fiscalYearEnd: sub.fiscalYearEnd, releases: out,
+    source: `https://data.sec.gov/submissions/CIK${cik}.json`, fetched_at: new Date().toISOString() }, 200, 60);
+}
+async function exhibit(req, t, acc) {
+  const hit = await hitFor(t);
+  if (!hit) return json(req, { error: `${t} is not in SEC's list of US-listed companies` }, 404);
+  if (!/^\d{10}-\d{2}-\d{6}$/.test(acc || "")) return json(req, { error: "bad accession number" }, 400);
+  const base = `https://www.sec.gov/Archives/edgar/data/${hit.cik}/${acc.replace(/-/g, "")}/`;
+  const idx = await getJSON(base + "index.json", 86400);
+  const names = ((idx.directory && idx.directory.item) || []).map((i) => i.name).filter((n) => /\.html?$/i.test(n));
+  const pick = names.find((n) => /ex-?99[._-]?0?1|ex991|exhibit991|ex99/i.test(n));
+  if (!pick) return json(req, { error: "no exhibit 99.1 in this filing", files: names.slice(0, 20) }, 404);
+  let html = await getText(base + pick, 86400);
+  html = html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<img[^>]*>/gi, "").slice(0, 900000);
+  return json(req, { ticker: hit.ticker, accn: acc, url: base + pick, html, fetched_at: new Date().toISOString() }, 200, 86400);
+}
+
 async function prices(req, t, rng) {
   t = (t || "").trim().toUpperCase().replace(/[^A-Z0-9.^-]/g, "");
   rng = ["1y", "2y", "5y", "10y", "max"].includes(rng) ? rng : "1y";
@@ -142,6 +182,8 @@ export default {
       if (u.pathname === "/search") return await search(req, u.searchParams.get("q"));
       if (u.pathname === "/company") return await company(req, u.searchParams.get("t"));
       if (u.pathname === "/prices") return await prices(req, u.searchParams.get("t"), u.searchParams.get("r"));
+      if (u.pathname === "/filings") return await filings8k(req, u.searchParams.get("t"));
+      if (u.pathname === "/exhibit") return await exhibit(req, u.searchParams.get("t"), u.searchParams.get("acc"));
       return json(req, { error: "unknown route", routes: ["/search?q=", "/company?t=", "/prices?t=&r=", "/health"] }, 404);
     } catch (e) {
       return json(req, { error: String(e && e.message || e) }, 502, 30);

@@ -411,23 +411,17 @@ def main():
     a = ap.parse_args()
     now = datetime.now(timezone.utc)
 
+    # On demand (owner, Nov 10 2026): no per-stock refresh. No watchlist quotes/profiles, no S&P 500 list or schedule —
+    # only the single market-wide earnings-calendar call (dates and published estimates, looked up for the stocks a user locks).
     wl = json.load(open(WATCHLIST))
-    symbols = [s.strip().upper() for s in wl.get("symbols", []) if s.strip()]
-    names = [n.strip() for n in wl.get("names", []) + a.add.split(",") if n.strip()]
+    symbols, names = [], [n.strip() for n in a.add.split(",") if n.strip()]
 
     state = {} if a.dry_run and os.environ.get("EARN_NO_PREV") else load_prev()
     comps = state.get("companies") or {}
     resolved = state.get("resolved") or {}
     usage = ledger_today(state.get("usage"), now)
 
-    sched_prev = state.get("sp_schedule")
-    try:
-        spl = sp500(state.get("sp500"), now)
-        sched = sp_schedule(sched_prev, spl["rows"], now)
-    except Exception as e:
-        print("S&P 500 schedule unavailable:", type(e).__name__, str(e)[:100])
-        spl, sched = state.get("sp500"), sched_prev
-    sched_new = sched is not sched_prev
+    spl, sched, sched_new = None, None, False   # S&P 500 list and Nasdaq schedule: no longer loaded (on demand)
     calls = plan(state, symbols, names, now, a.force, a.force_profile)
     if a.calendar_only:
         calls = [c for c in calls if c[0] == "earnings-calendar"]

@@ -21,6 +21,7 @@
   function locked() { var v = view(); return v.lock && v.sel ? v.sel : null; }
   function recent() { return getL(RK) || []; }
   function saved() { var a = getL(SK); if (a) return a; var J = root.EARNINGS && EARNINGS._data && EARNINGS._data(); return (J && J.watchlist || []).slice(); }
+  function lockedE(s) { return !!(root.ELOCK && ELOCK.state().syms.indexOf(s) >= 0); }
   function remember(h) { var r = recent().filter(function (x) { return x.s !== h.s; }); r.unshift({ s: h.s, n: h.n || "", x: h.x || "" }); setL(RK, r.slice(0, 8)); }
   function toggleSave(s) { var a = saved(), i = a.indexOf(s); if (i >= 0) a.splice(i, 1); else a.push(s); setL(SK, a); try { if (root.USM) USM.go(USM_cat()); } catch (e) {} paint(); }
   function USM_cat() { try { return localStorage.getItem("desk.usmCat") || "c1"; } catch (e) { return "c1"; } }
@@ -59,7 +60,7 @@
     if (!quiet) {
       if (m === "overview") { if (USM_cat() === "c6") USM.go("c1"); }
       else if (m === "company") { USM.go("c6"); var sb = doc.querySelector('#usmSub [data-usmsub="intel"]'); if (sb && sb.getAttribute("aria-pressed") !== "true") sb.click(); if (locked()) EARNINGS.lockTo(locked()); }
-      else if (m === "calendar") { USM.go("c6"); var cb = doc.querySelector('#usmSub [data-usmsub="cal"]'); if (cb && cb.getAttribute("aria-pressed") !== "true") cb.click(); }
+      else if (m === "calendar") { if (root.EARNINGS && EARNINGS.poll) EARNINGS.poll(true); }
       else if (m === "search") { setTimeout(function () { var i = doc.getElementById("usmX"); if (i) i.focus(); }, 30); }
     }
     paint(); if (root.GNAV) GNAV.paint();
@@ -71,7 +72,8 @@
     var on = i >= 0 && i === Q.i;
     return '<div class="ux-r' + (on ? " on" : "") + '" role="option" aria-selected="' + on + '"><button class="ux-pick" data-uxpick="' + esc(h.s) + '" data-uxn="' + esc(h.n) + '" data-uxx="' + esc(h.x) + '">' +
       '<b class="ux-t">' + esc(h.s) + '</b><span class="ux-n">' + esc(h.n || nameOf(h.s) || "") + "</span>" + (h.x ? '<span class="ux-x">' + esc(h.x) + "</span>" : "") + "</button>" +
-      (star !== false ? '<button class="ux-star" data-uxsave="' + esc(h.s) + '" aria-pressed="' + sv + '" title="' + (sv ? "Remove from saved companies" : "Save company") + '">' + (sv ? "★" : "☆") + "</button>" : "") + "</div>";
+      (star !== false ? '<button class="ux-star" data-uxsave="' + esc(h.s) + '" aria-pressed="' + sv + '" title="' + (sv ? "Remove from saved companies" : "Save company") + '">' + (sv ? "★" : "☆") + "</button>" : "") +
+      (root.ELOCK ? '<button class="ux-lk" data-ellock="' + esc(h.s) + '" data-eln="' + esc(h.n || nameOf(h.s) || "") + '" aria-pressed="' + lockedE(h.s) + '" title="Lock for today\'s earnings (max ' + ELOCK.MAX + ')">' + (lockedE(h.s) ? "🔔" : "🔕") + "</button>" : "") + "</div>";
   }
   function listsHTML() {
     var R = recent(), S = saved();
@@ -100,9 +102,14 @@
       wire(bar);
     }
     var L = locked(), ctx = doc.getElementById("usmXc");
-    var h = L ? 'Company: <b>' + esc(L) + "</b> " + esc(nameOf(L)) + ' <button class="ue-btn" data-uxmode="company">Open analysis</button> <button class="ux-star" data-uxsave="' + esc(L) + '" aria-pressed="' + (saved().indexOf(L) >= 0) + '">' + (saved().indexOf(L) >= 0 ? "★ Saved" : "☆ Save") + "</button>"
-      : '<span class="ux-none">No company selected — market data is shown for the whole market.</span>';
+    if (L) u.setAttribute("data-co", L); else u.removeAttribute("data-co");
+    var h = L ? 'Company: <b>' + esc(L) + "</b> " + esc(nameOf(L)) + ' <button class="ue-btn" data-uxmode="company">Open analysis</button> <button class="ux-star" data-uxsave="' + esc(L) + '" aria-pressed="' + (saved().indexOf(L) >= 0) + '">' + (saved().indexOf(L) >= 0 ? "★ Saved" : "☆ Save") + "</button>" +
+        (root.ELOCK ? ' <button class="ue-btn ux-elk" data-ellock="' + esc(L) + '" data-eln="' + esc(nameOf(L)) + '" aria-pressed="' + lockedE(L) + '">' + (lockedE(L) ? "🔔 Locked for earnings" : "🔕 Lock for earnings") + "</button>" : "")
+      : '<span class="ux-none">' + (mode === "company" ? "Search a company above to open its analysis." : "No company selected — market data is shown for the whole market.") + "</span>";
     if (ctx.innerHTML !== h) ctx.innerHTML = h;
+    var kc = doc.getElementById("usmK");
+    if (mode === "calendar" && root.USMCAL) { if (!kc) { var w = doc.createElement("div"); w.innerHTML = USMCAL.html(); kc = w.firstChild; kc.classList.add("ux-page"); bar.after(kc); } }
+    else if (kc) kc.remove();
     var sp = doc.getElementById("usmXs");
     if (mode === "search") { if (!sp) { sp = doc.createElement("section"); sp.id = "usmXs"; sp.className = "usm-card ux-page"; bar.after(sp); } sp.innerHTML = '<h3>Stock search</h3><p class="ux-none" style="margin:0 0 10px">Type a ticker or company name above. Picking a company opens Company Analysis; index, sector and earnings data stay market-wide.</p>' + listsHTML(); }
     else if (sp) sp.remove();
@@ -149,7 +156,8 @@
     ".ux-msg{padding:10px;color:var(--muted);font-size:13px}.ux-err{color:var(--red)}.ux-spin{display:inline-block;width:12px;height:12px;border:2px solid var(--line2);border-top-color:var(--cyan);border-radius:50%;margin-right:8px;vertical-align:-2px;animation:uxs .8s linear infinite}@keyframes uxs{to{transform:rotate(360deg)}}" +
     ".ux-lists{display:grid;grid-template-columns:1fr 1fr;gap:12px}.ux-h{font:700 11px 'IBM Plex Sans',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:4px 8px 4px}.ux-h small{text-transform:none;letter-spacing:0;font-weight:500}.ux-none{color:var(--muted);font-size:12.5px;margin:4px 8px}" +
     ".ux-page{flex:1 1 100%;order:10;box-sizing:border-box}" +
-    "#usm[data-mode=company] #usmWlB{display:none!important}#usm[data-mode=search] #usmC,#usm[data-mode=search] #usmB,#usm[data-mode=search] .usm-d,#usm[data-mode=company] #usmC,#usm[data-mode=company] #usmB,#usm[data-mode=calendar] #usmC{display:none!important}" +
+    "#usmB [data-usmcat=c4],#usmB [data-usmcat=c6],#usmB [data-usmcat=c9],#usmWlB{display:none!important}#usm[data-mode=company]:not([data-co]) .usm-d{display:none!important}.ux-lk{background:none;border:0;cursor:pointer;font-size:14px;padding:0 8px;opacity:.55}.ux-lk[aria-pressed=true]{opacity:1}.ux-elk[aria-pressed=true]{border-color:#e8b93d;color:#e8b93d}" +
+    "#usm[data-mode=company] #usmWlB{display:none!important}#usm[data-mode=search] #usmC,#usm[data-mode=search] #usmB,#usm[data-mode=search] .usm-d,#usm[data-mode=company] #usmC,#usm[data-mode=company] #usmB,#usm[data-mode=calendar] #usmC,#usm[data-mode=calendar] #usmB,#usm[data-mode=calendar] .usm-d{display:none!important}" +
     "@media (max-width:760px){.ux-lists{grid-template-columns:1fr}.ux-ex{display:none}.ux-in{flex-basis:100%}}";
   doc.head.appendChild(css);
 
@@ -157,5 +165,6 @@
     if (ready()) { paint(); if (mode !== "overview") setMode(mode); if (root.GNAV) GNAV.paint(); root.addEventListener("desk:earnboard", paint); return; }
     if (n > 0) setTimeout(function () { boot(n - 1); }, 400);
   })(60);
-  root.USMNAV = { mode: function () { return mode; }, setMode: setMode, open: open, _q: Q };
+  doc.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("[data-ellock],[data-elunlock]")) setTimeout(function () { paint(); paintDD(); }, 30); });
+  root.USMNAV = { mode: function () { return mode; }, setMode: setMode, open: open, paint: paint, _q: Q };
 })(window);

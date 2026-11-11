@@ -63,7 +63,7 @@
       var id = b.getAttribute("data-gnav"), on = id === g, kids = (G.filter(function (x) { return x[0] === id; })[0] || [0, 0, []])[2];
       b.setAttribute("aria-current", on ? "page" : "false");
       var any = function (c) { return kids.some(function (k) { var e = btn(k); return e && e.classList.contains(c); }); };
-      b.classList.toggle("md-dot", id !== "positioning" && any("md-dot")); b.classList.toggle("tab-today", id !== "positioning" && any("tab-today"));
+      b.classList.toggle("md-dot", id !== "positioning" && (any("md-dot") || (id === "usm" && !!(root.ELOCK && ELOCK.hasFresh())))); b.classList.toggle("tab-today", id !== "positioning" && any("tab-today"));
       var ttl = kids.map(function (k) { var e = btn(k); return e && e.title; }).filter(Boolean).join(" · "); b.title = ttl ? (G.filter(function (x) { return x[0] === id; })[0][3] + " — " + ttl) : G.filter(function (x) { return x[0] === id; })[0][3];
     });
     var kidsOn = 0;

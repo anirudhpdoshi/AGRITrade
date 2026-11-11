@@ -390,7 +390,7 @@
   }
   function notify() {
     var C = J && J.calendar; if (!C || !C.rows) return;
-    var F = C.rows.filter(function (r) { return fresh(r) && (r.top || r.w); });
+    var F = C.rows.filter(function (r) { return fresh(r) && r.w; });   /* on demand: no top-100 alerts; locked stocks alert through earn-lock.js */
     var b = BTN.querySelector(".ue-newb"); if (!b) { b = document.createElement("span"); b.className = "ue-newb"; BTN.appendChild(b); }
     b.textContent = F.length ? F.length + " NEW" : ""; b.hidden = !F.length;
     if (!window.EVENTS || !EVENTS.log) return;

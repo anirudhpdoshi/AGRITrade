@@ -309,18 +309,9 @@ def main():
         prev = json.loads(get_url(PREV))
     except Exception:
         prev = {}
-    breadth = None
-    try:
-        breadth = build_breadth()
-    except Exception as e:
-        print(f"! breadth: {e}")
-    breadth = breadth or prev.get("breadth")
-    nb = prev.get("northbook")
-    if not nb or nb.get("fetched") != now.strftime("%Y-%m-%d"):   # filings change slowly: once a day is plenty
-        try:
-            nb = build_northbook(now) or nb
-        except Exception as e:
-            print(f"! northbook: {e}")
+    # US Markets is on demand (owner, Nov 10 2026): no background per-stock loading. S&P 500 breadth (~500 stocks) and the
+    # Northbook issuer set are no longer built; the functions stay for reference. Index, sector-ETF and seasonality data stay.
+    breadth, nb = None, None
     body = {"updated_at": now.isoformat(timespec="seconds").replace("+00:00", "Z"), "provider": "Yahoo Finance daily closes (delayed, free)",
             "basis": "Price return — index levels, dividends excluded. Month-end close to month-end close; annual = Dec close to prior Dec close.",
             "seasonality": out, "periods": periods, "breadth": breadth, "northbook": nb, "health": health}
