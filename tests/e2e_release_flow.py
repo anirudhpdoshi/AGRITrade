@@ -70,7 +70,7 @@ async def main():
             await pg.wait_for_timeout(1500)
             await pg.evaluate("window.DESK_LOCKED=false;0")
             await pg.evaluate(SETUP + "(" + json.dumps(EVENTS) + ")")
-            await pg.click("#tabbtn-events"); await pg.wait_for_timeout(400)
+            await pg.click("[data-gnav=events]")   # G-01: Events is a group button; its tab sits in the sub-row; await pg.wait_for_timeout(400)
             if os.environ.get("SHOT"):
                 await pg.screenshot(path=os.path.join(os.environ["SHOT"], f"e2e_events_{tag}.png"), full_page=False)
             rows = await pg.evaluate("[].map.call(document.querySelectorAll('#panel-events .evr'),r=>r.innerText.replace(/\\s+/g,' '))")
