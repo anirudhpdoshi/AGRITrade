@@ -67,6 +67,8 @@
       s += '<text x="' + (W - R + 6) + '" y="' + (yy(g) + 4).toFixed(1) + '" class="tq-ax" text-anchor="start">' + g + "%</text>";
     });
     /* bars: debt, gross, maturing — solid actuals; forward maturing hatched (disclosed), forward gross/debt faded + dashed (estimate) */
+    /* data labels: one per bar; per-series stagger, then nudge any label that would overlap a neighbour up until clear */
+    var LAB = { debt: 4, gross: 14, mat: 26 }, lbls = [];
     yrs.forEach(function (y, i) {
       var gx = L + i * GW;
       [["debt", y.debt, 0], ["gross", y.gross, 18], ["mat", y.mat, 36]].forEach(function (b) {
@@ -78,8 +80,19 @@
           else { extra = ' opacity="0.45" stroke="#ffffff" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="3,2"'; }
         }
         s += '<rect x="' + x + '" y="' + yy0.toFixed(1) + '" width="15" height="' + h.toFixed(1) + '" fill="' + fill + '"' + extra + '><title>FY' + y.fy + " " + (b[0] === "debt" ? "total debt" : b[0] === "gross" ? "gross raised" : "maturing") + ": $" + v.toFixed(2) + "T" + (y.fwd ? (b[0] === "mat" ? " — disclosed (MSPD-confirmed)" : " — estimate") : "") + "</title></rect>";
+        lbls.push({ x: x + 7.5, y: yy0 - LAB[b[0]], t: "$" + v.toFixed(2) + "T" });
       });
       s += '<text x="' + cx(i) + '" y="' + (TOP + PH + 16) + '" class="tq-ax" text-anchor="middle">FY' + String(y.fy).slice(2) + (y.fwd ? "*" : "") + "</text>";
+    });
+    lbls.forEach(function (lb, i) {
+      var guard = 0, hit = true;
+      while (hit && guard < 8 && lb.y > 12) {
+        hit = false;
+        for (var j = 0; j < i; j++) {
+          if (Math.abs(lbls[j].x - lb.x) < 38 && Math.abs(lbls[j].y - lb.y) < 9) { lb.y -= 10; hit = true; guard++; break; }
+        }
+      }
+      s += '<text x="' + lb.x.toFixed(1) + '" y="' + lb.y.toFixed(1) + '" class="tq-blbl" text-anchor="middle">' + lb.t + "</text>";
     });
     /* WA yield trend line: solid actuals; dashed CBO 10Y assumption (4.3%) for the forward years */
     var pts = []; yrs.forEach(function (y, i) { if (y.yld != null) pts.push([cx(i), yy(y.yld)]); });
@@ -88,17 +101,19 @@
       pts.forEach(function (p) { s += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="2.6" class="tq-yd"/>'; });
       var lp = pts[pts.length - 1];
       s += '<polyline points="' + lp[0].toFixed(1) + "," + lp[1].toFixed(1) + " " + cx(yrs.length - 2).toFixed(1) + "," + yy(4.3).toFixed(1) + " " + cx(yrs.length - 1).toFixed(1) + "," + yy(4.3).toFixed(1) + '" class="tq-yl2"/>';
-      s += '<text x="' + (pts[0][0] - 4) + '" y="' + (pts[0][1] - 8).toFixed(1) + '" class="tq-ylbl">⚠️ WA yield on marketable debt (right axis, %)</text>';
+      s += '<text x="' + L + '" y="13" class="tq-ylbl">⚠️ WA yield on marketable debt (right axis, %)</text>';
       s += '<text x="' + (cx(yrs.length - 1) + 4) + '" y="' + (yy(4.3) - 8).toFixed(1) + '" class="tq-ylbl2" text-anchor="end">CBO 10Y assumption 4.3% (dashed — not WA yield)</text>';
     }
     s += "</svg>";
     /* legend */
     s += '<div class="tq-lg2"><span><i style="background:#38b6c9"></i>Total debt at year-end ($T)</span><span><i style="background:#f59e0b"></i>Gross debt raised ($T)</span><span><i style="background:#ef4444"></i>Principal maturing ($T)</span><span><i class="tq-sw-hatch"></i>Disclosed maturities (forward, MSPD-confirmed)</span><span><i class="tq-sw-est"></i>Model estimate (forward)</span><span><i class="tq-sw-yl"></i>⚠️ WA yield on marketable debt</span></div>';
-    /* exact-figure table under the chart */
-    var rows = yrs.map(function (y) {
-      return "<tr" + (y.fwd ? ' class="tq-fwd"' : "") + '><td>FY' + y.fy + (y.fwd ? ' <i>projection</i>' : "") + "</td><td>" + T(y.debt) + "</td><td>" + T(y.gross) + "</td><td>" + T(y.net) + "</td><td>" + T(y.refi) + "</td><td>" + T(y.mat) + "</td><td>" + (y.yld != null ? y.yld.toFixed(2) + "%" : "—") + "</td></tr>";
+    /* exact-figure table under the chart — TRANSPOSED: years are the columns, metrics are the rows (same figures, no re-derivation) */
+    var MET = [["Total debt", function (y) { return T(y.debt); }], ["Gross raised", function (y) { return T(y.gross); }], ["Net new borrowing", function (y) { return T(y.net); }], ["Refinancing", function (y) { return T(y.refi); }], ["Maturing", function (y) { return T(y.mat); }], ["⚠️ WA yield", function (y) { return y.yld != null ? y.yld.toFixed(2) + "%" : "—"; }]];
+    var head = '<tr><th>Metric</th>' + yrs.map(function (y) { return '<th' + (y.fwd ? ' class="tq-fwd"' : "") + '>FY' + y.fy + (y.fwd ? " <i>projection</i>" : "") + "</th>"; }).join("") + "</tr>";
+    var rows = MET.map(function (m) {
+      return '<tr><th scope="row">' + m[0] + "</th>" + yrs.map(function (y) { return '<td' + (y.fwd ? ' class="tq-fwd"' : "") + ">" + m[1](y) + "</td>"; }).join("") + "</tr>";
     }).join("");
-    s += '<div class="tbl-scroll"><table class="tq-t tq-ann"><thead><tr><th>Fiscal year</th><th>Total debt</th><th>Gross raised</th><th>Net new borrowing</th><th>Refinancing</th><th>Maturing</th><th>⚠️ WA yield</th></tr></thead><tbody>' + rows + "</tbody></table></div>";
+    s += '<div class="tbl-scroll"><table class="tq-t tq-ann"><thead>' + head + '</thead><tbody>' + rows + "</tbody></table></div>";
     s += '<div class="tq-note">Gross issuance = net new borrowing + refinancing issuance (gross − net). Refinancing is NOT new borrowing — it rolls maturing principal. Maturing = gross − net (identity), which captures within-year bill turnover; the MSPD scheduled maturities at the prior year-end are smaller (see gaps). * FY2027–2028 are projections: maturities are disclosed (MSPD-confirmed), gross issuance and closing debt are model estimates on the CBO Feb 2026 baseline. WA yield = FiscalData average interest rate on marketable debt at Sep 30. Sources: FiscalData Debt to the Penny, MSPD, Average Interest Rates, Auctions API.</div>';
     return s;
   }
@@ -301,12 +316,12 @@
     ".tq-h3{margin:12px 0 6px;font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink)}" +
     ".tq-t{width:100%;border-collapse:collapse;font:13px 'IBM Plex Mono',monospace}.tq-t th{text-align:right;color:var(--muted);font-size:11.5px;padding:6px 8px;border-bottom:1px solid var(--line2)}.tq-t th:first-child,.tq-t td:first-child{text-align:left}" +
     ".tq-t td{text-align:right;padding:3px 4px;border-bottom:1px solid var(--line)}.tq-t td.m{color:var(--muted);font-family:inherit}.tq-t tr.tot td{font-weight:700;border-top:2px solid var(--line2);padding:8px}" +
-    ".tq-t tr.tq-fwd td{color:var(--faint);font-style:italic}.tq-t tr.tq-fwd td:first-child{color:var(--muted);font-style:normal}.tq-t td i{font-size:10px;color:#e8b93d;font-style:normal;text-transform:uppercase;letter-spacing:.04em}" +
+    ".tq-t tr.tq-fwd td{color:var(--faint);font-style:italic}.tq-t tr.tq-fwd td:first-child{color:var(--muted);font-style:normal}.tq-t td.tq-fwd{color:var(--faint);font-style:italic}.tq-t th.tq-fwd{color:var(--faint);font-style:italic}.tq-t th i{display:block;font-size:10px;color:#e8b93d;font-style:normal;text-transform:uppercase;letter-spacing:.04em}.tq-t td i{font-size:10px;color:#e8b93d;font-style:normal;text-transform:uppercase;letter-spacing:.04em}" +
     ".tq-c{padding:6px 8px;border-radius:5px}.tq-h0{color:var(--faint)}.tq-past{color:var(--faint);text-decoration:line-through;opacity:.6}.tq-past i{display:block;font-size:9px;font-style:normal;text-decoration:none;letter-spacing:.04em;text-transform:uppercase}.tq-h1{background:rgba(148,163,184,.08)}.tq-h2{background:rgba(245,158,11,.18);color:#fcd34d}.tq-h3{background:rgba(249,115,22,.3);color:#fed7aa;font-weight:600}.tq-h4{background:rgba(220,38,38,.45);color:#fee2e2;font-weight:700}" +
     ".tq-bar{display:flex;height:24px;border-radius:5px;overflow:hidden;border:1px solid var(--line2)}.tq-bar div{display:flex;align-items:center;justify-content:center;font:700 10.5px 'IBM Plex Mono',monospace;color:#fff}" +
     ".tq-lg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;font:11.5px 'IBM Plex Mono',monospace;color:var(--muted)}.tq-lg div{display:flex;align-items:center;gap:6px}.tq-lg i{width:8px;height:8px;border-radius:50%}.tq-lg b{margin-left:auto;color:var(--ink)}" +
     ".tq-lg2{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 4px;font:11.5px 'IBM Plex Mono',monospace;color:var(--muted)}.tq-lg2 span{display:flex;align-items:center;gap:6px}.tq-lg2 i{width:10px;height:10px;border-radius:2px;display:inline-block}.tq-sw-hatch{background:repeating-linear-gradient(45deg,#ef4444 0 2px,#3f1d1d 2px 5px)}.tq-sw-est{background:rgba(245,158,11,.4);border:1px dashed #fff}.tq-sw-yl{background:#e8b93d;border-radius:50%!important;width:8px!important;height:8px!important}" +
-    ".tq-svg{width:100%;height:auto;display:block;background:var(--panel);border:1px solid var(--line);border-radius:8px}.tq-gl{stroke:rgba(148,163,184,.18);stroke-width:1}.tq-ax{fill:var(--faint);font:10.5px 'IBM Plex Mono',monospace}.tq-yl{fill:none;stroke:#e8b93d;stroke-width:2}.tq-yd{fill:#e8b93d}.tq-yl2{fill:none;stroke:#e8b93d;stroke-width:2;stroke-dasharray:5,3;opacity:.7}.tq-ylbl{fill:#e8b93d;font:600 11px 'IBM Plex Mono',monospace}.tq-ylbl2{fill:var(--faint);font:10px 'IBM Plex Mono',monospace}" +
+    ".tq-svg{width:100%;height:auto;display:block;background:var(--panel);border:1px solid var(--line);border-radius:8px}.tq-gl{stroke:rgba(148,163,184,.18);stroke-width:1}.tq-ax{fill:var(--faint);font:10.5px 'IBM Plex Mono',monospace}.tq-blbl{fill:#e8eef4;font:600 9px 'IBM Plex Mono',monospace}.tq-yl{fill:none;stroke:#e8b93d;stroke-width:2}.tq-yd{fill:#e8b93d}.tq-yl2{fill:none;stroke:#e8b93d;stroke-width:2;stroke-dasharray:5,3;opacity:.7}.tq-ylbl{fill:#e8b93d;font:600 11px 'IBM Plex Mono',monospace}.tq-ylbl2{fill:var(--faint);font:10px 'IBM Plex Mono',monospace}" +
     ".tq-sc{display:flex;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 10px;margin-top:6px;font:13px 'IBM Plex Mono',monospace}.tq-sc b{color:#ff8a84}" +
     ".tq-note{margin-top:8px;font-size:11.5px;color:var(--faint);line-height:1.5}.tq-note b{color:var(--ink)}.tq-note a{color:#38b6c9}.tq-ct td.r{color:#38b6c9}.tq-ft{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint);border-top:1px solid var(--line);padding-top:10px;margin-top:6px}" +
     ".tq-trend{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.tq-tr{display:flex;flex-direction:column;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 8px;min-width:52px}.tq-tr span{font:10px 'IBM Plex Mono',monospace;color:var(--faint)}.tq-tr b{font:700 13px 'IBM Plex Mono',monospace;color:#ff8a84}" +
