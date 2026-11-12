@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AGRITrade — Lock setup (one-time)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { background:#0b1220; color:#e8eef7; font-family: system-ui, sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; }
+  .card { background:#131c2e; border:1px solid #2a3a55; border-radius:12px; padding:28px; width:min(480px, 92vw); }
+  h1 { font-size:18px; margin:0 0 6px; }
+  p { font-size:13px; color:#9fb0c8; margin:0 0 16px; line-height:1.5; }
+  label { font-size:13px; display:block; margin-bottom:6px; }
+  input { width:100%; box-sizing:border-box; padding:10px 12px; font-size:16px; border-radius:8px; border:1px solid #2a3a55; background:#0b1220; color:#e8eef7; }
+  button { margin-top:14px; width:100%; padding:11px; font-size:15px; border-radius:8px; border:0; background:#2f6fed; color:#fff; cursor:pointer; }
+  button:disabled { opacity:.55; cursor:default; }
+  pre { background:#0b1220; border:1px solid #2a3a55; border-radius:8px; padding:12px; font-size:12px; white-space:pre-wrap; word-break:break-all; margin:14px 0 0; display:none; }
+  #status { font-size:13px; margin-top:12px; color:#9fb0c8; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>AGRITrade lock setup</h1>
+  <p>One-time setup. Enter the desk passcode below. This page derives a one-way check value (PBKDF2-HMAC-SHA256, 600,000 iterations) from it and shows the salt and check value. Nothing is sent anywhere and nothing is stored in this browser.</p>
+  <form id="f">
+    <label for="pw">Desk passcode</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    <button id="go" type="submit">Create lock value</button>
+  </form>
+  <div id="status"></div>
+  <pre id="out"></pre>
+</div>
+<script>
+(function () {
+  var ITER = 600000;
+  function b64(buf) {
+    var bytes = new Uint8Array(buf), s = "";
+    for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s);
+  }
+  document.getElementById("f").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var pw = document.getElementById("pw").value;
+    var status = document.getElementById("status");
+    var out = document.getElementById("out");
+    var btn = document.getElementById("go");
+    if (!pw) { status.textContent = "Enter the passcode first."; return; }
+    btn.disabled = true;
+    status.textContent = "Deriving check value (600,000 iterations) — takes a few seconds…";
+    try {
+      var salt = crypto.getRandomValues(new Uint8Array(16));
+      var key = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveBits"]);
+      var bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: salt, iterations: ITER }, key, 256);
+      out.style.display = "block";
+      out.textContent = "SALT=" + b64(salt) + "\nVERIFIER=" + b64(bits) + "\nITERATIONS=" + ITER + "\nALGORITHM=PBKDF2-HMAC-SHA256";
+      status.textContent = "Done. Copy the salt and verifier above.";
+      document.getElementById("pw").value = "";
+    } catch (err) {
+      status.textContent = "Derivation failed: " + err.message;
+    }
+    btn.disabled = false;
+  });
+})();
+</script>
+</body>
+</html>
