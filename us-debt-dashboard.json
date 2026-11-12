@@ -1,0 +1,590 @@
+{
+ "title": "US Government Debt \u2014 Historical Borrowing, Maturity & Refinancing Risk",
+ "prepared": "2026-11-12",
+ "data_as_of": "2026-11-11",
+ "units_note": "All dollar figures in $ billions (B) or $ trillions (T) as labelled. Rates in percent per annum.",
+ "sources": {
+  "debt_outstanding": "US Treasury, Bureau of the Fiscal Service, FiscalData API \u2014 Debt to the Penny (v2/accounting/od/debt_to_penny)",
+  "average_interest_rates": "US Treasury FiscalData API \u2014 Average Interest Rates on the Public Debt (v2/accounting/od/avg_interest_rates)",
+  "mspd": "US Treasury FiscalData API \u2014 Monthly Statement of the Public Debt, Table 1 (v1/debt/mspd/mspd_table_1) and Table 3 security-level (v1/debt/mspd/mspd_table_3)",
+  "auctions": "US Treasury FiscalData API \u2014 Treasury Securities Auctions (v1/accounting/od/auctions_query), total_accepted",
+  "receipts_outlays_interest": "US Treasury FiscalData API \u2014 Monthly Treasury Statement Table 5 (v1/accounting/mts/mts_table_5); cross-checked to FRED FYFR / FYONET / FYFSD (OMB data via FRED)",
+  "tga": "US Treasury FiscalData API \u2014 Daily Treasury Statement, Operating Cash Balance (v1/accounting/dts/operating_cash_balance)",
+  "market_yields": "Federal Reserve (FRED): DGS2, DGS5, DGS10, DGS30, DTB3, DGS1, T5YIE, DTWEXBGS, BAMLH0A0HYM2, BAA10Y",
+  "cbo": "Congressional Budget Office, The Budget and Economic Outlook: 2026 to 2036 (Feb 2026, publication 61882), Table 1-1; and An Update About CBO's Projections of the Budgetary Effects of Tariffs (Mar 2026, publication 62210)",
+  "gdp": "Federal Reserve (FRED): GDP (nominal, quarterly, BEA via FRED); CBO FY GDP in Table 1-1"
+ },
+ "methods": {
+  "gross_issuance": "Sum of Treasury auction awards (total_accepted) by issue date within each fiscal year, from the FiscalData auctions API. Includes SOMA (Federal Reserve) awards; SOMA is reported separately in the raw data. Cash-management bills included.",
+  "net_new_borrowing": "Change in total Treasury debt outstanding (Debt to the Penny) from prior fiscal year-end to current fiscal year-end.",
+  "refinancing_issuance": "Identity: gross marketable issuance minus net new borrowing. Equals actual redemptions/maturities during the year (including bills issued and redeemed within the year) plus buybacks and small adjustments. Do NOT treat as new borrowing.",
+  "maturities_actual": "Same identity as refinancing issuance (gross minus net). This is the economically meaningful 'debt maturing' for the historical chart because it captures within-year bill turnover.",
+  "scheduled_maturities": "From the MSPD security-level file as of the prior fiscal year-end: principal of marketable securities with maturity dates falling in the fiscal year. Excludes bills issued after that snapshot and redeemed within the year, so it is SMALLER than actual redemptions. Use for the forward/confirmed-maturity view, not the historical chart.",
+  "wa_marketable_rate": "FiscalData average interest rates, security_desc='Total Marketable', at the fiscal year-end month (Sep 30). This is the weighted-average coupon/rate on marketable debt outstanding.",
+  "fy_gdp": "Mean of the four quarterly nominal GDP prints in the fiscal year (BEA via FRED), used only for the historical debt-to-GDP ratios. CBO's FY GDP (Table 1-1) is used for CBO projections.",
+  "blended_refinancing_yield": "Estimate, not an official figure. Weights the Nov 9, 2026 market yields by the maturing principal by class: bills at the 3-month bill rate (DTB3 4.06%), notes at the mean of 2Y/5Y (4.62%), FRNs at 4.15%, TIPS at 4.50% (nominal-equivalent), bonds at 5.00%. See refinancing_cost for the components.",
+  "existing_cost_of_maturing_stock": "Estimate. Bills at the WA bill rate (3.87%, FiscalData avg_interest_rates Sep 2026); coupon-bearing maturing debt at its WA coupon (MSPD-derived). Bills' true issue yields are not in the MSPD (discount instruments), so this is an approximation, labelled as such.",
+  "total_debt_forward_estimate": "CBO projects debt held by the public only. Total debt shown = CBO debt held by the public + intragovernmental holdings ($7,747B at Sep 30, 2026) grown ~$0.2T/yr (recent trend). Labelled estimate, not a CBO figure.",
+  "mandatory_discretionary_actual": "The MTS does not publish a mandatory/discretionary split. FY2026 mandatory/discretionary shown are CBO Feb 2026 baseline projections; a derived actual mandatory is also given (actual outlays minus CBO discretionary minus actual net interest) and labelled derived."
+ },
+ "annual_history_fy2015_2026": [
+  {
+   "fiscal_year": 2015,
+   "fy_end": "2015-09-30",
+   "total_debt_T": 18.151,
+   "debt_held_public_T": 13.124,
+   "debt_held_public_pct_gdp": 72.3,
+   "total_debt_pct_gdp": 99.9,
+   "fy_nominal_gdp_T": 18.164,
+   "wa_marketable_rate_pct": 2.043,
+   "gross_marketable_issuance_T": 6.943,
+   "net_new_borrowing_T": 0.327,
+   "refinancing_issuance_T": 6.617,
+   "maturities_actual_T": 6.617,
+   "scheduled_maturities_at_prior_year_end_T": null,
+   "receipts_T": 3.249,
+   "outlays_T": 3.688,
+   "deficit_T": 0.439,
+   "gross_interest_T": 0.402,
+   "net_interest_T": 0.26,
+   "primary_deficit_T": 0.179,
+   "net_interest_pct_receipts": 8.02
+  },
+  {
+   "fiscal_year": 2016,
+   "fy_end": "2016-09-30",
+   "total_debt_T": 19.573,
+   "debt_held_public_T": 14.173,
+   "debt_held_public_pct_gdp": 76.0,
+   "total_debt_pct_gdp": 105.0,
+   "fy_nominal_gdp_T": 18.641,
+   "wa_marketable_rate_pct": 1.996,
+   "gross_marketable_issuance_T": 8.041,
+   "net_new_borrowing_T": 1.423,
+   "refinancing_issuance_T": 6.618,
+   "maturities_actual_T": 6.618,
+   "scheduled_maturities_at_prior_year_end_T": 3.097,
+   "receipts_T": 3.267,
+   "outlays_T": 3.854,
+   "deficit_T": 0.587,
+   "gross_interest_T": 0.43,
+   "net_interest_T": 0.284,
+   "primary_deficit_T": 0.304,
+   "net_interest_pct_receipts": 8.69
+  },
+  {
+   "fiscal_year": 2017,
+   "fy_end": "2017-09-30",
+   "total_debt_T": 20.245,
+   "debt_held_public_T": 14.673,
+   "debt_held_public_pct_gdp": 75.7,
+   "total_debt_pct_gdp": 104.5,
+   "fy_nominal_gdp_T": 19.375,
+   "wa_marketable_rate_pct": 2.094,
+   "gross_marketable_issuance_T": 8.624,
+   "net_new_borrowing_T": 0.671,
+   "refinancing_issuance_T": 7.953,
+   "maturities_actual_T": 7.953,
+   "scheduled_maturities_at_prior_year_end_T": 3.514,
+   "receipts_T": 3.315,
+   "outlays_T": 3.981,
+   "deficit_T": 0.666,
+   "gross_interest_T": 0.457,
+   "net_interest_T": 0.31,
+   "primary_deficit_T": 0.356,
+   "net_interest_pct_receipts": 9.35
+  },
+  {
+   "fiscal_year": 2018,
+   "fy_end": "2018-09-30",
+   "total_debt_T": 21.516,
+   "debt_held_public_T": 15.761,
+   "debt_held_public_pct_gdp": 77.1,
+   "total_debt_pct_gdp": 105.3,
+   "fy_nominal_gdp_T": 20.436,
+   "wa_marketable_rate_pct": 2.365,
+   "gross_marketable_issuance_T": 9.954,
+   "net_new_borrowing_T": 1.271,
+   "refinancing_issuance_T": 8.683,
+   "maturities_actual_T": 8.683,
+   "scheduled_maturities_at_prior_year_end_T": 3.633,
+   "receipts_T": 3.329,
+   "outlays_T": 4.108,
+   "deficit_T": 0.779,
+   "gross_interest_T": 0.522,
+   "net_interest_T": 0.371,
+   "primary_deficit_T": 0.408,
+   "net_interest_pct_receipts": 11.16
+  },
+  {
+   "fiscal_year": 2019,
+   "fy_end": "2019-09-30",
+   "total_debt_T": 22.719,
+   "debt_held_public_T": 16.809,
+   "debt_held_public_pct_gdp": 79.0,
+   "total_debt_pct_gdp": 106.7,
+   "fy_nominal_gdp_T": 21.286,
+   "wa_marketable_rate_pct": 2.436,
+   "gross_marketable_issuance_T": 11.708,
+   "net_new_borrowing_T": 1.203,
+   "refinancing_issuance_T": 10.505,
+   "maturities_actual_T": 10.505,
+   "scheduled_maturities_at_prior_year_end_T": 4.206,
+   "receipts_T": 3.462,
+   "outlays_T": 4.447,
+   "deficit_T": 0.984,
+   "gross_interest_T": 0.573,
+   "net_interest_T": 0.423,
+   "primary_deficit_T": 0.561,
+   "net_interest_pct_receipts": 12.23
+  },
+  {
+   "fiscal_year": 2020,
+   "fy_end": "2020-09-30",
+   "total_debt_T": 26.945,
+   "debt_held_public_T": 21.019,
+   "debt_held_public_pct_gdp": 98.5,
+   "total_debt_pct_gdp": 126.3,
+   "fy_nominal_gdp_T": 21.337,
+   "wa_marketable_rate_pct": 1.635,
+   "gross_marketable_issuance_T": 18.666,
+   "net_new_borrowing_T": 4.226,
+   "refinancing_issuance_T": 14.44,
+   "maturities_actual_T": 14.44,
+   "scheduled_maturities_at_prior_year_end_T": 4.492,
+   "receipts_T": 3.42,
+   "outlays_T": 6.552,
+   "deficit_T": 3.132,
+   "gross_interest_T": 0.523,
+   "net_interest_T": 0.387,
+   "primary_deficit_T": 2.744,
+   "net_interest_pct_receipts": 11.33
+  },
+  {
+   "fiscal_year": 2021,
+   "fy_end": "2021-09-30",
+   "total_debt_T": 28.429,
+   "debt_held_public_T": 22.283,
+   "debt_held_public_pct_gdp": 96.6,
+   "total_debt_pct_gdp": 123.3,
+   "fy_nominal_gdp_T": 23.062,
+   "wa_marketable_rate_pct": 1.47,
+   "gross_marketable_issuance_T": 20.197,
+   "net_new_borrowing_T": 1.484,
+   "refinancing_issuance_T": 18.713,
+   "maturities_actual_T": 18.713,
+   "scheduled_maturities_at_prior_year_end_T": 7.363,
+   "receipts_T": 4.046,
+   "outlays_T": 6.818,
+   "deficit_T": 2.772,
+   "gross_interest_T": 0.562,
+   "net_interest_T": 0.413,
+   "primary_deficit_T": 2.359,
+   "net_interest_pct_receipts": 10.2
+  },
+  {
+   "fiscal_year": 2022,
+   "fy_end": "2022-09-30",
+   "total_debt_T": 30.929,
+   "debt_held_public_T": 24.299,
+   "debt_held_public_pct_gdp": 95.0,
+   "total_debt_pct_gdp": 120.9,
+   "fy_nominal_gdp_T": 25.572,
+   "wa_marketable_rate_pct": 1.994,
+   "gross_marketable_issuance_T": 17.29,
+   "net_new_borrowing_T": 2.5,
+   "refinancing_issuance_T": 14.791,
+   "maturities_actual_T": 14.791,
+   "scheduled_maturities_at_prior_year_end_T": 6.32,
+   "receipts_T": 4.896,
+   "outlays_T": 6.272,
+   "deficit_T": 1.375,
+   "gross_interest_T": 0.718,
+   "net_interest_T": 0.534,
+   "primary_deficit_T": 0.842,
+   "net_interest_pct_receipts": 10.9
+  },
+  {
+   "fiscal_year": 2023,
+   "fy_end": "2023-09-30",
+   "total_debt_T": 33.167,
+   "debt_held_public_T": 26.33,
+   "debt_held_public_pct_gdp": 96.1,
+   "total_debt_pct_gdp": 121.0,
+   "fy_nominal_gdp_T": 27.403,
+   "wa_marketable_rate_pct": 3.016,
+   "gross_marketable_issuance_T": 19.938,
+   "net_new_borrowing_T": 2.238,
+   "refinancing_issuance_T": 17.699,
+   "maturities_actual_T": 17.699,
+   "scheduled_maturities_at_prior_year_end_T": 6.702,
+   "receipts_T": 4.439,
+   "outlays_T": 6.134,
+   "deficit_T": 1.695,
+   "gross_interest_T": 0.879,
+   "net_interest_T": 0.71,
+   "primary_deficit_T": 0.985,
+   "net_interest_pct_receipts": 16.0
+  },
+  {
+   "fiscal_year": 2024,
+   "fy_end": "2024-09-30",
+   "total_debt_T": 35.465,
+   "debt_held_public_T": 28.307,
+   "debt_held_public_pct_gdp": 97.6,
+   "total_debt_pct_gdp": 122.2,
+   "fy_nominal_gdp_T": 29.015,
+   "wa_marketable_rate_pct": 3.392,
+   "gross_marketable_issuance_T": 28.405,
+   "net_new_borrowing_T": 2.297,
+   "refinancing_issuance_T": 26.107,
+   "maturities_actual_T": 26.107,
+   "scheduled_maturities_at_prior_year_end_T": 8.346,
+   "receipts_T": 4.919,
+   "outlays_T": 6.752,
+   "deficit_T": 1.833,
+   "gross_interest_T": 1.133,
+   "net_interest_T": 0.949,
+   "primary_deficit_T": 0.884,
+   "net_interest_pct_receipts": 19.3
+  },
+  {
+   "fiscal_year": 2025,
+   "fy_end": "2025-09-30",
+   "total_debt_T": 37.638,
+   "debt_held_public_T": 30.278,
+   "debt_held_public_pct_gdp": 99.3,
+   "total_debt_pct_gdp": 123.5,
+   "fy_nominal_gdp_T": 30.478,
+   "wa_marketable_rate_pct": 3.406,
+   "gross_marketable_issuance_T": 30.237,
+   "net_new_borrowing_T": 2.173,
+   "refinancing_issuance_T": 28.064,
+   "maturities_actual_T": 28.064,
+   "scheduled_maturities_at_prior_year_end_T": 9.077,
+   "receipts_T": 5.235,
+   "outlays_T": 7.01,
+   "deficit_T": 1.775,
+   "gross_interest_T": 1.216,
+   "net_interest_T": 1.028,
+   "primary_deficit_T": 0.747,
+   "net_interest_pct_receipts": 19.64
+  },
+  {
+   "fiscal_year": 2026,
+   "fy_end": "2026-09-30",
+   "total_debt_T": 40.172,
+   "debt_held_public_T": 32.425,
+   "debt_held_public_pct_gdp": 100.6,
+   "total_debt_pct_gdp": 124.6,
+   "fy_nominal_gdp_T": 32.235,
+   "wa_marketable_rate_pct": 3.518,
+   "gross_marketable_issuance_T": 32.773,
+   "net_new_borrowing_T": 2.534,
+   "refinancing_issuance_T": 30.239,
+   "maturities_actual_T": 30.239,
+   "scheduled_maturities_at_prior_year_end_T": 9.722,
+   "receipts_T": 5.403,
+   "outlays_T": 7.396,
+   "deficit_T": 1.992,
+   "gross_interest_T": 1.36,
+   "net_interest_T": 1.142,
+   "primary_deficit_T": 0.85,
+   "net_interest_pct_receipts": 21.14
+  }
+ ],
+ "forward_maturity_schedule": {
+  "snapshot": "MSPD Table 3, Oct 31, 2026 (marketable securities only)",
+  "total_marketable_B": 31892.5,
+  "wam_months": 69.3,
+  "maturing_12M_B": 10919.4,
+  "maturing_24M_B": 14787.4,
+  "maturing_by_fiscal_year_B": {
+   "2027": 10502.138,
+   "2028": 4061.551,
+   "2029": 2822.647,
+   "2030": 2043.665
+  },
+  "maturing_by_month_B": {
+   "2026-11": 2580.849,
+   "2026-12": 2210.169,
+   "2027-01": 1485.808,
+   "2027-02": 998.407,
+   "2027-03": 615.118,
+   "2027-04": 852.485,
+   "2027-05": 341.125,
+   "2027-06": 283.44,
+   "2027-07": 419.607,
+   "2027-08": 368.967,
+   "2027-09": 346.162,
+   "2027-10": 417.226,
+   "2027-11": 342.55,
+   "2027-12": 244.931,
+   "2028-01": 421.835,
+   "2028-02": 345.918,
+   "2028-03": 248.96,
+   "2028-04": 434.887,
+   "2028-05": 350.791,
+   "2028-06": 252.203,
+   "2028-07": 387.472,
+   "2028-08": 358.928,
+   "2028-09": 255.849,
+   "2028-10": 223.693
+  },
+  "maturity_profile_by_tenor_B": {
+   "0-12M": 10919.4,
+   "12-24M": 3868.0
+  },
+  "refinancing_profile": {
+   "12M": {
+    "principal_B": 10919.4,
+    "by_class_B": {
+     "Bills Maturity Value": 7381.7,
+     "Notes": 2932.1,
+     "Floating Rate Notes": 354.3,
+     "Inflation-Protected Securities": 221.7,
+     "Bonds": 29.6
+    },
+    "coupon_bearing_B": 3183.4,
+    "wa_coupon_pct": 2.84
+   },
+   "24M": {
+    "principal_B": 14787.4,
+    "by_class_B": {
+     "Bills Maturity Value": 7381.7,
+     "Notes": 6248.5,
+     "Floating Rate Notes": 621.5,
+     "Inflation-Protected Securities": 472.4,
+     "Bonds": 63.4
+    },
+    "coupon_bearing_B": 6784.2,
+    "wa_coupon_pct": 2.93
+   }
+  }
+ },
+ "forward_borrowing_need": {
+  "fy2027": {
+   "principal_maturing_B": 10502.1,
+   "cbo_deficit_B": -1887,
+   "expected_gross_issuance_B": 12389.1,
+   "debt_held_public_B": 34005,
+   "total_debt_estimate_B": 41952
+  },
+  "fy2028": {
+   "principal_maturing_B": 4061.6,
+   "cbo_deficit_B": -2080,
+   "debt_held_public_B": 36093,
+   "total_debt_estimate_B": 44240,
+   "expected_gross_issuance_B": 6141.6
+  }
+ },
+ "cbo_baseline": {
+  "vintage": "CBO, The Budget and Economic Outlook: 2026 to 2036, February 2026 (publication 61882), Table 1-1",
+  "note": "Baseline assumes laws in place as of Jan 14, 2026, including IEEPA tariffs. See the March 2026 update (publication 62210) caveat below.",
+  "fy2027": {
+   "revenues_B": 5885,
+   "mandatory_B": 4783,
+   "discretionary_B": 1882,
+   "net_interest_B": 1108,
+   "outlays_B": 7772,
+   "deficit_B": -1887,
+   "primary_deficit_B": -779,
+   "debt_held_public_B": 34005,
+   "debt_held_public_pct_gdp": 102.1,
+   "gdp_B": 33315,
+   "revenues_pct_gdp": 17.7,
+   "outlays_pct_gdp": 23.3,
+   "deficit_pct_gdp": -5.7,
+   "net_interest_pct_gdp": 3.3
+  },
+  "fy2028": {
+   "revenues_B": 6071,
+   "mandatory_B": 5005,
+   "discretionary_B": 1929,
+   "net_interest_B": 1218,
+   "outlays_B": 8151,
+   "deficit_B": -2080,
+   "primary_deficit_B": -862,
+   "debt_held_public_B": 36093,
+   "debt_held_public_pct_gdp": 104.1,
+   "gdp_B": 34666,
+   "revenues_pct_gdp": 17.5,
+   "outlays_pct_gdp": 23.5,
+   "deficit_pct_gdp": -6.0,
+   "net_interest_pct_gdp": 3.5
+  },
+  "fy2036": {
+   "deficit_B": -3115,
+   "deficit_pct_gdp": -6.7,
+   "debt_held_public_B": 56152,
+   "debt_held_public_pct_gdp": 120.2,
+   "net_interest_B": 2144,
+   "net_interest_pct_gdp": 4.6
+  },
+  "fy2026_projection": {
+   "revenues_B": 5596,
+   "mandatory_B": 4529,
+   "discretionary_B": 1880,
+   "net_interest_B": 1039,
+   "outlays_B": 7449,
+   "deficit_B": -1853,
+   "debt_held_public_B": 32095,
+   "debt_held_public_pct_gdp": 100.6
+  },
+  "interest_rate_assumptions_pct": {
+   "t_bill_3m": {
+    "2026": 3.3,
+    "2027": 3.2,
+    "2028": 3.2,
+    "2036": 3.1
+   },
+   "treasury_10y": {
+    "2026": 4.1,
+    "2027": 4.3,
+    "2028": 4.3,
+    "2036": 4.4
+   },
+   "fed_funds_effective": {
+    "2026": 3.5,
+    "2027": 3.4,
+    "2028": 3.4,
+    "2036": 3.4
+   }
+  },
+  "march_2026_tariff_update": {
+   "source": "CBO publication 62210 (blog post by Director Swagel), March 2026",
+   "finding": "Supreme Court ruled Feb 20, 2026 that IEEPA does not authorize tariffs; Administration terminated them. Projected deficits $2.0T larger over FY2026-2036 than the Feb baseline ($1.6T primary + $0.4T debt service). No revised annual baseline published; the Feb FY2027-2028 deficits are therefore likely understated by roughly $150-200B/yr (estimate, not a CBO figure). Section 122 tariffs imposed Feb 24, 2026 are NOT reflected in the $2.0T.",
+   "customs_duties_in_feb_baseline_B": {
+    "2026": 418,
+    "2027": 421,
+    "2028": 424
+   },
+   "ieepa_duties_collected_before_removal_B": 150
+  }
+ },
+ "refinancing_cost": {
+  "existing_wa_marketable_rate_pct": 3.57,
+  "existing_wa_marketable_rate_date": "2026-10-31",
+  "wa_bill_rate_pct": 3.87,
+  "wa_bill_rate_date": "2026-09-30",
+  "maturing_12M": {
+   "principal_B": 10919.4,
+   "wa_coupon_pct_coupon_bearing_only": 2.84,
+   "coupon_bearing_B": 3183.4,
+   "estimated_existing_cost_pct": 3.44,
+   "blended_refinancing_yield_pct": 4.22,
+   "incremental_annual_interest_B": 85.2,
+   "incremental_vs_all_marketable_avg_B": 71.0
+  },
+  "maturing_24M": {
+   "principal_B": 14787.4,
+   "wa_coupon_pct_coupon_bearing_only": 2.93,
+   "coupon_bearing_B": 6784.2,
+   "estimated_existing_cost_pct": 3.28,
+   "blended_refinancing_yield_pct": 4.32,
+   "incremental_annual_interest_B": 153.8
+  },
+  "sensitivity_12M_B_per_year": {
+   "+50bps": 54.6,
+   "+100bps": 109.2,
+   "+200bps": 218.4
+  },
+  "sensitivity_24M_B_per_year": {
+   "+50bps": 73.9,
+   "+100bps": 147.9,
+   "+200bps": 295.7
+  },
+  "cumulative_2yr_incremental_B": 125.4
+ },
+ "servicing_capacity": {
+  "fiscal_year": 2026,
+  "receipts_T": 5.403,
+  "outlays_T": 7.396,
+  "deficit_T": 1.992,
+  "gross_interest_T": 1.36,
+  "net_interest_T": 1.142,
+  "primary_deficit_T": 0.85,
+  "net_interest_pct_receipts": 21.14,
+  "gross_interest_pct_receipts": 25.17,
+  "mandatory_B_cbo_baseline": 4529,
+  "discretionary_B_cbo_baseline": 1880,
+  "mandatory_note": "CBO Feb 2026 baseline projection for FY2026, not an MTS actual; the MTS does not publish a mandatory/discretionary split. Actual FY2026 outlays ($7,396B) came in $53B below CBO's $7,449B projection.",
+  "derived_mandatory_actual_B": 4374.0,
+  "derived_mandatory_note": "Derived: actual outlays minus CBO discretionary projection minus actual net interest. Labelled derived, not published.",
+  "tga_balance_B": 922.633,
+  "tga_balance_date": "2026-11-09",
+  "tga_balance_source": "Daily Treasury Statement, operating_cash_balance, TGA Closing Balance (open_today_bal)",
+  "cash_after_interest_note": "Primary deficit (-$850B) is the cash shortfall before interest; the total deficit (-$1,992B) is after interest. The TGA balance ($923B) covers ~0.46 years of the total deficit at the FY2026 run-rate."
+ },
+ "risk_indicators": {
+  "DGS2": {
+   "value": 4.56,
+   "date": "2026-11-09"
+  },
+  "DGS5": {
+   "value": 4.67,
+   "date": "2026-11-09"
+  },
+  "DGS10": {
+   "value": 4.88,
+   "date": "2026-11-09"
+  },
+  "DGS30": {
+   "value": 5.26,
+   "date": "2026-11-09"
+  },
+  "T5YIE": {
+   "value": 2.25,
+   "date": "2026-11-10"
+  },
+  "DTWEXBGS": {
+   "value": 121.8803,
+   "date": "2026-11-06"
+  },
+  "BAMLH0A0HYM2": {
+   "value": 3.34,
+   "date": "2026-11-09"
+  },
+  "BAA10Y": {
+   "value": 1.51,
+   "date": "2026-11-09"
+  },
+  "DTB3": {
+   "value": 4.06,
+   "date": "2026-11-09"
+  },
+  "DGS1": {
+   "value": 4.38,
+   "date": "2026-11-09"
+  },
+  "cbo_debt_held_public_pct_gdp_2036": 120.2,
+  "cbo_debt_held_public_pct_gdp_2036_source": "CBO Feb 2026 baseline, Table 1-1",
+  "debt_held_public_pct_gdp_fy2026_actual": 100.6,
+  "total_debt_pct_gdp_fy2026_actual": 124.6
+ },
+ "current_snapshot_crosscheck": {
+  "total_debt_T": 40.56,
+  "total_debt_date": "2026-11-09",
+  "marketable_T": 31.892,
+  "marketable_date": "2026-10-31",
+  "maturing_12M_T": 10.919,
+  "maturing_24M_T": 14.787,
+  "wam_months": 69.3,
+  "wa_rate_pct": 3.57,
+  "mspd_date": "2026-10-31",
+  "note": "Reproduced exactly from the MSPD Oct 31, 2026 snapshot in this research (12M $10,919.4B, 24M $14,787.4B, WAM 69.3 mo, WA rate 3.57%)."
+ },
+ "gaps_and_unverified": [
+  "Forward FY2028 maturities ($4,062B) are CONFIRMED maturities only \u2014 securities outstanding as of Oct 31, 2026. Bills issued during FY2027 that mature in FY2028 are not in the snapshot, so the FY2028 maturity and gross-issuance figures will rise as new bills are issued. The 12M/24M windows have the same property.",
+  "Gross marketable issuance is NOT published as a single annual official figure; it is the sum of auction awards (FiscalData auctions API) by issue-date fiscal year. Cross-check: FY2024 $28.4T and FY2025 $30.2T are consistent with Treasury/TBAC gross issuance figures, but no single Treasury table publishes the annual gross total \u2014 the Treasury Bulletin's financing tables (MTS Table 6) publish NET borrowing only.",
+  "MTS does not publish a mandatory/discretionary split; FY2026 actual mandatory/discretionary are not available as an official series (OMB Historical Tables FY2028 not yet released). CBO baseline projections are used for the split and labelled as projections.",
+  "CBO has NOT published a revised annual baseline after the March 2026 tariff ruling; the Feb 2026 FY2027-2028 deficits are likely understated by ~$150-200B/yr (estimate, not a CBO figure). The $2.0T/11yr figure is from CBO publication 62210.",
+  "The blended refinancing yield (~4.2%) and the existing cost of the maturing stock (~3.4%) are estimates with stated methods, not official figures. Bills' issue yields are not published security-by-security in the MSPD.",
+  "FRED GFDEBTN (quarterly total debt) lags: the FY2026-end (Sep 30, 2026) value is not yet published in FRED as of Nov 11, 2026; FiscalData Debt to the Penny is the authoritative source for it.",
+  "FRED has no series for federal net interest payments by fiscal year (FYINT does not exist); net interest is from the Monthly Treasury Statement (gross interest on Treasury debt securities minus interest received by trust funds).",
+  "MTS for October 2026 is not yet published (as of Nov 11, 2026), so the last-12-months window is FY2026 (Oct 2025-Sep 2026).",
+  "MSPD Table 3 TIPS outstanding is the unadjusted face value (excludes inflation accrual ~$250B); the Table 1 marketable total includes it. The maturity schedule therefore slightly understates TIPS principal at maturity.",
+  "CBO's debt-held-by-the-public projection for FY2026 ($32,095B) came in $330B below the actual ($32,425B) because the actual FY2026 deficit ($1,992B) exceeded CBO's projection ($1,853B)."
+ ],
+ "dashboard_note": "Dashboard data for the AGRITrade Treasury tab (treasury-ui.js). All figures copied verbatim from the research dataset prepared 2026-11-12 from official sources only (US Treasury FiscalData, FRED, CBO). Nothing modelled except where the methods field says 'Estimate'."
+}
