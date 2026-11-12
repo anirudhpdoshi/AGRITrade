@@ -10,6 +10,7 @@
     ["grains", "Grains", ["grains"], "Corn · Wheat · Soybeans — price, fan, fundamentals"],
     ["positioning", "Positioning / OI", ["grains"], "Open interest, CFTC funds, options, volatility"],
     ["macro", "Macro", ["macro", "fx", "treasury", "world"], "Macro table, CPI, USD/CAD, Treasury, world markets"],
+    ["aidebt", "AI Debt", ["aidebt"], "AI-company debt raises, Jan 2021 – Nov 2026"],
     ["events", "Events", ["events"], "Today's and upcoming releases"],
     ["intel", "Intelligence", ["intel", "policy"], "Global intel, central banks and policy"],
     ["usm", "US Markets", ["earnings"], "Market overview, stock search, company analysis, earnings calendar"],
