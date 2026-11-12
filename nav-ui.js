@@ -23,7 +23,7 @@
   function activePanel() { var a = doc.querySelector(".tab-panel.active"); return a ? a.id.replace("panel-", "") : ""; }
   function sub(p) { try { return (root.SUB || {})[p]; } catch (e) { return null; } }
   function groupOf(p) {
-    if (GRAINS.indexOf(p) >= 0) return "grains";
+    if (GRAINS.indexOf(p) >= 0) return root.POSMODE && POSMODE.on ? "positioning" : "grains";   /* positioning-ui.js shows its reports on the grain page */
     for (var i = 0; i < G.length; i++) if (G[i][2].indexOf(p) >= 0) return G[i][0];
     return null;
   }
