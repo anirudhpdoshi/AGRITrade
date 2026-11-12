@@ -77,9 +77,11 @@
         var cls = "", fill = COL[b[0]], extra = "";
         if (y.fwd) {
           if (b[0] === "mat") { fill = "url(#tq-hatch)"; extra = ' stroke="#ef4444" stroke-width="1"'; }
-          else { extra = ' opacity="0.45" stroke="#ffffff" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="3,2"'; }
+          else { extra = ' opacity="0.65" stroke="#ffffff" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="3,2"'; }
         }
-        s += '<rect x="' + x + '" y="' + yy0.toFixed(1) + '" width="15" height="' + h.toFixed(1) + '" fill="' + fill + '"' + extra + '><title>FY' + y.fy + " " + (b[0] === "debt" ? "total debt" : b[0] === "gross" ? "gross raised" : "maturing") + ": $" + v.toFixed(2) + "T" + (y.fwd ? (b[0] === "mat" ? " — disclosed (MSPD-confirmed)" : " — estimate") : "") + "</title></rect>";
+        /* hover/tap label: data-tip drives the custom tooltip (the old <title> never fired on touch) */
+        var tip = "FY" + y.fy + " · " + (b[0] === "debt" ? "Total debt" : b[0] === "gross" ? "Gross raised" : "Maturing") + " — $" + v.toFixed(2) + "T" + (y.fwd ? (b[0] === "mat" ? " (disclosed, MSPD-confirmed)" : " (estimate)") : "");
+        s += '<rect class="tq-bar" data-tip="' + tip + '" x="' + x + '" y="' + yy0.toFixed(1) + '" width="15" height="' + h.toFixed(1) + '" fill="' + fill + '"' + extra + "></rect>";
         lbls.push({ x: x + 7.5, y: yy0 - LAB[b[0]], t: "$" + v.toFixed(2) + "T" });
       });
       s += '<text x="' + cx(i) + '" y="' + (TOP + PH + 16) + '" class="tq-ax" text-anchor="middle">FY' + String(y.fy).slice(2) + (y.fwd ? "*" : "") + "</text>";
@@ -95,10 +97,10 @@
       s += '<text x="' + lb.x.toFixed(1) + '" y="' + lb.y.toFixed(1) + '" class="tq-blbl" text-anchor="middle">' + lb.t + "</text>";
     });
     /* WA yield trend line: solid actuals; dashed CBO 10Y assumption (4.3%) for the forward years */
-    var pts = []; yrs.forEach(function (y, i) { if (y.yld != null) pts.push([cx(i), yy(y.yld)]); });
+    var pts = []; yrs.forEach(function (y, i) { if (y.yld != null) pts.push([cx(i), yy(y.yld), y.fy, y.yld]); });
     if (pts.length > 1) {
       s += '<polyline points="' + pts.map(function (p) { return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" ") + '" class="tq-yl"/>';
-      pts.forEach(function (p) { s += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="2.6" class="tq-yd"/>'; });
+      pts.forEach(function (p) { s += '<circle class="tq-yd tq-ydot" data-tip="FY' + p[2] + " · WA yield — " + p[3].toFixed(2) + '%" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="2.6"/>'; });
       var lp = pts[pts.length - 1];
       s += '<polyline points="' + lp[0].toFixed(1) + "," + lp[1].toFixed(1) + " " + cx(yrs.length - 2).toFixed(1) + "," + yy(4.3).toFixed(1) + " " + cx(yrs.length - 1).toFixed(1) + "," + yy(4.3).toFixed(1) + '" class="tq-yl2"/>';
       s += '<text x="' + L + '" y="13" class="tq-ylbl">⚠️ WA yield on marketable debt (right axis, %)</text>';
@@ -118,6 +120,77 @@
     return s;
   }
 
+  /* ---- budget ledger — FY2022–FY2026, grouped: REVENUE / SPENDING / THE SHORTFALL ----
+     Headline totals from D.annual_history_fy2015_2026 (MTS Table 5 identity, cross-checked to FRED FYFR).
+     Revenue components: MTS Table 4 net receipts at the Sep 30 year-end (verified Nov 12, 2026) — the 7 components sum exactly to Total Receipts every year.
+     Program totals: MTS Table 5 agency totals at the Sep 30 year-end (verified Nov 12, 2026) — largest programs, shown for scale; NOT an additive partition (agency totals include intragovernmental flows).
+     Non-interest outlays = Total Outlays − Net Interest; deficit-to-GDP = deficit ÷ nominal GDP (both computed, labelled). */
+  function budgetLedger(D) {
+    var H = D.annual_history_fy2015_2026 || [], byYr = {};
+    H.forEach(function (r) { if (r.fiscal_year >= 2022 && r.fiscal_year <= 2026) byYr[r.fiscal_year] = r; });
+    if (!byYr[2022] || !byYr[2026]) return "";
+    var YRS = [2022, 2023, 2024, 2025, 2026];
+    /* $ billions — MTS Table 4 (receipts) + Table 5 (programs), Sep 30 year-ends, verified Nov 12, 2026 */
+    var REV = {
+      "Individual Income Taxes": [2632.145, 2176.481, 2426.067, 2656.044, 2845.527],
+      "Corporation Income Taxes": [424.865, 419.584, 529.867, 452.089, 381.415],
+      "Social Insurance & Retirement": [1483.527, 1614.454, 1709.558, 1748.294, 1811.795],
+      "Excise Taxes": [87.726, 75.804, 101.435, 105.936, 105.995],
+      "Customs Duties (Tariffs)": [99.908, 80.337, 77.037, 194.866, 173.219],
+      "Estate & Gift Taxes": [32.550, 33.668, 31.616, 29.462, 38.720],
+      "Miscellaneous Receipts": [135.398, 38.956, 43.155, 47.925, 46.657]
+    };
+    var PROG = {
+      "Social Security (SSA)": [1282.056, 1416.328, 1519.734, 1646.515, 1733.853],
+      "Medicare & Medicaid (CMS)": [2067.460, 2147.278, 2222.163, 2484.969, 2732.874],
+      "National Defense (DoD military)": [726.627, 775.872, 826.277, 868.412, 916.836],
+      "Veterans Affairs": [273.867, 301.026, 325.012, 376.591, 415.575],
+      "Agriculture (SNAP-led)": [245.210, 228.887, 203.402, 227.432, 216.670]
+    };
+    function fmtB(v) { return v >= 1000 ? "$" + (v / 1000).toFixed(2) + " Trillion" : "$" + v.toFixed(2) + " Billion"; }
+    function sgn(n, d) { return (n >= 0 ? "+" : "−") + Math.abs(n).toFixed(d == null ? 1 : d); }
+    function yoy(vals, i) { if (i === 0 || !vals[i - 1]) return ""; return sgn((vals[i] / vals[i - 1] - 1) * 100) + "%"; }
+    function chgCell(vals) {
+      var d = vals[4] - vals[0], p = (d / vals[0]) * 100;
+      return (d >= 0 ? "⬆ " : "⬇ ") + fmtB(Math.abs(d)) + " (" + sgn(p) + "%)";
+    }
+    function cell(vals, i) { return "<td>" + fmtB(vals[i]) + (i > 0 ? '<span class="tq-yoy">' + yoy(vals, i) + " YoY</span>" : "") + "</td>"; }
+    function row(label, vals, cls) {
+      return '<tr class="' + (cls || "") + '"><td>' + label + "</td>" + YRS.map(function (y, i) { return cell(vals, i); }).join("") + "<td><b>" + chgCell(vals) + "</b></td></tr>";
+    }
+    function rowPP(label, vals) {
+      var d = vals[4] - vals[0];
+      return '<tr><td>' + label + "</td>" + YRS.map(function (y, i) {
+        return "<td>" + vals[i].toFixed(1) + "%" + (i > 0 ? '<span class="tq-yoy">' + sgn(vals[i] - vals[i - 1]) + " pp YoY</span>" : "") + "</td>";
+      }).join("") + "<td><b>" + (d >= 0 ? "⬆ " : "⬇ ") + Math.abs(d).toFixed(1) + " percentage points</b></td></tr>";
+    }
+    function grp(label) { return '<tr class="tq-grp"><td colspan="7">' + label + "</td></tr>"; }
+    var t = function (y, k) { return byYr[y][k] * 1000; };
+    var receipts = YRS.map(function (y) { return t(y, "receipts_T"); });
+    var outlays = YRS.map(function (y) { return t(y, "outlays_T"); });
+    var deficit = YRS.map(function (y) { return t(y, "deficit_T"); });
+    var primary = YRS.map(function (y) { return t(y, "primary_deficit_T"); });
+    var grossInt = YRS.map(function (y) { return t(y, "gross_interest_T"); });
+    var netInt = YRS.map(function (y) { return t(y, "net_interest_T"); });
+    var nonInt = outlays.map(function (v, i) { return v - netInt[i]; });
+    var defGDP = YRS.map(function (y) { return byYr[y].deficit_T / byYr[y].fy_nominal_gdp_T * 100; });
+    var body = grp("Revenue — Total Receipts") + row("Total Receipts", receipts, "tot");
+    Object.keys(REV).forEach(function (k) { body += row(k, REV[k], "tq-sub"); });
+    body += grp("Spending — Total Outlays") + row("Total Outlays", outlays, "tot") +
+      row("Net Interest on Debt", netInt, "tq-sub") +
+      row("Non-interest outlays <i>(computed)</i>", nonInt, "tq-sub") +
+      '<tr class="tq-subh"><td colspan="7">Largest programs — MTS Table 5 agency totals, shown for scale (not additive to Total Outlays)</td></tr>';
+    Object.keys(PROG).forEach(function (k) { body += row(k, PROG[k], "tq-sub"); });
+    body += grp("The Shortfall") + row("Deficit", deficit, "tot") +
+      row("Primary Deficit (before interest)", primary, "tq-sub") +
+      row("Gross Interest on Debt", grossInt, "tq-sub") +
+      rowPP("Deficit-to-GDP Ratio", defGDP);
+    var intro = "The US budget deficit reached <b>$" + byYr[2026].deficit_T.toFixed(3) + " trillion</b> for fiscal year 2026, widening from the <b>$" + byYr[2025].deficit_T.toFixed(3) + " trillion</b> shortfall in fiscal year 2025.";
+    return '<p class="tq-ledger-intro">' + intro + "</p>" +
+      '<div class="tbl-scroll"><table class="tq-t tq-ledger"><thead><tr><th>Budget Line Item</th>' + YRS.map(function (y) { return "<th>FY " + y + "</th>"; }).join("") + "<th>Change (FY22 → FY26)</th></tr></thead><tbody>" + body + "</tbody></table></div>" +
+      '<div class="tq-note">Sources: US Department of the Treasury, Monthly Treasury Statement — Table 4 (receipts) &amp; Table 5 (outlays), fiscal year-end Sep 30. Revenue components sum to Total Receipts every year (within $0.4B — the dashboard’s headline totals are rounded to 3 decimals in $ trillions). Program totals are the largest MTS agency totals, shown for scale — they are not an additive partition of Total Outlays (MTS agency totals include intragovernmental flows). Non-interest outlays = Total Outlays − Net Interest (computed). Deficit-to-GDP = deficit ÷ nominal GDP (computed). Change = FY2022 → FY2026; YoY = vs the prior fiscal year. Revenue components &amp; program totals are verified MTS history for FY2022–FY2026 (static); the FY2027 column arrives with the next annual update. Verified Nov 12, 2026.</div>';
+  }
+
   /* ---- debt-spiral gauge: interest-cost growth vs receipts growth (computed from the annual history) ---- */
   function spiralGauge(D) {
     var H = D.annual_history_fy2015_2026 || [];
@@ -133,6 +206,25 @@
       '<div class="tq-spn">Net interest FY2023→FY2026: + ' + i3.toFixed(1) + '% ($' + b.net_interest_T.toFixed(2) + 'T → $' + c.net_interest_T.toFixed(2) + 'T) · Receipts: +' + r3.toFixed(1) + '% ($' + b.receipts_T.toFixed(2) + 'T → $' + c.receipts_T.toFixed(2) + 'T)<br>' +
       'Method: period growth = (end ÷ start − 1); gauge = interest growth ÷ receipts growth. Ratio &gt; 2 = elevated (interest compounding faster than the revenue base); 1–2 = watch; &lt; 1 = stable. Computed from the annual history (MTS / FiscalData), not a forecast.</div></div>';
   }
+
+  /* chart hover/tap labels: one delegated tooltip for the annual chart — shows on
+     mouse hover (desktop) and on tap (touch); the bars' old <title> tooltips never fired on touch.
+     Listeners attach once to P (persistent); the tip div is recreated on every render()
+     because innerHTML wipes it, and the handlers look it up fresh on each event. */
+  function tipTarget(e) {
+    var n = e.target;
+    if (n && n.closest) { var c = n.closest("[data-tip]"); if (c && P.contains(c)) return c; }
+    return null;
+  }
+  function tipShow(t, x, y) {
+    var tip = P.querySelector(".tq-tip"); if (!tip) return;
+    tip.textContent = t;
+    tip.style.display = "block";
+    var w = tip.offsetWidth, h = tip.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
+    var lx = Math.min(Math.max(8, x + 14), Math.max(8, vw - w - 8)), ly = Math.min(Math.max(8, y + 14), Math.max(8, vh - h - 8));
+    tip.style.left = lx + "px"; tip.style.top = ly + "px";
+  }
+  function tipHide() { var tip = P.querySelector(".tq-tip"); if (tip) tip.style.display = "none"; }
 
   function render() {
     var U = window.DATA && DATA.ust;
@@ -166,6 +258,14 @@
     } else if (DASH_FAILED) {
       ann = sec("tq-annual", "Annual debt &amp; borrowing — FY2015–2028", "",
         '<p class="note">Dashboard data (us-debt-dashboard.json) is not available on this deployment yet — the annual history, servicing capacity and risk sections will appear once it is published. The live snapshot above is current.</p>');
+    }
+
+    /* (b2) budget ledger — grouped FY2022–FY2026 */
+    var ledger = "";
+    if (D && D.annual_history_fy2015_2026) {
+      ledger = sec("tq-ledger", "Budget ledger — FY2022–FY2026",
+        "receipts, outlays & the deficit · YoY under every figure · change FY2022 → FY2026",
+        budgetLedger(D));
     }
 
     /* (c) forward maturity & refinancing — the existing 24-month wall, kept verbatim, plus a forward summary */
@@ -291,14 +391,35 @@
       "). Marketable totals and maturities are summed from the security-level MSPD; MSPD is monthly, Debt to the Penny daily." +
       (D ? " Dashboard data: us-debt-dashboard.json (prepared " + esc(D.prepared || "") + ", data as of " + esc(D.data_as_of || "") + ") — annual history, forward, servicing and risk from FiscalData, FRED and CBO as cited per section." : "") + "</div>";
 
-    P.innerHTML = '<div class="tq">' + head + kp + ann +
+    P.innerHTML = '<div class="tq">' + head + kp + ann + ledger +
       '<div class="tq-g">' + wall + '<div class="tq-side">' + prof + sc + "</div></div>" +
       fwdSum + rc + comp + svc + risk + verd + foot + "</div>";
+    /* tooltip element for the annual chart (recreated each render; listeners are on P, attached once below) */
+    var tipEl = document.createElement("div");
+    tipEl.className = "tq-tip";
+    tipEl.style.display = "none";
+    P.appendChild(tipEl);
   }
 
   BTN.addEventListener("click", function () { setTimeout(render, 0); });
   window.addEventListener("desk:unlock", function () { setTimeout(render, 300); });
   window.addEventListener("desk:data", render);
+  if (!P._tqTips) {
+    P._tqTips = true;
+    P.addEventListener("mouseover", function (e) { var n = tipTarget(e); if (n) tipShow(n.getAttribute("data-tip"), e.clientX, e.clientY); });
+    P.addEventListener("mousemove", function (e) { var n = tipTarget(e); if (n) tipShow(n.getAttribute("data-tip"), e.clientX, e.clientY); });
+    P.addEventListener("mouseout", function (e) {
+      var to = e.relatedTarget;
+      if (to && to.closest) { var c = to.closest("[data-tip]"); if (c && P.contains(c)) return; }
+      tipHide();
+    });
+    P.addEventListener("click", function (e) {
+      var n = tipTarget(e);
+      if (!n) { tipHide(); return; }
+      var r = n.getBoundingClientRect();
+      tipShow(n.getAttribute("data-tip"), r.left + r.width / 2, r.bottom);
+    });
+  }
   if (window.DATA) render();
   loadDash();
 
@@ -317,11 +438,12 @@
     ".tq-t{width:100%;border-collapse:collapse;font:13px 'IBM Plex Mono',monospace}.tq-t th{text-align:right;color:var(--muted);font-size:11.5px;padding:6px 8px;border-bottom:1px solid var(--line2)}.tq-t th:first-child,.tq-t td:first-child{text-align:left}" +
     ".tq-t td{text-align:right;padding:3px 4px;border-bottom:1px solid var(--line)}.tq-t td.m{color:var(--muted);font-family:inherit}.tq-t tr.tot td{font-weight:700;border-top:2px solid var(--line2);padding:8px}" +
     ".tq-t tr.tq-fwd td{color:var(--faint);font-style:italic}.tq-t tr.tq-fwd td:first-child{color:var(--muted);font-style:normal}.tq-t td.tq-fwd{color:var(--faint);font-style:italic}.tq-t th.tq-fwd{color:var(--faint);font-style:italic}.tq-t th i{display:block;font-size:10px;color:#e8b93d;font-style:normal;text-transform:uppercase;letter-spacing:.04em}.tq-t td i{font-size:10px;color:#e8b93d;font-style:normal;text-transform:uppercase;letter-spacing:.04em}" +
+    ".tq-grp td{background:rgba(56,182,201,.10);color:#38b6c9;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:11.5px;padding:7px 8px}.tq-t tr.tq-sub td:first-child{padding-left:20px}.tq-subh td{color:var(--faint)!important;font-size:11px!important;font-style:italic;padding-top:8px!important}.tq-yoy{display:block;font-size:10px;color:var(--faint);margin-top:1px}.tq-ledger-intro{font-size:13px;line-height:1.55;margin:0 0 10px}.tq-ledger-intro b{color:var(--ink)}" +
     ".tq-c{padding:6px 8px;border-radius:5px}.tq-h0{color:var(--faint)}.tq-past{color:var(--faint);text-decoration:line-through;opacity:.6}.tq-past i{display:block;font-size:9px;font-style:normal;text-decoration:none;letter-spacing:.04em;text-transform:uppercase}.tq-h1{background:rgba(148,163,184,.08)}.tq-h2{background:rgba(245,158,11,.18);color:#fcd34d}.tq-h3{background:rgba(249,115,22,.3);color:#fed7aa;font-weight:600}.tq-h4{background:rgba(220,38,38,.45);color:#fee2e2;font-weight:700}" +
     ".tq-bar{display:flex;height:24px;border-radius:5px;overflow:hidden;border:1px solid var(--line2)}.tq-bar div{display:flex;align-items:center;justify-content:center;font:700 10.5px 'IBM Plex Mono',monospace;color:#fff}" +
     ".tq-lg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;font:11.5px 'IBM Plex Mono',monospace;color:var(--muted)}.tq-lg div{display:flex;align-items:center;gap:6px}.tq-lg i{width:8px;height:8px;border-radius:50%}.tq-lg b{margin-left:auto;color:var(--ink)}" +
     ".tq-lg2{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 4px;font:11.5px 'IBM Plex Mono',monospace;color:var(--muted)}.tq-lg2 span{display:flex;align-items:center;gap:6px}.tq-lg2 i{width:10px;height:10px;border-radius:2px;display:inline-block}.tq-sw-hatch{background:repeating-linear-gradient(45deg,#ef4444 0 2px,#3f1d1d 2px 5px)}.tq-sw-est{background:rgba(245,158,11,.4);border:1px dashed #fff}.tq-sw-yl{background:#e8b93d;border-radius:50%!important;width:8px!important;height:8px!important}" +
-    ".tq-svg{width:100%;height:auto;display:block;background:var(--panel);border:1px solid var(--line);border-radius:8px}.tq-gl{stroke:rgba(148,163,184,.18);stroke-width:1}.tq-ax{fill:var(--faint);font:10.5px 'IBM Plex Mono',monospace}.tq-blbl{fill:#e8eef4;font:600 9px 'IBM Plex Mono',monospace}.tq-yl{fill:none;stroke:#e8b93d;stroke-width:2}.tq-yd{fill:#e8b93d}.tq-yl2{fill:none;stroke:#e8b93d;stroke-width:2;stroke-dasharray:5,3;opacity:.7}.tq-ylbl{fill:#e8b93d;font:600 11px 'IBM Plex Mono',monospace}.tq-ylbl2{fill:var(--faint);font:10px 'IBM Plex Mono',monospace}" +
+    ".tq-svg{width:100%;height:auto;display:block;background:var(--panel);border:1px solid var(--line);border-radius:8px}.tq-gl{stroke:rgba(148,163,184,.18);stroke-width:1}.tq-ax{fill:var(--faint);font:10.5px 'IBM Plex Mono',monospace}.tq-blbl{fill:#e8eef4;font:600 9px 'IBM Plex Mono',monospace}.tq-tip{position:fixed;z-index:60;pointer-events:none;display:none;background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:12px 'IBM Plex Mono',monospace;color:var(--ink);box-shadow:0 4px 16px rgba(0,0,0,.45);max-width:min(340px,calc(100vw - 16px))}.tq-svg rect[data-tip],.tq-svg circle[data-tip]{cursor:pointer}.tq-yl{fill:none;stroke:#e8b93d;stroke-width:2}.tq-yd{fill:#e8b93d}.tq-yl2{fill:none;stroke:#e8b93d;stroke-width:2;stroke-dasharray:5,3;opacity:.7}.tq-ylbl{fill:#e8b93d;font:600 11px 'IBM Plex Mono',monospace}.tq-ylbl2{fill:var(--faint);font:10px 'IBM Plex Mono',monospace}" +
     ".tq-sc{display:flex;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 10px;margin-top:6px;font:13px 'IBM Plex Mono',monospace}.tq-sc b{color:#ff8a84}" +
     ".tq-note{margin-top:8px;font-size:11.5px;color:var(--faint);line-height:1.5}.tq-note b{color:var(--ink)}.tq-note a{color:#38b6c9}.tq-ct td.r{color:#38b6c9}.tq-ft{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint);border-top:1px solid var(--line);padding-top:10px;margin-top:6px}" +
     ".tq-trend{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.tq-tr{display:flex;flex-direction:column;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 8px;min-width:52px}.tq-tr span{font:10px 'IBM Plex Mono',monospace;color:var(--faint)}.tq-tr b{font:700 13px 'IBM Plex Mono',monospace;color:#ff8a84}" +
