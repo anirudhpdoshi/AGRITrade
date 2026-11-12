@@ -5,8 +5,16 @@
    company. Summary | Details toggle above the main area. A year ruler (All + 2021–2026)
    filters both views; tap a year or drag/scrub across it. Every figure is shown exactly
    as researched — coupon, market yield and all-in rate are separate fields and never
-   substituted; null yields print as "—". Amounts are as issued, in millions, in the issue
-   currency; currencies are never summed or converted into one total. */
+   substituted; null yields print as "—". Amounts are shown in USD billions ($B):
+   USD rows are amount / 1000; non-USD rows are converted at the issue-month average
+   FX rate (FRED H.10 daily, mean of the month's observations) and carry the rate in
+   fx_rate_used. The original amount and issue currency are kept on every row and shown
+   in the expanded Details. "Total raised" follows the research's documented per-company
+   total (row.include_in_total): for most companies the parent's own funded debt; for
+   CoreWeave, Crusoe, Lambda, Nebius and Nscale it includes the project-vehicle / SPV
+   facilities the research counts as raised debt. Items excluded from a total (undrawn
+   facilities, leases, subsidiary debt, undocumented items) are still shown in Details,
+   marked "excluded from total". */
 (function () {
   "use strict";
   var P = document.getElementById("panel-aidebt"), BTN = document.getElementById("tabbtn-aidebt");
@@ -20,7 +28,10 @@
   var scrub = false;
   function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
   function num(v) { return (+v).toLocaleString("en-US"); }
-  function fmtM(v) { return num(Math.round(v)); } /* display totals rounded to whole millions; sub-million precision is noise from converted tranches */
+  function fmtB(v) { if (v == null) return "—"; return "$" + (+v < 0.1 ? (+v).toFixed(3) : (+v).toFixed(2)) + "B"; } /* $B, 2 decimals; 3 decimals below $0.10B so small raises (min $0.004B) never print as $0.00B */
+  function sumB(rows) { var t = 0, n = 0; rows.forEach(function (r) { if (r.include_in_total !== false && r.amount_usd_b != null) { t += r.amount_usd_b; n++; } }); return { t: Math.round(t * 1000) / 1000, n: n }; } /* totals count ONLY included rows (parent funded debt) */
+  function sumExcl(rows) { var t = 0, n = 0; rows.forEach(function (r) { if (r.include_in_total === false && r.amount_usd_b != null) { t += r.amount_usd_b; n++; } }); return { t: Math.round(t * 1000) / 1000, n: n }; } /* excluded rows, for the "excl. $XB" line */
+  function origAmt(r) { var s = (SYM[r.currency] || r.currency + " ") + num(r.amount) + "m (" + r.currency + ")"; return r.fx_rate_used ? s + " → " + r.fx_rate_used : s; }
   function monLbl(m) { if (!m) return "—"; var p = m.split("-"); return MON[+p[1] - 1] + " " + p[0]; }
   function fam(t) {
     t = (t || "").toLowerCase();
@@ -66,16 +77,6 @@
       return (b.amount || 0) - (a.amount || 0);
     });
   }
-  function curTotals(rows) {
-    var t = {};
-    rows.forEach(function (r) { if (r.amount != null) { t[r.currency] = (t[r.currency] || 0) + r.amount; } });
-    return t;
-  }
-  function curCounts(rows) {
-    var c = {};
-    rows.forEach(function (r) { if (r.amount != null) { c[r.currency] = (c[r.currency] || 0) + 1; } });
-    return c;
-  }
   function kpi(t, v, sub) { return '<div class="ad-k"><div class="t">' + t + '</div><div class="v">' + v + "</div>" + (sub ? '<div class="s">' + sub + "</div>" : "") + "</div>"; }
   function cfChip(c) { return '<span class="ad-cf ad-cf-' + c.toLowerCase() + '">' + c + "</span>"; }
 
@@ -83,14 +84,17 @@
     var spv = isSPV(r), sub = !spv && r.issuer_legal_entity !== mainIssuer(r.company);
     var badge = spv ? ' <span class="ad-badge ad-spv" title="SPV / project-entity borrower — this debt is not the parent company\u2019s own borrowing">SPV</span>'
       : sub ? ' <span class="ad-badge ad-sub" title="Subsidiary borrower — not the parent company itself">SUB</span>' : "";
-    var amt = r.amount == null ? '<span title="' + esc(r.notes || "Amount not disclosed in sources") + '">—</span>' : num(r.amount);
+    var excl = r.include_in_total === false;
+    var exTag = excl ? ' <span class="ad-badge ad-excl" title="Excluded from the company total' + (r.exclude_reason ? ": " + esc(r.exclude_reason) : "") + ' — see the expanded row">excluded from total</span>' : "";
+    var amt = r.amount_usd_b == null ? '<span title="' + esc(r.notes || "Amount not disclosed in sources") + '">—</span>'
+      : '<span title="' + esc(origAmt(r)) + '">' + fmtB(r.amount_usd_b) + "</span>";
     var yld = r.yield_or_coupon_pct == null ? "—"
       : (+r.yield_or_coupon_pct).toFixed(2) + "%";
     var yttl = r.yield_or_coupon_pct == null ? "Yield / coupon not publicly disclosed — floating-rate spreads are kept separate, never substituted"
       : esc(r.yield_type || "") + (r.yield_or_coupon_pct === 0 ? " — non-interest-bearing" : "");
     var ctry = r.country_of_issuer === "UNKNOWN" ? '<span title="Country not verified in sources">—</span>' : esc(r.country_of_issuer);
-    return '<tr data-i="' + i + '"><td><span class="co">' + esc(r.company) + "</span></td>" +
-      "<td>" + esc(r.issuer_legal_entity) + badge + "</td>" +
+    return '<tr data-i="' + i + '"' + (excl ? ' class="ad-ex"' : "") + '"><td><span class="co">' + esc(r.company) + "</span></td>" +
+      "<td>" + esc(r.issuer_legal_entity) + badge + exTag + "</td>" +
       "<td>" + esc(r.instrument_type) + "</td>" +
       '<td class="mono">' + monLbl(r.issue_month) + '</td><td class="r">' + amt + "</td>" +
       '<td class="mono">' + esc(r.currency) + '</td><td class="r" title="' + yttl + '">' + yld + "</td>" +
@@ -98,7 +102,13 @@
   }
   function detailHTML(r) {
     var src = (r.sources || []).map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("");
-    return '<tr class="ad-det"><td colspan="9"><div><b>Notes:</b> ' + esc(r.notes || "—") + "</div>" +
+    var amtLine = r.amount_usd_b == null ? "<b>Amount:</b> — (not disclosed in sources)"
+      : "<b>Amount:</b> " + esc(origAmt(r)) + " = " + fmtB(r.amount_usd_b);
+    var inclLine = r.include_in_total === false
+      ? '<div style="margin-top:6px"><b>In company total:</b> No — excluded' + (r.exclude_reason ? " (" + esc(r.exclude_reason) + ")" : "") + "</div>"
+      : "";
+    return '<tr class="ad-det"><td colspan="9"><div>' + amtLine + "</div>" + inclLine +
+      '<div style="margin-top:6px"><b>Notes:</b> ' + esc(r.notes || "—") + "</div>" +
       '<div style="margin-top:6px"><b>Sources:</b><ul>' + (src || "<li>—</li>") + "</ul></div></td></tr>";
   }
   function stripHTML(rows) {
@@ -106,11 +116,11 @@
     var byFam = {};
     rows.forEach(function (r) { var f = fam(r.instrument_type); (byFam[f] = byFam[f] || []).push(r); });
     var cells = FAMS.map(function (f) {
-      var rs = byFam[f] || [], t = curTotals(rs), parts = Object.keys(t).sort().map(function (c) { return (SYM[c] || c + " ") + fmtM(t[c]) + "m"; }).join(" · ");
-      return '<div class="ad-f"><div class="t">' + f + ' <span>(' + rs.length + (rs.length === 1 ? " raise)" : " raises)") + '</span></div><div class="v">' + (parts || "—") + "</div></div>";
+      var rs = byFam[f] || [], s = sumB(rs);
+      return '<div class="ad-f"><div class="t">' + f + ' <span>(' + rs.length + (rs.length === 1 ? " raise)" : " raises)") + '</span></div><div class="v">' + (s.n ? fmtB(s.t) : "—") + "</div></div>";
     }).join("");
-    var nullAmt = rows.filter(function (r) { return r.amount == null; }).length;
-    var note = "Totals of the rows shown after filtering — sums within each currency only, never converted." +
+    var nullAmt = rows.filter(function (r) { return r.amount_usd_b == null; }).length;
+    var note = "Totals of the rows shown after filtering, in USD billions — non-USD amounts converted at the issue-month average FX rate (FRED H.10 daily); original amount and currency kept per row. Totals follow the research\u2019s documented per-company total — for most companies the parent company\u2019s own funded debt; for CoreWeave, Crusoe, Lambda, Nebius and Nscale they include the project-vehicle / SPV facilities the research counts as raised debt. Excluded items are marked in Details." +
       (nullAmt ? " " + nullAmt + (nullAmt === 1 ? " row has" : " rows have") + " no disclosed amount and " + (nullAmt === 1 ? "is" : "are") + " excluded from totals." : "");
     return '<div class="ad-strip">' + cells + '</div><div class="ad-note">' + note + "</div>";
   }
@@ -146,21 +156,21 @@
   }
   function summaryHTML() {
     var rs = yrRows();
-    var tot = curTotals(rs), cnt = curCounts(rs);
+    var s = sumB(rs);
+    var ex = sumExcl(rs);
     var tiles = [];
     tiles.push(kpi("Debt raises", num(rs.length), (F.yr ? F.yr : "All years") + " · " + F.co));
-    var anyAmt = false;
-    ["USD", "EUR", "GBP", "JPY", "CAD", "CHF", "AUD"].forEach(function (c) {
-      if (tot[c]) { anyAmt = true; tiles.push(kpi(c + " raised", (SYM[c] || c + " ") + fmtM(tot[c]) + "m", (cnt[c] || 0) + " raises · sums in " + c + " only")); }
-    });
-    if (!anyAmt) tiles.push(kpi("Amounts", "—", "no disclosed amounts"));
+    tiles.push(kpi("Total raised", s.n ? fmtB(s.t) : "—", s.n ? s.n + " raises with disclosed amounts · USD billions" : "no disclosed amounts"));
     var ys = rs.filter(function (r) { return r.yield_or_coupon_pct != null; }).map(function (r) { return +r.yield_or_coupon_pct; });
     var lo = ys.length ? Math.min.apply(null, ys) : null, hi = ys.length ? Math.max.apply(null, ys) : null;
     var yrng = ys.length ? lo.toFixed(2) + "%" + (ys.length > 1 && hi !== lo ? " – " + hi.toFixed(2) + "%" : "") : "—";
     tiles.push(kpi("Yield / coupon range", yrng, ys.length ? ys.length + " of " + rs.length + " raises disclose a yield / coupon" : "no yield / coupon disclosed"));
     var tf = topFamily(rs);
     tiles.push(kpi("Top instrument family", tf ? esc(tf.f) : "—", tf ? tf.n + " of " + rs.length + " raises" : "—"));
-    return '<div class="ad-kpi">' + tiles.join("") + "</div>" + barsHTML() + stripHTML(rs);
+    var exclLine = ex.t > 0 ? '<div class="ad-cur">excl. ' + fmtB(ex.t) + ' via financing vehicles &amp; facilities — see Details</div>' : "";
+    /* Anthropic: the total is converts ISSUED; only $6.20B was still outstanding at Jun 30, 2026 (several converted to equity). Shown on the full-company Summary only. */
+    if (F.co === "Anthropic" && !F.yr) exclLine += '<div class="ad-cur">Converts issued ' + fmtB(s.t) + ' — $6.20B outstanding at Jun 30, 2026; several converted to equity</div>';
+    return '<div class="ad-kpi">' + tiles.join("") + "</div>" + exclLine + barsHTML() + stripHTML(rs);
   }
   function detailsHTML() {
     var rs = yrRows();
@@ -245,6 +255,8 @@
       ".ad-badge{font:700 10px 'IBM Plex Mono',monospace;padding:1px 6px;border-radius:4px;margin-left:5px;white-space:nowrap;cursor:help}" +
       ".ad-spv{color:#fda4af;background:rgba(224,69,58,.16);border:1px solid rgba(224,69,58,.5)}" +
       ".ad-sub{color:#c4b5fd;background:rgba(139,92,246,.14);border:1px solid rgba(139,92,246,.45)}" +
+      ".ad-excl{color:var(--faint);background:transparent;border:1px dashed var(--line2)}" +
+      ".ad-t tr.ad-ex td{opacity:.8}" +
       ".ad-ft{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint);border-top:1px solid var(--line);padding-top:10px;margin-top:6px}" +
       "@media (max-width:760px){.ad-hd h1{font-size:19px}.ad-flt select{max-width:100%}.ad-body{flex-direction:column}.ad-co{flex:none;width:100%;position:static}.ad-co-list{flex-direction:row;overflow-x:auto;padding-bottom:4px}.ad-co-b{white-space:nowrap;width:auto}}" +
       "</style>";
@@ -258,7 +270,7 @@
     var main = '<div class="ad-main">' +
       '<div class="ad-seg" role="tablist"><button type="button" data-view="summary">Summary</button><button type="button" data-view="details">Details</button></div>' +
       ruler + '<div id="ad-view"></div></div>';
-    var foot = '<div class="ad-ft">Verified 2026-11-11 · coupon, market yield and all-in rate are separate fields · sources per row (click a row to expand). Amounts are as issued, in millions, in the issue currency. SPV = SPV / project-entity borrower, not the parent company\u2019s own debt · SUB = subsidiary borrower. Data: SEC EDGAR filings, prospectuses, company IR, reputable press; 362 CONFIRMED · 38 REPORTED · 6 INDICATIVE.</div>';
+    var foot = '<div class="ad-ft">Verified 2026-11-11 · coupon, market yield and all-in rate are separate fields · sources per row (click a row to expand). Amounts in USD billions — non-USD amounts converted at the issue-month average FX rate (FRED H.10 daily); original amount and currency retained per row. Total raised follows the research\u2019s documented per-company total — for most companies the parent company\u2019s own funded debt; for CoreWeave, Crusoe, Lambda, Nebius and Nscale it includes the project-vehicle / SPV facilities the research counts as raised debt. Items excluded from a total (undrawn facilities, leases, subsidiary debt, undocumented items) are still shown in Details, marked \u2018excluded from total\u2019. SPV = SPV / project-entity borrower, not the parent company\u2019s own debt · SUB = subsidiary borrower. Data: SEC EDGAR filings, prospectuses, company IR, reputable press; 362 CONFIRMED · 38 REPORTED · 6 INDICATIVE.</div>';
     P.innerHTML = head + '<div class="ad">' + hd + '<div class="ad-body">' + list + main + "</div>" + foot + "</div>";
     BUILT = true;
     update();
