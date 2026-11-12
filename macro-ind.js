@@ -69,11 +69,17 @@
     var heat = c.id === "inflation" || c.id === "fincond", lab = sc >= 0.34 ? (heat ? (c.id === "fincond" ? "Tightening" : "Heating") : "Strengthening") : sc <= -0.34 ? (heat ? (c.id === "fincond" ? "Easing" : "Cooling") : "Weakening") : "Mixed";
     return { lab: lab, k: sc >= 0.34 ? (heat ? "heat" : "up") : sc <= -0.34 ? (heat ? "cool" : "dn") : "neu", tip: up + " of " + n + " " + (heat ? "rising" : "improving") + ", " + dn + " " + (heat ? "falling" : "weakening") + " on the latest print" }; }
   function isOn(m) { return !SEL || SEL.indexOf(m.key) >= 0; }
+  /* top category chip row (was a left rail): one chip per category; the
+     open categories' indicator lists render beneath the row, full width.
+     Selection behaviour is unchanged — data-mcat toggles a category open,
+     data-mcall / data-mcnone select/clear it, data-mtog toggles one
+     indicator; the Table / Chart / Both control is untouched. */
   function rail(C) {
-    return '<aside class="mi-rail"><div class="mi-pt">Categories</div>' + C.map(function (c) { var st = strength(c), on = c.items.filter(isOn).length, op = !!OPEN[c.id];
-      return '<div class="mc-cat' + (op ? " open" : "") + '"><button class="mc-h" data-mcat="' + c.id + '" aria-expanded="' + op + '"><span class="mc-n">' + esc(c.name) + '</span><span class="mc-s ' + st.k + '" title="' + esc(st.tip) + '">' + st.lab + '</span><span class="mc-c">' + on + "/" + c.items.length + '</span><span class="mc-ch">' + (op ? "▾" : "▸") + "</span></button>" +
-        (op ? '<div class="mc-body"><div class="mc-qa"><button data-mcall="' + c.id + '">Select all</button><button data-mcnone="' + c.id + '">Clear</button></div>' + ["us", "ca"].map(function (g) { var R = c.items.filter(function (m) { return m.group === g && tyOk(m); }); return R.length ? '<div class="mc-ct">' + flag(g, 13) + " " + CTN[g] + "</div>" + R.map(function (m) { var mk = mark(m), s = sig(m);
-          return '<button class="mc-i' + (isOn(m) ? " on" : "") + (mk ? " " + mk.k : "") + '" data-mtog="' + esc(m.key) + '" aria-pressed="' + isOn(m) + '">' + '<span class="mc-in">' + esc(m.name) + (m.measure ? " <i>" + esc(m.measure) + "</i>" : "") + "</span>" + (mk && mk.k !== "wk" ? badge(mk) : "") + '<span class="mc-iv ' + (s > 0 ? (c.id === "inflation" ? "heat" : "up") : s < 0 ? (c.id === "inflation" ? "cool" : "dn") : "") + '">' + mval(m, m.value) + "</span>" + tyTag(m, 1) + "</button>"; }).join("") : ""; }).join("") + "</div>" : "") + "</div>"; }).join("") + "</aside>";
+    return '<div class="mi-rail"><div class="mi-pt">Categories</div><div class="mi-cats">' + C.map(function (c) { var st = strength(c), on = c.items.filter(isOn).length, op = !!OPEN[c.id];
+      return '<button class="mc-cat' + (op ? " open" : "") + '" data-mcat="' + c.id + '" aria-expanded="' + op + '" aria-pressed="' + op + '"><span class="mc-n">' + esc(c.name) + '</span><span class="mc-s ' + st.k + '" title="' + esc(st.tip) + '">' + st.lab + '</span><span class="mc-c">' + on + "/" + c.items.length + "</span></button>"; }).join("") + "</div>" +
+      C.filter(function (c) { return OPEN[c.id]; }).map(function (c) {
+        return '<div class="mc-body"><div class="mc-qa"><button data-mcall="' + c.id + '">Select all</button><button data-mcnone="' + c.id + '">Clear</button></div>' + ["us", "ca"].map(function (g) { var R = c.items.filter(function (m) { return m.group === g && tyOk(m); }); return R.length ? '<div class="mc-ct">' + flag(g, 13) + " " + CTN[g] + "</div>" + R.map(function (m) { var mk = mark(m), s = sig(m);
+          return '<button class="mc-i' + (isOn(m) ? " on" : "") + (mk ? " " + mk.k : "") + '" data-mtog="' + esc(m.key) + '" aria-pressed="' + isOn(m) + '">' + '<span class="mc-in">' + esc(m.name) + (m.measure ? " <i>" + esc(m.measure) + "</i>" : "") + "</span>" + (mk && mk.k !== "wk" ? badge(mk) : "") + '<span class="mc-iv ' + (s > 0 ? (c.id === "inflation" ? "heat" : "up") : s < 0 ? (c.id === "inflation" ? "cool" : "dn") : "") + '">' + mval(m, m.value) + "</span>" + tyTag(m, 1) + "</button>"; }).join("") : ""; }).join("") + "</div>"; }).join("") + "</div>";
   }
   /* history for the selected period: points per year by frequency; 5Y uses the long series where the desk holds it */
   var PPY = { M: 12, Q: 4, W: 52, D: 12 };
@@ -95,7 +101,7 @@
     var any = 0, h = C.map(function (c) { var L = c.items.filter(function (m) { return isOn(m) && tyOk(m); }); if (!L.length) return ""; any = 1; var v = CV[c.id] || VIEW, st = strength(c);
       return '<section class="mc-ws"><div class="mc-wh"><h3>' + esc(c.name) + ' <span class="mc-s ' + st.k + '" title="' + esc(st.tip) + '">' + st.lab + '</span> <small>' + L.length + " selected</small></h3>" + viewSeg(v, 'data-mcv="' + c.id + '"') + "</div>" +
         (v !== "chart" ? tableView(L, c.id) : "") + (v !== "table" ? chartsView(L.slice().sort(function (a, b) { return a.group === b.group ? 0 : a.group === "us" ? -1 : 1; })) : "") + "</section>"; }).join("");
-    return any ? h : '<p class="note">Nothing selected — open a category on the left and pick its indicators.</p>';
+    return any ? h : '<p class="note">Nothing selected — open a category above and pick its indicators.</p>';
   }
 
   /* ---------- charts ---------- */
@@ -166,7 +172,7 @@
     if (!Object.keys(OPEN).length) OPEN[C[0].id] = 1;
     var all = [].concat.apply([], C.map(function (c) { return c.items; })), sel = all.filter(isOn), nNew = all.filter(function (m) { var k = mark(m); return k && k.k === "new"; }).length;
     var errs = DATA.meta.macro_errors ? Object.keys(DATA.meta.macro_errors).length : 0, P = function (x) { return '<button data-mper="' + x + '" aria-pressed="' + (PER === x) + '">' + x + "</button>"; };
-    return '<div class="tile wide mi-tile" data-src="macro"><h2>All macro indicators <span class="h2note">— by category · pick indicators on the left · Table, Chart or Both</span></h2>' +
+    return '<div class="tile wide mi-tile" data-src="macro"><h2>All macro indicators <span class="h2note">— by category · pick indicators above · Table, Chart or Both</span></h2>' +
       '<div class="mi-bar"><span class="mi-dl">Display selected data</span>' + viewSeg(VIEW, "data-mview") + '<span class="mi-dl">Cycle</span><div class="seg mi-vs">' + ["all", "lead", "coin", "lag"].map(function (x) { return '<button data-mtf="' + x + '" aria-pressed="' + (TF === x) + '">' + (x === "all" ? "All" : TYN[x]) + "</button>"; }).join("") + "</div>" + '<span class="mi-dl">Chart period</span><div class="seg mi-vs">' + P("1Y") + P("2Y") + P("5Y") + "</div>" +
       '<span class="mi-cnt">Selected view: ' + VIEW[0].toUpperCase() + VIEW.slice(1) + " · " + sel.length + " of " + all.length + " indicators" + (nNew ? ' · <b class="mi-b new">' + nNew + " TODAY</b>" : "") + "</span>" +
       '<div class="m-legend"><span class="up">▲ stronger</span><span class="dn">▼ weaker</span><span class="heat">▲ inflation hotter</span><span class="cool">▼ inflation cooler</span></div></div>' +
@@ -200,7 +206,7 @@
     ".mi-bar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:4px 0 12px}.mi-bar .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}" +
     ".mi-bar .seg button{background:transparent;border:0;color:var(--muted);padding:6px 14px;font:600 12.5px 'IBM Plex Sans',sans-serif;cursor:pointer}.mi-bar .seg button[aria-pressed=true]{background:#1d4ed8;color:#fff}" +
     ".mi-cnt{font:12px 'IBM Plex Mono',monospace;color:var(--faint)}.mi-bar .m-legend{margin:0}" +
-    ".mi-wrap{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}" +
+    ".mi-wrap{display:block}" +
     ".mi-pick{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;position:sticky;top:70px;max-height:calc(100vh - 90px);overflow:auto}" +
     ".mi-pt{font:700 11px 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}" +
     ".mi-qb{display:flex;gap:6px;margin-bottom:8px}.mi-qb button{flex:1;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:4px 0;font-size:11.5px;cursor:pointer}.mi-qb button:hover{border-color:#38b6c9;color:var(--text)}" +
@@ -220,10 +226,15 @@
     ".mi-ax{font:10px 'IBM Plex Mono',monospace;fill:#8494ab}.mi-pv{font:600 10.5px 'IBM Plex Mono',monospace;fill:#b9c7da}.mi-pv.l{fill:#e8a33d;font-size:11.5px}.mi-new{font:700 10px 'IBM Plex Mono',monospace;fill:#E8C33A}" +
     ".mi-rd{font-size:12.5px;color:var(--muted);margin:4px 0}" +
     ".mi-dl{font:700 10.5px 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.mi-vs{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}.mi-vs button{background:transparent;border:0;color:var(--muted);padding:5px 14px;font:600 12.5px 'IBM Plex Sans',sans-serif;cursor:pointer}.mi-vs button[aria-pressed=true]{background:#1d4ed8;color:#fff}" +
-    ".mi-rail{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px;position:sticky;top:70px;max-height:calc(100vh - 90px);overflow:auto}" +
-    ".mc-cat{border-bottom:1px solid var(--line)}.mc-cat:last-child{border-bottom:0}.mc-h{display:grid;grid-template-columns:minmax(0,1fr) auto auto 12px;min-width:0;gap:8px;align-items:center;width:100%;background:none;border:0;color:var(--text);padding:9px 6px;cursor:pointer;text-align:left;font:600 13px 'IBM Plex Sans',sans-serif}.mc-h:hover{background:rgba(110,168,255,.06)}" +
+    ".mi-rail{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px}" +
+    ".mi-cats{display:flex;flex-wrap:wrap;gap:6px}" +
+    ".mc-cat{display:inline-flex;align-items:center;gap:7px;background:transparent;border:1px solid var(--line2);border-radius:8px;color:var(--muted);font:700 12.5px 'IBM Plex Sans',sans-serif;padding:5px 12px;cursor:pointer}" +
+    ".mc-cat:hover{color:#fff;background:#14213a}" +
+    ".mc-cat.open{color:#101825;background:var(--amber);border-color:var(--amber)}" +
+    ".mc-cat.open .mc-s{color:#101825;border-color:rgba(16,24,37,.45)}" +
+    ".mc-cat.open .mc-c{color:#101825}" +
     ".mc-s{font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.04em;padding:1px 6px;border-radius:4px;border:1px solid currentColor;white-space:nowrap}.mc-s.up{color:#3fb97f}.mc-s.dn{color:#e0655f}.mc-s.heat{color:#e8a33d}.mc-s.cool{color:#6ea8ff}.mc-s.neu{color:#8494ab}" +
-    ".mc-n{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mc-c{font:11px 'IBM Plex Mono',monospace;color:var(--faint)}.mc-ch{color:var(--faint);font-size:11px}.mc-body{padding:2px 2px 8px}" +
+    ".mc-n{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mc-c{font:11px 'IBM Plex Mono',monospace;color:var(--faint)}.mc-ch{color:var(--faint);font-size:11px}.mc-body{padding:10px 2px 4px;border-top:1px solid var(--line);margin-top:10px}" +
     ".mc-qa{display:flex;gap:6px;margin:0 4px 6px}.mc-qa button{background:none;border:0;color:#38b6c9;font-size:11.5px;cursor:pointer;padding:0}" +
     ".mc-i{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:6px;align-items:center;width:100%;background:none;border:1px solid transparent;border-left:3px solid transparent;border-radius:6px;color:var(--muted);padding:5px 6px;margin:1px 0;cursor:pointer;text-align:left;font-size:12.5px}" +
     ".mc-i:hover{background:rgba(110,168,255,.06)}.mc-i.on{color:var(--text);border-left-color:#38b6c9;background:rgba(56,182,201,.07)}.mc-in{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mc-in i{color:var(--faint);font-style:normal}.mc-iv{font:11.5px 'IBM Plex Mono',monospace}" +

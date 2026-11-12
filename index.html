@@ -359,6 +359,13 @@ table.sd-tbl tr.sd-key td.lbl{font-weight:700}
 .sn-b small{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--faint);background:#14213a;border-radius:8px;padding:0 6px}
 .sn-b:hover{background:#14213a;color:#e8eef4}.sn-b[aria-pressed="true"]{border-left-color:#38b6c9;background:#14263d;color:#fff;font-weight:600}
 .sec-off{display:none!important}
+/* ---- top section-filter chips (replaces the left .secnav tree) ---- */
+.sec-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.sec-chip{appearance:none;font:700 12.5px 'IBM Plex Sans',sans-serif;color:var(--muted);background:transparent;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer}
+.sec-chip small{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);background:#14213a;border-radius:8px;padding:0 6px;margin-left:6px}
+.sec-chip:hover{color:#fff;background:#14213a}
+.sec-chip[aria-pressed="true"]{color:#101825;background:var(--amber);border-color:var(--amber)}
+.sec-chip[aria-pressed="true"] small{background:rgba(16,24,37,.18);color:#101825}
 .pk.btip:hover{border-color:#38b6c9}
 .nchips{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
 .nchip{font:inherit;font-size:11.5px;padding:3px 9px;border-radius:12px;border:1px solid var(--line);background:#101a2b;color:var(--muted);cursor:pointer}
@@ -1164,6 +1171,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
     <button class="tab-btn gr-child" role="tab" id="tabbtn-corn" aria-selected="true" aria-controls="panel-corn" data-tab="corn">Corn<span class="sym">ZCZ26</span></button>
     <button class="tab-btn gr-child" role="tab" id="tabbtn-wheat" aria-selected="false" aria-controls="panel-wheat" data-tab="wheat">Wheat<span class="sym">ZWZ26</span></button>
     <button class="tab-btn gr-child" role="tab" id="tabbtn-soybeans" aria-selected="false" aria-controls="panel-soybeans" data-tab="soybeans">Soybeans<span class="sym">ZSF27</span></button>
+    <button class="tab-btn" role="tab" id="tabbtn-positioning" aria-selected="false" aria-controls="panel-positioning" data-tab="positioning">Positioning<span class="sym">CFTC · OI</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-fx" aria-selected="false" aria-controls="panel-fx" data-tab="fx">USD/CAD<span class="sym">Desk</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-macro" aria-selected="false" aria-controls="panel-macro" data-tab="macro">Macro<span class="sym">US · CA</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-world" aria-selected="false" aria-controls="panel-world" data-tab="world">World<span class="sym">Markets</span></button>
@@ -1182,6 +1190,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
   <section class="tab-panel active" id="panel-corn" role="tabpanel" aria-labelledby="tabbtn-corn"></section>
   <section class="tab-panel" id="panel-wheat" role="tabpanel" aria-labelledby="tabbtn-wheat"></section>
   <section class="tab-panel" id="panel-soybeans" role="tabpanel" aria-labelledby="tabbtn-soybeans"></section>
+  <section class="tab-panel" id="panel-positioning" role="tabpanel" aria-labelledby="tabbtn-positioning"></section>
   <section class="tab-panel" id="panel-fx" role="tabpanel" aria-labelledby="tabbtn-fx"></section>
   <section class="tab-panel" id="panel-macro" role="tabpanel" aria-labelledby="tabbtn-macro"></section>
   <section class="tab-panel" id="panel-world" role="tabpanel" aria-labelledby="tabbtn-world"></section>
@@ -4770,7 +4779,7 @@ function kbDecorate(panel, sub, sid, list, cur){
   var first=[].filter.call(sub.children, function(t){ return t.getAttribute('data-sec')!=='*'; })[0];
   sub.insertBefore(g, first||null);
 }
-function navReflow(){ ['corn','wheat','soybeans','fx'].forEach(function(p){ if(typeof buildSecNav==='function') buildSecNav(p); }); if(window.WORLD) WORLD.render(); }
+function navReflow(){ ['corn','wheat','soybeans','fx','macro'].forEach(function(p){ if(typeof buildSecNav==='function') buildSecNav(p); }); if(window.WORLD) WORLD.render(); }
 document.addEventListener('click', function(ev){
   var t=ev.target.closest?ev.target:null; if(!t) return;
   if(t.closest('[data-navmin]')){ ev.stopPropagation(); NAVMIN=!NAVMIN; document.body.classList.toggle('nav-min', NAVMIN); try{ localStorage.setItem('desk.navmin', NAVMIN?'1':'0'); }catch(e){} return; }
@@ -4786,23 +4795,27 @@ document.addEventListener('click', function(ev){
   if(t.closest('.tn-h')){ var pn2=((t.closest('.tab-panel')||{}).id||'').replace('panel-',''); if(NAVSHUT[pn2]){ NAVSHUT[pn2]=false; try{ localStorage.setItem('desk.navshut', JSON.stringify(NAVSHUT)); }catch(e){} } }
 }, true);
 window.addEventListener('load', function(){ var k=document.createElement('script'); k.src='kb.js?v='+Date.now(); k.onload=navReflow; document.body.appendChild(k); });
-var SECMQ=window.matchMedia('(max-width:1240px)');
-function placeSecNav(L, nav){
-  var G=L.querySelector(':scope>.grid'), st=G&&G.querySelector(':scope>.subnav-tile');
-  if(SECMQ.matches&&st){ if(nav.previousElementSibling!==st) st.after(nav); }
-  else if(nav.parentNode!==L||L.firstChild!==nav){ L.insertBefore(nav, L.firstChild); }
-}
-SECMQ.addEventListener&&SECMQ.addEventListener('change', function(){ ['corn','wheat','soybeans','fx','macro'].forEach(buildSecNav); });
 var SEC={}; try{ SEC=JSON.parse(localStorage.getItem('desk.sec')||'{}')||{}; }catch(e){}
 function secKey(panel){ return panel+'.'+SUB[panel]; }
+/* ---------- top section-filter chips (no left tree) ----------
+   buildSecNav keeps the SECG grouping, SEC state, --sa theme, data-subt,
+   .subctx breadcrumb and kbDecorate exactly as before, but renders the
+   section filter as a <div class="sec-chips"> row directly beneath the
+   panel's .subnav pill row inside the subnav-tile. No .secnav element is
+   created and .layout.has-secnav is never added, so the .subnav pills stay
+   visible as the top tabs. Chips carry data-secp + data-sec-v exactly as
+   the old tree buttons did, so the existing [data-sec-v] handlers keep
+   working (inline handler below + rows-ui.js). */
 function buildSecNav(panel){
   var P=document.getElementById('panel-'+panel); if(!P) return;
   var L=P.querySelector('.layout'); if(!L) return;
-  var sub=P.querySelector('[data-subpanel].on'); var nav=L.querySelector(':scope>.secnav');
-  if(!nav) nav=P.querySelector('.secnav');
-  if(!nav){ nav=document.createElement('nav'); nav.className='secnav'; nav.setAttribute('aria-label','Sections'); }
-  L.classList.add('has-secnav'); placeSecNav(L, nav);
-  if(!sub){ nav.innerHTML=''; return; }
+  var sub=P.querySelector('[data-subpanel].on');
+  /* strip any stale left tree from an earlier build; never re-add it */
+  var old=L.querySelector('.secnav'); if(old) old.remove();
+  L.classList.remove('has-secnav');
+  var st=P.querySelector('.subnav-tile'), oc=st&&st.querySelector('.sec-chips');
+  if(oc) oc.remove();
+  if(!sub) return;
   var rules=(SECG[panel==='fx'||panel==='macro'?panel:'grain']||{})[sub.getAttribute('data-subpanel')]||[], groups={}, order=[];
   var og=sub.querySelector(':scope>.kb-guide'); if(og) og.remove();
   [].forEach.call(sub.children, function(t){
@@ -4821,33 +4834,20 @@ function buildSecNav(panel){
   var sid=sub.getAttribute('data-subpanel'), acc=SUBTHEME[sid]||'#38b6c9', L2=P.querySelector('.layout');
   P.style.setProperty('--sa', acc); if(L2) L2.setAttribute('data-subt', sid);
   var secLab=cur==='all'?'All sections':cur==='guide'?'Guide':(groups[cur]||{}).lab||'';
-  var GB='<button class="sn-b sn-guide" data-secp="'+panel+'" data-sec-v="guide" aria-pressed="'+(cur==='guide')+'"><span>ⓘ Guide — what\u2019s in here</span></button>';
-  if(!SECMQ.matches){
-    /* desktop: one tree — every menu with its next event; the open menu expands into its sections */
-    var heads=[].map.call(P.querySelectorAll('.subnav [data-sub]'), function(b){ return {id:b.getAttribute('data-sub'), name:(b.querySelector('.sb-name')||{}).textContent||'', ev:(b.querySelector('.sb-ev')||{}).textContent||'', cd:b.querySelector('.sb-cd')}; });
-    nav.innerHTML='<div class="sn-h"><span>'+esc(GTITLE[panel]||'Sections')+'</span><button class="sn-min" data-navmin title="Collapse / expand the menu panel" aria-label="Collapse menu panel">\u00ab</button></div>'+heads.map(function(h){
-      var on=h.id===sid, c=SUBTHEME[h.id]||'#38b6c9', cd=h.cd&&h.cd.querySelector('.countdown');
-      return '<div class="tn'+(on?' open':'')+(on&&NAVSHUT[panel]?' shut':'')+'" style="--tc:'+c+'">'+
-        '<button class="tn-h" data-name="'+esc(h.name)+'" data-sub="'+h.id+'" data-subp="'+panel+'" aria-selected="'+on+'" aria-expanded="'+on+'"><i class="tn-dot"></i><span class="tn-t"><b>'+esc(h.name)+'</b>'+
-        (cd&&!/No scheduled/.test(h.ev)?'<small title="'+esc(h.ev)+'">'+esc(h.ev)+'</small><small class="tn-cd">in <span class="countdown" data-t="'+cd.getAttribute('data-t')+'" data-fmt="hms">'+cd.textContent+'</span></small>':'<small>No scheduled event</small>')+
-        '</span><span class="tn-chev" aria-hidden="true">›</span></button>'+
-        (on?'<div class="tn-kids">'+GB+
-          '<button class="sn-b" data-secp="'+panel+'" data-sec-v="all" aria-pressed="'+(cur==='all')+'"><span>All sections</span><small>'+list.length+'</small></button>'+
-          list.map(function(g){ return '<button class="sn-b" data-secp="'+panel+'" data-sec-v="'+g.id+'" aria-pressed="'+(cur===g.id)+'"><span>'+esc(g.lab)+'</span>'+(g.n>1?'<small>'+g.n+'</small>':'')+'</button>'; }).join('')+'</div>':'')+
-      '</div>'; }).join('');
-  } else {
-  nav.innerHTML='<div class="sn-h">'+esc(subLab)+'</div>'+GB+
-    '<button class="sn-b" data-secp="'+panel+'" data-sec-v="all" aria-pressed="'+(cur==='all')+'"><span>All sections</span><small>'+list.length+'</small></button>'+
-    list.map(function(g){ return '<button class="sn-b" data-secp="'+panel+'" data-sec-v="'+g.id+'" aria-pressed="'+(cur===g.id)+'"><span>'+esc(g.lab)+'</span>'+(g.n>1?'<small>'+g.n+'</small>':'')+'</button>'; }).join('');
-  }
-    var st=P.querySelector('.subnav-tile'), cx=st&&st.querySelector('.subctx');
+  var sn=st&&st.querySelector('.subnav');
+  if(st&&sn){ var w=document.createElement('div');
+    w.innerHTML='<div class="sec-chips" role="group" aria-label="Sections">'+
+      '<button class="sec-chip" data-secp="'+panel+'" data-sec-v="all" aria-pressed="'+(cur==='all')+'"><span>All sections</span><small>'+list.length+'</small></button>'+
+      list.map(function(g){ return '<button class="sec-chip" data-secp="'+panel+'" data-sec-v="'+g.id+'" aria-pressed="'+(cur===g.id)+'"><span>'+esc(g.lab)+'</span>'+(g.n>1?'<small>'+g.n+'</small>':'')+'</button>'; }).join('')+
+      '<button class="sec-chip sec-guide" data-secp="'+panel+'" data-sec-v="guide" aria-pressed="'+(cur==='guide')+'"><span>ⓘ Guide — what’s in here</span></button></div>';
+    st.insertBefore(w.firstChild, sn.nextSibling); }
+    var cx=st&&st.querySelector('.subctx');
     if(st&&!cx){ cx=document.createElement('div'); cx.className='subctx'; st.insertBefore(cx, st.firstChild); }
     if(cx){ var hb=P.querySelector('.subnav [data-sub="'+sid+'"]'), ev=hb&&hb.querySelector('.sb-ev'), cdd=hb&&hb.querySelector('.sb-cd');
       cx.innerHTML='<span class="sc-pill"><i></i>'+esc(subLab)+'</span><span class="sc-sec">› '+esc(secLab)+'</span>'+
         (ev&&!/No scheduled/.test(ev.textContent)?'<span class="sc-ev">Next: <b>'+esc(ev.textContent)+'</b> '+(cdd?cdd.innerHTML:'')+'</span>':'')+kbSwitchHTML(); }
   [].forEach.call(sub.children, function(t){ var s=t.getAttribute('data-sec'); t.classList.toggle('sec-off', cur!=='all' && s!=='*' && s!==cur); });
   kbDecorate(panel, sub, sid, list, cur);
-  var act=nav.querySelector('[aria-pressed="true"]'); if(act&&SECMQ.matches) nav.scrollLeft=Math.max(0,act.offsetLeft-nav.clientWidth/2+act.offsetWidth/2);
   if(panel!=='fx'&&typeof drawDestMaps==='function'&&cur==='dest') setTimeout(drawDestMaps,30);
 }
 document.addEventListener('click', function(ev){
@@ -5028,7 +5028,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script src="pricechart-ui.js?v=20261110e"></script>
 <script src="narrative-ui.js?v=20261110a"></script>
 <script src="macro-table.js?v=20261110a"></script>
-<script src="nav-ui.js?v=20261112a"></script>
+<script src="nav-ui.js?v=20261112b"></script>
 <script src="usm-cal.js?v=20261110a"></script>
 <script src="usm-nav.js?v=20261111a"></script>
 <script src="earn-lock.js?v=20261110a"></script>
@@ -5039,6 +5039,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="tracker-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="treasury-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="ai-debt-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
+<script>(function(){var f=document.createElement("script");f.src="positioning-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var v=Date.now(),a=document.createElement("script");a.src="co-engine.js?v="+v;a.onload=function(){var b=document.createElement("script");b.src="company-ui.js?v="+v;document.body.appendChild(b);};document.body.appendChild(a);})();</script>
 <script>/* GitHub API allowance (60 requests/hour per browser) is reserved for the live feed (live.json, every minute).
    Every other module's reads of its data branch go to the raw copy (a minute or two behind), and live.json itself drops to

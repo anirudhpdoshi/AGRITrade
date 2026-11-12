@@ -11,6 +11,26 @@
   var V = { sub: "overview", grp: "all", flagged: false, q: "", sev: "all" };
   try { Object.assign(V, JSON.parse(localStorage.getItem("desk.world") || "{}")); NOTIFY = localStorage.getItem("desk.worldNotify") === "1"; } catch (e) {}
   var seen = {};
+  /* report-first layout (Nov 2026): top tabs + one slicer row, no left nav.
+     Same button language as positioning-ui.js .pos-tabs (lines 23-26). The
+     #panel-world scope beats the site's .wlay / body.nav-min .wlay rules. */
+  (function () {
+    var css = document.createElement("style");
+    css.textContent =
+      "#panel-world .wlay{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}" +
+      "#panel-world .wmain{min-width:0;display:flex;flex-direction:column;gap:14px}" +
+      ".w-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px}" +
+      ".w-tabs button{appearance:none;font:700 13.5px 'IBM Plex Sans',sans-serif;color:var(--muted);background:transparent;border:1px solid var(--line2);border-radius:8px;padding:8px 14px;cursor:pointer}" +
+      ".w-tabs button:hover{color:#fff;background:#14213a}" +
+      ".w-tabs button[aria-selected=true]{color:#101825;background:var(--amber);border-color:var(--amber)}" +
+      ".w-tabs button small{font-weight:400;font-size:11.5px;opacity:.75;margin-left:6px}" +
+      ".w-slicer{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 4px}" +
+      ".w-slicer button{appearance:none;font:600 12.5px 'IBM Plex Sans',sans-serif;color:var(--muted);background:transparent;border:1px solid var(--line2);border-radius:8px;padding:6px 10px;cursor:pointer}" +
+      ".w-slicer button:hover{color:#fff;background:#14213a}" +
+      ".w-slicer button[aria-pressed=true]{color:#101825;background:var(--amber);border-color:var(--amber)}" +
+      ".w-slicer button small{font-family:'IBM Plex Mono',monospace;font-size:11px;opacity:.75;margin-left:5px}";
+    document.head.appendChild(css);
+  })();
   function save() { try { localStorage.setItem("desk.world", JSON.stringify(V)); } catch (e) {} }
   function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
   function nf(v, d) { return v == null || !isFinite(v) ? "—" : (+v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }); }
@@ -188,9 +208,7 @@
       return (V.grp === "all" || i.group === V.grp) && (!V.flagged || (i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low))) &&
         (!q || (i.name + " " + i.sym + " " + i.region).toLowerCase().indexOf(q) >= 0);
     });
-    var filt = '<div class="wfil"><input type="search" placeholder="Search markets…" value="' + esc(V.q) + '" data-wq>' +
-      ["all"].concat(GROUPS).map(function (g) { return '<button class="nchip" data-wgrp="' + g + '" aria-pressed="' + (V.grp === g) + '">' + (g === "all" ? "All" : g) + "</button>"; }).join("") +
-      '<button class="nchip" data-wflag aria-pressed="' + V.flagged + '">52-week signals only</button></div>';
+    var filt = '<div class="wfil"><input type="search" placeholder="Search markets…" value="' + esc(V.q) + '" data-wq></div>';   /* group / 52-week chips live only in the slicer row above the body */
     var body = GROUPS.filter(function (g) { return V.grp === "all" || V.grp === g; }).map(function (g) {
       var rows = list.filter(function (i) { return i.group === g; });
       if (g === "Indices") rows.sort(function (a, b) { return ["Asia-Pacific", "Europe", "Americas"].indexOf(a.region) - ["Asia-Pacific", "Europe", "Americas"].indexOf(b.region); });
@@ -332,7 +350,7 @@
     var list = (W.alerts || []).filter(function (a) { return V.sev === "all" || (V.sev === "major" ? a.tier >= 2 : V.sev === "up" ? a.move > 0 : V.sev === "down" ? a.move < 0 : true); });
     var t = W.thresholds || {};
     return '<div class="tile wide"><h2>Alert feed <span class="h2note">— ' + (W.alerts || []).length + " stored · tiers " + (t.pct || []).map(function (x, k) { return (t.names || [])[k] + " ±" + x + "%"; }).join(", ") + " (yields " + (t.bp || []).join("/") + " bp)</span></h2>" + '<span class="wasof blk">server engine last ran ' + tDate(W.updated_at) + " ET (" + ago(Date.now() - Date.parse(W.updated_at)) + " ago)" + ((W.alerts || [])[0] ? " · newest alert " + tDate(W.alerts[0].at) + " ET" : "") + "</span>" +
-      '<div class="wfil">' + [["all", "All"], ["major", "Major and above"], ["up", "Upward"], ["down", "Downward"]].map(function (x) { return '<button class="nchip" data-wsev="' + x[0] + '" aria-pressed="' + (V.sev === x[0]) + '">' + x[1] + "</button>"; }).join("") +
+      '<div class="wfil">' +   /* severity chips live only in the slicer row above the body */
       '<button class="nchip" data-wnotify aria-pressed="' + NOTIFY + '">' + (NOTIFY ? "Browser notifications on" : "Turn on browser notifications") + "</button></div>" +
       (list.length ? alertRows(list) : '<p class="note">No alerts match.</p>') +
       '<div class="stamp">One alert per market × comparison × direction × tier crossing · re-alerts only on a higher tier, a direction flip, or after falling back below the Watch tier (' + (t.cooldown_min || 30) + "-min cooldown) · no alerts on stale quotes, closed markets or futures roll sessions · browser notifications work while this page is open; for alerts while it is closed, add a WORLD_ALERT_WEBHOOK secret (Slack/Teams/other webhook) — currently " + esc((W.health || {}).webhook || "not configured") + "</div></div>";
@@ -357,33 +375,45 @@
       '<div class="wsrc">' + (err ? '<span class="pk-al hot">' + esc(err) + "</span> " : "") + (W ? '<span class="pk-al ' + (stale ? "warn" : "ok") + '">server data ' + ago(a) + " old" + (stale ? " — server runs paused (weekend) or failing" : "") + "</span> " : '<span class="pk-al warn">loading world.json…</span>') + "</div>";
   }
   var WTHEME = { overview: "#38b6c9", sessions: "#6ea8ff", markets: "#e8b93d", alerts: "#ff8a84", health: "#3fb97f", guide: "#9aa8bb" };
-  function navHTML() {
+  /* report-first (Nov 2026): the 6 sections are top tabs; the filter children that used to expand under
+     the left nav now live in one slicer row (#wSlicer) beneath the tabs. Same buttons, same attributes. */
+  function headsData() {
     var L = inst(), now = Date.now(), ex = (W && W.exchanges) || {}, al = (W && W.alerts) || [];
     var openN = openCount(now);
     var sig = L.filter(function (i) { return i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low); }).length;
     var H = (W && W.health) || {};
-    var heads = [
+    return [
       ["overview", "Overview", "movers · regions · 52-week"],
       ["sessions", "Sessions", W ? openN + " of " + Object.keys(ex).length + " venues open now" : ""],
       ["markets", "Markets", W ? L.length + " instruments · " + sig + " 52-week signals" : ""],
       ["alerts", "Alerts", W ? al.length + " stored · " + al.filter(function (a) { return a.tier >= 2; }).length + " major+" : ""],
       ["health", "Data health", W ? (H.ok || 0) + " / " + (H.expected || 0) + " returned" : ""],
       ["guide", "Guide", "what each view is for"]];
-    function kid(attr, val, on, lab, n) { return '<button class="sn-b" ' + attr + '="' + val + '" aria-pressed="' + on + '"><span>' + esc(lab) + "</span>" + (n != null ? "<small>" + n + "</small>" : "") + "</button>"; }
-    function kids(id) {
-      if (!W) return "";
-      if (id === "markets") return kid("data-wgrp", "all", V.grp === "all" && !V.flagged, "All markets", L.length) +
+  }
+  function kid(attr, val, on, lab, n) { return '<button class="sn-b" ' + attr + '="' + val + '" aria-pressed="' + on + '"><span>' + esc(lab) + "</span>" + (n != null ? "<small>" + n + "</small>" : "") + "</button>"; }
+  function kids(id) {
+    var L = inst(), al = (W && W.alerts) || [];
+    if (!W) return "";
+    if (id === "markets") {
+      var sig = L.filter(function (i) { return i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low); }).length;
+      return kid("data-wgrp", "all", V.grp === "all" && !V.flagged, "All markets", L.length) +
         GROUPS.map(function (g) { return kid("data-wgrp", g, V.grp === g && !V.flagged, g, L.filter(function (i) { return i.group === g; }).length); }).join("") +
         kid("data-wflag", "1", V.flagged, "52-week signals only", sig);
-      if (id === "alerts") return [["all", "All alerts", al.length], ["major", "Major and above", al.filter(function (a) { return a.tier >= 2; }).length], ["up", "Upward", al.filter(function (a) { return a.move > 0; }).length], ["down", "Downward", al.filter(function (a) { return a.move < 0; }).length]]
-        .map(function (x) { return kid("data-wsev", x[0], V.sev === x[0], x[1], x[2]); }).join("");
-      return "";
     }
-    var shut = window.NAVSHUT && window.NAVSHUT.world;
-    return '<div class="sn-h"><span>World markets</span><button class="sn-min" data-navmin title="Collapse / expand the menu panel" aria-label="Collapse menu panel">\u00ab</button></div>' + heads.map(function (h) {
-      var on = V.sub === h[0], k = on ? kids(h[0]) : "", hasK = h[0] === "markets" || h[0] === "alerts";
-      return '<div class="tn' + (on ? " open" : "") + (on && shut ? " shut" : "") + '" style="--tc:' + WTHEME[h[0]] + '"><button class="tn-h" data-name="' + h[1] + '" data-wsub="' + h[0] + '" aria-selected="' + on + '"><i class="tn-dot"></i><span class="tn-t"><b>' + h[1] + "</b><small>" + esc(h[2]) + '</small></span><span class="tn-chev" aria-hidden="true">' + (hasK ? "›" : "") + "</span></button>" + (k ? '<div class="tn-kids">' + k + "</div>" : "") + "</div>";
+    if (id === "alerts") return [["all", "All alerts", al.length], ["major", "Major and above", al.filter(function (a) { return a.tier >= 2; }).length], ["up", "Upward", al.filter(function (a) { return a.move > 0; }).length], ["down", "Downward", al.filter(function (a) { return a.move < 0; }).length]]
+      .map(function (x) { return kid("data-wsev", x[0], V.sev === x[0], x[1], x[2]); }).join("");
+    return "";
+  }
+  function tabsHTML() {
+    return headsData().map(function (h) {
+      var on = V.sub === h[0];
+      return '<button type="button" role="tab" data-wsub="' + h[0] + '" aria-selected="' + on + '"><b>' + h[1] + "</b>" + (h[2] ? "<small>" + esc(h[2]) + "</small>" : "") + "</button>";
     }).join("");
+  }
+  function slicerHTML() {
+    if (V.sub === "markets") return kids("markets");
+    if (V.sub === "alerts") return kids("alerts");
+    return "";
   }
   function ctxHTML() {
     var lab = { overview: "Overview", sessions: "Sessions", markets: "Markets", alerts: "Alerts", health: "Data health", guide: "Guide" }[V.sub] || "Overview";
@@ -430,11 +460,13 @@
   }
   function render() {
     var P = document.getElementById("panel-world"); if (!P) return;
-    if (!P.querySelector("#wHead")) P.innerHTML = '<div class="world wlay"><nav class="secnav wnav" id="wNav" aria-label="World sections"></nav><div class="wmain"><div class="tile wide subnav-tile"><div class="subctx" id="wCtx"></div><div id="wHead"></div></div><div class="grid" id="wBody"></div></div></div>';
+    if (!P.querySelector("#wHead")) P.innerHTML = '<div class="world wlay"><div class="wmain"><div class="tile wide subnav-tile"><div class="subctx" id="wCtx"></div><div id="wHead"></div></div><div class="w-tabs" id="wTabs" role="tablist" aria-label="World sections"></div><div class="w-slicer" id="wSlicer" role="group" aria-label="Section filter"></div><div class="grid" id="wBody"></div></div></div>';
     P.style.setProperty("--sa", WTHEME[V.sub] || "#38b6c9");
     P.querySelector(".wlay").setAttribute("data-subt", V.sub);
     paintHead();
-    document.getElementById("wNav").innerHTML = navHTML();
+    document.getElementById("wTabs").innerHTML = tabsHTML();
+    var _sl = document.getElementById("wSlicer"), _sh = slicerHTML();
+    _sl.innerHTML = _sh; _sl.style.display = _sh ? "" : "none";
     document.getElementById("wCtx").innerHTML = ctxHTML();
     var B = document.getElementById("wBody");
     if (!W) { B.innerHTML = err ? '<div class="tile wide"><div class="unreach">\u26a0 Sorry, we can\u2019t be reached now <small>\u2014 global market data did not load; retrying every minute</small></div></div>' : '<div class="tile wide"><p class="note">Loading global market data…</p></div>'; return; }
@@ -446,8 +478,8 @@
     var t = ev.target.closest ? ev.target : null; if (!t || !t.closest("#panel-world")) return;
     var hb = t.closest("[data-whl]"); if (hb) { var x = hb.getAttribute("data-whl"); V.hl = V.hl === x ? null : x; render(); return; }
     var b = t.closest("[data-wsub]"); if (b) { V.sub = b.getAttribute("data-wsub"); save(); render(); return; }
-    b = t.closest("[data-wgrp]"); if (b) { V.grp = b.getAttribute("data-wgrp"); if (b.closest("#wNav")) V.flagged = false; save(); render(); return; }
-    b = t.closest("[data-wflag]"); if (b) { V.flagged = b.closest("#wNav") ? true : !V.flagged; if (V.flagged && b.closest("#wNav")) V.grp = "all"; save(); render(); return; }
+    b = t.closest("[data-wgrp]"); if (b) { V.grp = b.getAttribute("data-wgrp"); V.flagged = false; save(); render(); return; }   /* slicer: a group pick clears the 52-week filter, as the old nav did */
+    b = t.closest("[data-wflag]"); if (b) { V.flagged = true; V.grp = "all"; save(); render(); return; }
     b = t.closest("[data-wsev]"); if (b) { V.sev = b.getAttribute("data-wsev"); save(); render(); return; }
     b = t.closest("[data-wnotify]"); if (b) {
       if (NOTIFY) { NOTIFY = false; try { localStorage.setItem("desk.worldNotify", "0"); } catch (e) {} render(); return; }

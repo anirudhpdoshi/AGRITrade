@@ -8,7 +8,7 @@
   var G = [   /* id, label, child tab ids (first = default), hint */
     ["overview", "Overview", ["briefing"], "US · CA briefing, markets pulse, catalyst calendar"],
     ["grains", "Grains", ["grains"], "Corn · Wheat · Soybeans — price, fan, fundamentals"],
-    ["positioning", "Positioning / OI", ["grains"], "Open interest, CFTC funds, options, volatility"],
+    ["positioning", "Positioning / OI", ["positioning"], "Open interest, CFTC funds, options, volatility"],
     ["macro", "Macro", ["macro", "fx", "world"], "Macro table, CPI, USD/CAD, world markets"],
     ["treasury", "US Treasury", ["treasury"], "US government debt — borrowing, maturity & refinancing risk"],
     ["aidebt", "AI Debt", ["aidebt"], "AI-company debt raises, Jan 2021 – Nov 2026"],
@@ -23,8 +23,8 @@
   function activePanel() { var a = doc.querySelector(".tab-panel.active"); return a ? a.id.replace("panel-", "") : ""; }
   function sub(p) { try { return (root.SUB || {})[p]; } catch (e) { return null; } }
   function groupOf(p) {
-    if (GRAINS.indexOf(p) >= 0) return sub(p) === "deriv" ? "positioning" : "grains";
-    for (var i = 0; i < G.length; i++) if (G[i][2].indexOf(p) >= 0 && G[i][0] !== "positioning") return G[i][0];
+    if (GRAINS.indexOf(p) >= 0) return "grains";
+    for (var i = 0; i < G.length; i++) if (G[i][2].indexOf(p) >= 0) return G[i][0];
     return null;
   }
   function setGrainSub(k, s) { if (root.setSub && GRAINS.indexOf(k) >= 0) { try { setSub(k, s); } catch (e) {} } }
@@ -56,7 +56,7 @@
   });
   /* each existing tab button is tagged with its group; only the active group's buttons show in the sub-row */
   (function () { var m = btn("macro"), f = btn("fx"); if (m && f) tabs.insertBefore(m, f); })();   /* Macro first in its group */
-  G.forEach(function (g) { if (g[0] === "positioning") return; g[2].forEach(function (id) { var b = btn(id); if (b) b.setAttribute("data-gnav-of", g[0]); }); });
+  G.forEach(function (g) { g[2].forEach(function (id) { var b = btn(id); if (b) b.setAttribute("data-gnav-of", g[0]); }); });
 
   function paint() {
     var p = activePanel(), g = groupOf(p) || (p === "" ? null : null);
@@ -65,7 +65,7 @@
       var id = b.getAttribute("data-gnav"), on = id === g, kids = (G.filter(function (x) { return x[0] === id; })[0] || [0, 0, []])[2];
       b.setAttribute("aria-current", on ? "page" : "false");
       var any = function (c) { return kids.some(function (k) { var e = btn(k); return e && e.classList.contains(c); }); };
-      b.classList.toggle("md-dot", id !== "positioning" && (any("md-dot") || (id === "usm" && !!(root.ELOCK && ELOCK.hasFresh())))); b.classList.toggle("tab-today", id !== "positioning" && any("tab-today"));
+      b.classList.toggle("md-dot", (any("md-dot") || (id === "usm" && !!(root.ELOCK && ELOCK.hasFresh())))); b.classList.toggle("tab-today", any("tab-today"));
       var ttl = kids.map(function (k) { var e = btn(k); return e && e.title; }).filter(Boolean).join(" · "); b.title = ttl ? (G.filter(function (x) { return x[0] === id; })[0][3] + " — " + ttl) : G.filter(function (x) { return x[0] === id; })[0][3];
     });
     var kidsOn = 0;
@@ -79,10 +79,10 @@
   bar.addEventListener("click", function (ev) {
     var b = ev.target.closest("[data-gnav]"); if (!b) return;
     var g = b.getAttribute("data-gnav"), p = activePanel();
-    if (g === "grains" || g === "positioning") {
+    if (g === "grains") {
       var gb = btn("grains"); if (GRAINS.indexOf(p) < 0 && gb) gb.click();
       var k = activePanel(); if (GRAINS.indexOf(k) < 0) k = "corn";
-      if (g === "positioning") setGrainSub(k, "deriv"); else if (sub(k) === "deriv") setGrainSub(k, LAST.grainSub && LAST.grainSub !== "deriv" ? LAST.grainSub : "overview");
+      if (sub(k) === "deriv") setGrainSub(k, LAST.grainSub && LAST.grainSub !== "deriv" ? LAST.grainSub : "overview");
     } else {
       var def = G.filter(function (x) { return x[0] === g; })[0][2], t = LAST[g] && def.indexOf(LAST[g]) >= 0 ? LAST[g] : def[0], tb = btn(t);
       if (tb) tb.click();

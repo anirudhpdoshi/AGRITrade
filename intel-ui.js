@@ -54,12 +54,19 @@
   if (!document.getElementById("it-css")) {
     var css = document.createElement("style"); css.id = "it-css";
     css.textContent = [
-      ".it{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;align-items:start}",
-      ".it-nav{position:sticky;top:calc(var(--strip-h,40px) + 64px);display:flex;flex-direction:column;gap:3px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 8px}",
-      ".it-nav button{appearance:none;text-align:left;border:1px solid transparent;background:none;color:var(--muted);font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}",
-      ".it-nav button[aria-current=true]{background:color-mix(in srgb,var(--cyan) 14%,transparent);border-color:color-mix(in srgb,var(--cyan) 45%,transparent);color:var(--ink)}",
-      ".it-nav .n{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--faint)}.it-nav .n.hot{color:var(--red);font-weight:700}",
-      ".it-nav h3{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:10px 10px 4px;font-weight:600}",
+      ".it{display:flex;flex-direction:column;gap:14px;align-items:stretch}",
+      ".it-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px}",
+      ".it-tabs button{appearance:none;font:700 13.5px 'IBM Plex Sans',sans-serif;color:var(--muted);background:transparent;border:1px solid var(--line2);border-radius:8px;padding:8px 14px;cursor:pointer}",
+      ".it-tabs button:hover{color:#fff;background:#14213a}",
+      ".it-tabs button[aria-selected=true]{color:#101825;background:var(--amber);border-color:var(--amber)}",
+      ".it-tabs .n{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--faint)}",
+      ".it-tabs button[aria-selected=true] .n{color:#101825}",
+      ".it-slicer{display:flex;flex-wrap:wrap;gap:6px;align-items:center}",
+      ".it-slicer button{appearance:none;font:700 12.5px 'IBM Plex Sans',sans-serif;color:var(--muted);background:transparent;border:1px solid var(--line2);border-radius:8px;padding:6px 12px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}",
+      ".it-slicer button:hover{color:#fff;background:#14213a}",
+      ".it-slicer button[aria-pressed=true]{color:#101825;background:var(--amber);border-color:var(--amber)}",
+      ".it-slicer .n{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--faint)}.it-slicer .n.hot{color:var(--red);font-weight:700}",
+      ".it-slicer button[aria-pressed=true] .n{color:#101825}",
       ".it-main{min-width:0;display:flex;flex-direction:column;gap:14px}",
       ".it-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-size:12.5px;color:var(--muted)}",
       ".it-tier{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.06em;padding:3px 9px;border-radius:20px;border:1px solid}",
@@ -99,7 +106,7 @@
       ".it-ok{color:var(--green)}.it-bad{color:var(--red)}.it-amb{color:var(--amber)}",
       ".it-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}",
       ".it-kpi{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 11px}.it-kpi .k{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600}.it-kpi .v{font-family:'IBM Plex Mono',monospace;font-size:19px;color:var(--ink);margin-top:3px}",
-      "@media (max-width:900px){.it{grid-template-columns:1fr}.it-nav{position:static;flex-direction:row;overflow-x:auto}.it-nav h3{display:none}.it-nav button{flex:0 0 auto}",
+      "@media (max-width:900px){.it-tabs,.it-slicer{flex-wrap:nowrap;overflow-x:auto}.it-tabs button,.it-slicer button{flex:0 0 auto}",
       ".it-t .hm{display:none!important}.it-det td{display:block!important}.it-t col{width:auto!important}}"
     ].join("\n");
     document.head.appendChild(css);
@@ -173,12 +180,22 @@
     return out + (w.length ? '<div class="it-warn">⚠ ' + w.map(esc).join("<br>⚠ ") + "</div>" : "");
   }
   function nameOf(k) { var x = ((D && D.indicators) || []).filter(function (i) { return i.id === k; })[0]; return x ? x.name : k; }
-  function navHTML() {
-    var it = items(), alerts = it.filter(function (i) { return i.alert; }).length, mat = it.filter(function (i) { return i.material; }).length;
+  /* Report-first: the 5 sections are top tabs; the category dimension + Material & alerts
+     live in one slicer row beneath the tabs and stay put across reports. The slicer sets the
+     feed filter (V.cat / V.hot); on other sections it stays visible and the selection is kept
+     for when you return to the Feed. */
+  function tabsHTML() {
+    var it = items();
     var subs = [["feed", "Feed", it.length], ["ind", "Official indicators", ((D && D.indicators) || []).length], ["cal", "Release calendar", ((D && D.calendar) || []).length], ["health", "Sources & health", ""], ["guide", "How to read this", ""]];
-    var s = "<h3>Intelligence</h3>" + subs.map(function (x) { return '<button type="button" data-isub="' + x[0] + '" aria-current="' + (V.sub === x[0]) + '"><span>' + x[1] + '</span><span class="n">' + x[2] + "</span></button>"; }).join("");
-    s += "<h3>Jump to</h3>" + CATS.slice(1).map(function (c) { var n = it.filter(function (i) { return i.cat === c[0]; }).length; return '<button type="button" data-icat="' + c[0] + '" aria-current="' + (V.sub === "feed" && V.cat === c[0]) + '"><span><i style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + CATC[c[0]] + ';margin-right:7px"></i>' + c[1] + '</span><span class="n">' + n + "</span></button>"; }).join("");
-    s += '<button type="button" data-ihot="1" aria-current="' + (V.sub === "feed" && V.hot) + '"><span>Material & alerts</span><span class="n' + (alerts ? " hot" : "") + '">' + (alerts + mat) + "</span></button>";
+    return subs.map(function (x) { return '<button type="button" role="tab" data-isub="' + x[0] + '" aria-selected="' + (V.sub === x[0]) + '"><span>' + x[1] + "</span>" + (x[2] === "" ? "" : ' <span class="n">' + x[2] + "</span>") + "</button>"; }).join("");
+  }
+  function slicerHTML() {
+    var it = items(), alerts = it.filter(function (i) { return i.alert; }).length, mat = it.filter(function (i) { return i.material; }).length;
+    var s = CATS.map(function (c) {
+      var n = c[0] === "all" ? it.length : it.filter(function (i) { return i.cat === c[0]; }).length;
+      return '<button type="button" data-icat="' + c[0] + '" aria-pressed="' + (V.cat === c[0]) + '"><span>' + (c[0] === "all" ? "" : '<i style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + CATC[c[0]] + ';margin-right:7px"></i>') + c[1] + '</span><span class="n">' + n + "</span></button>";
+    }).join("");
+    s += '<button type="button" data-ihot="1" aria-pressed="' + V.hot + '"><span>Material & alerts</span><span class="n' + (alerts ? " hot" : "") + '">' + (alerts + mat) + "</span></button>";
     return s;
   }
   function fbtn(k, v, lab) { return '<button type="button" data-if="' + k + '" data-v="' + v + '" aria-pressed="' + (String(V[k]) === String(v)) + '">' + lab + "</button>"; }
@@ -318,8 +335,9 @@
 
   function active() { return P.classList.contains("active"); }
   function render() {
-    if (!P.querySelector(".it")) P.innerHTML = '<div class="it"><nav class="it-nav" id="itNav" aria-label="Intel sections"></nav><div class="it-main"><div class="tile wide" id="itHead"></div><div id="itBody" class="it-main"></div></div></div>';
-    document.getElementById("itNav").innerHTML = navHTML();
+    if (!P.querySelector(".it")) P.innerHTML = '<div class="it"><div class="it-tabs" id="itTabs" role="tablist" aria-label="Intelligence reports"></div><div class="it-slicer" id="itSlicer" role="group" aria-label="Category"></div><div class="tile wide" id="itHead"></div><div id="itBody" class="it-main"></div></div>';
+    document.getElementById("itTabs").innerHTML = tabsHTML();
+    document.getElementById("itSlicer").innerHTML = slicerHTML();
     document.getElementById("itHead").innerHTML = headHTML();
     var B = document.getElementById("itBody");
     if (!D) { B.innerHTML = tier === 4 && err ? '<div class="tile wide"><div class="unreach">⚠ Sorry, we can’t be reached now <small>— the intelligence feed did not load and no copy is saved in this browser yet; retrying every minute</small></div></div>' : '<div class="tile wide"><p class="note">Loading intelligence feed…</p></div>'; return; }
@@ -333,7 +351,7 @@
     if (t.closest("a")) return;
     var b = t.closest("[data-isub]"); if (b) { V.sub = b.getAttribute("data-isub"); save(); render(); return; }
     b = t.closest("[data-icat]"); if (b) { V.sub = "feed"; V.cat = b.getAttribute("data-icat"); V.hot = false; save(); render(); return; }
-    b = t.closest("[data-ihot]"); if (b) { V.sub = "feed"; V.hot = b.closest(".it-nav") ? true : !V.hot; if (b.closest(".it-nav")) V.cat = "all"; save(); render(); return; }
+    b = t.closest("[data-ihot]"); if (b) { V.sub = "feed"; V.hot = !V.hot; if (V.hot && b.closest(".it-slicer")) V.cat = "all"; save(); render(); return; }
     b = t.closest("[data-if]"); if (b) { V[b.getAttribute("data-if")] = b.getAttribute("data-v"); save(); render(); return; }
     b = t.closest("tr.r[data-iid]"); if (b) { var id = b.getAttribute("data-iid"); V.open = V.open === id ? "" : id; render(); return; }
   });

@@ -82,11 +82,11 @@
     ".ut-ctx{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}.ut-ctx b{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--ink)}" +
     ".ut-lock{appearance:none;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);border-radius:7px;padding:5px 10px;font:inherit;font-size:12.5px;cursor:pointer}" +
     ".ut-lock[aria-pressed=true]{border-color:var(--amber);color:var(--amber);background:rgba(232,163,61,.08)}" +
-    ".ut-shell{display:grid;grid-template-columns:196px minmax(0,1fr);gap:12px;align-items:start}" +
-    ".ut-nav{position:sticky;top:calc(var(--strip-h,40px) + 8px);border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:8px}" +
-    ".ut-nav .g{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);padding:8px 8px 4px}" +
-    ".ut-nav button{display:flex;justify-content:space-between;align-items:center;width:100%;appearance:none;border:0;background:none;color:var(--muted);font:inherit;font-size:13px;text-align:left;padding:6px 8px;border-radius:6px;cursor:pointer}" +
-    ".ut-nav button:hover:not(:disabled){background:rgba(255,255,255,.04);color:var(--ink)}.ut-nav button[aria-current=true]{background:#1a2a42;color:#fff;box-shadow:inset 2px 0 0 var(--cyan)}" +
+    ".ut-shell{display:block}" +
+    ".ut-nav{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px}" +
+    ".ut-nav .g{align-self:center;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);padding:0 4px 0 8px}" +
+    ".ut-nav button{appearance:none;display:inline-flex;align-items:center;gap:7px;font:700 13.5px 'IBM Plex Sans',sans-serif;color:var(--muted);background:transparent;border:1px solid var(--line2);border-radius:8px;padding:8px 14px;cursor:pointer;white-space:nowrap}" +
+    ".ut-nav button:hover:not(:disabled){color:#fff;background:#14213a}.ut-nav button[aria-current=true]{color:#101825;background:var(--amber);border-color:var(--amber)}" +
     ".ut-nav button:disabled{opacity:.42;cursor:default}.ut-nav small{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--faint)}" +
     ".ut-feed{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:10px 12px;position:sticky;top:calc(var(--strip-h,40px) + 8px);max-height:calc(100vh - var(--strip-h,40px) - 24px);overflow:auto}" +
     ".ut-feed h3{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:12px 0 5px;display:flex;justify-content:space-between}.ut-feed h3 small{letter-spacing:0;text-transform:none;color:var(--faint);font-weight:400}" +
@@ -131,8 +131,8 @@
     "table.hm .gap{width:10px;min-width:10px;background:none;cursor:default}table.hm td.ytd{opacity:.8}" +
     ".hm-leg{display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--faint);margin-top:8px}.hm-leg i{display:block;width:22px;height:10px;border-radius:2px}" +
     ".ut-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0}" +
-    "@media (max-width:1280px){.ut-shell{grid-template-columns:180px minmax(0,1fr)}.ut-feed{grid-column:1/-1;position:static;max-height:none}}" +
-    "@media (max-width:860px){.ut-shell{grid-template-columns:1fr}.ut-nav{position:static;display:flex;gap:4px;overflow-x:auto;padding:6px}.ut-nav .g{display:none}.ut-nav button{white-space:nowrap;width:auto}" +
+    "@media (max-width:1280px){.ut-feed{grid-column:1/-1;position:static;max-height:none}}" +
+    "@media (max-width:860px){.ut-nav{gap:4px}.ut-nav .g{display:none}" +
     ".ut-hdr{grid-template-columns:repeat(2,minmax(0,1fr))}.ut-detail,.ut-sum{grid-template-columns:1fr}}" +
     "@media (max-width:1020px){.ue-grid{grid-template-columns:1fr}.ue-top{grid-template-columns:repeat(2,minmax(0,1fr))}}";
   document.head.appendChild(css);
@@ -608,8 +608,10 @@
     if (!(V.lock && V.sel) && V.view === "company") V.view = "market";
     var centre = V.view === "season" ? seasonView() : V.view === "plan" ? '<div class="tile"><h2>Data &amp; plan coverage</h2>' + topStrip() + "</div>" + planTile() + footer()
       : V.view === "company" && V.lock && V.sel && window.COMPANY ? COMPANY.html(V.sel) : boardHTML();
+    var tabsHost = document.getElementById("usmTabs"), navHtml = nav();
+    if (tabsHost) tabsHost.innerHTML = navHtml;   /* tracker shell: tabs sit above the slicer, outside the panel */
     P.innerHTML = protoBar() + header() + indexDetail() + tickerBar() + (flashMsg ? '<div class="ut-ask" style="margin:-4px 0 10px">' + esc(flashMsg) + "</div>" : "") +
-      '<div class="ut-shell">' + nav() + '<main class="ut-main" style="min-width:0">' + centre + "</main></div>";
+      '<div class="ut-shell">' + (tabsHost ? "" : navHtml) + '<main class="ut-main" style="min-width:0">' + centre + "</main></div>";
     if (hadQ) { var i = P.querySelector("[data-utq]"); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch (e) {} } }
   }
 
@@ -631,6 +633,14 @@
     if (t.closest("[data-cocard]")) { if (V.lock && V.sel) { V.view = "company"; save(); } return; }
     b = t.closest("[data-utev]"); if (b) { choose(b.getAttribute("data-utev")); return; }
     b = t.closest("[data-uesym]"); if (b) { choose(b.getAttribute("data-uesym")); }
+  });
+  /* tabs live in #usmTabs (outside #panel-earnings) when the tracker shell is on: same handlers, same order.
+     In-panel clicks never reach here — they are handled by P's own listener above. */
+  document.addEventListener("click", function (ev) {
+    if (P.contains(ev.target)) return;
+    var t = ev.target.closest ? ev.target : null; if (!t) return;
+    var b = t.closest("[data-utgo]"); if (b) { V.view = b.getAttribute("data-utgo"); if (b.hasAttribute("data-utidx")) { V.idx = b.getAttribute("data-utidx"); idxOpen = null; } seaCell = null; save(); render(); return; }
+    if (t.closest("[data-cocard]")) { if (V.lock && V.sel) { V.view = "company"; save(); } return; }
   });
   P.addEventListener("input", function (ev) { if (ev.target.hasAttribute && ev.target.hasAttribute("data-utq")) { q = ev.target.value; liveSearch(); render(); } });
   P.addEventListener("keydown", function (ev) {
