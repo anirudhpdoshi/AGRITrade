@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "_site"
-FILES = ["index.html", "live.js", "direct.js", "motion.js", "fwd.js", "world-ui.js", "kb.js", "gg-ui.js", "events-ui.js", "fed-ui.js", "cpi-ui.js", "pricechart-ui.js", "narrative-ui.js", "nav-ui.js", "macro-table.js", "usm-cal.js", "usm-nav.js", "earn-lock.js", "health-ui.js", "intel-ui.js", "policy-ui.js", "briefing-ui.js", "glossary.js", "season.js", "feed-rail.js", "grains-ui.js", "rows-ui.js", "obs-ui.js", "swot-ui.js", "tabs-ui.js", "optflow-ui.js", "macro-ind.js", "earnings-ui.js", "tracker-ui.js", "treasury-ui.js", "co-engine.js", "company-ui.js", "world-paths.json", "data.json"]
+FILES = ["index.html", "live.js", "direct.js", "motion.js", "fwd.js", "world-ui.js", "kb.js", "gg-ui.js", "events-ui.js", "fed-ui.js", "cpi-ui.js", "pricechart-ui.js", "narrative-ui.js", "nav-ui.js", "macro-table.js", "usm-cal.js", "usm-nav.js", "earn-lock.js", "health-ui.js", "intel-ui.js", "policy-ui.js", "briefing-ui.js", "glossary.js", "season.js", "feed-rail.js", "grains-ui.js", "rows-ui.js", "obs-ui.js", "swot-ui.js", "tabs-ui.js", "optflow-ui.js", "macro-ind.js", "earnings-ui.js", "tracker-ui.js", "treasury-ui.js", "ai-debt-ui.js", "ai-debt.json", "co-engine.js", "company-ui.js", "world-paths.json", "data.json"]
 
 
 def b64(b):
@@ -85,13 +85,11 @@ def main():
     stamp_version()
     key = os.environ.get("FINNHUB_API_KEY", "").strip()
     pw = os.environ.get("DESK_PASSCODE", "").strip()
-    # Passcode gate removed (owner, Nov 11 2026). Without a passcode nothing can be sealed, and the stream key must never
-    # be published in the clear, so no vault is written: the live tick stream stays off and the desk uses its delayed feeds.
-    vault = None
-    print("::notice title=desk gate::removed - desk opens without a passcode; live stream key not published")
+    # Passcode gate restored (owner, Nov 11 2026): the desk opens only if the passcode decrypts the sealed vault.
+    vault = seal(pw, key)
     (OUT / "config.js").write_text("window.DESK_VAULT=" + json.dumps(vault) + ";\n")
     # hard guard: no secret may appear in anything we publish
-    secrets_ = [key, os.environ.get("ALPHAVANTAGE_API_KEY", "").strip()]   # passcode no longer used (gate removed)
+    secrets_ = [key, os.environ.get("ALPHAVANTAGE_API_KEY", "").strip()]   # passcode itself is never published (only the sealed vault)
     for s in filter(None, secrets_):
         for p in OUT.rglob("*"):
             if p.is_file() and s in p.read_text(errors="ignore"):
