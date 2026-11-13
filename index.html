@@ -1245,6 +1245,9 @@ body.fxo .pos-tabs{gap:0 4px!important;border-bottom:1px solid #1a1a1a;margin-bo
 body.fxo .pos-tabs button{border:0!important;border-radius:0!important;background:transparent!important;color:#8a8a8a!important;font-weight:500!important;padding:8px 12px 9px!important;border-bottom:1px solid transparent!important;margin-bottom:-1px}
 body.fxo .pos-tabs button[aria-selected="true"]{color:#d9b46a!important;border-bottom-color:#d9b46a!important}
 body.fxo .pos-tabs button:hover{color:#fff!important}
+/* Positioning: the commodity comes from the left tiles and the summary table already lists every grain — no repeat box, no second commodity row */
+#panel-positioning .cf-view{display:none!important}
+.gr-slicer[aria-label="CFTC commodity"]{display:none!important}
 </style>
 </head>
 <body class="locked">
@@ -5226,6 +5229,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="glossary.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script src="grain-prices.js?v=20261113a"></script>
 <script src="grains-ui.js?v=20261113d"></script>
+<script src="sectabs.js?v=20261113a"></script>
 <script src="rows-ui.js?v=20261113a"></script>
 <script src="obs-ui.js?v=20261110c"></script>
 <script src="swot-ui.js?v=20261110z"></script>
