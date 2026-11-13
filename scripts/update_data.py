@@ -1802,14 +1802,15 @@ def macro(D, N, only=None):
             if how == "diff" or (unit == "K" and how == "level"):
                 pts = [(d, v / 1000 if (how == "level" and src == "fred") else v) for d, v in pts]  # FRED claims are persons -> K
             longp = None
-            if key in MACRO_LONG:
+            if True:   # every indicator keeps ~5 years (Macro page 1Y / 2Y / 5Y views); the original MACRO_LONG set kept 6 years
                 lp = pts
                 if fq == "D":   # daily policy rates -> month-end readings
                     me = {}
                     for d, v in lp:
                         me[d[:7]] = (d, v)
                     lp = [me[m] for m in sorted(me)]
-                longp = [[d[:10], round(v, dec + 1)] for d, v in lp[-(24 if fq == "Q" else 72):]]
+                keep = (24 if fq == "Q" else 72) if key in MACRO_LONG else {"Q": 20, "W": 262, "D": 60}.get(fq, 60)
+                longp = [[d[:10], round(v, dec + 1)] for d, v in lp[-keep:]]
             pts_all = pts[-24:]
             pts = pts[-12:]
             if len(pts) < 2:

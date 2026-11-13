@@ -5,8 +5,20 @@
    The older dashboards (CPI deep dive, cycle & Fed policy, trade & fiscal, releases & consensus) stay under "Deep dives". */
 (function (root) {
   var doc = root.document, P = doc.getElementById("panel-macro"); if (!P) return;
-  var KEY = "desk.mnav", S = { c: "us", g: "lead", k: {} };
-  try { var sv = JSON.parse(localStorage.getItem(KEY) || "{}"); if (sv.c) S.c = sv.c; if (sv.g) S.g = sv.g; if (sv.k) S.k = sv.k; } catch (e) {}
+  /* categories as Trading Economics groups them (tradingeconomics.com/indicators) */
+  var TE = [["main", "Main", "The four numbers every macro read starts with: growth, the policy rate, inflation and unemployment."],
+    ["gdp", "GDP", "Output of the economy after inflation."], ["labour", "Labour", "Jobs, unemployment, wages and openings."],
+    ["prices", "Prices", "Inflation at the consumer, producer and import level."], ["money", "Money", "Policy rates, credit and financial conditions."],
+    ["business", "Business", "Factory, trade and purchasing-manager surveys."], ["consumer", "Consumer", "Household income, spending, credit and sentiment."],
+    ["housing", "Housing", "Starts, permits and home sales — the most rate-sensitive part of the economy."], ["deep", "Deep dives", ""]];
+  var TE_IDS = TE.map(function (x) { return x[0]; });
+  function teOf(k) {
+    return /policy/.test(k) ? "money" : /gdp/.test(k) ? "gdp" : /cpi|pce|ppi|trim|median|import|ippi/.test(k) ? "prices" : /_ur$|nfp|emp|ahe|hours|jolts|claims|cclaims|adp|udur|vac/.test(k) ? "labour" :
+      /starts|permits|nhs/.test(k) ? "housing" : /nfci|busloans/.test(k) ? "money" : /umich|pinc|pspend|ccinc/.test(k) ? "consumer" : "business";
+  }
+  var MAIN = { us: ["us_gdp", "us_policy", "us_cpi", "us_ur"], ca: ["ca_gdp", "ca_policy", "ca_cpi", "ca_ur"] };
+  var KEY = "desk.mnav", S = { c: "us", g: "main", k: {}, r: "2", v: "both" };
+  try { var sv = JSON.parse(localStorage.getItem(KEY) || "{}"); if (sv.c) S.c = sv.c; if (sv.g && TE_IDS.indexOf(sv.g) >= 0) S.g = sv.g; if (sv.k) S.k = sv.k; if (sv.r) S.r = sv.r; if (sv.v) S.v = sv.v; } catch (e) {}
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   var TZ = "America/Toronto";
@@ -85,13 +97,49 @@
     return { rel: rel, next: fut[0] || null, todayDue: fut.filter(function (t) { return dayET(t) === dayET(now); })[0] || null, todayOut: past.filter(function (t) { return dayET(t) === dayET(now); })[0] || null };
   }
   function items(c, g) {
-    return mAll().filter(function (m) { return m.group === c && !m.chart_only && CLS[m.key] === g; }).map(function (m) {
-      var t = relTime(m), seenToday = m.seen_at && dayET(Date.parse(m.seen_at)) === dayET(Date.now());
+    return mAll().filter(function (m) { if (m.group !== c || (m.chart_only && !/policy|gdpq/.test(m.key))) return false; return g === "main" ? MAIN[c].indexOf(m.key) >= 0 : teOf(m.key) === g; }).map(function (m) {
+      var t = relTime(m), seenToday = m.freq !== "D" && m.seen_at && dayET(Date.parse(m.seen_at)) === dayET(Date.now());
       return { m: m, t: t, today: !!(t.todayOut || t.todayDue || seenToday), out: !!(t.todayOut || seenToday), due: t.todayDue };
-    }).sort(function (a, b) { return (b.today - a.today) || (typeOf(a.m.key) < typeOf(b.m.key) ? -1 : typeOf(a.m.key) > typeOf(b.m.key) ? 1 : 0); });
+    }).sort(function (a, b) { return g === "main" ? MAIN[c].indexOf(a.m.key) - MAIN[c].indexOf(b.m.key) : (b.today - a.today) || (cyc(a.m.key) - cyc(b.m.key)); });
   }
-  function todayCount(c) { var n = 0; ["lead", "coin", "lag"].forEach(function (g) { n += items(c, g).filter(function (x) { return x.today; }).length; }); return n; }
+  function cyc(k) { return { lead: 0, coin: 1, lag: 2 }[CLS[k]] != null ? { lead: 0, coin: 1, lag: 2 }[CLS[k]] : 3; }
+  function todayCount(c) { var n = 0; TE_IDS.forEach(function (g) { if (g !== "main" && g !== "deep") n += items(c, g).filter(function (x) { return x.today; }).length; }); return n; }
   function fv(m, v) { if (v == null || v === "") return "—"; v = +v; return root.mval ? mval(m, v) : v.toFixed(m.dec || 1); }
+  /* history for the chosen range: the ~5-year series (ISO dates) when the desk holds it, else the 24 latest readings */
+  function series(m, yrs) {
+    var L = m.long || [], H = m.hist24 || m.history || [];
+    if (L.length > 2 && /^\d{4}-\d{2}/.test(L[0][0])) {
+      var cut = new Date(); cut.setFullYear(cut.getFullYear() - yrs); var c = cut.toISOString().slice(0, 10);
+      var out = L.filter(function (x) { return x[0] >= c; }).map(function (x) { return [x[0], x[1], true]; });
+      var span = (Date.parse(L[L.length - 1][0]) - Date.parse(L[0][0])) / 31557600000;
+      return { pts: out, full: span >= yrs - 0.6 || yrs <= 2 };
+    }
+    var per = m.freq === "W" ? 52 : m.freq === "Q" ? 4 : m.freq === "D" ? 12 : 12, n = per * yrs;
+    return { pts: H.slice(-n).map(function (x) { return [x[0], x[1], false]; }), full: H.length >= n };
+  }
+  var FQ = "M";
+  function lab(x) { if (!x[2]) return x[0]; var d = new Date(x[0] + "T12:00:00Z"), yy = "'" + String(d.getUTCFullYear()).slice(2);
+    if (FQ === "Q") return "Q" + (Math.floor(d.getUTCMonth() / 3) + 1) + " " + yy;
+    var mo = d.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }); return FQ === "W" || FQ === "D" ? mo + " " + d.getUTCDate() + " " + yy : mo + " " + yy; }
+  function chart(P, m) {
+    var v = P.map(function (x) { return x[1]; }); if (v.length < 2) return '<p class="note">Not enough history on file.</p>';
+    var W = 760, H = 210, L0 = 46, R0 = 10, T0 = 12, B0 = 26, lo = Math.min.apply(null, v), hi = Math.max.apply(null, v), pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
+    var X = function (i) { return L0 + i / (v.length - 1) * (W - L0 - R0); }, Y = function (y) { return T0 + (hi - y) / (hi - lo) * (H - T0 - B0); };
+    var g = "", d = m.dec != null ? +m.dec : 1;
+    for (var k = 0; k <= 4; k++) { var yv = hi - (hi - lo) * k / 4, yy = Y(yv); g += '<line x1="' + L0 + '" x2="' + (W - R0) + '" y1="' + yy.toFixed(1) + '" y2="' + yy.toFixed(1) + '" stroke="#1a1a1a"/><text x="' + (L0 - 6) + '" y="' + (yy + 3.5).toFixed(1) + '" text-anchor="end" fill="#777" font-size="10" font-family="JetBrains Mono,monospace">' + yv.toFixed(d) + "</text>"; }
+    if (lo < 0 && hi > 0) g += '<line x1="' + L0 + '" x2="' + (W - R0) + '" y1="' + Y(0).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '" stroke="#444" stroke-dasharray="3 3"/>';
+    var step = Math.max(1, Math.ceil(v.length / 7));
+    P.forEach(function (x, i) { if (i % step === 0 || i === v.length - 1) g += '<text x="' + X(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" fill="#777" font-size="10" font-family="JetBrains Mono,monospace">' + esc(lab(x)) + "</text>"; });
+    var pts = v.map(function (y, i) { return X(i).toFixed(1) + "," + Y(y).toFixed(1); }).join(" ");
+    var dots = P.map(function (x, i) { return '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(x[1]).toFixed(1) + '" r="' + (v.length > 80 ? 1.2 : 2.4) + '" fill="#d9b46a"><title>' + esc(lab(x)) + ": " + x[1].toFixed(d) + "</title></circle>"; }).join("");
+    return '<svg class="mn2-ch2" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(m.name) + ' history"><polyline fill="none" stroke="#d9b46a" stroke-width="1.8" points="' + pts + '"/>' + g + dots + "</svg>";
+  }
+  function table(P, m) {
+    var d = m.dec != null ? +m.dec : 1, R = P.slice().reverse();
+    return '<div class="mn2-tw"><table class="mn2-tb"><thead><tr><th>Period</th><th class="r">Value</th><th class="r">Change</th></tr></thead><tbody>' + R.map(function (x, i) {
+      var pv = R[i + 1], ch = pv ? x[1] - pv[1] : null;
+      return "<tr><td>" + esc(lab(x)) + '</td><td class="r"><b>' + x[1].toFixed(d) + '</b></td><td class="r ' + (ch == null ? "" : ch > 0 ? "up" : ch < 0 ? "dn" : "") + '">' + (ch == null ? "—" : (ch > 0 ? "+" : ch < 0 ? "−" : "") + Math.abs(ch).toFixed(d)) + "</td></tr>"; }).join("") + "</tbody></table></div>";
+  }
   function spark(h) {
     var v = (h || []).map(function (x) { return x[1]; }).filter(function (x) { return x != null; }); if (v.length < 2) return "";
     var W = 520, H = 120, lo = Math.min.apply(null, v), hi = Math.max.apply(null, v), rg = (hi - lo) || 1;
@@ -102,16 +150,20 @@
   }
   function cardHTML(x, g) {
     var m = x.m, C = root.consensusFor ? consensusFor(m) : null, cons = C && C.consensus != null ? +C.consensus : null, v = m.value != null ? +m.value : null;
-    var sur = cons != null && v != null ? v - cons : null, G = GROUPS.filter(function (q) { return q[0] === g; })[0];
+    var sur = cons != null && v != null ? v - cons : null, cg = CLS[m.key] || (/policy/.test(m.key) ? "lag" : "coin"), G = GROUPS.filter(function (q) { return q[0] === cg; })[0];
     var gd = /down|heat/.test(m.good || "") ? "down" : /up/.test(m.good || "") ? "up" : null, hot = gd === "down" ? sur > 0 : gd === "up" ? sur < 0 : null;
     var stat = x.out ? '<span class="mn2-live"><i></i>Released today ' + (x.t.todayOut ? hm(x.t.todayOut) : "") + "</span>" : x.due ? '<span class="mn2-live due"><i></i>Due today ' + hm(x.due) + "</span>" : "";
     var kv = function (k, val, cls) { return '<div class="mn2-kv"><span>' + k + "</span><b" + (cls ? ' class="' + cls + '"' : "") + ">" + val + "</b></div>"; };
     return '<div class="mn2-card"><div class="mn2-ch"><span class="mn2-cn">' + (root.flag ? flag(COUNTRY[m.group].cc, 16) : "") + " " + esc(COUNTRY[m.group].short + " " + m.name) + "</span>" +
-      '<span class="mn2-tag ' + g + '">' + G[1] + "</span><span class=\"mn2-ty\">" + TYPE[typeOf(m.key)] + "</span>" + stat + "</div>" +
+      '<span class="mn2-tag ' + cg + '">' + G[1] + "</span><span class=\"mn2-ty\">" + TYPE[typeOf(m.key)] + "</span>" + stat + "</div>" +
       '<div class="mn2-big">' + fv(m, v) + ' <small>' + esc(m.measure || "") + " · " + esc(m.period || "") + "</small></div>" +
       '<div class="mn2-kvs">' + kv("Consensus", cons != null ? fv(m, cons) : "—") + kv("Prior", fv(m, m.prior)) + kv("Surprise", sur != null ? (sur > 0 ? "+" : "−") + Math.abs(sur).toFixed(m.dec || 1) : "—", hot == null || sur == null || !sur ? "" : hot ? "dn" : "up") +
         kv("Released", x.t.rel ? when(x.t.rel) : "—") + kv("Next", x.t.next ? when(x.t.next) : "not yet scheduled") + "</div>" +
-      spark((m.hist24 || m.history || []).slice(-24)) +
+      (function () { FQ = m.freq || "M"; var yrs = +S.r, SR = series(m, yrs);
+        var ctl = '<div class="mn2-ctl"><span class="mn2-sw">' + ["1", "2", "5"].map(function (r) { return '<button type="button" data-mn2r="' + r + '" aria-pressed="' + (S.r === r) + '">' + r + "Y</button>"; }).join("") + "</span>" +
+          '<span class="mn2-sw">' + [["chart", "Chart"], ["table", "Table"], ["both", "Both"]].map(function (x) { return '<button type="button" data-mn2v="' + x[0] + '" aria-pressed="' + (S.v === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</span>" +
+          '<span class="mn2-n">' + SR.pts.length + " readings" + (SR.full ? "" : " · full " + yrs + "-year history arrives with the next data refresh") + "</span></div>";
+        return ctl + '<div class="mn2-vw ' + S.v + '">' + (S.v !== "table" ? chart(SR.pts, m) : "") + (S.v !== "chart" ? table(SR.pts, m) : "") + "</div>"; })() +
       '<div class="mn2-edu"><div><b>What it is</b><p>' + esc(WHAT[m.key] || m.name) + "</p></div><div><b>Why it is " + G[1].toLowerCase() + "</b><p>" + esc(G[2]) + "</p></div>" +
         '<div><b>How to read it</b><p>' + (gd === "down" ? "Lower is better for the economy's balance — a print above consensus is a hot (hawkish) surprise." : gd === "up" ? "Higher is better — a print above consensus is a positive surprise for growth." : "Read it against its own trend and the consensus.") + "</p></div></div>" +
       '<div class="mn2-ft">Source: ' + esc(m.src || "—") + (m.seen_at ? " · on the desk " + when(Date.parse(m.seen_at)) : "") + ' · <button type="button" class="mn2-hist" data-mn2hist="' + esc(m.key) + '">Full history →</button></div></div>';
@@ -132,25 +184,28 @@
         '<span class="mn2-ctn">' + (root.flag ? flag(COUNTRY[c].cc, 22) : "") + " " + COUNTRY[c].name + "</span>" +
         '<span class="mn2-ctc">' + mAll().filter(function (m) { return m.group === c && !m.chart_only && CLS[m.key]; }).length + " indicators</span>" +
         (n ? '<span class="mn2-ctt"><i></i>' + n + " out or due today</span>" : '<span class="mn2-ctt none">nothing scheduled today</span>') + "</button>"; }).join("") + "</aside>";
-    var tabs = '<div class="mn2-tabs" role="tablist">' + GROUPS.map(function (g) { var t = g[0] !== "deep" && items(S.c, g[0]).some(function (x) { return x.today; });
+    var tabs = '<div class="mn2-tabs" role="tablist">' + TE.filter(function (g) { return g[0] === "deep" || items(S.c, g[0]).length; }).map(function (g) { var t = g[0] !== "deep" && items(S.c, g[0]).some(function (x) { return x.today; });
       return '<button type="button" class="st-b" data-mn2g="' + g[0] + '" aria-selected="' + (S.g === g[0]) + '">' + g[1] + (t ? '<i class="mn2-dot"></i>' : "") + "</button>"; }).join("") + "</div>";
     var main = "";
     if (!deep) {
       var IT = items(S.c, S.g), sel = IT.filter(function (x) { return x.m.key === S.k[S.c + S.g]; })[0] || IT[0];
-      var byT = {}; IT.forEach(function (x) { var t = typeOf(x.m.key); (byT[t] = byT[t] || []).push(x); });
+      var byT = {}; IT.forEach(function (x) { var t = S.g === "main" ? "main" : (CLS[x.m.key] || (/policy/.test(x.m.key) ? "pol" : "coin")); (byT[t] = byT[t] || []).push(x); });
+      var TL = { main: "Headline", lead: "Leading", coin: "Coincident", lag: "Lagging", pol: "Policy" };
       main = '<div class="mn2-g"><nav class="mn2-list" aria-label="Data points">' + Object.keys(byT).map(function (t) {
-        return '<div class="mn2-lh">' + TYPE[t] + "</div>" + byT[t].map(function (x) { return '<button type="button" class="mn2-it' + (x === sel ? " on" : "") + '" data-mn2k="' + x.m.key + '"><span>' + esc(x.m.name) + "</span>" +
+        return '<div class="mn2-lh">' + TL[t] + "</div>" + byT[t].map(function (x) { return '<button type="button" class="mn2-it' + (x === sel ? " on" : "") + '" data-mn2k="' + x.m.key + '"><span>' + esc(x.m.name) + "</span>" +
           (x.today ? '<i class="mn2-dot' + (x.out ? "" : " due") + '" title="' + (x.out ? "Released today" : "Due today " + (x.due ? hm(x.due) : "")) + '"></i>' : "") + "</button>"; }).join(""); }).join("") +
         '<div class="mn2-key"><i class="mn2-dot"></i> out today <i class="mn2-dot due"></i> due today</div></nav>' +
         '<div class="mn2-c">' + (sel ? cardHTML(sel, S.g) : '<p class="note">No indicators in this group.</p>') + "</div></div>";
     }
-    box.innerHTML = '<div class="mn2-lay">' + left + '<div class="mn2-main"><div class="tile wide mn2-head"><h2>' + COUNTRY[S.c].name + ' macro <span class="h2note">— pick a group, then a data point · red dot = released or due today</span></h2>' + todayStrip(S.c) + tabs + "</div>" + main + "</div></div>";
+    box.innerHTML = '<div class="mn2-lay">' + left + '<div class="mn2-main"><div class="tile wide mn2-head"><h2>' + COUNTRY[S.c].name + ' macro <span class="h2note">— categories as Trading Economics groups them · each data point tagged leading, coincident or lagging · red dot = released or due today</span></h2>' + todayStrip(S.c) + tabs + "</div>" + main + "</div></div>";
   }
   P.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t) return;
     var b = t.closest("[data-mn2c]"); if (b) { S.c = b.getAttribute("data-mn2c"); save(); render(); return; }
     b = t.closest("[data-mn2g]"); if (b) { S.g = b.getAttribute("data-mn2g"); save(); render(); return; }
     b = t.closest("[data-mn2k]"); if (b) { S.k[S.c + S.g] = b.getAttribute("data-mn2k"); save(); render(); return; }
+    b = t.closest("[data-mn2r]"); if (b) { S.r = b.getAttribute("data-mn2r"); save(); render(); return; }
+    b = t.closest("[data-mn2v]"); if (b) { S.v = b.getAttribute("data-mn2v"); save(); render(); return; }
     b = t.closest("[data-mn2hist]"); if (b && root.openMacroDetail) { openMacroDetail(b.getAttribute("data-mn2hist")); }
   });
   var rm = root.renderMacro; if (typeof rm === "function") root.renderMacro = function () { var r = rm.apply(this, arguments); try { render(); } catch (e) {} return r; };
@@ -178,6 +233,10 @@
     ".mn2-big{font:500 34px 'JetBrains Mono','IBM Plex Mono',monospace;color:#fff;margin:10px 0 6px}.mn2-big small{font:12.5px 'Libre Franklin',system-ui,sans-serif;color:#8f9db3}" +
     ".mn2-kvs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;margin:6px 0 12px}.mn2-kv{padding:8px 10px;border-left:1px solid #1a1a1a;min-width:0}.mn2-kv:first-child{border-left:0}" +
     ".mn2-kv span{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#8a8a8a}.mn2-kv b{font:500 14px 'JetBrains Mono','IBM Plex Mono',monospace;color:#e8eef4}.mn2-kv b.up{color:var(--green)}.mn2-kv b.dn{color:var(--red)}" +
+    ".mn2-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:4px 0 10px}.mn2-sw{display:inline-flex;border:1px solid #2a2a2a;border-radius:6px;overflow:hidden}.mn2-sw button{all:unset;cursor:pointer;padding:3px 11px;font:500 12px 'JetBrains Mono','IBM Plex Mono',monospace;color:#8a8a8a}.mn2-sw button[aria-pressed=true]{color:#d9b46a;background:rgba(217,180,106,.1)}.mn2-sw button+button{border-left:1px solid #2a2a2a}.mn2-n{font-size:11px;color:#777}" +
+    ".mn2-vw.both{display:grid;grid-template-columns:minmax(0,2fr) minmax(220px,1fr);gap:14px;align-items:start}.mn2-ch2{width:100%;height:auto;display:block}.mn2-tw{max-height:240px;overflow:auto;border:1px solid #1a1a1a;border-radius:6px}.mn2-vw.table .mn2-tw{max-height:360px}" +
+    ".mn2-tb{width:100%;border-collapse:collapse;font:12.5px 'JetBrains Mono','IBM Plex Mono',monospace;display:table!important}.mn2-tb thead{display:table-header-group!important}.mn2-tb tbody{display:table-row-group!important}.mn2-tb th{position:sticky;top:0;background:#000;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#8a8a8a;font-weight:500;text-align:left;padding:6px 10px;border-bottom:1px solid #2a2a2a}.mn2-tb td{padding:5px 10px;border-bottom:1px solid #111;color:#c9d4e2}.mn2-tb .r{text-align:right}.mn2-tb b{color:#fff;font-weight:500}.mn2-tb .up{color:#3fb97f}.mn2-tb .dn{color:#e0655f}" +
+    "@media (max-width:900px){.mn2-vw.both{grid-template-columns:1fr}}" +
     ".mn2-sp{width:100%;height:120px;display:block}.mn2-spx{display:flex;justify-content:space-between;font:11px 'JetBrains Mono','IBM Plex Mono',monospace;color:#777;margin:2px 0 12px}" +
     ".mn2-edu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.mn2-edu b{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#d9b46a}.mn2-edu p{margin:4px 0 0;font-size:13px;line-height:1.5;color:#c9d4e2}" +
     ".mn2-ft{margin-top:12px;font-size:11.5px;color:#777}.mn2-hist{all:unset;cursor:pointer;color:#d9b46a}.mn2-hist:hover{text-decoration:underline}" +
