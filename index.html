@@ -30,7 +30,7 @@ u.searchParams.delete("fresh");history.replaceState(null,"",u.pathname+(u.search
 <title>AGRITrade — Grain &amp; USD/CAD Desk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   color-scheme: dark;
@@ -1140,6 +1140,48 @@ body.gr3 .tab-panel.active .subnav .subbtn[data-sub="prices"] .sb-name:after{con
 .gp-tbl td.gp-c b{font-weight:500}.gp-tbl .up{color:var(--green)}.gp-tbl .dn{color:var(--red)}.gp-tbl td.gp-c small{color:inherit;opacity:.85}
 .gp-tbl tr.gp-front td{background:#e8b93d0d}
 .gp-tbl tbody tr:hover td{background:#14213a}
+</style>
+<style id="fxo-css">
+/* uniform price digits everywhere: same size and baseline; the 5th decimal is dimmed, not shrunk */
+.qt-v .qt-fr{color:var(--faint,#6b7686)!important}
+.qt-box.tk-up-s,.qt-box.tk-dn-s{background:transparent!important;padding:1px 4px 1px 14px!important}
+.qt-box.tk-up-s .qt-v{color:var(--green)!important}.qt-box.tk-dn-s .qt-v{color:var(--red)!important}
+.qt-box.tk-up-s .qt-ar:before{color:var(--green)!important}.qt-box.tk-dn-s .qt-ar:before{color:var(--red)!important}
+/* USD/CAD desk — OLED bento: true black, 1px hairlines, no fills or shadows */
+body.fxo,body.fxo main{background:#000}
+body.fxo #panel-fx .tile,body.fxo #panel-fx .rail-card{background:#000!important;border:1px solid #1a1a1a!important;box-shadow:none!important;border-radius:6px}
+body.fxo #panel-fx .tile:before,body.fxo #panel-fx .tile:after{display:none}
+body.fxo #panel-fx .qt-grid,body.fxo #panel-fx .fxmx{font-family:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace}
+body.fxo #panel-fx .qt-grid{grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:0;border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a}
+body.fxo #panel-fx .qt{background:transparent!important;border:0!important;border-left:1px solid #1a1a1a!important;border-radius:0!important;padding:8px 12px!important;box-shadow:none!important}
+body.fxo #panel-fx .qt:first-child{border-left:0!important}
+body.fxo #panel-fx .qt-h b{color:#8a8a8a;font-size:10.5px;text-transform:uppercase}body.fxo #panel-fx .qt-sub{color:#555;font-size:10px;text-transform:uppercase}
+body.fxo #panel-fx .qt-box{padding-left:0!important}body.fxo #panel-fx .qt-ar{display:none}
+body.fxo #panel-fx .qt-v{color:#fff!important;font-size:24px!important;font-weight:400!important}
+body.fxo #panel-fx .qt-c{font-size:11.5px;white-space:normal}body.fxo #panel-fx .qt-f{color:#555;font-size:10.5px}
+body.fxo #panel-fx .subnav-tile{border:0!important;background:#000!important;padding:6px 0 0!important}
+body.fxo #panel-fx .subnav{display:flex!important;flex-wrap:wrap;gap:0 4px;border-bottom:1px solid #1a1a1a;margin-top:10px}
+body.fxo #panel-fx .subnav .subbtn{all:unset;cursor:pointer;padding:8px 12px 9px;font-size:14px;color:#8a8a8a;border-bottom:1px solid transparent;margin-bottom:-1px;font-family:"Libre Franklin",system-ui,sans-serif}
+body.fxo #panel-fx .subnav .subbtn:hover{color:#fff}
+body.fxo #panel-fx .subnav .subbtn[aria-selected="true"]{color:#d9b46a;border-bottom-color:#d9b46a}
+body.fxo #panel-fx .subnav .sb-ev,body.fxo #panel-fx .subnav .sb-cd{display:none}
+@media (max-width:760px){ body.fxo #panel-fx .subnav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none} body.fxo #panel-fx .subnav .subbtn{white-space:nowrap} body.fxo #panel-fx .qt-grid{grid-template-columns:repeat(2,minmax(0,1fr))} body.fxo #panel-fx .qt:nth-child(odd){border-left:0!important} body.fxo #panel-fx .qt{border-top:1px solid #1a1a1a!important} body.fxo #panel-fx .qt-v{font-size:20px!important} }
+/* forward rates matrix */
+.fxmx-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:8px 16px;margin-bottom:12px}
+.fxmx-head h2{font-family:"Libre Franklin",system-ui,sans-serif!important;font-size:19px!important;font-weight:500!important;letter-spacing:.06em!important;text-transform:uppercase;color:#d9b46a!important;margin:0}
+.fxmx-meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:flex-end;font-size:12px;color:#8a8a8a}
+.fxmx-g{color:#d9b46a;font-weight:500}
+.fxmx-pill{border:1px solid #2a2a2a;border-radius:5px;padding:3px 8px;font-size:11px;color:#8a8a8a;font-family:"JetBrains Mono","IBM Plex Mono",monospace}.fxmx-pill b{color:#fff;font-weight:500}
+.fxmx{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;font-family:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace}
+.fxmx-c{border:1px solid #1f1f1f;border-radius:6px;padding:10px 12px 9px;background:linear-gradient(180deg,#000 35%,rgba(120,20,20,var(--a,.12)));min-width:0;cursor:default}
+.fxmx-c.prem{background:linear-gradient(180deg,#000 35%,rgba(20,110,60,var(--a,.12)))}
+.fxmx-c:hover{border-color:#3a3a3a}
+.fxmx-t{display:flex;justify-content:space-between;font-size:12px;color:#8a8a8a}.fxmx-t b{color:#fff;font-weight:600;font-size:14px}
+.fxmx-f{font-size:26px;color:#fff;margin:6px 0 4px;letter-spacing:.01em;white-space:nowrap}.fxmx-f i{font-style:normal;color:#5c5c5c}
+.fxmx-p{font-size:13px}.fxmx-p.dn{color:#e0655f}.fxmx-p.up{color:#3fb97f}
+.fxmx-d{font-size:11px;color:#666;margin-top:2px}
+@media (max-width:1300px){.fxmx{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:760px){.fxmx{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.fxmx-f{font-size:20px}}
 </style>
 </head>
 <body class="locked">
@@ -4612,8 +4654,9 @@ function fxSubnavHTML(){
   var live=fxTilesHTML();
   return subnavHTML('fx', [
     {id:'overview', label:'Overview', ev:nextOf(ev, function(e){ return e.impact==='High'; })},
-    {id:'deriv', label:'Derivatives & positioning', ev:nextOf(ev.filter(function(e){ return cb.test(e.label); }).concat(cftc))},
-    {id:'rates', label:'Rates, policy & energy', ev:nextOf(ev, function(e){ return cb.test(e.label)||/Crude|Oil|Treasury|Bond|Auction/i.test(e.label); })}
+    {id:'deriv', label:'Derivatives', ev:nextOf(ev.filter(function(e){ return cb.test(e.label); }).concat(cftc))},
+    {id:'rates', label:'Rates, Policy & Energy', ev:nextOf(ev, function(e){ return cb.test(e.label)||/Crude|Oil|Treasury|Bond|Auction/i.test(e.label); })},
+    {id:'fwd', label:'Forward Rates', ev:nextOf(ev, function(e){ return cb.test(e.label); })}
   ], live);
 }
 function renderFX(){
@@ -4746,9 +4789,10 @@ function renderFX(){
     '<div class="stamp">USD/CAD = CAD per USD \u00b7 F = S \u00d7 DF<sub>USD</sub> \u00f7 DF<sub>CAD</sub> \u00b7 under 1Y: money-market simple interest, DF = 1/(1 + r\u00b7T) \u00b7 1Y and beyond: semi-annual bond yields, DF = (1 + r/2)<sup>\u22122T</sup> \u00b7 T = actual days spot\u2192value date \u00f7 365 (both inputs are government yields on a 365-day basis) \u00b7 spot date T+1, months end-of-month + modified following (weekends only; bank holidays not adjusted) \u00b7 each currency\u2019s rate interpolated linearly between its curve nodes \u00b7 traded forward points also reflect cross-currency basis, credit and dealer spreads, so executable forwards differ</div></div>';
   html+=fxSubnavHTML()+
     subWrap('fx','overview', fxKpiHTML()+liveFxHTML()+T.spot+T.closes+T.model+askTileHTML('fx'))+
-    subWrap('fx','deriv', positioningKpiHTML('fx')+T.forwards+T.cftc+T.sentiment.replace('class="tile"','class="tile wide"'))+
+    subWrap('fx','deriv', positioningKpiHTML('fx')+T.cftc+T.sentiment.replace('class="tile"','class="tile wide"'))+
     /* macro sections now live on the Macro tab (renderMacro) */
-    subWrap('fx','rates', ylLiveHTML()+T.yields+T.energy.replace('class="tile wide"','class="tile"')+T.policy);
+    subWrap('fx','rates', ylLiveHTML()+T.yields+T.energy.replace('class="tile wide"','class="tile"')+T.policy)+
+    subWrap('fx','fwd', '<div class="tile wide fxmx-tile" data-src="fx_spot"><div class="fxmx-head"><h2>Forward Rates Matrix<span class="h2note" style="display:none"> — 1M to 12M</span></h2><div class="fxmx-meta"><span><b class="fxmx-g">USD / CAD forward curve</b> · covered-interest-parity outrights · theoretical</span><span class="fxmx-pill">SPOT REF <b id="fxmx-spot">—</b></span><span class="fxmx-pill">12M FORWARD <b id="fxmx-12">—</b></span></div></div><div id="fx-fwdmx" class="fxmx"></div><div class="stamp">Outright = spot × DF<sub>USD</sub> ÷ DF<sub>CAD</sub> from US Treasury and Government of Canada yields · points in pips (1 pip = 0.0001 CAD) · reprices on every live spot tick · not a dealer quote</div></div>'+T.forwards);
   html+='</div><aside class="rail">'+liveMonitorHTML()+fxAlertsHTML()+'</aside></div>';
   document.getElementById('panel-fx').innerHTML=html;
   if(window.FWD) FWD.mount();   /* rebuild the live forward-curve component inside the fresh tile */
