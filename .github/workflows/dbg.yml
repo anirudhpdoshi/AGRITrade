@@ -1,0 +1,20 @@
+name: dbg
+on: { push: { branches: [cme-check] } }
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          W=https://agritrade-sec.anirudh-p-doshi.workers.dev
+          for s in 03 56 57; do for k in current preliminary_voi; do
+            curl -s -D h.txt -o f.pdf "$W/cme?s=$s&k=$k"; echo "== $s $k $(head -1 h.txt) size=$(stat -c%s f.pdf) $(grep -i x-cme-last h.txt)"; head -c 8 f.pdf; echo
+          done; done
+          pip -q install pdfplumber
+          curl -s -o c.pdf "$W/cme?s=56&k=current"
+          python - <<'P'
+          import pdfplumber
+          with pdfplumber.open("c.pdf") as p:
+              print("pages",len(p.pages))
+              t=p.pages[0].extract_text() or ""
+              print(t[:1500])
+          P
