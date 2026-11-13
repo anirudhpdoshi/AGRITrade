@@ -7,9 +7,9 @@
   var GRAINS = ["corn", "wheat", "soybeans"];
   var G = [   /* id, label, child tab ids (first = default), hint */
     ["overview", "Overview", ["briefing"], "US · CA briefing, markets pulse, catalyst calendar"],
-    ["grains", "Grains", ["grains"], "Corn · Wheat · Soybeans — price, fan, fundamentals"],
+    ["grains", "Grains", ["grains", "fx"], "Corn · Soybeans · Wheat · USD/CAD — price tiles open each report"],
     ["positioning", "Positioning / OI", ["positioning"], "Open interest, CFTC funds, options, volatility"],
-    ["macro", "Macro", ["macro", "fx", "world"], "Macro table, CPI, USD/CAD, world markets"],
+    ["macro", "Macro", ["macro", "world"], "Macro table, CPI, world markets"],
     ["treasury", "US Treasury", ["treasury"], "US government debt — borrowing, maturity & refinancing risk"],
     ["aidebt", "AI Debt", ["aidebt"], "AI-company debt raises, Jan 2021 – Nov 2026"],
     ["events", "Events", ["events"], "Today's and upcoming releases"],
@@ -55,7 +55,7 @@
     setTimeout(paint, 40);
   });
   /* each existing tab button is tagged with its group; only the active group's buttons show in the sub-row */
-  (function () { var m = btn("macro"), f = btn("fx"); if (m && f) tabs.insertBefore(m, f); })();   /* Macro first in its group */
+  (function () { var m = btn("macro"), f = btn("world"); if (m && f) tabs.insertBefore(m, f); })();   /* Macro first in its group */
   G.forEach(function (g) { g[2].forEach(function (id) { var b = btn(id); if (b) b.setAttribute("data-gnav-of", g[0]); }); });
 
   function paint() {

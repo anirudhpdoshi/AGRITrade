@@ -171,6 +171,21 @@ async function prices(req, t, rng) {
   return json(req, { ticker: a, spx: b, range: rng, provider: "Yahoo Finance daily closes (delayed)", fetched_at: new Date().toISOString() }, 200, 900);
 }
 
+/* CME Daily Bulletin — only the three grain sections, never an open proxy. k = current (final, prior session) | preliminary_voi */
+const CME_SEC = { "03": "Section03_Agricultural_Futures.pdf", "56": "Section56_Corn_Oat_RoughRice_Options.pdf", "57": "Section57_Soybean_Soymeal_Soyoil_SoybeanCrush_wheat_Options.pdf" };
+async function cmeBulletin(req, s, k) {
+  const f = CME_SEC[s]; const kind = k === "preliminary_voi" ? "preliminary_voi" : "current";
+  if (!f) return json(req, { error: "unknown section" }, 400);
+  const r = await fetch("https://www.cmegroup.com/daily_bulletin/" + kind + "/" + f, { headers: {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",
+    "Accept": "application/pdf,*/*;q=0.8", "Accept-Language": "en-US,en;q=0.9", "Referer": "https://www.cmegroup.com/market-data/daily-bulletin.html" },
+    cf: { cacheTtl: 900, cacheEverything: true } });
+  if (!r.ok) return json(req, { error: "cme " + r.status }, 502);
+  const h = new Headers(cors(req)); h.set("Content-Type", "application/pdf"); h.set("Cache-Control", "public, max-age=900");
+  const lm = r.headers.get("Last-Modified"); if (lm) h.set("X-CME-Last-Modified", lm);
+  return new Response(r.body, { status: 200, headers: h });
+}
+
 export default {
   async fetch(req, env) {
     if (env && env.SEC_CONTACT) CONTACT = "AGRITrade desk " + String(env.SEC_CONTACT).trim();
@@ -183,6 +198,7 @@ export default {
       if (u.pathname === "/company") return await company(req, u.searchParams.get("t"));
       if (u.pathname === "/prices") return await prices(req, u.searchParams.get("t"), u.searchParams.get("r"));
       if (u.pathname === "/filings") return await filings8k(req, u.searchParams.get("t"));
+      if (u.pathname === "/cme") return await cmeBulletin(req, u.searchParams.get("s"), u.searchParams.get("k"));
       if (u.pathname === "/exhibit") return await exhibit(req, u.searchParams.get("t"), u.searchParams.get("acc"));
       return json(req, { error: "unknown route", routes: ["/search?q=", "/company?t=", "/prices?t=&r=", "/health"] }, 404);
     } catch (e) {

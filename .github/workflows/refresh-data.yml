@@ -45,6 +45,9 @@ jobs:
           FORCE: ${{ github.event.inputs.force }}
           ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
 
+      - name: CME final open interest (Daily Bulletin, via the desk worker)
+        run: python scripts/cme_final.py || echo "CME final OI skipped this run"
+
       - name: Commit if changed
         run: |
           if git diff --quiet -- data.json; then

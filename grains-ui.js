@@ -45,7 +45,8 @@
   if (!parent || !head) return;
   var ET = "America/New_York";
   function btn(k) { return doc.getElementById("tabbtn-" + k); }
-  function active() { var a = doc.querySelector(".tab-panel.active"), k = a ? a.id.replace("panel-", "") : ""; return ORDER.indexOf(k) >= 0 ? k : null; }
+  function active() { var a = doc.querySelector(".tab-panel.active"), k = a ? a.id.replace("panel-", "") : ""; return ORDER.indexOf(k) >= 0 || k === "fx" ? k : null; }
+  function isG(k) { return ORDER.indexOf(k) >= 0; }
   function saved() { try { var v = localStorage.getItem(KEY); return ORDER.indexOf(v) >= 0 ? v : "corn"; } catch (e) { return "corn"; } }
   function remember(k) { try { localStorage.setItem(KEY, k); } catch (e) {} }
   function fmtET(ms, o) { return new Date(ms).toLocaleString("en-US", Object.assign({ timeZone: ET }, o)); }
@@ -81,6 +82,19 @@
       '<span class="gr-f">' + (T.q ? "Delayed " + T.q + " · " : "") + 'Front ' + T.expiry + (fndLabel(T.contract) ? ' · FND ' + fndLabel(T.contract) : "") + '</span>' +
       (stale ? '<span class="gr-stale">LATEST VERIFIED ' + shortDate(T.date) + '</span>' : "") + '</button>';
   }
+  /* USD/CAD tile: the entry point to the USD/CAD desk report (removed from the Macro menu) */
+  function fxTileHTML(on) {
+    var F = root.DATA && DATA.fx, fd = F && F.feed, mid = fd && +fd.mid, ref = F && F.spot && +F.spot.ref, sel = ' aria-pressed="' + on + '" data-grain-pick="fx"';
+    if (!(mid > 0)) return '<button type="button" class="gr-tile"' + sel + '><span class="gr-n">USD/CAD</span></button>';
+    var d = ref ? mid - ref : null, dir = d > 0 ? "up" : d < 0 ? "down" : "flat", s = d > 0 ? "+" : d < 0 ? "−" : "";
+    var t = fd.ts || (DATA.meta && DATA.meta.asof && DATA.meta.asof.fx_spot), tl = t ? fmtET(Date.parse(t), { hour: "numeric", minute: "2-digit" }) + " ET" : "";
+    return '<button type="button" class="gr-tile gr-fx"' + sel + '>' +
+      '<span class="gr-n">USD/CAD <b>SPOT</b>' + (on ? '<em class="gr-selb">SELECTED</em>' : "") + '<span class="gr-live" title="Live spot — updates on every tick">' + PULSE + '</span></span>' +
+      '<span class="gr-v"><span class="qt-box gr-px" data-qt="gr-fx" data-v="' + mid + '" data-dec="5" data-qt-live="usdcad"><span class="qt-v">' + (root.QTFMT ? QTFMT(mid, 5) : mid.toFixed(5)) + '</span></span><small>CAD per USD</small></span>' +
+      '<span class="gr-c ' + dir + '">' + (d != null ? s + Math.abs(d * 1e4).toFixed(1) + " pips · " + s + Math.abs(d / ref * 100).toFixed(2) + "%" : "") + '</span>' +
+      (ref ? '<span class="gr-phys"><span class="gr-ph">Reference</span><span class="gr-kv"><span>Prior close</span><b>' + ref.toFixed(4) + '</b></span><span class="gr-kv"><span>1 CAD in USD</span><b>' + (1 / mid).toFixed(4) + '</b></span></span>' : "") +
+      '<span class="gr-f">' + (tl ? "Spot " + tl + " · " : "") + 'opens the USD/CAD desk report</span></button>';
+  }
   /* right column: "next" card for the open report tab, with the other tabs' next events beneath */
   function nextCard(k) {
     var P = doc.getElementById("panel-" + k), rail = P && P.querySelector("aside.rail"); if (!rail) return;
@@ -108,7 +122,7 @@
     var now = Date.now(), A = asOfLine(now), ev = nextEvent(now);
     var h = '<div class="gr-top"><span class="gr-asof">' + A.text + '</span>' + (ev ? '<span class="gr-next">' + ev + '</span>' : "") + '</div>' +
       '<div class="gr-col-h">Execution Tiles</div>' +
-      '<div class="gr-strip">' + ORDER.map(function (k) { return tileHTML(k, A.day, k === on); }).join("") + '</div>';
+      '<div class="gr-strip">' + ORDER.map(function (k) { return tileHTML(k, A.day, k === on); }).join("") + fxTileHTML(on === "fx") + '</div>';
     if (head.getAttribute("data-h") !== h) { head.innerHTML = h; head.setAttribute("data-h", h); }
     nextCard(on);
   }
@@ -124,9 +138,9 @@
     return null;
   }
   function pick(k) {
-    var from = active(), same = from === k, sub = from && !same ? section(from) : null, y = root.scrollY, b = btn(k); if (!b) return;
-    var A = LOCK && from && !same ? anchor(from) : null;
-    if (LOCK && from && !same) {
+    var from = active(), same = from === k, both = isG(from) && isG(k), sub = from && !same && both ? section(from) : null, y = root.scrollY, b = btn(k); if (!b) return;
+    var A = LOCK && from && !same && both ? anchor(from) : null;
+    if (LOCK && from && !same && both) {
       try {
         if (root.SEC && root.SUB) { var sv = SEC[from + "." + SUB[from]]; if (sv != null) { SEC[k + "." + sub] = sv; localStorage.setItem("desk.sec", JSON.stringify(SEC)); } }
         if (root.DASH_STATE && root.dstate) { var f = dstate(from), t = dstate(k); ROUTE_KEYS.forEach(function (q) { if (f[q] != null) t[q] = f[q]; }); }
@@ -134,19 +148,19 @@
     }
     b.click();
     if (sub && root.setSub) root.setSub(k, sub);      /* the menu holds when the commodity changes */
-    if (LOCK && from && !same && root.renderGrain) { try { renderGrain(k); if (root.buildSecNav) buildSecNav(k); if (root.drawDestMaps) drawDestMaps(); } catch (e) {} }
+    if (LOCK && from && !same && both && root.renderGrain) { try { renderGrain(k); if (root.buildSecNav) buildSecNav(k); if (root.drawDestMaps) drawDestMaps(); } catch (e) {} }
     function place() { var T = A ? doc.querySelectorAll("#panel-" + k + " [data-subpanel].on .tile")[A.i] : null;
       if (T) root.scrollTo(0, Math.max(0, T.getBoundingClientRect().top + root.scrollY - A.off));   /* same tile, same height on screen */
       else root.scrollTo(0, y); }                     /* CG-2: same scroll position */
     place(); setTimeout(place, 0); setTimeout(place, 150);   /* again after the tab switch and section nav settle */
     if (root.DESK_LIVE && DESK_LIVE.paintPills) DESK_LIVE.paintPills();
   }
-  parent.addEventListener("click", function () { pick(active() || saved()); });
+  parent.addEventListener("click", function () { var a = active(); pick(a && isG(a) ? a : saved()); });
   head.addEventListener("click", function (ev) {
     var b = ev.target.closest && ev.target.closest("[data-grain-pick]"); if (b) pick(b.getAttribute("data-grain-pick")); });
   doc.addEventListener("click", function (ev) {
     if (!ev.target.closest || !ev.target.closest(".tab-btn")) return;
-    var k = active(); if (k) remember(k); paint();
+    var k = active(); if (k && isG(k)) remember(k); paint();
   });
   doc.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("[data-sub]")) setTimeout(function () { var k = active(); if (k) nextCard(k); }, 0); });
   /* the "updated today" mark on any grain carries up to the parent */
@@ -155,7 +169,7 @@
   if (root.MutationObserver) { var mo = new MutationObserver(mirror); ORDER.forEach(function (k) { var b = btn(k); if (b) mo.observe(b, { attributes: true, attributeFilter: ["class", "title"] }); }); }
   mirror();
   /* a grain page redraw wipes its rail: put the insights card back */
-  if (root.MutationObserver) ORDER.forEach(function (k) { var P = doc.getElementById("panel-" + k); if (P) new MutationObserver(function () { if (active() === k && !P.querySelector(".gx-box")) nextCard(k); }).observe(P, { childList: true }); });
+  if (root.MutationObserver) ORDER.concat(["fx"]).forEach(function (k) { var P = doc.getElementById("panel-" + k); if (P) new MutationObserver(function () { if (active() === k && !P.querySelector(".gx-box")) nextCard(k); }).observe(P, { childList: true }); });
   /* a data refresh repaints the strip; the age and countdown tick on their own */
   var ra = root.renderAll;
   if (typeof ra === "function") root.renderAll = function () { var r = ra.apply(this, arguments); paint(); return r; };

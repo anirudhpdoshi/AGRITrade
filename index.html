@@ -1113,7 +1113,7 @@ table.pi-tab td{vertical-align:top}table.pi-tab small{display:block;color:var(--
 /* market matrix: report tabs as slim text tabs; countdowns move to the right column */
 body.gr3 .tab-panel.active .subnav-tile{padding:10px 14px 4px}
 body.gr3 .tab-panel.active .subnav-tile:before{content:"Market Matrix & Subcategories";display:block;font-size:15px;font-weight:600;color:#e8eef4;margin-bottom:6px}
-body.gr3 .tab-panel.active .subnav-live{display:none}
+body.gr3 :is(#panel-corn,#panel-wheat,#panel-soybeans).active .subnav-live{display:none}
 body.gr3 .tab-panel.active .subnav{display:flex!important;flex-wrap:wrap;gap:2px 4px;border-bottom:1px solid #1f2a3a}
 body.gr3 .tab-panel.active .subnav .subbtn{all:unset;cursor:pointer;padding:8px 12px 9px;font-size:13.5px;color:#9fb0c6;border-bottom:2px solid transparent;margin-bottom:-1px;display:inline-flex}
 body.gr3 .tab-panel.active .subnav .subbtn:hover{color:#fff}
@@ -1208,6 +1208,30 @@ body.fxo .tab-panel.active .ad-co-b.on .c{color:#d9b46a!important;border-color:#
 .ad-lb{paint-order:stroke;stroke:#0a0f16;stroke-width:3px;stroke-linejoin:round}
 body.fxo .ad-lb{stroke:#000}
 .ad-t td,.ad-t th{white-space:nowrap}
+</style>
+<style id="oled-all">
+/* the OLED desk look on every menu except Events */
+body.fxo{background:#000}
+body.fxo .topbar,body.fxo nav.gnav,body.fxo .gnav,body.fxo #gsub{background:#000!important}
+body.fxo .tab-panel.active :is(.tile,.rail-card,.tq-p,.tq-k,.tq-svg,.qt,.kpi,.gr-tile,.gx-next,.obs-box,.prow,.usm-a){background:#000!important;border-color:#1a1a1a!important;box-shadow:none!important}
+body.fxo #grains-head .gr-tile{background:#000!important;border-color:#1f1f1f!important}
+body.fxo #grains-head .gr-tile[aria-pressed="true"]{border-color:#d9b46a!important;box-shadow:0 0 0 1px #d9b46a55,0 0 18px #d9b46a1f!important}
+body.fxo #grains-head .gr-px{font-family:"JetBrains Mono","IBM Plex Mono",monospace}
+body.fxo .tab-panel.active .tile h2{color:#d9b46a}
+body.fxo .tab-panel.active .subnav .subbtn[aria-selected="true"]{color:#d9b46a!important;border-bottom-color:#d9b46a!important}
+body.fxo :is(#panel-corn,#panel-wheat,#panel-soybeans,#panel-fx) .subctx .sc-sec{display:none}
+body.fxo .tk-side{background:transparent!important;border:1px solid #1a1a1a!important;color:#fff!important}body.fxo .tk-side .tk-lab{color:#8a8a8a!important}body.fxo .tk-side .qt-v{color:#fff!important}body.fxo .tk-badge{background:#000!important;border:1px solid #2a2a2a!important;color:#d9b46a!important}
+body.fxo .gnav{background:#000!important;border-color:#1a1a1a!important;box-shadow:none!important}
+body.fxo .gnav-b{font-weight:500!important;color:#8a8a8a!important;background:transparent!important;box-shadow:none!important}
+body.fxo .gnav-b:hover{color:#fff!important}
+body.fxo .gnav-b[aria-current=page]{color:#d9b46a!important;box-shadow:inset 0 -1px 0 #d9b46a!important}
+body.fxo .topbar h1{font-family:"JetBrains Mono","IBM Plex Mono",monospace;font-weight:500;letter-spacing:.02em}
+body.fxo .snapshot-banner,body.fxo .season-banner{background:#000!important}
+nav.tabs [data-gnav-of="grains"]{display:none!important}
+@media (min-width:1021px){body.gr3 #panel-fx .qt-grid{grid-template-columns:repeat(7,minmax(0,1fr))!important}body.gr3 #panel-fx .qt-v{font-size:19px!important}body.gr3 #panel-fx .qt{padding:8px 9px!important}}
+.tq-p{overflow-x:auto}@media (max-width:760px){.tq-svg{min-width:860px}}
+/* no filled yellow buttons anywhere: the selected option is a gold outline */
+body.fxo .tab-panel.active button[aria-pressed="true"]:not(.gr-tile):not(.subbtn),body.fxo .tab-panel.active button.on:not(.ad-co-b):not(.subbtn),body.fxo #gsub .gsub-b[aria-pressed="true"]{background:rgba(217,180,106,.08)!important;color:#d9b46a!important;border-color:#d9b46a!important;box-shadow:none!important}
 </style>
 </head>
 <body class="locked">
@@ -4987,12 +5011,13 @@ function buildSecNav(panel){
   });
   var list=order.map(function(k){ return groups[k]; }).sort(function(a,b){ return a.idx-b.idx; });
   var cur=SEC[secKey(panel)]||'all'; if(cur!=='all'&&cur!=='guide'&&!groups[cur]) cur='all';
+  var GRN=/^(corn|wheat|soybeans|fx)$/.test(panel); if(GRN) cur='all';   /* commodity pages: no section-filter row — every section shows; open a line item to review it */
   var subLab=(P.querySelector('[data-sub="'+sub.getAttribute('data-subpanel')+'"] .sb-name')||{}).textContent||'';
   var sid=sub.getAttribute('data-subpanel'), acc=SUBTHEME[sid]||'#38b6c9', L2=P.querySelector('.layout');
   P.style.setProperty('--sa', acc); if(L2) L2.setAttribute('data-subt', sid);
   var secLab=cur==='all'?'All sections':cur==='guide'?'Guide':(groups[cur]||{}).lab||'';
   var sn=st&&st.querySelector('.subnav');
-  if(st&&sn){ var w=document.createElement('div');
+  if(st&&sn&&!GRN){ var w=document.createElement('div');
     w.innerHTML='<div class="sec-chips" role="group" aria-label="Sections">'+
       '<button class="sec-chip" data-secp="'+panel+'" data-sec-v="all" aria-pressed="'+(cur==='all')+'"><span>All sections</span><small>'+list.length+'</small></button>'+
       list.map(function(g){ return '<button class="sec-chip" data-secp="'+panel+'" data-sec-v="'+g.id+'" aria-pressed="'+(cur===g.id)+'"><span>'+esc(g.lab)+'</span>'+(g.n>1?'<small>'+g.n+'</small>':'')+'</button>'; }).join('')+
@@ -5187,7 +5212,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="briefing-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="glossary.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script src="grain-prices.js?v=20261113a"></script>
-<script src="grains-ui.js?v=20261113a"></script>
+<script src="grains-ui.js?v=20261113b"></script>
 <script src="rows-ui.js?v=20261110c"></script>
 <script src="obs-ui.js?v=20261110c"></script>
 <script src="swot-ui.js?v=20261110z"></script>
@@ -5199,7 +5224,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script src="pricechart-ui.js?v=20261110e"></script>
 <script src="narrative-ui.js?v=20261110a"></script>
 <script src="macro-table.js?v=20261110a"></script>
-<script src="nav-ui.js?v=20261112c"></script>
+<script src="nav-ui.js?v=20261113a"></script>
 <script src="usm-cal.js?v=20261110a"></script>
 <script src="usm-nav.js?v=20261111a"></script>
 <script src="earn-lock.js?v=20261110a"></script>
