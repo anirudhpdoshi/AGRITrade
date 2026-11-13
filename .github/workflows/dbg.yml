@@ -19,7 +19,11 @@ jobs:
               with pdfplumber.open(io.BytesIO(b)) as pdf:
                   for pg in pdf.pages:
                       for l in (pg.extract_text() or "").split("\n"):
-                          if re.search(r"(MAR27|JAN27).*(CORN|SOYBEAN|WHEAT)",l) and len(l)<60: print("   HDR",repr(l))
+                          pass
+                  for pi,pg in enumerate(pdf.pages[:10]):
+                      L=(pg.extract_text() or "").split("\n")
+                      for j,l in enumerate(L):
+                          if l.startswith("TOTAL") or re.match(r"^[A-Z]{3}\d\d [A-Z ]+(CALL|PUT)",l): print("   CTX",pi+1,repr(l[:70]), "| next:",repr(L[j+1][:50]) if j+1<len(L) else "")
               if sec=="57":
                   w=P["m"].get(("WHEAT","DEC26","CALL"),{}).get("oi",{}); print("  wheat dec call 700/800:",w.get(700),w.get(800))
           P
