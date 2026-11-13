@@ -436,20 +436,32 @@
     if (window.MOTION) window.MOTION.scan();         /* roll / flash the changed outrights and forward points */
   }
   /* forward rates matrix: 1M–12M outrights as a grid of cells (fx "Forward Rates" tab) */
+  var INV = false; try { INV = localStorage.getItem("desk.fwdinv") === "1"; } catch (e) {}
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest && ev.target.closest("[data-fwdinv]"); if (!b) return;
+    INV = b.getAttribute("data-fwdinv") === "1"; try { localStorage.setItem("desk.fwdinv", INV ? "1" : "0"); } catch (e) {}
+    if (S.res) matrix(S.res);
+  });
   function matrix(res) {
     var box = document.getElementById("fx-fwdmx"); if (!box) return;
-    var sp = document.getElementById("fxmx-spot"); if (sp) sp.textContent = res.spot ? res.spot.toFixed(5) : "—";
+    var tg = document.getElementById("fxmx-inv");
+    if (tg) tg.innerHTML = '<button type="button" data-fwdinv="0" aria-pressed="' + !INV + '">USD/CAD</button><button type="button" data-fwdinv="1" aria-pressed="' + INV + '">CAD/USD · inverse</button>';
+    var gl = document.getElementById("fxmx-pair"); if (gl) gl.textContent = INV ? "CAD / USD forward curve (inverse)" : "USD / CAD forward curve";
+    /* inverse: every outright and spot is 1 ÷ rate (USD per CAD); points are re-measured on that basis, so their sign flips */
+    var iv = function (x) { return INV && x ? 1 / x : x; }, S0 = iv(res.spot);
+    var sp = document.getElementById("fxmx-spot"); if (sp) sp.textContent = res.spot ? S0.toFixed(5) : "—";
     var L = (res.legs || []).filter(function (l) { return /^(\d+M|1Y|2Y)$/.test(l.t); });   /* all 24 months: 1M … 24M */
     var mx = Math.max.apply(null, L.map(function (l) { return Math.abs(l.pts || 0); }).concat([1]));
     var y1 = L.filter(function (l) { return l.t === "2Y"; })[0], e12 = document.getElementById("fxmx-12");
-    if (e12) e12.textContent = y1 && y1.F != null ? y1.F.toFixed(5) + " (" + (y1.pts > 0 ? "+" : "−") + Math.abs(y1.pts).toFixed(1) + " pips)" : "—";
+    var ptsOf = function (l) { return INV ? (1 / l.F - 1 / res.spot) * 1e4 : l.pts; };
+    if (e12) e12.textContent = y1 && y1.F != null ? iv(y1.F).toFixed(5) + " (" + (ptsOf(y1) > 0 ? "+" : "−") + Math.abs(ptsOf(y1)).toFixed(1) + " pips)" : "—";
     box.innerHTML = L.map(function (l) {
       var t = l.t === "1Y" ? "12M" : l.t === "2Y" ? "24M" : l.t, vd = l.vd, mon = MON[vd.getUTCMonth()] + " \u2019" + String(vd.getUTCFullYear()).slice(2);
       if (l.F == null) return '<div class="fxmx-c"><div class="fxmx-t"><b>' + t + "</b><span>" + mon + '</span></div><div class="fxmx-f">—</div><div class="fxmx-d">inputs unavailable</div></div>';
-      var f = l.F.toFixed(5), a = (0.06 + 0.3 * Math.abs(l.pts) / mx).toFixed(3), prem = l.pts > 0;
+      var P = ptsOf(l), f = iv(l.F).toFixed(5), a = (0.06 + 0.3 * Math.abs(P) / mx).toFixed(3), prem = P > 0;
       return '<div class="fxmx-c' + (prem ? " prem" : "") + '" style="--a:' + a + '" title="' + t + " outright, value " + vd.toISOString().slice(0, 10) + " · USD " + l.rUSD.toFixed(3) + "% vs CAD " + l.rCAD.toFixed(3) + '%"><div class="fxmx-t"><b>' + t + "</b><span>" + mon + "</span></div>" +
         '<div class="fxmx-f">' + f.slice(0, -1) + "<i>" + f.slice(-1) + "</i></div>" +
-        '<div class="fxmx-p ' + (prem ? "up" : "dn") + '">' + (prem ? "+" : "−") + Math.abs(l.pts).toFixed(1) + " pts</div>" +
+        '<div class="fxmx-p ' + (prem ? "up" : "dn") + '">' + (prem ? "+" : "−") + Math.abs(P).toFixed(1) + " pts</div>" +
         '<div class="fxmx-d">' + vd.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) + "</div></div>";
     }).join("");
   }
