@@ -66,34 +66,57 @@
     if (best === null) return "";
     return "Next: WASDE + Crop Production · " + fmtET(best, { weekday: "short", month: "short", day: "numeric" }) + ", 12:00 PM ET · in " + age(best - now);
   }
+  var PULSE = '<svg class="gr-pulse" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8h3l2-5 3 10 2-5h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function tileHTML(k, day, on) {
-    var g = root.DATA && DATA.grains && DATA.grains[k], R0 = g && g.roll && g.roll[0], T = tile(R0, g), R = T && T.px != null ? { settle: T.px } : R0, sel = ' aria-pressed="' + on + '" data-grain-pick="' + k + '"';
+    var g = root.DATA && DATA.grains && DATA.grains[k], R0 = g && g.roll && g.roll[0], T = tile(R0, g), sel = ' aria-pressed="' + on + '" data-grain-pick="' + k + '"';
     if (!T) return '<button type="button" class="gr-tile"' + sel + '><span class="gr-n">' + NAME[k] + '</span></button>';
-    var stale = day && T.date && T.date < day;
+    var stale = day && T.date && T.date < day, fx = root.DATA && DATA.fx && DATA.fx.feed && +DATA.fx.feed.mid, bt = root.BU_PER_MT && BU_PER_MT[k];
+    var phys = (fx && bt ? '<span class="gr-kv"><span>C$/t equiv.</span><b title="Front futures × ' + bt + ' bu/t × USD/CAD — no basis">' + (T.px * bt * fx).toFixed(2) + '</b></span>' : "") +
+      (fx ? '<span class="gr-kv"><span>USD/CAD</span><b>' + fx.toFixed(4) + '</b></span>' : "");
     return '<button type="button" class="gr-tile"' + sel + '>' +
-      '<span class="gr-n">' + NAME[k] + ' <b>' + T.contract + '</b></span>' +
-      '<span class="gr-v"><span class="qt-box' + (T.dir === "up" ? " tk-up-s" : T.dir === "down" ? " tk-dn-s" : "") + '"><span class="qt-v">' + (root.QTFMT ? QTFMT(R.settle * 100, 2) : T.settle) + '</span></span><small> c/bu</small></span>' +
+      '<span class="gr-n">' + NAME[k].toUpperCase() + ' <b>' + T.contract + '</b>' + (on ? '<em class="gr-selb">SELECTED</em>' : "") + '<span class="gr-live" title="Price updates as new delayed quotes arrive">' + PULSE + '</span></span>' +
+      '<span class="gr-v"><span class="qt-box gr-px" data-qt="gr-' + k + '" data-v="' + T.px + '" data-dec="4"><span class="qt-v">' + T.px.toFixed(4) + '</span></span><small>$/bu</small></span>' +
       '<span class="gr-c ' + T.dir + '">' + (T.chg ? T.chg + " · " + T.pct : "") + '</span>' +
+      (phys ? '<span class="gr-phys"><span class="gr-ph">Physical calculations</span>' + phys + '</span>' : "") +
       '<span class="gr-f">' + (T.q ? "Delayed " + T.q + " · " : "") + 'Front ' + T.expiry + (fndLabel(T.contract) ? ' · FND ' + fndLabel(T.contract) : "") + '</span>' +
       (stale ? '<span class="gr-stale">LATEST VERIFIED ' + shortDate(T.date) + '</span>' : "") + '</button>';
+  }
+  /* right column: "next" card for the open report tab, with the other tabs' next events beneath */
+  function nextCard(k) {
+    var P = doc.getElementById("panel-" + k), rail = P && P.querySelector("aside.rail"); if (!rail) return;
+    var B = P.querySelectorAll(".subnav [data-sub]"), on = null, rows = "";
+    B.forEach(function (b) { if (b.getAttribute("aria-selected") === "true") on = b; });
+    if (!on) return;
+    function part(b) { var n = b.querySelector(".sb-name"), e = b.querySelector(".sb-ev"), c = b.querySelector(".countdown"), d = b.querySelector(".sb-date");
+      return { n: n ? n.textContent : "", e: e ? e.textContent : "", c: c ? c.outerHTML : "", d: d ? d.textContent.replace(/^\s*·\s*/, "") : "" }; }
+    var a = part(on);
+    B.forEach(function (b) { if (b === on) return; var x = part(b); if (!x.c) return;
+      rows += '<div class="gx-r" data-sub="' + b.getAttribute("data-sub") + '" data-subp="' + k + '"><span>' + x.n + '</span><span>' + x.e + '</span><b>' + x.c + '</b></div>'; });
+    var h = '<div class="gx-h">Insights &amp; Activity</div><div class="gx-next"><div class="gx-t">' + a.n + '</div>' +
+      (a.c ? '<div class="gx-e">Next: ' + a.e + '</div><div class="gx-c">' + a.c + ' · ' + a.d + '</div>' : '<div class="gx-e">No scheduled event</div>') + '</div>' +
+      (rows ? '<div class="gx-list">' + rows + '</div>' : "");
+    var box = rail.querySelector(".gx-box");
+    if (!box) { box = doc.createElement("div"); box.className = "gx-box"; rail.insertBefore(box, rail.firstChild); }
+    if (box.getAttribute("data-k") !== a.n + rows.length || !box.innerHTML) { box.innerHTML = h; box.setAttribute("data-k", a.n + rows.length); }
   }
   function paint() {
     var on = active();
     head.hidden = !on;
+    doc.body.classList.toggle("gr3", !!on);
     parent.setAttribute("aria-selected", on ? "true" : "false");
     if (!on) return;
     var now = Date.now(), A = asOfLine(now), ev = nextEvent(now);
     var h = '<div class="gr-top"><span class="gr-asof">' + A.text + '</span>' + (ev ? '<span class="gr-next">' + ev + '</span>' : "") + '</div>' +
-      '<div class="gr-strip">' + ORDER.map(function (k) { return tileHTML(k, A.day, k === on); }).join("") + '</div>' +
-      '<div class="gr-slicer" role="group" aria-label="Commodity"><span>Commodity</span>' + ORDER.map(function (k) { return '<button type="button" data-grain-pick="' + k + '" aria-pressed="' + (k === on) + '">' + NAME[k] + '</button>'; }).join("") +
-      '<button type="button" class="gr-lock" data-grain-lock aria-pressed="' + LOCK + '" title="' + (LOCK ? "View locked: switching commodity keeps the same menu, section, geography, crop year and place on the page" : "View unlocked: each commodity opens where you last left it") + '">' + (LOCK ? "\ud83d\udd12 View locked" : "\ud83d\udd13 Lock view") + "</button>" + '</div>';
-    if (head.innerHTML !== h) head.innerHTML = h;
+      '<div class="gr-col-h">Execution Tiles</div>' +
+      '<div class="gr-strip">' + ORDER.map(function (k) { return tileHTML(k, A.day, k === on); }).join("") + '</div>';
+    if (head.getAttribute("data-h") !== h) { head.innerHTML = h; head.setAttribute("data-h", h); }
+    nextCard(on);
   }
   root.GRAINS.pick = function (k) { pick(k); };
   function section(k) { var s = doc.querySelector("#panel-" + k + ' [data-sub][aria-selected="true"]'); return s ? s.getAttribute("data-sub") : null; }
   /* View lock (default on): Corn / Soybeans / Wheat keep the same route — menu, section filter, geography, crop year, map/table —
      and the same tile at the same height on screen, so you can flip commodities on e.g. WASDE without losing your place */
-  var LOCK = true; try { LOCK = localStorage.getItem("desk.grlock") !== "0"; } catch (e) {}
+  var LOCK = true;   /* the open tab and sub-section always hold when the commodity changes */
   var ROUTE_KEYS = ["crop", "view", "basis", "fgeo"];
   function anchor(k) {   /* first tile still on screen: its index in the open menu and its distance from the top */
     var T = doc.querySelectorAll("#panel-" + k + " [data-subpanel].on .tile"), top = (doc.querySelector(".tabs") || {}).offsetHeight || 0;
@@ -120,17 +143,19 @@
   }
   parent.addEventListener("click", function () { pick(active() || saved()); });
   head.addEventListener("click", function (ev) {
-    if (ev.target.closest && ev.target.closest("[data-grain-lock]")) { LOCK = !LOCK; try { localStorage.setItem("desk.grlock", LOCK ? "1" : "0"); } catch (e) {} paint(); return; }
     var b = ev.target.closest && ev.target.closest("[data-grain-pick]"); if (b) pick(b.getAttribute("data-grain-pick")); });
   doc.addEventListener("click", function (ev) {
     if (!ev.target.closest || !ev.target.closest(".tab-btn")) return;
     var k = active(); if (k) remember(k); paint();
   });
+  doc.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("[data-sub]")) setTimeout(function () { var k = active(); if (k) nextCard(k); }, 0); });
   /* the "updated today" mark on any grain carries up to the parent */
   function mirror() { var src = ORDER.map(btn).filter(function (b) { return b && b.classList.contains("tab-today"); })[0];
     parent.classList.toggle("tab-today", !!src); if (src && src.title) parent.title = src.title; else parent.removeAttribute("title"); }
   if (root.MutationObserver) { var mo = new MutationObserver(mirror); ORDER.forEach(function (k) { var b = btn(k); if (b) mo.observe(b, { attributes: true, attributeFilter: ["class", "title"] }); }); }
   mirror();
+  /* a grain page redraw wipes its rail: put the insights card back */
+  if (root.MutationObserver) ORDER.forEach(function (k) { var P = doc.getElementById("panel-" + k); if (P) new MutationObserver(function () { if (active() === k && !P.querySelector(".gx-box")) nextCard(k); }).observe(P, { childList: true }); });
   /* a data refresh repaints the strip; the age and countdown tick on their own */
   var ra = root.renderAll;
   if (typeof ra === "function") root.renderAll = function () { var r = ra.apply(this, arguments); paint(); return r; };

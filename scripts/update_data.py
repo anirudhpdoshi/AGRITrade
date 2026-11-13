@@ -1935,6 +1935,24 @@ def settles(D, N):
                         leg["settle"], leg["settle_date"] = round(ls[-1][1], 4), ls[-1][0]
                 except Exception as e:
                     print(f"  curve leg {leg['contract']} skipped: {e}")
+            # forward months for the Prices tab: the roll legs plus the following listed months, 6 in all (settles only)
+            try:
+                curve, code = [], g["roll"][0]["contract"]
+                for i in range(6):
+                    leg = next((r for r in g["roll"] if r["contract"] == code), None)
+                    if leg and leg.get("settle") is not None:
+                        curve.append({"contract": code, "settle": leg["settle"], "prev": leg.get("prev"), "settle_date": leg.get("settle_date")})
+                    else:
+                        try:
+                            ls = _yahoo_settles(code, "1mo")
+                            if ls:
+                                curve.append({"contract": code, "settle": round(ls[-1][1], 4), "prev": ls[-2][1] if len(ls) > 1 else None, "settle_date": ls[-1][0]})
+                        except Exception as e:
+                            print(f"  forward month {code} skipped: {e}")
+                    code = next_contract(code, k)
+                g["curve"] = curve
+            except Exception as e:
+                print(f"  forward months {k} skipped: {e}")
             done.append(f"{k} {fan['settle_date']} {fan['anchor']}")
         except Exception as e:
             errs[k] = str(e)[:200]

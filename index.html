@@ -1080,6 +1080,67 @@ table.pi-tab td{vertical-align:top}table.pi-tab small{display:block;color:var(--
 .evfi-go{cursor:pointer;border-radius:6px;margin:0 -6px;padding-left:6px;padding-right:6px;transition:background .15s}.evfi-go:hover,.evfi-go:focus-visible{background:rgba(56,182,201,.08);outline:none}
 .evfo{color:#7dd8e6;font-weight:500}.evfi-go:hover .evfo{text-decoration:underline}
 </style>
+<style id="gr3-css">
+/* Grains 3-column desk (Nov 13 redesign): execution tiles | market matrix | insights & activity */
+.qt-v .qt-bf,.qt-v .qt-pp,.qt-v .qt-fr{font-size:inherit!important;font-weight:inherit!important;letter-spacing:inherit!important;margin:0!important;align-self:auto!important;vertical-align:baseline!important;line-height:inherit!important}
+.qt-v{align-items:baseline!important}
+@media (min-width:1021px){
+ body.gr3 main{display:grid;grid-template-columns:262px minmax(0,1fr);column-gap:14px;row-gap:0;align-items:start}
+ body.gr3 main>*{grid-column:2;min-width:0}
+ body.gr3 #grains-head{grid-column:1;grid-row:1/span 40;position:sticky;top:calc(var(--strip-h,40px) + 64px);align-self:start}
+ body.gr3 .gr-strip{grid-template-columns:1fr}
+ body.gr3 .gr-top{flex-direction:column;font-size:11.5px;gap:2px}
+ body.gr3 .gr-top .gr-next{display:none}
+}
+#grains-head .gr-col-h{font-size:15px;font-weight:600;color:#e8eef4;margin:6px 0 8px}
+#grains-head .gr-tile{gap:4px;padding:12px 14px;background:#0c121c;border-color:#1f2a3a;position:relative}
+#grains-head .gr-tile[aria-pressed="true"]{border-color:#e8b93d;box-shadow:0 0 0 1px #e8b93d55,0 0 18px #e8b93d22}
+#grains-head .gr-n{font-size:12.5px;letter-spacing:.04em;color:#c9d4e2;display:flex;align-items:center;gap:6px}
+#grains-head .gr-n b{font-weight:500;color:#8f9db3}
+#grains-head .gr-selb{font-style:normal;font-size:9.5px;font-weight:700;letter-spacing:.06em;color:#0b0f16;background:#e8b93d;border-radius:4px;padding:1px 6px;position:absolute;top:-8px;left:50%;transform:translateX(-50%)}
+#grains-head .gr-live{margin-left:auto;color:#3fb97f;display:inline-flex}.gr-pulse{width:14px;height:14px}
+#grains-head .gr-v{display:flex;align-items:baseline;gap:6px}
+#grains-head .gr-px{background:none!important;padding:0!important;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:28px;font-weight:500;color:#fff;letter-spacing:.01em;line-height:1.15}
+#grains-head .gr-px .qt-v{font-size:inherit;font-weight:inherit;color:inherit}
+#grains-head .gr-v small{font-size:11.5px;color:#8f9db3}
+#grains-head .gr-c{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:13px}
+#grains-head .gr-phys{display:flex;flex-direction:column;gap:2px;border-top:1px solid #1f2a3a;padding-top:6px;margin-top:2px;font-size:11.5px}
+#grains-head .gr-ph{color:#8f9db3;font-size:10.5px;letter-spacing:.03em}
+#grains-head .gr-kv{display:flex;justify-content:space-between;color:#aab6c8}#grains-head .gr-kv b{font-family:"IBM Plex Mono",ui-monospace,monospace;font-weight:500;color:#e8eef4}
+#grains-head .gr-f{font-size:11px;color:#7d8aa0}
+@media (max-width:1020px){ body.gr3 .gr-strip{grid-template-columns:repeat(3,minmax(0,1fr))} }
+@media (max-width:760px){ body.gr3 .gr-strip{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px} #grains-head .gr-tile{padding:10px 8px} #grains-head .gr-phys,#grains-head .gr-f,#grains-head .gr-live,body.gr3 .gr-col-h{display:none} #grains-head .gr-n{font-size:10.5px;flex-wrap:wrap;gap:0 4px} #grains-head .gr-px{font-size:17px} #grains-head .gr-v small{display:none} #grains-head .gr-c{font-size:10.5px} body.gr3 .tab-panel.active .subnav{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none} body.gr3 .tab-panel.active .subnav .subbtn{white-space:nowrap} }
+/* market matrix: report tabs as slim text tabs; countdowns move to the right column */
+body.gr3 .tab-panel.active .subnav-tile{padding:10px 14px 4px}
+body.gr3 .tab-panel.active .subnav-tile:before{content:"Market Matrix & Subcategories";display:block;font-size:15px;font-weight:600;color:#e8eef4;margin-bottom:6px}
+body.gr3 .tab-panel.active .subnav-live{display:none}
+body.gr3 .tab-panel.active .subnav{display:flex!important;flex-wrap:wrap;gap:2px 4px;border-bottom:1px solid #1f2a3a}
+body.gr3 .tab-panel.active .subnav .subbtn{all:unset;cursor:pointer;padding:8px 12px 9px;font-size:13.5px;color:#9fb0c6;border-bottom:2px solid transparent;margin-bottom:-1px;display:inline-flex}
+body.gr3 .tab-panel.active .subnav .subbtn:hover{color:#fff}
+body.gr3 .tab-panel.active .subnav .subbtn[aria-selected="true"]{color:#e8b93d;border-bottom-color:#e8b93d}
+body.gr3 .tab-panel.active .subnav .subbtn:focus-visible{outline:2px solid #38b6c9}
+body.gr3 .tab-panel.active .subnav .sb-ev,body.gr3 .tab-panel.active .subnav .sb-cd{display:none}
+body.gr3 .tab-panel.active .subnav .subbtn[data-sub="prices"] .sb-name:after{content:"LIVE";font-size:9px;font-weight:700;letter-spacing:.06em;color:#e8b93d;border:1px solid #e8b93d88;border-radius:4px;padding:0 4px;margin-left:6px;vertical-align:2px}
+/* insights & activity */
+.gx-box{order:-1}.gx-h{font-size:15px;font-weight:600;color:#e8eef4}
+.gx-next{border:1px solid #2a3547;background:#0c121c;border-radius:10px;padding:10px 12px;margin-top:6px}
+.gx-t{font-weight:600;font-size:13px;color:#e8eef4}.gx-e{font-size:13px;color:#c9d4e2;margin-top:4px}.gx-c{font-size:12px;color:#e8b93d;font-family:"IBM Plex Mono",ui-monospace,monospace;margin-top:2px}
+.gx-list{margin-top:6px;display:flex;flex-direction:column;gap:2px}
+.gx-r{display:grid;grid-template-columns:auto 1fr auto;gap:8px;font-size:11.5px;color:#8f9db3;padding:4px 2px;cursor:pointer;border-bottom:1px solid #1a2433}
+.gx-r span:first-child{color:#c9d4e2}.gx-r span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gx-r b{font-weight:500;color:#e8b93d;font-family:"IBM Plex Mono",ui-monospace,monospace}
+.gx-r:hover span:first-child{color:#fff}
+/* prices tab */
+.gp-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.gp-tbl th{font-size:11.5px;font-weight:500;color:#8f9db3;text-align:right;padding:8px 10px;border-bottom:1px solid #26324a;white-space:nowrap}
+.gp-tbl th:first-child,.gp-tbl th:nth-child(2){text-align:left}
+.gp-tbl td{padding:8px 10px;border-bottom:1px solid #1a2433;text-align:right;font-family:"IBM Plex Mono",ui-monospace,monospace;white-space:nowrap;vertical-align:top}
+.gp-tbl td small{display:block;font-size:10.5px;color:#7d8aa0;margin-top:2px}
+.gp-tbl td.gp-m,.gp-tbl td.gp-k{text-align:left;font-family:inherit}.gp-tbl td.gp-m b{font-weight:600;color:#e8eef4}.gp-tbl td.gp-k{color:#aab6c8}
+.gp-tbl td.gp-px b{font-weight:500;color:#fff;font-size:14px}
+.gp-tbl td.gp-c b{font-weight:500}.gp-tbl .up{color:var(--green)}.gp-tbl .dn{color:var(--red)}.gp-tbl td.gp-c small{color:inherit;opacity:.85}
+.gp-tbl tr.gp-front td{background:#e8b93d0d}
+.gp-tbl tbody tr:hover td{background:#14213a}
+</style>
 </head>
 <body class="locked">
 <!-- owner passcode gate · the passcode must decrypt the sealed vault (config.js: PBKDF2 600k + AES-256-GCM); no passcode hash is published · re-locks after 20 min idle -->
@@ -2539,8 +2600,8 @@ function grainKpiHTML(key){
   var E=(DATA.exports&&DATA.exports[key])||EXPORT[key], w=E.weeks[E.weeks.length-1], v=esVerdict(w);
   var spark=sparkPath(g.history.map(function(h){ return h.s; }),120,26);
   return '<div class="tile wide kpi-strip">'+
-    kpi(meta.contract+' (delayed)', '<span class="g-kpi" data-grain="'+key+'" data-tick="kpi-'+key+'" data-roll>'+money2(q)+'</span>', '<span class="'+cls(chg)+'">'+sgn(chg,2,'%')+'</span> vs settle · '+esc(f.intraday[1]), spark)+
-    kpi('Settle · '+fmtShortDate(f.settle_date), money2(f.anchor), 'z '+f.z+' · MA20 $'+f.ma20)+
+    kpi(meta.contract+' (delayed)', '<span class="g-kpi" data-grain="'+key+'" data-tick="kpi-'+key+'" data-roll>$'+fmt(q,4)+'</span>', '<span class="'+cls(chg)+'">'+sgn(chg,2,'%')+'</span> vs settle · '+esc(f.intraday[1]), spark)+
+    kpi('Settle · '+fmtShortDate(f.settle_date), '$'+fmt(+f.anchor,4), 'z '+f.z+' · MA20 $'+f.ma20)+
     kpi('Options ('+meta.chainNear+')', 'P/C '+f.pcr, 'P $'+fmt(f.put_wall[0],2)+' · C $'+fmt(f.call_wall[0],2))+
     kpi('Managed money', sgn(Math.round(last.net/1000),0)+'<small>k</small>', '<span class="'+cls(last.net-prev.net)+'">'+sgn(Math.round((last.net-prev.net)/100)/10,1)+'k</span> w/w · '+fmtShortDate(last.date))+
     kpi('Export sales', fmt(Math.round(w[2]/1000))+'<small>k MT</small>', (v?'<span class="'+(v==='BEAT'?'up':v==='MISS'?'dn':'neu')+'">'+(v==='BEAT'?'above':v==='MISS'?'below':'inside')+' range</span>':'no estimate')+' · w/e '+fmtShortDate(w[0]))+
@@ -4160,8 +4221,9 @@ function grainSubnavHTML(key){
   return subnavHTML(key, [
     {id:'overview', label:'Overview', ev:nextOf(all, function(e){ return e.kind==='wasde'||e.kind==='contract'||e.kind==='ca'; })||nextOf(all)},
     {id:'deriv', label:'Derivatives', ev:nextOf(us, function(e){ return e.kind==='contract'||e.kind==='cftc'; })},
-    {id:'inputs', label:'Input costs', ev:inputsNextEvent()},
-    {id:'fund', label:'Fundamentals · '+({us:'USDA',on:'Ontario',ca:'Canada',br:'Brazil',world:'World'}[geo]||'USDA'), ev:(geo==='ca'||geo==='on')?nextOf(ca):nextOf(us, function(e){ return e.kind==='usda'||e.kind==='wasde'; })}
+    {id:'inputs', label:'Input Costs', ev:inputsNextEvent()},
+    {id:'fund', label:'Fundamentals '+({us:'USDA',on:'Ontario',ca:'Canada',br:'Brazil',world:'World'}[geo]||'USDA'), ev:(geo==='ca'||geo==='on')?nextOf(ca):nextOf(us, function(e){ return e.kind==='usda'||e.kind==='wasde'; })},
+    {id:'prices', label:'Prices', ev:nextOf(us, function(e){ return e.kind==='contract'; })}
   ], live);
 }
 function renderGrain(key){ try{ oiSanitize(DATA); }catch(e){} 
@@ -4214,7 +4276,7 @@ function renderGrain(key){ try{ oiSanitize(DATA); }catch(e){}
   var gb=function(v,l){ return '<button data-dash="'+key+'" data-k="fgeo" data-v="'+v+'" aria-pressed="'+(geo===v)+'">'+l+'</button>'; };
   var FH='<div class="tile wide geo-head"><div class="tile-head"><h2>'+meta.name+' fundamentals <span class="h2note">— pick a geography</span></h2><span class="toggle" role="group">'+gb('us',flag('us',11)+' US · USDA / WASDE')+gb('ca',flag('ca',11)+' CANADA · STATCAN')+gb('on',flag('ca',11)+' ONTARIO')+gb('br',(window.WORLD&&WORLD.flag?WORLD.flag('br',11):'')+' BRAZIL \u00b7 CONAB')+gb('world',(window.WORLD&&WORLD.flag?WORLD.flag('xx',11):'')+' WORLD \u00b7 USDA')+'</span></div></div>';
   FU=(geo==='br'||geo==='world')?FH+cropCompareHTML(key)+(window.GG?GG.exportsHTML(key)+GG.html(key,geo):'<div class="tile wide"><p class="note">Loading global grain data\u2026</p></div>'):FH+cropCompareHTML(key)+(window.GG&&window.SUB&&SUB[key]==='fund'?GG.exportsHTML(key):'<div class="tile wide"><h2>Export comparison <span class="h2note">\u2014 US \u00b7 Canada \u00b7 Brazil</span></h2><p class="note">Loads when Fundamentals is open\u2026</p></div>')+(geo==='us'?FU:canadaTileHTML(key,true)+canadaChartsHTML(key)+caCalendarHTML());
-  html+=subWrap(key,'overview',OV)+subWrap(key,'deriv',DV)+subWrap(key,'fund',FU)+subWrap(key,'inputs',inputsHTML(key));
+  html+=subWrap(key,'overview',OV)+subWrap(key,'deriv',DV)+subWrap(key,'fund',FU)+subWrap(key,'inputs',inputsHTML(key))+subWrap(key,'prices',(window.GPRICES?GPRICES.html(key):'<div class="tile wide"><p class="note">Loading forward months…</p></div>'));
   html+='</div><aside class="rail">'+grainAlertsLiveHTML(key)+grainCalendarHTML(key)+newsRailHTML(NEWS[key], key)+'</aside></div>';
   document.getElementById('panel-'+key).innerHTML=html;
 }
@@ -4769,7 +4831,7 @@ var SECG={
     rates:[['ys','Yield spreads',/yield spreads/i],['en','Energy',/Energy/],['pol','Policy expectations',/Policy expectations/]]
   }
 };
-var SUBTHEME={overview:'#38b6c9',deriv:'#a78bfa',macro:'#e8b93d',fund:'#e8b93d',rates:'#3fb97f',inputs:'#f08a5d',dash:'#e8b93d',cycle:'#a78bfa',trade:'#38b6c9',rel:'#3fb97f',cpi:'#e8a33d'};
+var SUBTHEME={overview:'#38b6c9',deriv:'#a78bfa',macro:'#e8b93d',fund:'#e8b93d',rates:'#3fb97f',inputs:'#f08a5d',dash:'#e8b93d',cycle:'#a78bfa',trade:'#38b6c9',rel:'#3fb97f',cpi:'#e8a33d',prices:'#e8b93d'};
 var GTITLE={corn:'Corn · ZCZ26',wheat:'Wheat · ZWZ26',soybeans:'Soybeans · ZSF27',fx:'USD/CAD desk',macro:'Macro · US & Canada'};
 
 /* ---------- left-panel collapse, knowledge bank, per-menu guide ---------- */
@@ -5054,7 +5116,8 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="intel-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="briefing-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="glossary.js?v="+Date.now();document.body.appendChild(f);})();</script>
-<script src="grains-ui.js?v=20261110c"></script>
+<script src="grain-prices.js?v=20261113a"></script>
+<script src="grains-ui.js?v=20261113a"></script>
 <script src="rows-ui.js?v=20261110c"></script>
 <script src="obs-ui.js?v=20261110c"></script>
 <script src="swot-ui.js?v=20261110z"></script>
