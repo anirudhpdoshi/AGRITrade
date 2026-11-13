@@ -61,10 +61,10 @@ def parse(pdf_bytes):
                 h = HEAD.match(line)
                 if h:
                     fam = (h.group(2), h.group(3))
-                    cur = (h.group(2), h.group(1), h.group(3)); out["m"].setdefault(cur, {"oi": {}, "total": None}); continue
+                    cur = (h.group(2), h.group(1), h.group(3)); out["m"].setdefault(cur, {"oi": {}, "st": {}, "total": None}); continue
                 mo = MONTH.match(line)
                 if mo and fam:
-                    cur = (fam[0], mo.group(1), fam[1]); out["m"].setdefault(cur, {"oi": {}, "total": None}); continue
+                    cur = (fam[0], mo.group(1), fam[1]); out["m"].setdefault(cur, {"oi": {}, "st": {}, "total": None}); continue
                 if cur is None:
                     continue
                 if line.startswith("TOTAL "):
@@ -89,6 +89,10 @@ def parse(pdf_bytes):
                 if oi is None:
                     oi = 0
                 out["m"][cur]["oi"][int(t[0])] = oi
+                try:
+                    out["m"][cur]["st"][int(t[0])] = float(t[5].rstrip("ABN#*R"))
+                except ValueError:
+                    pass
     return out
 
 
@@ -161,6 +165,104 @@ def apply(D, P, grain):
     return notes
 
 
+# ---------- option months beyond the desk's two IBKR chains (Prices tab): totals + Black-76 ATM IV from CME settles ----------
+MCODE = "FGHJKMNQUVXZ"
+FUT_MONTHS = {"corn": "HKNUZ", "wheat": "HKNUZ", "soybeans": "FHKNQUX"}
+ROOT = {"corn": "ZC", "soybeans": "ZS", "wheat": "ZW"}
+HOL = {"2026-11-26", "2026-12-25", "2027-01-01", "2027-01-18", "2027-02-15", "2027-04-02", "2027-05-31", "2027-06-18", "2027-07-05", "2027-09-06",
+       "2027-11-25", "2027-12-24", "2028-01-17", "2028-02-21", "2028-04-14", "2028-05-29", "2028-06-19", "2028-07-04", "2028-09-04"}
+MNUM = {m: i + 1 for i, m in enumerate(["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"])}
+
+
+def opt_expiry(mon):
+    """CBOT standard grain options: last Friday preceding, by at least 2 business days, the last business day of the month before."""
+    from datetime import date, timedelta
+    y, m = 2000 + int(mon[3:]), MNUM[mon[:3]]
+    d = date(y, m, 1) - timedelta(days=1)
+    bd = lambda x: x.weekday() < 5 and x.isoformat() not in HOL
+    while not bd(d):
+        d -= timedelta(days=1)
+    n = 0
+    while n < 2:
+        d -= timedelta(days=1)
+        if bd(d):
+            n += 1
+    while d.weekday() != 4:
+        d -= timedelta(days=1)
+    while not bd(d):                       # exchange holiday on that Friday: the business day before
+        d -= timedelta(days=1)
+    return d
+
+
+def _ncdf(x):
+    import math
+    return 0.5 * (1 + math.erf(x / 2 ** 0.5))
+
+
+def black_iv(F, K, T, price, call):
+    import math
+    if not (F > 0 and K > 0 and T > 0 and price > 0):
+        return None
+    intrinsic = max(0.0, (F - K) if call else (K - F))
+    if price <= intrinsic + 1e-9:
+        return None
+    lo, hi = 1e-4, 3.0
+    for _ in range(80):
+        v = (lo + hi) / 2
+        d1 = (math.log(F / K) + v * v * T / 2) / (v * math.sqrt(T)); d2 = d1 - v * math.sqrt(T)
+        p = F * _ncdf(d1) - K * _ncdf(d2) if call else K * _ncdf(-d2) - F * _ncdf(-d1)
+        if p > price:
+            hi = v
+        else:
+            lo = v
+    return (lo + hi) / 2
+
+
+def months(D, P, grain, n=5):
+    """Five standard option months (same-month futures underlying) from the CME final bulletin."""
+    import math
+    from datetime import date
+    G = D["grains"][grain]
+    curve = {c["contract"]: c for c in (G.get("curve") or G.get("roll") or [])}
+    bdate = date.fromisoformat(P["date"])
+    out = []
+    for (fam, mon, side), x in sorted(P["m"].items(), key=lambda kv: (int(kv[0][1][3:]), MNUM.get(kv[0][1][:3], 0))):
+        if fam != GRAIN[grain] or side != "CALL" or mon[:3] not in MNUM:
+            continue
+        code = MCODE[MNUM[mon[:3]] - 1]
+        if code not in FUT_MONTHS[grain]:
+            continue                       # serial / short-dated months sit on a different futures month — left out
+        Pt = P["m"].get((fam, mon, "PUT"))
+        if not Pt or x["total"] is None or Pt["total"] is None or sum(x["oi"].values()) != x["total"] or sum(Pt["oi"].values()) != Pt["total"]:
+            continue
+        contract = ROOT[grain] + code + mon[3:]
+        exp = opt_expiry(mon)
+        if exp < bdate:
+            continue
+        fut = curve.get(contract) or {}
+        F = fut.get("settle") if fut.get("settle_date") == P["date"] else None
+        iv = None
+        if F:
+            T = max((exp - bdate).days, 1) / 365.0
+            ks = sorted(set(x["st"]) & set(Pt["st"]), key=lambda k: abs(k / 100.0 - F))
+            for k in ks[:2]:
+                K = k / 100.0
+                vs = [v for v in (black_iv(F, K, T, x["st"][k] / 100.0, True), black_iv(F, K, T, Pt["st"][k] / 100.0, False)) if v]
+                if vs:
+                    iv = sum(vs) / len(vs); break
+        c, p_ = x["total"], Pt["total"]
+        row = {"chain": mon[:1] + mon[1:3].lower() + "-" + mon[3:], "contract": contract, "expires": exp.isoformat(), "calls_oi": c, "puts_oi": p_,
+               "pcr": round(p_ / c, 2) if c else None, "src": f"CME #{P['bulletin']}"}
+        if iv:
+            row["atm_iv"] = round(iv * 100, 2)
+            sd = F * iv * math.sqrt(max((exp - bdate).days, 1) / 365.0)
+            row["lo"], row["hi"] = round(F - sd, 4), round(F + sd, 4)
+        out.append(row)
+        if len(out) >= n:
+            break
+    return out
+
+
 def main(argv):
     args = dict(zip(argv[::2], argv[1::2])) if len(argv) % 2 == 0 else {}
     dry = "--dry" in argv
@@ -183,6 +285,14 @@ def main(argv):
             notes.append(f"{g}: bulletin {P['bulletin']} is not marked FINAL — skipped"); continue
         n = apply(D, P, g); notes += n
         changed |= any("final OI applied" in x for x in n)
+        try:
+            M = months(D, P, g)
+            old = D["grains"][g].get("cme_months") or {}
+            if M and (old.get("date"), old.get("rows")) != (P["date"], M):
+                D["grains"][g]["cme_months"] = {"date": P["date"], "bulletin": P["bulletin"], "rows": M}
+                changed = True; notes.append(f"{g}: {len(M)} option months from CME ({', '.join(r['chain'] for r in M)})")
+        except Exception as e:
+            notes.append(f"{g}: option months skipped — {e}")
     for x in notes:
         print(" ", x)
     if changed and not dry:

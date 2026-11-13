@@ -8,4 +8,5 @@ jobs:
       - run: |
           pip -q install pdfplumber
           git fetch -q origin main && git show FETCH_HEAD:data.json > data.json
-          python scripts/cme_final.py --dry
+          python scripts/cme_final.py
+          python -c "import json;D=json.load(open('data.json'))['DATA'];[print(g,json.dumps(D['grains'][g].get('cme_months'))[:900]) for g in ('corn','soybeans','wheat')]"
