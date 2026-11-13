@@ -9,15 +9,17 @@ jobs:
           pip -q install pdfplumber
           git show origin/main:data.json > data.json 2>/dev/null || git fetch -q origin main && git show FETCH_HEAD:data.json > data.json
           cp data.json before.json
-          python scripts/cme_final.py
           python - <<'P'
-          import json
-          a=json.load(open("before.json"))["DATA"]; b=json.load(open("data.json"))["DATA"]
-          for g in ("corn","soybeans","wheat"):
-              for s in ("near","far"):
-                  x,y=a["grains"][g][s],b["grains"][g][s]
-                  print(g,s,y.get("chain"),"|",x.get("oi_label"),"->",y.get("oi_label"))
-                  print("   calls",x.get("calls"),"->",y.get("calls"),"puts",x.get("puts"),"->",y.get("puts"),"walls",x.get("call_wall"),x.get("put_wall"),"->",y.get("call_wall"),y.get("put_wall"))
-                  dx={r[0]:(r[1],r[2]) for r in x["rows"]}; diffs=[(r[0],dx.get(r[0]),(r[1],r[2])) for r in y["rows"] if dx.get(r[0])!=(r[1],r[2])]
-                  print("   strikes changed",len(diffs),"of",len(y["rows"]), diffs[:4])
+          import sys,re; sys.path.insert(0,"scripts"); import cme_final as C, pdfplumber, io
+          for sec in ("56","57"):
+              b=C.fetch(sec); P=C.parse(b)
+              print("SEC",sec,P["date"],P["bulletin"],P["final"])
+              for k,v in P["m"].items():
+                  if k[1] in ("DEC26","JAN27","MAR27","MAY27") : print("  ",k,"n",len(v["oi"]),"sum",sum(v["oi"].values()),"total",v["total"])
+              with pdfplumber.open(io.BytesIO(b)) as pdf:
+                  for pg in pdf.pages:
+                      for l in (pg.extract_text() or "").split("\n"):
+                          if re.search(r"(MAR27|JAN27).*(CORN|SOYBEAN|WHEAT)",l) and len(l)<60: print("   HDR",repr(l))
+              if sec=="57":
+                  w=P["m"].get(("WHEAT","DEC26","CALL"),{}).get("oi",{}); print("  wheat dec call 700/800:",w.get(700),w.get(800))
           P
