@@ -50,7 +50,7 @@
     var maxV = 0; yrs.forEach(function (y) { maxV = Math.max(maxV, y.debt || 0, y.gross || 0, y.mat || 0); });
     if (!maxV) return "";
     /* SVG geometry: 14 groups x 64px + margins */
-    var L = 46, R = 46, TOP = 28, PH = 210, GW = 64, W = L + yrs.length * GW + R, HGT = TOP + PH + 34;
+    var L = 60, R = 46, TOP = 44, PH = 250, GW = 64, W = L + yrs.length * GW + R, HGT = TOP + PH + 34;
     var yv = function (v) { return TOP + PH - (v / maxV) * PH; };
     var yy = function (r) { return TOP + PH - (r / 5) * PH; };
     var cx = function (i) { return L + i * GW + GW / 2; };
@@ -68,7 +68,7 @@
     });
     /* bars: debt, gross, maturing — solid actuals; forward maturing hatched (disclosed), forward gross/debt faded + dashed (estimate) */
     /* data labels: one per bar; per-series stagger, then nudge any label that would overlap a neighbour up until clear */
-    var LAB = { debt: 4, gross: 14, mat: 26 }, lbls = [];
+    var LAB = { debt: 6, gross: 6 }, lbls = [];
     yrs.forEach(function (y, i) {
       var gx = L + i * GW;
       [["debt", y.debt, 0], ["gross", y.gross, 18], ["mat", y.mat, 36]].forEach(function (b) {
@@ -81,8 +81,8 @@
         }
         /* hover/tap label: data-tip drives the custom tooltip (the old <title> never fired on touch) */
         var tip = "FY" + y.fy + " · " + (b[0] === "debt" ? "Total debt" : b[0] === "gross" ? "Gross raised" : "Maturing") + " — $" + v.toFixed(2) + "T" + (y.fwd ? (b[0] === "mat" ? " (disclosed, MSPD-confirmed)" : " (estimate)") : "");
-        s += '<rect class="tq-bar" data-tip="' + tip + '" x="' + x + '" y="' + yy0.toFixed(1) + '" width="15" height="' + h.toFixed(1) + '" fill="' + fill + '"' + extra + "></rect>";
-        lbls.push({ x: x + 7.5, y: yy0 - LAB[b[0]], t: "$" + v.toFixed(2) + "T" });
+        s += '<rect class="tq-rbar" data-tip="' + tip + '" x="' + x + '" y="' + yy0.toFixed(1) + '" width="15" height="' + h.toFixed(1) + '" fill="' + fill + '"' + extra + "></rect>";
+        if (LAB[b[0]] != null) lbls.push({ x: x + 7.5, y: yy0 - LAB[b[0]], t: "$" + v.toFixed(2) + "T", k: b[0] });
       });
       s += '<text x="' + cx(i) + '" y="' + (TOP + PH + 16) + '" class="tq-ax" text-anchor="middle">FY' + String(y.fy).slice(2) + (y.fwd ? "*" : "") + "</text>";
     });
@@ -91,10 +91,10 @@
       while (hit && guard < 8 && lb.y > 12) {
         hit = false;
         for (var j = 0; j < i; j++) {
-          if (Math.abs(lbls[j].x - lb.x) < 38 && Math.abs(lbls[j].y - lb.y) < 9) { lb.y -= 10; hit = true; guard++; break; }
+          if (Math.abs(lbls[j].x - lb.x) < 40 && Math.abs(lbls[j].y - lb.y) < 11) { lb.y -= 11; hit = true; guard++; break; }
         }
       }
-      s += '<text x="' + lb.x.toFixed(1) + '" y="' + lb.y.toFixed(1) + '" class="tq-blbl" text-anchor="middle">' + lb.t + "</text>";
+      s += '<text x="' + lb.x.toFixed(1) + '" y="' + lb.y.toFixed(1) + '" class="tq-blbl tq-bl-' + lb.k + '" text-anchor="middle">' + lb.t + "</text>";
     });
     /* WA yield trend line: solid actuals; dashed CBO 10Y assumption (4.3%) for the forward years */
     var pts = []; yrs.forEach(function (y, i) { if (y.yld != null) pts.push([cx(i), yy(y.yld), y.fy, y.yld]); });
@@ -103,8 +103,8 @@
       pts.forEach(function (p) { s += '<circle class="tq-yd tq-ydot" data-tip="FY' + p[2] + " · WA yield — " + p[3].toFixed(2) + '%" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="2.6"/>'; });
       var lp = pts[pts.length - 1];
       s += '<polyline points="' + lp[0].toFixed(1) + "," + lp[1].toFixed(1) + " " + cx(yrs.length - 2).toFixed(1) + "," + yy(4.3).toFixed(1) + " " + cx(yrs.length - 1).toFixed(1) + "," + yy(4.3).toFixed(1) + '" class="tq-yl2"/>';
-      s += '<text x="' + L + '" y="13" class="tq-ylbl">⚠️ WA yield on marketable debt (right axis, %)</text>';
-      s += '<text x="' + (cx(yrs.length - 1) + 4) + '" y="' + (yy(4.3) - 8).toFixed(1) + '" class="tq-ylbl2" text-anchor="end">CBO 10Y assumption 4.3% (dashed — not WA yield)</text>';
+      s += '<text x="' + L + '" y="14" class="tq-ylbl">WA yield on marketable debt — right axis, %</text>';
+      s += '<text x="' + (W - R) + '" y="14" class="tq-ylbl2" text-anchor="end">dashed: CBO 10Y assumption 4.3% (not WA yield)</text>';
     }
     s += "</svg>";
     /* legend */
@@ -147,7 +147,7 @@
       "Veterans Affairs": [273.867, 301.026, 325.012, 376.591, 415.575],
       "Agriculture (SNAP-led)": [245.210, 228.887, 203.402, 227.432, 216.670]
     };
-    function fmtB(v) { return v >= 1000 ? "$" + (v / 1000).toFixed(2) + " Trillion" : "$" + v.toFixed(2) + " Billion"; }
+    function fmtB(v) { return v >= 1000 ? "$" + (v / 1000).toFixed(2) + "T" : "$" + v.toFixed(2) + "B"; }
     function sgn(n, d) { return (n >= 0 ? "+" : "−") + Math.abs(n).toFixed(d == null ? 1 : d); }
     function yoy(vals, i) { if (i === 0 || !vals[i - 1]) return ""; return sgn((vals[i] / vals[i - 1] - 1) * 100) + "%"; }
     function chgCell(vals) {
@@ -449,6 +449,14 @@
     ".tq-trend{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.tq-tr{display:flex;flex-direction:column;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 8px;min-width:52px}.tq-tr span{font:10px 'IBM Plex Mono',monospace;color:var(--faint)}.tq-tr b{font:700 13px 'IBM Plex Mono',monospace;color:#ff8a84}" +
     ".tq-sp{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:10px}.tq-sp>div:first-child{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}.tq-sp b{font:700 14px 'IBM Plex Mono',monospace}.tq-sp span{font:12px 'IBM Plex Mono',monospace;color:var(--muted)}.tq-spn{margin-top:6px;font:11.5px 'IBM Plex Mono',monospace;color:var(--faint);line-height:1.5}.tq-sp-el{border-color:rgba(224,69,58,.55);background:rgba(224,69,58,.06)}.tq-sp-el b{color:#ff8a84}.tq-sp-wa{border-color:rgba(232,185,61,.5)}.tq-sp-wa b{color:#e8b93d}.tq-sp-ok b{color:#38b6c9}" +
     ".tq-vg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}.tq-v{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}.tq-v .t{font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.tq-v .v{font:700 24px 'IBM Plex Mono',monospace;margin:4px 0}.tq-v .s{font:12px 'IBM Plex Mono',monospace;color:var(--faint);line-height:1.5}.tq-v-hi{border-color:rgba(224,69,58,.55);background:rgba(224,69,58,.06)}.tq-v-hi .v{color:#ff8a84}" +
-    "@media (max-width:980px){.tq-g{grid-template-columns:1fr}}";
+    "@media (max-width:980px){.tq-g{grid-template-columns:1fr}}" +
+    /* Nov 13 board refresh: KPI strip as one hairline-separated row, no colour fills; series-coloured chart labels; aligned ledger */
+    ".tq-kpi:not(.tq-kpi-sm){grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel)}" +
+    ".tq-kpi:not(.tq-kpi-sm) .tq-k{background:transparent!important;border:0!important;border-left:1px solid var(--line)!important;border-radius:0;padding:10px 12px}" +
+    ".tq-kpi:not(.tq-kpi-sm) .tq-k:first-child{border-left:0!important}.tq-kpi:not(.tq-kpi-sm) .tq-k .v{font-size:22px;font-weight:600;white-space:nowrap}" +
+    ".tq-kpi:not(.tq-kpi-sm) .tq-k.al{background:linear-gradient(180deg,rgba(224,69,58,.10),transparent)!important}" +
+    ".tq-blbl{paint-order:stroke;stroke:#0d141f;stroke-width:3px;stroke-linejoin:round}.tq-blbl.tq-bl-debt{fill:#7fd3e0}.tq-blbl.tq-bl-gross{fill:#f5b94a}" +
+    ".tq-ledger th,.tq-ledger td{text-align:right;vertical-align:top}.tq-ledger th:first-child,.tq-ledger td:first-child{text-align:left}.tq-ledger .tq-yoy{display:block}" +
+    "@media (max-width:760px){.tq-kpi:not(.tq-kpi-sm){grid-template-columns:repeat(2,minmax(0,1fr))}.tq-kpi:not(.tq-kpi-sm) .tq-k{border-top:1px solid var(--line)!important}.tq-kpi:not(.tq-kpi-sm) .tq-k:nth-child(odd){border-left:0!important}}";
   document.head.appendChild(css);
 })();
