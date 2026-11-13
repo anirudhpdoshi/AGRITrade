@@ -18,6 +18,9 @@ SECTION = {"corn": "56", "soybeans": "57", "wheat": "57"}
 MON = {"Jan": "JAN", "Feb": "FEB", "Mar": "MAR", "Apr": "APR", "May": "MAY", "Jun": "JUN", "Jul": "JUL", "Aug": "AUG",
        "Sep": "SEP", "Oct": "OCT", "Nov": "NOV", "Dec": "DEC"}
 HEAD = re.compile(r"^([A-Z]{3}\d{2}) (CORN|SOYBEAN|WHEAT) (CALL|PUT)$")
+FAM = re.compile(r"^(CORN|SOYBEAN|WHEAT) (CALL|PUT)S$")      # product section: later months follow as bare "JAN27" lines
+ANYSEC = re.compile(r"^[A-Z][A-Z0-9 &/-]*(CALLS|PUTS)$")
+MONTH = re.compile(r"^([A-Z]{3}\d{2})$")
 NUM = re.compile(r"^-?[\d.,]+[ABN#*R]?$|^----$")
 
 
@@ -38,7 +41,7 @@ def _int(t):
 def parse(pdf_bytes):
     """-> {"date": "YYYY-MM-DD", "bulletin": "219", "final": bool, "m": {("CORN","DEC26","CALL"): {"oi": {strike: oi}, "total": oi}}}"""
     import pdfplumber
-    out, cur = {"date": None, "bulletin": None, "final": False, "m": {}}, None
+    out, cur, fam = {"date": None, "bulletin": None, "final": False, "m": {}}, None, None
     with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
         for pg in pdf.pages:
             for line in (pg.extract_text() or "").split("\n"):
@@ -50,9 +53,18 @@ def parse(pdf_bytes):
                         out["date"] = datetime.strptime(f"{m.group(3)} {m.group(4)} {m.group(5)}", "%b %d %Y").strftime("%Y-%m-%d")
                 if line == "FINAL" or line.endswith(" FINAL"):
                     out["final"] = True
+                f = FAM.match(line)
+                if f:
+                    fam = (f.group(1), f.group(2)); cur = None; continue
+                if ANYSEC.match(line):
+                    fam = None; cur = None; continue
                 h = HEAD.match(line)
                 if h:
+                    fam = (h.group(2), h.group(3))
                     cur = (h.group(2), h.group(1), h.group(3)); out["m"].setdefault(cur, {"oi": {}, "total": None}); continue
+                mo = MONTH.match(line)
+                if mo and fam:
+                    cur = (fam[0], mo.group(1), fam[1]); out["m"].setdefault(cur, {"oi": {}, "total": None}); continue
                 if cur is None:
                     continue
                 if line.startswith("TOTAL "):
