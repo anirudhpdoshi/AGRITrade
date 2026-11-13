@@ -184,11 +184,12 @@
     var subs = [["monitor", "Stance monitor"], ["minutes", "Minutes & summaries"], ["transcript", "Transcript intelligence"], ["calendar", "Policy calendar"], ["markets", "Policy & markets"]];
     var src = Object.keys(J.status || {}).map(function (b) { var s = J.status[b], ok = Object.keys(s.sources || {}).filter(function (u) { return s.sources[u] === 200; }).length, n = Object.keys(s.sources || {}).length;
       return esc(b.toUpperCase()) + " " + ok + "/" + n; }).join(" · ");
-    P.innerHTML = '<div class="tile wide pi-head"><h2>Central bank policy intelligence <span class="h2note">— Fed · ECB · BoE · BoC · BoJ, read from the banks’ own sites</span></h2>' + strip() +
+    P.innerHTML = '<div class="pi-lay"><aside class="pi-left"><div class="gr-col-h">Central Banks</div>' + strip() +
+      '<button class="pi-card pi-all ' + (V.bank === "all" ? "on" : "") + '" data-pib="all"><div class="pi-ch">All banks</div><div class="pi-sub">Fed · ECB · BoE · BoC · BoJ</div></button></aside><div class="pi-main"><div class="tile wide pi-head"><h2>Central bank policy intelligence <span class="h2note">— read from the banks’ own sites</span></h2>' +
       '<div class="pi-nav">' + subs.map(function (s) { return '<button data-pisub="' + s[0] + '" aria-pressed="' + (V.sub === s[0]) + '">' + s[1] + "</button>"; }).join("") +
-      (V.bank !== "all" ? '<button data-pib="all">Show all banks ✕</button>' : "") + '</div><div class="stamp">Updated ' + esc(new Date(J.updated_at).toLocaleString("en-US", { timeZone: TZ, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET</div></div>" +
+'</div><div class="stamp">Updated ' + esc(new Date(J.updated_at).toLocaleString("en-US", { timeZone: TZ, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET</div></div>" +
       (V.sub === "minutes" ? minutesHTML() : V.sub === "calendar" ? calendarHTML() : V.sub === "transcript" ? transcriptHTML() : V.sub === "markets" ? marketsHTML() : monitorHTML()) +
-      '<div class="tile wide"><div class="stamp">Method: ' + esc(J.method || "") + " Evidence is quoted word-for-word with its paragraph number and the official link; voting status is shown only where it is certain for that date (BoC decides by consensus).</div></div>";
+      '<div class="tile wide"><div class="stamp">Method: ' + esc(J.method || "") + " Evidence is quoted word-for-word with its paragraph number and the official link; voting status is shown only where it is certain for that date (BoC decides by consensus).</div></div></div></div>";
   }
   P.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t) return;
@@ -216,4 +217,17 @@
     ".pm-more{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint);margin-top:6px}" +
     "@media (max-width:760px){.pm-grid{grid-template-columns:minmax(0,1fr)}.pm-card{min-width:0;overflow-wrap:anywhere}.pm-r{grid-template-columns:48px minmax(0,1fr) 52px}.pm-ty,.pm-vs{display:none}}";
   document.head.appendChild(pmcss);
+  var lay = document.createElement("style");
+  lay.textContent = ".pi-lay{display:grid;grid-template-columns:262px minmax(0,1fr);gap:14px;align-items:start}.pi-left{position:sticky;top:calc(var(--strip-h,40px) + 64px);display:flex;flex-direction:column;gap:10px}" +
+    ".pi-left .gr-col-h{font-size:15px;font-weight:600;color:#e8eef4;margin:6px 0 0}.pi-left .pi-strip{display:flex!important;flex-direction:column;gap:10px;margin:0}" +
+    ".pi-left .pi-card{width:100%;text-align:left;background:#0c121c;border:1px solid #1f2a3a;border-radius:10px;padding:12px 14px;cursor:pointer;position:relative}" +
+    ".pi-left .pi-card.on{border-color:#d9b46a;box-shadow:0 0 0 1px #d9b46a55,0 0 18px #d9b46a1f}" +
+    ".pi-left .pi-sc{font-family:'JetBrains Mono','IBM Plex Mono',monospace;font-size:24px;font-weight:500}.pi-left .pi-ch{font-size:12.5px;letter-spacing:.03em;color:#c9d4e2;display:flex;align-items:center;gap:6px}" +
+    "body.fxo .pi-left .pi-card{background:#000}" +
+    ".pi-nav{display:flex!important;flex-wrap:wrap;gap:0 4px;border-bottom:1px solid #1a1a1a;margin:8px 0 6px}" +
+    ".pi-nav button{all:unset;cursor:pointer;padding:8px 12px 9px;font:500 13.5px 'Libre Franklin',system-ui,sans-serif;color:#8f9db3;border-bottom:1px solid transparent;margin-bottom:-1px}" +
+    ".pi-nav button:hover{color:#fff}.pi-nav button[aria-pressed=true]{color:#d9b46a!important;border-bottom-color:#d9b46a;background:transparent!important}" +
+    "@media (max-width:1020px){.pi-lay{grid-template-columns:1fr}.pi-left{position:static}.pi-left .pi-strip{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))}}" +
+    "@media (max-width:760px){.pi-left .pi-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.pi-nav{flex-wrap:nowrap!important;overflow-x:auto}.pi-nav button{white-space:nowrap}}";
+  document.head.appendChild(lay);
 })();
