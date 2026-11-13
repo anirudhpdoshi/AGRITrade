@@ -219,6 +219,15 @@
         (!q || (i.name + " " + i.sym + " " + i.region).toLowerCase().indexOf(q) >= 0);
     });
     var filt = '<div class="wfil"><input type="search" placeholder="Search markets…" value="' + esc(V.q) + '" data-wq></div>';   /* group / 52-week chips live only in the slicer row above the body */
+    var VIEWSW = '<span class="wv-sw"><button type="button" data-wview="tiles" aria-pressed="' + (V.view !== "table") + '">Tiles</button><button type="button" data-wview="table" aria-pressed="' + (V.view === "table") + '">Feed</button></span>';
+    if (V.view === "table") {
+      var tb = GROUPS.filter(function (g) { return V.grp === "all" || V.grp === g; }).map(function (g) {
+        var rows = list.filter(function (i) { return i.group === g; }); if (!rows.length) return "";
+        return '<tr class="wgh"><td colspan="9">' + ({ Indices: "Equity indices", FX: "Currencies" }[g] || g) + " " + asOf(rows) + "</td></tr>" + rows.map(rowHTML).join(""); }).join("");
+      return '<div class="tile wide"><h2>All markets <span class="h2note">— market feed view</span></h2>' + asOf(list, "blk") + '<div class="wv-bar">' + filt + VIEWSW + "</div>" +
+        '<div class="wtw"><table class="wt"><thead><tr><th>Market</th><th>Status · source time</th><th class="r">LTP</th><th class="r">Chg</th><th class="r">% Chg</th><th class="r">High</th><th class="r">Low</th><th>52-week range</th><th>30d</th></tr></thead><tbody>' +
+        (tb || '<tr><td colspan="9" class="neu">No markets match the filter.</td></tr>') + "</tbody></table></div></div>";
+    }
     var body = QUADS.map(function (Q) {
       var gs = Q[1].filter(function (g) { return V.grp === "all" || V.grp === g; }); if (!gs.length) return "";
       var rows = list.filter(function (i) { return gs.indexOf(i.group) >= 0; });
@@ -226,11 +235,12 @@
       if (!rows.length) return "";
       return '<section class="wq4"><h3>' + Q[0] + " <small>" + rows.length + "</small> " + asOf(rows) + '</h3><div class="wmt-g">' + rows.map(tileHTML).join("") + "</div></section>";
     }).join("");
-    return '<div class="tile wide"><h2>All markets <span class="h2note">— last price, change, 52-week position · exact source time (Toronto) and age on every tile</span></h2>' + asOf(list, "blk") + filt +
+    return '<div class="tile wide"><h2>All markets <span class="h2note">— last price, change, 52-week position · exact source time (Toronto) and age on every tile</span></h2>' + asOf(list, "blk") + '<div class="wv-bar">' + filt + VIEWSW + "</div>" +
       '<div class="wq4-g">' + (body || '<p class="neu">No markets match the filter.</p>') + "</div>" +
       '<div class="stamp">LTP = last traded/quoted price · % change vs the previous official close (yields and spreads in basis points) · 52-week range from daily highs/lows · badges: NEW 52W HIGH/LOW when today’s range breaks the prior 52-week extreme, “% from” when within 5% · sparkline = last 30 days</div></div>';
   }
   (function () { var c = document.createElement("style"); c.textContent =
+    ".wv-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}.wv-sw{display:inline-flex;border:1px solid #2a2a2a;border-radius:6px;overflow:hidden}.wv-sw button{all:unset;cursor:pointer;padding:4px 12px;font:500 12px 'Libre Franklin',system-ui,sans-serif;color:#8a8a8a}.wv-sw button[aria-pressed=true]{color:#d9b46a!important;background:rgba(217,180,106,.1)!important}.wv-sw button+button{border-left:1px solid #2a2a2a}" +
     ".wq4-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:10px}.wq4{border:1px solid #1f1f1f;border-radius:8px;padding:10px 12px;min-width:0}" +
     ".wq4 h3{margin:0 0 10px;font:600 12.5px 'Libre Franklin',system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#d9b46a;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}.wq4 h3 small{color:#8a8a8a;font-weight:500}.wq4 h3 .wasof{text-transform:none;letter-spacing:0;font-weight:400}" +
     ".wmt-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}.wmt-r *{font-size:9.5px!important}" +
@@ -498,6 +508,7 @@
     var t = ev.target.closest ? ev.target : null; if (!t || !t.closest("#panel-world")) return;
     var hb = t.closest("[data-whl]"); if (hb) { var x = hb.getAttribute("data-whl"); V.hl = V.hl === x ? null : x; render(); return; }
     var b = t.closest("[data-wsub]"); if (b) { V.sub = b.getAttribute("data-wsub"); save(); render(); return; }
+    b = t.closest("[data-wview]"); if (b) { V.view = b.getAttribute("data-wview"); save(); render(); return; }
     b = t.closest("[data-wgrp]"); if (b) { V.grp = b.getAttribute("data-wgrp"); V.flagged = false; save(); render(); return; }   /* slicer: a group pick clears the 52-week filter, as the old nav did */
     b = t.closest("[data-wflag]"); if (b) { V.flagged = true; V.grp = "all"; save(); render(); return; }
     b = t.closest("[data-wsev]"); if (b) { V.sev = b.getAttribute("data-wsev"); save(); render(); return; }

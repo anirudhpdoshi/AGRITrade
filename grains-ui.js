@@ -73,6 +73,9 @@
     if (best === null) return "";
     return "Next: WASDE + Crop Production · " + fmtET(best, { weekday: "short", month: "short", day: "numeric" }) + ", 12:00 PM ET · in " + age(best - now);
   }
+  /* every price says what it is: LIVE stream, DELAYED quote (~10 min), SETTLE (official close) or CLOSED market */
+  function stChip(k) { var L = { lv: ["LIVE", "Live stream — updates on every tick"], dl: ["DELAYED", "Delayed quote, about 10 minutes behind"], se: ["SETTLE", "Official settlement — no newer quote yet"], cz: ["CLOSED", "Market closed — last quote shown"] }[k];
+    return '<span class="gr-st ' + k + '" title="' + L[1] + '">' + L[0] + "</span>"; }
   var PULSE = '<svg class="gr-pulse" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8h3l2-5 3 10 2-5h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function tileHTML(k, day, on) {
     var g = root.DATA && DATA.grains && DATA.grains[k], R0 = g && g.roll && g.roll[0], T = tile(R0, g), sel = ' aria-pressed="' + on + '" data-grain-pick="' + k + '"';
@@ -81,7 +84,7 @@
     var phys = (fx && bt ? '<span class="gr-kv"><span>C$/t equiv.</span><b title="Front futures × ' + bt + ' bu/t × USD/CAD — no basis">' + (T.px * bt * fx).toFixed(2) + '</b></span>' : "") +
       (fx ? '<span class="gr-kv"><span>USD/CAD</span><b>' + fx.toFixed(4) + '</b></span>' : "");
     return '<button type="button" class="gr-tile"' + sel + '>' +
-      '<span class="gr-n">' + NAME[k].toUpperCase() + ' <b>' + T.contract + '</b>' + (on ? '<em class="gr-selb">SELECTED</em>' : "") + '<span class="gr-live" title="Price updates as new delayed quotes arrive">' + PULSE + '</span></span>' +
+      '<span class="gr-n">' + NAME[k].toUpperCase() + ' <b>' + T.contract + '</b>' + stChip(T.q ? (root.MKT && MKT.grain && !MKT.grain() ? "cz" : "dl") : "se") + (on ? '<em class="gr-selb">SELECTED</em>' : "") + '<span class="gr-live" title="Price updates as new delayed quotes arrive">' + PULSE + '</span></span>' +
       '<span class="gr-v"><span class="qt-box gr-px" data-qt="gr-' + k + '" data-v="' + T.px + '" data-dec="4"><span class="qt-v">' + T.px.toFixed(4) + '</span></span><small>$/bu</small></span>' +
       '<span class="gr-c ' + T.dir + '">' + (T.chg ? T.chg + " · " + T.pct : "") + '</span>' +
       (phys ? '<span class="gr-phys"><span class="gr-ph">Physical calculations</span>' + phys + '</span>' : "") +
@@ -95,7 +98,7 @@
     var d = ref ? mid - ref : null, dir = d > 0 ? "up" : d < 0 ? "down" : "flat", s = d > 0 ? "+" : d < 0 ? "−" : "";
     var t = fd.ts || (DATA.meta && DATA.meta.asof && DATA.meta.asof.fx_spot), tl = t ? fmtET(Date.parse(t), { hour: "numeric", minute: "2-digit" }) + " ET" : "";
     return '<button type="button" class="gr-tile gr-fx"' + sel + '>' +
-      '<span class="gr-n">USD/CAD <b>SPOT</b>' + (on ? '<em class="gr-selb">SELECTED</em>' : "") + '<span class="gr-live" title="Live spot — updates on every tick">' + PULSE + '</span></span>' +
+      '<span class="gr-n">USD/CAD <b>SPOT</b>' + stChip(root.MKT && MKT.fx && !MKT.fx() ? "cz" : root.isAuto && !isAuto("fx_spot") ? "dl" : "lv") + (on ? '<em class="gr-selb">SELECTED</em>' : "") + '<span class="gr-live" title="Live spot — updates on every tick">' + PULSE + '</span></span>' +
       '<span class="gr-v"><span class="qt-box gr-px" data-qt="gr-fx" data-v="' + mid + '" data-dec="5" data-qt-live="usdcad"><span class="qt-v">' + (root.QTFMT ? QTFMT(mid, 5) : mid.toFixed(5)) + '</span></span><small>CAD per USD</small></span>' +
       '<span class="gr-c ' + dir + '">' + (d != null ? s + Math.abs(d * 1e4).toFixed(1) + " pips · " + s + Math.abs(d / ref * 100).toFixed(2) + "%" : "") + '</span>' +
       (ref ? '<span class="gr-phys"><span class="gr-ph">Reference</span><span class="gr-kv"><span>Prior close</span><b>' + ref.toFixed(4) + '</b></span><span class="gr-kv"><span>1 CAD in USD</span><b>' + (1 / mid).toFixed(4) + '</b></span></span>' : "") +

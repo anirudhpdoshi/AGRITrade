@@ -65,7 +65,7 @@
       by[id].els.push(el);
     });
     var nav = S.querySelector(":scope > .st-nav");
-    if (groups.length < 3) { if (nav) nav.remove(); groups.forEach(function (g) { g.els.forEach(function (el) { el.classList.remove("st-off"); }); }); return; }
+    if (groups.length < (S.getAttribute("data-subpanel") === "prices" ? 2 : 3)) { if (nav) nav.remove(); groups.forEach(function (g) { g.els.forEach(function (el) { el.classList.remove("st-off"); }); }); return; }
     var cur = SAVED[key]; if (cur !== "all" && !by[cur]) cur = groups[0].id;
     var html = groups.map(function (g) { return '<button type="button" class="st-b" data-stk="' + pid + "|" + key + "|" + g.id + '" aria-selected="' + (g.id === cur) + '">' + esc(g.lab) + "</button>"; }).join("") +
       '<button type="button" class="st-b st-all" data-stk="' + pid + "|" + key + '|all" aria-selected="' + (cur === "all") + '">All</button>';

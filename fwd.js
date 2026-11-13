@@ -436,7 +436,12 @@
     if (window.MOTION) window.MOTION.scan();         /* roll / flash the changed outrights and forward points */
   }
   /* forward rates matrix: 1M–12M outrights as a grid of cells (fx "Forward Rates" tab) */
-  var INV = false; try { INV = localStorage.getItem("desk.fwdinv") === "1"; } catch (e) {}
+  var INV = false, FEED = false; try { INV = localStorage.getItem("desk.fwdinv") === "1"; FEED = localStorage.getItem("desk.fwdview") === "feed"; } catch (e) {}
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest && ev.target.closest("[data-fwdview]"); if (!b) return;
+    FEED = b.getAttribute("data-fwdview") === "feed"; try { localStorage.setItem("desk.fwdview", FEED ? "feed" : "tiles"); } catch (e) {}
+    if (S.res) matrix(S.res);
+  });
   document.addEventListener("click", function (ev) {
     var b = ev.target.closest && ev.target.closest("[data-fwdinv]"); if (!b) return;
     INV = b.getAttribute("data-fwdinv") === "1"; try { localStorage.setItem("desk.fwdinv", INV ? "1" : "0"); } catch (e) {}
@@ -446,6 +451,9 @@
     var box = document.getElementById("fx-fwdmx"); if (!box) return;
     var tg = document.getElementById("fxmx-inv");
     if (tg) tg.innerHTML = '<button type="button" data-fwdinv="0" aria-pressed="' + !INV + '">USD/CAD</button><button type="button" data-fwdinv="1" aria-pressed="' + INV + '">CAD/USD · inverse</button>';
+    var vg = document.getElementById("fxmx-view");
+    if (vg) vg.innerHTML = '<button type="button" data-fwdview="tiles" aria-pressed="' + !FEED + '">Tiles</button><button type="button" data-fwdview="feed" aria-pressed="' + FEED + '">Feed</button>';
+    box.classList.toggle("feed", FEED); box.style.display = FEED ? "block" : "";
     var gl = document.getElementById("fxmx-pair"); if (gl) gl.textContent = INV ? "CAD / USD forward curve (inverse)" : "USD / CAD forward curve";
     /* inverse: every outright and spot is 1 ÷ rate (USD per CAD); points are re-measured on that basis, so their sign flips */
     var iv = function (x) { return INV && x ? 1 / x : x; }, S0 = iv(res.spot);
@@ -455,6 +463,17 @@
     var y1 = L.filter(function (l) { return l.t === "2Y"; })[0], e12 = document.getElementById("fxmx-12");
     var ptsOf = function (l) { return INV ? (1 / l.F - 1 / res.spot) * 1e4 : l.pts; };
     if (e12) e12.textContent = y1 && y1.F != null ? iv(y1.F).toFixed(5) + " (" + (ptsOf(y1) > 0 ? "+" : "−") + Math.abs(ptsOf(y1)).toFixed(1) + " pips)" : "—";
+    if (FEED) {
+      box.innerHTML = '<table class="fxmx-t"><thead><tr><th>Tenor</th><th>Month</th><th>Value date</th><th class="r">Outright</th><th class="r">Fwd pts</th><th class="r">Ann. %</th><th class="r">USD rate</th><th class="r">CAD rate</th></tr></thead><tbody>' +
+        '<tr class="sp"><td>Spot</td><td></td><td>' + (res.spotDate ? res.spotDate.toISOString().slice(0, 10) : "") + '</td><td class="r"><b>' + (res.spot ? S0.toFixed(5) : "—") + '</b></td><td class="r">—</td><td class="r">—</td><td class="r"></td><td class="r"></td></tr>' +
+        L.map(function (l) {
+          var t = l.t === "1Y" ? "12M" : l.t === "2Y" ? "24M" : l.t, vd = l.vd, P = l.F == null ? null : ptsOf(l), ann = l.F == null ? null : (iv(l.F) / S0 - 1) / l.T * 100;
+          return "<tr><td><b>" + t + "</b></td><td>" + MON[vd.getUTCMonth()] + " \u2019" + String(vd.getUTCFullYear()).slice(2) + "</td><td>" + vd.toISOString().slice(0, 10) + "</td>" +
+            '<td class="r"><b>' + (l.F == null ? "—" : iv(l.F).toFixed(5)) + '</b></td><td class="r ' + (P == null ? "" : P > 0 ? "up" : "dn") + '">' + (P == null ? "—" : (P > 0 ? "+" : "−") + Math.abs(P).toFixed(1)) + "</td>" +
+            '<td class="r">' + (ann == null ? "—" : (ann > 0 ? "+" : "−") + Math.abs(ann).toFixed(2) + "%") + '</td><td class="r">' + (l.rUSD != null ? l.rUSD.toFixed(3) + "%" : "—") + '</td><td class="r">' + (l.rCAD != null ? l.rCAD.toFixed(3) + "%" : "—") + "</td></tr>";
+        }).join("") + "</tbody></table>";
+      return;
+    }
     box.innerHTML = L.map(function (l) {
       var t = l.t === "1Y" ? "12M" : l.t === "2Y" ? "24M" : l.t, vd = l.vd, mon = MON[vd.getUTCMonth()] + " \u2019" + String(vd.getUTCFullYear()).slice(2);
       if (l.F == null) return '<div class="fxmx-c"><div class="fxmx-t"><b>' + t + "</b><span>" + mon + '</span></div><div class="fxmx-f">—</div><div class="fxmx-d">inputs unavailable</div></div>';

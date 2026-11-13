@@ -1935,10 +1935,10 @@ def settles(D, N):
                         leg["settle"], leg["settle_date"] = round(ls[-1][1], 4), ls[-1][0]
                 except Exception as e:
                     print(f"  curve leg {leg['contract']} skipped: {e}")
-            # forward months for the Prices tab: the roll legs plus the following listed months, 6 in all (settles only)
+            # forward months for the Prices tab: the roll legs plus every following listed month with a settle, up to 12 (settles only)
             try:
                 curve, code = [], g["roll"][0]["contract"]
-                for i in range(6):
+                for i in range(12):
                     leg = next((r for r in g["roll"] if r["contract"] == code), None)
                     if leg and leg.get("settle") is not None:
                         curve.append({"contract": code, "settle": leg["settle"], "prev": leg.get("prev"), "settle_date": leg.get("settle_date")})
