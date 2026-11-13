@@ -7,23 +7,5 @@ jobs:
       - uses: actions/checkout@v4
       - run: |
           pip -q install pdfplumber
-          git show origin/main:data.json > data.json 2>/dev/null || git fetch -q origin main && git show FETCH_HEAD:data.json > data.json
-          cp data.json before.json
-          python - <<'P'
-          import sys,re; sys.path.insert(0,"scripts"); import cme_final as C, pdfplumber, io
-          for sec in ("56","57"):
-              b=C.fetch(sec); P=C.parse(b)
-              print("SEC",sec,P["date"],P["bulletin"],P["final"])
-              for k,v in P["m"].items():
-                  if k[1] in ("DEC26","JAN27","MAR27","MAY27") : print("  ",k,"n",len(v["oi"]),"sum",sum(v["oi"].values()),"total",v["total"])
-              with pdfplumber.open(io.BytesIO(b)) as pdf:
-                  for pg in pdf.pages:
-                      for l in (pg.extract_text() or "").split("\n"):
-                          pass
-                  for pi,pg in enumerate(pdf.pages[:10]):
-                      L=(pg.extract_text() or "").split("\n")
-                      for j,l in enumerate(L):
-                          if l.startswith("TOTAL") or re.match(r"^[A-Z]{3}\d\d [A-Z ]+(CALL|PUT)",l): print("   CTX",pi+1,repr(l[:70]), "| next:",repr(L[j+1][:50]) if j+1<len(L) else "")
-              if sec=="57":
-                  w=P["m"].get(("WHEAT","DEC26","CALL"),{}).get("oi",{}); print("  wheat dec call 700/800:",w.get(700),w.get(800))
-          P
+          git fetch -q origin main && git show FETCH_HEAD:data.json > data.json
+          python scripts/cme_final.py --dry
