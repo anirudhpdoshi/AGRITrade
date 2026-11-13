@@ -4,20 +4,20 @@ jobs:
   t:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - run: |
-          W=https://agritrade-sec.anirudh-p-doshi.workers.dev
           pip -q install pdfplumber
-          curl -s -o c.pdf "$W/cme?s=56"; curl -s -o s.pdf "$W/cme?s=57"
+          git show origin/main:data.json > data.json 2>/dev/null || git fetch -q origin main && git show FETCH_HEAD:data.json > data.json
+          cp data.json before.json
+          python scripts/cme_final.py
           python - <<'P'
-          import pdfplumber,re
-          for f in ["c.pdf","s.pdf"]:
-              with pdfplumber.open(f) as p:
-                  print("#####",f,len(p.pages))
-                  for i,pg in enumerate(p.pages):
-                      t=pg.extract_text() or ""
-                      L=t.split("\n")
-                      heads=[l for l in L if re.search(r"(CALL|PUT)S?\b|OPT|TOTAL",l)][:12]
-                      print("--- page",i+1, "| ".join([h for h in heads if not h.startswith(("PG5","56 ","Side","CRUSH","FOR FUT"))])[:500])
-                      if (f=="c.pdf" and i==2) or (f=="s.pdf" and re.search(r"SOYBEAN CALL|WHEAT CALL|WHEAT PUT|SOYBEAN PUT|SOYBEAN OPT|WHEAT OPT", t) and i<30):
-                          print("\n".join(L[7:60]))
+          import json
+          a=json.load(open("before.json"))["DATA"]; b=json.load(open("data.json"))["DATA"]
+          for g in ("corn","soybeans","wheat"):
+              for s in ("near","far"):
+                  x,y=a["grains"][g][s],b["grains"][g][s]
+                  print(g,s,y.get("chain"),"|",x.get("oi_label"),"->",y.get("oi_label"))
+                  print("   calls",x.get("calls"),"->",y.get("calls"),"puts",x.get("puts"),"->",y.get("puts"),"walls",x.get("call_wall"),x.get("put_wall"),"->",y.get("call_wall"),y.get("put_wall"))
+                  dx={r[0]:(r[1],r[2]) for r in x["rows"]}; diffs=[(r[0],dx.get(r[0]),(r[1],r[2])) for r in y["rows"] if dx.get(r[0])!=(r[1],r[2])]
+                  print("   strikes changed",len(diffs),"of",len(y["rows"]), diffs[:4])
           P
