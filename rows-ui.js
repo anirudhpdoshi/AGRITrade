@@ -76,8 +76,11 @@
     var d = new Date(best), o = { timeZone: "America/New_York" };
     return "Section as-of: " + d.toLocaleString("en-US", Object.assign({ month: "short", day: "numeric" }, o)) + ", " + d.toLocaleString("en-US", Object.assign({ hour: "numeric", minute: "2-digit" }, o)) + " ET";
   }
+  var OFF = true;   /* Nov 13: the numbered row list is retired — every section shows as a card, like the Grains Overview */
   function build(k) {
     var sub = subOf(k); if (!sub || !sub.classList.contains("on")) return;   /* the section tags exist only on the open section */
+    if (OFF) { [].forEach.call(sub.querySelectorAll(":scope > .prow-h, :scope > .prow-top"), function (x) { x.remove(); });
+      [].forEach.call(sub.querySelectorAll(":scope > .prow-off"), function (x) { x.classList.remove("prow-off"); }); sub.classList.remove("prow-on"); return; }
     if (root.SEC) SEC[k + ".deriv"] = "all";       /* the rows replace the one-at-a-time filter */
     [].forEach.call(sub.querySelectorAll(":scope > .prow-h, :scope > .prow-top"), function (x) { x.remove(); });
     var G = root.DATA && DATA.grains && DATA.grains[k]; if (!G) return;
@@ -128,7 +131,7 @@
   }, true);
   /* some panels load after the page draws (Options flow): put a late arrival into its row */
   var busy = false;
-  function settle(k) { if (busy) return; var sub = subOf(k); if (!sub || !sub.classList.contains("on")) return;
+  function settle(k) { if (busy || OFF) return; var sub = subOf(k); if (!sub || !sub.classList.contains("on")) return;
     var lastH = null, stray = false; [].forEach.call(sub.children, function (t) { if (t.classList.contains("prow-h")) lastH = t; else if (t.classList.contains("tile") && !t.classList.contains("tr-tile")) { var id = t.getAttribute("data-sec"); if (!id || !lastH || lastH.getAttribute("data-prow") !== id) stray = true; } });
     if (!stray) return; busy = true; if (root.buildSecNav) buildSecNav(k); build(k); if (root.OBSUI) OBSUI.paint(k); setTimeout(function () { busy = false; }, 0); }
   function watch(k) { var sub = subOf(k); if (!sub || sub.__rowsWatch || !root.MutationObserver) return; sub.__rowsWatch = 1; new MutationObserver(function () { settle(k); }).observe(sub, { childList: true }); settle(k); }

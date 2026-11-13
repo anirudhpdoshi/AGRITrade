@@ -209,7 +209,7 @@
     if (!G) { P.innerHTML = '<div class="tile wide"><h2>Positioning / Open Interest</h2><p>' + UNA + " — no data for " + esc(NAME[k] || k) + " in the dataset.</p></div>"; return; }
     var tabs = '<div class="pos-tabs" role="tablist" aria-label="Positioning reports">' + REPORTS.map(function (r) { return '<button type="button" role="tab" data-pos-report="' + r[0] + '" aria-selected="' + (r[0] === st.report) + '">' + esc(r[1]) + "</button>"; }).join("") + "</div>";
     var slicer = '<div class="gr-slicer" role="group" aria-label="Commodity"><span>Commodity</span>' + GR.map(function (x) { return '<button type="button" data-pos-pick="' + x + '" aria-pressed="' + (x === k) + '">' + NAME[x] + "</button>"; }).join("") + "</div>";
-    P.innerHTML = '<div class="pos-wrap">' + tabs + slicer + '<div class="pos-body"></div></div>';
+    P.innerHTML = '<div class="pos-wrap">' + tabs + '<div class="pos-body"></div></div>';   /* commodity comes from the left price tiles */
     var body = P.querySelector(".pos-body");
     if (!body) return;
     if (st.report === "cftc") mountCftc(body, k, G);
@@ -258,5 +258,5 @@
   root.addEventListener("desk:unlock", function () { setTimeout(render, 300); });
   if (root.MutationObserver) new MutationObserver(function () { if (P.classList.contains("active")) render(); }).observe(P, { attributes: true, attributeFilter: ["class"] });
   if (root.DATA) render();
-  root.POSITIONING = { render: render };
+  root.POSITIONING = { render: render, current: function () { return st.commodity; }, pick: function (k) { if (GR.indexOf(k) < 0) return; st.commodity = k; save(); render(); } };
 })(window);

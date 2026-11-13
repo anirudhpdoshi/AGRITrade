@@ -1234,6 +1234,18 @@ nav.tabs [data-gnav-of="grains"]{display:none!important}
 /* no filled yellow buttons anywhere: the selected option is a gold outline */
 body.fxo .tab-panel.active button[aria-pressed="true"]:not(.gr-tile):not(.subbtn),body.fxo .tab-panel.active button.on:not(.ad-co-b):not(.subbtn),body.fxo #gsub .gsub-b[aria-pressed="true"]{background:rgba(217,180,106,.08)!important;color:#d9b46a!important;border-color:#d9b46a!important;box-shadow:none!important}
 </style>
+<style id="pos-mini">
+@media (min-width:1021px){ body.gr3.gr-mini main{grid-template-columns:150px minmax(0,1fr)} }
+body.gr-mini #grains-head .gr-tile{padding:7px 9px;gap:1px}
+body.gr-mini #grains-head .gr-phys,body.gr-mini #grains-head .gr-f,body.gr-mini #grains-head .gr-stale,body.gr-mini #grains-head .gr-live,body.gr-mini #grains-head .gr-v small,body.gr-mini .gr-top{display:none}
+body.gr-mini #grains-head .gr-px{font-size:16px}body.gr-mini #grains-head .gr-n{font-size:10.5px}body.gr-mini #grains-head .gr-c{font-size:10.5px}
+body.gr-mini #grains-head .gr-col-h{font-size:12px;margin:2px 0 6px}
+body.gr-mini #grains-head .gr-selb{font-size:8.5px;top:-7px}
+body.fxo .pos-tabs{gap:0 4px!important;border-bottom:1px solid #1a1a1a;margin-bottom:12px!important}
+body.fxo .pos-tabs button{border:0!important;border-radius:0!important;background:transparent!important;color:#8a8a8a!important;font-weight:500!important;padding:8px 12px 9px!important;border-bottom:1px solid transparent!important;margin-bottom:-1px}
+body.fxo .pos-tabs button[aria-selected="true"]{color:#d9b46a!important;border-bottom-color:#d9b46a!important}
+body.fxo .pos-tabs button:hover{color:#fff!important}
+</style>
 </head>
 <body class="locked">
 <!-- owner passcode gate · the passcode must decrypt the sealed vault (config.js: PBKDF2 600k + AES-256-GCM); no passcode hash is published · re-locks after 20 min idle -->
@@ -5213,8 +5225,8 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="briefing-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="glossary.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script src="grain-prices.js?v=20261113a"></script>
-<script src="grains-ui.js?v=20261113c"></script>
-<script src="rows-ui.js?v=20261110c"></script>
+<script src="grains-ui.js?v=20261113d"></script>
+<script src="rows-ui.js?v=20261113a"></script>
 <script src="obs-ui.js?v=20261110c"></script>
 <script src="swot-ui.js?v=20261110z"></script>
 <script src="tabs-ui.js?v=20261110c"></script>

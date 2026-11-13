@@ -45,7 +45,7 @@
   if (!parent || !head) return;
   var ET = "America/New_York";
   function btn(k) { return doc.getElementById("tabbtn-" + k); }
-  function active() { var a = doc.querySelector(".tab-panel.active"), k = a ? a.id.replace("panel-", "") : ""; return ORDER.indexOf(k) >= 0 || k === "fx" ? k : null; }
+  function active() { var a = doc.querySelector(".tab-panel.active"), k = a ? a.id.replace("panel-", "") : ""; return ORDER.indexOf(k) >= 0 || k === "fx" || k === "positioning" ? k : null; }
   function isG(k) { return ORDER.indexOf(k) >= 0; }
   function saved() { try { var v = localStorage.getItem(KEY); return ORDER.indexOf(v) >= 0 ? v : "corn"; } catch (e) { return "corn"; } }
   function remember(k) { try { localStorage.setItem(KEY, k); } catch (e) {} }
@@ -119,12 +119,14 @@
     doc.body.classList.toggle("gr3", !!on);
     parent.setAttribute("aria-selected", on ? "true" : "false");
     if (!on) return;
+    var POS = on === "positioning"; doc.body.classList.toggle("gr-mini", POS);
+    if (POS) on = root.POSITIONING && POSITIONING.current ? POSITIONING.current() : "corn";
     var now = Date.now(), A = asOfLine(now), ev = nextEvent(now);
     var h = '<div class="gr-top"><span class="gr-asof">' + A.text + '</span>' + (ev ? '<span class="gr-next">' + ev + '</span>' : "") + '</div>' +
       '<div class="gr-col-h">Execution Tiles</div>' +
-      '<div class="gr-strip">' + ORDER.map(function (k) { return tileHTML(k, A.day, k === on); }).join("") + fxTileHTML(on === "fx") + '</div>';
+      '<div class="gr-strip">' + ORDER.map(function (k) { return tileHTML(k, A.day, k === on); }).join("") + (POS ? "" : fxTileHTML(on === "fx")) + '</div>';
     if (head.getAttribute("data-h") !== h) { head.innerHTML = h; head.setAttribute("data-h", h); }
-    nextCard(on);
+    if (!POS) nextCard(on);
   }
   root.GRAINS.pick = function (k) { pick(k); };
   function section(k) { var s = doc.querySelector("#panel-" + k + ' [data-sub][aria-selected="true"]'); return s ? s.getAttribute("data-sub") : null; }
@@ -158,7 +160,9 @@
   }
   parent.addEventListener("click", function () { var a = active(); pick(a && isG(a) ? a : saved()); });
   head.addEventListener("click", function (ev) {
-    var b = ev.target.closest && ev.target.closest("[data-grain-pick]"); if (b) pick(b.getAttribute("data-grain-pick")); });
+    var b = ev.target.closest && ev.target.closest("[data-grain-pick]"); if (!b) return;
+    if (active() === "positioning" && root.POSITIONING && POSITIONING.pick) { POSITIONING.pick(b.getAttribute("data-grain-pick")); paint(); return; }
+    pick(b.getAttribute("data-grain-pick")); });
   doc.addEventListener("click", function (ev) {
     if (!ev.target.closest || !ev.target.closest(".tab-btn")) return;
     var k = active(); if (k && isG(k)) remember(k); paint();
@@ -170,6 +174,7 @@
   if (root.MutationObserver) { var mo = new MutationObserver(mirror); ORDER.forEach(function (k) { var b = btn(k); if (b) mo.observe(b, { attributes: true, attributeFilter: ["class", "title"] }); }); }
   mirror();
   /* a grain page redraw wipes its rail: put the insights card back */
+  if (root.MutationObserver) { var PP = doc.getElementById("panel-positioning"); if (PP) new MutationObserver(function () { paint(); }).observe(PP, { attributes: true, attributeFilter: ["class"] }); }
   if (root.MutationObserver) ORDER.concat(["fx"]).forEach(function (k) { var P = doc.getElementById("panel-" + k); if (P) new MutationObserver(function () { if (active() === k && !P.querySelector(".gx-box")) nextCard(k); }).observe(P, { childList: true }); });
   /* a data refresh repaints the strip; the age and countdown tick on their own */
   var ra = root.renderAll;
