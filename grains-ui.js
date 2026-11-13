@@ -124,7 +124,7 @@
     var now = Date.now(), A = asOfLine(now), ev = nextEvent(now);
     var h = '<div class="gr-top"><span class="gr-asof">' + A.text + '</span>' + (ev ? '<span class="gr-next">' + ev + '</span>' : "") + '</div>' +
       '<div class="gr-col-h">Execution Tiles</div>' +
-      '<div class="gr-strip">' + ORDER.map(function (k) { return tileHTML(k, A.day, k === on); }).join("") + (POS ? "" : fxTileHTML(on === "fx")) + '</div>';
+      '<div class="gr-strip">' + ORDER.map(function (k) { return tileHTML(k, A.day, k === on); }).join("") + fxTileHTML(on === "fx") + '</div>';
     if (head.getAttribute("data-h") !== h) { head.innerHTML = h; head.setAttribute("data-h", h); }
     if (!POS) nextCard(on);
   }

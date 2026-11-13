@@ -5021,7 +5021,7 @@ function buildSecNav(panel){
     var hit=null; for(var i=0;i<rules.length;i++){ if(rules[i][2].test(txt)){ hit=rules[i]; break; } }
     var id=hit?hit[0]:'more', lab=hit?hit[1]:(h?h.textContent.split('—')[0].trim():'More');
     if(!hit){ id='more-'+order.length; }
-    t.setAttribute('data-sec', id);
+    t.setAttribute('data-sec', id); t.setAttribute('data-sec-lab', lab);
     if(!groups[id]){ groups[id]={id:id,lab:lab,n:0,idx:hit?rules.indexOf(hit):99+order.length}; order.push(id); }
     groups[id].n++;
   });
@@ -5228,8 +5228,8 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="briefing-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="glossary.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script src="grain-prices.js?v=20261113a"></script>
-<script src="grains-ui.js?v=20261113d"></script>
-<script src="sectabs.js?v=20261113a"></script>
+<script src="grains-ui.js?v=20261113e"></script>
+<script src="sectabs.js?v=20261113c"></script>
 <script src="rows-ui.js?v=20261113a"></script>
 <script src="obs-ui.js?v=20261110c"></script>
 <script src="swot-ui.js?v=20261110z"></script>

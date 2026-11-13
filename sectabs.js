@@ -53,6 +53,39 @@
     if (nav.innerHTML !== html) nav.innerHTML = html;
     groups.forEach(function (g) { g.els.forEach(function (el) { el.classList.toggle("st-off", g.id !== cur); }); });
   }
+  /* grain + USD/CAD tabs: child-section menu inside the open tab, grouped by the desk's own section tags */
+  var GP = ["corn", "wheat", "soybeans", "fx"];
+  function buildSub(pid) {
+    var P = doc.getElementById("panel-" + pid), S = P && P.querySelector("[data-subpanel].on"); if (!S) return;
+    var key = (pid === "fx" ? "fx" : "grain") + "." + S.getAttribute("data-subpanel"), groups = [], by = {};   /* one choice for all three grains: switching commodity keeps the section */
+    [].forEach.call(S.children, function (el) {
+      var id = el.getAttribute("data-sec"); if (!id || id === "*" || el.classList.contains("st-nav")) return;
+      var lab = el.getAttribute("data-sec-lab") || id; if (/^(corn|wheat|soybeans)$/i.test(lab)) lab = "Evidence";
+      if (!by[id]) { by[id] = { id: id, lab: lab, els: [] }; groups.push(by[id]); }
+      by[id].els.push(el);
+    });
+    var nav = S.querySelector(":scope > .st-nav");
+    if (groups.length < 3) { if (nav) nav.remove(); groups.forEach(function (g) { g.els.forEach(function (el) { el.classList.remove("st-off"); }); }); return; }
+    var cur = SAVED[key]; if (cur !== "all" && !by[cur]) cur = groups[0].id;
+    var html = groups.map(function (g) { return '<button type="button" class="st-b" data-stk="' + pid + "|" + key + "|" + g.id + '" aria-selected="' + (g.id === cur) + '">' + esc(g.lab) + "</button>"; }).join("") +
+      '<button type="button" class="st-b st-all" data-stk="' + pid + "|" + key + '|all" aria-selected="' + (cur === "all") + '">All</button>';
+    if (!nav) { nav = doc.createElement("div"); nav.className = "st-nav"; nav.setAttribute("role", "tablist"); nav.setAttribute("aria-label", "Sections"); }
+    var first = groups[0].els[0];
+    [].some.call(S.children, function (el) { if (el.getAttribute("data-sec") && el.getAttribute("data-sec") !== "*") { first = el; return true; } return false; });
+    if (nav.nextElementSibling !== first) S.insertBefore(nav, first);
+    if (nav.innerHTML !== html) nav.innerHTML = html;
+    groups.forEach(function (g) { g.els.forEach(function (el) { el.classList.toggle("st-off", cur !== "all" && g.id !== cur); }); });
+    if (pid !== "fx" && cur !== "all" && root.drawDestMaps && cur === "dest") setTimeout(drawDestMaps, 30);
+  }
+  doc.addEventListener("click", function (ev) {
+    var b = ev.target.closest && ev.target.closest("[data-stk]"); if (!b) return;
+    var q = b.getAttribute("data-stk").split("|"); SAVED[q[1]] = q[2]; save(); buildSub(q[0]);
+    if (root.DESK_LIVE && DESK_LIVE.paintPills) try { DESK_LIVE.paintPills(); } catch (e) {}
+    try { root.dispatchEvent(new Event("resize")); } catch (e) {}
+  });
+  var bsn = root.buildSecNav;
+  if (typeof bsn === "function") root.buildSecNav = function (p) { var r = bsn.apply(this, arguments); if (GP.indexOf(p) >= 0) buildSub(p); return r; };
+  GP.forEach(function (p) { var P = doc.getElementById("panel-" + p); if (P && P.innerHTML) buildSub(p); });
   var busy = {};
   function schedule(pid) { if (busy[pid]) return; busy[pid] = 1; setTimeout(function () { busy[pid] = 0; build(pid); }, 60); }
   doc.addEventListener("click", function (ev) {
@@ -74,5 +107,5 @@
     "body.fxo .st-nav{border-bottom-color:#1a1a1a}" +
     "@media (max-width:760px){.st-nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}}";
   doc.head.appendChild(css);
-  root.SECTABS = { build: build };
+  root.SECTABS = { build: build, buildSub: buildSub };
 })(window);

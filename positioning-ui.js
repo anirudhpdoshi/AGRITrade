@@ -46,7 +46,7 @@
   var st = { report: "cftc", commodity: "corn" };
   try { var s = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; if (s.report) st.report = s.report; if (s.commodity) st.commodity = s.commodity; } catch (e) {}
   if (GR.indexOf(st.commodity) < 0) { try { st.commodity = JSON.parse(localStorage.getItem("desk.grain") || '"corn"') || "corn"; } catch (e) { st.commodity = "corn"; } }
-  if (GR.indexOf(st.commodity) < 0) st.commodity = "corn";
+  if (GR.indexOf(st.commodity) < 0 && st.commodity !== "fx") st.commodity = "corn";
   if (!REPORTS.some(function (r) { return r[0] === st.report; })) st.report = "cftc";
   function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
   function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
@@ -99,7 +99,8 @@
     if (!src) return [];
     var out = [];
     [].forEach.call(src.children, function (ch) {
-      if (!match || match(ch)) out.push(ch.cloneNode(true));
+      if (match && ch.classList && ch.classList.contains("st-nav")) return;
+      if (!match || match(ch)) { var c = ch.cloneNode(true); if (match) c.classList.remove("st-off"); out.push(c); }
     });
     return out;
   }
@@ -202,10 +203,26 @@
   }
   lastDataStamp = dataStamp();
 
+  /* USD/CAD: the desk's CAD positioning (leveraged-funds KPIs, CFTC CAD funds, sentiment & FX options) from the USD/CAD page */
+  function mountFx(body) {
+    var F = doc.getElementById("panel-fx");
+    if (F && !F.innerHTML && typeof root.renderFX === "function") { try { root.renderFX(); } catch (e) {} }
+    var saved = (root.SUB && root.SUB.fx) || "overview";
+    try { if (saved !== "deriv" && typeof root.setSub === "function") root.setSub("fx", "deriv"); } catch (e) {}
+    var nodes = cloneFrom("fx", "deriv", null);
+    try { if (saved !== "deriv" && typeof root.setSub === "function") root.setSub("fx", saved); } catch (e) {}
+    if (!nodes.length) { fallback(body, "USD/CAD positioning", "no CAD positioning in the dataset."); return; }
+    appendAll(body, nodes);
+  }
   function render() {
     if (!root.DATA || !DATA.grains) { P.innerHTML = '<div class="tile wide"><h2>Positioning / Open Interest</h2><p>Positioning data has not loaded yet.</p></div>'; return; }
     if (P.classList.contains("active")) ensureFreshSources();
-    var k = st.commodity, G = DATA.grains[k];
+    var k = st.commodity;
+    if (k === "fx") {
+      P.innerHTML = '<div class="pos-wrap"><div class="pos-tabs" role="tablist" aria-label="Positioning reports"><button type="button" role="tab" aria-selected="true">CAD Positioning &amp; Sentiment</button></div><div class="pos-body pos-fx" data-subpanel-clone="fx"></div></div>';
+      mountFx(P.querySelector(".pos-body")); return;
+    }
+    var G = DATA.grains[k];
     if (!G) { P.innerHTML = '<div class="tile wide"><h2>Positioning / Open Interest</h2><p>' + UNA + " — no data for " + esc(NAME[k] || k) + " in the dataset.</p></div>"; return; }
     var tabs = '<div class="pos-tabs" role="tablist" aria-label="Positioning reports">' + REPORTS.map(function (r) { return '<button type="button" role="tab" data-pos-report="' + r[0] + '" aria-selected="' + (r[0] === st.report) + '">' + esc(r[1]) + "</button>"; }).join("") + "</div>";
     var slicer = '<div class="gr-slicer" role="group" aria-label="Commodity"><span>Commodity</span>' + GR.map(function (x) { return '<button type="button" data-pos-pick="' + x + '" aria-pressed="' + (x === k) + '">' + NAME[x] + "</button>"; }).join("") + "</div>";
@@ -239,6 +256,7 @@
       setTimeout(render, 90);
       return;
     }
+    if (t.closest("[data-stk]")) { setTimeout(render, 60); return; }
     var r = t.closest("[data-pos-report]");
     if (r) { st.report = r.getAttribute("data-pos-report"); save(); render(); return; }
     var c = t.closest("[data-pos-pick]");
@@ -258,5 +276,5 @@
   root.addEventListener("desk:unlock", function () { setTimeout(render, 300); });
   if (root.MutationObserver) new MutationObserver(function () { if (P.classList.contains("active")) render(); }).observe(P, { attributes: true, attributeFilter: ["class"] });
   if (root.DATA) render();
-  root.POSITIONING = { render: render, current: function () { return st.commodity; }, pick: function (k) { if (GR.indexOf(k) < 0) return; st.commodity = k; save(); render(); } };
+  root.POSITIONING = { render: render, current: function () { return st.commodity; }, pick: function (k) { if (GR.indexOf(k) < 0 && k !== "fx") return; st.commodity = k; save(); render(); } };
 })(window);
