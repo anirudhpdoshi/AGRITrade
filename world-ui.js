@@ -203,23 +203,43 @@
       "<td>" + range52(i) + '<div class="wbs">' + badges(i) + "</div></td><td>" + spark(i.spark) + "</td></tr>";
   }
   var GROUPS = ["Indices", "FX", "Metals", "Energy", "Industrial & Ags", "Rates & Vol"];
+  /* Markets as four quadrants of tiles (Nov 13): equities · currencies · commodities · rates & volatility */
+  var QUADS = [["Equity indices", ["Indices"]], ["Currencies", ["FX"]], ["Commodities", ["Metals", "Energy", "Industrial & Ags"]], ["Rates & volatility", ["Rates & Vol"]]];
+  function tileHTML(i) {
+    var ex = W.exchanges[i.ex] || {}, st = status(ex, Date.now());
+    return '<div class="wmt" data-wid="' + i.id + '"><div class="wmt-h">' + fl(i.cc, 12) + ' <b title="' + esc(i.sym) + '">' + esc(i.name) + '</b><span class="wst ' + st + '">' + SLAB[st] + "</span></div>" +
+      '<div class="wmt-v"><b data-tick="w-' + i.id + '">' + last(i) + "</b>" + spark(i.spark) + "</div>" +
+      '<div class="wmt-c">' + (i.kind === "price" ? '<span class="' + cl(i.chg) + '">' + sg(i.chg, i.dec) + "</span> · " : "") + chgCell(i) + "</div>" +
+      '<div class="wmt-r">' + range52(i) + '<div class="wbs">' + badges(i) + "</div></div>" +
+      '<div class="wmt-f">' + age(i) + "</div></div>";
+  }
   function marketsHTML() {
     var q = (V.q || "").toLowerCase(), list = inst().filter(function (i) {
       return (V.grp === "all" || i.group === V.grp) && (!V.flagged || (i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low))) &&
         (!q || (i.name + " " + i.sym + " " + i.region).toLowerCase().indexOf(q) >= 0);
     });
     var filt = '<div class="wfil"><input type="search" placeholder="Search markets…" value="' + esc(V.q) + '" data-wq></div>';   /* group / 52-week chips live only in the slicer row above the body */
-    var body = GROUPS.filter(function (g) { return V.grp === "all" || V.grp === g; }).map(function (g) {
-      var rows = list.filter(function (i) { return i.group === g; });
-      if (g === "Indices") rows.sort(function (a, b) { return ["Asia-Pacific", "Europe", "Americas"].indexOf(a.region) - ["Asia-Pacific", "Europe", "Americas"].indexOf(b.region); });
+    var body = QUADS.map(function (Q) {
+      var gs = Q[1].filter(function (g) { return V.grp === "all" || V.grp === g; }); if (!gs.length) return "";
+      var rows = list.filter(function (i) { return gs.indexOf(i.group) >= 0; });
+      if (gs.indexOf("Indices") >= 0) rows.sort(function (a, b) { return ["Asia-Pacific", "Europe", "Americas"].indexOf(a.region) - ["Asia-Pacific", "Europe", "Americas"].indexOf(b.region); });
       if (!rows.length) return "";
-      return '<tr class="wgh"><td colspan="9">' + ({ Indices: "Equity indices", FX: "Currencies" }[g] || g) + " " + asOf(rows) + "</td></tr>" + rows.map(rowHTML).join("");
+      return '<section class="wq4"><h3>' + Q[0] + " <small>" + rows.length + "</small> " + asOf(rows) + '</h3><div class="wmt-g">' + rows.map(tileHTML).join("") + "</div></section>";
     }).join("");
-    return '<div class="tile wide"><h2>All markets <span class="h2note">— last price, change, today’s range, 52-week position · exact source time (Toronto) and age under each status</span></h2>' + asOf(list, "blk") + filt +
-      '<div class="wtw"><table class="wt"><thead><tr><th>Market</th><th>Status · source time</th><th class="r">LTP</th><th class="r">Chg</th><th class="r">% Chg</th><th class="r">High</th><th class="r">Low</th><th>52-week range</th><th>30d</th></tr></thead><tbody>' +
-      (body || '<tr><td colspan="9" class="neu">No markets match the filter.</td></tr>') + "</tbody></table></div>" +
-      '<div class="stamp">LTP = last traded/quoted price · % change vs the previous official close (yields and spreads in basis points) · high/low = current session · 52-week range from daily highs/lows · badges: NEW 52W HIGH/LOW when today’s range breaks the prior 52-week extreme, “% from” when within 5% · ROLL = continuous futures symbol switched contracts; change measured against that contract’s own previous close</div></div>';
+    return '<div class="tile wide"><h2>All markets <span class="h2note">— last price, change, 52-week position · exact source time (Toronto) and age on every tile</span></h2>' + asOf(list, "blk") + filt +
+      '<div class="wq4-g">' + (body || '<p class="neu">No markets match the filter.</p>') + "</div>" +
+      '<div class="stamp">LTP = last traded/quoted price · % change vs the previous official close (yields and spreads in basis points) · 52-week range from daily highs/lows · badges: NEW 52W HIGH/LOW when today’s range breaks the prior 52-week extreme, “% from” when within 5% · sparkline = last 30 days</div></div>';
   }
+  (function () { var c = document.createElement("style"); c.textContent =
+    ".wq4-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:10px}.wq4{border:1px solid #1f1f1f;border-radius:8px;padding:10px 12px;min-width:0}" +
+    ".wq4 h3{margin:0 0 10px;font:600 12.5px 'Libre Franklin',system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#d9b46a;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}.wq4 h3 small{color:#8a8a8a;font-weight:500}.wq4 h3 .wasof{text-transform:none;letter-spacing:0;font-weight:400}" +
+    ".wmt-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}.wmt-r *{font-size:9.5px!important}" +
+    ".wmt{border:1px solid #1f1f1f;border-radius:6px;padding:8px 10px;background:#000;min-width:0;display:flex;flex-direction:column;gap:3px}.wmt:hover{border-color:#3a3a3a}" +
+    ".wmt-h{display:flex;align-items:center;gap:6px;font-size:12px;min-width:0}.wmt-h b{font-weight:600;color:#e8eef4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}.wmt-h .wst{flex:0 0 auto;font-size:9.5px}" +
+    ".wmt-v{display:flex;align-items:center;justify-content:space-between;gap:6px}.wmt-v b{font:500 18px 'JetBrains Mono','IBM Plex Mono',monospace;color:#fff}.wmt-v .wsp{width:56px;height:16px;flex:0 0 auto}" +
+    ".wmt-c{font:12px 'JetBrains Mono','IBM Plex Mono',monospace}.wmt-r{font-size:10.5px;min-width:0;overflow:hidden}.wmt-r .wbs:empty{display:none}.wmt-f{font-size:10.5px;color:#777}" +
+    "@media (max-width:1100px){.wq4-g{grid-template-columns:1fr}}@media (max-width:760px){.wmt-g{grid-template-columns:repeat(2,minmax(0,1fr))}}";
+    document.head.appendChild(c); })();
   function sessionsHTML() {
     var now = Date.now(), ex = W.exchanges, keys = ["ASX", "TSE", "HKEX", "SSE", "NSE", "XETRA", "EPA", "EUREX", "LSE", "NYSE", "TSX", "CBOT", "CME", "ICE", "FX"].filter(function (k) { return ex[k]; });
     var tp = {}; new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(now)).forEach(function (p) { tp[p.type] = p.value; });
