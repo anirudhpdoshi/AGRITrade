@@ -155,8 +155,41 @@
     var d = m.dec != null ? +m.dec : 1;
     var head = P.map(function (x) { return "<th>" + esc(lab(x)) + "</th>"; }).join("");
     var val = P.map(function (x, i) { return '<td class="' + (i === P.length - 1 ? "lt" : "") + '"><b>' + x[1].toFixed(d) + "</b></td>"; }).join("");
-    var chg = P.map(function (x, i) { var pv = P[i - 1], ch = pv ? x[1] - pv[1] : null; return '<td class="' + (ch == null ? "" : ch > 0 ? "up" : ch < 0 ? "dn" : "") + '">' + (ch == null ? "—" : (ch > 0 ? "+" : ch < 0 ? "−" : "") + Math.abs(ch).toFixed(d)) + "</td>"; }).join("");
+    var chg = P.map(function (x, i) { var pv = P[i - 1], ch = pv ? x[1] - pv[1] : null; if (ch != null && Math.abs(ch) < Math.pow(10, -d) / 2) ch = 0; return '<td class="' + (ch == null ? "" : ch > 0 ? "up" : ch < 0 ? "dn" : "") + '">' + (ch == null ? "—" : (ch > 0 ? "+" : ch < 0 ? "−" : "") + Math.abs(ch).toFixed(d)) + "</td>"; }).join("");
     return '<div class="mn2-tw" data-mn2scroll><table class="mn2-tb"><thead><tr><th class="rh">Period</th>' + head + '</tr></thead><tbody><tr><th class="rh">Value</th>' + val + '</tr><tr><th class="rh">Change</th>' + chg + "</tr></tbody></table></div>";
+  }
+  /* "what the latest release says": every line is computed from the numbers on file — no outside opinion */
+  function readOut(m, cons, gd, cg) {
+    var d = m.dec != null ? +m.dec : 1, u = m.unit === "K" ? "K" : (m.unit || ""), f = function (x) { return (+x).toFixed(d) + u; }, du = u === "%" ? " pp" : u;
+    var v = +m.value, pr = m.prior != null ? +m.prior : null, five = series(m, 5).pts.map(function (x) { return x[1]; }), out = [];
+    if (pr != null && isFinite(v)) {
+      var ch = v - pr, word = Math.abs(ch) < Math.pow(10, -d) / 2 ? "was unchanged at " + f(v) : (ch > 0 ? "rose" : "fell") + " to " + f(v) + " from " + f(pr);
+      out.push(esc(m.name) + " " + word + (m.freq === "W" ? " in the week to " : " in ") + esc(m.period || "the latest period") + ".");
+    }
+    if (cons != null) { var sp = v - cons; out.push(Math.abs(sp) < Math.pow(10, -d) / 2 ? "In line with the " + f(cons) + " consensus." : (sp > 0 ? "Above" : "Below") + " the " + f(cons) + " consensus by " + Math.abs(sp).toFixed(d) + du +
+      (gd ? " — a " + ((gd === "down") === (sp > 0) ? (gd === "down" ? "hotter-than-expected" : "weaker-than-expected") : (gd === "down" ? "softer-than-expected" : "stronger-than-expected")) + " print." : ".")); }
+    if (five.length >= 8) {
+      var lo = Math.min.apply(null, five), hi = Math.max.apply(null, five), avg = five.reduce(function (a, b) { return a + b; }, 0) / five.length;
+      var rank = five.filter(function (x) { return x <= v; }).length / five.length, yrs = Math.max(1, Math.round(five.length / ({ Q: 4, W: 52 }[m.freq] || 12)));
+      out.push((v >= hi ? "The highest reading in " + yrs + " years" : v <= lo ? "The lowest reading in " + yrs + " years" : "Higher than " + Math.round(rank * 100) + "% of readings over the last " + yrs + " years") +
+        " (range " + f(lo) + " to " + f(hi) + "), and " + (Math.abs(v - avg) < Math.pow(10, -d) / 2 ? "right at" : v > avg ? Math.abs(v - avg).toFixed(d) + du + " above" : Math.abs(v - avg).toFixed(d) + du + " below") + " its " + f(avg) + " average.");
+      var run = 0, dirn = 0; for (var i = five.length - 1; i > 0; i--) { var c = Math.sign(five[i] - five[i - 1]); if (!c) break; if (!dirn) dirn = c; if (c !== dirn) break; run++; }
+      if (run >= 3) out.push(run + " " + (dirn > 0 ? "rises" : "declines") + " in a row.");
+    }
+    /* what that means, by kind of indicator */
+    var k = m.key, mean = "";
+    if (/cpi|pce|trim|median/.test(k) && /y\/y/.test(m.measure || "")) mean = v > 2.05 ? "Still above the 2% inflation target" + (pr != null && v < pr ? ", though easing" : pr != null && v > pr ? " and moving away from it" : "") + " — pressure on the " + (m.group === "us" ? "Fed" : "Bank of Canada") + " to keep rates restrictive." : "At or below the 2% target — room for the " + (m.group === "us" ? "Fed" : "Bank of Canada") + " to ease if growth slows.";
+    else if (/ppi|ippi|import/.test(k)) mean = (pr != null && v > pr ? "Pipeline cost pressure is building" : "Pipeline cost pressure is easing") + " — producer and import prices tend to reach consumer prices with a lag.";
+    else if (/_ur$/.test(k)) mean = pr != null ? (v > pr ? "A rising jobless rate is how a slowdown shows up in the labour market." : v < pr ? "A falling jobless rate points to a still-tight labour market." : "A steady jobless rate: no turn yet.") : "";
+    else if (/nfp|emp|adp/.test(k)) mean = v < 0 ? "Job losses — a sign of a weakening economy." : "Hiring continues; watch the trend against labour-force growth.";
+    else if (/claims/.test(k)) mean = pr != null ? (v > pr ? "More people filing — an early warning sign for layoffs." : "Fewer filings — layoffs remain contained.") : "";
+    else if (/ism|ivey/.test(k)) mean = (v >= 50 ? "Above 50: activity is expanding" : "Below 50: activity is contracting") + (pr != null ? (v > pr ? ", and the pace picked up." : v < pr ? ", and the pace slowed." : ".") : ".");
+    else if (/gdp/.test(k)) mean = v < 0 ? "The economy shrank in the period." : v >= 2 ? "Growth at or above its long-run pace." : "Growth below its long-run pace.";
+    else if (/policy/.test(k)) mean = "The policy rate sets the cost of money; every other number on this page is read against it.";
+    else if (/starts|permits|nhs/.test(k)) mean = pr != null ? (v > pr ? "Housing picked up — usually a sign that rates are not biting harder." : "Housing softened — the most rate-sensitive part of the economy is slowing.") : "";
+    else if (cg === "lead") mean = pr != null ? (v > pr ? "A leading indicator turning up hints at firmer activity ahead." : "A leading indicator turning down hints at softer activity ahead.") : "";
+    if (mean) out.push(mean);
+    return out.length ? '<div class="mn2-ro"><b>What the latest release says</b><ul>' + out.map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul></div>" : "";
   }
   function spark(h) {
     var v = (h || []).map(function (x) { return x[1]; }).filter(function (x) { return x != null; }); if (v.length < 2) return "";
@@ -175,6 +208,7 @@
     return '<div class="mn2-card"><div class="mn2-ch"><span class="mn2-cn">' + (root.flag ? flag(COUNTRY[m.group].cc, 16) : "") + " " + esc(COUNTRY[m.group].short + " " + m.name) + "</span>" +
       '<span class="mn2-tag ' + cg + '">' + G[1] + "</span><span class=\"mn2-ty\">" + TYPE[typeOf(m.key)] + "</span>" + stat + "</div>" +
       '<div class="mn2-big">' + fv(m, v) + ' <small>' + esc(m.measure || "") + " · " + esc(m.period || "") + "</small></div>" +
+      readOut(m, cons, gd, cg) +
       '<div class="mn2-kvs">' + kv("Consensus", cons != null ? fv(m, cons) : "—") + kv("Prior", fv(m, m.prior)) + kv("Surprise", sur != null ? (sur > 0 ? "+" : "−") + Math.abs(sur).toFixed(m.dec || 1) : "—", hot == null || sur == null || !sur ? "" : hot ? "dn" : "up") +
         kv("Released", x.t.rel ? when(x.t.rel) : "—") + kv("Next", x.t.next ? when(x.t.next) : "not yet scheduled") + "</div>" +
       (function () { FQ = m.freq || "M"; var yrs = +S.r, SR = series(m, yrs);
@@ -256,6 +290,9 @@
     ".mn2-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:4px 0 10px}.mn2-sw{display:inline-flex;border:1px solid #2a2a2a;border-radius:6px;overflow:hidden}.mn2-sw button{all:unset;cursor:pointer;padding:3px 11px;font:500 12px 'JetBrains Mono','IBM Plex Mono',monospace;color:#8a8a8a}.mn2-sw button[aria-pressed=true]{color:#d9b46a;background:rgba(217,180,106,.1)}.mn2-sw button+button{border-left:1px solid #2a2a2a}.mn2-n{font-size:11px;color:#777}" +
     ".mn2-vw.both{display:flex;flex-direction:column;gap:12px}.mn2-ch2{width:100%;height:auto;display:block}.mn2-tw{overflow-x:auto;border:1px solid #1a1a1a;border-radius:6px}" +
     ".mn2-tb{width:100%;border-collapse:collapse;font:12.5px 'JetBrains Mono','IBM Plex Mono',monospace;display:table!important}.mn2-tb thead{display:table-header-group!important}.mn2-tb tbody{display:table-row-group!important}.mn2-tb th{background:#000;font-size:10.5px;color:#8a8a8a;font-weight:500;text-align:right;padding:6px 10px;border-bottom:1px solid #2a2a2a;white-space:nowrap}.mn2-tb th.rh{position:sticky;left:0;z-index:1;text-align:left;letter-spacing:.06em;text-transform:uppercase;border-right:1px solid #2a2a2a}.mn2-tb td{padding:5px 10px;border-bottom:1px solid #111;color:#c9d4e2;text-align:right;white-space:nowrap}.mn2-tb td.lt{background:rgba(217,180,106,.08)}.mn2-tb td.lt b{color:#d9b46a}.mn2-tb .r{text-align:right}.mn2-tb b{color:#fff;font-weight:500}.mn2-tb .up{color:#3fb97f}.mn2-tb .dn{color:#e0655f}" +
+    ".mn2-ro{border-left:2px solid #d9b46a;background:rgba(217,180,106,.05);padding:8px 12px;margin:2px 0 12px;border-radius:0 6px 6px 0}.mn2-ro b{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#d9b46a}.mn2-ro ul{margin:6px 0 0;padding-left:18px}.mn2-ro li{font-size:13px;line-height:1.55;color:#e8eef4}" +
+    "#mdc-overlay .mdc-wrap{max-width:1040px!important;background:#000!important;border:1px solid #2a2a2a!important;border-top:3px solid #d9b46a!important;box-shadow:0 20px 60px rgba(0,0,0,.8)!important}.mn2-modal .mn2-card{border:0;padding:6px 4px}.mn2-modal .mn2-hist{display:none}" +
+    ".mn2-more{margin:6px 4px 10px;border-top:1px solid #1a1a1a;padding-top:8px}.mn2-more>summary{cursor:pointer;color:#8a8a8a;font-size:12px;letter-spacing:.06em;text-transform:uppercase}.mn2-more[open]>summary{color:#d9b46a}" +
     ".mn2-lg{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:11.5px;color:#aab6c8;margin:0 0 4px}.mn2-lg span{display:inline-flex;align-items:center;gap:6px}.mn2-lg i{display:inline-block;width:14px;height:3px;border-radius:2px}.mn2-lg i.ds{height:0;border-top:2px dashed}.mn2-lg i.dt{height:0;border-top:2px dotted}" +
     ".mn2-sp{width:100%;height:120px;display:block}.mn2-spx{display:flex;justify-content:space-between;font:11px 'JetBrains Mono','IBM Plex Mono',monospace;color:#777;margin:2px 0 12px}" +
     ".mn2-edu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.mn2-edu b{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#d9b46a}.mn2-edu p{margin:4px 0 0;font-size:13px;line-height:1.5;color:#c9d4e2}" +
@@ -264,5 +301,28 @@
     "@media (max-width:1020px){.mn2-lay{grid-template-columns:1fr}.mn2-left{position:static;flex-direction:row;flex-wrap:wrap}.mn2-left .gr-col-h{width:100%}.mn2-ct{flex:1 1 200px}}" +
     "@media (max-width:760px){.mn2-tabs{flex-wrap:nowrap;overflow-x:auto}.mn2-kvs{grid-template-columns:repeat(2,minmax(0,1fr))}}";
   doc.head.appendChild(css);
-  root.MNAV = { render: render };
+  /* "Full history" anywhere on the desk opens the new indicator card; the older detail stays below under More detail */
+  function cardFor(key) {
+    var m = mAll().filter(function (x) { return x.key === key; })[0]; if (!m) return null;
+    var t = relTime(m), seenToday = m.freq !== "D" && m.seen_at && dayET(Date.parse(m.seen_at)) === dayET(Date.now());
+    return cardHTML({ m: m, t: t, today: !!(t.todayOut || t.todayDue || seenToday), out: !!(t.todayOut || seenToday), due: t.todayDue }, null);
+  }
+  var oldOpen = root.openMacroDetail;
+  function paintModal(key) {
+    var o = doc.getElementById("mdc-overlay"); if (!o) return; var c = cardFor(key); if (!c) return;
+    var B = o.querySelector(".mdc-body"), old = B.querySelector(".mn2-old");
+    var keep = old ? old.innerHTML : "";
+    if (!keep) { var tmp = doc.createElement("div"); tmp.innerHTML = B.innerHTML; keep = tmp.innerHTML; }
+    B.innerHTML = '<div class="mn2-modal">' + c + '</div><details class="mn2-more"><summary>More detail</summary><div class="mn2-old">' + keep + "</div></details>";
+    toEndIn(B);
+  }
+  function toEndIn(el) { [].forEach.call(el.querySelectorAll("[data-mn2scroll]"), function (w) { w.scrollLeft = w.scrollWidth; }); }
+  if (typeof oldOpen === "function") root.openMacroDetail = function (key) { var r = oldOpen.apply(this, arguments); try { paintModal(key); } catch (e) {} return r; };
+  doc.addEventListener("click", function (ev) {
+    var o = ev.target.closest && ev.target.closest("#mdc-overlay"); if (!o) return;
+    var b = ev.target.closest("[data-mn2r],[data-mn2v]"); if (!b) return;
+    if (b.hasAttribute("data-mn2r")) S.r = b.getAttribute("data-mn2r"); else S.v = b.getAttribute("data-mn2v"); save();
+    paintModal(o.getAttribute("data-key")); render();
+  });
+  root.MNAV = { render: render, cardFor: cardFor };
 })(window);
