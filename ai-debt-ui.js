@@ -53,7 +53,7 @@
   var scrub = false;
   function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
   function num(v) { return (+v).toLocaleString("en-US"); }
-  function fmtB(v) { if (v == null) return "—"; return "$" + (+v < 0.1 ? (+v).toFixed(3) : (+v).toFixed(2)) + "B"; } /* $B, 2 decimals; 3 decimals below $0.10B so small raises (min $0.004B) never print as $0.00B */
+  function fmtB(v) { if (v == null) return "—"; var a = Math.abs(+v); return (+v < 0 ? "−$" : "$") + (a > 0 && a < 0.1 ? a.toFixed(3) : a.toFixed(2)) + "B"; } /* $B, 2 decimals; 3 decimals below $0.10B so small raises (min $0.004B) never print as $0.00B */
   function sumB(rows) { var t = 0, n = 0; rows.forEach(function (r) { if (r.include_in_total !== false && r.amount_usd_b != null) { t += r.amount_usd_b; n++; } }); return { t: Math.round(t * 1000) / 1000, n: n }; } /* totals count ONLY included rows (parent funded debt) */
   function sumExcl(rows) { var t = 0, n = 0; rows.forEach(function (r) { if (r.include_in_total === false && r.amount_usd_b != null) { t += r.amount_usd_b; n++; } }); return { t: Math.round(t * 1000) / 1000, n: n }; } /* excluded rows, for the "excl. $XB" line */
   function origAmt(r) { var s = (SYM[r.currency] || r.currency + " ") + num(r.amount) + "m (" + r.currency + ")"; return r.fx_rate_used ? s + " → " + r.fx_rate_used : s; }
@@ -102,7 +102,7 @@
       return (b.amount || 0) - (a.amount || 0);
     });
   }
-  function kpi(t, v, sub) { return '<div class="ad-k"><div class="t">' + t + '</div><div class="v">' + v + "</div>" + (sub ? '<div class="s">' + sub + "</div>" : "") + "</div>"; }
+  function kpi(t, v, sub) { var L = String(v).replace(/<[^>]*>/g, "").length; return '<div class="ad-k' + (L > 14 ? " ad-k-long" : "") + '"><div class="t">' + t + '</div><div class="v">' + v + "</div>" + (sub ? '<div class="s">' + sub + "</div>" : "") + "</div>"; }
   function cfChip(c) { return '<span class="ad-cf ad-cf-' + c.toLowerCase() + '">' + c + "</span>"; }
 
 /* ---------- Enhancement data: debt-service capacity, annual debt chart, refinancing scenarios.
@@ -566,18 +566,20 @@ function profileHTML() {
     "Gross issuance is not the same as the increase in debt: if a company raises $20B but repays $15B, its net debt increase is about $5B before other adjustments — the net change label above each bar is the change in the year-end balance. " +
     "Historical maturing principal is a partial lower bound (raises with a stated maturity year only), calendar-year basis.";
   /* --- SVG 1: balances — closing debt stacked ST+LT, net debt line, net change label --- */
-  var W = 800, n = rows.length, x0 = 46, x1 = 794, base = 168, top = 12;
+  var W = 800, n = rows.length, x0 = 50, x1 = 794, base = 186, top = 12;
   var slot = (x1 - x0) / n, barW = Math.min(58, slot * 0.52);
-  var maxV = 1;
-  rows.forEach(function (r) { if (r.total_debt != null && r.total_debt > maxV) maxV = r.total_debt; });
-  maxV *= 1.12;
-  function Y(v) { return Math.round(base - (v / maxV) * (base - top)); }
+  var maxV = 1, minV = 0;
+  rows.forEach(function (r) { if (r.total_debt != null && r.total_debt > maxV) maxV = r.total_debt; if (r.net_debt != null && r.net_debt > maxV) maxV = r.net_debt; if (r.net_debt != null && r.net_debt < minV) minV = r.net_debt; });
+  maxV *= 1.14; if (minV < 0) minV = Math.min(minV * 1.6, -maxV * 0.16);
+  var bot = base; top = 22;
+  function Y(v) { return Math.round(bot - ((v - minV) / (maxV - minV)) * (bot - top)); }
+  var zero = Y(0);
   function CX(i) { return Math.round(x0 + slot * (i + 0.5)); }
-  var svg1 = '<svg class="ad-svg" viewBox="0 0 800 212" role="img" aria-label="Closing total debt by fiscal year, stacked short-term and long-term, with net debt line">';
-  svg1 += '<line x1="' + x0 + '" y1="' + base + '" x2="' + x1 + '" y2="' + base + '" stroke="var(--line2)" stroke-width="1"/>';
+  var svg1 = '<svg class="ad-svg" viewBox="0 0 800 222" role="img" aria-label="Closing total debt by fiscal year, stacked short-term and long-term, with net debt line">';
+  svg1 += '<line x1="' + x0 + '" y1="' + zero + '" x2="' + x1 + '" y2="' + zero + '" stroke="var(--line2)" stroke-width="1"/>';
   svg1 += '<line x1="' + x0 + '" y1="' + Y(maxV / 2) + '" x2="' + x1 + '" y2="' + Y(maxV / 2) + '" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 4"/>';
   svg1 += '<text x="4" y="' + (Y(maxV / 2) + 4) + '" font-size="10" fill="var(--faint)">$' + (maxV / 2).toFixed(0) + 'B</text>';
-  svg1 += '<text x="4" y="' + (base - 4) + '" font-size="10" fill="var(--faint)">0</text>';
+  svg1 += '<text x="4" y="' + (zero + 4) + '" font-size="10" fill="var(--faint)">$0</text>';
   var prevDebt = null, netPts = [];
   rows.forEach(function (r, i) {
     var cx = CX(i), x = Math.round(cx - barW / 2);
@@ -585,22 +587,22 @@ function profileHTML() {
     svg1 += '<rect x="' + Math.round(cx - slot / 2 + 2) + '" y="' + top + '" width="' + Math.round(slot - 4) + '" height="' + (base - top) + '" fill="transparent"><title>' + esc(tip) + '</title></rect>';
     if (r.total_debt != null) {
       var lt = r.lt != null ? r.lt : r.total_debt, st = r.st != null ? r.st : 0;
-      var ltH = Math.max(2, Math.round(lt / maxV * (base - top)));
-      var stH = st > 0 ? Math.max(2, Math.round(st / maxV * (base - top))) : 0;
-      svg1 += '<rect x="' + x + '" y="' + (base - ltH) + '" width="' + Math.round(barW) + '" height="' + ltH + '" fill="#38b6c9"><title>' + esc("Long-term debt " + fmtB(r.lt) + " · " + tip) + '</title></rect>';
-      if (stH > 0) svg1 += '<rect x="' + x + '" y="' + (base - ltH - stH) + '" width="' + Math.round(barW) + '" height="' + stH + '" fill="#7dd3fc"><title>' + esc("Short-term debt " + fmtB(r.st) + " · " + tip) + '</title></rect>';
+      var ltH = Math.max(2, zero - Y(lt));
+      var stH = st > 0 ? Math.max(2, Y(lt) - Y(lt + st)) : 0;
+      svg1 += '<rect x="' + x + '" y="' + (zero - ltH) + '" width="' + Math.round(barW) + '" height="' + ltH + '" fill="#38b6c9"><title>' + esc("Long-term debt " + fmtB(r.lt) + " · " + tip) + '</title></rect>';
+      if (stH > 0) svg1 += '<rect x="' + x + '" y="' + (zero - ltH - stH) + '" width="' + Math.round(barW) + '" height="' + stH + '" fill="#7dd3fc"><title>' + esc("Short-term debt " + fmtB(r.st) + " · " + tip) + '</title></rect>';
       var d = prevDebt != null ? r.total_debt - prevDebt : null;
       var dTxt = d == null ? "—" : ((d >= 0 ? "+" : "−") + "$" + Math.abs(d).toFixed(2) + "B" + (r.yoy != null ? " (" + (r.yoy >= 0 ? "+" : "") + r.yoy.toFixed(1) + "%)" : ""));
-      svg1 += '<text x="' + cx + '" y="' + Math.max(10, Y(r.total_debt) - 6) + '" text-anchor="middle" font-size="10" fill="var(--ink)">' + esc(dTxt) + '</text>';
-      svg1 += '<text x="' + cx + '" y="' + (base + 14) + '" text-anchor="middle" font-size="11" fill="var(--muted)">' + (r.kind === "ttm" ? "TTM" : "FY" + r.year) + '</text>';
-      svg1 += '<text x="' + cx + '" y="' + (base + 27) + '" text-anchor="middle" font-size="9" fill="var(--faint)">' + esc(r.period_end || "") + '</text>';
+      svg1 += '<text x="' + cx + '" y="' + Math.max(12, Y(r.total_debt) - 7) + '" text-anchor="middle" font-size="10" class="ad-lb" fill="var(--ink)">' + esc(dTxt) + '</text>';
+      svg1 += '<text x="' + cx + '" y="' + (base + 16) + '" text-anchor="middle" font-size="11" fill="var(--muted)">' + (r.kind === "ttm" ? "TTM" : "FY" + r.year) + '</text>';
+      svg1 += '<text x="' + cx + '" y="' + (base + 29) + '" text-anchor="middle" font-size="9" fill="var(--faint)">' + esc(r.period_end || "") + '</text>';
       if (r.net_debt != null) netPts.push({ i: i, v: r.net_debt });
       prevDebt = r.total_debt;
     } else {
-      svg1 += '<rect x="' + x + '" y="' + (base - 24) + '" width="' + Math.round(barW) + '" height="24" fill="transparent" stroke="var(--line2)" stroke-dasharray="3 3"><title>' + esc(tip) + '</title></rect>';
-      svg1 += '<text x="' + cx + '" y="' + (base - 8) + '" text-anchor="middle" font-size="11" fill="var(--faint)">—</text>';
-      svg1 += '<text x="' + cx + '" y="' + (base + 14) + '" text-anchor="middle" font-size="11" fill="var(--muted)">' + (r.kind === "ttm" ? "TTM" : "FY" + r.year) + '</text>';
-      svg1 += '<text x="' + cx + '" y="' + (base + 27) + '" text-anchor="middle" font-size="9" fill="var(--faint)">' + esc(r.period_end || "") + '</text>';
+      svg1 += '<rect x="' + x + '" y="' + (zero - 24) + '" width="' + Math.round(barW) + '" height="24" fill="transparent" stroke="var(--line2)" stroke-dasharray="3 3"><title>' + esc(tip) + '</title></rect>';
+      svg1 += '<text x="' + cx + '" y="' + (zero - 8) + '" text-anchor="middle" font-size="11" fill="var(--faint)">—</text>';
+      svg1 += '<text x="' + cx + '" y="' + (base + 16) + '" text-anchor="middle" font-size="11" fill="var(--muted)">' + (r.kind === "ttm" ? "TTM" : "FY" + r.year) + '</text>';
+      svg1 += '<text x="' + cx + '" y="' + (base + 29) + '" text-anchor="middle" font-size="9" fill="var(--faint)">' + esc(r.period_end || "") + '</text>';
     }
   });
   if (netPts.length > 1) {
@@ -609,7 +611,7 @@ function profileHTML() {
   }
   netPts.forEach(function (pt) {
     svg1 += '<circle cx="' + CX(pt.i) + '" cy="' + Y(pt.v) + '" r="4.5" fill="#f59e0b" stroke="#0a0f16" stroke-width="1.5" vector-effect="non-scaling-stroke"><title>Net debt ' + fmtB(pt.v) + ' (total debt less cash &amp; equivalents)</title></circle>';
-    svg1 += '<text x="' + CX(pt.i) + '" y="' + Math.max(10, Y(pt.v) - 8) + '" text-anchor="middle" font-size="10" fill="#f59e0b">' + fmtB(pt.v) + '</text>';
+    svg1 += '<text x="' + (pt.v < 0 ? CX(pt.i) : CX(pt.i) + 9) + '" y="' + (Y(pt.v) + (pt.v < 0 ? 15 : -8)) + '" text-anchor="' + (pt.v < 0 ? 'middle' : 'start') + '" font-size="10" class="ad-lb" fill="#f5b94a">' + fmtB(pt.v) + '</text>';
   });
   svg1 += "</svg>";
   var leg1 = '<div class="ad-leg"><span><i class="sw" style="background:#38b6c9"></i>Closing debt — long-term</span><span><i class="sw" style="background:#7dd3fc"></i>Closing debt — short-term</span><span><i class="sw" style="background:#f59e0b;border-radius:50%!important"></i>Net debt (total debt − cash)</span><span>Label above each bar: net change in the year-end balance ($B and YoY %)</span></div>';
@@ -630,15 +632,16 @@ function profileHTML() {
     var m = mh.map[r.year];
     function fbar(v, off, fill, dash, title) {
       if (v == null) return '<text x="' + Math.round(cx + off) + '" y="' + (fBase - 4) + '" text-anchor="middle" font-size="10" fill="var(--faint)">—</text>';
+      if (!+v) return '<text x="' + Math.round(cx + off) + '" y="' + (fBase - 4) + '" text-anchor="middle" font-size="9" fill="var(--faint)">$0</text>';
       var h = Math.max(2, Math.round(v / fMax * (fBase - fTop)));
       return '<rect x="' + Math.round(cx + off - bw / 2) + '" y="' + (fBase - h) + '" width="' + Math.round(bw) + '" height="' + h + '" fill="' + fill + '"' + (dash ? ' stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 3"' : "") + '><title>' + esc(title) + '</title></rect>' +
-        '<text x="' + Math.round(cx + off) + '" y="' + Math.max(10, fBase - h - 4) + '" text-anchor="middle" font-size="9" fill="var(--muted)">' + (+v).toFixed(1) + '</text>';
+        '<text x="' + Math.round(cx + off) + '" y="' + Math.max(10, fBase - h - 4) + '" text-anchor="middle" font-size="9" fill="var(--muted)">$' + (+v).toFixed(1) + 'B</text>';
     }
     function fbarDown(v, off, fill, title) {
       if (v == null) return "";
       var h = Math.max(2, Math.round(v / fMax * (fBase - fTop)));
       return '<rect x="' + Math.round(cx + off - bw / 2) + '" y="' + fBase + '" width="' + Math.round(bw) + '" height="' + h + '" fill="' + fill + '"><title>' + esc(title) + '</title></rect>' +
-        '<text x="' + Math.round(cx + off) + '" y="' + Math.min(148, fBase + h + 11) + '" text-anchor="middle" font-size="9" fill="var(--muted)">−' + (+v).toFixed(1) + '</text>';
+        '<text x="' + Math.round(cx + off) + '" y="' + Math.min(148, fBase + h + 11) + '" text-anchor="middle" font-size="9" fill="var(--muted)">−$' + (+v).toFixed(1) + 'B</text>';
     }
     svg2 += fbar(r.gross_raised, -slot * 0.26, "#3b82f6", false, "Gross debt raised (calendar-year) " + fmtB(r.gross_raised));
     svg2 += fbarDown(r.principal_repaid, 0, "#e0453a", "Principal repaid (fiscal year) " + fmtB(r.principal_repaid));

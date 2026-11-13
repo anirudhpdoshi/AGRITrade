@@ -454,7 +454,7 @@
     }).join("");
   }
   /* true-black (OLED) styling while the USD/CAD desk is open */
-  (function () { var P = ["panel-fx", "panel-macro"].map(function (id) { return document.getElementById(id); }).filter(Boolean);
+  (function () { var P = ["panel-fx", "panel-macro", "panel-aidebt"].map(function (id) { return document.getElementById(id); }).filter(Boolean);
     function t() { document.body.classList.toggle("fxo", P.some(function (p) { return p.classList.contains("active"); })); }
     t(); if (window.MutationObserver) P.forEach(function (p) { new MutationObserver(t).observe(p, { attributes: true, attributeFilter: ["class"] }); }); })();
   function update(spot) {                              /* called on every valid tick; batched to <= 2 repaints a second */
