@@ -6,15 +6,18 @@ jobs:
     steps:
       - run: |
           W=https://agritrade-sec.anirudh-p-doshi.workers.dev
-          for s in 03 56 57; do for k in current preliminary_voi; do
-            curl -s -D h.txt -o f.pdf "$W/cme?s=$s&k=$k"; echo "== $s $k $(head -1 h.txt) size=$(stat -c%s f.pdf) $(grep -i x-cme-last h.txt)"; head -c 8 f.pdf; echo
-          done; done
           pip -q install pdfplumber
-          curl -s -o c.pdf "$W/cme?s=56&k=current"
+          curl -s -o c.pdf "$W/cme?s=56"; curl -s -o s.pdf "$W/cme?s=57"
           python - <<'P'
-          import pdfplumber
-          with pdfplumber.open("c.pdf") as p:
-              print("pages",len(p.pages))
-              t=p.pages[0].extract_text() or ""
-              print(t[:1500])
+          import pdfplumber,re
+          for f in ["c.pdf","s.pdf"]:
+              with pdfplumber.open(f) as p:
+                  print("#####",f,len(p.pages))
+                  for i,pg in enumerate(p.pages):
+                      t=pg.extract_text() or ""
+                      L=t.split("\n")
+                      heads=[l for l in L if re.search(r"(CALL|PUT)S?\b|OPT|TOTAL",l)][:12]
+                      print("--- page",i+1, "| ".join(heads)[:900])
+                      if i in (1,) or (f=="s.pdf" and i in (1,)):
+                          print("\n".join(L[:70]))
           P
