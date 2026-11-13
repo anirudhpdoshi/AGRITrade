@@ -47,12 +47,16 @@
   }
   function optionsHTML(k) {
     var O = root.DATA && DATA.optflow && DATA.optflow[k], g = DATA.grains && DATA.grains[k]; if (!O || !O.chains || !O.chains.length || !g) return "";
-    var rows = O.chains.map(function (c) {
+    /* the desk's IBKR chains first, then CME final-bulletin months to make five option months (weeklies extra) */
+    var CH = O.chains.slice(), have = {}, CM = (g.cme_months && g.cme_months.rows) || [];
+    CH.forEach(function (c) { if (!/weekly/i.test(c.chain || "")) have[c.chain] = 1; });
+    CM.forEach(function (c) { if (!have[c.chain] && Object.keys(have).length < 5) { have[c.chain] = 1; CH.push(Object.assign({ cme: true }, c)); } });
+    var rows = CH.map(function (c) {
       var r = (g.curve || g.roll || []).filter(function (x) { return x.contract === c.contract; })[0] || {};
       var q = quoteFor(g, c.contract, r.settle_date, r.settle), px = q ? q.px : r.settle, ref = q ? r.settle : r.prev;
       var td = new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" }), dte = c.expires ? Math.max(0, Math.round((Date.parse(c.expires + "T12:00:00Z") - Date.parse(td + "T12:00:00Z")) / 864e5)) : null;
       var wk = /weekly/i.test(c.chain || "");
-      return "<tr><td class=\"gp-m\"><b>" + esc(wk ? c.chain.replace(/^Weekly\s*/i, "Wkly ") : c.chain) + "</b><small>" + (wk ? "Weekly options" : "Delayed option month") + "</small></td>" +
+      return "<tr><td class=\"gp-m\"><b>" + esc(wk ? c.chain.replace(/^Weekly\s*/i, "Wkly ") : c.chain) + "</b><small>" + (wk ? "Weekly options" : c.cme ? "CME final · IV computed" : "Delayed option month") + "</small></td>" +
         '<td class="gp-k">' + esc(c.contract) + "</td>" +
         '<td class="gp-px"><b>' + (px != null ? p4(px) : "—") + "</b><small>underlying</small></td>" +
         chgCell(px, ref) +
@@ -63,7 +67,7 @@
     }).join("");
     return '<div class="tile wide gp-tile" data-src="options"><h2>Delayed option months <span class="h2note">— ' + NAME[k] + " options by expiry · underlying in $/bu</span></h2>" +
       '<div class="tbl-scroll"><table class="gp-tbl"><thead><tr><th>Option month</th><th>Underlying</th><th>Price</th><th>Change</th><th>Expires</th><th>ATM IV</th><th>Expected range</th><th>Put/call OI</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
-      '<div class="stamp">Option chains as of ' + esc(new Date(O.asof).toLocaleString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET · expected range = market-implied move to expiry, not a forecast · put/call = open-interest ratio</div></div>";
+      '<div class="stamp">' + (CM.length ? "Months marked “CME final” come from CME Daily Bulletin #" + esc(g.cme_months.bulletin || "") + " (" + day(g.cme_months.date) + " close): open interest is CME’s final count and ATM IV is computed (Black-76) from CME’s at-the-money settlements · " : "") + 'Option chains as of ' + esc(new Date(O.asof).toLocaleString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET · expected range = market-implied move to expiry, not a forecast · put/call = open-interest ratio</div></div>";
   }
   root.GPRICES = { html: function (k) { var h = curveHTML(k) + optionsHTML(k); return h || '<div class="tile wide"><p class="note">No forward-month prices on file yet.</p></div>'; } };
   /* if a grain page was drawn before this file loaded, redraw it so the Prices tab fills */

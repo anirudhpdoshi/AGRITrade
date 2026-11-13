@@ -60,7 +60,7 @@
     var key = (pid === "fx" ? "fx" : "grain") + "." + S.getAttribute("data-subpanel"), groups = [], by = {};   /* one choice for all three grains: switching commodity keeps the section */
     [].forEach.call(S.children, function (el) {
       var id = el.getAttribute("data-sec"); if (!id || id === "*" || el.classList.contains("st-nav")) return;
-      var lab = el.getAttribute("data-sec-lab") || id; if (/^(corn|wheat|soybeans)$/i.test(lab)) lab = "Evidence";
+      var lab = el.getAttribute("data-sec-lab") || id; if (/^(corn|wheat|soybeans)$/i.test(lab)) lab = "Evidence"; if (lab === "season") lab = "Seasonality";
       if (!by[id]) { by[id] = { id: id, lab: lab, els: [] }; groups.push(by[id]); }
       by[id].els.push(el);
     });
@@ -86,6 +86,18 @@
   var bsn = root.buildSecNav;
   if (typeof bsn === "function") root.buildSecNav = function (p) { var r = bsn.apply(this, arguments); if (GP.indexOf(p) >= 0) buildSub(p); return r; };
   GP.forEach(function (p) { var P = doc.getElementById("panel-" + p); if (P && P.innerHTML) buildSub(p); });
+  /* cards that load after the page draws (e.g. Options flow) arrive untagged: tag and file them, never show them under the wrong section */
+  var late = {};
+  GP.forEach(function (p) {
+    var P = doc.getElementById("panel-" + p); if (!P || !root.MutationObserver) return;
+    new MutationObserver(function () {
+      if (late[p]) return;
+      var S = P.querySelector("[data-subpanel].on"); if (!S) return;
+      var stray = [].some.call(S.children, function (el) { return el.classList.contains("tile") && !el.getAttribute("data-sec"); });
+      if (!stray) return;
+      late[p] = 1; setTimeout(function () { late[p] = 0; try { if (root.buildSecNav) root.buildSecNav(p); else buildSub(p); } catch (e) {} }, 80);
+    }).observe(P, { childList: true, subtree: true });
+  });
   var busy = {};
   function schedule(pid) { if (busy[pid]) return; busy[pid] = 1; setTimeout(function () { busy[pid] = 0; build(pid); }, 60); }
   doc.addEventListener("click", function (ev) {
