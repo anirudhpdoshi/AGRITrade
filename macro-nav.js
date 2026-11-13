@@ -123,22 +123,40 @@
     var mo = d.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }); return FQ === "W" || FQ === "D" ? mo + " " + d.getUTCDate() + " " + yy : mo + " " + yy; }
   function chart(P, m) {
     var v = P.map(function (x) { return x[1]; }); if (v.length < 2) return '<p class="note">Not enough history on file.</p>';
-    var W = 760, H = 210, L0 = 46, R0 = 10, T0 = 12, B0 = 26, lo = Math.min.apply(null, v), hi = Math.max.apply(null, v), pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
-    var X = function (i) { return L0 + i / (v.length - 1) * (W - L0 - R0); }, Y = function (y) { return T0 + (hi - y) / (hi - lo) * (H - T0 - B0); };
-    var g = "", d = m.dec != null ? +m.dec : 1;
-    for (var k = 0; k <= 4; k++) { var yv = hi - (hi - lo) * k / 4, yy = Y(yv); g += '<line x1="' + L0 + '" x2="' + (W - R0) + '" y1="' + yy.toFixed(1) + '" y2="' + yy.toFixed(1) + '" stroke="#1a1a1a"/><text x="' + (L0 - 6) + '" y="' + (yy + 3.5).toFixed(1) + '" text-anchor="end" fill="#777" font-size="10" font-family="JetBrains Mono,monospace">' + yv.toFixed(d) + "</text>"; }
-    if (lo < 0 && hi > 0) g += '<line x1="' + L0 + '" x2="' + (W - R0) + '" y1="' + Y(0).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '" stroke="#444" stroke-dasharray="3 3"/>';
-    var step = Math.max(1, Math.ceil(v.length / 7));
-    P.forEach(function (x, i) { if (i % step === 0 || i === v.length - 1) g += '<text x="' + X(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" fill="#777" font-size="10" font-family="JetBrains Mono,monospace">' + esc(lab(x)) + "</text>"; });
+    var n = v.length, W = 820, H = 250, L0 = 50, R0 = 64, T0 = 22, B0 = 28, lo = Math.min.apply(null, v), hi = Math.max.apply(null, v), pad = (hi - lo) * 0.12 || 1, lo2 = lo - pad, hi2 = hi + pad;
+    var X = function (i) { return L0 + i / (n - 1) * (W - L0 - R0); }, Y = function (y) { return T0 + (hi2 - y) / (hi2 - lo2) * (H - T0 - B0); };
+    var g = "", d = m.dec != null ? +m.dec : 1, F = "JetBrains Mono,monospace";
+    for (var k = 0; k <= 4; k++) { var yv = hi2 - (hi2 - lo2) * k / 4, yy = Y(yv); g += '<line x1="' + L0 + '" x2="' + (W - R0) + '" y1="' + yy.toFixed(1) + '" y2="' + yy.toFixed(1) + '" stroke="#161616"/><text x="' + (L0 - 6) + '" y="' + (yy + 3.5).toFixed(1) + '" text-anchor="end" fill="#666" font-size="10" font-family="' + F + '">' + yv.toFixed(d) + "</text>"; }
+    if (lo2 < 0 && hi2 > 0) g += '<line x1="' + L0 + '" x2="' + (W - R0) + '" y1="' + Y(0).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '" stroke="#444"/>';
+    var step = Math.max(1, Math.ceil(n / 8));
+    P.forEach(function (x, i) { if (i % step === 0 || i === n - 1) g += '<text x="' + X(i).toFixed(1) + '" y="' + (H - 9) + '" text-anchor="middle" fill="#777" font-size="10" font-family="' + F + '">' + esc(lab(x)) + "</text>"; });
+    /* mean (dashed) and least-squares trend (dotted) over the range shown */
+    var mean = v.reduce(function (a, b) { return a + b; }, 0) / n, sx = 0, sy = 0, sxy = 0, sxx = 0;
+    v.forEach(function (y, i) { sx += i; sy += y; sxy += i * y; sxx += i * i; });
+    var sl = (n * sxy - sx * sy) / (n * sxx - sx * sx || 1), ic = (sy - sl * sx) / n;
+    g += '<line x1="' + L0 + '" x2="' + (W - R0) + '" y1="' + Y(mean).toFixed(1) + '" y2="' + Y(mean).toFixed(1) + '" stroke="#38b6c9" stroke-width="1.2" stroke-dasharray="6 4"/>' +
+      '<text x="' + (W - R0 + 4) + '" y="' + (Y(mean) + 3.5).toFixed(1) + '" fill="#38b6c9" font-size="10" font-family="' + F + '">avg ' + mean.toFixed(d) + "</text>";
+    g += '<line x1="' + X(0).toFixed(1) + '" x2="' + X(n - 1).toFixed(1) + '" y1="' + Y(ic).toFixed(1) + '" y2="' + Y(ic + sl * (n - 1)).toFixed(1) + '" stroke="#a78bfa" stroke-width="1.4" stroke-dasharray="2 3"/>';
     var pts = v.map(function (y, i) { return X(i).toFixed(1) + "," + Y(y).toFixed(1); }).join(" ");
-    var dots = P.map(function (x, i) { return '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(x[1]).toFixed(1) + '" r="' + (v.length > 80 ? 1.2 : 2.4) + '" fill="#d9b46a"><title>' + esc(lab(x)) + ": " + x[1].toFixed(d) + "</title></circle>"; }).join("");
-    return '<svg class="mn2-ch2" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(m.name) + ' history"><polyline fill="none" stroke="#d9b46a" stroke-width="1.8" points="' + pts + '"/>' + g + dots + "</svg>";
+    /* value on every point when they fit; otherwise every few points plus the high, the low and the latest */
+    var imax = v.indexOf(hi), imin = v.indexOf(lo), every = n <= 26 ? 1 : Math.ceil(n / 14);
+    var dots = P.map(function (x, i) {
+      var show = i % every === 0 || i === n - 1 || i === imax || i === imin, up = i === 0 || x[1] >= v[i - 1];
+      var ty = Y(x[1]) + (up ? -8 : 15); if (ty < T0 - 6) ty = Y(x[1]) + 15; if (ty > H - B0 + 4) ty = Y(x[1]) - 8;
+      return '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(x[1]).toFixed(1) + '" r="' + (i === n - 1 ? 4 : n > 80 ? 1.3 : 2.6) + '" fill="#d9b46a"><title>' + esc(lab(x)) + ": " + x[1].toFixed(d) + "</title></circle>" +
+        (show ? '<text x="' + X(i).toFixed(1) + '" y="' + ty.toFixed(1) + '" text-anchor="middle" fill="' + (i === n - 1 ? "#fff" : "#c9b07a") + '" font-size="' + (i === n - 1 ? 11 : 9.5) + '" font-family="' + F + '" paint-order="stroke" stroke="#000" stroke-width="3">' + x[1].toFixed(d) + "</text>" : "");
+    }).join("");
+    var trend = sl * (n - 1), per = { M: "month", W: "week", Q: "quarter", D: "month" }[FQ] || "period";
+    return '<div class="mn2-lg"><span><i style="background:#d9b46a"></i>' + esc(m.name) + '</span><span><i class="ds" style="border-color:#38b6c9"></i>Average ' + mean.toFixed(d) + '</span><span><i class="dt" style="border-color:#a78bfa"></i>Trend ' + (trend >= 0 ? "+" : "−") + Math.abs(trend).toFixed(d) + " over the range (" + (sl >= 0 ? "+" : "−") + Math.abs(sl).toFixed(d + 1) + " per " + per + ")</span></div>" +
+      '<svg class="mn2-ch2" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(m.name) + ' history with average and trend"><polyline fill="none" stroke="#d9b46a" stroke-width="1.8" points="' + pts + '"/>' + g + dots + "</svg>";
   }
+  /* periods as columns, values (and change) as rows; newest on the right, scrolled into view */
   function table(P, m) {
-    var d = m.dec != null ? +m.dec : 1, R = P.slice().reverse();
-    return '<div class="mn2-tw"><table class="mn2-tb"><thead><tr><th>Period</th><th class="r">Value</th><th class="r">Change</th></tr></thead><tbody>' + R.map(function (x, i) {
-      var pv = R[i + 1], ch = pv ? x[1] - pv[1] : null;
-      return "<tr><td>" + esc(lab(x)) + '</td><td class="r"><b>' + x[1].toFixed(d) + '</b></td><td class="r ' + (ch == null ? "" : ch > 0 ? "up" : ch < 0 ? "dn" : "") + '">' + (ch == null ? "—" : (ch > 0 ? "+" : ch < 0 ? "−" : "") + Math.abs(ch).toFixed(d)) + "</td></tr>"; }).join("") + "</tbody></table></div>";
+    var d = m.dec != null ? +m.dec : 1;
+    var head = P.map(function (x) { return "<th>" + esc(lab(x)) + "</th>"; }).join("");
+    var val = P.map(function (x, i) { return '<td class="' + (i === P.length - 1 ? "lt" : "") + '"><b>' + x[1].toFixed(d) + "</b></td>"; }).join("");
+    var chg = P.map(function (x, i) { var pv = P[i - 1], ch = pv ? x[1] - pv[1] : null; return '<td class="' + (ch == null ? "" : ch > 0 ? "up" : ch < 0 ? "dn" : "") + '">' + (ch == null ? "—" : (ch > 0 ? "+" : ch < 0 ? "−" : "") + Math.abs(ch).toFixed(d)) + "</td>"; }).join("");
+    return '<div class="mn2-tw" data-mn2scroll><table class="mn2-tb"><thead><tr><th class="rh">Period</th>' + head + '</tr></thead><tbody><tr><th class="rh">Value</th>' + val + '</tr><tr><th class="rh">Change</th>' + chg + "</tr></tbody></table></div>";
   }
   function spark(h) {
     var v = (h || []).map(function (x) { return x[1]; }).filter(function (x) { return x != null; }); if (v.length < 2) return "";
@@ -198,7 +216,9 @@
         '<div class="mn2-c">' + (sel ? cardHTML(sel, S.g) : '<p class="note">No indicators in this group.</p>') + "</div></div>";
     }
     box.innerHTML = '<div class="mn2-lay">' + left + '<div class="mn2-main"><div class="tile wide mn2-head"><h2>' + COUNTRY[S.c].name + ' macro <span class="h2note">— categories as Trading Economics groups them · each data point tagged leading, coincident or lagging · red dot = released or due today</span></h2>' + todayStrip(S.c) + tabs + "</div>" + main + "</div></div>";
+    toEnd();
   }
+  function toEnd() { [].forEach.call(P.querySelectorAll("[data-mn2scroll]"), function (w) { w.scrollLeft = w.scrollWidth; }); }
   P.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t) return;
     var b = t.closest("[data-mn2c]"); if (b) { S.c = b.getAttribute("data-mn2c"); save(); render(); return; }
@@ -234,9 +254,9 @@
     ".mn2-kvs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;margin:6px 0 12px}.mn2-kv{padding:8px 10px;border-left:1px solid #1a1a1a;min-width:0}.mn2-kv:first-child{border-left:0}" +
     ".mn2-kv span{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#8a8a8a}.mn2-kv b{font:500 14px 'JetBrains Mono','IBM Plex Mono',monospace;color:#e8eef4}.mn2-kv b.up{color:var(--green)}.mn2-kv b.dn{color:var(--red)}" +
     ".mn2-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:4px 0 10px}.mn2-sw{display:inline-flex;border:1px solid #2a2a2a;border-radius:6px;overflow:hidden}.mn2-sw button{all:unset;cursor:pointer;padding:3px 11px;font:500 12px 'JetBrains Mono','IBM Plex Mono',monospace;color:#8a8a8a}.mn2-sw button[aria-pressed=true]{color:#d9b46a;background:rgba(217,180,106,.1)}.mn2-sw button+button{border-left:1px solid #2a2a2a}.mn2-n{font-size:11px;color:#777}" +
-    ".mn2-vw.both{display:grid;grid-template-columns:minmax(0,2fr) minmax(220px,1fr);gap:14px;align-items:start}.mn2-ch2{width:100%;height:auto;display:block}.mn2-tw{max-height:240px;overflow:auto;border:1px solid #1a1a1a;border-radius:6px}.mn2-vw.table .mn2-tw{max-height:360px}" +
-    ".mn2-tb{width:100%;border-collapse:collapse;font:12.5px 'JetBrains Mono','IBM Plex Mono',monospace;display:table!important}.mn2-tb thead{display:table-header-group!important}.mn2-tb tbody{display:table-row-group!important}.mn2-tb th{position:sticky;top:0;background:#000;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#8a8a8a;font-weight:500;text-align:left;padding:6px 10px;border-bottom:1px solid #2a2a2a}.mn2-tb td{padding:5px 10px;border-bottom:1px solid #111;color:#c9d4e2}.mn2-tb .r{text-align:right}.mn2-tb b{color:#fff;font-weight:500}.mn2-tb .up{color:#3fb97f}.mn2-tb .dn{color:#e0655f}" +
-    "@media (max-width:900px){.mn2-vw.both{grid-template-columns:1fr}}" +
+    ".mn2-vw.both{display:flex;flex-direction:column;gap:12px}.mn2-ch2{width:100%;height:auto;display:block}.mn2-tw{overflow-x:auto;border:1px solid #1a1a1a;border-radius:6px}" +
+    ".mn2-tb{width:100%;border-collapse:collapse;font:12.5px 'JetBrains Mono','IBM Plex Mono',monospace;display:table!important}.mn2-tb thead{display:table-header-group!important}.mn2-tb tbody{display:table-row-group!important}.mn2-tb th{background:#000;font-size:10.5px;color:#8a8a8a;font-weight:500;text-align:right;padding:6px 10px;border-bottom:1px solid #2a2a2a;white-space:nowrap}.mn2-tb th.rh{position:sticky;left:0;z-index:1;text-align:left;letter-spacing:.06em;text-transform:uppercase;border-right:1px solid #2a2a2a}.mn2-tb td{padding:5px 10px;border-bottom:1px solid #111;color:#c9d4e2;text-align:right;white-space:nowrap}.mn2-tb td.lt{background:rgba(217,180,106,.08)}.mn2-tb td.lt b{color:#d9b46a}.mn2-tb .r{text-align:right}.mn2-tb b{color:#fff;font-weight:500}.mn2-tb .up{color:#3fb97f}.mn2-tb .dn{color:#e0655f}" +
+    ".mn2-lg{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:11.5px;color:#aab6c8;margin:0 0 4px}.mn2-lg span{display:inline-flex;align-items:center;gap:6px}.mn2-lg i{display:inline-block;width:14px;height:3px;border-radius:2px}.mn2-lg i.ds{height:0;border-top:2px dashed}.mn2-lg i.dt{height:0;border-top:2px dotted}" +
     ".mn2-sp{width:100%;height:120px;display:block}.mn2-spx{display:flex;justify-content:space-between;font:11px 'JetBrains Mono','IBM Plex Mono',monospace;color:#777;margin:2px 0 12px}" +
     ".mn2-edu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.mn2-edu b{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#d9b46a}.mn2-edu p{margin:4px 0 0;font-size:13px;line-height:1.5;color:#c9d4e2}" +
     ".mn2-ft{margin-top:12px;font-size:11.5px;color:#777}.mn2-hist{all:unset;cursor:pointer;color:#d9b46a}.mn2-hist:hover{text-decoration:underline}" +
