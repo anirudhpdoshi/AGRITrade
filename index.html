@@ -1180,6 +1180,7 @@ body.fxo .tab-panel.active .subnav .sb-ev,body.fxo .tab-panel.active .subnav .sb
 .fxmx-f{font-size:26px;color:#fff;margin:6px 0 4px;letter-spacing:.01em;white-space:nowrap}.fxmx-f i{font-style:normal;color:#5c5c5c}
 .fxmx-p{font-size:13px}.fxmx-p.dn{color:#e0655f}.fxmx-p.up{color:#3fb97f}
 .fxmx-d{font-size:11px;color:#666;margin-top:2px}
+body.gr3 .fxmx-f{font-size:clamp(16px,1.45vw,23px)}body.gr3 .fxmx-c{padding:9px 10px 8px}
 @media (max-width:1300px){.fxmx{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (max-width:760px){.fxmx{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.fxmx-f{font-size:20px}}
 </style>
@@ -4842,7 +4843,7 @@ function renderFX(){
     subWrap('fx','deriv', positioningKpiHTML('fx')+T.cftc+T.sentiment.replace('class="tile"','class="tile wide"'))+
     /* macro sections now live on the Macro tab (renderMacro) */
     subWrap('fx','rates', ylLiveHTML()+T.yields+T.energy.replace('class="tile wide"','class="tile"')+T.policy)+
-    subWrap('fx','fwd', '<div class="tile wide fxmx-tile" data-src="fx_spot"><div class="fxmx-head"><h2>Forward Rates Matrix<span class="h2note" style="display:none"> — 1M to 12M</span></h2><div class="fxmx-meta"><span><b class="fxmx-g">USD / CAD forward curve</b> · covered-interest-parity outrights · theoretical</span><span class="fxmx-pill">SPOT REF <b id="fxmx-spot">—</b></span><span class="fxmx-pill">12M FORWARD <b id="fxmx-12">—</b></span></div></div><div id="fx-fwdmx" class="fxmx"></div><div class="stamp">Outright = spot × DF<sub>USD</sub> ÷ DF<sub>CAD</sub> from US Treasury and Government of Canada yields · points in pips (1 pip = 0.0001 CAD) · reprices on every live spot tick · not a dealer quote</div></div>'+T.forwards);
+    subWrap('fx','fwd', '<div class="tile wide fxmx-tile" data-src="fx_spot"><div class="fxmx-head"><h2>Forward Rates Matrix<span class="h2note" style="display:none"> — 1M to 24M</span></h2><div class="fxmx-meta"><span><b class="fxmx-g">USD / CAD forward curve</b> · covered-interest-parity outrights · theoretical</span><span class="fxmx-pill">SPOT REF <b id="fxmx-spot">—</b></span><span class="fxmx-pill">24M FORWARD <b id="fxmx-12">—</b></span></div></div><div id="fx-fwdmx" class="fxmx"></div><div class="stamp">Outright = spot × DF<sub>USD</sub> ÷ DF<sub>CAD</sub> from US Treasury and Government of Canada yields · points in pips (1 pip = 0.0001 CAD) · reprices on every live spot tick · not a dealer quote</div></div>'+T.forwards);
   html+='</div><aside class="rail">'+liveMonitorHTML()+fxAlertsHTML()+'</aside></div>';
   document.getElementById('panel-fx').innerHTML=html;
   if(window.FWD) FWD.mount();   /* rebuild the live forward-curve component inside the fresh tile */
@@ -5212,7 +5213,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="briefing-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="glossary.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script src="grain-prices.js?v=20261113a"></script>
-<script src="grains-ui.js?v=20261113b"></script>
+<script src="grains-ui.js?v=20261113c"></script>
 <script src="rows-ui.js?v=20261110c"></script>
 <script src="obs-ui.js?v=20261110c"></script>
 <script src="swot-ui.js?v=20261110z"></script>

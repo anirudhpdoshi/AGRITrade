@@ -147,6 +147,7 @@
       } catch (e) {}
     }
     b.click();
+    if (k === "fx" && !same && root.setSub) { try { setSub("fx", "fwd"); } catch (e) {} setTimeout(function () { nextCard("fx"); }, 0); }   /* the spot tile lands on the 24-month forward rates */
     if (sub && root.setSub) root.setSub(k, sub);      /* the menu holds when the commodity changes */
     if (LOCK && from && !same && both && root.renderGrain) { try { renderGrain(k); if (root.buildSecNav) buildSecNav(k); if (root.drawDestMaps) drawDestMaps(); } catch (e) {} }
     function place() { var T = A ? doc.querySelectorAll("#panel-" + k + " [data-subpanel].on .tile")[A.i] : null;

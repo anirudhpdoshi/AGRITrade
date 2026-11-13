@@ -439,12 +439,12 @@
   function matrix(res) {
     var box = document.getElementById("fx-fwdmx"); if (!box) return;
     var sp = document.getElementById("fxmx-spot"); if (sp) sp.textContent = res.spot ? res.spot.toFixed(5) : "—";
-    var L = (res.legs || []).filter(function (l) { return /^(\d+M|1Y)$/.test(l.t) && (l.t === "1Y" || +l.t.replace("M", "") <= 11); });
+    var L = (res.legs || []).filter(function (l) { return /^(\d+M|1Y|2Y)$/.test(l.t); });   /* all 24 months: 1M … 24M */
     var mx = Math.max.apply(null, L.map(function (l) { return Math.abs(l.pts || 0); }).concat([1]));
-    var y1 = L.filter(function (l) { return l.t === "1Y"; })[0], e12 = document.getElementById("fxmx-12");
+    var y1 = L.filter(function (l) { return l.t === "2Y"; })[0], e12 = document.getElementById("fxmx-12");
     if (e12) e12.textContent = y1 && y1.F != null ? y1.F.toFixed(5) + " (" + (y1.pts > 0 ? "+" : "−") + Math.abs(y1.pts).toFixed(1) + " pips)" : "—";
     box.innerHTML = L.map(function (l) {
-      var t = l.t === "1Y" ? "12M" : l.t, vd = l.vd, mon = MON[vd.getUTCMonth()] + " \u2019" + String(vd.getUTCFullYear()).slice(2);
+      var t = l.t === "1Y" ? "12M" : l.t === "2Y" ? "24M" : l.t, vd = l.vd, mon = MON[vd.getUTCMonth()] + " \u2019" + String(vd.getUTCFullYear()).slice(2);
       if (l.F == null) return '<div class="fxmx-c"><div class="fxmx-t"><b>' + t + "</b><span>" + mon + '</span></div><div class="fxmx-f">—</div><div class="fxmx-d">inputs unavailable</div></div>';
       var f = l.F.toFixed(5), a = (0.06 + 0.3 * Math.abs(l.pts) / mx).toFixed(3), prem = l.pts > 0;
       return '<div class="fxmx-c' + (prem ? " prem" : "") + '" style="--a:' + a + '" title="' + t + " outright, value " + vd.toISOString().slice(0, 10) + " · USD " + l.rUSD.toFixed(3) + "% vs CAD " + l.rCAD.toFixed(3) + '%"><div class="fxmx-t"><b>' + t + "</b><span>" + mon + "</span></div>" +
