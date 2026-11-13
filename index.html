@@ -1799,59 +1799,75 @@ function exportTileHTML(key){
 /* ---------------- SVG chart builders ---------------- */
 function oiSVG(rows, ds, cp, prev, lab){
   cp=cp||'both'; var shC=cp!=='put', shP=cp!=='call';
-  var W=760,H=280,PL=46,PR=14,PT=22,PB=34, pw=W-PL-PR, ph=H-PT-PB;
+  /* phone: a narrower viewBox keeps text at a readable size, and the strike range is cut to the area around price and the walls */
+  var narrow=(typeof window!=='undefined'&&window.innerWidth<640);
+  var Ux=ds.wall_ref||ds.underlying;
+  if(narrow&&rows.length>44){
+    var pi=0; rows.forEach(function(r,i){ if(Ux&&r[0]<=Ux) pi=i; });
+    var lo=Math.max(0,pi-18), hi=Math.min(rows.length-1,pi+19);
+    rows.forEach(function(r,i){ if((shC&&Math.abs(r[0]-ds.call_wall[0])<0.001)||(shP&&Math.abs(r[0]-ds.put_wall[0])<0.001)){ lo=Math.min(lo,i); hi=Math.max(hi,i); } });
+    rows=rows.slice(Math.max(0,lo-3), hi+4);
+  }
+  var W=narrow?420:760, H=narrow?300:290, PL=narrow?34:46, PR=narrow?8:14, PT=narrow?44:30, PB=narrow?50:52, pw=W-PL-PR, ph=H-PT-PB;
+  var FS=narrow?11:10.5, CW=FS*0.62;   /* mono glyph width, for label collision checks */
   var max=0; rows.forEach(function(r){ max=Math.max(max,shC?r[1]:0,shP?r[2]:0); }); max=max||1;
-  max*=1.12;
+  var mag=Math.pow(10,Math.floor(Math.log10(max/3))), ystep=[1,2,2.5,5,10].map(function(m){ return m*mag; }).filter(function(v){ return max*1.04/v<=4; })[0]||10*mag, nt=Math.ceil(max*1.04/ystep); max=nt*ystep;
   var n=rows.length, bw=pw/n;
   function Y(v){ return PT+ph*(1-v/max); }
+  function cx(idx){ return PL+idx*bw+bw/2; }
+  function kfmt(v){ return v>=1000?(v/1000).toFixed(v<10000&&v%1000?1:0).replace(/\.0$/,'')+'k':Math.round(v)+''; }
+  function T(x,y,txt,o){ o=o||{}; return '<text x="'+(+x).toFixed(1)+'" y="'+(+y).toFixed(1)+'" fill="'+(o.c||'#8f9db3')+'" font-size="'+(o.fs||FS)+'"'+(o.w?' font-weight="'+o.w+'"':'')+' font-family="IBM Plex Mono" text-anchor="'+(o.a||'middle')+'">'+txt+'</text>'; }
   var s='';
-  for(var i=0;i<=3;i++){ var gy=PT+ph*i/3, gv=max*(1-i/3);
+  for(var i=0;i<=nt;i++){ var gy=PT+ph*i/nt, gv=max*(1-i/nt);
     s+='<line x1="'+PL+'" y1="'+gy+'" x2="'+(PL+pw)+'" y2="'+gy+'" stroke="#1e2a3a"/>';
-    s+='<text x="'+(PL-6)+'" y="'+(gy+4)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="end">'+Math.round(gv/1000)+'k</text>'; }
+    s+=T(PL-5,gy+4,kfmt(gv),{a:'end'}); }
   rows.forEach(function(r,idx){
-    var x=PL+idx*bw, cw=Math.max(1,bw*(cp==='both'?0.38:0.7));
+    var x=PL+idx*bw, gap=bw>4?1:0, cw=Math.max(1,(cp==='both'?(bw-gap)*0.44:bw*0.7));
     var isCW = Math.abs(r[0]-ds.call_wall[0])<0.001, isPW = Math.abs(r[0]-ds.put_wall[0])<0.001;
-    var Uq=ds.wall_ref||ds.underlying, itmC=Uq&&r[0]<Uq-1e-9, itmP=Uq&&r[0]>Uq+1e-9;   /* in-the-money strikes are faded: they are positions from when price was elsewhere, not levels ahead */
-    if(shC&&r[1]>0) s+='<rect x="'+x.toFixed(1)+'" y="'+Y(r[1]).toFixed(1)+'" width="'+cw.toFixed(1)+'" height="'+(PT+ph-Y(r[1])).toFixed(1)+'" fill="'+(isCW?'#ffd27a':'#3fb97f')+'"'+(itmC?' opacity=".35"':'')+'/>';
-    if(shP&&r[2]>0) s+='<rect x="'+(cp==='both'?x+cw+1:x).toFixed(1)+'" y="'+Y(r[2]).toFixed(1)+'" width="'+cw.toFixed(1)+'" height="'+(PT+ph-Y(r[2])).toFixed(1)+'" fill="'+(isPW?'#ff9d97':'#b34a44')+'"'+(itmP?' opacity=".35"':'')+'/>';
+    var itmC=Ux&&r[0]<Ux-1e-9, itmP=Ux&&r[0]>Ux+1e-9;   /* in-the-money strikes are faded: they are positions from when price was elsewhere, not levels ahead */
+    var x0=x+(bw-(cp==='both'?2*cw+gap:cw))/2;
+    if(shC&&r[1]>0) s+='<rect x="'+x0.toFixed(1)+'" y="'+Y(r[1]).toFixed(1)+'" width="'+cw.toFixed(1)+'" height="'+(PT+ph-Y(r[1])).toFixed(1)+'" fill="'+(isCW?'#ffd27a':'#3fb97f')+'"'+(itmC?' opacity=".35"':'')+'/>';
+    if(shP&&r[2]>0) s+='<rect x="'+(cp==='both'?x0+cw+gap:x0).toFixed(1)+'" y="'+Y(r[2]).toFixed(1)+'" width="'+cw.toFixed(1)+'" height="'+(PT+ph-Y(r[2])).toFixed(1)+'" fill="'+(isPW?'#ff9d97':'#b34a44')+'"'+(itmP?' opacity=".35"':'')+'/>';
   });
+  s+='<line x1="'+PL+'" y1="'+(PT+ph)+'" x2="'+(PL+pw)+'" y2="'+(PT+ph)+'" stroke="#2c3a4e"/>';
+  /* strike labels: as many as fit without touching; walls and the strike next to price always get one */
+  var lw=5*CW+8, keep=[], must={};
+  rows.forEach(function(r,idx){ if(Math.abs(r[0]-ds.call_wall[0])<0.001&&shC) must[idx]=1; if(Math.abs(r[0]-ds.put_wall[0])<0.001&&shP) must[idx]=1; });
+  var nice=[0.05,0.1,0.25,0.5,1,2,5], span=(rows[n-1][0]-rows[0][0])||1, want=Math.max(2,Math.floor(pw/(lw*1.15))), stepK=nice.filter(function(v){ return span/v<=want; })[0]||10;
+  Object.keys(must).forEach(function(k){ keep.push(+k); });
+  rows.forEach(function(r,idx){ var m=r[0]/stepK; if(Math.abs(m-Math.round(m))<1e-6) keep.push(idx); });
+  keep.sort(function(a,b){ return (must[b]?1:0)-(must[a]?1:0)||a-b; });
+  var placed=[]; keep.forEach(function(idx){ var x=cx(idx); if(!must[idx]&&(x-lw/2<PL-8||x+lw/2>W-2)) return; var lx=Math.min(Math.max(x,PL-8+lw/2),W-2-lw/2); if(placed.some(function(p){ return Math.abs(p-lx)<lw; })) return; placed.push(lx);
+    s+='<line x1="'+x.toFixed(1)+'" y1="'+(PT+ph)+'" x2="'+x.toFixed(1)+'" y2="'+(PT+ph+3)+'" stroke="#2c3a4e"/>'+T(lx,PT+ph+15,rows[idx][0].toFixed(2),{c:must[idx]?'#c9d4e3':'#8f9db3'}); });
   var PV={}; if(prev&&prev.rows) prev.rows.forEach(function(r){ PV[r[0]]=r; });
   rows.forEach(function(r,idx){ var q=PV[r[0]], tot=r[1]+r[2];
     var tip=(lab?esc(lab)+' · ':'')+'strike '+r[0].toFixed(2)+'|Calls '+fmt(r[1])+(q?' ('+sgn(r[1]-q[1],0)+')':'')+'|Puts '+fmt(r[2])+(q?' ('+sgn(r[2]-q[2],0)+')':'')+'|P/C '+(r[1]?fmt(r[2]/r[1],2):'—')+' · total '+fmt(tot)+(q?'|change vs '+fmtShortDate(prev.date)+' close':'');
     s+='<rect class="oi-hit" x="'+(PL+idx*bw).toFixed(1)+'" y="'+PT+'" width="'+bw.toFixed(1)+'" height="'+ph+'" fill="transparent" data-tip="'+tip+'"/>'; });
-  /* wall markers + strike labels (every nth) */
-  var step = n>110 ? 16 : n>70 ? 10 : 6;
-  var lastLabeled=-step;
-  rows.forEach(function(r,idx){
-    if(idx%step===0 || (idx===n-1 && idx-lastLabeled>=Math.ceil(step/2))){
-      if(idx%step===0) lastLabeled=idx;
-      s+='<text x="'+(PL+idx*bw+bw/2).toFixed(1)+'" y="'+(PT+ph+16)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+r[0].toFixed(2)+'</text>';
-    }
-  });
-  function wallMark(wall, oi, label, color, mode){
-    var idx=-1; rows.forEach(function(r,i2){ if(Math.abs(r[0]-wall)<0.001) idx=i2; });
-    if(idx<0) return '';
-    var x=PL+idx*bw+bw/2, anchor='middle', tx=x;
-    if(mode==='left'){ anchor='end'; tx=x-5; } if(mode==='right'){ anchor='start'; tx=x+5; }
-    return '<line x1="'+x+'" y1="'+(PT-4)+'" x2="'+x+'" y2="'+(PT+ph)+'" stroke="'+color+'" stroke-width="1.4" stroke-dasharray="4 3"/>'+
-      '<text x="'+tx+'" y="'+(PT-10)+'" fill="'+color+'" font-size="11" font-weight="600" font-family="IBM Plex Mono" text-anchor="'+anchor+'">'+label+' '+wall.toFixed(2)+' · '+fmt(oi)+'</text>';
+  /* wall labels live in their own lane above the plot; two labels that would touch are stacked on two lines,
+     and every label is kept inside the chart edges */
+  function idxOf(k){ var ii=-1; rows.forEach(function(r,i2){ if(Math.abs(r[0]-k)<0.001) ii=i2; }); return ii; }
+  var walls=[];
+  if(shP){ var ip=idxOf(ds.put_wall[0]); if(ip>=0) walls.push({x:cx(ip), t:(narrow?'PUT ':'PUT WALL ')+ds.put_wall[0].toFixed(2)+' · '+fmt(ds.put_wall[1]), c:'#ff9d97'}); }
+  if(shC){ var ic=idxOf(ds.call_wall[0]); if(ic>=0) walls.push({x:cx(ic), t:(narrow?'CALL ':'CALL WALL ')+ds.call_wall[0].toFixed(2)+' · '+fmt(ds.call_wall[1]), c:'#ffd27a'}); }
+  walls.sort(function(a,b){ return a.x-b.x; });
+  var lane=[PT-8, PT-8];
+  walls.forEach(function(w){ w.w=w.t.length*CW*1.05; w.l=Math.min(Math.max(w.x-w.w/2,2),W-2-w.w); w.y=lane[0]; });
+  if(walls.length===2&&walls[0].l+walls[0].w+10>walls[1].l){
+    /* not enough room side by side: push them apart if the chart is wide enough, else stack */
+    var need=walls[0].w+walls[1].w+10;
+    if(need<=W-4){ var mid=(walls[0].x+walls[1].x)/2, L0=Math.max(2,Math.min(mid-need/2,W-2-need)); walls[0].l=L0; walls[1].l=L0+walls[0].w+10; }
+    else { walls[0].y=PT-8-(FS+5); }
   }
-  var sameStrike = cp==='both' && Math.abs(ds.call_wall[0]-ds.put_wall[0])<0.001;
-  var cMode = sameStrike?'left':'', pMode = sameStrike?'right':'';
-  if(!sameStrike && cp==='both'){
-    /* distinct strikes whose centered labels would collide: swing each label outward */
-    function wallX(wall){ var ii=-1; rows.forEach(function(r,i2){ if(Math.abs(r[0]-wall)<0.001) ii=i2; }); return ii<0?null:PL+ii*bw+bw/2; }
-    var xc=wallX(ds.call_wall[0]), xp=wallX(ds.put_wall[0]);
-    var needW=(('CALL WALL '+ds.call_wall[0].toFixed(2)+' \u00b7 '+fmt(ds.call_wall[1])).length +
-               ('PUT WALL '+ds.put_wall[0].toFixed(2)+' \u00b7 '+fmt(ds.put_wall[1])).length)*3.3+4;
-    if(xc!=null && xp!=null && Math.abs(xc-xp)<needW){ if(xc<xp){ cMode='left'; pMode='right'; } else { cMode='right'; pMode='left'; } }
-  }
-  var Ux=ds.wall_ref||ds.underlying;
+  walls.forEach(function(w){
+    s+='<line x1="'+w.x.toFixed(1)+'" y1="'+(w.y+3)+'" x2="'+w.x.toFixed(1)+'" y2="'+(PT+ph)+'" stroke="'+w.c+'" stroke-width="1.4" stroke-dasharray="4 3"/>';
+    s+=T(w.l,w.y,w.t,{c:w.c,a:'start',w:600}); });
+  /* live price: line through the plot, badge in the lane under the strike axis so it never covers bars or strike labels */
   if(Ux){ var xi=null; for(var q=0;q<rows.length-1;q++){ if(rows[q][0]<=Ux&&Ux<=rows[q+1][0]){ xi=PL+(q+(Ux-rows[q][0])/((rows[q+1][0]-rows[q][0])||1))*bw+bw/2; break; } }
-    if(xi!=null) s+='<line x1="'+xi.toFixed(1)+'" y1="'+(PT+8)+'" x2="'+xi.toFixed(1)+'" y2="'+(PT+ph)+'" stroke="#e8eef4" stroke-width="1.6"/><rect x="'+(xi-44).toFixed(1)+'" y="'+(PT+ph-22)+'" width="88" height="16" rx="4" fill="#0b1220" stroke="#e8eef4" stroke-width=".8"/><text x="'+xi.toFixed(1)+'" y="'+(PT+ph-10)+'" fill="#fff" font-size="10.5" font-weight="700" font-family="IBM Plex Mono" text-anchor="middle">PRICE '+(+Ux).toFixed(4)+'</text>'; }
-  if(shC) s+=wallMark(ds.call_wall[0], ds.call_wall[1], 'CALL WALL', '#ffd27a', cMode);
-  if(shP) s+=wallMark(ds.put_wall[0], ds.put_wall[1], 'PUT WALL', '#ff9d97', pMode);
-  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Open interest by strike">'+s+'</svg>';
+    if(xi!=null){ var bt='PRICE '+(+Ux).toFixed(4), bwd=bt.length*CW+14, bx=Math.min(Math.max(xi-bwd/2,2),W-2-bwd), by=PT+ph+22;
+      s+='<line x1="'+xi.toFixed(1)+'" y1="'+PT+'" x2="'+xi.toFixed(1)+'" y2="'+(by)+'" stroke="#e8eef4" stroke-width="1.6"/>'+
+        '<rect x="'+bx.toFixed(1)+'" y="'+by+'" width="'+bwd.toFixed(1)+'" height="'+(FS+8)+'" rx="4" fill="#0b1220" stroke="#e8eef4" stroke-width=".8"/>'+
+        T(bx+bwd/2,by+FS+3,bt,{c:'#fff',w:700}); } }
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Open interest by strike" data-oi-narrow="'+(narrow?1:0)+'">'+s+'</svg>';
 }
 
 function skewSVG(g, meta){
@@ -3149,6 +3165,7 @@ function xpandSync(){
   t.style.setProperty('--xh1', (hh-14)+'px'); t.style.setProperty('--xh2', (hh-14+ch)+'px');
 }
 window.addEventListener('resize', xpandSync);
+var OI_NARROW=window.innerWidth<640; window.addEventListener('resize', function(){ var nw=window.innerWidth<640; if(nw===OI_NARROW) return; OI_NARROW=nw; ['corn','wheat','soybeans'].forEach(function(k){ var el=document.getElementById('oi-'+k); if(el) el.innerHTML=oiTileHTML(k); }); });
 document.addEventListener('click', function(ev){
   var b=ev.target.closest&&ev.target.closest('[data-xpand]'); if(!b) return;
   var id=b.getAttribute('data-xpand'), t=document.getElementById(id); if(!t) return;
