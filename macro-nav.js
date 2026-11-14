@@ -200,13 +200,22 @@
     return '<svg class="mn2-sp" viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" role="img" aria-label="Last ' + v.length + ' readings"><polyline fill="none" stroke="#d9b46a" stroke-width="2" vector-effect="non-scaling-stroke" points="' + pts.join(" ") + '"/><circle cx="' + last[0] + '" cy="' + last[1] + '" r="3.5" fill="#d9b46a"/></svg>' +
       '<div class="mn2-spx"><span>' + esc(h[0][0]) + '</span><span>low ' + lo.toFixed(2) + " · high " + hi.toFixed(2) + '</span><span>' + esc(h[h.length - 1][0]) + "</span></div>";
   }
+  /* open(key): show one data point (country, group and card) — used by "See it" on the Events tab. The card is
+     flashed for a moment, and keeps the flash if the page redraws meanwhile. */
+  var FL = { k: null, t: 0 };
+  function open(key) {
+    var m = mAll().filter(function (x) { return x.key === key; })[0]; if (!m || !MAIN[m.group]) return false;
+    var c = m.group, g = MAIN[c].indexOf(key) >= 0 ? "main" : teOf(key);
+    if (!items(c, g).some(function (x) { return x.m.key === key; })) return false;
+    S.c = c; S.g = g; S.k[c + g] = key; FL = { k: key, t: Date.now() + 2600 }; save(); render(); return true;
+  }
   function cardHTML(x, g) {
     var m = x.m, C = root.consensusFor ? consensusFor(m) : null, cons = C && C.consensus != null ? +C.consensus : null, v = m.value != null ? +m.value : null;
     var sur = cons != null && v != null ? v - cons : null, cg = CLS[m.key] || (/policy/.test(m.key) ? "lag" : "coin"), G = GROUPS.filter(function (q) { return q[0] === cg; })[0];
     var gd = /down|heat/.test(m.good || "") ? "down" : /up/.test(m.good || "") ? "up" : null, hot = gd === "down" ? sur > 0 : gd === "up" ? sur < 0 : null;
     var stat = x.out ? '<span class="mn2-live"><i></i>Released today ' + (x.t.todayOut ? hm(x.t.todayOut) : "") + "</span>" : x.due ? '<span class="mn2-live due"><i></i>Due today ' + hm(x.due) + "</span>" : "";
     var kv = function (k, val, cls) { return '<div class="mn2-kv"><span>' + k + "</span><b" + (cls ? ' class="' + cls + '"' : "") + ">" + val + "</b></div>"; };
-    return '<div class="mn2-card"><div class="mn2-ch"><span class="mn2-cn">' + (root.flag ? flag(COUNTRY[m.group].cc, 16) : "") + " " + esc(COUNTRY[m.group].short + " " + m.name) + "</span>" +
+    return '<div class="mn2-card' + (FL.k === m.key && Date.now() < FL.t ? " flash-find" : "") + '" data-mkey="' + esc(m.key) + '"><div class="mn2-ch"><span class="mn2-cn">' + (root.flag ? flag(COUNTRY[m.group].cc, 16) : "") + " " + esc(COUNTRY[m.group].short + " " + m.name) + "</span>" +
       '<span class="mn2-tag ' + cg + '">' + G[1] + "</span><span class=\"mn2-ty\">" + TYPE[typeOf(m.key)] + "</span>" + stat + "</div>" +
       '<div class="mn2-big">' + fv(m, v) + ' <small>' + esc(m.measure || "") + " · " + esc(m.period || "") + "</small></div>" +
       readOut(m, cons, gd, cg) +
@@ -325,5 +334,5 @@
     if (b.hasAttribute("data-mn2r")) S.r = b.getAttribute("data-mn2r"); else S.v = b.getAttribute("data-mn2v"); save();
     paintModal(o.getAttribute("data-key")); render();
   });
-  root.MNAV = { render: render, cardFor: cardFor };
+  root.MNAV = { render: render, cardFor: cardFor, open: open };
 })(window);

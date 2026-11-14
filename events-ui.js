@@ -640,9 +640,11 @@
     var at = (spec || "").indexOf("@"); if (at >= 0) { sel = sel || spec.slice(at + 1); spec = spec.slice(0, at); }   /* "tab:section@card" */
     var a = (spec || "").split(":"), b = document.getElementById("tabbtn-" + a[0]); if (!b) return;
     b.click();
+    var mk = a[0] === "macro" && sel ? /data-mkey="([^"]+)"/.exec(sel) : null;   /* Macro page: open that data point's card */
+    if (mk && window.MNAV && MNAV.open) { try { MNAV.open(mk[1]); } catch (e) {} }
     if (sel) setTimeout(function () { decorate();
       var el = [].filter.call(document.querySelectorAll("#panel-" + a[0] + " " + sel), function (x) { return x.offsetParent !== null; })[0];   /* the visible copy */
-      if (el) { var c = el.closest(".mk-click, .mcard, .tile, .dash-card") || el;
+      if (el) { var c = el.closest(".mn2-card, .mk-click, .mcard, .tile, .dash-card") || el;
         var y = c.getBoundingClientRect().top + window.scrollY - window.innerHeight / 3; window.scrollTo({ top: Math.max(0, y), behavior: "auto" });
         c.classList.remove("flash-find"); void c.offsetWidth; c.classList.add("flash-find"); } }, 320);
     if (a[0] === "policy") { if (a[1] && window.POLICY && POLICY.open) POLICY.open(a[1]); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
