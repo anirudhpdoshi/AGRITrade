@@ -1081,7 +1081,7 @@ table.pi-tab td{vertical-align:top}table.pi-tab small{display:block;color:var(--
 .evfi-go{cursor:pointer;border-radius:6px;margin:0 -6px;padding-left:6px;padding-right:6px;transition:background .15s}.evfi-go:hover,.evfi-go:focus-visible{background:rgba(56,182,201,.08);outline:none}
 .evfo{color:#7dd8e6;font-weight:500}.evfi-go:hover .evfo{text-decoration:underline}
 </style>
-<link rel="stylesheet" href="desk-theme.css?v=20261113b">
+<link rel="stylesheet" href="desk-theme.css?v=20261113c">
 </head>
 <body class="locked">
 <!-- owner passcode gate · the passcode must decrypt the sealed vault (config.js: PBKDF2 600k + AES-256-GCM); no passcode hash is published · re-locks after 20 min idle -->
@@ -4775,7 +4775,7 @@ document.querySelector('main').addEventListener('click', function(ev){
 /* ================= LEFT SECTION NAVIGATOR (groups the cards of each sub-tab) ================= */
 var SECG={
   grain:{
-    overview:[['snap','Snapshot & KPIs',/kpi-strip|dash-head/],['fan','Price & σ fan',/σ fan/],['season','Seasonality',/ssn-tile/],['insight','Insight',/\bInsight\b/],['ask','Ask Claude',/ask-tile/]],
+    overview:[['snap','Snapshot & KPIs',/kpi-strip|dash-head/],['cone','Volatility cone',/vcone-tile/],['fan','Price & σ fan',/σ fan/],['season','Seasonality',/ssn-tile/],['insight','Insight',/\bInsight\b/],['ask','Ask Claude',/ask-tile/]],
     deriv:[['cockpit','Derivatives cockpit',/kpi-strip/],['pos','Positioning KPIs',/poskpi|ckwrap/],['cftc','CFTC managed money',/cftc_grains/],['opt','Options data',/Options positioning|Open-interest change/],['vol','Volatility & skew',/Volatility|IV skew/],['optflow','Options flow & expirations',/of-tile|Options flow &amp; expirations|Options flow & expirations/],['flow','Position flow signal',/fl-tile|Position flow/],['carry','Carry & roll',/tr-tile|Curve & calendar|Futures roll/],['oi','Open interest by strike',/\boi-(corn|wheat|soybeans)\b/]],
     fund:[['cmp','Crop-year comparison',/Crop-year comparison/],['xcmp','Export comparison',/Export comparison/],['wmap','World map',/production map/i],['wdet','Country detail',/ detail /],['wprod','Top producers',/Top producers/],['wexp','Top exporters',/Top exporters/],['brsurvey','CONAB survey',/CONAB crop survey/],['brsd','Brazil supply & demand',/Brazil (soybean )?supply/i],['brvs','CONAB vs USDA',/CONAB vs USDA/],['brexp','Brazil exports',/exports \u2014 actual|exports — actual/],['brl','USD/BRL',/USD\/BRL/],['sd','Supply & demand (WASDE)',/supply & demand/i],['dest','Export destinations',/Export destinations/i],['exp','Export sales',/Export Sales/i],['cal','Agri calendar',/agri calendar/i],['caprod','Production & farm prices',/production by crop year|farm price/i],['ca','Canada / Ontario stats',/Canada|Ontario/]],
     inputs:[['cost','Input cost summary',/input costs/i],['paths','Price paths & events',/price paths/i]]
@@ -4788,7 +4788,7 @@ var SECG={
     rel:[['rel','Latest releases',/Latest releases|releases/i]]
   },
   fx:{
-    overview:[['snap','Snapshot',/kpi-strip/],['live','Live USD/CAD',/live-fx/],['spot','Spot & key levels',/spot & key levels/i],['daily','Daily chart',/daily closes/i],['model','Model view',/Model view/],['ask','Ask Claude',/ask-tile/]],
+    overview:[['snap','Snapshot',/kpi-strip/],['cone','Volatility cone',/vcone-tile/],['live','Live USD/CAD',/live-fx/],['spot','Spot & key levels',/spot & key levels/i],['daily','Daily chart',/daily closes/i],['model','Model view',/Model view/],['ask','Ask Claude',/ask-tile/]],
     deriv:[['pos','Positioning KPIs',/poskpi|ckwrap/],['fwd','Forward rates',/Forward rates|Forward curve/],['cftc','CFTC CAD funds',/cftc_fx|CFTC CAD/],['sent','Sentiment & FX options',/Retail sentiment/]],
     macro:[['live','Live USD/CAD',/live-fx/],['dash','Macro dashboard',/macro dashboard/i],['tf','Trade & fiscal',/Trade & fiscal/i],['cycle','Cycle composites',/Cycle composites/],['fed','Fed policy',/Fed policy intelligence/],['allind','All indicators',/All macro indicators/],['rel','Latest releases',/Latest releases/]],
     rates:[['ys','Yield spreads',/yield spreads/i],['en','Energy',/Energy/],['pol','Policy expectations',/Policy expectations/]]
@@ -5082,6 +5082,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="glossary.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script src="grain-prices.js?v=20261113d"></script>
 <script src="grains-ui.js?v=20261113g"></script>
+<script src="volcone.js?v=20261113a"></script>
 <script src="sectabs.js?v=20261113e"></script>
 <script src="rows-ui.js?v=20261113a"></script>
 <script src="obs-ui.js?v=20261110c"></script>
