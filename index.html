@@ -449,7 +449,7 @@ table.fwd-in td.fi-src{text-align:left;color:var(--faint);font-size:11.5px;white
 .aw-errbox{margin:0 0 10px;padding:9px 12px;border-radius:8px;background:rgba(224,101,95,.1);border:1px solid #7a3a36;color:#ffc9c4;font-size:12.5px;line-height:1.5}.aw-errbox b{color:#ff9d97}
 .await-err{box-shadow:inset 0 0 0 1px #7a3a36}.has-flag .aw-errbox{margin-right:38px}
 .awaiting{position:relative;overflow:hidden}
-.awaiting>*{visibility:hidden}
+.awaiting>*{opacity:.55}   /* previous data stays readable while the new release is fetched */
 .awaiting::before{content:"";position:absolute;inset:14px;border-radius:8px;z-index:2;
   background:linear-gradient(#22324a,#22324a) 0 0/45% 14px no-repeat,linear-gradient(#1b2a40,#1b2a40) 0 30px/80% 34px no-repeat,linear-gradient(#1b2a40,#1b2a40) 0 80px/100% 60%  no-repeat,
   linear-gradient(100deg,transparent 30%,rgba(255,255,255,.07) 50%,transparent 70%) 0 0/200% 100% no-repeat;animation:skel 1.4s linear infinite}
@@ -1080,7 +1080,7 @@ table.pi-tab td{vertical-align:top}table.pi-tab small{display:block;color:var(--
 .evfi-go{cursor:pointer;border-radius:6px;margin:0 -6px;padding-left:6px;padding-right:6px;transition:background .15s}.evfi-go:hover,.evfi-go:focus-visible{background:rgba(56,182,201,.08);outline:none}
 .evfo{color:#7dd8e6;font-weight:500}.evfi-go:hover .evfo{text-decoration:underline}
 </style>
-<link rel="stylesheet" href="desk-theme.css?v=20261113a">
+<link rel="stylesheet" href="desk-theme.css?v=20261113b">
 </head>
 <body class="locked">
 <!-- owner passcode gate · the passcode must decrypt the sealed vault (config.js: PBKDF2 600k + AES-256-GCM); no passcode hash is published · re-locks after 20 min idle -->
@@ -2517,7 +2517,8 @@ function usdaEvents(key, fromMs, days){
     if(wd==="Mon"){ at(y,m,dd,11,0,"Export inspections","usda"); if(m>=4&&m<=11&&!(m===11&&dd>30)) at(y,m,dd,16,0,"Crop progress","usda"); }
     if(wd==="Thu"&&!thanks) at(y,m,dd,8,30,"Export sales","usda");
     if(wd==="Fri"&&m===11&&dd>=23&&dd<=29) at(y,m,dd,8,30,"Export sales (Thanksgiving week)","usda");
-    if(wd==="Fri") at(y,m,dd,15,30,"CFTC Commitments of Traders","cftc");
+    if(wd==="Fri"&&!(window.COT_DELAY&&COT_DELAY[iso])) at(y,m,dd,15,30,"CFTC Commitments of Traders","cftc");
+    if(window.COT_REL&&COT_REL[iso]) at(y,m,dd,15,30,"CFTC Commitments of Traders (holiday-delayed)","cftc");
     if(USDA_WASDE.indexOf(iso)>=0) at(y,m,dd,12,0,"WASDE + Crop Production","wasde");
     (meta.dates||[]).forEach(function(cd){ if(cd[0]===iso) at(y,m,dd,14,20,cd[1],"contract")  /* CBOT close 1:20 CT = 2:20 ET */; });
   }
@@ -3886,6 +3887,22 @@ function checklistItems(key){
   return items;
 }
 /* ================= AWAITING-RELEASE SKELETON (event cards only) ================= */
+/* CFTC moves the COT release off Friday in federal-holiday weeks (cftc.gov/MarketReports/CommitmentsofTraders/ReleaseSchedule):
+   skipped Friday -> {rel: delayed release day, asof: positions date}. Update from that page each year. */
+var COT_DELAY={"2026-11-13":{rel:"2026-11-16",asof:"2026-11-10"},"2026-11-27":{rel:"2026-11-30",asof:"2026-11-24"},"2026-12-25":{rel:"2026-12-28",asof:"2026-12-22"}};
+var COT_REL={}; Object.keys(COT_DELAY).forEach(function(f){ COT_REL[COT_DELAY[f].rel]=COT_DELAY[f].asof; });
+/* the most recent COT release that has happened: {t, asof} */
+function lastCotRelease(){
+  var now=Date.now();
+  for(var i=0;i<=10;i++){ var x=new Date(now-i*86400000), p={};
+    new Intl.DateTimeFormat('en-US',{timeZone:'America/Toronto',year:'numeric',month:'numeric',day:'numeric',weekday:'short'}).formatToParts(x).forEach(function(q){ p[q.type]=q.value; });
+    var iso=p.year+'-'+String(p.month).padStart(2,'0')+'-'+String(p.day).padStart(2,'0'), t=zonedMs(+p.year,+p.month,+p.day,15,30,'America/Toronto');
+    if(t>now) continue;
+    if(COT_REL[iso]) return {t:t, asof:COT_REL[iso]};
+    if(p.weekday==='Fri'&&!COT_DELAY[iso]) return {t:t, asof:isoAdd(+p.year,+p.month,+p.day,-3)};
+  }
+  return null;
+}
 function lastWeekday(wd, h, m, maxBackDays){
   var now=Date.now();
   for(var i=0;i<=(maxBackDays||8);i++){ var x=new Date(now-i*86400000), p={};
@@ -3896,8 +3913,8 @@ function lastWeekday(wd, h, m, maxBackDays){
 function isoAdd(y,m,d,days){ var x=new Date(Date.UTC(y,m-1,d)+days*86400000); return x.toISOString().slice(0,10); }
 function awaitingList(){
   var now=Date.now(), out=[], DAY=86400000;
-  var cf=lastWeekday('Fri',15,30,7);
-  if(cf&&now-cf.t<DAY){ var exp=isoAdd(cf.y,cf.m,cf.d,-3), last=(DATA.grains.corn.cftc||[]).slice(-1)[0];
+  var cf=lastCotRelease();
+  if(cf&&now-cf.t<DAY){ var exp=cf.asof, last=(DATA.grains.corn.cftc||[]).slice(-1)[0];
     if(last&&last.date<exp) out.push({key:'cftc', sel:'[data-src="cftc_grains"],[data-src="cftc_fx"],.poskpi', label:'Awaiting CFTC Commitments of Traders \u2014 positions as of '+exp,
       info:{what:'CFTC Commitments of Traders (positions as of Tue '+fmtDate(exp)+')', short:'CFTC Commitments of Traders', who:'the CFTC', t:cf.t, lag:'The CFTC posts the report at 3:30 PM ET; the desk reads the CFTC data API directly from your browser every 30 s \u2014 it usually catches up within 5\u201330 minutes, occasionally longer after a holiday.',
         prev:'positions as of '+fmtDate(last.date), url:'https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm', urlLab:'CFTC COT reports'}}); }

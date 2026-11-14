@@ -189,3 +189,7 @@ body.fxo .tab-panel.active :is(.wh-c,.wh-t,.sn-b,.sw-b,.wh-g){background:#000!im
 @media (max-width:1100px){.mn2-g{grid-template-columns:minmax(0,1fr)!important}}
 .ad-main table,.pi-lay table{max-width:100%}
 .ad-main .tile,.ad-sec{overflow-x:auto}
+
+/* ---- awaiting (Nov 13): the card keeps its last data; a thin running bar and a status line on top say a new release is being fetched ---- */
+.awaiting::before,.awaiting.aw-sm::before{inset:0 0 auto 0!important;height:3px;border-radius:0;background:linear-gradient(90deg,transparent,#e8b93d,transparent) 0 0/200% 100% no-repeat!important;animation:skel 1.4s linear infinite}
+.awaiting::after,.awaiting.aw-sm::after{top:6px;bottom:auto!important;left:auto!important;right:10px!important;max-width:70%;text-align:right!important;background:rgba(0,0,0,.82);padding:2px 8px;border-radius:4px;font-size:10.5px!important}
