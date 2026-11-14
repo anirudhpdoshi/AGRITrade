@@ -334,5 +334,5 @@
     if (b.hasAttribute("data-mn2r")) S.r = b.getAttribute("data-mn2r"); else S.v = b.getAttribute("data-mn2v"); save();
     paintModal(o.getAttribute("data-key")); render();
   });
-  root.MNAV = { render: render, cardFor: cardFor, open: open };
+  root.MNAV = { render: render, cardFor: cardFor, open: open, what: function (k) { return WHAT[k] || ""; } };
 })(window);

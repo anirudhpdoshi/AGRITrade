@@ -92,7 +92,7 @@
       (RC[k].dates || []).forEach(function (d) {
         var a = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/.exec(d); if (!a) return;
         var t = zms(a[1], +a[2], +a[3]); if (macroAt[ccy + "|" + t]) return;
-        add({ t: t, label: ccy + " " + (m ? m.name : k.replace(/^(us|ca)_/, "").toUpperCase()), kind: "macro", cc: ccy === "CAD" ? "ca" : "us", impact: "High", high: true, go: "macro:dash" });
+        add({ t: t, label: ccy + " " + (m ? m.name : k.replace(/^(us|ca)_/, "").toUpperCase()), kind: "macro", mkey: k, cc: ccy === "CAD" ? "ca" : "us", impact: "High", high: true, go: "macro:dash" });
       });
     });
     try {
@@ -232,7 +232,7 @@
           : "<b>Summary</b><p>" + (e.t > Date.now() ? "Scheduled. The summary appears here once the bank publishes the document — each line quoted from the official text." : "Due now: the desk reads the bank\u2019s site every 15 minutes; the summary appears here once the document is read.") + "</p>") +
         '<button class="evgo" data-evgo="policy:minutes">Open Policy · Minutes &amp; summaries →</button></div></div>';
     }
-    var k = relKey(e), sum = (k && k.macro && SUM[k.macro]) || SUMK[e.kind] || "Scheduled economic release from the US / Canada calendar. The desk does not track this series, so no history or actual is held — forecast and previous come from the calendar.";
+    var k = relKey(e), sum = (k && k.macro && SUM[k.macro]) || (k && k.macro && window.MNAV && MNAV.what && MNAV.what(k.macro)) || (e.kind !== "macro" && SUMK[e.kind]) || "Scheduled economic release from the US / Canada calendar. The desk does not track this series, so no history or actual is held — forecast and previous come from the calendar.";
     var hist = m ? ((m.hist24 && m.hist24.length > 2) ? m.hist24 : m.history || []).slice(-6).reverse() : [];
     var go = LD && LD.at && LD.go ? '<button class="evgo see" data-evgo="' + esc(LD.go) + '" data-evsel="' + esc(LD.sel || "") + '">See it: ' + esc(LD.where) + " →</button>" : e.go ? '<button class="evgo" data-evgo="' + e.go + '">Open ' + esc(deskName(e.go)) + " →</button>" : "";
     var src = e.kind === "macro" || e.kind === "energy" ? (e.fc || e.prev ? "Forecast and previous: Forex Factory weekly calendar feed (consensus as published), refreshed hourly. Blank = none published — never estimated." : "No forecast published for this release.")
@@ -240,19 +240,29 @@
     sum += "";
     var srcHTML = '<p class="evx-s">' + esc(src) + (k && k.macro ? " Actual: official source via the desk (" + esc(k.macro) + ")." : "") + "</p>";
     if (/^(us|ca)_(core_)?cpi$|^ca_(trim|median)$/.test((k && k.macro) || "")) go += ' <button class="evgo" data-cpigo="' + (k.macro.slice(0, 2)) + '">CPI deep dive — every category →</button>';
-    return '<div class="evx">' + (m ? '<div class="evx-c">' + spark(m) + "</div>" : "") + '<div class="evx-t"><b>Summary</b><p>' + esc(sum) + "</p>" +
+    var full = m && window.openMacroDetail ? '<button class="evgo evx-full" data-evhist="' + esc(m.key) + '">Full history — chart &amp; table, 1Y / 2Y / 5Y →</button>' : "";
+    return (full || go ? '<div class="evx-bar">' + full + go + "</div>" : "") + '<div class="evx">' + (m ? '<div class="evx-c">' + spark(m) + "</div>" : "") + '<div class="evx-t"><b>Summary</b><p>' + esc(sum) + "</p>" +
       (hist.length ? '<table class="evx-h"><thead><tr><th>Period</th><th>Value</th></tr></thead><tbody>' + hist.map(function (x) { return "<tr><td>" + esc(x[0]) + "</td><td>" + (window.mval ? mval(m, x[1]) : x[1]) + "</td></tr>"; }).join("") + "</tbody></table>" : "") +
-      srcHTML + (LD && LD.at ? '<p class="evx-l">On the desk ' + hm(LD.at) + " ET (" + lagTxt2(LD.at - e.t) + " after the scheduled time)" + (LD.txt ? " · " + esc(LD.txt) : "") + "</p>" : "") + go + "</div></div>";
+      srcHTML + (LD && LD.at ? '<p class="evx-l">On the desk ' + hm(LD.at) + " ET (" + lagTxt2(LD.at - e.t) + " after the scheduled time)" + (LD.txt ? " · " + esc(LD.txt) : "") + "</p>" : "") + "</div></div>";
   }
 
   /* ---------- release → desk link: did the number land, when, and exactly where to look ---------- */
   var MAPU = [[/^(Advance|Prelim|Final) GDP q\/q|^GDP q\/q/, "us_gdp"], [/Core PCE/, "us_core_pce"], [/^Unemployment Claims/, "us_claims"], [/^Core CPI/, "us_core_cpi"], [/^CPI (y\/y|m\/m)/, "us_cpi"],
-    [/Non-?Farm|Nonfarm/i, "us_nfp"], [/^Unemployment Rate/, "us_ur"], [/Average Hourly Earnings/, "us_ahe"], [/^Retail Sales m\/m/, "us_retail"], [/UoM|Michigan/, "us_umich"], [/Federal Funds Rate|FOMC Statement/, "us_policy"]];
+    [/Non-?Farm|Nonfarm/i, "us_nfp"], [/^Unemployment Rate/, "us_ur"], [/Average Hourly Earnings/, "us_ahe"], [/^Retail Sales m\/m/, "us_retail"], [/UoM|Michigan/, "us_umich"], [/Federal Funds Rate|FOMC Statement/, "us_policy"], [/^Core PPI|^PPI m\/m/, "us_ppi"], [/^Import Prices/, "us_import"],
+    [/^JOLTS/, "us_jolts"], [/^ADP Non-?Farm/i, "us_adp"], [/^Factory Orders/, "us_factory"], [/Durable Goods/, "us_durable"], [/^Industrial Production/, "us_indpro"],
+    [/^Personal Income/, "us_pinc"], [/^Personal Spending/, "us_pspend"], [/^PCE Price Index/, "us_pce"], [/^Building Permits/, "us_permits"], [/^Housing Starts/, "us_starts"],
+    [/^New Home Sales/, "us_nhs"], [/^ISM Manufacturing PMI/, "us_ism"], [/^ISM Services PMI/, "us_ism_svc"], [/^Continuing Claims/, "us_cclaims"]];
   var MAPC = [[/Trimmed|CPI-?trim/i, "ca_trim"], [/Median CPI|CPI-?median/i, "ca_median"], [/^CPI m\/m|^CPI y\/y/, "ca_cpi"], [/Employment Change/, "ca_emp"], [/^Unemployment Rate/, "ca_ur"], [/^GDP m\/m/, "ca_gdp"],
-    [/^Core Retail Sales/, "ca_retail_ex"], [/^Retail Sales m\/m/, "ca_retail"], [/Overnight Rate|BOC Rate Statement/, "ca_policy"]];
+    [/^Core Retail Sales/, "ca_retail_ex"], [/^Retail Sales m\/m/, "ca_retail"], [/Overnight Rate|BOC Rate Statement/, "ca_policy"],
+    [/^Manufacturing Sales/, "ca_mfg"], [/^Wholesale Sales/, "ca_whl"], [/^Building Permits/, "ca_permits"], [/^Housing Starts/, "ca_starts"], [/^IPPI|Industrial Product Price/, "ca_ippi"],
+    [/^Ivey PMI/, "ca_ivey"], [/Job Vacancies/, "ca_vac"], [/^GDP q\/q/, "ca_gdpq"]];
   function relKey(e) {
-    if (e.kind === "macro") { var name = e.label.replace(/^(USD|CAD) /, ""), M = /^CAD /.test(e.label) ? MAPC : MAPU;
-      for (var i = 0; i < M.length; i++) if (M[i][0].test(name)) return { macro: M[i][1] }; return null; }
+    if (e.kind === "macro") { if (e.mkey) return { macro: e.mkey };
+      var name = e.label.replace(/^(USD|CAD) /, ""), ca = /^CAD /.test(e.label), M = ca ? MAPC : MAPU, have = {};
+      (window.macroAll ? macroAll() : []).forEach(function (x) { have[x.key] = x; });
+      for (var i = 0; i < M.length; i++) if (M[i][0].test(name) && (have[M[i][1]] || !window.macroAll)) return { macro: M[i][1] };
+      var hit = Object.keys(have).filter(function (k2) { return k2.indexOf(ca ? "ca_" : "us_") === 0 && have[k2].name.toLowerCase() === name.toLowerCase(); })[0];   /* same name as a tracked series */
+      return hit ? { macro: hit } : null; }
     if (e.kind === "usda" && /Export sales/.test(e.label)) return { asof: "exports" };
     if (e.kind === "wasde") return { asof: "wasde" };
     if (e.kind === "cftc") return { asof: "cftc_grains" };
@@ -658,6 +668,7 @@
     if (ev.key !== "Enter") return; var g = ev.target && ev.target.closest && ev.target.closest(".evfi-go"); if (g) { ev.preventDefault(); go(g.getAttribute("data-evgo")); } });
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t) return;
+    var fh = t.closest("[data-evhist]"); if (fh) { ev.preventDefault(); ev.stopPropagation(); openMacroDetail(fh.getAttribute("data-evhist")); return; }
     var g = t.closest("[data-evgo]"); if (g) { ev.preventDefault(); go(g.getAttribute("data-evgo"), g.getAttribute("data-evsel")); return; }
     if (!t.closest("#panel-events")) { if (t.closest("#tabbtn-events")) { unseen = 0; render(); paintBadge(); } return; }
     var b = t.closest("[data-evday]"); if (b) { V.day = b.getAttribute("data-evday"); V.open = ""; saveV(); repaintMain(true); return; }
@@ -700,6 +711,8 @@
     ".ev-tbl td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}.ev-tbl tr.evr{cursor:pointer}.ev-tbl tr.evr:hover td{background:rgba(110,168,255,.05)}.ev-tbl tr.evr.open td{background:rgba(110,168,255,.08)}.ev-tbl tr.evr.st-out td{opacity:.75}.ev-tbl td,.ev-tbl th{text-align:left!important;white-space:normal}.ev-tbl .evev{min-width:260px}.evx-t p{white-space:normal}#evTop,#evBody{grid-column:1/-1;min-width:0}#evBody{display:flex;flex-direction:column;gap:14px}.ev-tbl tr.evr{display:table-row!important;grid-template-columns:none!important;padding:0!important;border:0!important;background:none!important}.ev-tbl tr.evr.rel-today td{background:#1E40AF;color:#fff}.ev-tbl tr.evr.st-soon td{background:rgba(232,185,61,.10)}.ev-tbl tr.evr.st-due td{background:rgba(63,185,127,.12)}.ev-tbl tr.evr.st-soon td:first-child{box-shadow:inset 3px 0 0 #e8b93d}.ev-tbl tr.evr.st-due td:first-child{box-shadow:inset 3px 0 0 #3fb97f}html[data-theme=light] .ev-tbl tr.evr.rel-today td{background:#DBEAFE;color:#10283F}" +
     ".ev-tbl .evtm{font-family:'IBM Plex Mono',monospace;white-space:nowrap}.ev-tbl .evcc{white-space:nowrap}.ev-tbl .evev{font-weight:600;font-family:'IBM Plex Sans',sans-serif}.ev-tbl .evn{font-family:'IBM Plex Mono',monospace;white-space:nowrap}.ev-tbl .evst{font-size:12px}.ev-tbl .evst .evgo{display:block;margin-top:4px}" +
     ".evimp{display:inline-block;min-width:66px;text-align:center;font:700 11px 'IBM Plex Sans',sans-serif;padding:3px 8px;border-radius:4px;color:#fff}.evimp.iH{background:#d6453d}.evimp.iM{background:#c99a1e;color:#1b1400}.evimp.iL{background:#24406b}" +
+    ".evx-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding:8px 4px 10px;border-bottom:1px solid #1a1a1a;margin-bottom:8px}.evx-bar .evgo{font-size:12.5px}" +
+    ".evx-bar .evx-full{color:#d9b46a;border:1px solid rgba(217,180,106,.5);border-radius:6px;padding:4px 10px;font-weight:600}.evx-bar .evx-full:hover{background:rgba(217,180,106,.1);text-decoration:none}" +
     ".evx{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:18px;padding:6px 4px 10px}.evx-ch{width:100%;height:auto}.evx-ax{font:10px 'IBM Plex Mono',monospace;fill:var(--muted)}.evx-t p{margin:4px 0 10px;font-size:13px;line-height:1.55;color:var(--muted)}.evx-h{border-collapse:collapse;font-size:12px;margin-bottom:8px}.evx-h td,.evx-h th{padding:3px 10px 3px 0;text-align:left}.evx-l{font-size:12.5px}" +
     "@media (max-width:760px){.evdays{grid-template-columns:repeat(3,1fr)}.evx{grid-template-columns:1fr}.ev-tbl{min-width:820px}}";
   document.head.appendChild(evcss);
