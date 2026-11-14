@@ -8,7 +8,7 @@
   var API = "https://api.github.com/repos/" + REPO + "/contents/world.json?ref=world";
   var RAW = "https://raw.githubusercontent.com/" + REPO + "/world/world.json";
   var W = null, etag = "", lastOk = 0, lastTry = 0, err = null, NOTIFY = false;
-  var V = { sub: "overview", grp: "all", flagged: false, q: "", sev: "all" };
+  var V = { sub: "overview", grp: "desk", flagged: false, q: "", sev: "all" };
   try { Object.assign(V, JSON.parse(localStorage.getItem("desk.world") || "{}")); NOTIFY = localStorage.getItem("desk.worldNotify") === "1"; } catch (e) {}
   var seen = {};
   /* report-first layout (Nov 2026): top tabs + one slicer row, no left nav.
@@ -213,48 +213,107 @@
       '<div class="wmt-r">' + range52(i) + '<div class="wbs">' + badges(i) + "</div></div>" +
       '<div class="wmt-f">' + age(i) + "</div></div>";
   }
-  /* Markets: categories as a left pane of tiles (like the grain, bank and country tiles elsewhere on the desk) */
-  var GLAB = { Indices: "Equity indices", FX: "Currencies" };
-  function catPane() {
-    var L = inst(), now = Date.now(), sigF = function (i) { return i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low); };
-    function t(attr, val, on, lab, rows) {
-      var up = rows.filter(function (i) { return i.chg > 0; }).length, dn = rows.filter(function (i) { return i.chg < 0; }).length,
-        op = rows.filter(function (i) { return status(W.exchanges[i.ex] || {}, now) === "open"; }).length, sg = rows.filter(sigF).length;
-      return '<button type="button" class="wm-ct' + (on ? " on" : "") + '" ' + attr + '="' + val + '">' + (on ? '<em class="gr-selb">SELECTED</em>' : "") +
-        '<span class="wm-ctn">' + esc(lab) + "<b>" + rows.length + "</b></span>" +
-        '<span class="wm-ctr"><span class="up">▲ ' + up + '</span><span class="dn">▼ ' + dn + "</span><span>" + op + " open</span>" + (sg ? '<span class="sg">' + sg + " 52w</span>" : "") + "</span></button>";
-    }
-    return '<aside class="wm-left"><div class="gr-col-h">Categories</div>' +
-      t("data-wgrp", "all", V.grp === "all" && !V.flagged, "All markets", L) +
-      GROUPS.map(function (g) { return t("data-wgrp", g, V.grp === g && !V.flagged, GLAB[g] || g, L.filter(function (i) { return i.group === g; })); }).join("") +
-      t("data-wflag", "1", V.flagged, "52-week signals", L.filter(sigF)) + "</aside>";
+  /* Markets (Nov 14): sub-categories ranked by how much they matter to a grain & USD/CAD desk. Every sub-category says
+     why it matters and reads its own numbers; the tier is a fixed desk judgement, the read-outs are computed live. */
+  var TIER = { d: ["DIRECT", "Prices what the desk trades"], h: ["HIGH", "Moves grain or USD/CAD within days"], m: ["MEDIUM", "Shapes demand and risk appetite"], c: ["CONTEXT", "Background — little direct link"] };
+  var SUBS = [
+    ["grains", "Grains & softs", "d", ["corn", "soy", "wheat", "sugar"], "The desk’s own markets (CBOT front month). Sugar competes with corn as an ethanol feedstock and for Brazil’s acreage.",
+      { corn: "CBOT corn — desk market", soy: "CBOT soybeans — desk market", wheat: "CBOT wheat — desk market", sugar: "Brazil cane vs corn ethanol; Brazil acreage" }],
+    ["usd", "USD/CAD & the dollar", "d", ["usdcad", "dxy"], "USD/CAD converts every Canadian grain price; a firmer US dollar (DXY) makes US grain dearer abroad and is a headwind for CBOT.",
+      { usdcad: "Converts CBOT into CAD bids", dxy: "Dollar strength = export headwind" }],
+    ["spread", "US–Canada rates", "d", ["usca2y", "usca10y", "ca2y", "ca10y"], "The US-over-Canada yield gap is the main driver of USD/CAD: a wider US premium usually lifts USD/CAD.",
+      { usca2y: "Main rate driver of USD/CAD", usca10y: "Longer-term USD/CAD driver", ca2y: "Bank of Canada path", ca10y: "Canada term rates" }],
+    ["energy", "Energy", "h", ["wti", "brent", "natgas", "rbob", "heatoil"], "Crude sets ethanol and soybean-oil demand and supports CAD (Canada exports oil); natural gas feeds nitrogen fertilizer; diesel is farm and freight cost.",
+      { wti: "Ethanol / soy-oil value; CAD support", brent: "World crude; CAD terms of trade", natgas: "Nitrogen fertilizer cost", rbob: "Gasoline blend = ethanol demand", heatoil: "Diesel: farm & freight cost" }],
+    ["ust", "US Treasuries", "h", ["us2y", "us5y", "us10y", "us30y"], "The Fed path: sets the US side of the rate gap and the dollar’s direction, and the cost of carrying grain inventory.",
+      { us2y: "Fed path; US side of the spread", us5y: "Medium-term rates", us10y: "Benchmark; mortgage & carry cost", us30y: "Long end" }],
+    ["comfx", "Commodity currencies", "h", ["audusd", "nzdusd"], "Trade with global commodity demand like CAD; AUD also tracks Australia’s wheat exports and China demand.",
+      { audusd: "Australian wheat competitor; China proxy", nzdusd: "Dairy/ag exporter currency" }],
+    ["vol", "Volatility", "m", ["vix"], "The fear gauge: VIX spikes make funds cut risk — CAD usually weakens and crowded commodity longs get sold.",
+      { vix: "Risk-off = CAD weaker, fund selling" }],
+    ["namer", "North American equities", "m", ["spx", "ndx", "ixic", "dji", "rut", "tsx"], "Risk appetite: rising stocks usually support CAD and commodity fund flows; the TSX is heavy in energy and materials.",
+      { spx: "US risk appetite", ndx: "Growth / tech risk", ixic: "Broad US tech", dji: "US blue chips", rut: "US small caps — domestic economy", tsx: "Energy & materials — CAD linked" }],
+    ["asia", "Asia-Pacific equities", "m", ["shcomp", "hsi", "n225", "asx200", "nifty"], "Demand side: China and Asia are the largest buyers of US and Canadian soybeans, canola and wheat.",
+      { shcomp: "China — #1 soybean buyer", hsi: "China sentiment", n225: "Japan — corn & wheat buyer", asx200: "Australia — wheat competitor", nifty: "India — pulses & edible-oil buyer" }],
+    ["indmet", "Industrial metals", "m", ["copper", "aluminium"], "A read on China and industrial demand; copper tends to move with CAD and risk appetite.",
+      { copper: "China growth gauge; moves with CAD", aluminium: "Industrial demand" }],
+    ["majors", "Major currencies", "m", ["eurusd", "usdjpy", "gbpusd", "usdchf"], "These make up most of the DXY; EUR also prices EU and Black Sea wheat competing with North American wheat.",
+      { eurusd: "EU wheat competitiveness; ~58% of DXY", usdjpy: "Japan import demand; risk tone", gbpusd: "Part of DXY", usdchf: "Safe-haven flows" }],
+    ["europe", "European equities", "c", ["ftse", "dax", "cac", "sx5e"], "Global risk tone; the EU is a wheat competitor and a canola buyer.",
+      { ftse: "UK risk tone", dax: "German industry", cac: "France — EU’s biggest wheat grower", sx5e: "Eurozone risk tone" }],
+    ["precious", "Precious metals", "c", ["gold", "silver", "platinum", "palladium"], "Safe-haven and dollar-hedge flows; little direct grain link.",
+      { gold: "Safe haven; dollar hedge", silver: "Precious / industrial mix", platinum: "Autos / industrial", palladium: "Autos" }],
+    ["em", "Emerging-market FX", "c", ["usdinr"], "India is a large buyer of Canadian lentils and peas and of edible oils; a weaker rupee cuts its buying power.",
+      { usdinr: "India import buying power" }]];
+  var SUB_BY = {}; SUBS.forEach(function (s) { SUB_BY[s[0]] = s; });
+  function subOf(id) { for (var k = 0; k < SUBS.length; k++) if (SUBS[k][3].indexOf(id) >= 0) return SUBS[k]; return null; }
+  function mv(i) { return i.kind === "price" ? i.pct : i.chg; }   /* % for prices, bp for yields and spreads */
+  function mvTxt(i) { var v = mv(i); return v == null ? "—" : i.kind === "price" ? sg(v, 2, "%") : sg(v, 1, " bp"); }
+  function subRows(S) { var by = {}; inst().forEach(function (i) { by[i.id] = i; }); return S[3].map(function (id) { return by[id]; }).filter(Boolean); }
+  function pill(t) { return '<span class="wr-t ' + t + '" title="' + esc(TIER[t][1]) + '">' + TIER[t][0] + "</span>"; }
+  /* the read-out: what the sub-category did and what that usually means for the desk (direction from the numbers only) */
+  function readSub(S) {
+    var R = subRows(S), by = {}; R.forEach(function (i) { by[i.id] = i; }); if (!R.length) return "";
+    var P = R.filter(function (i) { return mv(i) != null; }); if (!P.length) return "";
+    var up = P.filter(function (i) { return mv(i) > 0; }).length, dn = P.filter(function (i) { return mv(i) < 0; }).length;
+    var big = P.slice().sort(function (a, b) { return Math.abs(mv(b)) - Math.abs(mv(a)); })[0];
+    var s = up + " up, " + dn + " down · biggest " + big.name.replace(/ \(.*\)/, "") + " " + mvTxt(big) + ". ", f = function (id) { return by[id] && mv(by[id]) != null ? mv(by[id]) : null; };
+    var x;
+    if (S[0] === "usd" && (x = f("dxy")) != null) s += x > 0 ? "Dollar firmer — a headwind for US grain exports; CAD-priced grain gains if USD/CAD rises with it." : x < 0 ? "Dollar softer — supportive for US grain exports." : "";
+    if (S[0] === "spread" && (x = f("usca2y")) != null) s += x > 0 ? "US 2-year premium widened — usually lifts USD/CAD." : x < 0 ? "US 2-year premium narrowed — usually weighs on USD/CAD." : "";
+    if (S[0] === "energy" && (x = f("wti")) != null) s += x > 0 ? "Crude up — supports ethanol and soy-oil values and CAD." : x < 0 ? "Crude down — weighs on ethanol/soy-oil values and CAD." : "";
+    if (S[0] === "vol" && (x = f("vix")) != null) s += x > 0 ? "Fear rising — watch for CAD weakness and fund selling." : x < 0 ? "Fear easing — supportive of risk, CAD and fund buying." : "";
+    if (S[0] === "ust" && (x = f("us2y")) != null) s += x > 0 ? "Front-end yields up — firmer dollar bias." : x < 0 ? "Front-end yields down — softer dollar bias." : "";
+    if (S[0] === "grains") { var g = ["corn", "soy", "wheat"].map(f).filter(function (v) { return v != null; }); if (g.length) { var a = g.reduce(function (p, q) { return p + q; }, 0) / g.length; s += "Grains average " + sg(a, 2, "%") + "."; } }
+    if (S[0] === "comfx" || S[0] === "namer" || S[0] === "asia" || S[0] === "indmet") s += up > dn ? "Risk/demand tone positive." : dn > up ? "Risk/demand tone negative." : "";
+    return s;
   }
-  function marketsHTML() { return '<div class="wm-lay">' + catPane() + '<div class="wm-main">' + marketsBody() + "</div></div>"; }
-  function marketsBody() {
-    var q = (V.q || "").toLowerCase(), list = inst().filter(function (i) {
-      return (V.grp === "all" || i.group === V.grp) && (!V.flagged || (i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low))) &&
-        (!q || (i.name + " " + i.sym + " " + i.region).toLowerCase().indexOf(q) >= 0);
-    });
-    var filt = '<div class="wfil"><input type="search" placeholder="Search markets…" value="' + esc(V.q) + '" data-wq></div>';   /* group / 52-week chips live only in the slicer row above the body */
-    var VIEWSW = '<span class="wv-sw"><button type="button" data-wview="tiles" aria-pressed="' + (V.view !== "table") + '">Tiles</button><button type="button" data-wview="table" aria-pressed="' + (V.view === "table") + '">Rows</button></span>';
-    if (V.view === "table") {
-      var tb = GROUPS.filter(function (g) { return V.grp === "all" || V.grp === g; }).map(function (g) {
-        var rows = list.filter(function (i) { return i.group === g; }); if (!rows.length) return "";
-        return '<tr class="wgh"><td colspan="9">' + ({ Indices: "Equity indices", FX: "Currencies" }[g] || g) + " " + asOf(rows) + "</td></tr>" + rows.map(rowHTML).join(""); }).join("");
-      return '<div class="tile wide"><h2>' + esc(V.flagged ? "52-week signals" : V.grp === "all" ? "All markets" : (GLAB[V.grp] || V.grp)) + ' <span class="h2note">— rows view</span></h2>' + asOf(list, "blk") + '<div class="wv-bar">' + filt + VIEWSW + "</div>" +
-        '<div class="wtw"><table class="wt"><thead><tr><th>Market</th><th>Status · source time</th><th class="r">LTP</th><th class="r">Chg</th><th class="r">% Chg</th><th class="r">High</th><th class="r">Low</th><th>52-week range</th><th>30d</th></tr></thead><tbody>' +
-        (tb || '<tr><td colspan="9" class="neu">No markets match the filter.</td></tr>') + "</tbody></table></div></div>";
+  function deskSubs() { return SUBS.filter(function (s) { return s[2] === "d" || s[2] === "h"; }); }
+  function catPane() {
+    var now = Date.now(), sigF = function (i) { return i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low); };
+    function tile(val, on, lab, rows, t, attr) {
+      var P = rows.filter(function (i) { return mv(i) != null; }), up = P.filter(function (i) { return mv(i) > 0; }).length, dn = P.filter(function (i) { return mv(i) < 0; }).length,
+        op = rows.filter(function (i) { return status(W.exchanges[i.ex] || {}, now) === "open"; }).length;
+      return '<button type="button" class="wm-ct' + (on ? " on" : "") + '" ' + (attr || "data-wgrp") + '="' + val + '">' + (on ? '<em class="gr-selb">SELECTED</em>' : "") +
+        '<span class="wm-ctn">' + esc(lab) + "<b>" + rows.length + "</b></span>" +
+        '<span class="wm-ctr">' + (t ? pill(t) : "") + '<span class="up">▲ ' + up + '</span><span class="dn">▼ ' + dn + "</span>" + (op ? "<span>" + op + " open</span>" : "") + "</span></button>";
     }
-    var body = QUADS.map(function (Q) {
-      var gs = Q[1].filter(function (g) { return V.grp === "all" || V.grp === g; }); if (!gs.length) return "";
-      var rows = list.filter(function (i) { return gs.indexOf(i.group) >= 0; });
-      if (gs.indexOf("Indices") >= 0) rows.sort(function (a, b) { return ["Asia-Pacific", "Europe", "Americas"].indexOf(a.region) - ["Asia-Pacific", "Europe", "Americas"].indexOf(b.region); });
-      if (!rows.length) return "";
-      return '<section class="wq4"><h3>' + Q[0] + " <small>" + rows.length + "</small> " + asOf(rows) + '</h3><div class="wmt-g">' + rows.map(tileHTML).join("") + "</div></section>";
+    var L = inst(), cur = V.flagged ? "" : V.grp;
+    var deskRows = []; deskSubs().forEach(function (s) { deskRows = deskRows.concat(subRows(s)); });
+    var html = '<aside class="wm-left"><div class="gr-col-h">Views</div>' + tile("desk", cur === "desk", "Desk-relevant", deskRows) + tile("all", cur === "all", "All markets", L) +
+      tile("1", V.flagged, "52-week signals", L.filter(sigF), null, "data-wflag");
+    ["d", "h", "m", "c"].forEach(function (t) {
+      html += '<div class="gr-col-h wm-th">' + TIER[t][0].charAt(0) + TIER[t][0].slice(1).toLowerCase() + " relevance <small>" + esc(TIER[t][1]) + "</small></div>";
+      SUBS.filter(function (s) { return s[2] === t; }).forEach(function (s) { html += tile(s[0], cur === s[0], s[1], subRows(s), t); });
+    });
+    return html + "</aside>";
+  }
+  function marketsHTML() { if (V.grp !== "desk" && V.grp !== "all" && !SUB_BY[V.grp]) V.grp = "desk"; return '<div class="wm-lay">' + catPane() + '<div class="wm-main">' + marketsBody() + "</div></div>"; }
+  function subHead(S, n) {
+    return '<div class="wsub-h"><div class="wsub-t">' + pill(S[2]) + "<b>" + esc(S[1]) + "</b><small>" + n + "</small></div>" +
+      '<p class="wsub-why"><i>Why it matters</i> ' + esc(S[4]) + "</p>" + (readSub(S) ? '<p class="wsub-read"><i>Today</i> ' + esc(readSub(S)) + "</p>" : "") + "</div>";
+  }
+  function marketsBody() {
+    var q = (V.q || "").toLowerCase(), sigF = function (i) { return i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low); };
+    var subs = V.flagged || V.grp === "all" ? SUBS : V.grp === "desk" ? deskSubs() : [SUB_BY[V.grp]];
+    var keep = function (i) { return (!V.flagged || sigF(i)) && (!q || (i.name + " " + i.sym + " " + i.region).toLowerCase().indexOf(q) >= 0); };
+    var title = V.flagged ? "52-week signals" : V.grp === "all" ? "All markets — by desk relevance" : V.grp === "desk" ? "Desk-relevant markets" : SUB_BY[V.grp][1];
+    var all = []; subs.forEach(function (S) { all = all.concat(subRows(S).filter(keep)); });
+    var filt = '<div class="wfil"><input type="search" placeholder="Search markets…" value="' + esc(V.q) + '" data-wq></div>';
+    var VIEWSW = '<span class="wv-sw"><button type="button" data-wview="tiles" aria-pressed="' + (V.view !== "table") + '">Tiles</button><button type="button" data-wview="table" aria-pressed="' + (V.view === "table") + '">Rows</button></span>';
+    var head = '<div class="tile wide"><h2>' + esc(title) + ' <span class="h2note">— ranked by relevance to grains and USD/CAD · each group says why it matters and what it did today</span></h2>' + asOf(all, "blk") + '<div class="wv-bar">' + filt + VIEWSW + "</div>";
+    var body = subs.map(function (S) {
+      var rows = subRows(S).filter(keep); if (!rows.length) return "";
+      if (V.view === "table") return '<section class="wq4 wsub">' + subHead(S, rows.length) + '<div class="wtw"><table class="wt"><thead><tr><th>Market</th><th>Status · source time</th><th class="r">LTP</th><th class="r">Chg</th><th class="r">% Chg</th><th class="r">High</th><th class="r">Low</th><th>52-week range</th><th>30d</th></tr></thead><tbody>' + rows.map(rowHTML).join("") + "</tbody></table></div></section>";
+      return '<section class="wq4 wsub">' + subHead(S, rows.length) + '<div class="wmt-g">' + rows.map(function (i) { return tileHTML(i).replace('<div class="wmt-f">', '<div class="wmt-why">' + esc((S[5] || {})[i.id] || "") + '</div><div class="wmt-f">'); }).join("") + "</div></section>";
     }).join("");
-    return '<div class="tile wide"><h2>' + esc(V.flagged ? "52-week signals" : V.grp === "all" ? "All markets" : (GLAB[V.grp] || V.grp)) + ' <span class="h2note">— last price, change, 52-week position · exact source time (Toronto) and age on every tile</span></h2>' + asOf(list, "blk") + '<div class="wv-bar">' + filt + VIEWSW + "</div>" +
-      '<div class="wq4-g">' + (body || '<p class="neu">No markets match the filter.</p>') + "</div>" +
-      '<div class="stamp">LTP = last traded/quoted price · % change vs the previous official close (yields and spreads in basis points) · 52-week range from daily highs/lows · badges: NEW 52W HIGH/LOW when today’s range breaks the prior 52-week extreme, “% from” when within 5% · sparkline = last 30 days</div></div>';
+    return head + '<div class="wsub-g">' + (body || '<p class="neu">No markets match the filter.</p>') + "</div>" +
+      '<div class="stamp">Relevance tiers are a fixed desk view of how directly each group moves grain prices or USD/CAD; “Today” lines are computed from the latest prices on this page (direction only — not a forecast) · LTP = last traded/quoted price · % change vs the previous official close (yields and spreads in basis points) · 52-week range from daily highs/lows · sparkline = last 30 days</div></div>';
+  }
+  /* Overview: one line per desk-relevant group — why it matters and what it did */
+  function relBoard() {
+    return '<h3>Why it matters to the desk <small>tap a group to open it</small></h3><div class="wrb">' + SUBS.filter(function (s) { return s[2] !== "c"; }).map(function (S) {
+      return '<button type="button" class="wrb-r" data-wgo="' + S[0] + '">' + pill(S[2]) + "<b>" + esc(S[1]) + "</b><span>" + esc(readSub(S) || S[4]) + "</span></button>"; }).join("") + "</div>";
   }
   (function () { var c = document.createElement("style"); c.textContent =
     ".wm-lay{display:grid;grid-template-columns:230px minmax(0,1fr);gap:14px;align-items:start;grid-column:1/-1;width:100%}.wm-main>.tile{width:100%;box-sizing:border-box}.wm-lay>*{min-width:0}.wm-left{display:flex;flex-direction:column;gap:8px;position:sticky;top:calc(var(--strip-h,40px) + 64px)}.wm-left .gr-col-h{font-size:15px;font-weight:600;color:#e8eef4;margin:4px 0 0}" +
@@ -264,6 +323,14 @@
     ".wm-ctr{display:flex;flex-wrap:wrap;gap:2px 10px;font:11px 'JetBrains Mono','IBM Plex Mono',monospace;color:#8a8a8a}.wm-ctr .up{color:#3fb97f}.wm-ctr .dn{color:#e0655f}.wm-ctr .sg{color:#d9b46a}" +
     "@media (max-width:1020px){.wm-lay{grid-template-columns:minmax(0,1fr)}.wm-left{position:static;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}.wm-left .gr-col-h{grid-column:1/-1}}@media (max-width:760px){.wm-left{grid-template-columns:repeat(2,minmax(0,1fr))}}" +
     ".wv-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}.wv-sw{display:inline-flex;border:1px solid #2a2a2a;border-radius:6px;overflow:hidden}.wv-sw button{all:unset;cursor:pointer;padding:4px 12px;font:500 12px 'Libre Franklin',system-ui,sans-serif;color:#8a8a8a}.wv-sw button[aria-pressed=true]{color:#d9b46a!important;background:rgba(217,180,106,.1)!important}.wv-sw button+button{border-left:1px solid #2a2a2a}" +
+    ".wm-th{margin-top:6px;font-size:12px!important;color:#d9b46a!important;letter-spacing:.04em}.wm-th small{display:block;font-size:10.5px;color:#777;font-weight:400;letter-spacing:0}" +
+    ".wr-t{font:700 9px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.06em;border:1px solid;border-radius:3px;padding:0 4px;line-height:15px}.wr-t.d{color:#d9b46a}.wr-t.h{color:#38b6c9}.wr-t.m{color:#9aa6b8}.wr-t.c{color:#666}" +
+    ".wsub-g{display:flex;flex-direction:column;gap:14px;margin-top:10px}.wsub-h{margin:0 0 10px}.wsub-t{display:flex;align-items:center;gap:8px}.wsub-t b{font:600 14px 'Libre Franklin',system-ui,sans-serif;color:#e8eef4;letter-spacing:.02em}.wsub-t small{color:#8a8a8a;font:12px 'JetBrains Mono','IBM Plex Mono',monospace}" +
+    ".wsub-why,.wsub-read{margin:5px 0 0;font-size:12.5px;line-height:1.5;color:#c9d4e2}.wsub-why i,.wsub-read i{font-style:normal;font:600 10px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#8a8a8a;margin-right:6px}.wsub-read{color:#e8eef4}.wsub-read i{color:#d9b46a}" +
+    ".wmt-why{font-size:10.5px;color:#9fb1c6;line-height:1.35;border-top:1px solid #151515;padding-top:3px}" +
+    ".wrb{display:flex;flex-direction:column;gap:4px;margin:6px 0 12px}.wrb-r{all:unset;cursor:pointer;display:grid;grid-template-columns:62px 190px minmax(0,1fr);gap:10px;align-items:baseline;padding:6px 8px;border:1px solid #1a1a1a;border-radius:6px;font-size:12.5px;color:#c9d4e2}.wrb-r:hover{border-color:#3a3a3a}.wrb-r b{color:#e8eef4;font-weight:600}" +
+    ".wrb-r .wr-t{justify-self:start}" +
+    "@media (max-width:760px){.wrb-r{grid-template-columns:62px minmax(0,1fr)}.wrb-r span{grid-column:1/-1}#panel-world .wm-left{display:flex!important;flex-direction:row!important;flex-wrap:nowrap;overflow-x:auto;gap:8px;padding-bottom:6px;scrollbar-width:thin}#panel-world .wm-left .gr-col-h{display:none}#panel-world .wm-ct{flex:0 0 158px}}" +
     ".wq4-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:14px;margin-top:10px}.wq4{border:1px solid #1f1f1f;border-radius:8px;padding:10px 12px;min-width:0}" +
     ".wq4 h3{margin:0 0 10px;font:600 12.5px 'Libre Franklin',system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#d9b46a;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}.wq4 h3 small{color:#8a8a8a;font-weight:500}.wq4 h3 .wasof{text-transform:none;letter-spacing:0;font-weight:400}" +
     ".wmt-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}.wmt-r *{font-size:9.5px!important}" +
@@ -366,7 +433,7 @@
       '<div class="wh-clk">' + clocks + "</div>" +
       '<div class="wh-main"><div><h3>Desk first</h3><div class="wh-desk">' + DESK.map(function (id) { return by[id] ? deskTile(deskSync(by[id])) : ""; }).join("") + "</div>" +
       '<h3>Regions</h3><div class="wh-reg">' + reg.map(function (r) { return '<span>' + r[0] + ' <b class="' + cl(r[1]) + '">' + sg(r[1], 2, "%") + "</b></span>"; }).join("") + "</div>" +
-      '<details class="wh-rest"><summary>Everything else (' + L.filter(function (i) { return DESK.indexOf(i.id) < 0; }).length + " markets)</summary>" + rest + "</details>" +
+      relBoard() + '<details class="wh-rest"><summary>Everything else (' + L.filter(function (i) { return DESK.indexOf(i.id) < 0; }).length + " markets)</summary>" + rest + "</details>" +
       '<div class="obs-box"><b>OBSERVATIONS</b><ul>' + obs.map(function (o) { return "<li>" + esc(o) + "</li>"; }).join("") + "</ul></div></div>" +
       '<div class="wh-mv"><h3>What moved <small>Major and above · ' + M.length + " moves from " + maj + " alert rows</small></h3>" + (M.length ? M.slice(0, 14).map(function (a) { var u = a.move > 0;   /* arrow, colour and sign all come from the printed move */
         return '<div class="wh-m"><span class="' + (u ? "up" : "dn") + '">' + (u ? "▲" : "▼") + " " + sg(a.move, 2, a.unit === "bp" ? " bp" : "%") + "</span> <b>" + esc(a.name) + '</b> <span class="sev s' + a.tier + '">' + esc(a.severity) + "</span><small>" + tDate(a.at) + " ET</small></div>"; }).join("") : '<p class="note">No Major moves this session.</p>') + "</div></div>" +
@@ -471,7 +538,7 @@
   }
   function ctxHTML() {
     var lab = { overview: "Overview", sessions: "Sessions", markets: "Markets", alerts: "Alerts", health: "Data health", guide: "Guide" }[V.sub] || "Overview";
-    var sec = V.sub === "markets" ? (V.flagged ? "52-week signals only" : V.grp === "all" ? "All markets" : V.grp) : V.sub === "alerts" ? ({ all: "All alerts", major: "Major and above", up: "Upward", down: "Downward" }[V.sev] || "") : "";
+    var sec = V.sub === "markets" ? (V.flagged ? "52-week signals only" : V.grp === "all" ? "All markets" : V.grp === "desk" ? "Desk-relevant" : (SUB_BY[V.grp] ? SUB_BY[V.grp][1] : V.grp)) : V.sub === "alerts" ? ({ all: "All alerts", major: "Major and above", up: "Upward", down: "Downward" }[V.sev] || "") : "";
     return '<span class="sc-pill"><i></i>' + lab + "</span>" + (sec ? '<span class="sc-sec">› ' + esc(sec) + "</span>" : "") + refreshHTML() + (typeof window.kbSwitchHTML === "function" ? window.kbSwitchHTML() : "");
   }
 
@@ -533,6 +600,7 @@
     var hb = t.closest("[data-whl]"); if (hb) { var x = hb.getAttribute("data-whl"); V.hl = V.hl === x ? null : x; render(); return; }
     var b = t.closest("[data-wsub]"); if (b) { V.sub = b.getAttribute("data-wsub"); save(); render(); return; }
     b = t.closest("[data-wview]"); if (b) { V.view = b.getAttribute("data-wview"); save(); render(); return; }
+    b = t.closest("[data-wgo]"); if (b) { V.sub = "markets"; V.grp = b.getAttribute("data-wgo"); V.flagged = false; save(); render(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
     b = t.closest("[data-wgrp]"); if (b) { V.grp = b.getAttribute("data-wgrp"); V.flagged = false; save(); render(); return; }   /* slicer: a group pick clears the 52-week filter, as the old nav did */
     b = t.closest("[data-wflag]"); if (b) { V.flagged = true; V.grp = "all"; save(); render(); return; }
     b = t.closest("[data-wsev]"); if (b) { V.sev = b.getAttribute("data-wsev"); save(); render(); return; }
