@@ -22,7 +22,8 @@
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   var TZ = "America/Toronto";
-  function dayET(t) { return new Date(t).toLocaleDateString("en-CA", { timeZone: TZ }); }
+  var DF = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+  function dayET(t) { return DF.format(new Date(t)); }
   function hm(t) { return new Date(t).toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" }) + " ET"; }
   function when(t) { return new Date(t).toLocaleString("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " ET"; }
   var COUNTRY = { us: { name: "United States", short: "US", cc: "us" }, ca: { name: "Canada", short: "Canada", cc: "ca" } };

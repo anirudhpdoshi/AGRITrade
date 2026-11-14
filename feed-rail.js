@@ -11,11 +11,12 @@
   var TC = { corn: "#e8b93d", wheat: "#d9a066", soybeans: "#3fb97f", fx: "#38b6c9", macro: "#6ea8ff", cb: "#9b8cff", world: "#ff8a84", leg: "#c9a3ff", earn: "#f5c542", energy: "#f08a5d", metals: "#d4b25a", wires: "#9fb4cf" };
   var DEF = { corn: "corn", wheat: "wheat", soybeans: "soybeans", fx: "fx", world: "world", policy: "cb", earnings: "earn", briefing: "all", events: "all", intel: "agri" };
   var LOADED = Date.now();   /* news older than the page never pops a notification, however late the stored feed arrives */
-  var pick = {}, seen = {}, firstPass = true, lastSig = "", ONLY = true;
+  var pick = {}, seen = {}, firstPass = true, lastSig = "", lastCtx = "", lastPaint = 0, ONLY = true;
   try { ONLY = localStorage.getItem("desk.feedall") !== "1"; } catch (e) {}
   function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
-  function hm(t) { return new Date(t).toLocaleTimeString("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit" }); }
-  function day(t) { return new Date(t).toLocaleDateString("en-CA", { timeZone: "America/Toronto" }); }
+  function hm(t) { return HF.format(new Date(t)); }
+  var DF = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto", year: "numeric", month: "2-digit", day: "2-digit" }), HF = new Intl.DateTimeFormat("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit" });
+  function day(t) { return DF.format(new Date(t)); }
   function tab() { var a = document.querySelector(".tab-panel.active"); return a ? a.id.replace("panel-", "") : "corn"; }
   var WIRE_OK = null;   /* ids of wire alerts the server still sends; a stored one it has withdrawn is hidden */
   function feed() { try { return ((window.EVENTS && EVENTS._feed && EVENTS._feed()) || []).filter(function (m) { var id = m.id || ""; return !(WIRE_OK && /^al\|wire\|/.test(id) && !WIRE_OK[id]); }); } catch (e) { return []; } }
@@ -156,7 +157,10 @@
       }
     });
     firstPass = false;
-    if (sig !== lastSig) { lastSig = sig; paint(true); } else paint(false);
+    /* repaint when the feed changes, the page changes, or every 30 s for the "x min ago" times — not every second */
+    var ctx = tab(), now = Date.now();
+    if (sig !== lastSig) { lastSig = sig; lastCtx = ctx; lastPaint = now; paint(true); }
+    else if (ctx !== lastCtx || now - lastPaint > 30000 || !document.querySelector(".fr-card, .fr-drawer")) { lastCtx = ctx; lastPaint = now; paint(false); }
   }
   document.addEventListener("click", function (e) {
     var it = e.target.closest && e.target.closest(".fs-i[data-evgo]");

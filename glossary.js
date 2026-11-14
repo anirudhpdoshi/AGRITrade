@@ -95,9 +95,24 @@
       });
     });
   }
-  var timer = 0, busy = false;
-  function later() { if (timer) return; timer = setTimeout(function () { timer = 0; busy = true; try { scan(document.querySelector("main")); } catch (e) {} busy = false; }, 400); }
-  new MutationObserver(function () { if (!busy) later(); }).observe(document.body, { childList: true, subtree: true });
+  /* scan only the cards that actually changed (was: the whole page, ~50k nodes, after every live tick) */
+  var timer = 0, busy = false, dirty = new Set(), CARD = ".tile, .rail-card, .pm-card, .qt";
+  function later() { if (timer) return; timer = setTimeout(function () { timer = 0; busy = true;
+    try { var L = []; dirty.forEach(function (c) { if (c.isConnected && c.offsetParent !== null) L.push(c); }); dirty.clear();
+      if (L.length) scan({ querySelectorAll: function () { return L; } }); } catch (e) {} busy = false; }, 400); }
+  new MutationObserver(function (M) {
+    if (busy) return;
+    M.forEach(function (m) {
+      var t = m.target.nodeType === 1 ? m.target : m.target.parentNode; if (!t || !t.closest) return;
+      if (t.closest(".gl, .gl-tip")) return;
+      var c = t.closest(CARD);
+      if (c) dirty.add(c); else [].forEach.call(m.addedNodes, function (n) { if (n.nodeType !== 1) return; if (n.matches(CARD)) dirty.add(n); [].forEach.call(n.querySelectorAll(CARD), function (x) { dirty.add(x); }); });
+    });
+    if (dirty.size) later();
+  }).observe(document.body, { childList: true, subtree: true });
+  /* hidden cards become visible on a tab switch: scan them then */
+  document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("button")) setTimeout(function () { var P = document.querySelector(".tab-panel.active"); if (P) [].forEach.call(P.querySelectorAll(CARD), function (c) { if (!c.querySelector(".gl")) dirty.add(c); }); if (dirty.size) later(); }, 300); });
+  setTimeout(function () { try { scan(document.querySelector(".tab-panel.active") || document.querySelector("main")); } catch (e) {} }, 1500);
   document.addEventListener("mouseover", function (e) { var b = e.target.closest && e.target.closest(".gl"); if (b) show(b); });
   document.addEventListener("mouseout", function (e) { if (e.target.closest && e.target.closest(".gl")) hide(); });
   document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest(".gl"); if (b) { e.preventDefault(); e.stopPropagation(); show(b); } else hide(); }, true);

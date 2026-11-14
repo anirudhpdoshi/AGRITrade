@@ -190,18 +190,15 @@
   /* panel is visible and the data stamp moved, force the full repaint   */
   /* (window.renderAllFull, the pre-dirty version) before cloning.      */
   /* ------------------------------------------------------------------ */
-  var lastDataStamp = null;
+  var seenStamp = {};   /* per commodity: repaint only the grain page being cloned, and only when the data moved (was a full-app repaint) */
   function dataStamp() { try { var m = root.DATA && root.DATA.meta; return m && (m.updated_at || JSON.stringify(m.asof || "")); } catch (e) { return null; } }
   function ensureFreshSources() {
-    var s = dataStamp();
-    if (!s || s === lastDataStamp) return;
-    lastDataStamp = s;
-    try {
-      if (typeof root.renderAllFull === "function") root.renderAllFull();
-      else if (typeof root.renderGrain === "function") ["corn", "wheat", "soybeans"].forEach(function (k) { try { root.renderGrain(k); } catch (e) {} });
-    } catch (e) {}
+    var s = dataStamp(), k = st.commodity; if (!s || k === "fx") return;
+    var src = doc.getElementById("panel-" + k);
+    if (seenStamp[k] === s && src && src.innerHTML) return;
+    seenStamp[k] = s;
+    try { if (typeof root.renderGrain === "function") root.renderGrain(k); } catch (e) {}
   }
-  lastDataStamp = dataStamp();
 
   /* USD/CAD: the desk's CAD positioning (leveraged-funds KPIs, CFTC CAD funds, sentiment & FX options) from the USD/CAD page */
   function mountFx(body) {

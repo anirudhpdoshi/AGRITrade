@@ -1080,186 +1080,7 @@ table.pi-tab td{vertical-align:top}table.pi-tab small{display:block;color:var(--
 .evfi-go{cursor:pointer;border-radius:6px;margin:0 -6px;padding-left:6px;padding-right:6px;transition:background .15s}.evfi-go:hover,.evfi-go:focus-visible{background:rgba(56,182,201,.08);outline:none}
 .evfo{color:#7dd8e6;font-weight:500}.evfi-go:hover .evfo{text-decoration:underline}
 </style>
-<style id="gr3-css">
-/* Grains 3-column desk (Nov 13 redesign): execution tiles | market matrix | insights & activity */
-.qt-v .qt-bf,.qt-v .qt-pp,.qt-v .qt-fr{font-size:inherit!important;font-weight:inherit!important;letter-spacing:inherit!important;margin:0!important;align-self:auto!important;vertical-align:baseline!important;line-height:inherit!important}
-.qt-v{align-items:baseline!important}
-@media (min-width:1021px){
- body.gr3 main{display:grid;grid-template-columns:262px minmax(0,1fr);column-gap:14px;row-gap:0;align-items:start}
- body.gr3 main>*{grid-column:2;min-width:0}
- body.gr3 #grains-head{grid-column:1;grid-row:1/span 40;position:sticky;top:calc(var(--strip-h,40px) + 64px);align-self:start}
- body.gr3 .gr-strip{grid-template-columns:1fr}
- body.gr3 .gr-top{flex-direction:column;font-size:11.5px;gap:2px}
- body.gr3 .gr-top .gr-next{display:none}
-}
-#grains-head .gr-col-h{font-size:15px;font-weight:600;color:#e8eef4;margin:6px 0 8px}
-#grains-head .gr-tile{gap:4px;padding:12px 14px;background:#0c121c;border-color:#1f2a3a;position:relative}
-#grains-head .gr-tile[aria-pressed="true"]{border-color:#e8b93d;box-shadow:0 0 0 1px #e8b93d55,0 0 18px #e8b93d22}
-#grains-head .gr-n{font-size:12.5px;letter-spacing:.04em;color:#c9d4e2;display:flex;align-items:center;gap:6px}
-#grains-head .gr-n b{font-weight:500;color:#8f9db3}
-#grains-head .gr-selb{font-style:normal;font-size:9.5px;font-weight:700;letter-spacing:.06em;color:#0b0f16;background:#e8b93d;border-radius:4px;padding:1px 6px;position:absolute;top:-8px;left:50%;transform:translateX(-50%)}
-#grains-head .gr-st{font:700 9px "JetBrains Mono","IBM Plex Mono",monospace;letter-spacing:.06em;border:1px solid;border-radius:3px;padding:0 4px}#grains-head .gr-st.dl{color:#e8b93d;border-color:#e8b93d66}#grains-head .gr-st.se{color:#8f9db3;border-color:#8f9db366}#grains-head .gr-st.lv{color:#3fb97f;border-color:#3fb97f66}#grains-head .gr-st.cz{color:#e0655f;border-color:#e0655f66}
-#grains-head .gr-live{margin-left:auto;color:#3fb97f;display:inline-flex}.gr-pulse{width:14px;height:14px}
-#grains-head .gr-v{display:flex;align-items:baseline;gap:6px}
-#grains-head .gr-px{background:none!important;padding:0!important;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:28px;font-weight:500;color:#fff;letter-spacing:.01em;line-height:1.15}
-#grains-head .gr-px .qt-v{font-size:inherit;font-weight:inherit;color:inherit}
-#grains-head .gr-v small{font-size:11.5px;color:#8f9db3}
-#grains-head .gr-c{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:13px}
-#grains-head .gr-phys{display:flex;flex-direction:column;gap:2px;border-top:1px solid #1f2a3a;padding-top:6px;margin-top:2px;font-size:11.5px}
-#grains-head .gr-ph{color:#8f9db3;font-size:10.5px;letter-spacing:.03em}
-#grains-head .gr-kv{display:flex;justify-content:space-between;color:#aab6c8}#grains-head .gr-kv b{font-family:"IBM Plex Mono",ui-monospace,monospace;font-weight:500;color:#e8eef4}
-#grains-head .gr-f{font-size:11px;color:#7d8aa0}
-@media (max-width:1020px){ body.gr3 .gr-strip{grid-template-columns:repeat(3,minmax(0,1fr))} }
-@media (max-width:760px){ body.gr3 .gr-strip{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px} #grains-head .gr-tile{padding:10px 8px} #grains-head .gr-phys,#grains-head .gr-f,#grains-head .gr-live,body.gr3 .gr-col-h{display:none} #grains-head .gr-n{font-size:10.5px;flex-wrap:wrap;gap:0 4px} #grains-head .gr-px{font-size:17px} #grains-head .gr-v small{display:none} #grains-head .gr-c{font-size:10.5px} body.gr3 .tab-panel.active .subnav{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none} body.gr3 .tab-panel.active .subnav .subbtn{white-space:nowrap} }
-/* market matrix: report tabs as slim text tabs; countdowns move to the right column */
-body.gr3 .tab-panel.active .subnav-tile{padding:10px 14px 4px}
-body.gr3 .tab-panel.active .subnav-tile:before{content:"Market Matrix & Subcategories";display:block;font-size:15px;font-weight:600;color:#e8eef4;margin-bottom:6px}
-body.gr3 :is(#panel-corn,#panel-wheat,#panel-soybeans).active .subnav-live{display:none}
-body.gr3 .tab-panel.active .subnav{display:flex!important;flex-wrap:wrap;gap:2px 4px;border-bottom:1px solid #1f2a3a}
-body.gr3 .tab-panel.active .subnav .subbtn{all:unset;cursor:pointer;padding:8px 12px 9px;font-size:13.5px;color:#9fb0c6;border-bottom:2px solid transparent;margin-bottom:-1px;display:inline-flex}
-body.gr3 .tab-panel.active .subnav .subbtn:hover{color:#fff}
-body.gr3 .tab-panel.active .subnav .subbtn[aria-selected="true"]{color:#e8b93d;border-bottom-color:#e8b93d}
-body.gr3 .tab-panel.active .subnav .subbtn:focus-visible{outline:2px solid #38b6c9}
-body.gr3 .tab-panel.active .subnav .sb-ev,body.gr3 .tab-panel.active .subnav .sb-cd{display:none}
-body.gr3 .tab-panel.active .subnav .subbtn[data-sub="prices"] .sb-name:after{content:"DELAYED";font-size:9px;font-weight:700;letter-spacing:.06em;color:#e8b93d;border:1px solid #e8b93d88;border-radius:4px;padding:0 4px;margin-left:6px;vertical-align:2px}
-/* insights & activity */
-.gx-box{order:-1}.gx-h{font-size:15px;font-weight:600;color:#e8eef4}
-.gx-next{border:1px solid #2a3547;background:#0c121c;border-radius:10px;padding:10px 12px;margin-top:6px}
-.gx-t{font-weight:600;font-size:13px;color:#e8eef4}.gx-e{font-size:13px;color:#c9d4e2;margin-top:4px}.gx-c{font-size:12px;color:#e8b93d;font-family:"IBM Plex Mono",ui-monospace,monospace;margin-top:2px}
-.gx-list{margin-top:6px;display:flex;flex-direction:column;gap:2px}
-.gx-r{display:grid;grid-template-columns:auto 1fr auto;gap:8px;font-size:11.5px;color:#8f9db3;padding:4px 2px;cursor:pointer;border-bottom:1px solid #1a2433}
-.gx-r span:first-child{color:#c9d4e2}.gx-r span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gx-r b{font-weight:500;color:#e8b93d;font-family:"IBM Plex Mono",ui-monospace,monospace}
-.gx-r:hover span:first-child{color:#fff}
-/* prices tab */
-.gp-tbl{width:100%;border-collapse:collapse;font-size:13px}
-.gp-tbl th{font-size:11.5px;font-weight:500;color:#8f9db3;text-align:right;padding:8px 10px;border-bottom:1px solid #26324a;white-space:nowrap}
-.gp-tbl th:first-child,.gp-tbl th:nth-child(2){text-align:left}
-.gp-tbl td{padding:8px 10px;border-bottom:1px solid #1a2433;text-align:right;font-family:"IBM Plex Mono",ui-monospace,monospace;white-space:nowrap;vertical-align:top}
-.gp-tbl td small{display:block;font-size:10.5px;color:#7d8aa0;margin-top:2px}
-.gp-tbl td.gp-m,.gp-tbl td.gp-k{text-align:left;font-family:inherit}.gp-tbl td.gp-m b{font-weight:600;color:#e8eef4}.gp-tbl td.gp-k{color:#aab6c8}
-.gp-tbl td.gp-px b{font-weight:500;color:#fff;font-size:14px}
-.gp-tbl td.gp-c b{font-weight:500}.gp-tbl .up{color:var(--green)}.gp-tbl .dn{color:var(--red)}.gp-tbl td.gp-c small{color:inherit;opacity:.85}
-.gp-tbl tr.gp-front td{background:#e8b93d0d}
-.gp-tbl tbody tr:hover td{background:#14213a}
-</style>
-<style id="fxo-css">
-/* uniform price digits everywhere: same size and baseline; the 5th decimal is dimmed, not shrunk */
-.qt-v .qt-fr{color:var(--faint,#6b7686)!important}
-.qt-box.tk-up-s,.qt-box.tk-dn-s{background:transparent!important;padding:1px 4px 1px 14px!important}
-.qt-box.tk-up-s .qt-v{color:var(--green)!important}.qt-box.tk-dn-s .qt-v{color:var(--red)!important}
-.qt-box.tk-up-s .qt-ar:before{color:var(--green)!important}.qt-box.tk-dn-s .qt-ar:before{color:var(--red)!important}
-/* USD/CAD desk — OLED bento: true black, 1px hairlines, no fills or shadows */
-body.fxo,body.fxo main{background:#000}
-body.fxo .tab-panel.active .tile,body.fxo .tab-panel.active .rail-card{background:#000!important;border:1px solid #1a1a1a!important;box-shadow:none!important;border-radius:6px}
-body.fxo .tab-panel.active .rail-card:not(.fr-card){padding:12px 14px}body.fxo .tab-panel.active .tile:before,body.fxo .tab-panel.active .tile:after{display:none}
-body.fxo .tab-panel.active .qt-grid,body.fxo .tab-panel.active .fxmx{font-family:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace}
-body.fxo .tab-panel.active .qt-grid{grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:0;border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a}
-body.fxo .tab-panel.active .qt{background:transparent!important;border:0!important;border-left:1px solid #1a1a1a!important;border-radius:0!important;padding:8px 12px!important;box-shadow:none!important}
-body.fxo .tab-panel.active .qt:first-child{border-left:0!important}
-body.fxo .tab-panel.active .qt-h b{color:#8a8a8a;font-size:10.5px;text-transform:uppercase}body.fxo .tab-panel.active .qt-sub{color:#555;font-size:10px;text-transform:uppercase}
-body.fxo .tab-panel.active .qt-box{padding-left:0!important}body.fxo .tab-panel.active .qt-ar{display:none}
-body.fxo .tab-panel.active .qt-v{color:#fff!important;font-size:24px!important;font-weight:400!important}
-body.fxo .tab-panel.active .qt-c{font-size:11.5px;white-space:normal}body.fxo .tab-panel.active .qt-f{color:#555;font-size:10.5px}
-body.fxo .tab-panel.active .subnav-tile{border:0!important;background:#000!important;padding:6px 0 0!important}
-body.fxo .tab-panel.active .subnav{display:flex!important;flex-wrap:wrap;gap:0 4px;border-bottom:1px solid #1a1a1a;margin-top:10px}
-body.fxo .tab-panel.active .subnav .subbtn{all:unset;cursor:pointer;padding:8px 12px 9px;font-size:14px;color:#8a8a8a;border-bottom:1px solid transparent;margin-bottom:-1px;font-family:"Libre Franklin",system-ui,sans-serif}
-body.fxo .tab-panel.active .subnav .subbtn:hover{color:#fff}
-body.fxo .tab-panel.active .subnav .subbtn[aria-selected="true"]{color:#d9b46a;border-bottom-color:#d9b46a}
-body.fxo .tab-panel.active .subnav .sb-ev,body.fxo .tab-panel.active .subnav .sb-cd{display:none}
-@media (max-width:760px){ body.fxo .tab-panel.active .subnav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none} body.fxo .tab-panel.active .subnav .subbtn{white-space:nowrap} body.fxo .tab-panel.active .qt-grid{grid-template-columns:repeat(2,minmax(0,1fr))} body.fxo .tab-panel.active .qt:nth-child(odd){border-left:0!important} body.fxo .tab-panel.active .qt{border-top:1px solid #1a1a1a!important} body.fxo .tab-panel.active .qt-v{font-size:20px!important} }
-/* forward rates matrix */
-.fxmx-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:8px 16px;margin-bottom:12px}
-.fxmx-head h2{font-family:"Libre Franklin",system-ui,sans-serif!important;font-size:19px!important;font-weight:500!important;letter-spacing:.06em!important;text-transform:uppercase;color:#d9b46a!important;margin:0}
-.fxmx-meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:flex-end;font-size:12px;color:#8a8a8a}
-.fxmx-g{color:#d9b46a;font-weight:500}.fxmx-tg{display:inline-flex;border:1px solid #2a2a2a;border-radius:6px;overflow:hidden}.fxmx-tg button{all:unset;cursor:pointer;padding:3px 10px;font:500 11.5px "JetBrains Mono","IBM Plex Mono",monospace;color:#8a8a8a}.fxmx-tg button[aria-pressed=true]{color:#d9b46a!important;background:rgba(217,180,106,.1)!important}.fxmx-tg button+button{border-left:1px solid #2a2a2a}.fxmx.feed{display:block}.fxmx-t{display:table!important}.fxmx-t thead{display:table-header-group!important}.fxmx-t tbody{display:table-row-group!important}.fxmx-t{width:100%;border-collapse:collapse;font:13px "JetBrains Mono","IBM Plex Mono",monospace}.fxmx-t th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#8a8a8a;font-weight:500;text-align:left;padding:7px 10px;border-bottom:1px solid #2a2a2a}.fxmx-t td{padding:6px 10px;border-bottom:1px solid #141414;color:#c9d4e2}.fxmx-t .r{text-align:right}.fxmx-t b{color:#fff;font-weight:500}.fxmx-t .up{color:#3fb97f}.fxmx-t .dn{color:#e0655f}.fxmx-t tr.sp td{color:#d9b46a}.fxmx-t tbody tr:hover td{background:#0d0d0d}
-.fxmx-pill{border:1px solid #2a2a2a;border-radius:5px;padding:3px 8px;font-size:11px;color:#8a8a8a;font-family:"JetBrains Mono","IBM Plex Mono",monospace}.fxmx-pill b{color:#fff;font-weight:500}
-.fxmx{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;font-family:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace}
-.fxmx-c{border:1px solid #1f1f1f;border-radius:6px;padding:10px 12px 9px;background:linear-gradient(180deg,#000 35%,rgba(120,20,20,var(--a,.12)));min-width:0;cursor:default}
-.fxmx-c.prem{background:linear-gradient(180deg,#000 35%,rgba(20,110,60,var(--a,.12)))}
-.fxmx-c:hover{border-color:#3a3a3a}
-.fxmx-t{display:flex;justify-content:space-between;font-size:12px;color:#8a8a8a}.fxmx-t b{color:#fff;font-weight:600;font-size:14px}
-.fxmx-f{font-size:26px;color:#fff;margin:6px 0 4px;letter-spacing:.01em;white-space:nowrap}.fxmx-f i{font-style:normal;color:#5c5c5c}
-.fxmx-p{font-size:13px}.fxmx-p.dn{color:#e0655f}.fxmx-p.up{color:#3fb97f}
-.fxmx-d{font-size:11px;color:#666;margin-top:2px}
-body.gr3 .fxmx-f{font-size:clamp(16px,1.45vw,23px)}body.gr3 .fxmx-c{padding:9px 10px 8px}
-@media (max-width:1300px){.fxmx{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media (max-width:760px){.fxmx{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.fxmx-f{font-size:20px}}
-</style>
-<style id="labels-css">
-/* app-wide: active section chips are a gold outline, not a filled yellow button; headings and labels one balanced scale */
-.sec-chip[aria-pressed="true"]{color:#e8b93d!important;background:rgba(232,185,61,.10)!important;border-color:#e8b93d!important}
-.sec-chip[aria-pressed="true"] small{background:rgba(232,185,61,.18)!important;color:#e8b93d!important}
-.tile h2{font-size:12.5px;letter-spacing:.08em;line-height:1.45}
-.tile h2 .h2note{letter-spacing:.01em;text-transform:none;font-weight:400}
-.kpi .lab,.kpi-lab,.qt-h b{letter-spacing:.05em}
-.stamp{line-height:1.5}
-</style>
-<style id="aid-css">
-/* AI Debt — same desk styling: true black panels, hairlines, slim gold tabs, one-row KPI strips, readable chart labels */
-body.fxo .tab-panel.active :is(.ad-sec,.ad-co,.ad-flt,.ad-k,.ad-seg){background:#000!important;border-color:#1a1a1a!important;box-shadow:none!important}
-body.fxo .tab-panel.active .ad-seg{border:0!important;border-bottom:1px solid #1a1a1a!important;border-radius:0;padding:0;gap:4px;display:flex}
-body.fxo .tab-panel.active .ad-seg button{border-radius:0;padding:8px 14px 9px;font:500 14px "Libre Franklin",system-ui,sans-serif;color:#8a8a8a;border-bottom:1px solid transparent;margin-bottom:-1px;box-shadow:none!important;background:transparent!important}
-body.fxo .tab-panel.active .ad-seg button.on{color:#d9b46a;border-bottom-color:#d9b46a}
-body.fxo .tab-panel.active .ad-co-b.on{background:rgba(217,180,106,.08)!important;border-color:#d9b46a!important}
-body.fxo .tab-panel.active .ad-co-b.on .c{color:#d9b46a!important;border-color:#d9b46a88!important}
-.ad-kpi{gap:0!important;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.ad-kpi .ad-k{border:0!important;border-left:1px solid var(--line)!important;border-radius:0!important}
-.ad-kpi .ad-k:first-child{border-left:0!important}
-.ad-k .v{font-size:21px!important;font-weight:600!important}
-.ad-k.ad-k-long .v{font-size:14px!important;line-height:1.35;font-weight:500!important}
-.ad-lb{paint-order:stroke;stroke:#0a0f16;stroke-width:3px;stroke-linejoin:round}
-body.fxo .ad-lb{stroke:#000}
-.ad-t td,.ad-t th{white-space:nowrap}
-</style>
-<style id="oled-all">
-/* the OLED desk look on every menu except Events */
-body.fxo{background:#000}
-body.fxo .topbar,body.fxo nav.gnav,body.fxo .gnav,body.fxo #gsub{background:#000!important}
-body.fxo .tab-panel.active :is(.tile,.rail-card,.tq-p,.tq-k,.tq-svg,.qt,.kpi,.gr-tile,.gx-next,.obs-box,.prow,.usm-a){background:#000!important;border-color:#1a1a1a!important;box-shadow:none!important}
-body.fxo #grains-head .gr-tile{background:#000!important;border-color:#1f1f1f!important}
-body.fxo #grains-head .gr-tile[aria-pressed="true"]{border-color:#d9b46a!important;box-shadow:0 0 0 1px #d9b46a55,0 0 18px #d9b46a1f!important}
-body.fxo #grains-head .gr-px{font-family:"JetBrains Mono","IBM Plex Mono",monospace}
-body.fxo .tab-panel.active .tile h2{color:#d9b46a}
-body.fxo .tab-panel.active .subnav .subbtn[aria-selected="true"]{color:#d9b46a!important;border-bottom-color:#d9b46a!important}
-body.fxo :is(#panel-corn,#panel-wheat,#panel-soybeans,#panel-fx) .subctx .sc-sec{display:none}
-body.fxo .tk-side{background:transparent!important;border:1px solid #1a1a1a!important;color:#fff!important}body.fxo .tk-side .tk-lab{color:#8a8a8a!important}body.fxo .tk-side .qt-v{color:#fff!important}body.fxo .tk-badge{background:#000!important;border:1px solid #2a2a2a!important;color:#d9b46a!important}
-body.fxo .gnav{background:#000!important;border-color:#1a1a1a!important;box-shadow:none!important}
-body.fxo .gnav-b{font-weight:500!important;color:#8a8a8a!important;background:transparent!important;box-shadow:none!important}
-body.fxo .gnav-b:hover{color:#fff!important}
-body.fxo .gnav-b[aria-current=page]{color:#d9b46a!important;box-shadow:inset 0 -1px 0 #d9b46a!important}
-body.fxo .topbar h1{font-family:"JetBrains Mono","IBM Plex Mono",monospace;font-weight:500;letter-spacing:.02em}
-body.fxo .snapshot-banner,body.fxo .season-banner{background:#000!important}
-nav.tabs [data-gnav-of="grains"]{display:none!important}
-.fwd-legacy{display:none!important}   /* the 24-month matrix replaces it; kept in the page because the matrix reprices from its engine */
-@media (min-width:1021px){body.gr3 #panel-fx .qt-grid{grid-template-columns:repeat(7,minmax(0,1fr))!important}body.gr3 #panel-fx .qt-v{font-size:19px!important}body.gr3 #panel-fx .qt{padding:8px 9px!important}}
-.tq-p{overflow-x:auto}@media (max-width:760px){.tq-svg{min-width:860px}}
-/* no filled yellow buttons anywhere: the selected option is a gold outline */
-body.fxo .tab-panel.active button[aria-pressed="true"]:not(.gr-tile):not(.subbtn):not([data-pisub]),body.fxo .tab-panel.active button.on:not(.ad-co-b):not(.subbtn):not(.pi-card),body.fxo #gsub .gsub-b[aria-pressed="true"]{background:rgba(217,180,106,.08)!important;color:#d9b46a!important;border-color:#d9b46a!important;box-shadow:none!important}
-</style>
-<style id="pos-mini">
-@media (min-width:1021px){ body.gr3.gr-mini main{grid-template-columns:150px minmax(0,1fr)} }
-body.gr-mini #grains-head .gr-tile{padding:7px 9px;gap:1px}
-body.gr-mini #grains-head .gr-phys,body.gr-mini #grains-head .gr-f,body.gr-mini #grains-head .gr-stale,body.gr-mini #grains-head .gr-live,body.gr-mini #grains-head .gr-v small,body.gr-mini .gr-top{display:none}
-body.gr-mini #grains-head .gr-px{font-size:16px}body.gr-mini #grains-head .gr-n{font-size:10.5px}body.gr-mini #grains-head .gr-c{font-size:10.5px}
-body.gr-mini #grains-head .gr-col-h{font-size:12px;margin:2px 0 6px}
-body.gr-mini #grains-head .gr-selb{font-size:8.5px;top:-7px}
-body.fxo .pos-tabs{gap:0 4px!important;border-bottom:1px solid #1a1a1a;margin-bottom:12px!important}
-body.fxo .pos-tabs button{border:0!important;border-radius:0!important;background:transparent!important;color:#8a8a8a!important;font-weight:500!important;padding:8px 12px 9px!important;border-bottom:1px solid transparent!important;margin-bottom:-1px}
-body.fxo .pos-tabs button[aria-selected="true"]{color:#d9b46a!important;border-bottom-color:#d9b46a!important}
-body.fxo .pos-tabs button:hover{color:#fff!important}
-/* Positioning: the commodity comes from the left tiles and the summary table already lists every grain — no repeat box, no second commodity row */
-#panel-positioning .cf-view{display:none!important}
-/* Intelligence: commodity comes from the left tiles */
-#panel-intel .sw-ctl > span:first-child,#panel-intel .sw-ctl > .gr-slicer:first-of-type{display:none!important}
-/* World Markets: the same slim gold-underline menu */
-body.fxo .w-tabs{gap:0 4px!important;border-bottom:1px solid #1a1a1a;margin-bottom:12px!important}
-body.fxo .w-tabs button{border:0!important;border-radius:0!important;background:transparent!important;color:#8a8a8a!important;font-weight:500!important;padding:8px 12px 9px!important;border-bottom:1px solid transparent!important;margin-bottom:-1px;box-shadow:none!important}
-body.fxo .w-tabs button b{font-weight:500}body.fxo .w-tabs button small{color:#555!important;margin-left:6px}
-body.fxo .w-tabs button[aria-selected="true"]{color:#d9b46a!important;border-bottom-color:#d9b46a!important}body.fxo .w-tabs button[aria-selected="true"] small{color:#8a7a55!important}
-body.fxo .w-tabs button:hover{color:#fff!important}
-body.fxo .tab-panel.active :is(.wh-c,.wh-t,.sn-b,.sw-b,.wh-g){background:#000!important;border-color:#1f1f1f!important}
-.gr-slicer[aria-label="CFTC commodity"]{display:none!important}
-</style>
+<link rel="stylesheet" href="desk-theme.css?v=20261113a">
 </head>
 <body class="locked">
 <!-- owner passcode gate · the passcode must decrypt the sealed vault (config.js: PBKDF2 600k + AES-256-GCM); no passcode hash is published · re-locks after 20 min idle -->
@@ -1410,11 +1231,13 @@ function asOf(key, withTime){
 }
 /* calendar times are stored as printed by the source calendar (US Mountain);
    evEpoch converts them so the page can show Toronto time and sort past/future */
+var _ZF={}, _ZM={};   /* one formatter per zone and a memo: this runs thousands of times per page */
 function zonedMs(y,mo,d,h,mi,tz){
+  var key=y+"|"+mo+"|"+d+"|"+h+"|"+mi+"|"+tz; if(key in _ZM) return _ZM[key];
   var guess=Date.UTC(y,mo-1,d,h,mi), p={};
-  new Intl.DateTimeFormat("en-US",{timeZone:tz,year:"numeric",month:"numeric",day:"numeric",hour:"numeric",minute:"numeric",hourCycle:"h23"})
+  (_ZF[tz]||(_ZF[tz]=new Intl.DateTimeFormat("en-US",{timeZone:tz,year:"numeric",month:"numeric",day:"numeric",hour:"numeric",minute:"numeric",hourCycle:"h23"})))
     .formatToParts(new Date(guess)).forEach(function(x){ p[x.type]=+x.value; });
-  return guess-(Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute)-guess);
+  return (_ZM[key]=guess-(Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute)-guess));
 }
 function evEpoch(e){
   var dm=/^(\d{4})-(\d{2})-(\d{2})$/.exec(e.date), tm=/^(\d{1,2}):(\d{2})\s*(am|pm)$/i.exec(e.time||"");
@@ -1427,7 +1250,8 @@ function etLabel(ms,withDay){
 }
 function safeUrl(u){ return /^https?:\/\//i.test(u||"") ? esc(u) : "#"; }
 function isAuto(key){ var m=DATA.meta||{}; return m.asof && m.built_at && new Date(m.asof[key])>new Date(m.built_at); }
-function fmt(n, d){ if(Math.abs(n)<0.5*Math.pow(10,-(d==null?0:d))) n=0; return n.toLocaleString("en-US",{minimumFractionDigits:(d==null?0:d), maximumFractionDigits:(d==null?0:d)}); }
+var _NF={};
+function fmt(n, d){ d=d==null?0:d; if(Math.abs(n)<0.5*Math.pow(10,-d)) n=0; return (_NF[d]||(_NF[d]=new Intl.NumberFormat("en-US",{minimumFractionDigits:d, maximumFractionDigits:d}))).format(n); }
 function money(v){ return "$" + fmt(v, v < 10 ? (Math.round(v*100)%25===0?2:4) : 2); }
 function money2(v){ return "$" + fmt(v,2); }
 function sgn(v, d, suf){ var s = (v>0?"+":v<0?"−":"") + fmt(Math.abs(v), d==null?1:d) + (suf||""); return s; }
@@ -5252,7 +5076,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script src="pricechart-ui.js?v=20261110e"></script>
 <script src="narrative-ui.js?v=20261110a"></script>
 <script src="macro-table.js?v=20261110a"></script>
-<script src="macro-nav.js?v=20261113f"></script>
+<script src="macro-nav.js?v=20261113g"></script>
 <script src="nav-ui.js?v=20261113b"></script>
 <script src="usm-cal.js?v=20261110a"></script>
 <script src="usm-nav.js?v=20261111a"></script>
@@ -5264,7 +5088,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="tracker-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="treasury-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="ai-debt-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
-<script>(function(){var f=document.createElement("script");f.src="positioning-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
+<script>(function(){var f=document.createElement("script");f.src="positioning-ui.js?v=20261113b"+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var v=Date.now(),a=document.createElement("script");a.src="co-engine.js?v="+v;a.onload=function(){var b=document.createElement("script");b.src="company-ui.js?v="+v;document.body.appendChild(b);};document.body.appendChild(a);})();</script>
 <script>/* GitHub API allowance (60 requests/hour per browser) is reserved for the live feed (live.json, every minute).
    Every other module's reads of its data branch go to the raw copy (a minute or two behind), and live.json itself drops to
