@@ -11,7 +11,7 @@
   var doc = root.document, KEY = "desk.earnLocks", MAX = 3, POLL_MS = 120000, TZ = "America/New_York";
   var DEFAULT_WORKER = "https://agritrade-sec.anirudh-p-doshi.workers.dev";
   function worker() { try { var w = localStorage.getItem("desk.secWorker"); return w === "off" ? "" : w || DEFAULT_WORKER; } catch (e) { return DEFAULT_WORKER; } }
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function esc(s) { return DeskCore.esc(s); }
   function today() { return new Date().toLocaleDateString("en-CA", { timeZone: TZ }); }
   function dayOf(iso) { return iso ? new Date(iso).toLocaleDateString("en-CA", { timeZone: TZ }) : null; }
   function et(iso, o) { return iso ? new Date(iso).toLocaleString("en-US", Object.assign({ timeZone: "America/Toronto", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }, o || {})) + " ET" : "—"; }

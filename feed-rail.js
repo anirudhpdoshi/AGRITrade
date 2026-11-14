@@ -13,7 +13,7 @@
   var LOADED = Date.now();   /* news older than the page never pops a notification, however late the stored feed arrives */
   var pick = {}, seen = {}, firstPass = true, lastSig = "", lastCtx = "", lastPaint = 0, ONLY = true;
   try { ONLY = localStorage.getItem("desk.feedall") !== "1"; } catch (e) {}
-  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function esc(s) { return DeskCore.esc(s); }
   function hm(t) { return HF.format(new Date(t)); }
   var DF = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto", year: "numeric", month: "2-digit", day: "2-digit" }), HF = new Intl.DateTimeFormat("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit" });
   function day(t) { return DF.format(new Date(t)); }

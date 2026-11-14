@@ -3,7 +3,7 @@
 (function (root) {
   var MC = "FGHJKMNQUVXZ", MN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   var NAME = { corn: "Corn", soybeans: "Soybeans", wheat: "Wheat" };
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function esc(s) { return DeskCore.esc(s); }
   function p4(v) { return v == null || !isFinite(v) ? "" : (+v).toFixed(4); }
   function mon(c) { var m = /([FGHJKMNQUVXZ])(\d{2})$/.exec(c || ""); return m ? MN[MC.indexOf(m[1])] + "-" + m[2] : c; }
   function day(iso) { if (!iso) return ""; var p = String(iso).slice(0, 10).split("-"); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }); }

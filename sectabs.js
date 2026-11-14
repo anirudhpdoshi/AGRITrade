@@ -5,7 +5,7 @@
   var doc = root.document, KEY = "desk.sectabs", SAVED = {};
   try { SAVED = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) {}
   function save() { try { localStorage.setItem(KEY, JSON.stringify(SAVED)); } catch (e) {} }
-  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function esc(s) { return DeskCore.esc(s); }
   /* heading text without its notes: "02 · COST OF DEBT  WA yield …" -> "Cost of debt" */
   function label(el) {
     var h = el.querySelector("h2,h3"); if (!h) return null;

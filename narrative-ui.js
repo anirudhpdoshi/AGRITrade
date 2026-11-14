@@ -3,7 +3,7 @@
    Correlation is never presented as cause. */
 (function (root) {
   var doc = root.document, NAME = { corn: "Corn", wheat: "Wheat", soybeans: "Soybeans" };
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function esc(s) { return DeskCore.esc(s); }
   function num(x) { var v = typeof x === "string" ? parseFloat(x.replace(/,/g, "")) : x; return isFinite(v) ? v : null; }
   function c2(v) { return (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(1) + "¢"; }
   function px(v) { return "$" + v.toFixed(v < 20 ? 4 : 2).replace(/0{1,2}$/, ""); }

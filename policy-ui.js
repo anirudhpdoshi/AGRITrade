@@ -11,7 +11,7 @@
   var V = (function () { try { return JSON.parse(localStorage.getItem("desk.policyView") || "{}"); } catch (e) { return {}; } })();
   V.sub = V.sub || "monitor"; V.bank = V.bank || "all"; V.sort = V.sort || "date";
   function save() { try { localStorage.setItem("desk.policyView", JSON.stringify(V)); } catch (e) {} }
-  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function esc(s) { return DeskCore.esc(s); }
   function fl(cc) { try { return window.WORLD && WORLD.flag ? WORLD.flag(cc) : ""; } catch (e) { return ""; } }
   function bname(b) { return (J && J.banks[b] && J.banks[b].name) || b.toUpperCase(); }
   function day(iso) { return iso ? new Date(iso).toLocaleDateString("en-US", { timeZone: TZ, month: "short", day: "numeric" }) : "—"; }

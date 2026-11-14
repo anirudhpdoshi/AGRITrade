@@ -6,7 +6,7 @@
   var ST = { v: "table", cat: "all", sort: "rel", dir: -1 };
   try { var s0 = JSON.parse(localStorage.getItem("desk.mtab") || "{}"); if (s0 && s0.v) ST = Object.assign(ST, s0); } catch (e) {}
   function save() { try { localStorage.setItem("desk.mtab", JSON.stringify(ST)); } catch (e) {} }
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function esc(s) { return DeskCore.esc(s); }
   var CATS = [["all", "All"], ["infl", "Inflation"], ["lab", "Labour"], ["act", "Activity"], ["rates", "Rates"], ["trade", "Trade & fiscal"]];
   function cat(k) { return /cpi|pce|ppi|trim|median/.test(k) ? "infl" : /_ur$|nfp|emp|ahe|hours|jolts|claims|cclaims|adp|udur/.test(k) ? "lab" : /policy|rate|yield/.test(k) ? "rates" : /trade|deficit|fiscal/.test(k) ? "trade" : "act"; }
   function n(v) { var x = typeof v === "string" ? parseFloat(v) : v; return isFinite(x) ? x : null; }

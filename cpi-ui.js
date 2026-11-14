@@ -18,7 +18,7 @@
   };
   function cur() { var c = CC[V.cc] || CC.us; return c.data() && c.data().items && c.data().items.length ? c : null; }
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  function esc(t) { return String(t == null ? "" : t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function esc(s) { return DeskCore.esc(s); }
   function mon(ym) { var a = (ym || "").split("-"); return a.length > 1 ? MON[+a[1] - 1] + " " + a[0] : ym; }
   function last(a) { return a && a.length ? a[a.length - 1] : null; }
   function prev(a) { return a && a.length > 1 ? a[a.length - 2] : null; }

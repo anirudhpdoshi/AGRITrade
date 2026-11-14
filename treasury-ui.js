@@ -11,7 +11,7 @@
   var P = document.getElementById("panel-treasury"), BTN = document.getElementById("tabbtn-treasury");
   if (!P || !BTN) return;
   var MON = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function esc(s) { return DeskCore.esc(s); }
   function T(v, d) { return v == null ? "N/A" : "$" + (+v).toFixed(d == null ? 2 : d) + "T"; }
   function B(v) { return v == null ? "—" : "$" + Math.round(v).toLocaleString("en-US") + " B"; }
   function B1(v) { return v == null ? "—" : "$" + (+v).toLocaleString("en-US", { maximumFractionDigits: 1, minimumFractionDigits: 1 }) + " B"; }

@@ -17,7 +17,7 @@
   var store = { get: function (k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
                 set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
   var V = Object.assign({ desk: "ca" }, store.get(VIEW) || {});
-  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function esc(s) { return DeskCore.esc(s); }
   function ago(iso) { var m = Math.round((Date.now() - Date.parse(iso)) / 60000); return !isFinite(m) ? "" : m < 1 ? "now" : m < 60 ? m + "m ago" : m < 2880 ? Math.round(m / 60) + "h ago" : Math.round(m / 1440) + "d ago"; }
   function et(ms, day) { return new Date(ms).toLocaleString("en-US", Object.assign({ timeZone: "America/Toronto", hour: "numeric", minute: "2-digit" }, day ? { weekday: "short", month: "short", day: "numeric" } : {})); }
   function nf(v, d) { return v == null || !isFinite(v) ? "—" : (+v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }); }

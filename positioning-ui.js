@@ -49,7 +49,7 @@
   if (GR.indexOf(st.commodity) < 0 && st.commodity !== "fx") st.commodity = "corn";
   if (!REPORTS.some(function (r) { return r[0] === st.report; })) st.report = "cftc";
   function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
-  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function esc(s) { return DeskCore.esc(s); }
   function n(v) { return v == null || isNaN(v) ? null : Math.round(Math.abs(v)).toLocaleString("en-US"); }
   function sg(v) { return v == null || isNaN(v) ? UNA : (v < 0 ? "−" : v > 0 ? "+" : "") + n(Math.abs(v)); }
   function day(iso) { if (!iso) return UNA; var p = String(iso).split("-"); if (p.length !== 3) return esc(iso); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }); }

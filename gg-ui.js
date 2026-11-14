@@ -13,7 +13,7 @@
   var A2 = { USA: "us", CAN: "ca", BRA: "br", ARG: "ar", RUS: "ru", UKR: "ua", CHN: "cn", IND: "in", AUS: "au", PRY: "py", ZAF: "za", KAZ: "kz",
     MEX: "mx", URY: "uy", PAK: "pk", TUR: "tr", JPN: "jp", GBR: "gb", CHE: "ch", NZL: "nz", HKG: "hk", DEU: "de", FRA: "fr", EU: "eu" };
 
-  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
+  function esc(s) { return DeskCore.esc(s); }
   function mt(v, d) { return v == null ? "—" : (v / 1000).toLocaleString("en-US", { minimumFractionDigits: d == null ? 1 : d, maximumFractionDigits: d == null ? 1 : d }); }
   function n1(v, d) { return v == null ? "—" : (+v).toLocaleString("en-US", { minimumFractionDigits: d == null ? 1 : d, maximumFractionDigits: d == null ? 1 : d }); }
   function pc(v, d) { return v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d == null ? 1 : d) + "%"; }

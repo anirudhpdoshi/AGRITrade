@@ -31,7 +31,7 @@
   V.sort = V.sort || "mcap"; V.dir = V.dir || -1; V.view = V.view || "market"; V.idx = V.idx || "dji";
   V.fw = V.fw || "all"; V.ft = V.ft || "any"; var ask = null, idxOpen = null, seaCell = null, q = "";
   function save() { try { localStorage.setItem("desk.earningsView", JSON.stringify(V)); } catch (e) {} }
-  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function esc(s) { return DeskCore.esc(s); }
 
   /* ---------- styles (scoped to .ue-) ---------- */
   var css = document.createElement("style");

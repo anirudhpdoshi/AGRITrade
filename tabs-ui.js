@@ -1,7 +1,7 @@
 /* Remaining tabs (Commodities BRD s.15): a computed tab label and one Observations box per tab, rule-based from each tab's own data. */
 (function (root) {
   var doc = root.document, ET = "America/New_York";
-  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function esc(s) { return DeskCore.esc(s); }
   function day(iso) { return new Date(String(iso).length === 10 ? iso + "T12:00:00Z" : iso).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: String(iso).length === 10 ? "UTC" : ET }); }
   function sym(id, t) { var b = doc.getElementById("tabbtn-" + id), s = b && b.querySelector(".sym"); if (s && t && s.textContent !== t) s.textContent = t; }
   function box(P, id, bullets) { if (!P) return; var old = doc.getElementById(id); if (!bullets.length) { if (old) old.remove(); return; }

@@ -5,7 +5,7 @@
 (function () {
   "use strict";
   var NAME = { corn: "Corn", wheat: "Wheat", soybeans: "Soybeans" };
-  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function esc(s) { return DeskCore.esc(s); }
   function px(v) { return v == null ? "—" : "$" + (+v).toFixed(4); }
   function ct(v) { return v == null ? "—" : ((v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(1) + "¢"); }
   function n0(v) { return v == null ? "—" : Math.round(v).toLocaleString("en-US"); }

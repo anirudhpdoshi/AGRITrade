@@ -32,7 +32,7 @@
     document.head.appendChild(css);
   })();
   function save() { try { localStorage.setItem("desk.world", JSON.stringify(V)); } catch (e) {} }
-  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
+  function esc(s) { return DeskCore.esc(s); }
   function nf(v, d) { return v == null || !isFinite(v) ? "—" : (+v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }); }
   function sg(v, d, u) { return v == null || !isFinite(v) ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + nf(Math.abs(v), d) + (u || ""); }
   function cl(v) { return v > 0 ? "up" : v < 0 ? "dn" : "neu"; }

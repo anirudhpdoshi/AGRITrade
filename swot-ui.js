@@ -84,7 +84,7 @@
   var doc = root.document, ORDER = ["corn", "soybeans", "wheat"], V = { k: null, h: "week", f: "both" };
   try { var sv = JSON.parse(localStorage.getItem("desk.swot") || "{}"); if (sv.h) V.h = sv.h; if (sv.f) V.f = sv.f; } catch (e) {}
   function save() { try { localStorage.setItem("desk.swot", JSON.stringify({ h: V.h, f: V.f })); } catch (e) {} }
-  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function esc(s) { return (typeof DeskCore !== "undefined" ? DeskCore : require("./core.js")).esc(s); }
   function nowET() { var d = new Date(), f = function (o) { return d.toLocaleString("en-CA", Object.assign({ timeZone: "America/Toronto" }, o)); }; return f({ year: "numeric", month: "2-digit", day: "2-digit" }) + "T" + f({ hour: "2-digit", minute: "2-digit", hourCycle: "h23" }); }
   function grain() { if (V.k) return V.k; try { var g = localStorage.getItem("desk.grain"); if (ORDER.indexOf(g) >= 0) return g; } catch (e) {} return "corn"; }
   function seg(attr, list, on) { return '<div class="gr-slicer" role="group">' + list.map(function (x) { return '<button type="button" ' + attr + '="' + x[0] + '" aria-pressed="' + (x[0] === on) + '">' + x[1] + "</button>"; }).join("") + "</div>"; }

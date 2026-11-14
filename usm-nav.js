@@ -7,7 +7,7 @@
 (function (root) {
   "use strict";
   var doc = root.document, RK = "desk.usmRecent", SK = "desk.usmWatch", MK = "desk.usmMode";
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function esc(s) { return DeskCore.esc(s); }
   function getL(k) { try { var a = JSON.parse(localStorage.getItem(k) || "null"); return Array.isArray(a) ? a : null; } catch (e) { return null; } }
   function setL(k, a) { try { localStorage.setItem(k, JSON.stringify(a)); } catch (e) {} }
   var MODES = [["overview", "Market Overview"], ["search", "Stock Search"], ["company", "Company Analysis"], ["calendar", "Earnings Calendar"]];

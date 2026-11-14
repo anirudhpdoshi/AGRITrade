@@ -91,7 +91,7 @@
     carry: function (g, t) { var m = /Roll progress[^\d]*(?:Nov|Oct|Dec|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep)? ?\d* ?(?:\(prelim\))?\s*([\d.]+)%/.exec(t.textContent.replace(/\s+/g, " ")); return m ? ["Roll progress is " + m[1] + "% of open interest: " + (+m[1] < 50 ? "most positions are still in the front." : "most positions have moved to the deferred.")] : []; }
   };
   var doc = root.document, GR = ["corn", "soybeans", "wheat"], SKIP = /obs-box/, LOG = {};
-  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function esc(s) { return (typeof DeskCore !== "undefined" ? DeskCore : require("./core.js")).esc(s); }
   function demote(tile, nodes) { if (!nodes.length) return; var d = tile.querySelector(":scope > .prow-ev"); if (!d) { d = doc.createElement("details"); d.className = "prow-ev"; d.innerHTML = "<summary>Detail evidence</summary>"; tile.appendChild(d); } nodes.forEach(function (x) { d.appendChild(x); }); }
   function spaced(el) { var w = doc.createTreeWalker(el, NodeFilter.SHOW_TEXT), o = [], x; while ((x = w.nextNode())) o.push(x.nodeValue); return o.join(" ").replace(/\s+/g, " "); }
   function box(tile, bullets, key) {

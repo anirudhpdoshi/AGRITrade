@@ -5,7 +5,7 @@
   var API = "https://api.github.com/repos/anirudhpdoshi/AGRITrade/contents/health.json?ref=health",
       RAW = "https://raw.githubusercontent.com/anirudhpdoshi/AGRITrade/health/health.json";
   var H = null, ERR = "", SEL = "api", etag = null, timer = null;
-  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function esc(s) { return DeskCore.esc(s); }
   function et(s, withDate) { if (!s) return "—"; var d = new Date(s); if (isNaN(d)) return esc(s); var o = { hour: "numeric", minute: "2-digit", timeZone: "America/Toronto" }; if (withDate) { o.month = "short"; o.day = "numeric"; } return d.toLocaleString("en-US", o) + " ET"; }
   function ago(s) { if (!s) return "—"; var m = Math.round((Date.now() - Date.parse(s)) / 60000); return m < 1 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " d ago"; }
   function age(m) { return m == null ? "—" : m < 60 ? m + " min" : m < 1440 ? (m / 60).toFixed(1) + " h" : (m / 1440).toFixed(1) + " d"; }

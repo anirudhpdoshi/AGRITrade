@@ -20,7 +20,7 @@
   var KEY = "desk.mnav", S = { c: "us", g: "main", k: {}, r: "2", v: "both" };
   try { var sv = JSON.parse(localStorage.getItem(KEY) || "{}"); if (sv.c) S.c = sv.c; if (sv.g && TE_IDS.indexOf(sv.g) >= 0) S.g = sv.g; if (sv.k) S.k = sv.k; if (sv.r) S.r = sv.r; if (sv.v) S.v = sv.v; } catch (e) {}
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function esc(s) { return DeskCore.esc(s); }
   var TZ = "America/Toronto";
   var DF = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
   function dayET(t) { return DF.format(new Date(t)); }

@@ -24,6 +24,7 @@ u.searchParams.delete("fresh");history.replaceState(null,"",u.pathname+(u.search
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta charset="utf-8">
+<script src="core.js?v=20261113a"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
 <link rel="icon" href="data:,">
@@ -1256,7 +1257,7 @@ function money(v){ return "$" + fmt(v, v < 10 ? (Math.round(v*100)%25===0?2:4) :
 function money2(v){ return "$" + fmt(v,2); }
 function sgn(v, d, suf){ var s = (v>0?"+":v<0?"−":"") + fmt(Math.abs(v), d==null?1:d) + (suf||""); return s; }
 function cls(v){ return v>0 ? "up" : v<0 ? "dn" : "neu"; }
-function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function esc(s) { return DeskCore.esc(s); }
 function stat(k, v, small){ return '<div class="stat"><div class="k">'+k+'</div><div class="v">'+v+(small?' <small>'+small+'</small>':'')+'</div></div>'; }
 
 /* ---------------- grain meta (verified pipeline summary text, Oct 22 2026) ---------------- */

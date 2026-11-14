@@ -22,7 +22,7 @@
   var cat = "c1"; try { cat = localStorage.getItem("desk.usmCat") || "c1"; } catch (e) {}
   if (!CATS.some(function (c) { return c[0] === cat; })) cat = "c1";
 
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function esc(s) { return DeskCore.esc(s); }
   var T0 = Date.now();
   function W() { return window.WORLD && WORLD._data ? WORLD._data() : null; }
   function bySym(s) { var w = W(); return w && (w.instruments || []).filter(function (i) { return i.sym === s; })[0] || null; }

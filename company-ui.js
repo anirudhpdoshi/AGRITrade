@@ -13,7 +13,7 @@
   function worker() { try { var w = localStorage.getItem(WK); return w === "off" ? "" : w || DEFAULT_WORKER; } catch (e) { return DEFAULT_WORKER; } }
   var MEM = {}, card = null, rerender = function () { if (window.EARNINGS) EARNINGS.render(); };
   var C1 = "#1f9db3", C2 = "#c4842a", C3 = "#9468d6", C4 = "#d0607a";   /* validated categorical order (dark surface) */
-  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function esc(s) { return DeskCore.esc(s); }
   var f$ = E.fmt;
   function pc(v, d) { if (v == null || !isFinite(v)) return "—"; var t = Math.abs(v).toFixed(d == null ? 1 : d); return (+t === 0 ? "" : v > 0 ? "+" : "−") + t + "%"; }
   function pp(v) { return v == null ? "—" : pc(v).replace("%", " pp"); }

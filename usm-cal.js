@@ -9,7 +9,7 @@
   try { ST.tab = localStorage.getItem("desk.usmCalTab") || "today"; } catch (e) {}
   var TABS = [["upcoming", "Upcoming"], ["today", "Today"], ["released", "Released"], ["refreshing", "Refreshing"]];
   var seenReleased = null;
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function esc(s) { return DeskCore.esc(s); }
   function n(v) { return v == null || v === "" || !isFinite(+v) ? null : +v; }
   function num(v, d) { return v == null ? "—" : (+v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }); }
   function big(v) { if (v == null) return "—"; var a = Math.abs(v), s = v < 0 ? "−$" : "$"; return a >= 1e9 ? s + (a / 1e9).toFixed(2) + "B" : a >= 1e6 ? s + (a / 1e6).toFixed(1) + "M" : s + num(a, 0); }

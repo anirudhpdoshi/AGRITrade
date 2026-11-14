@@ -80,7 +80,7 @@
   function lab(d, short) { return short ? MON[d.getUTCMonth()] + " ’" + String(d.getUTCFullYear()).slice(2) : MON[d.getUTCMonth()] + " " + d.getUTCDate() + ", " + d.getUTCFullYear(); }
   function clock(t) { return new Date(t).toLocaleTimeString("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit", second: "2-digit" }); }
   function tradeDateET() { var p = {}; new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(Date.now())).forEach(function (q) { p[q.type] = q.value; }); return utc(+p.year, +p.month, +p.day); }
-  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+  function esc(s) { return (typeof DeskCore !== "undefined" ? DeskCore : require("./core.js")).esc(s); }
 
   /* rate inputs: server snapshot (fwd_inputs) when present; otherwise the legacy stored rates, flagged as indicative */
   function inputs() {

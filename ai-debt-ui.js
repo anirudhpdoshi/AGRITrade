@@ -51,7 +51,7 @@
   var D = null, E = null, LOADFAIL = false, EFAIL = false, BUILT = false;
   var F = { co: "", yr: "", inst: "", cf: "", view: "summary" };
   var scrub = false;
-  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function esc(s) { return DeskCore.esc(s); }
   function num(v) { return (+v).toLocaleString("en-US"); }
   function fmtB(v) { if (v == null) return "—"; var a = Math.abs(+v); return (+v < 0 ? "−$" : "$") + (a > 0 && a < 0.1 ? a.toFixed(3) : a.toFixed(2)) + "B"; } /* $B, 2 decimals; 3 decimals below $0.10B so small raises (min $0.004B) never print as $0.00B */
   function sumB(rows) { var t = 0, n = 0; rows.forEach(function (r) { if (r.include_in_total !== false && r.amount_usd_b != null) { t += r.amount_usd_b; n++; } }); return { t: Math.round(t * 1000) / 1000, n: n }; } /* totals count ONLY included rows (parent funded debt) */

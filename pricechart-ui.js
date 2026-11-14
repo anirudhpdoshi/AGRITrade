@@ -10,7 +10,7 @@
   try { ST = JSON.parse(localStorage.getItem("desk.pxc") || "{}"); } catch (e) {}
   function st(k) { return ST[k] || (ST[k] = { r: "3M", ma: { 20: 1, 50: 1 }, v: "chart" }); }
   function save() { try { var o = {}; Object.keys(ST).forEach(function (k) { o[k] = { r: ST[k].r, ma: ST[k].ma, v: ST[k].v }; }); localStorage.setItem("desk.pxc", JSON.stringify(o)); } catch (e) {} }
-  function esc(t) { return String(t == null ? "" : t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function esc(s) { return DeskCore.esc(s); }
   function f4(v) { return v == null ? "—" : "$" + v.toFixed(4).replace(/0{1,2}$/, ""); }
   function dlab(d, long) { var x = new Date(d + "T12:00:00Z"); return x.toLocaleDateString("en-US", long ? { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" } : { month: "short", day: "numeric", timeZone: "UTC" }); }
   function series(k) { var G = root.DATA && DATA.grain_long; return G && G.series && G.series[k] || null; }
