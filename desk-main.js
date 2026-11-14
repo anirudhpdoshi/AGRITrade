@@ -2929,20 +2929,7 @@ function renderGrain(key){ try{ oiSanitize(DATA); }catch(e){}
   var MA50=f.ma50||{corn:"5.10", soybeans:"12.75", wheat:"7.05"}[key];
   var wow = last.net - prev.net;
   var html='<div class="layout"><div class="grid">'+grainSubnavHTML(key), OV=grainKpiHTML(key)+grainDashboardHTML(key), DV='', FU='';
-  /* fan tile */
-  var FL=fanLevels(g, meta);
-  OV+='<div class="tile wide" data-src="grains_quote" data-src2="options" data-grain="'+key+'"><h2>'+meta.name+' '+meta.contract+' — 10-day σ fan <span class="h2note">double-click the chart to zoom · settle fan anchored '+fmtDate(f.settle_date)+' · live fan re-anchored on the latest delayed quote</span></h2>'+
-    '<div class="stat-row" style="margin:6px 0 10px">'+
-    stat("Daily σ", "$"+fmt(f.sig,4)) +
-    stat("Chain IV", fmt(f.iv_chain_iv,2)+"%") +
-    stat("MA20 / 50 / 100", "$"+f.ma20+" / $"+MA50+(f.ma100?" / $"+f.ma100:"")) +
-    stat("Settle 10-day 95% range", f.r10[0].toFixed(2)+" – "+f.r10[1].toFixed(2)) +
-    stat("Settle 10-day 99% range", f.r10_99[0].toFixed(2)+" – "+f.r10_99[1].toFixed(2)) +
-    '</div>'+ fanChipsHTML(key)+ '%%FANZOOM%%'+ fanSVG2(g, meta, FL)+ fanRulerHTML(g, FL)+
-    '<p class="posread">'+esc(FL.read)+'</p>'+
-    '<div class="legend"><span><span class="sw" style="background:#dbe4f0"></span>Verified settlements ('+g.history.length+')</span><span><span class="sw" style="background:'+meta.accent+'"></span>Settle-anchored fan (LATEST VERIFIED)</span><span><span class="sw" style="background:#38b6c9"></span>Live-anchored fan (delayed quote '+esc(f.intraday[1]||'')+')</span><span><span class="sw" style="background:#f0c169"></span>MA20</span><span><span class="sw" style="background:#b18cff"></span>MA50 / options walls</span><span><span class="sw" style="background:#ff6b6b"></span>Market (delayed)</span><span>Right-edge labels: every live-fan level at day 10, spaced apart with leader lines to each level\u2019s true price — no label overlaps another · exp MA20 / exp MA50 are flat zero-drift extensions of the last trailing values, labeled \u201cexp\u201d — never predictions · IV band uses chain IV '+fmt(f.iv_chain_iv,2)+'% × √(10/252)</span></div>'+
-    '<div class="stamp">Settle fan from '+g.history.length+' daily settles through '+fmtDate(f.settle_date)+' (σ = st.dev of the last 30 daily changes) · live fan re-anchored on the delayed quote '+esc(f.intraday[1])+'</div></div>';
-  OV=OV.replace('%%FANZOOM%%', fanZoomHTML(key));
+  /* the 10-day σ fan card was merged into the Volatility cone (volcone.js): one cone, implied or realised σ */
   /* export sales — 10-week trend */
   FU+=wasdeTableHTML(key)+exportTileHTML(key)+destTileHTML(key);
   /* insight + curve (both computed from the data) */
@@ -3512,7 +3499,7 @@ document.querySelector('main').addEventListener('click', function(ev){
 /* ================= LEFT SECTION NAVIGATOR (groups the cards of each sub-tab) ================= */
 var SECG={
   grain:{
-    overview:[['snap','Snapshot & KPIs',/kpi-strip|dash-head/],['cone','Volatility cone',/vcone-tile/],['fan','Price & σ fan',/σ fan/],['season','Seasonality',/ssn-tile/],['insight','Insight',/\bInsight\b/],['ask','Ask Claude',/ask-tile/]],
+    overview:[['snap','Snapshot & KPIs',/kpi-strip|dash-head/],['cone','Volatility cone',/vcone-tile/],['season','Seasonality',/ssn-tile/],['insight','Insight',/\bInsight\b/],['ask','Ask Claude',/ask-tile/]],
     deriv:[['cockpit','Derivatives cockpit',/kpi-strip/],['pos','Positioning KPIs',/poskpi|ckwrap/],['cftc','CFTC managed money',/cftc_grains/],['opt','Options data',/Options positioning|Open-interest change/],['vol','Volatility & skew',/Volatility|IV skew/],['optflow','Options flow & expirations',/of-tile|Options flow &amp; expirations|Options flow & expirations/],['flow','Position flow signal',/fl-tile|Position flow/],['carry','Carry & roll',/tr-tile|Curve & calendar|Futures roll/],['oi','Open interest by strike',/\boi-(corn|wheat|soybeans)\b/]],
     fund:[['cmp','Crop-year comparison',/Crop-year comparison/],['xcmp','Export comparison',/Export comparison/],['wmap','World map',/production map/i],['wdet','Country detail',/ detail /],['wprod','Top producers',/Top producers/],['wexp','Top exporters',/Top exporters/],['brsurvey','CONAB survey',/CONAB crop survey/],['brsd','Brazil supply & demand',/Brazil (soybean )?supply/i],['brvs','CONAB vs USDA',/CONAB vs USDA/],['brexp','Brazil exports',/exports \u2014 actual|exports — actual/],['brl','USD/BRL',/USD\/BRL/],['sd','Supply & demand (WASDE)',/supply & demand/i],['dest','Export destinations',/Export destinations/i],['exp','Export sales',/Export Sales/i],['cal','Agri calendar',/agri calendar/i],['caprod','Production & farm prices',/production by crop year|farm price/i],['ca','Canada / Ontario stats',/Canada|Ontario/]],
     inputs:[['cost','Input cost summary',/input costs/i],['paths','Price paths & events',/price paths/i]]

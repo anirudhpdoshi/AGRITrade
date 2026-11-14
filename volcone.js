@@ -11,7 +11,7 @@
 (function (root) {
   var doc = root.document;
   var KEYS = ["corn", "soybeans", "wheat", "fx"], NAME = { corn: "Corn", soybeans: "Soybeans", wheat: "Wheat", fx: "USD/CAD" }, MULT = 5000;
-  var L = { dual: true, walls: true, ma: true, events: true, cot: true };
+  var L = { dual: true, walls: true, ma: true, events: true, cot: true, rv: false };
   try { var sv = JSON.parse(localStorage.getItem("desk.vcone") || "{}"); for (var q in sv) if (q in L) L[q] = !!sv[q]; } catch (e) {}
   function save() { try { localStorage.setItem("desk.vcone", JSON.stringify(L)); } catch (e) {} }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
@@ -62,7 +62,12 @@
       m.px = qt && qt.px != null && qt.ts && iso(Date.parse(qt.ts)) >= (R0.settle_date || "") ? +qt.px : m.settle;
       m.contract = R0.contract || fan.front || ""; m.unit = "$/bu";
       m.state = qt ? (root.MKT && MKT.grain && !MKT.grain() ? "CLOSED" : "DELAYED") : "SETTLE";
-      var iv = +(near.iv || fan.iv_chain_iv); m.sd = iv > 0 ? iv / 100 / Math.sqrt(252) : null; m.iv = iv; m.volLab = "chain ATM IV " + (iv ? iv.toFixed(2) + "%" : "");
+      var iv = +(near.iv || fan.iv_chain_iv); m.sdIv = iv > 0 ? iv / 100 / Math.sqrt(252) : null; m.iv = iv;
+      /* realised: the desk's own 30-session settle σ (fan.sig, $/bu) as a share of the settle — the same σ the old σ-fan card used */
+      m.sdRv = fan.sig && m.settle ? +fan.sig / m.settle : null;
+      var useRv = L.rv && m.sdRv || !m.sdIv; m.sd = useRv ? m.sdRv : m.sdIv; m.rvOn = !!useRv;
+      m.volLab = useRv ? "30-session realised σ ($" + (+fan.sig).toFixed(4) + "/day)" : "chain ATM IV " + (iv ? iv.toFixed(2) + "%" : "");
+      try { if (root.fanLevels && root.GMETA) m.read = fanLevels(G, GMETA[k]).read; } catch (e) {}
       m.thr = 0.05; m.thrLab = "5¢";
       m.oi = (near.rows || []).map(function (r) { return [+r[0], +r[1] || 0, +r[2] || 0]; });
       var prev = {}; ((near.rows_prev || {}).rows || []).forEach(function (r) { prev[+r[0]] = [+r[1] || 0, +r[2] || 0]; }); m.prevOk = !!(near.rows_prev && near.rows_prev.rows);
@@ -206,25 +211,27 @@
   }
   /* ---------- telemetry rail + header ---------- */
   function rail(m, L2) {
-    var d = m.dec, live = m._live, F = m._F, ci = live ? [m.px * Math.exp(-1.96 * Math.sqrt(path(m, F)[F])), m.px * Math.exp(1.96 * Math.sqrt(path(m, F)[F]))] : null;
+    var d = m.dec, live = m._live, F = m._F, VF = live ? Math.sqrt(path(m, F)[F]) : 0, ci = live ? [m.px * Math.exp(-1.96 * VF), m.px * Math.exp(1.96 * VF)] : null, ci99 = live ? [m.px * Math.exp(-2.576 * VF), m.px * Math.exp(2.576 * VF)] : null;
     var kv = function (a, b) { return '<div class="vc-kv"><span>' + a + "</span><b>" + b + "</b></div>"; };
     var tg = function (k2, lab) { return '<button type="button" class="vc-tg" data-vctg="' + k2 + '" aria-pressed="' + L[k2] + '"><span>' + lab + "</span><i></i></button>"; };
     var reg = m.gex == null ? (m.fx ? '<div class="vc-reg na">GAMMA REGIME: n/a — no FX options OI</div>' : "") : '<div class="vc-reg ' + (m.gex < 0 ? "short" : "long") + '">GAMMA REGIME: ' + (m.gex < 0 ? "SHORT / VOLATILE" : "LONG / PINNED") + "</div>";
     var cot = m._cot, cotTxt = cot ? (m.px >= cot.px ? "above" : "below") + " by " + (Math.abs(m.px - cot.px) * m.unitMove).toFixed(1) + m.uLab : "—";
     return '<div class="vc-rail">' + reg +
       '<div class="vc-kvs">' + kv("MA20", m.ma20 ? m.ma20.toFixed(d) : "—") + kv("MA50", m.ma50 ? m.ma50.toFixed(d) : "—") + kv("MA100", m.ma100 ? m.ma100.toFixed(d) : "—") +
-        kv("10D 95% low", ci ? ci[0].toFixed(d) : "—") + kv("10D 95% high", ci ? ci[1].toFixed(d) : "—") + (m.gex != null ? kv("NET GEX", (m.gex < 0 ? "−$" : "$") + Math.abs(m.gex / 1e6).toFixed(0) + "M") : "") +
+        kv("10D 95% low", ci ? ci[0].toFixed(d) : "—") + kv("10D 95% high", ci ? ci[1].toFixed(d) : "—") + kv("10D 99% range", ci99 ? ci99[0].toFixed(d) + "–" + ci99[1].toFixed(d) : "—") +
+        (m.sdIv && m.sdRv ? kv("Implied vol", (m.sdIv * Math.sqrt(252) * 100).toFixed(1) + "%") + kv("Realised vol 30d", (m.sdRv * Math.sqrt(252) * 100).toFixed(1) + "%") +
+          kv("IV − RV", '<span class="' + (m.sdIv > m.sdRv ? "up" : "dn") + '">' + ((m.sdIv - m.sdRv) * Math.sqrt(252) * 100 >= 0 ? "+" : "−") + Math.abs((m.sdIv - m.sdRv) * Math.sqrt(252) * 100).toFixed(1) + " pts</span>") : "") + (m.gex != null ? kv("NET GEX", (m.gex < 0 ? "−$" : "$") + Math.abs(m.gex / 1e6).toFixed(0) + "M") : "") +
         kv("vs " + m.settleLab, ((m.px - m.settle) >= 0 ? "+" : "−") + Math.abs((m.px - m.settle) * m.unitMove).toFixed(1) + m.uLab) +
         kv("COT " + (cot ? md(cot.d) : "price"), cot ? cot.px.toFixed(d) : "—") + kv("Price vs COT", '<span class="' + (cot ? (m.px >= cot.px ? "up" : "dn") : "") + '">' + cotTxt + "</span>") +
         (cot && cot.net != null ? kv("Funds net", (cot.net > 0 ? "+" : "") + cot.net.toLocaleString()) : "") + "</div>" +
-      '<div class="vc-tgs">' + tg("dual", "Dual cone") + tg("walls", m.fx ? "Key levels" : "GEX / OI walls") + tg("ma", "MA 20/50/100") + tg("events", "Event gates") + tg("cot", "CFTC price line") + "</div>" +
+      '<div class="vc-tgs">' + tg("dual", "Dual cone") + tg("walls", m.fx ? "Key levels" : "GEX / OI walls") + tg("ma", "MA 20/50/100") + tg("events", "Event gates") + tg("cot", "CFTC price line") + (m.sdIv && m.sdRv ? tg("rv", "σ: realised, not implied") : "") + "</div>" +
       '<div class="vc-log"><b>Breach telemetry</b>' + (L2.length ? L2.slice(-6).reverse().map(function (x) { return "<div><span>" + HM.format(new Date(x.t)) + "</span>" + esc(x.txt) + "</div>"; }).join("") : '<div class="neu">No tests or breaches this session.</div>') + "</div></div>";
   }
   function head(m) {
     var d = m.dec, ch = m.px - m.settle, pc = (m.px / m.settle - 1) * 100, fxm = root.DATA.fx && root.DATA.fx.feed && +root.DATA.fx.feed.mid;
     return '<div class="vc-head"><span class="vc-nm">AGRITRADE // ' + esc(NAME[m.k].toUpperCase()) + " " + esc(m.contract) + ' <i class="vc-st ' + m.state.toLowerCase() + '">' + m.state + "</i></span>" +
       '<span class="vc-hp"><b class="vc-roll" data-vcpx>' + m.px.toFixed(d) + "</b> <small>" + esc(m.unit) + '</small> <span class="' + (ch > 0 ? "up" : ch < 0 ? "dn" : "") + '">' + (ch >= 0 ? "+" : "−") + Math.abs(ch).toFixed(d) + " (" + (pc >= 0 ? "+" : "−") + Math.abs(pc).toFixed(2) + "%)</span></span>" +
-      (m.fx ? "" : '<span class="vc-hk">USD/CAD <b>' + (fxm ? fxm.toFixed(4) : "—") + "</b></span>") + '<span class="vc-hk">' + (m.fx ? "RVOL 20D" : "CHAIN IV") + " <b>" + (m.sd ? (m.sd * Math.sqrt(252) * 100).toFixed(2) + "%" : "—") + "</b></span>" +
+      (m.fx ? "" : '<span class="vc-hk">USD/CAD <b>' + (fxm ? fxm.toFixed(4) : "—") + "</b></span>") + '<span class="vc-hk">' + (m.fx ? "RVOL 20D" : m.rvOn ? "RVOL 30D" : "CHAIN IV") + " <b>" + (m.sd ? (m.sd * Math.sqrt(252) * 100).toFixed(2) + "%" : "—") + "</b></span>" +
       '<span class="vc-hk vc-cycle">CYCLE <b data-vccyc>01:00</b><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" class="vc-cbg"/><circle cx="12" cy="12" r="10" class="vc-cfg" pathLength="100"/></svg></span></div>';
   }
   function tileHTML(k) {
@@ -232,7 +239,7 @@
     var svg = draw(m), L2 = logHits(m);
     var evs = Object.keys(m.ratios || {}).filter(function (x) { return m.ratios[x]; }).map(function (x) { return x + " days move " + m.ratios[x].r.toFixed(2) + "× a normal day (" + m.ratios[x].n + " reports in the history)"; }).join("; ");
     return '<div class="tile wide vcone-tile" data-vck="' + k + '" data-src="' + (m.fx ? "fx_spot" : "grains_quote") + '"><h2>Volatility cone <span class="h2note">— ' + NAME[k] + ": dual cone (settle vs live), event-stepped ±1–3σ, " + (m.fx ? "key levels" : "OI walls, gamma regime") + ", CFTC price line</span></h2>" +
-      head(m) + '<div class="vc-wrap">' + rail(m, L2) + '<div class="vc-main">' + svg + "</div></div>" + '<div class="vc-ruler">' + ruler(m) + "</div>" +
+      head(m) + (m.read ? '<p class="vc-read"><b>Level check</b> ' + esc(m.read) + "</p>" : "") + '<div class="vc-wrap">' + rail(m, L2) + '<div class="vc-main">' + svg + "</div></div>" + '<div class="vc-ruler">' + ruler(m) + "</div>" +
       '<div class="stamp">Cones = price × e<sup>±kσ√V</sup>, σ from the ' + esc(m.volLab) + "; amber wireframe from the " + esc(m.settleLab) + ", cyan fan from the latest tick — market-implied ranges, not forecasts" +
       (evs ? " · event steps measured from this market’s closes: " + esc(evs) : m.fx ? " · no event-day history for USD/CAD, so its gates are marked but not stepped" : "") +
       (m.gex != null ? " · net GEX = Σ (call OI − put OI) × Black-76 gamma × 5,000 bu × F² × 1% (dealers assumed long calls, short puts)" : "") +
@@ -286,6 +293,7 @@
     ".vc-nm{font-size:14px;color:#e8eef4;letter-spacing:.04em;display:flex;align-items:center;gap:8px}.vc-st{font-style:normal;font-size:9px;font-weight:700;letter-spacing:.06em;border:1px solid;border-radius:3px;padding:0 4px}.vc-st.live{color:#3fb97f}.vc-st.delayed{color:#e8b93d}.vc-st.settle{color:#8f9db3}.vc-st.closed{color:#e0655f}" +
     ".vc-hp b{font-size:22px;font-weight:500;color:#fff;display:inline-block;font-variant-numeric:tabular-nums}.vc-hp small{color:#8a8a8a}.vc-hp .up{color:#3fb97f}.vc-hp .dn{color:#e0655f}.vc-roll.tick{animation:vcRoll .45s ease-out}@keyframes vcRoll{0%{transform:translateY(-60%);opacity:0}100%{transform:none;opacity:1}}" +
     ".vc-hk{font-size:12px;color:#8a8a8a}.vc-hk b{color:#e8eef4;font-weight:500}.vc-cycle{margin-left:auto;display:inline-flex;align-items:center;gap:8px}.vc-cycle svg{width:22px;height:22px;transform:rotate(-90deg)}.vc-cbg{fill:none;stroke:#222;stroke-width:2.5}.vc-cfg{fill:none;stroke:#38e0f0;stroke-width:2.5;stroke-dasharray:100;transition:stroke-dashoffset .95s linear;filter:drop-shadow(0 0 3px #38e0f0)}" +
+    ".vc-read{margin:0;border:1px solid #1a1a1a;border-bottom:0;background:#000;padding:8px 14px;font-size:12.5px;line-height:1.5;color:#c9d4e2}.vc-read b{font:600 10px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#d9b46a;margin-right:6px}" +
     ".vc-wrap{display:grid;grid-template-columns:minmax(200px,20%) minmax(0,1fr);border:1px solid #1a1a1a;background:#000}" +
     ".vc-rail{padding:12px;border-right:1px solid #1a1a1a;display:flex;flex-direction:column;gap:10px;font-family:'JetBrains Mono','IBM Plex Mono',monospace}" +
     ".vc-reg{font-size:10.5px;font-weight:700;letter-spacing:.05em;border:1px solid;border-radius:5px;padding:4px 8px;text-align:center}.vc-reg.short{color:#ffb020;border-color:#ffb02088;background:rgba(255,176,32,.08)}.vc-reg.long{color:#38b6c9;border-color:#38b6c988;background:rgba(56,182,201,.08)}.vc-reg.na{color:#777;border-color:#333}" +
