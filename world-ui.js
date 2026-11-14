@@ -213,18 +213,35 @@
       '<div class="wmt-r">' + range52(i) + '<div class="wbs">' + badges(i) + "</div></div>" +
       '<div class="wmt-f">' + age(i) + "</div></div>";
   }
-  function marketsHTML() {
+  /* Markets: categories as a left pane of tiles (like the grain, bank and country tiles elsewhere on the desk) */
+  var GLAB = { Indices: "Equity indices", FX: "Currencies" };
+  function catPane() {
+    var L = inst(), now = Date.now(), sigF = function (i) { return i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low); };
+    function t(attr, val, on, lab, rows) {
+      var up = rows.filter(function (i) { return i.chg > 0; }).length, dn = rows.filter(function (i) { return i.chg < 0; }).length,
+        op = rows.filter(function (i) { return status(W.exchanges[i.ex] || {}, now) === "open"; }).length, sg = rows.filter(sigF).length;
+      return '<button type="button" class="wm-ct' + (on ? " on" : "") + '" ' + attr + '="' + val + '">' + (on ? '<em class="gr-selb">SELECTED</em>' : "") +
+        '<span class="wm-ctn">' + esc(lab) + "<b>" + rows.length + "</b></span>" +
+        '<span class="wm-ctr"><span class="up">▲ ' + up + '</span><span class="dn">▼ ' + dn + "</span><span>" + op + " open</span>" + (sg ? '<span class="sg">' + sg + " 52w</span>" : "") + "</span></button>";
+    }
+    return '<aside class="wm-left"><div class="gr-col-h">Categories</div>' +
+      t("data-wgrp", "all", V.grp === "all" && !V.flagged, "All markets", L) +
+      GROUPS.map(function (g) { return t("data-wgrp", g, V.grp === g && !V.flagged, GLAB[g] || g, L.filter(function (i) { return i.group === g; })); }).join("") +
+      t("data-wflag", "1", V.flagged, "52-week signals", L.filter(sigF)) + "</aside>";
+  }
+  function marketsHTML() { return '<div class="wm-lay">' + catPane() + '<div class="wm-main">' + marketsBody() + "</div></div>"; }
+  function marketsBody() {
     var q = (V.q || "").toLowerCase(), list = inst().filter(function (i) {
       return (V.grp === "all" || i.group === V.grp) && (!V.flagged || (i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low))) &&
         (!q || (i.name + " " + i.sym + " " + i.region).toLowerCase().indexOf(q) >= 0);
     });
     var filt = '<div class="wfil"><input type="search" placeholder="Search markets…" value="' + esc(V.q) + '" data-wq></div>';   /* group / 52-week chips live only in the slicer row above the body */
-    var VIEWSW = '<span class="wv-sw"><button type="button" data-wview="tiles" aria-pressed="' + (V.view !== "table") + '">Tiles</button><button type="button" data-wview="table" aria-pressed="' + (V.view === "table") + '">Feed</button></span>';
+    var VIEWSW = '<span class="wv-sw"><button type="button" data-wview="tiles" aria-pressed="' + (V.view !== "table") + '">Tiles</button><button type="button" data-wview="table" aria-pressed="' + (V.view === "table") + '">Rows</button></span>';
     if (V.view === "table") {
       var tb = GROUPS.filter(function (g) { return V.grp === "all" || V.grp === g; }).map(function (g) {
         var rows = list.filter(function (i) { return i.group === g; }); if (!rows.length) return "";
         return '<tr class="wgh"><td colspan="9">' + ({ Indices: "Equity indices", FX: "Currencies" }[g] || g) + " " + asOf(rows) + "</td></tr>" + rows.map(rowHTML).join(""); }).join("");
-      return '<div class="tile wide"><h2>All markets <span class="h2note">— market feed view</span></h2>' + asOf(list, "blk") + '<div class="wv-bar">' + filt + VIEWSW + "</div>" +
+      return '<div class="tile wide"><h2>' + esc(V.flagged ? "52-week signals" : V.grp === "all" ? "All markets" : (GLAB[V.grp] || V.grp)) + ' <span class="h2note">— rows view</span></h2>' + asOf(list, "blk") + '<div class="wv-bar">' + filt + VIEWSW + "</div>" +
         '<div class="wtw"><table class="wt"><thead><tr><th>Market</th><th>Status · source time</th><th class="r">LTP</th><th class="r">Chg</th><th class="r">% Chg</th><th class="r">High</th><th class="r">Low</th><th>52-week range</th><th>30d</th></tr></thead><tbody>' +
         (tb || '<tr><td colspan="9" class="neu">No markets match the filter.</td></tr>') + "</tbody></table></div></div>";
     }
@@ -235,13 +252,19 @@
       if (!rows.length) return "";
       return '<section class="wq4"><h3>' + Q[0] + " <small>" + rows.length + "</small> " + asOf(rows) + '</h3><div class="wmt-g">' + rows.map(tileHTML).join("") + "</div></section>";
     }).join("");
-    return '<div class="tile wide"><h2>All markets <span class="h2note">— last price, change, 52-week position · exact source time (Toronto) and age on every tile</span></h2>' + asOf(list, "blk") + '<div class="wv-bar">' + filt + VIEWSW + "</div>" +
+    return '<div class="tile wide"><h2>' + esc(V.flagged ? "52-week signals" : V.grp === "all" ? "All markets" : (GLAB[V.grp] || V.grp)) + ' <span class="h2note">— last price, change, 52-week position · exact source time (Toronto) and age on every tile</span></h2>' + asOf(list, "blk") + '<div class="wv-bar">' + filt + VIEWSW + "</div>" +
       '<div class="wq4-g">' + (body || '<p class="neu">No markets match the filter.</p>') + "</div>" +
       '<div class="stamp">LTP = last traded/quoted price · % change vs the previous official close (yields and spreads in basis points) · 52-week range from daily highs/lows · badges: NEW 52W HIGH/LOW when today’s range breaks the prior 52-week extreme, “% from” when within 5% · sparkline = last 30 days</div></div>';
   }
   (function () { var c = document.createElement("style"); c.textContent =
+    ".wm-lay{display:grid;grid-template-columns:230px minmax(0,1fr);gap:14px;align-items:start;grid-column:1/-1;width:100%}.wm-main>.tile{width:100%;box-sizing:border-box}.wm-lay>*{min-width:0}.wm-left{display:flex;flex-direction:column;gap:8px;position:sticky;top:calc(var(--strip-h,40px) + 64px)}.wm-left .gr-col-h{font-size:15px;font-weight:600;color:#e8eef4;margin:4px 0 0}" +
+    ".wm-ct{all:unset;box-sizing:border-box;cursor:pointer;position:relative;display:flex;flex-direction:column;gap:5px;border:1px solid #1f1f1f;border-radius:8px;padding:10px 12px;background:#000}.wm-ct:hover{border-color:#3a3a3a}.wm-ct.on{border-color:#d9b46a;box-shadow:0 0 0 1px #d9b46a55,0 0 16px #d9b46a1f}" +
+    ".wm-ct .gr-selb{font-style:normal;font-size:8.5px;font-weight:700;letter-spacing:.06em;color:#0b0f16;background:#d9b46a;border-radius:4px;padding:1px 5px;position:absolute;top:-7px;left:50%;transform:translateX(-50%)}" +
+    ".wm-ctn{display:flex;justify-content:space-between;align-items:baseline;font-size:13.5px;font-weight:600;color:#e8eef4}.wm-ctn b{font:500 15px 'JetBrains Mono','IBM Plex Mono',monospace;color:#d9b46a}" +
+    ".wm-ctr{display:flex;flex-wrap:wrap;gap:2px 10px;font:11px 'JetBrains Mono','IBM Plex Mono',monospace;color:#8a8a8a}.wm-ctr .up{color:#3fb97f}.wm-ctr .dn{color:#e0655f}.wm-ctr .sg{color:#d9b46a}" +
+    "@media (max-width:1020px){.wm-lay{grid-template-columns:minmax(0,1fr)}.wm-left{position:static;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}.wm-left .gr-col-h{grid-column:1/-1}}@media (max-width:760px){.wm-left{grid-template-columns:repeat(2,minmax(0,1fr))}}" +
     ".wv-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}.wv-sw{display:inline-flex;border:1px solid #2a2a2a;border-radius:6px;overflow:hidden}.wv-sw button{all:unset;cursor:pointer;padding:4px 12px;font:500 12px 'Libre Franklin',system-ui,sans-serif;color:#8a8a8a}.wv-sw button[aria-pressed=true]{color:#d9b46a!important;background:rgba(217,180,106,.1)!important}.wv-sw button+button{border-left:1px solid #2a2a2a}" +
-    ".wq4-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:10px}.wq4{border:1px solid #1f1f1f;border-radius:8px;padding:10px 12px;min-width:0}" +
+    ".wq4-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:14px;margin-top:10px}.wq4{border:1px solid #1f1f1f;border-radius:8px;padding:10px 12px;min-width:0}" +
     ".wq4 h3{margin:0 0 10px;font:600 12.5px 'Libre Franklin',system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#d9b46a;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}.wq4 h3 small{color:#8a8a8a;font-weight:500}.wq4 h3 .wasof{text-transform:none;letter-spacing:0;font-weight:400}" +
     ".wmt-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}.wmt-r *{font-size:9.5px!important}" +
     ".wmt{border:1px solid #1f1f1f;border-radius:6px;padding:8px 10px;background:#000;min-width:0;display:flex;flex-direction:column;gap:3px}.wmt:hover{border-color:#3a3a3a}" +
@@ -425,6 +448,7 @@
     var L = inst(), al = (W && W.alerts) || [];
     if (!W) return "";
     if (id === "markets") {
+      return "";   /* categories live in the left pane now */
       var sig = L.filter(function (i) { return i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low); }).length;
       return kid("data-wgrp", "all", V.grp === "all" && !V.flagged, "All markets", L.length) +
         GROUPS.map(function (g) { return kid("data-wgrp", g, V.grp === g && !V.flagged, g, L.filter(function (i) { return i.group === g; }).length); }).join("") +
