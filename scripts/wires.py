@@ -16,8 +16,10 @@ from email.utils import parsedate_to_datetime
 
 import requests
 
+from desknet import sec_ua
+
 UA = {"User-Agent": "AGRITrade-desk/1.0 (+https://github.com/anirudhpdoshi/AGRITrade)", "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, application/json;q=0.9, */*;q=0.8"}
-SEC_UA = {"User-Agent": ("AGRITrade desk " + os.environ.get("SEC_CONTACT", "").strip()).strip(), "Accept": "application/atom+xml"}
+SEC_UA = sec_ua(Accept="application/atom+xml")
 SOURCES = [   # key, label, url, kind
     ("bw", "Business Wire", "https://feed.businesswire.com/rss/home/?rss=G1QFDERJXkJeEFtRWA==", "co"),
     ("prn", "PR Newswire", "https://www.prnewswire.com/rss/news-releases-list.rss", "co"),

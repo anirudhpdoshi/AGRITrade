@@ -44,18 +44,7 @@ def iso(dt):
     return dt.astimezone(TOR).isoformat(timespec="seconds")
 
 
-SECRET_ENV = ("FAS_API_KEY", "ALPHAVANTAGE_API_KEY", "FINNHUB_API_KEY", "DESK_PASSCODE", "BEA_API_KEY")
-
-
-def redact(text):
-    """Strip every secret value from text that may reach logs or the public data.json."""
-    import os
-    text = str(text)
-    for n in SECRET_ENV:
-        v = os.environ.get(n, "").strip()
-        if v:
-            text = text.replace(v, "***")
-    return re.sub(r"(?i)(apikey|api_key|token|key|userid)=[^&\s'\"]+", r"\1=***", text)
+from desknet import redact, SECRET_ENV  # noqa: E402,F401  (shared: every job redacts the same secrets)
 
 
 def get(url, headers=None, **kw):

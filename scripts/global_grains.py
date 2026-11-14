@@ -17,6 +17,8 @@ import subprocess
 import sys
 import time
 
+from desknet import redact
+
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 WT = "/tmp/ggrain-worktree"
 PSD = "https://api.fas.usda.gov/api/psd"
@@ -43,8 +45,7 @@ KEY_A3 = {"USA", "CAN", "BRA", "ARG", "UKR", "RUS", "EU", "CHN", "AUS", "IND", "
 
 
 def red(s):
-    s = str(s)
-    return s.replace(KEY, "***") if KEY else s
+    return redact(s)
 
 
 def now_utc():

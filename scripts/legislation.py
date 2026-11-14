@@ -16,6 +16,8 @@ import xml.etree.ElementTree as ET
 
 import requests
 
+from desknet import redact
+
 UA = {"User-Agent": "Mozilla/5.0 (desk briefing; +https://github.com/anirudhpdoshi/AGRITrade)"}
 KEY = os.environ.get("CONGRESS_API_KEY", "").strip()
 MONTHS = {m: i + 1 for i, m in enumerate(["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"])}
@@ -38,8 +40,7 @@ def get(url, **kw):
 
 
 def scrub(e):
-    s = f"{type(e).__name__}: {e}"
-    return s.replace(KEY, "***") if KEY else s
+    return redact(f"{type(e).__name__}: {e}")
 
 
 # ---------------------------------------------------------------- Canada

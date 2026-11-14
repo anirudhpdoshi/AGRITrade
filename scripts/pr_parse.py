@@ -9,8 +9,10 @@ import os, re
 VERSION = 2   # bump when the reader changes: stored reads from an older version are re-read
 from html.parser import HTMLParser
 
+from desknet import sec_ua
+
 # SEC fair-access rule: automated requests must name a contact email. It comes from the SEC_CONTACT secret (never in the repo).
-SEC_UA = {"User-Agent": ("AGRITrade desk " + os.environ.get("SEC_CONTACT", "").strip()).strip(), "Accept-Encoding": "gzip, deflate"}
+SEC_UA = sec_ua(**{"Accept-Encoding": "gzip, deflate"})
 
 LINES = [   # key, label regex (whole label, case-insensitive), allow-negative
     ("rev", r"(total )?(net sales|net revenues?|revenues?|total revenues?|total net sales|total net revenues?|sales)", False),

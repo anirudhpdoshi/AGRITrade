@@ -1,7 +1,7 @@
 name: Tests
 on:
   push:
-    paths: ["index.html", "events-ui.js", "policy-ui.js", "briefing-ui.js", "scripts/briefing.py", "scripts/optflow.py", "optflow-ui.js", "scripts/legislation.py", "live.js", "fwd.js", "scripts/world.py", "scripts/global_grains.py", "scripts/intel.py", "scripts/update_data.py", "scripts/policy_watch.py", "scripts/live_loop.py", "scripts/us_earnings.py", "scripts/us_market.py", "co-engine.js", "company-ui.js", "earnings-ui.js", "tests/**", ".github/workflows/tests.yml"]
+    paths: ["index.html", "events-ui.js", "policy-ui.js", "briefing-ui.js", "scripts/briefing.py", "scripts/optflow.py", "optflow-ui.js", "scripts/legislation.py", "live.js", "fwd.js", "scripts/world.py", "scripts/global_grains.py", "scripts/intel.py", "scripts/update_data.py", "scripts/policy_watch.py", "scripts/live_loop.py", "scripts/us_earnings.py", "scripts/us_market.py", "co-engine.js", "company-ui.js", "earnings-ui.js", "tests/**", ".github/workflows/tests.yml", "core.js", "scripts/desknet.py", "scripts/policy_intel.py", ".github/workflows/tests.yml"]
   workflow_dispatch:
 jobs:
   unit:
@@ -10,6 +10,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: "20" }
+      - name: Every page script parses
+        run: for f in *.js; do node --check "$f" || exit 1; done
       - run: node tests/fwd.test.js
       - run: node tests/co_engine.test.js
       - run: node tests/grains.test.js
@@ -35,6 +37,9 @@ jobs:
       - run: python tests/test_sp_schedule.py
       - run: python tests/test_bea_fastlane.py && python tests/test_roll.py && python tests/test_health.py && python tests/test_publish.py
       - run: python tests/test_yields.py
+      - run: python tests/test_policy_intel.py
+      - name: Lint (syntax errors and undefined names only)
+        run: pip install -q ruff && ruff check scripts tests --select E9,F63,F7,F82
   e2e:
     # the release flow end to end in a real browser: landed / awaiting / calendar-only rows, "See it" jump, NEW tabs and
     # cards, Milestones feed for macro, options and central-bank releases, wall shifts, and no NaN/undefined on any tab
