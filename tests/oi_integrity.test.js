@@ -1,6 +1,6 @@
 // OI integrity (chunk 2): sanitizer re-derives totals, rejects bad rows, N/A ratio, drops a previous pull from another contract.
 const assert = require("assert"); const fs = require("fs");
-const src = fs.readFileSync(__dirname + "/../index.html", "utf8");
+const src = fs.readFileSync(__dirname + "/../index.html", "utf8") + fs.readFileSync(__dirname + "/../desk-main.js", "utf8");
 const pick = (name) => { const i = src.indexOf("function " + name + "("); let d = 0, j = src.indexOf("{", i); for (let k = j; k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) return src.slice(i, k + 1); } } };
 eval(pick("oiTradeDate") + pick("oiSanitize"));
 global.DATA = { meta: { asof: { options: "2026-11-10T08:42:00-05:00" } } };
