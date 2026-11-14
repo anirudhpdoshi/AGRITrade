@@ -216,7 +216,7 @@
     var stat = x.out ? '<span class="mn2-live"><i></i>Released today ' + (x.t.todayOut ? hm(x.t.todayOut) : "") + "</span>" : x.due ? '<span class="mn2-live due"><i></i>Due today ' + hm(x.due) + "</span>" : "";
     var kv = function (k, val, cls) { return '<div class="mn2-kv"><span>' + k + "</span><b" + (cls ? ' class="' + cls + '"' : "") + ">" + val + "</b></div>"; };
     return '<div class="mn2-card' + (FL.k === m.key && Date.now() < FL.t ? " flash-find" : "") + '" data-mkey="' + esc(m.key) + '"><div class="mn2-ch"><span class="mn2-cn">' + (root.flag ? flag(COUNTRY[m.group].cc, 16) : "") + " " + esc(COUNTRY[m.group].short + " " + m.name) + "</span>" +
-      '<span class="mn2-tag ' + cg + '">' + G[1] + "</span><span class=\"mn2-ty\">" + TYPE[typeOf(m.key)] + "</span>" + stat + "</div>" +
+      '<span class="mn2-tag ' + cg + '">' + G[1] + "</span><span class=\"mn2-ty\">" + TYPE[typeOf(m.key)] + "</span>" + stat + '<button type="button" class="mn2-hist mn2-histtop" data-mn2hist="' + esc(m.key) + '">Full history →</button>' + "</div>" +
       '<div class="mn2-big">' + fv(m, v) + ' <small>' + esc(m.measure || "") + " · " + esc(m.period || "") + "</small></div>" +
       readOut(m, cons, gd, cg) +
       '<div class="mn2-kvs">' + kv("Consensus", cons != null ? fv(m, cons) : "—") + kv("Prior", fv(m, m.prior)) + kv("Surprise", sur != null ? (sur > 0 ? "+" : "−") + Math.abs(sur).toFixed(m.dec || 1) : "—", hot == null || sur == null || !sur ? "" : hot ? "dn" : "up") +
@@ -228,7 +228,7 @@
         return ctl + '<div class="mn2-vw ' + S.v + '">' + (S.v !== "table" ? chart(SR.pts, m) : "") + (S.v !== "chart" ? table(SR.pts, m) : "") + "</div>"; })() +
       '<div class="mn2-edu"><div><b>What it is</b><p>' + esc(WHAT[m.key] || m.name) + "</p></div><div><b>Why it is " + G[1].toLowerCase() + "</b><p>" + esc(G[2]) + "</p></div>" +
         '<div><b>How to read it</b><p>' + (gd === "down" ? "Lower is better for the economy's balance — a print above consensus is a hot (hawkish) surprise." : gd === "up" ? "Higher is better — a print above consensus is a positive surprise for growth." : "Read it against its own trend and the consensus.") + "</p></div></div>" +
-      '<div class="mn2-ft">Source: ' + esc(m.src || "—") + (m.seen_at ? " · on the desk " + when(Date.parse(m.seen_at)) : "") + ' · <button type="button" class="mn2-hist" data-mn2hist="' + esc(m.key) + '">Full history →</button></div></div>';
+      '<div class="mn2-ft">Source: ' + esc(m.src || "—") + (m.seen_at ? " · on the desk " + when(Date.parse(m.seen_at)) : "") + '</div></div>';
   }
   function todayStrip(c) {
     var ev = []; try { ev = (root.fxEvList ? fxEvList() : []).filter(function (e) { return dayET(e.t) === dayET(Date.now()) && (e.ccy === (c === "us" ? "USD" : "CAD")); }); } catch (e) {}
@@ -307,6 +307,7 @@
     ".mn2-sp{width:100%;height:120px;display:block}.mn2-spx{display:flex;justify-content:space-between;font:11px 'JetBrains Mono','IBM Plex Mono',monospace;color:#777;margin:2px 0 12px}" +
     ".mn2-edu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.mn2-edu b{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#d9b46a}.mn2-edu p{margin:4px 0 0;font-size:13px;line-height:1.5;color:#c9d4e2}" +
     ".mn2-ft{margin-top:12px;font-size:11.5px;color:#777}.mn2-hist{all:unset;cursor:pointer;color:#d9b46a}.mn2-hist:hover{text-decoration:underline}" +
+    ".mn2-histtop{margin-left:auto;border:1px solid rgba(217,180,106,.55);border-radius:6px;padding:3px 10px;font:600 12px 'Libre Franklin',system-ui,sans-serif}.mn2-histtop:hover{background:rgba(217,180,106,.1);text-decoration:none}" +
     "@media (max-width:1100px){.mn2-g{grid-template-columns:1fr}.mn2-list{flex-direction:row;flex-wrap:wrap}.mn2-lh{width:100%}.mn2-kvs{grid-template-columns:repeat(3,minmax(0,1fr))}.mn2-edu{grid-template-columns:1fr}}" +
     "@media (max-width:1020px){.mn2-lay{grid-template-columns:1fr}.mn2-left{position:static;flex-direction:row;flex-wrap:wrap}.mn2-left .gr-col-h{width:100%}.mn2-ct{flex:1 1 200px}}" +
     "@media (max-width:760px){.mn2-tabs{flex-wrap:nowrap;overflow-x:auto}.mn2-kvs{grid-template-columns:repeat(2,minmax(0,1fr))}}";

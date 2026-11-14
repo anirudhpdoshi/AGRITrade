@@ -183,7 +183,7 @@
     var k = relKey(e), m = k && k.macro && window.mfind ? mfind(k.macro) : null, act = actualOf(e, LD), I = imp(e), cc = ccOf(e);
     var prev = e.prev || (m && LD && LD.at && m.prior != null && window.mval ? mval(m, m.prior) : "");
     var open = V.open === e.id, ctry = cc === "ca" ? "Canada" : cc === "us" ? "United States" : "—";
-    var h = '<tr class="evr st-' + st + (e.high ? " hi" : "") + (rt ? " rel-today" : "") + (open ? " open" : "") + '" data-evopen="' + esc(e.id) + '" tabindex="0" aria-expanded="' + open + '">' +
+    var h = '<tr class="evr st-' + st + (e.high ? " hi" : "") + (rt ? " rel-today" : "") + (open ? " open" : "") + (m ? " evmac" : "") + '" data-evopen="' + esc(e.id) + '"' + (m ? ' data-evmacro="' + esc(m.key) + '" title="Open ' + esc(m.name) + ' on the Macro tab — chart, table and full history"' : "") + ' tabindex="0" aria-expanded="' + open + '">' +
       '<td class="evtm">' + hm(e.t) + "</td><td class=\"evcc\">" + (cc && window.flag ? window.flag(cc, 13) + " " : "") + ctry + '</td><td><span class="evimp i' + I + '">' + IMPN[I] + "</span></td>" +
       '<td class="evev">' + (rt ? '<span class="rt-pill">RELEASED TODAY</span> ' : "") + esc(e.label.replace(/^(USD|CAD) /, "")) + " " + chip(e) + "</td>" +
       '<td class="evn">' + esc(act) + '</td><td class="evn">' + esc(e.fc || "") + '</td><td class="evn">' + esc(prev) + '</td><td class="evst">' + stat + see + "</td></tr>";
@@ -240,8 +240,7 @@
     sum += "";
     var srcHTML = '<p class="evx-s">' + esc(src) + (k && k.macro ? " Actual: official source via the desk (" + esc(k.macro) + ")." : "") + "</p>";
     if (/^(us|ca)_(core_)?cpi$|^ca_(trim|median)$/.test((k && k.macro) || "")) go += ' <button class="evgo" data-cpigo="' + (k.macro.slice(0, 2)) + '">CPI deep dive — every category →</button>';
-    var full = m && window.openMacroDetail ? '<button class="evgo evx-full" data-evhist="' + esc(m.key) + '">Full history — chart &amp; table, 1Y / 2Y / 5Y →</button>' : "";
-    return (full || go ? '<div class="evx-bar">' + full + go + "</div>" : "") + '<div class="evx">' + (m ? '<div class="evx-c">' + spark(m) + "</div>" : "") + '<div class="evx-t"><b>Summary</b><p>' + esc(sum) + "</p>" +
+    return (go ? '<div class="evx-bar">' + go + "</div>" : "") + '<div class="evx">' + (m ? '<div class="evx-c">' + spark(m) + "</div>" : "") + '<div class="evx-t"><b>Summary</b><p>' + esc(sum) + "</p>" +
       (hist.length ? '<table class="evx-h"><thead><tr><th>Period</th><th>Value</th></tr></thead><tbody>' + hist.map(function (x) { return "<tr><td>" + esc(x[0]) + "</td><td>" + (window.mval ? mval(m, x[1]) : x[1]) + "</td></tr>"; }).join("") + "</tbody></table>" : "") +
       srcHTML + (LD && LD.at ? '<p class="evx-l">On the desk ' + hm(LD.at) + " ET (" + lagTxt2(LD.at - e.t) + " after the scheduled time)" + (LD.txt ? " · " + esc(LD.txt) : "") + "</p>" : "") + "</div></div>";
   }
@@ -664,16 +663,17 @@
   document.addEventListener("change", function (ev) { var el = ev.target; if (!el || !el.getAttribute) return;
     if (el.hasAttribute("data-evimpc")) { V.imp[el.getAttribute("data-evimpc")] = el.checked; saveV(); repaintMain(true); return; }
     if (el.hasAttribute("data-evcat")) { V.cat = el.value; saveV(); repaintMain(true); } else if (el.hasAttribute("data-evcustom")) { V.custom = el.value; saveV(); repaintMain(true); } });
-  document.addEventListener("keydown", function (ev) { if (ev.key === "Enter" && ev.target && ev.target.closest && ev.target.closest("tr[data-evopen]") && !ev.target.closest("button")) { var r = ev.target.closest("tr[data-evopen]"), id = r.getAttribute("data-evopen"); V.open = V.open === id ? "" : id; saveV(); repaintMain(); return; }
+  document.addEventListener("keydown", function (ev) { if (ev.key === "Enter" && ev.target && ev.target.closest && ev.target.closest("tr[data-evmacro]") && !ev.target.closest("button")) { go("macro:dash", '[data-mkey="' + ev.target.closest("tr[data-evmacro]").getAttribute("data-evmacro") + '"]'); return; }
+    if (ev.key === "Enter" && ev.target && ev.target.closest && ev.target.closest("tr[data-evopen]") && !ev.target.closest("button")) { var r = ev.target.closest("tr[data-evopen]"), id = r.getAttribute("data-evopen"); V.open = V.open === id ? "" : id; saveV(); repaintMain(); return; }
     if (ev.key !== "Enter") return; var g = ev.target && ev.target.closest && ev.target.closest(".evfi-go"); if (g) { ev.preventDefault(); go(g.getAttribute("data-evgo")); } });
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t) return;
-    var fh = t.closest("[data-evhist]"); if (fh) { ev.preventDefault(); ev.stopPropagation(); openMacroDetail(fh.getAttribute("data-evhist")); return; }
     var g = t.closest("[data-evgo]"); if (g) { ev.preventDefault(); go(g.getAttribute("data-evgo"), g.getAttribute("data-evsel")); return; }
     if (!t.closest("#panel-events")) { if (t.closest("#tabbtn-events")) { unseen = 0; render(); paintBadge(); } return; }
     var b = t.closest("[data-evday]"); if (b) { V.day = b.getAttribute("data-evday"); V.open = ""; saveV(); repaintMain(true); return; }
     b = t.closest("[data-evimp]"); if (b) { var ki = b.getAttribute("data-evimp"); V.imp[ki] = V.imp[ki] === false; saveV(); repaintMain(true); return; }
     b = t.closest("[data-evcc]"); if (b) { var kc = b.getAttribute("data-evcc"); V.ccs[kc] = V.ccs[kc] === false; saveV(); repaintMain(true); return; }
+    b = t.closest("[data-evmacro]"); if (b && !t.closest("button,a,input,select")) { go("macro:dash", '[data-mkey="' + b.getAttribute("data-evmacro") + '"]'); return; }   /* tracked data point: straight to its Macro card */
     b = t.closest("[data-evopen]"); if (b && !t.closest("button,a,input,select")) { var id = b.getAttribute("data-evopen"); V.open = V.open === id ? "" : id; saveV(); repaintMain(); return; }
     var b = t.closest("[data-evgrp]"); if (b) { V.grp = b.getAttribute("data-evgrp"); saveV(); repaintMain(); return; }
     if (t.closest("[data-evhigh]")) { V.high = !V.high; saveV(); repaintMain(); return; }
@@ -712,7 +712,7 @@
     ".ev-tbl .evtm{font-family:'IBM Plex Mono',monospace;white-space:nowrap}.ev-tbl .evcc{white-space:nowrap}.ev-tbl .evev{font-weight:600;font-family:'IBM Plex Sans',sans-serif}.ev-tbl .evn{font-family:'IBM Plex Mono',monospace;white-space:nowrap}.ev-tbl .evst{font-size:12px}.ev-tbl .evst .evgo{display:block;margin-top:4px}" +
     ".evimp{display:inline-block;min-width:66px;text-align:center;font:700 11px 'IBM Plex Sans',sans-serif;padding:3px 8px;border-radius:4px;color:#fff}.evimp.iH{background:#d6453d}.evimp.iM{background:#c99a1e;color:#1b1400}.evimp.iL{background:#24406b}" +
     ".evx-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding:8px 4px 10px;border-bottom:1px solid #1a1a1a;margin-bottom:8px}.evx-bar .evgo{font-size:12.5px}" +
-    ".evx-bar .evx-full{color:#d9b46a;border:1px solid rgba(217,180,106,.5);border-radius:6px;padding:4px 10px;font-weight:600}.evx-bar .evx-full:hover{background:rgba(217,180,106,.1);text-decoration:none}" +
+    '.ev-tbl tr.evmac .evev:after{content:" → Macro";font:500 10.5px "IBM Plex Mono",monospace;color:#d9b46a;opacity:.75}' + ".evx-bar .evx-full{color:#d9b46a;border:1px solid rgba(217,180,106,.5);border-radius:6px;padding:4px 10px;font-weight:600}.evx-bar .evx-full:hover{background:rgba(217,180,106,.1);text-decoration:none}" +
     ".evx{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:18px;padding:6px 4px 10px}.evx-ch{width:100%;height:auto}.evx-ax{font:10px 'IBM Plex Mono',monospace;fill:var(--muted)}.evx-t p{margin:4px 0 10px;font-size:13px;line-height:1.55;color:var(--muted)}.evx-h{border-collapse:collapse;font-size:12px;margin-bottom:8px}.evx-h td,.evx-h th{padding:3px 10px 3px 0;text-align:left}.evx-l{font-size:12.5px}" +
     "@media (max-width:760px){.evdays{grid-template-columns:repeat(3,1fr)}.evx{grid-template-columns:1fr}.ev-tbl{min-width:820px}}";
   document.head.appendChild(evcss);
