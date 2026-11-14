@@ -324,7 +324,7 @@ def _fetch_batch(universe, now_utc):
                             o, h, l = float(seg["Open"].iloc[0]), float(seg["High"].max()), float(seg["Low"].min())
             w = week52(list(prior["High"].astype(float))[-251:], list(prior["Low"].astype(float))[-251:], last, h, l)
             # closing basis: completed sessions only — today's row counts once its session has closed
-            done = d if session_status(EXCHANGES[u["ex"]], now_utc)["state"] in ("closed", "break") and not roll else prior
+            done = d if session_status(EXCHANGES[u["ex"]], now_utc)["state"] in ("closed", "break") else prior   # the continuous series is already mixed across rolls, so a roll flag does not hold back the close
             mab = ma_block([x.strftime("%Y-%m-%d") for x in done.index], [float(x) for x in done["Close"].astype(float)])
             recs[u["id"]] = {**u, "provider": "Yahoo Finance (delayed)", "roll": roll, "last": last, "prev_close": prev_close, "open": o, "high": h, "low": l,
                              "chg": last - prev_close, "pct": pct(last, prev_close), "pct_open": pct(last, o) if o else None,
