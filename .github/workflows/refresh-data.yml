@@ -48,6 +48,9 @@ jobs:
       - name: CME final open interest (Daily Bulletin, via the desk worker)
         run: python scripts/cme_final.py || echo "CME final OI skipped this run"
 
+      - name: CFTC COT release schedule (holiday-delayed dates)
+        run: python scripts/cot_schedule.py || echo "COT schedule skipped this run"
+
       - name: Commit if changed
         run: |
           if git diff --quiet -- data.json; then

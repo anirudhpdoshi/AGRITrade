@@ -37,6 +37,7 @@ jobs:
       - run: python tests/test_sp_schedule.py
       - run: python tests/test_bea_fastlane.py && python tests/test_roll.py && python tests/test_health.py && python tests/test_publish.py
       - run: python tests/test_yields.py
+      - run: python tests/test_cot_schedule.py
       - run: python tests/test_policy_intel.py
       - name: Lint (syntax errors and undefined names only)
         run: pip install -q ruff && ruff check scripts tests --select E9,F63,F7,F82

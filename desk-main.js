@@ -1237,6 +1237,7 @@ function usdaEvents(key, fromMs, days){
     if(wd==="Mon"){ at(y,m,dd,11,0,"Export inspections","usda"); if(m>=4&&m<=11&&!(m===11&&dd>30)) at(y,m,dd,16,0,"Crop progress","usda"); }
     if(wd==="Thu"&&!thanks) at(y,m,dd,8,30,"Export sales","usda");
     if(wd==="Fri"&&m===11&&dd>=23&&dd<=29) at(y,m,dd,8,30,"Export sales (Thanksgiving week)","usda");
+    if(window.cotSync) cotSync();
     if(wd==="Fri"&&!(window.COT_DELAY&&COT_DELAY[iso])) at(y,m,dd,15,30,"CFTC Commitments of Traders","cftc");
     if(window.COT_REL&&COT_REL[iso]) at(y,m,dd,15,30,"CFTC Commitments of Traders (holiday-delayed)","cftc");
     if(USDA_WASDE.indexOf(iso)>=0) at(y,m,dd,12,0,"WASDE + Crop Production","wasde");
@@ -2611,9 +2612,26 @@ function checklistItems(key){
    skipped Friday -> {rel: delayed release day, asof: positions date}. Update from that page each year. */
 var COT_DELAY={"2026-11-13":{rel:"2026-11-16",asof:"2026-11-10"},"2026-11-27":{rel:"2026-11-30",asof:"2026-11-24"},"2026-12-25":{rel:"2026-12-28",asof:"2026-12-22"}};
 var COT_REL={}; Object.keys(COT_DELAY).forEach(function(f){ COT_REL[COT_DELAY[f].rel]=COT_DELAY[f].asof; });
+/* the refresh job reads the CFTC schedule page into DATA.cot_schedule (scripts/cot_schedule.py); for every year it covers,
+   the published dates win: a Friday with no release is skipped, its report goes out on the next listed day (positions as
+   of that week's Tuesday), or not at all if nothing is listed within 4 days. Years not yet published fall back to Fridays. */
+var _cotSeen=null;
+function cotSync(){
+  var S=window.DATA&&DATA.cot_schedule; if(!S||!S.years||S.checked===_cotSeen) return; _cotSeen=S.checked;
+  Object.keys(S.years).forEach(function(y){
+    var rel={}; (S.years[y]||[]).forEach(function(d){ rel[d]=1; });
+    Object.keys(COT_DELAY).forEach(function(f){ if(f.slice(0,4)===y){ if(COT_DELAY[f].rel) delete COT_REL[COT_DELAY[f].rel]; delete COT_DELAY[f]; } });
+    for(var d=new Date(Date.UTC(+y,0,1));d.getUTCFullYear()===+y;d=new Date(d.getTime()+86400000)){
+      if(d.getUTCDay()!==5) continue; var f=d.toISOString().slice(0,10); if(rel[f]) continue;
+      var asof=new Date(d.getTime()-3*86400000).toISOString().slice(0,10), r=null;
+      for(var k=1;k<=4&&!r;k++){ var c=new Date(d.getTime()+k*86400000).toISOString().slice(0,10); if(rel[c]) r=c; }
+      COT_DELAY[f]={rel:r, asof:asof}; if(r) COT_REL[r]=asof;
+    }
+  });
+}
 /* the most recent COT release that has happened: {t, asof} */
 function lastCotRelease(){
-  var now=Date.now();
+  cotSync(); var now=Date.now();
   for(var i=0;i<=10;i++){ var x=new Date(now-i*86400000), p={};
     new Intl.DateTimeFormat('en-US',{timeZone:'America/Toronto',year:'numeric',month:'numeric',day:'numeric',weekday:'short'}).formatToParts(x).forEach(function(q){ p[q.type]=q.value; });
     var iso=p.year+'-'+String(p.month).padStart(2,'0')+'-'+String(p.day).padStart(2,'0'), t=zonedMs(+p.year,+p.month,+p.day,15,30,'America/Toronto');

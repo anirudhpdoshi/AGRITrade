@@ -276,7 +276,7 @@
       if (seen && seen >= e.t - 5 * MIN) return { at: seen, txt: m.name + " " + m.period + ": " + (window.mval ? mval(m, m.value) : m.value) + (e.fc && sameMeasure(e, m) ? " (fc " + e.fc + ")" : ""), go: "macro:dash", sel: '[data-mkey="' + k.macro + '"]', where: "Macro · " + m.name, tab: "macro" };
       return { pending: 1, where: "Macro · " + m.name }; }
     if (k.asof) { var w = WHERE[k.asof], at = A[k.asof] ? Date.parse(A[k.asof]) : 0, ok = at >= e.t - 5 * MIN;
-      if (k.asof === "cftc_grains") { var c = DATA.grains.corn.cftc, lastD = c[c.length - 1].date; ok = lastD >= new Date(e.t - 4 * 86400000).toISOString().slice(0, 10); at = ok ? e.t : 0; }
+      if (k.asof === "cftc_grains") { var c = DATA.grains.corn.cftc, lastD = c[c.length - 1].date; var ri = new Date(e.t - 5 * 3600000).toISOString().slice(0, 10), want = (window.COT_REL && COT_REL[ri]) || new Date(e.t - 4 * 86400000).toISOString().slice(0, 10); ok = lastD >= want; at = ok ? e.t : 0; }
       if (k.asof === "exports") { var E = (DATA.exports && DATA.exports.corn && DATA.exports.corn.weeks) || [], wk = E.length ? E[E.length - 1][1] : ""; ok = wk >= new Date(e.t - 8 * 86400000).toISOString().slice(0, 10); }
       return ok ? { at: at, txt: "", go: w[0], sel: w[1], where: w[2], tab: w[0].split(":")[0] } : { pending: 1, where: w[2] }; }
     if (k.cb) { var PJ = window.POLICY && POLICY._data(), bk = null;
