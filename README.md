@@ -16,7 +16,7 @@ GitHub Action (every 15 min, weekdays)          browser
 - **`index.html`**: renderers plus an embedded copy of the data. That copy is the fallback if `data.json` can't load.
 - **`data.json`**: `{DATA, NEWS}`. `DATA.meta.asof` holds the last observation time per source, and the freshness pills read it.
 - **`live.js`**: status strip (ET clock, FX/CBOT sessions, countdown to the next high-impact event), freshness pills, the streaming spot rate with sparkline and level-cross toasts, and live forwards and level check.
-- **`scripts/update_data.py`**: patches each source independently. A failed source keeps its old values and old as-of time, so its pill turns amber or red. `python scripts/update_data.py --only news,fx_spot --dry-run` is useful when debugging.
+- **`scripts/update_data.py`**: the runner. The blocks themselves live in `scripts/ud_fx.py`, `ud_grains.py`, `ud_macro.py`, `ud_treasury.py` (shared plumbing in `ud_common.py`). It patches each source independently. A failed source keeps its old values and old as-of time, so its pill turns amber or red. `python scripts/update_data.py --only news,fx_spot --dry-run` is useful when debugging.
 
 ## What refreshes automatically vs what is still manual
 

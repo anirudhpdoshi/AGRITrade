@@ -56,7 +56,7 @@ due = L.macro_due(D)
 ok({"us_gdp", "us_core_pce"} <= due, f"GDP and PCE are awaited after 8:30: {due}")
 ok(not L.rel_done(D, "macro"), "release watch stays open while they are awaited")
 fred = []
-U._fred = lambda sid, start: fred.append(sid) or [(f"2026-{m:02d}-01", 230.0 + m) for m in range(1, 10)]
+sys.modules[U.macro.__module__]._fred = lambda sid, start: fred.append(sid) or [(f"2026-{m:02d}-01", 230.0 + m) for m in range(1, 10)]   # stub where macro() looks it up
 before = {m["key"]: m for m in D["macro"]}
 calls.clear()
 U.macro(D, {}, only={"us_gdp", "us_core_pce"})
