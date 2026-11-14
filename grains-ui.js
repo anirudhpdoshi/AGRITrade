@@ -88,6 +88,7 @@
       '<span class="gr-v"><span class="qt-box gr-px" data-qt="gr-' + k + '" data-v="' + T.px + '" data-dec="4"><span class="qt-v">' + T.px.toFixed(4) + '</span></span><small>$/bu</small></span>' +
       '<span class="gr-c ' + T.dir + '">' + (T.chg ? T.chg + " · " + T.pct : "") + '</span>' +
       (phys ? '<span class="gr-phys"><span class="gr-ph">Physical calculations</span>' + phys + '</span>' : "") +
+      (root.MASIG ? MASIG.tileLine(k) : "") +
       '<span class="gr-f">' + (T.q ? "Delayed " + T.q + " · " : "") + 'Front ' + T.expiry + (fndLabel(T.contract) ? ' · FND ' + fndLabel(T.contract) : "") + '</span>' +
       (stale ? '<span class="gr-stale">LATEST VERIFIED ' + shortDate(T.date) + '</span>' : "") + '</button>';
   }
@@ -102,6 +103,7 @@
       '<span class="gr-v"><span class="qt-box gr-px" data-qt="gr-fx" data-v="' + mid + '" data-dec="5" data-qt-live="usdcad"><span class="qt-v">' + (root.QTFMT ? QTFMT(mid, 5) : mid.toFixed(5)) + '</span></span><small>CAD per USD</small></span>' +
       '<span class="gr-c ' + dir + '">' + (d != null ? s + Math.abs(d * 1e4).toFixed(1) + " pips · " + s + Math.abs(d / ref * 100).toFixed(2) + "%" : "") + '</span>' +
       (ref ? '<span class="gr-phys"><span class="gr-ph">Reference</span><span class="gr-kv"><span>Prior close</span><b>' + ref.toFixed(4) + '</b></span><span class="gr-kv"><span>1 CAD in USD</span><b>' + (1 / mid).toFixed(4) + '</b></span></span>' : "") +
+      (root.MASIG ? MASIG.tileLine("fx") : "") +
       '<span class="gr-f">' + (tl ? "Spot " + tl + " · " : "") + 'opens the USD/CAD desk report</span></button>';
   }
   /* right column: "next" card for the open report tab, with the other tabs' next events beneath */

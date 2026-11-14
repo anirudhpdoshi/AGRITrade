@@ -433,7 +433,7 @@
     if (!active()) unseen++;
     paintBadge(); if (active()) paintFeed();
   }
-  var MK = { policy: ["🏦", "#6ea8ff"], data: ["◆", "#38b6c9"], release: ["✓", "#3fb97f"], due: ["⏱", "#e8b93d"], world: ["🌐", "#ff8a84"], oi: ["⚡", "#c9a3ff"], level: ["↕", "#6ea8ff"], day: ["☀", "#9aa8bb"] };
+  var MK = { alert: ["📣", "#ff5d5d"], policy: ["🏦", "#6ea8ff"], data: ["◆", "#38b6c9"], release: ["✓", "#3fb97f"], due: ["⏱", "#e8b93d"], world: ["🌐", "#ff8a84"], oi: ["⚡", "#c9a3ff"], level: ["↕", "#6ea8ff"], day: ["☀", "#9aa8bb"] };
   var FV = "all";
   function feedHTML() {
     var now = Date.now(), list = feed.filter(function (m) { return FV === "all" || m.k === FV || (FV === "release" && m.k === "data"); });

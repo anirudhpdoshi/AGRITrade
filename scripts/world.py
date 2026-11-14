@@ -229,6 +229,18 @@ def yf():
 ROLL_TOL_PCT = 1.0   # continuous-futures roll guard: series prior close vs Yahoo's previous close for the quoted contract
 
 
+def ma_block(dates, closes):
+    """20/50/100/200-day simple MAs on completed daily closes, now and one close earlier (for cross detection).
+    None when there are fewer than 22 closes; an MA needing more history than exists is None."""
+    if len(closes) < 22:
+        return None
+    def avg(n, end):
+        return round(sum(closes[end - n + 1:end + 1]) / n, 6) if end + 1 >= n else None
+    e = len(closes) - 1
+    return {"asof": dates[e], "close": round(closes[e], 6), "prev_close": round(closes[e - 1], 6), "prev_asof": dates[e - 1],
+            "ma": {str(n): avg(n, e) for n in (20, 50, 100, 200)}, "prev_ma": {str(n): avg(n, e - 1) for n in (20, 50, 100, 200)}}
+
+
 def _quote_prev_close(sym):
     """Yahoo's own previous close for the contract currently quoted under a continuous futures symbol."""
     try:
@@ -311,9 +323,12 @@ def _fetch_batch(universe, now_utc):
                         if len(seg):
                             o, h, l = float(seg["Open"].iloc[0]), float(seg["High"].max()), float(seg["Low"].min())
             w = week52(list(prior["High"].astype(float))[-251:], list(prior["Low"].astype(float))[-251:], last, h, l)
+            # closing basis: completed sessions only — today's row counts once its session has closed
+            done = d if session_status(EXCHANGES[u["ex"]], now_utc)["state"] in ("closed", "break") and not roll else prior
+            mab = ma_block([x.strftime("%Y-%m-%d") for x in done.index], [float(x) for x in done["Close"].astype(float)])
             recs[u["id"]] = {**u, "provider": "Yahoo Finance (delayed)", "roll": roll, "last": last, "prev_close": prev_close, "open": o, "high": h, "low": l,
                              "chg": last - prev_close, "pct": pct(last, prev_close), "pct_open": pct(last, o) if o else None,
-                             "ts": last_ts.isoformat(), "session_date": sess.isoformat(), "w52": w,
+                             "ts": last_ts.isoformat(), "session_date": sess.isoformat(), "w52": w, "ma": mab,
                              "spark": [round(float(x), 6) for x in list(d["Close"].astype(float))[-30:]]}
         except Exception as e:
             failed.append({"id": u["id"], "sym": u["sym"], "error": f"{type(e).__name__}: {str(e)[:120]}"})

@@ -211,6 +211,7 @@
       '<div class="wmt-v"><b data-tick="w-' + i.id + '">' + last(i) + "</b>" + spark(i.spark) + "</div>" +
       '<div class="wmt-c">' + (i.kind === "price" ? '<span class="' + cl(i.chg) + '">' + sg(i.chg, i.dec) + "</span> · " : "") + chgCell(i) + "</div>" +
       '<div class="wmt-r">' + range52(i) + '<div class="wbs">' + badges(i) + "</div></div>" +
+      (window.MASIG && MA_SUBS[(subOf(i.id) || [])[0]] ? MASIG.worldLine(i) : "") +
       '<div class="wmt-f">' + age(i) + "</div></div>";
   }
   /* Markets (Nov 14): sub-categories ranked by how much they matter to a grain & USD/CAD desk. Every sub-category says
@@ -245,6 +246,7 @@
       { gold: "Safe haven; dollar hedge", silver: "Precious / industrial mix", platinum: "Autos / industrial", palladium: "Autos" }],
     ["em", "Emerging-market FX", "c", ["usdinr"], "India is a large buyer of Canadian lentils and peas and of edible oils; a weaker rupee cuts its buying power.",
       { usdinr: "India import buying power" }]];
+  var MA_SUBS = { grains: 1, usd: 1, energy: 1, indmet: 1, precious: 1, comfx: 1 };
   var SUB_BY = {}; SUBS.forEach(function (s) { SUB_BY[s[0]] = s; });
   function subOf(id) { for (var k = 0; k < SUBS.length; k++) if (SUBS[k][3].indexOf(id) >= 0) return SUBS[k]; return null; }
   function mv(i) { return i.kind === "price" ? i.pct : i.chg; }   /* % for prices, bp for yields and spreads */
@@ -288,7 +290,7 @@
     });
     return html + "</aside>";
   }
-  function marketsHTML() { if (V.grp !== "desk" && V.grp !== "all" && !SUB_BY[V.grp]) V.grp = "desk"; return '<div class="wm-lay">' + catPane() + '<div class="wm-main">' + marketsBody() + "</div></div>"; }
+  function marketsHTML() { if (V.grp !== "desk" && V.grp !== "all" && !SUB_BY[V.grp]) V.grp = "desk"; return '<div class="wm-main wm-full">' + marketsBody() + "</div>"; }
   function subHead(S, n) {
     return '<div class="wsub-h"><div class="wsub-t">' + pill(S[2]) + "<b>" + esc(S[1]) + "</b><small>" + n + "</small></div>" +
       '<p class="wsub-why"><i>Why it matters</i> ' + esc(S[4]) + "</p>" + (readSub(S) ? '<p class="wsub-read"><i>Today</i> ' + esc(readSub(S)) + "</p>" : "") + "</div>";
@@ -331,6 +333,13 @@
     ".wrb{display:flex;flex-direction:column;gap:4px;margin:6px 0 12px}.wrb-r{all:unset;cursor:pointer;display:grid;grid-template-columns:62px 190px minmax(0,1fr);gap:10px;align-items:baseline;padding:6px 8px;border:1px solid #1a1a1a;border-radius:6px;font-size:12.5px;color:#c9d4e2}.wrb-r:hover{border-color:#3a3a3a}.wrb-r b{color:#e8eef4;font-weight:600}" +
     ".wrb-r .wr-t{justify-self:start}" +
     "@media (max-width:760px){.wrb-r{grid-template-columns:62px minmax(0,1fr)}.wrb-r span{grid-column:1/-1}#panel-world .wm-left{display:flex!important;flex-direction:row!important;flex-wrap:nowrap;overflow-x:auto;gap:8px;padding-bottom:6px;scrollbar-width:thin}#panel-world .wm-left .gr-col-h{display:none}#panel-world .wm-ct{flex:0 0 158px}}" +
+    "#panel-world .w-tabs{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:0;border-bottom:1px solid #1a1a1a;margin:4px 0 12px;scrollbar-width:thin}" +
+    "#panel-world .w-tabs .wt-b{all:unset;cursor:pointer;flex:0 0 auto;display:flex;flex-direction:column;gap:2px;padding:8px 12px 9px;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}" +
+    "#panel-world .wt-b b{font:500 13px 'Libre Franklin',system-ui,sans-serif;color:#8f9db3}#panel-world .wt-b:hover b{color:#fff}#panel-world .wt-b small{font:10.5px 'JetBrains Mono','IBM Plex Mono',monospace;color:#666;display:flex;gap:6px}#panel-world .wt-b small i{font-style:normal}#panel-world .wt-b small .up{color:#3fb97f99}#panel-world .wt-b small .dn{color:#e0655f99}" +
+    "#panel-world .wt-b[aria-selected=true]{border-bottom-color:#d9b46a}#panel-world .wt-b[aria-selected=true] b{color:#d9b46a}#panel-world .wt-b:focus-visible{outline:2px solid #38b6c9}" +
+    "#panel-world .wt-b.t-d{box-shadow:inset 0 2px 0 #d9b46a55}#panel-world .wt-b.t-h{box-shadow:inset 0 2px 0 #38b6c955}" +
+    "#panel-world .wt-sep{flex:0 0 auto;align-self:center;font:700 9px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.08em;color:#555;padding:0 6px 0 14px;border-left:1px solid #1a1a1a;margin-left:6px}" +
+    ".wm-full{width:100%;grid-column:1/-1}" +
     ".wq4-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:14px;margin-top:10px}.wq4{border:1px solid #1f1f1f;border-radius:8px;padding:10px 12px;min-width:0}" +
     ".wq4 h3{margin:0 0 10px;font:600 12.5px 'Libre Franklin',system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#d9b46a;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}.wq4 h3 small{color:#8a8a8a;font-weight:500}.wq4 h3 .wasof{text-transform:none;letter-spacing:0;font-weight:400}" +
     ".wmt-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}.wmt-r *{font-size:9.5px!important}" +
@@ -491,8 +500,7 @@
     var h = document.getElementById("wHead"); if (!h) return;
     var now = Date.now(), cities = [["Toronto", "America/Toronto", "ca"], ["New York", "America/New_York", "us"], ["London", "Europe/London", "gb"], ["Frankfurt", "Europe/Berlin", "de"], ["Mumbai", "Asia/Kolkata", "in"], ["Hong Kong", "Asia/Hong_Kong", "hk"], ["Tokyo", "Asia/Tokyo", "jp"], ["Sydney", "Australia/Sydney", "au"]];
     var a = W ? now - Date.parse(W.updated_at) : null, stale = a != null && a > 40 * 60000;
-    h.innerHTML = '<div class="wclk">' + cities.map(function (c) { return '<span>' + fl(c[2], 11) + " <b>" + new Date(now).toLocaleTimeString("en-US", { timeZone: c[1], hour: "numeric", minute: "2-digit" }) + "</b><small>" + c[0] + "</small></span>"; }).join("") + "</div>" +
-      '<div class="wsrc">' + (err ? '<span class="pk-al hot">' + esc(err) + "</span> " : "") + (W ? '<span class="pk-al ' + (stale ? "warn" : "ok") + '">server data ' + ago(a) + " old" + (stale ? " — server runs paused (weekend) or failing" : "") + "</span> " : '<span class="pk-al warn">loading world.json…</span>') + "</div>";
+    h.innerHTML = '<div class="wsrc">' + (err ? '<span class="pk-al hot">' + esc(err) + "</span> " : "") + (W ? '<span class="pk-al ' + (stale ? "warn" : "ok") + '">server data ' + ago(a) + " old" + (stale ? " — server runs paused (weekend) or failing" : "") + "</span> " : '<span class="pk-al warn">loading world.json…</span>') + "</div>";
   }
   var WTHEME = { overview: "#38b6c9", sessions: "#6ea8ff", markets: "#e8b93d", alerts: "#ff8a84", health: "#3fb97f", guide: "#9aa8bb" };
   /* report-first (Nov 2026): the 6 sections are top tabs; the filter children that used to expand under
@@ -525,14 +533,23 @@
       .map(function (x) { return kid("data-wsev", x[0], V.sev === x[0], x[1], x[2]); }).join("");
     return "";
   }
+  /* one tab per section (Nov 14): views, then the 14 sub-categories in relevance order, then Alerts — each tab carries its live count */
   function tabsHTML() {
-    return headsData().map(function (h) {
-      var on = V.sub === h[0];
-      return '<button type="button" role="tab" data-wsub="' + h[0] + '" aria-selected="' + on + '"><b>' + h[1] + "</b>" + (h[2] ? "<small>" + esc(h[2]) + "</small>" : "") + "</button>";
-    }).join("");
+    if (!W) return "";
+    var L = inst(), sigF = function (i) { return i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low); };
+    function ud(rows) { var P = rows.filter(function (i) { return mv(i) != null; }); return '<i class="up">▲' + P.filter(function (i) { return mv(i) > 0; }).length + '</i><i class="dn">▼' + P.filter(function (i) { return mv(i) < 0; }).length + "</i>"; }
+    function tb(attr, val, on, lab, rows, t) { return '<button type="button" role="tab" class="wt-b' + (t ? " t-" + t : "") + '" ' + attr + '="' + val + '" aria-selected="' + on + '"><b>' + esc(lab) + "</b><small>" + rows.length + " " + ud(rows) + "</small></button>"; }
+    var mk = V.sub === "markets", cur = mk && !V.flagged ? V.grp : "", deskRows = [];
+    deskSubs().forEach(function (S) { deskRows = deskRows.concat(subRows(S)); });
+    var h = tb("data-wgrp", "desk", cur === "desk", "Desk-relevant", deskRows);
+    ["d", "h", "m", "c"].forEach(function (t) { h += '<span class="wt-sep" title="' + esc(TIER[t][1]) + '">' + TIER[t][0] + "</span>" + SUBS.filter(function (S) { return S[2] === t; }).map(function (S) { return tb("data-wgrp", S[0], cur === S[0], S[1], subRows(S), t); }).join(""); });
+    h += '<span class="wt-sep">VIEWS</span>' + tb("data-wgrp", "all", cur === "all", "All markets", L) + tb("data-wflag", "1", mk && V.flagged, "52-week signals", L.filter(sigF));
+    var al = W.alerts || [];
+    h += '<button type="button" role="tab" class="wt-b" data-wsub="alerts" aria-selected="' + (V.sub === "alerts") + '"><b>Alerts</b><small>' + al.filter(function (a) { return a.tier >= 2; }).length + " major</small></button>";
+    return h;
   }
   function slicerHTML() {
-    if (V.sub === "markets") return kids("markets");
+    if (V.sub === "markets") return "";
     if (V.sub === "alerts") return kids("alerts");
     return "";
   }
@@ -589,9 +606,10 @@
     var _sl = document.getElementById("wSlicer"), _sh = slicerHTML();
     _sl.innerHTML = _sh; _sl.style.display = _sh ? "" : "none";
     document.getElementById("wCtx").innerHTML = ctxHTML();
+    if (V.sub !== "alerts") V.sub = "markets";   /* Overview, Sessions, Data health and Guide were retired (Nov 14) */
     var B = document.getElementById("wBody");
     if (!W) { B.innerHTML = err ? '<div class="tile wide"><div class="unreach">\u26a0 Sorry, we can\u2019t be reached now <small>\u2014 global market data did not load; retrying every minute</small></div></div>' : '<div class="tile wide"><p class="note">Loading global market data…</p></div>'; return; }
-    B.innerHTML = V.sub === "guide" ? guideHTML() : V.sub === "sessions" ? sessionsHTML() : V.sub === "markets" ? marketsHTML() : V.sub === "alerts" ? alertsHTML() : V.sub === "health" ? healthHTML() : heroHTML() + overviewHTML();
+    B.innerHTML = V.sub === "alerts" ? alertsHTML() : marketsHTML();
     kbDecorateW(B);
     if (window.MOTION) window.MOTION.scan();
   }
@@ -601,8 +619,8 @@
     var b = t.closest("[data-wsub]"); if (b) { V.sub = b.getAttribute("data-wsub"); save(); render(); return; }
     b = t.closest("[data-wview]"); if (b) { V.view = b.getAttribute("data-wview"); save(); render(); return; }
     b = t.closest("[data-wgo]"); if (b) { V.sub = "markets"; V.grp = b.getAttribute("data-wgo"); V.flagged = false; save(); render(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
-    b = t.closest("[data-wgrp]"); if (b) { V.grp = b.getAttribute("data-wgrp"); V.flagged = false; save(); render(); return; }   /* slicer: a group pick clears the 52-week filter, as the old nav did */
-    b = t.closest("[data-wflag]"); if (b) { V.flagged = true; V.grp = "all"; save(); render(); return; }
+    b = t.closest("[data-wgrp]"); if (b) { V.sub = "markets"; V.grp = b.getAttribute("data-wgrp"); V.flagged = false; save(); render(); return; }   /* slicer: a group pick clears the 52-week filter, as the old nav did */
+    b = t.closest("[data-wflag]"); if (b) { V.sub = "markets"; V.flagged = true; V.grp = "all"; save(); render(); return; }
     b = t.closest("[data-wsev]"); if (b) { V.sev = b.getAttribute("data-wsev"); save(); render(); return; }
     b = t.closest("[data-wnotify]"); if (b) {
       if (NOTIFY) { NOTIFY = false; try { localStorage.setItem("desk.worldNotify", "0"); } catch (e) {} render(); return; }

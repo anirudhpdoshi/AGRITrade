@@ -107,4 +107,13 @@ t("live yield overlays the official close; change in bp vs that close", ly_ok)
 t("no bars -> official record unchanged", lambda: W.apply_live_yield(OFF, [], NOWY) is OFF or (_ for _ in ()).throw(AssertionError()))
 t("official close newer than the last bar -> keep official", lambda: W.apply_live_yield(dict(OFF, session_date="2026-10-29"), BARS, NOWY)["ex"] == "UST" or (_ for _ in ()).throw(AssertionError()))
 t("live print 2 pts away -> rejected, official kept", lambda: W.apply_live_yield(OFF, [(BARS[-1][0], 7.2)], NOWY)["last"] == 4.99 or (_ for _ in ()).throw(AssertionError()))
+print("moving averages (closing basis)")
+def ma_ok():
+    c = [float(x) for x in range(1, 251)]; d = [f"d{i}" for i in range(250)]
+    b = W.ma_block(d, c)
+    assert b["close"] == 250 and b["ma"]["20"] == sum(range(231, 251)) / 20 and b["ma"]["200"] == sum(range(51, 251)) / 200, b
+    assert b["prev_ma"]["20"] == sum(range(230, 250)) / 20 and b["asof"] == "d249" and b["prev_asof"] == "d248", b
+    s = W.ma_block(d[:60], c[:60]); assert s["ma"]["100"] is None and s["ma"]["50"] is not None, s
+    assert W.ma_block(d[:10], c[:10]) is None
+t("MA 20/50/100/200 now and one close earlier; short history -> None", ma_ok)
 print(f"\n{n - fail}/{n} passed"); sys.exit(1 if fail else 0)
