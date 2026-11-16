@@ -313,13 +313,39 @@
     "@media (max-width:760px){.mn2-tabs{flex-wrap:nowrap;overflow-x:auto}.mn2-kvs{grid-template-columns:repeat(2,minmax(0,1fr))}}";
   css.textContent += ".mn2-drv{margin:12px 0;border:1px solid #1a1a1a;border-left:3px solid #38b6c9;background:#050505;padding:10px 14px}.mn2-drh{font:600 12px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#38b6c9;margin-bottom:8px}.mn2-drh small{text-transform:none;letter-spacing:0;color:#777;font-weight:400}" +
     ".mn2-dv{margin:8px 0 12px}.mn2-dv>b{display:block;font-size:13px;color:#e8eef4;margin-bottom:6px}.mn2-dl{margin:4px 0 8px 18px;padding:0;font-size:12.5px;line-height:1.55;color:#c9d4e2}" +
-    ".mn2-dt{border-collapse:collapse;font:12px 'JetBrains Mono','IBM Plex Mono',monospace;width:100%}.mn2-dt th,.mn2-dt td{padding:4px 8px;border-bottom:1px solid #141414;text-align:right;white-space:nowrap}.mn2-dt th:first-child{text-align:left;font-family:'Libre Franklin',system-ui,sans-serif;font-weight:500;color:#c9d4e2}" +
+    ".mn2-dt{border-collapse:collapse;font:12px 'JetBrains Mono','IBM Plex Mono',monospace;width:100%}.mn2-dt th,.mn2-dt td{padding:4px 6px;border-bottom:1px solid #141414;text-align:right;white-space:nowrap}.mn2-dt th:first-child{text-align:left;font-family:'Libre Franklin',system-ui,sans-serif;font-weight:500;color:#c9d4e2}" +
     ".mn2-dt thead th{color:#777;font-weight:500;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em}.mn2-dt td{color:#e8eef4}.mn2-dt .up{color:#3fb97f}.mn2-dt .dn{color:#e0655f}.mn2-dt tr.agg th{color:#d9b46a;font-weight:600}.mn2-dt tr.agg td{background:#0b0b0b}" +
     ".mn2-dtw{overflow-x:auto;border:1px solid #141414}.mn2-dt2 thead th{background:#050505}.mn2-dt2 thead button{all:unset;cursor:pointer;color:#8a8a8a;white-space:nowrap}.mn2-dt2 thead button:hover{color:#fff}.mn2-dt2 thead button.on{color:#d9b46a}.mn2-dt2 thead button:focus-visible{outline:2px solid #38b6c9}" +
-    ".mn2-dt2 td.bc{white-space:nowrap}.mn2-tk{display:inline-block;position:relative;width:64px;height:11px;vertical-align:middle;margin-right:8px;border-left:0}.mn2-tk:before{content:'';position:absolute;left:50%;top:-2px;bottom:-2px;border-left:1px solid #2a2a2a}.mn2-bar{position:absolute;top:0;bottom:0;border-radius:2px}.mn2-bar.p{background:#3fb97f}.mn2-bar.n{background:#e0655f}.mn2-dn{font-size:11px;color:#777;margin:6px 0 0;line-height:1.45}";
+    ".mn2-dt2 tr.tp.g{background:rgba(63,185,127,.10)}.mn2-dt2 tr.tp.d{background:rgba(224,101,95,.10)}.mn2-dt2 tr.tp.g th:first-child{box-shadow:inset 3px 0 0 #3fb97f}.mn2-dt2 tr.tp.d th:first-child{box-shadow:inset 3px 0 0 #e0655f}" +
+    ".mn2-rk{font:700 9.5px 'JetBrains Mono','IBM Plex Mono',monospace;font-style:normal;letter-spacing:.03em;margin-left:8px;padding:1px 5px;border-radius:3px;color:#000}.mn2-rk.g{background:#3fb97f}.mn2-rk.d{background:#e0655f}" +
+    ".mn2-wt{font:700 9.5px 'JetBrains Mono','IBM Plex Mono',monospace;font-style:normal;margin-left:8px;padding:0 5px;border:1px solid #d9b46a;border-radius:3px;color:#d9b46a}.mn2-dt2 td.wbig{color:#d9b46a;font-weight:700}.mn2-dt2 td.wsm{color:#666}" +
+    ".mn2-dt2 td.bc{white-space:nowrap}.mn2-tk{display:inline-block;position:relative;width:44px;height:11px;vertical-align:middle;margin-right:8px;border-left:0}.mn2-tk:before{content:'';position:absolute;left:50%;top:-2px;bottom:-2px;border-left:1px solid #2a2a2a}.mn2-bar{position:absolute;top:0;bottom:0;border-radius:2px}.mn2-bar.p{background:#3fb97f}.mn2-bar.n{background:#e0655f}.mn2-dn{font-size:11px;color:#777;margin:6px 0 0;line-height:1.45}";
   doc.head.appendChild(css);
   /* ---- Full history: what drove the print (Nov 16). Momentum from the series itself for every indicator; internals from the
      official component series where the desk holds them (CPI: BLS / Statistics Canada categories; others: DATA.macro_parts). ---- */
+  /* official weights: BLS CPI-U relative importance, Dec 2025 (bls.gov/cpi/tables/relative-importance/2025.htm);
+     Statistics Canada 2025 basket (Prices Analytical Series 62F0014M2026005): majors at link-month prices, sub-items at reference-period prices */
+  var WUS = { "All items": 100, "Core (ex food & energy)": 79.919, "Food": 13.698, "Energy": 6.383, "Core goods": 19.176, "Core services": 60.744, "Food at home": 8.325, "Food away from home": 5.373,
+    "Cereals & bakery products": 1.035, "Cereals & cereal products": 0.315, "Bakery products": 0.721, "Meats, poultry, fish & eggs": 1.995, "Beef & veal": 0.638, "Chicken": 0.291, "Eggs": 0.133,
+    "Dairy products": 0.758, "Fruits & vegetables": 1.269, "Fresh fruits": 0.532, "Fresh vegetables": 0.476, "Lettuce": 0.044, "Tomatoes": 0.063, "Nonalcoholic beverages": 0.995, "Coffee": 0.221,
+    "Sugar & sweets": 0.328, "Fats & oils": 0.231, "Alcoholic beverages": 0.84, "Gasoline": 2.895, "Fuel oil": 0.083, "Electricity": 2.489, "Utility (piped) gas": 0.773, "New vehicles": 3.838,
+    "Used cars & trucks": 2.759, "Apparel": 2.368, "Medical care commodities": 1.489, "Household furnishings & operations": 4.298, "Televisions": 0.107, "Tobacco & smoking products": 0.445,
+    "Shelter": 35.625, "Rent of primary residence": 7.84, "Owners' equivalent rent": 26.204, "Lodging away from home": 1.289, "Medical care services": 6.935, "Hospital services": 2.167,
+    "Physicians' services": 1.684, "Motor vehicle insurance": 2.754, "Motor vehicle maintenance & repair": 1.039, "Airline fares": 0.881, "Transportation services": 6.315,
+    "Water, sewer & trash": 1.144, "Education & communication": 5.846, "Recreation": 5.137 };
+  var WCA = { "All items": 100, "Food": 16.93, "Shelter": 28.3, "Household operations & furnishings": 12.8, "Clothing & footwear": 4.5, "Transportation": 18.54, "Health & personal care": 5.4,
+    "Recreation, education & reading": 9.81, "Alcohol, tobacco & cannabis": 3.73, "Food purchased from stores": 10.82, "Food from restaurants": 6.02, "Rent": 7.45, "Mortgage interest cost": 5.23,
+    "Purchase of passenger vehicles": 6.67, "Vehicle insurance premiums": 2.45, "Gasoline": 3.3 };
+  /* components that add up to the headline level: weight = share of the total in the latest period */
+  var SHARE = { us_nfp: 1, us_retail: 1, us_pspend: 1, us_starts: ["Northeast", "Midwest", "South", "West"], us_permits: ["Northeast", "Midwest", "South", "West"] };
+  var PARENT = { "Owners' equivalent rent": "Shelter", "Rent of primary residence": "Shelter", "Lodging away from home": "Shelter", "Cereals & cereal products": "Cereals & bakery products",
+    "Bakery products": "Cereals & bakery products", "Beef & veal": "Meats, poultry, fish & eggs", "Chicken": "Meats, poultry, fish & eggs", "Eggs": "Meats, poultry, fish & eggs",
+    "Fresh fruits": "Fruits & vegetables", "Fresh vegetables": "Fruits & vegetables", "Lettuce": "Fresh vegetables", "Tomatoes": "Fresh vegetables", "Coffee": "Nonalcoholic beverages",
+    "Hospital services": "Medical care services", "Physicians' services": "Medical care services", "Motor vehicle insurance": "Transportation services",
+    "Motor vehicle maintenance & repair": "Transportation services", "Airline fares": "Transportation services", "Cereals & cereal products ": "",
+    "Food purchased from stores": "Food", "Food from restaurants": "Food", "Rent": "Shelter", "Mortgage interest cost": "Shelter", "Owned accommodation": "Shelter",
+    "Purchase of passenger vehicles": "Transportation", "Vehicle insurance premiums": "Transportation", "Gasoline": "Transportation", "Air transportation": "Transportation",
+    "Bakery & cereal products": "Food purchased from stores", "Meat": "Food purchased from stores", "Dairy products": "Food purchased from stores" };
   var CPIMAP = { us_cpi: "cpi_detail", us_core_cpi: "cpi_detail", ca_cpi: "cpi_detail_ca", ca_trim: "cpi_detail_ca", ca_median: "cpi_detail_ca" };
   function sgn(x, d, u) { if (x == null || !isFinite(x)) return "—"; var r = Math.abs(x) < Math.pow(10, -d) / 2 ? 0 : x; return (r > 0 ? "+" : r < 0 ? "−" : "") + Math.abs(r).toFixed(d) + (u || ""); }
   function cl(x) { return x == null ? "" : x > 0 ? "up" : x < 0 ? "dn" : ""; }
@@ -362,7 +388,24 @@
       var mm0 = last(i.mm, 0), mm1 = last(i.mm, 1), yy0 = last(i.yy, 0), yy1 = last(i.yy, 1), lv = i.v ? last(i.v, 0) : null;
       return { n: i.n, g: i.g, mm0: mm0, mm1: mm1, yy0: yy0, yy1: yy1, dyy: yy0 != null && yy1 != null ? yy0 - yy1 : null, dmm: mm0 != null && mm1 != null ? mm0 - mm1 : null, lv: lv };
     });
+    var WT = kind === "cpi" ? (CPIMAP[m.key] === "cpi_detail" ? WUS : WCA) : null, wsrc = "";
+    if (WT) { R.forEach(function (r) { if (WT[r.n] != null) r.w = WT[r.n]; }); wsrc = CPIMAP[m.key] === "cpi_detail" ? "BLS relative importance, Dec 2025" : "StatCan 2025 basket (majors at link-month prices, sub-items at reference prices)"; }
+    else if (SHARE[m.key]) { var part = SHARE[m.key] === 1 ? R : R.filter(function (r) { return SHARE[m.key].indexOf(r.n) >= 0; }), tot = part.reduce(function (a, r) { return a + (r.lv || 0); }, 0);
+      if (tot > 0) { part.forEach(function (r) { if (r.lv != null) r.w = r.lv / tot * 100; }); wsrc = "share of the total in the latest period"; } }
+    /* contribution to the headline move: weight × change (pp) for price/% components; the change itself for job counts and GDP contributions */
+    R.forEach(function (r) { r.ct = kind === "pp" ? r.lv : kind === "diff" ? r.mm0 : r.w != null && r.mm0 != null ? r.w / 100 * r.mm0 : null; });
+    var hasW = R.some(function (r) { return r.w != null; }), hasC = kind !== "pp" && kind !== "diff" && R.some(function (r) { return r.ct != null; });
     var agg = R.filter(function (r) { return r.g === "agg"; }), rest = R.filter(function (r) { return r.g !== "agg"; });
+    /* top 5 gainers and draggers: ranked by contribution where weights exist, else by the size of the latest move; headline rows excluded */
+    var rk = R.filter(function (r) { return !/^all items|^core \(ex/i.test(r.n) && (kind === "cpi" ? r.g !== "agg" || WT && r.w != null : true); }), rkey = R.some(function (r) { return r.ct != null && r.g !== "agg"; }) ? "ct" : "mm0";
+    if (kind === "cpi") rk = rk.filter(function (r) { return r.g !== "agg"; });
+    /* a sub-item is not ranked next to its own parent (OER inside Shelter, gasoline inside Transportation…) */
+    var inRk = {}; rk.forEach(function (r) { inRk[r.n] = 1; }); rk = rk.filter(function (r) { return !(PARENT[r.n] && inRk[PARENT[r.n]]); });
+    var tiny = rkey === "ct" && kind !== "pp" && kind !== "diff" ? 0.005 : 0;
+    var gl = rk.filter(function (r) { return r[rkey] != null && r[rkey] > tiny; }).sort(function (a, b) { return b[rkey] - a[rkey]; }).slice(0, 5),
+      dl = rk.filter(function (r) { return r[rkey] != null && r[rkey] < -tiny; }).sort(function (a, b) { return a[rkey] - b[rkey]; }).slice(0, 5);
+    gl.forEach(function (r, i) { r.top = "g" + (i + 1); }); dl.forEach(function (r, i) { r.top = "d" + (i + 1); });
+    var rkLab = rkey === "ct" ? (kind === "cpi" || hasC ? "contribution (weight × MoM)" : kind === "pp" ? "contribution" : "change") : "latest move";
     /* the story: who moved most this period, and whose year-on-year rate accelerated / slowed most */
     var key = kind === "pp" ? "lv" : "mm0", isHead = function (r) { return /^all items|^core \(ex/i.test(r.n); };
     /* CPI: tell the story with the major groups (food, energy, goods, services, shelter, transport…), single items after */
@@ -372,13 +415,15 @@
       dn = ok.slice().sort(function (a, b) { return a[key] - b[key]; }).slice(0, 3).filter(function (r) { return r[key] < 0; });
     var acc = major.filter(function (r) { return r.dyy != null; }).sort(function (a, b) { return b.dyy - a.dyy; });
     var lines = [];
+    if (gl.length) lines.push("Top gainers by " + rkLab + ": " + gl.map(function (r) { return esc(r.n) + " " + (rkey === "ct" && kind !== "pp" && kind !== "diff" ? sgn(r.ct, 2, " pp") : sgn(r[rkey], dd, du)); }).join(", ") + ".");
+    if (dl.length) lines.push("Top draggers by " + rkLab + ": " + dl.map(function (r) { return esc(r.n) + " " + (rkey === "ct" && kind !== "pp" && kind !== "diff" ? sgn(r.ct, 2, " pp") : sgn(r[rkey], dd, du)); }).join(", ") + ".");
     if (kind === "pp") {
-      if (up.length) lines.push("Added the most: " + up.map(function (r) { return esc(r.n) + " " + sgn(r.lv, dd, du); }).join(", ") + ".");
-      if (dn.length) lines.push("Subtracted: " + dn.map(function (r) { return esc(r.n) + " " + sgn(r.lv, dd, du); }).join(", ") + ".");
+      if (false && up.length) lines.push("Added the most: " + up.map(function (r) { return esc(r.n) + " " + sgn(r.lv, dd, du); }).join(", ") + ".");
+      if (false && dn.length) lines.push("Subtracted: " + dn.map(function (r) { return esc(r.n) + " " + sgn(r.lv, dd, du); }).join(", ") + ".");
     } else {
       var lab2 = kind === "diff" ? "change" : "month-on-month";
-      if (up.length) lines.push("Biggest rises (" + lab2 + "): " + up.map(function (r) { return esc(r.n) + " " + sgn(r.mm0, dd, du); }).join(", ") + ".");
-      if (dn.length) lines.push("Biggest falls (" + lab2 + "): " + dn.map(function (r) { return esc(r.n) + " " + sgn(r.mm0, dd, du); }).join(", ") + ".");
+      if (false && up.length) lines.push("Biggest rises (" + lab2 + "): " + up.map(function (r) { return esc(r.n) + " " + sgn(r.mm0, dd, du); }).join(", ") + ".");
+      if (false && dn.length) lines.push("Biggest falls (" + lab2 + "): " + dn.map(function (r) { return esc(r.n) + " " + sgn(r.mm0, dd, du); }).join(", ") + ".");
       if (acc.length > 1 && kind !== "diff") {
         var a1 = acc.slice(0, 2).filter(function (r) { return r.dyy > 0.05; }), s1 = acc.slice(-2).reverse().filter(function (r) { return r.dyy < -0.05; });
         if (a1.length) lines.push("Year-on-year rate picked up most in " + a1.map(function (r) { return esc(r.n) + " (" + r.yy1.toFixed(1) + "% → " + r.yy0.toFixed(1) + "%)"; }).join(", ") + ".");
@@ -393,12 +438,16 @@
     var yu = kind === "diff" ? du : "%", cw = kind === "diff" ? "Change" : "MoM";
     var COLS = kind === "pp" ? [["lv", "Latest", du, dd, 1], ["prev", "Prior", du, dd, 0], ["mm0", "Change", du, dd, 1], ["yago", "A year ago", du, dd, 0]] :
       [["mm0", cw + " latest", du, dd, 1], ["mm1", cw + " prior", du, dd, 0], ["yy0", "YoY latest", yu, dd, 1], ["yy1", "YoY prior", yu, dd, 0], ["dyy", "YoY shift", kind === "diff" ? du : " pp", kind === "diff" ? dd : 1, 1]];
-    var so = SORT[m.key] || { c: COLS[0][0], d: -1, abs: true };
+    if (hasC) COLS.splice(1, 0, ["ct", "Contrib.", " pp", 2, 1]);
+    var so = SORT[m.key] || { c: hasC ? "ct" : COLS[0][0], d: -1, abs: true };
     var mx = {}; COLS.forEach(function (c) { mx[c[0]] = Math.max.apply(null, R.map(function (r) { return Math.abs(r[c[0]] || 0); }).concat([1e-9])); });
     var head = '<th><button type="button" data-mn2sort="' + esc(m.key) + '|n" class="' + (so.c === "n" ? "on" : "") + '">Component' + (so.c === "n" ? (so.d < 0 ? " ▼" : " ▲") : "") + "</button></th>" +
       COLS.map(function (c) { var on = so.c === c[0]; return '<th><button type="button" data-mn2sort="' + esc(m.key) + "|" + c[0] + '" class="' + (on ? "on" : "") + '" title="Sort: highest to lowest, click again for lowest to highest">' + c[1] + (on ? (so.abs ? " ▼ size" : so.d < 0 ? " ▼" : " ▲") : " ⇅") + "</button></th>"; }).join("");
     var row = function (r) {
-      return '<tr class="' + (r.g === "agg" ? "agg" : "") + '"><th>' + esc(r.n) + "</th>" + COLS.map(function (c) {
+      var badge = r.top ? '<em class="mn2-rk ' + r.top.charAt(0) + '">' + (r.top.charAt(0) === "g" ? "▲ Gainer #" : "▼ Dragger #") + r.top.slice(1) + "</em>" : "",
+        wb = r.w != null && r.w > 5 && r.w < 100 ? '<em class="mn2-wt" title="Weight in the index">W ' + r.w.toFixed(1) + "%</em>" : "";
+      return '<tr class="' + (r.g === "agg" ? "agg " : "") + (r.top ? "tp " + r.top.charAt(0) : "") + '"><th>' + esc(r.n) + wb + badge + "</th>" + COLS.map(function (c) {
+        if (c[0] === "w") return '<td class="' + (r.w > 5 && r.w < 100 ? "wbig" : "wsm") + '">' + (r.w == null ? "—" : r.w.toFixed(r.w < 1 ? 2 : 1) + "%") + "</td>";
         var v = r[c[0]], w = v == null ? 0 : Math.abs(v) / mx[c[0]] * 50;
         var bar = c[4] ? '<span class="mn2-tk">' + (v != null ? '<i class="mn2-bar ' + (v >= 0 ? "p" : "n") + '" style="' + (v >= 0 ? "left:50%" : "right:50%") + ";width:" + w.toFixed(1) + '%"></i>' : "") + "</span>" : "";
         return '<td class="' + (c[4] ? cl(v) + " bc" : "") + '">' + bar + "<span>" + sgn(v, c[3], c[2]) + "</span></td>"; }).join("") + "</tr>";
@@ -414,12 +463,14 @@
     return '<div class="mn2-dv"><b>' + esc(title) + "</b>" + (lines.length ? '<ul class="mn2-dl">' + lines.map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul>" : "") +
       '<div class="mn2-dtw"><table class="mn2-dt mn2-dt2"><thead><tr>' + head + "</tr></thead><tbody>" + body + "</tbody></table></div>" +
       '<p class="mn2-dn">' + (kind === "pp" ? "Contributions in percentage points of annualized real GDP growth; they add up to the headline." : kind === "diff" ? "Changes in levels (" + esc(unit) + "); YoY = change over 12 months." : "MoM = change on the prior period; YoY = change on the same period a year earlier; YoY shift = how much the yearly rate moved since last period.") +
+      (gl.length || dl.length ? " Highlighted: top 5 gainers (green) and draggers (red) by " + rkLab + "." : "") + (hasW ? " W = weight in the headline (" + esc(wsrc) + "); weights above 5% are tagged." : "") +
+      (hasC ? " Contribution ≈ weight × MoM, in percentage points of the headline." : "") +
       " Sorted " + sortTxt + " (" + (agg.length ? "headline groups stay on top; " : "") + "click a column to sort, click again to reverse). Bars are scaled to the largest move in that column. Source: " + esc(src) + ".</p></div>";
   }
   var SORT = {};
   doc.addEventListener("click", function (ev) {
     var b = ev.target.closest && ev.target.closest("[data-mn2sort]"); if (!b) return;
-    var q = b.getAttribute("data-mn2sort").split("|"), cur = SORT[q[0]] || { c: q[0] === "us_gdp" ? "lv" : "mm0", d: -1, abs: true };
+    var q = b.getAttribute("data-mn2sort").split("|"), th = b.closest("tr"), c0 = th && th.querySelector('[data-mn2sort$="|ct"]') ? "ct" : q[0] === "us_gdp" ? "lv" : "mm0", cur = SORT[q[0]] || { c: c0, d: -1, abs: true };
     /* first click: highest → lowest; again: lowest → highest; again: largest move either way */
     if (cur.c !== q[1]) SORT[q[0]] = { c: q[1], d: q[1] === "n" ? 1 : -1, abs: false };
     else if (q[1] === "n") SORT[q[0]] = { c: "n", d: -cur.d, abs: false };
