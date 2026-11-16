@@ -389,7 +389,9 @@
       return { n: i.n, g: i.g, mm0: mm0, mm1: mm1, yy0: yy0, yy1: yy1, dyy: yy0 != null && yy1 != null ? yy0 - yy1 : null, dmm: mm0 != null && mm1 != null ? mm0 - mm1 : null, lv: lv };
     });
     var WT = kind === "cpi" ? (CPIMAP[m.key] === "cpi_detail" ? WUS : WCA) : null, wsrc = "";
-    if (WT) { R.forEach(function (r) { if (WT[r.n] != null) r.w = WT[r.n]; }); wsrc = CPIMAP[m.key] === "cpi_detail" ? "BLS relative importance, Dec 2025" : "StatCan 2025 basket (majors at link-month prices, sub-items at reference prices)"; }
+    var CW = CPIMAP[m.key] === "cpi_detail_ca" && D.cpi_detail_ca && D.cpi_detail_ca.w;   /* the full StatCan basket, when the refresh has loaded it */
+    if (CW) { WT = CW; WT["All items"] = 100; }
+    if (WT) { R.forEach(function (r) { if (WT[r.n] != null) r.w = WT[r.n]; }); wsrc = CPIMAP[m.key] === "cpi_detail" ? "BLS relative importance, Dec 2025" : CW ? D.cpi_detail_ca.w_src : "StatCan 2025 basket (majors at link-month prices, sub-items at reference prices)"; }
     else if (SHARE[m.key]) { var part = SHARE[m.key] === 1 ? R : R.filter(function (r) { return SHARE[m.key].indexOf(r.n) >= 0; }), tot = part.reduce(function (a, r) { return a + (r.lv || 0); }, 0);
       if (tot > 0) { part.forEach(function (r) { if (r.lv != null) r.w = r.lv / tot * 100; }); wsrc = "share of the total in the latest period"; } }
     /* contribution to the headline move: weight × change (pp) for price/% components; the change itself for job counts and GDP contributions */

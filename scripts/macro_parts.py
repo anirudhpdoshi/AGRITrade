@@ -120,3 +120,45 @@ def macro_parts(D, N):
         print(f"  macro_parts {key}: {len(items)}/{len(comps)} components to {items[0]['m'][-1]}")
     if not done:
         print("  macro_parts: up to date")
+
+
+def ca_cpi_weights(D, N):
+    """Statistics Canada CPI basket weights (table 18-10-0007-01: Canada, link-month prices, distribution to selected geographies),
+    latest basket, for every category the desk shows in cpi_detail_ca. Names are matched through the CPI table's own product list
+    (18-10-0004 metadata), so a weight is only attached to the exact product. Checked weekly; the basket changes once a year."""
+    import csv as _csv, io as _io, json as _json, zipfile
+    import requests
+    from cpi_detail import CA_ITEMS
+    C = D.get("cpi_detail_ca")
+    if not C or not C.get("items"):
+        return
+    now = UDC.NOW
+    if C.get("w") and C.get("w_checked") and now - datetime.fromisoformat(C["w_checked"]) < timedelta(days=7):
+        return
+    C["w_checked"] = now.isoformat(timespec="seconds")
+    H = {**UDC.UA, "Content-Type": "application/json"}
+    meta = requests.post("https://www150.statcan.gc.ca/t1/wds/rest/getCubeMetadata", headers=H, data=_json.dumps([{"productId": 18100004}]), timeout=40).json()[0]["object"]
+    dim = [d for d in meta["dimension"] if "product" in d["dimensionNameEn"].lower()][0]
+    official = {int(mb["memberId"]): mb["memberNameEn"].strip() for mb in dim["member"]}
+    url = requests.get("https://www150.statcan.gc.ca/t1/wds/rest/getFullTableDownloadCSV/18100007/en", headers=UDC.UA, timeout=40).json()["object"]
+    z = zipfile.ZipFile(_io.BytesIO(requests.get(url, headers=UDC.UA, timeout=120).content))
+    name = [n for n in z.namelist() if n.endswith(".csv") and "MetaData" not in n][0]
+    rows = list(_csv.DictReader(_io.TextIOWrapper(z.open(name), encoding="utf-8-sig")))
+    pk = [k for k in rows[0] if "product" in k.lower()][0]
+    pp = [k for k in rows[0] if "price period" in k.lower()][0]
+    gd = [k for k in rows[0] if "distribution" in k.lower()][0]
+    sel = [r for r in rows if r["GEO"] == "Canada" and "link month" in r[pp].lower() and "selected geographies" in r[gd].lower() and r["VALUE"] not in ("", None)]
+    if not sel:
+        raise RuntimeError("basket weights: no Canada link-month rows")
+    yr = max(r["REF_DATE"] for r in sel)
+    byname = {r[pk].strip(): float(r["VALUE"]) for r in sel if r["REF_DATE"] == yr}
+    w = {}
+    for mem, short, _ in CA_ITEMS:
+        nm = official.get(mem)
+        if nm and nm in byname:
+            w[short] = byname[nm]
+    if len(w) < 8:
+        raise RuntimeError(f"basket weights: only {len(w)} categories matched")
+    C["w"], C["w_year"] = w, yr
+    C["w_src"] = "Statistics Canada table 18-10-0007-01, " + yr + " basket at link-month prices"
+    print(f"  ca_cpi_weights: {len(w)}/{len(CA_ITEMS)} categories, basket {yr}")
