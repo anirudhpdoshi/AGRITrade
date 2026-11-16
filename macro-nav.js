@@ -130,7 +130,7 @@
     for (var k = 0; k <= 4; k++) { var yv = hi2 - (hi2 - lo2) * k / 4, yy = Y(yv); g += '<line x1="' + L0 + '" x2="' + (W - R0) + '" y1="' + yy.toFixed(1) + '" y2="' + yy.toFixed(1) + '" stroke="#161616"/><text x="' + (L0 - 6) + '" y="' + (yy + 3.5).toFixed(1) + '" text-anchor="end" fill="#666" font-size="10" font-family="' + F + '">' + yv.toFixed(d) + "</text>"; }
     if (lo2 < 0 && hi2 > 0) g += '<line x1="' + L0 + '" x2="' + (W - R0) + '" y1="' + Y(0).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '" stroke="#444"/>';
     var step = Math.max(1, Math.ceil(n / 8));
-    P.forEach(function (x, i) { if (i % step === 0 || i === n - 1) g += '<text x="' + X(i).toFixed(1) + '" y="' + (H - 9) + '" text-anchor="middle" fill="#777" font-size="10" font-family="' + F + '">' + esc(lab(x)) + "</text>"; });
+    P.forEach(function (x, i) { if ((i % step === 0 && n - 1 - i >= step * 0.6) || i === n - 1) g += '<text x="' + X(i).toFixed(1) + '" y="' + (H - 9) + '" text-anchor="middle" fill="#777" font-size="10" font-family="' + F + '">' + esc(lab(x)) + "</text>"; });
     /* mean (dashed) and least-squares trend (dotted) over the range shown */
     var mean = v.reduce(function (a, b) { return a + b; }, 0) / n, sx = 0, sy = 0, sxy = 0, sxx = 0;
     v.forEach(function (y, i) { sx += i; sy += y; sxy += i * y; sxx += i * i; });
@@ -311,7 +311,100 @@
     "@media (max-width:1100px){.mn2-g{grid-template-columns:1fr}.mn2-list{flex-direction:row;flex-wrap:wrap}.mn2-lh{width:100%}.mn2-kvs{grid-template-columns:repeat(3,minmax(0,1fr))}.mn2-edu{grid-template-columns:1fr}}" +
     "@media (max-width:1020px){.mn2-lay{grid-template-columns:1fr}.mn2-left{position:static;flex-direction:row;flex-wrap:wrap}.mn2-left .gr-col-h{width:100%}.mn2-ct{flex:1 1 200px}}" +
     "@media (max-width:760px){.mn2-tabs{flex-wrap:nowrap;overflow-x:auto}.mn2-kvs{grid-template-columns:repeat(2,minmax(0,1fr))}}";
+  css.textContent += ".mn2-drv{margin:12px 0;border:1px solid #1a1a1a;border-left:3px solid #38b6c9;background:#050505;padding:10px 14px}.mn2-drh{font:600 12px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#38b6c9;margin-bottom:8px}.mn2-drh small{text-transform:none;letter-spacing:0;color:#777;font-weight:400}" +
+    ".mn2-dv{margin:8px 0 12px}.mn2-dv>b{display:block;font-size:13px;color:#e8eef4;margin-bottom:6px}.mn2-dl{margin:4px 0 8px 18px;padding:0;font-size:12.5px;line-height:1.55;color:#c9d4e2}" +
+    ".mn2-dt{border-collapse:collapse;font:12px 'JetBrains Mono','IBM Plex Mono',monospace;width:100%}.mn2-dt th,.mn2-dt td{padding:4px 8px;border-bottom:1px solid #141414;text-align:right;white-space:nowrap}.mn2-dt th:first-child{text-align:left;font-family:'Libre Franklin',system-ui,sans-serif;font-weight:500;color:#c9d4e2}" +
+    ".mn2-dt thead th{color:#777;font-weight:500;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em}.mn2-dt td{color:#e8eef4}.mn2-dt .up{color:#3fb97f}.mn2-dt .dn{color:#e0655f}.mn2-dt tr.agg th{color:#d9b46a;font-weight:600}.mn2-dt tr.agg td{background:#0b0b0b}" +
+    ".mn2-dtw{max-height:360px;overflow:auto;border:1px solid #141414}.mn2-dt2 thead th{position:sticky;top:0;background:#050505}.mn2-dn{font-size:11px;color:#777;margin:6px 0 0;line-height:1.45}";
   doc.head.appendChild(css);
+  /* ---- Full history: what drove the print (Nov 16). Momentum from the series itself for every indicator; internals from the
+     official component series where the desk holds them (CPI: BLS / Statistics Canada categories; others: DATA.macro_parts). ---- */
+  var CPIMAP = { us_cpi: "cpi_detail", us_core_cpi: "cpi_detail", ca_cpi: "cpi_detail_ca", ca_trim: "cpi_detail_ca", ca_median: "cpi_detail_ca" };
+  function sgn(x, d, u) { if (x == null || !isFinite(x)) return "—"; var r = Math.abs(x) < Math.pow(10, -d) / 2 ? 0 : x; return (r > 0 ? "+" : r < 0 ? "−" : "") + Math.abs(r).toFixed(d) + (u || ""); }
+  function cl(x) { return x == null ? "" : x > 0 ? "up" : x < 0 ? "dn" : ""; }
+  function momentum(m) {
+    var d = m.dec != null ? +m.dec : 1, pct = m.unit === "%", L = (m.long && m.long.length > 13 && /^\d{4}-/.test(m.long[0][0])) ? m.long : null, H = L || m.hist24 || m.history || [];
+    if (H.length < 3) return "";
+    /* the long file can trail the latest print by a release: put the headline on the end so "latest" is the latest */
+    if (m.value != null) { var lastD = H[H.length - 1][0];
+      if (L ? (m.obs_date && m.obs_date.slice(0, 10) > lastD) : (m.period && lastD !== m.period)) H = H.concat([[L ? m.obs_date.slice(0, 10) : m.period, +m.value]]); }
+    var v = H.map(function (x) { return +x[1]; }), n = v.length - 1, per = m.freq === "Q" ? 4 : m.freq === "W" ? 52 : 12, lag = m.freq === "Q" ? "quarter" : m.freq === "W" ? "week" : "month";
+    var unit = pct ? " pp" : m.unit === "K" ? "K" : "", rows = [];
+    var dif = function (a, b) { return pct || m.unit === "K" ? a - b : (b ? (a / b - 1) * 100 : null); }, du = pct ? " pp" : m.unit === "K" ? "K" : "%";
+    rows.push(["Latest vs prior " + lag, fv(m, v[n]) + " vs " + fv(m, v[n - 1]), sgn(dif(v[n], v[n - 1]), d, du)]);
+    if (n >= 1 + 1) rows.push(["Prior " + lag + " vs the one before", fv(m, v[n - 1]) + " vs " + fv(m, v[n - 2]), sgn(dif(v[n - 1], v[n - 2]), d, du)]);
+    var ya = -1;
+    if (L && (m.freq === "W" || m.freq === "D")) { var t0 = Date.parse(H[n][0]) - 365 * 864e5, best = 9e15; for (var j = n - 1; j >= 0; j--) { var dd2 = Math.abs(Date.parse(H[j][0]) - t0); if (dd2 < best && dd2 <= 4 * 864e5) { best = dd2; ya = j; } } }
+    else if (L) { var want = (+H[n][0].slice(0, 4) - 1) + H[n][0].slice(4, 7); for (var j = n - 1; j >= 0; j--) if (H[j][0].slice(0, 7) === want) { ya = j; break; } }   /* by date: a skipped month must not shift the comparison */
+    else if (n >= per) ya = n - per;
+    if (ya >= 0) rows.push(["Latest vs a year earlier (" + esc(lab([H[ya][0], 0, !!L])) + ")", fv(m, v[n]) + " vs " + fv(m, v[ya]), sgn(dif(v[n], v[ya]), d, du)]);
+    if (n >= 5) { var a3 = (v[n] + v[n - 1] + v[n - 2]) / 3, b3 = (v[n - 3] + v[n - 4] + v[n - 5]) / 3; rows.push(["Last 3 " + lag + "s average vs the 3 before", fv(m, a3) + " vs " + fv(m, b3), sgn(dif(a3, b3), d, du)]); }
+    var run = 0, dir = Math.sign(v[n] - v[n - 1]); for (var i = n; i > 0 && dir && Math.sign(v[i] - v[i - 1]) === dir; i--) run++;
+    var runTxt = dir ? (dir > 0 ? "Rising " : "Falling ") + run + " " + lag + (run > 1 ? "s" : "") + " in a row" : "Unchanged on the " + lag;
+    return '<div class="mn2-dv"><b>Momentum — ' + (m.measure ? esc(m.measure) + " · " : "") + 'computed from this series</b><table class="mn2-dt"><tbody>' +
+      rows.map(function (r) { return "<tr><th>" + r[0] + "</th><td>" + r[1] + '</td><td class="' + (r[2].charAt(0) === "+" ? "up" : r[2].charAt(0) === "−" ? "dn" : "") + '">' + r[2] + "</td></tr>"; }).join("") +
+      "</tbody></table><p class=\"mn2-dn\">" + runTxt + "." + (pct ? " Changes in percentage points." : m.unit === "K" ? "" : " Changes in %.") + "</p></div>";
+  }
+  function internals(m) {
+    var D = root.DATA || {}, src, items, kind, unit, per, title;
+    if (CPIMAP[m.key] && D[CPIMAP[m.key]] && D[CPIMAP[m.key]].items) {
+      var C = D[CPIMAP[m.key]]; kind = "cpi"; unit = "%"; src = (CPIMAP[m.key] === "cpi_detail" ? "BLS CPI-U by category — " : "Statistics Canada CPI by category — ") + (C.note || "");
+      items = C.items.map(function (i) { return { n: i.n, g: i.g, mm: i.mm, yy: i.yy, m: i.m }; }); title = "Inside the number — CPI categories, " + md2(C.month);
+      if (m.key === "us_core_cpi" || m.key === "ca_trim" || m.key === "ca_median") items = items.filter(function (i) { return !/^food$|^energy$|gasoline|fuel|electric|natural gas|utility/i.test(i.n) && i.g !== "energy"; });
+    } else if ((D.macro_parts || {})[m.key] && D.macro_parts[m.key].items) {
+      var Pp = D.macro_parts[m.key]; kind = Pp.kind; unit = Pp.unit; src = Pp.src; items = Pp.items; title = "Inside the number — components, " + md2(items[0].m[items[0].m.length - 1]);
+    } else return '<div class="mn2-dv"><b>Inside the number</b><p class="mn2-dn">' + (m.group === "ca" ? "Statistics Canada component tables for this release are not on the desk yet." : "No official component breakdown is published for this indicator in a free feed the desk reads.") +
+      " The momentum table above is computed from the headline series.</p></div>";
+    var last = function (a, k) { return a && a.length > k ? a[a.length - 1 - k] : null; };
+    var du = kind === "diff" ? (unit === "K jobs" || unit === "K" ? "K" : "") : kind === "pp" ? " pp" : "%", dd = kind === "diff" ? 0 : kind === "pp" ? 2 : 1;
+    var R = items.map(function (i) {
+      var mm0 = last(i.mm, 0), mm1 = last(i.mm, 1), yy0 = last(i.yy, 0), yy1 = last(i.yy, 1), lv = i.v ? last(i.v, 0) : null;
+      return { n: i.n, g: i.g, mm0: mm0, mm1: mm1, yy0: yy0, yy1: yy1, dyy: yy0 != null && yy1 != null ? yy0 - yy1 : null, dmm: mm0 != null && mm1 != null ? mm0 - mm1 : null, lv: lv };
+    });
+    var agg = R.filter(function (r) { return r.g === "agg"; }), rest = R.filter(function (r) { return r.g !== "agg"; });
+    /* the story: who moved most this period, and whose year-on-year rate accelerated / slowed most */
+    var key = kind === "pp" ? "lv" : "mm0", isHead = function (r) { return /^all items|^core \(ex/i.test(r.n); };
+    /* CPI: tell the story with the major groups (food, energy, goods, services, shelter, transport…), single items after */
+    var major = kind === "cpi" ? R.filter(function (r) { return (r.g === "agg" || r.g === "main") && !isHead(r); }) : rest;
+    var ok = major.filter(function (r) { return r[key] != null; });
+    var up = ok.slice().sort(function (a, b) { return b[key] - a[key]; }).slice(0, 3).filter(function (r) { return r[key] > 0; }),
+      dn = ok.slice().sort(function (a, b) { return a[key] - b[key]; }).slice(0, 3).filter(function (r) { return r[key] < 0; });
+    var acc = major.filter(function (r) { return r.dyy != null; }).sort(function (a, b) { return b.dyy - a.dyy; });
+    var lines = [];
+    if (kind === "pp") {
+      if (up.length) lines.push("Added the most: " + up.map(function (r) { return esc(r.n) + " " + sgn(r.lv, dd, du); }).join(", ") + ".");
+      if (dn.length) lines.push("Subtracted: " + dn.map(function (r) { return esc(r.n) + " " + sgn(r.lv, dd, du); }).join(", ") + ".");
+    } else {
+      var lab2 = kind === "diff" ? "change" : "month-on-month";
+      if (up.length) lines.push("Biggest rises (" + lab2 + "): " + up.map(function (r) { return esc(r.n) + " " + sgn(r.mm0, dd, du); }).join(", ") + ".");
+      if (dn.length) lines.push("Biggest falls (" + lab2 + "): " + dn.map(function (r) { return esc(r.n) + " " + sgn(r.mm0, dd, du); }).join(", ") + ".");
+      if (acc.length > 1 && kind !== "diff") {
+        var a1 = acc.slice(0, 2).filter(function (r) { return r.dyy > 0.05; }), s1 = acc.slice(-2).reverse().filter(function (r) { return r.dyy < -0.05; });
+        if (a1.length) lines.push("Year-on-year rate picked up most in " + a1.map(function (r) { return esc(r.n) + " (" + r.yy1.toFixed(1) + "% → " + r.yy0.toFixed(1) + "%)"; }).join(", ") + ".");
+        if (s1.length) lines.push("Slowed most in " + s1.map(function (r) { return esc(r.n) + " (" + r.yy1.toFixed(1) + "% → " + r.yy0.toFixed(1) + "%)"; }).join(", ") + ".");
+      }
+    }
+    if (kind === "cpi") { var items2 = rest.filter(function (r) { return r.g !== "main" && r.mm0 != null; }).sort(function (a, b) { return Math.abs(b.mm0) - Math.abs(a.mm0); }).slice(0, 4);
+      if (items2.length) lines.push("Largest single-item moves (small weights, volatile): " + items2.map(function (r) { return esc(r.n) + " " + sgn(r.mm0, 1, "%"); }).join(", ") + "."); }
+    lines = lines.map(function (x) { return x.replace("Biggest rises (month-on-month)", kind === "cpi" ? "Major groups up most on the month" : "Biggest rises (month-on-month)").replace("Biggest falls (month-on-month)", kind === "cpi" ? "Major groups down most on the month" : "Biggest falls (month-on-month)"); });
+    var head = kind === "pp" ? "<th>Component</th><th>Latest</th><th>Prior</th><th>Change</th><th>A year ago</th>" :
+      "<th>Component</th><th>" + (kind === "diff" ? "Change" : "MoM") + " latest</th><th>" + (kind === "diff" ? "Change" : "MoM") + " prior</th><th>YoY latest</th><th>YoY prior</th><th>YoY shift</th>";
+    var row = function (r) {
+      if (kind === "pp") { var ya = null; return "<tr><th>" + esc(r.n) + '</th><td class="' + cl(r.lv) + '">' + sgn(r.lv, dd, du) + "</td><td>" + sgn(r.lv - (r.mm0 || 0), dd, du) + '</td><td class="' + cl(r.mm0) + '">' + sgn(r.mm0, dd, du) + "</td><td>" + (r.yy0 != null ? sgn(r.lv - r.yy0, dd, du) : "—") + "</td></tr>"; }
+      var yu = kind === "diff" ? du : "%";
+      return '<tr class="' + (r.g === "agg" ? "agg" : "") + '"><th>' + esc(r.n) + '</th><td class="' + cl(r.mm0) + '">' + sgn(r.mm0, dd, du) + "</td><td>" + sgn(r.mm1, dd, du) + '</td><td class="' + cl(r.yy0) + '">' + sgn(r.yy0, dd, yu) + "</td><td>" + sgn(r.yy1, dd, yu) + '</td><td class="' + cl(r.dyy) + '">' + (kind === "diff" ? sgn(r.dyy, dd, du) : sgn(r.dyy, 1, " pp")) + "</td></tr>";
+    };
+    var body = agg.map(row).join("") + rest.slice().sort(function (a, b) { var k = kind === "pp" ? "lv" : "mm0"; return Math.abs(b[k] || 0) - Math.abs(a[k] || 0); }).map(row).join("");
+    return '<div class="mn2-dv"><b>' + esc(title) + "</b>" + (lines.length ? '<ul class="mn2-dl">' + lines.map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul>" : "") +
+      '<div class="mn2-dtw"><table class="mn2-dt mn2-dt2"><thead><tr>' + head + "</tr></thead><tbody>" + body + "</tbody></table></div>" +
+      '<p class="mn2-dn">' + (kind === "pp" ? "Contributions in percentage points of annualized real GDP growth; they add up to the headline." : kind === "diff" ? "Changes in levels (" + esc(unit) + "); YoY = change over 12 months." : "MoM = change on the prior period; YoY = change on the same period a year earlier; YoY shift = how much the yearly rate moved since last period.") +
+      " Rows sorted by size of the latest move. Source: " + esc(src) + ".</p></div>";
+  }
+  function md2(s) { if (!s) return ""; var d = new Date(String(s).slice(0, 7) + "-15T12:00:00Z"); return d.toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" }); }
+  function drivers(key) {
+    var m = mAll().filter(function (x) { return x.key === key; })[0]; if (!m) return "";
+    return '<div class="mn2-drv"><div class="mn2-drh">What drove it <small>— month-on-month and year-on-year, latest vs the period before</small></div>' + momentum(m) + internals(m) + "</div>";
+  }
   /* "Full history" anywhere on the desk opens the new indicator card; the older detail stays below under More detail */
   function cardFor(key) {
     var m = mAll().filter(function (x) { return x.key === key; })[0]; if (!m) return null;
@@ -324,6 +417,8 @@
     var B = o.querySelector(".mdc-body"), old = B.querySelector(".mn2-old");
     var keep = old ? old.innerHTML : "";
     if (!keep) { var tmp = doc.createElement("div"); tmp.innerHTML = B.innerHTML; keep = tmp.innerHTML; }
+    var dv = ""; try { dv = drivers(key); } catch (e) {}
+    c = c.replace('<div class="mn2-kvs">', dv + '<div class="mn2-kvs">');
     B.innerHTML = '<div class="mn2-modal">' + c + '</div><details class="mn2-more"><summary>More detail</summary><div class="mn2-old">' + keep + "</div></details>";
     toEndIn(B);
   }
