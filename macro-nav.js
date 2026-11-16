@@ -315,7 +315,8 @@
     ".mn2-dv{margin:8px 0 12px}.mn2-dv>b{display:block;font-size:13px;color:#e8eef4;margin-bottom:6px}.mn2-dl{margin:4px 0 8px 18px;padding:0;font-size:12.5px;line-height:1.55;color:#c9d4e2}" +
     ".mn2-dt{border-collapse:collapse;font:12px 'JetBrains Mono','IBM Plex Mono',monospace;width:100%}.mn2-dt th,.mn2-dt td{padding:4px 8px;border-bottom:1px solid #141414;text-align:right;white-space:nowrap}.mn2-dt th:first-child{text-align:left;font-family:'Libre Franklin',system-ui,sans-serif;font-weight:500;color:#c9d4e2}" +
     ".mn2-dt thead th{color:#777;font-weight:500;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em}.mn2-dt td{color:#e8eef4}.mn2-dt .up{color:#3fb97f}.mn2-dt .dn{color:#e0655f}.mn2-dt tr.agg th{color:#d9b46a;font-weight:600}.mn2-dt tr.agg td{background:#0b0b0b}" +
-    ".mn2-dtw{max-height:360px;overflow:auto;border:1px solid #141414}.mn2-dt2 thead th{position:sticky;top:0;background:#050505}.mn2-dn{font-size:11px;color:#777;margin:6px 0 0;line-height:1.45}";
+    ".mn2-dtw{overflow-x:auto;border:1px solid #141414}.mn2-dt2 thead th{background:#050505}.mn2-dt2 thead button{all:unset;cursor:pointer;color:#8a8a8a;white-space:nowrap}.mn2-dt2 thead button:hover{color:#fff}.mn2-dt2 thead button.on{color:#d9b46a}.mn2-dt2 thead button:focus-visible{outline:2px solid #38b6c9}" +
+    ".mn2-dt2 td.bc{white-space:nowrap}.mn2-tk{display:inline-block;position:relative;width:64px;height:11px;vertical-align:middle;margin-right:8px;border-left:0}.mn2-tk:before{content:'';position:absolute;left:50%;top:-2px;bottom:-2px;border-left:1px solid #2a2a2a}.mn2-bar{position:absolute;top:0;bottom:0;border-radius:2px}.mn2-bar.p{background:#3fb97f}.mn2-bar.n{background:#e0655f}.mn2-dn{font-size:11px;color:#777;margin:6px 0 0;line-height:1.45}";
   doc.head.appendChild(css);
   /* ---- Full history: what drove the print (Nov 16). Momentum from the series itself for every indicator; internals from the
      official component series where the desk holds them (CPI: BLS / Statistics Canada categories; others: DATA.macro_parts). ---- */
@@ -387,19 +388,44 @@
     if (kind === "cpi") { var items2 = rest.filter(function (r) { return r.g !== "main" && r.mm0 != null; }).sort(function (a, b) { return Math.abs(b.mm0) - Math.abs(a.mm0); }).slice(0, 4);
       if (items2.length) lines.push("Largest single-item moves (small weights, volatile): " + items2.map(function (r) { return esc(r.n) + " " + sgn(r.mm0, 1, "%"); }).join(", ") + "."); }
     lines = lines.map(function (x) { return x.replace("Biggest rises (month-on-month)", kind === "cpi" ? "Major groups up most on the month" : "Biggest rises (month-on-month)").replace("Biggest falls (month-on-month)", kind === "cpi" ? "Major groups down most on the month" : "Biggest falls (month-on-month)"); });
-    var head = kind === "pp" ? "<th>Component</th><th>Latest</th><th>Prior</th><th>Change</th><th>A year ago</th>" :
-      "<th>Component</th><th>" + (kind === "diff" ? "Change" : "MoM") + " latest</th><th>" + (kind === "diff" ? "Change" : "MoM") + " prior</th><th>YoY latest</th><th>YoY prior</th><th>YoY shift</th>";
+    /* columns: [id, label, value(r), unit, decimals, bar?]; click a header to sort (high → low, then low → high) */
+    R.forEach(function (r) { r.prev = r.lv != null && r.mm0 != null ? r.lv - r.mm0 : null; r.yago = r.lv != null && r.yy0 != null ? r.lv - r.yy0 : null; });
+    var yu = kind === "diff" ? du : "%", cw = kind === "diff" ? "Change" : "MoM";
+    var COLS = kind === "pp" ? [["lv", "Latest", du, dd, 1], ["prev", "Prior", du, dd, 0], ["mm0", "Change", du, dd, 1], ["yago", "A year ago", du, dd, 0]] :
+      [["mm0", cw + " latest", du, dd, 1], ["mm1", cw + " prior", du, dd, 0], ["yy0", "YoY latest", yu, dd, 1], ["yy1", "YoY prior", yu, dd, 0], ["dyy", "YoY shift", kind === "diff" ? du : " pp", kind === "diff" ? dd : 1, 1]];
+    var so = SORT[m.key] || { c: COLS[0][0], d: -1, abs: true };
+    var mx = {}; COLS.forEach(function (c) { mx[c[0]] = Math.max.apply(null, R.map(function (r) { return Math.abs(r[c[0]] || 0); }).concat([1e-9])); });
+    var head = '<th><button type="button" data-mn2sort="' + esc(m.key) + '|n" class="' + (so.c === "n" ? "on" : "") + '">Component' + (so.c === "n" ? (so.d < 0 ? " ▼" : " ▲") : "") + "</button></th>" +
+      COLS.map(function (c) { var on = so.c === c[0]; return '<th><button type="button" data-mn2sort="' + esc(m.key) + "|" + c[0] + '" class="' + (on ? "on" : "") + '" title="Sort: highest to lowest, click again for lowest to highest">' + c[1] + (on ? (so.abs ? " ▼ size" : so.d < 0 ? " ▼" : " ▲") : " ⇅") + "</button></th>"; }).join("");
     var row = function (r) {
-      if (kind === "pp") { var ya = null; return "<tr><th>" + esc(r.n) + '</th><td class="' + cl(r.lv) + '">' + sgn(r.lv, dd, du) + "</td><td>" + sgn(r.lv - (r.mm0 || 0), dd, du) + '</td><td class="' + cl(r.mm0) + '">' + sgn(r.mm0, dd, du) + "</td><td>" + (r.yy0 != null ? sgn(r.lv - r.yy0, dd, du) : "—") + "</td></tr>"; }
-      var yu = kind === "diff" ? du : "%";
-      return '<tr class="' + (r.g === "agg" ? "agg" : "") + '"><th>' + esc(r.n) + '</th><td class="' + cl(r.mm0) + '">' + sgn(r.mm0, dd, du) + "</td><td>" + sgn(r.mm1, dd, du) + '</td><td class="' + cl(r.yy0) + '">' + sgn(r.yy0, dd, yu) + "</td><td>" + sgn(r.yy1, dd, yu) + '</td><td class="' + cl(r.dyy) + '">' + (kind === "diff" ? sgn(r.dyy, dd, du) : sgn(r.dyy, 1, " pp")) + "</td></tr>";
+      return '<tr class="' + (r.g === "agg" ? "agg" : "") + '"><th>' + esc(r.n) + "</th>" + COLS.map(function (c) {
+        var v = r[c[0]], w = v == null ? 0 : Math.abs(v) / mx[c[0]] * 50;
+        var bar = c[4] ? '<span class="mn2-tk">' + (v != null ? '<i class="mn2-bar ' + (v >= 0 ? "p" : "n") + '" style="' + (v >= 0 ? "left:50%" : "right:50%") + ";width:" + w.toFixed(1) + '%"></i>' : "") + "</span>" : "";
+        return '<td class="' + (c[4] ? cl(v) + " bc" : "") + '">' + bar + "<span>" + sgn(v, c[3], c[2]) + "</span></td>"; }).join("") + "</tr>";
     };
-    var body = agg.map(row).join("") + rest.slice().sort(function (a, b) { var k = kind === "pp" ? "lv" : "mm0"; return Math.abs(b[k] || 0) - Math.abs(a[k] || 0); }).map(row).join("");
+    var cmp = function (a, b) {
+      if (so.c === "n") return so.d * (a.n < b.n ? -1 : a.n > b.n ? 1 : 0) * -1;
+      var x = a[so.c], y = b[so.c]; if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1;
+      if (so.abs) return Math.abs(y) - Math.abs(x);
+      return so.d < 0 ? y - x : x - y;
+    };
+    var body = agg.slice().sort(cmp).map(row).join("") + rest.slice().sort(cmp).map(row).join("");
+    var sortTxt = so.c === "n" ? "by name" : "by " + COLS.filter(function (c) { return c[0] === so.c; })[0][1] + (so.abs ? ", largest move either way first" : so.d < 0 ? ", highest to lowest" : ", lowest to highest");
     return '<div class="mn2-dv"><b>' + esc(title) + "</b>" + (lines.length ? '<ul class="mn2-dl">' + lines.map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul>" : "") +
       '<div class="mn2-dtw"><table class="mn2-dt mn2-dt2"><thead><tr>' + head + "</tr></thead><tbody>" + body + "</tbody></table></div>" +
       '<p class="mn2-dn">' + (kind === "pp" ? "Contributions in percentage points of annualized real GDP growth; they add up to the headline." : kind === "diff" ? "Changes in levels (" + esc(unit) + "); YoY = change over 12 months." : "MoM = change on the prior period; YoY = change on the same period a year earlier; YoY shift = how much the yearly rate moved since last period.") +
-      " Rows sorted by size of the latest move. Source: " + esc(src) + ".</p></div>";
+      " Sorted " + sortTxt + " (" + (agg.length ? "headline groups stay on top; " : "") + "click a column to sort, click again to reverse). Bars are scaled to the largest move in that column. Source: " + esc(src) + ".</p></div>";
   }
+  var SORT = {};
+  doc.addEventListener("click", function (ev) {
+    var b = ev.target.closest && ev.target.closest("[data-mn2sort]"); if (!b) return;
+    var q = b.getAttribute("data-mn2sort").split("|"), cur = SORT[q[0]] || { c: q[0] === "us_gdp" ? "lv" : "mm0", d: -1, abs: true };
+    /* first click: highest → lowest; again: lowest → highest; again: largest move either way */
+    if (cur.c !== q[1]) SORT[q[0]] = { c: q[1], d: q[1] === "n" ? 1 : -1, abs: false };
+    else if (q[1] === "n") SORT[q[0]] = { c: "n", d: -cur.d, abs: false };
+    else SORT[q[0]] = cur.abs ? { c: q[1], d: -1, abs: false } : cur.d < 0 ? { c: q[1], d: 1, abs: false } : { c: q[1], d: -1, abs: true };
+    var o = doc.getElementById("mdc-overlay"); if (o) { var y = o.scrollTop, bodyEl = o.querySelector(".mdc-body"), y2 = bodyEl ? bodyEl.scrollTop : 0; paintModal(o.getAttribute("data-key")); o.scrollTop = y; if (bodyEl) { var nb = o.querySelector(".mdc-body"); if (nb) nb.scrollTop = y2; } }
+  });
   function md2(s) { if (!s) return ""; var d = new Date(String(s).slice(0, 7) + "-15T12:00:00Z"); return d.toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" }); }
   function drivers(key) {
     var m = mAll().filter(function (x) { return x.key === key; })[0]; if (!m) return "";
