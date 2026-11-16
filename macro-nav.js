@@ -402,7 +402,7 @@
     var rk = R.filter(function (r) { return !/^all items|^core \(ex/i.test(r.n) && (kind === "cpi" ? r.g !== "agg" || WT && r.w != null : true); }), rkey = R.some(function (r) { return r.ct != null && r.g !== "agg"; }) ? "ct" : "mm0";
     if (kind === "cpi") rk = rk.filter(function (r) { return r.g !== "agg"; });
     /* a sub-item is not ranked next to its own parent (OER inside Shelter, gasoline inside Transportation…) */
-    var inRk = {}; rk.forEach(function (r) { inRk[r.n] = 1; }); rk = rk.filter(function (r) { return !(PARENT[r.n] && inRk[PARENT[r.n]]); });
+    var inRk = {}; rk.forEach(function (r) { inRk[r.n] = 1; }); if (CPIMAP[m.key] !== "cpi_detail_ca") rk = rk.filter(function (r) { return !(PARENT[r.n] && inRk[PARENT[r.n]]); });   /* Canada: every category ranks on its own basket weight */
     var tiny = rkey === "ct" && kind !== "pp" && kind !== "diff" ? 0.005 : 0;
     var gl = rk.filter(function (r) { return r[rkey] != null && r[rkey] > tiny; }).sort(function (a, b) { return b[rkey] - a[rkey]; }).slice(0, 5),
       dl = rk.filter(function (r) { return r[rkey] != null && r[rkey] < -tiny; }).sort(function (a, b) { return a[rkey] - b[rkey]; }).slice(0, 5);
