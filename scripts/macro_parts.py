@@ -49,7 +49,7 @@ PARTS = {
         ("Business equipment", "IPBUSEQ"), ("Materials", "IPMAT")]),
     "us_durable": ("pct", "$", "Census durable-goods orders", [
         ("Ex transportation", "ADXTNO"), ("Core capital goods (nondefence ex aircraft)", "NEWORDER"), ("Transportation equipment", "A36SNO")]),
-    "us_factory": ("pct", "$", "Census factory orders", [("Durable goods", "AMDMNO"), ("Nondurable goods", "AMNMNO")]),
+    "us_factory": ("pct", "$", "Census factory orders", [("Durable goods", "DGORDER"), ("Nondurable goods", "AMNMNO")]),
     "us_starts": ("pct", "units", "Census housing starts by type and region", [
         ("Single-family", "HOUST1F"), ("5+ units", "HOUST5F"), ("Northeast", "HOUSTNE"), ("Midwest", "HOUSTMW"), ("South", "HOUSTS"), ("West", "HOUSTW")]),
     "us_permits": ("pct", "units", "Census building permits by type and region", [
