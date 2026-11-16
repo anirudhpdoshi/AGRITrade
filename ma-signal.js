@@ -47,7 +47,7 @@
     var chips = N.map(function (n) {
       if (b.ma[n] == null) return '<span class="ma-c na" title="not enough history">' + n + "D —</span>";
       var up = b.close > b.ma[n], dist = (b.close / b.ma[n] - 1) * 100;
-      return '<span class="ma-c ' + (up ? "up" : "dn") + '" title="' + n + "-day MA " + fmt(b.ma[n], d) + " · close " + (up ? "above" : "below") + " by " + Math.abs(dist).toFixed(2) + '%">' + n + "D " + (up ? "▲" : "▼") + "</span>";
+      return '<span class="ma-c ' + (up ? "up" : "dn") + '" title="' + n + "-day MA " + fmt(b.ma[n], d) + " · close " + (up ? "above" : "below") + " by " + Math.abs(dist).toFixed(2) + '%">' + "<u>" + n + "D " + (up ? "▲" : "▼") + " <i>" + (dist >= 0 ? "+" : "−") + Math.abs(dist).toFixed(1) + "%</i></u><b>" + fmt(b.ma[n], d) + "</b></span>";
     }).join("");
     var badges = r.ev.map(function (e) {
       return '<span class="ma-b ' + (e.up ? "up" : "dn") + '">' + (e.k === "px" ? (e.up ? "CROSSED ABOVE " : "BROKE BELOW ") + e.n + "D" : (e.a === 50 && e.b === 200 ? (e.up ? "GOLDEN CROSS" : "DEATH CROSS") : e.a + "D " + (e.up ? "OVER " : "UNDER ") + e.b + "D")) + "</span>";
@@ -83,7 +83,7 @@
   }
   var css = document.createElement("style");
   css.textContent = ".ma-row{display:flex;flex-direction:column;gap:3px;margin-top:5px;padding-top:5px;border-top:1px solid #1a1a1a;text-align:left}" +
-    ".ma-chips{display:flex;flex-wrap:wrap;gap:4px}.ma-c{font:600 10px 'JetBrains Mono','IBM Plex Mono',monospace;border:1px solid;border-radius:3px;padding:0 4px;line-height:15px}.ma-c.up{color:#3fb97f;border-color:#3fb97f66}.ma-c.dn{color:#e0655f;border-color:#e0655f66}.ma-c.na{color:#555;border-color:#333}" +
+    ".ma-chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.ma-c{font:600 10px 'JetBrains Mono','IBM Plex Mono',monospace;border:1px solid;border-radius:3px;padding:2px 5px;line-height:14px;white-space:nowrap;overflow:hidden;display:flex;flex-direction:column}.ma-c u{text-decoration:none;display:flex;justify-content:space-between;gap:4px}.ma-c b{font:600 12px 'JetBrains Mono','IBM Plex Mono',monospace;color:#e8eef4}.ma-c i{font-style:normal;opacity:.8}.ma-c.up{color:#3fb97f;border-color:#3fb97f66}.ma-c.dn{color:#e0655f;border-color:#e0655f66}.ma-c.na{color:#555;border-color:#333}" +
     ".ma-v{font-size:11px;line-height:1.35}.ma-v.bull2,.ma-v.bull{color:#3fb97f}.ma-v.bear2,.ma-v.bear{color:#e0655f}.ma-v.mix{color:#e8b93d}.ma-v.bull2,.ma-v.bear2{font-weight:600}" +
     ".ma-bs{display:flex;flex-wrap:wrap;gap:4px}.ma-b{font:700 9.5px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.04em;border-radius:3px;padding:1px 5px;color:#000;animation:maPulse 1.6s ease-in-out 3}.ma-b.up{background:#3fb97f}.ma-b.dn{background:#e0655f}" +
     "@keyframes maPulse{50%{opacity:.45}}@media (prefers-reduced-motion:reduce){.ma-b{animation:none}}";
