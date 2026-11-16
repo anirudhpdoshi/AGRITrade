@@ -38,21 +38,11 @@ def _get(url, headers):
 
 
 def fetch(sec):
-    """worker first; if CME refuses the worker, try CME directly from the runner (one of the two usually gets through)"""
-    errs = []
-    for how, url, hdr in (("worker", f"{WORKER}?s={sec}", {"User-Agent": "AGRITrade desk"}),
-                          ("direct", "https://www.cmegroup.com/daily_bulletin/current/" + SEC_FILE.get(sec, ""),
-                           {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",
-                            "Accept": "application/pdf,*/*;q=0.8", "Accept-Language": "en-US,en;q=0.9",
-                            "Referer": "https://www.cmegroup.com/market-data/daily-bulletin.html"})):
-        try:
-            b = _get(url, hdr)
-            if b.startswith(b"%PDF"):
-                return b
-            errs.append(f"{how}: not a PDF ({b[:60]!r})")
-        except Exception as e:
-            errs.append(f"{how}: {e}")
-    raise RuntimeError(f"section {sec}: " + " | ".join(errs))
+    """through the desk worker only; when CME refuses (it blocks automated downloads), stop — never work around the block"""
+    b = _get(f"{WORKER}?s={sec}", {"User-Agent": "AGRITrade desk"})
+    if not b.startswith(b"%PDF"):
+        raise RuntimeError(f"section {sec}: not a PDF ({b[:60]!r})")
+    return b
 
 
 def _int(t):

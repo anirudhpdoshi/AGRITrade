@@ -45,8 +45,10 @@ jobs:
           FORCE: ${{ github.event.inputs.force }}
           ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
 
-      - name: CME final open interest (Daily Bulletin, via the desk worker)
-        run: python scripts/cme_final.py || echo "CME final OI skipped this run"
+      # CME final open interest (Daily Bulletin) is OFF: since Nov 13 CME blocks automated downloads of the bulletin
+      # ("IP address is blocked due to suspected web scraping"), and its terms forbid scripts. Final OI comes from the
+      # IBKR scheduled runs instead. scripts/cme_final.py still parses a bulletin saved by hand:
+      #   python scripts/cme_final.py --file56 Section56.pdf --file57 Section57.pdf
 
       - name: CFTC COT release schedule (holiday-delayed dates)
         run: python scripts/cot_schedule.py || echo "COT schedule skipped this run"
