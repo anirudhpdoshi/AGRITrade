@@ -9,7 +9,7 @@ CME total is left untouched.
 
     python scripts/cme_final.py [--file56 x.pdf --file57 y.pdf] [--dry]
 """
-import io, json, re, sys, urllib.request
+import io, json, re, sys, urllib.error, urllib.request
 from datetime import datetime, timezone
 
 WORKER = "https://agritrade-sec.anirudh-p-doshi.workers.dev/cme"
@@ -24,13 +24,35 @@ MONTH = re.compile(r"^([A-Z]{3}\d{2})$")
 NUM = re.compile(r"^-?[\d.,]+[ABN#*R]?$|^----$")
 
 
+SEC_FILE = {"03": "Section03_Agricultural_Futures.pdf", "56": "Section56_Corn_Options.pdf", "57": "Section57_Soybean_And_Wheat_Options.pdf"}
+
+
+def _get(url, headers):
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return r.read()
+    except urllib.error.HTTPError as e:
+        body = e.read()[:160]
+        raise RuntimeError(f"HTTP {e.code} {body!r}")
+
+
 def fetch(sec):
-    req = urllib.request.Request(f"{WORKER}?s={sec}", headers={"User-Agent": "AGRITrade desk"})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        b = r.read()
-    if not b.startswith(b"%PDF"):
-        raise RuntimeError(f"section {sec}: not a PDF ({b[:60]!r})")
-    return b
+    """worker first; if CME refuses the worker, try CME directly from the runner (one of the two usually gets through)"""
+    errs = []
+    for how, url, hdr in (("worker", f"{WORKER}?s={sec}", {"User-Agent": "AGRITrade desk"}),
+                          ("direct", "https://www.cmegroup.com/daily_bulletin/current/" + SEC_FILE.get(sec, ""),
+                           {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",
+                            "Accept": "application/pdf,*/*;q=0.8", "Accept-Language": "en-US,en;q=0.9",
+                            "Referer": "https://www.cmegroup.com/market-data/daily-bulletin.html"})):
+        try:
+            b = _get(url, hdr)
+            if b.startswith(b"%PDF"):
+                return b
+            errs.append(f"{how}: not a PDF ({b[:60]!r})")
+        except Exception as e:
+            errs.append(f"{how}: {e}")
+    raise RuntimeError(f"section {sec}: " + " | ".join(errs))
 
 
 def _int(t):
