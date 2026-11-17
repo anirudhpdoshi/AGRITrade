@@ -67,8 +67,12 @@ class Watch:
             rows[x["s"]] = {"symbol": x["s"], "date": day.isoformat(), "time": x.get("time"), "name": x.get("n"), "fq": x.get("fq"),
                             "eps_f": x.get("eps_f"), "ests": x.get("ests"), "mcap": x.get("mcap"), "sp": True}
         for sym, r in fmp.items():
-            if sym in rows:   # on demand (Nov 10 2026): no top-100 / watchlist universe; the browser watches the stocks a user locks
-                rows[sym] = dict(rows.get(sym, {"symbol": sym, "date": day.isoformat()}), **{k: v for k, v in r.items() if v is not None})
+            # on demand (Nov 10 2026): no S&P 500 / watchlist universe and no per-stock FMP calls; the browser watches the stocks a
+            # user locks. The calendar's mega-caps ("top", e.g. NVDA) are still watched here (owner, Nov 17 2026) — EDGAR only, no
+            # FMP calls — so their results reach the board and the company view without a lock. The S&P schedule is gone, so
+            # without this nothing was watched at all.
+            if sym in rows or r.get("top"):
+                rows[sym] = dict(rows.get(sym, {"symbol": sym, "date": day.isoformat(), "name": r.get("name")}), **{k: v for k, v in r.items() if v is not None})
         self.rows = rows
         for s, r in self.rows.items():
             if r.get("epsActual") is not None or r.get("revenueActual") is not None:
