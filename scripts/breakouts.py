@@ -57,6 +57,12 @@ def watchlist():
         return []
 
 
+def f(x):
+    """price text: 50,870.12 · 246.30 · 1.4312 (never scientific notation)"""
+    a = abs(x)
+    return f"{x:,.2f}" if a >= 1000 else f"{x:.2f}" if a >= 10 else f"{x:.4f}"
+
+
 def sma(c, n, end):
     return None if end + 1 < n else sum(c[end - n + 1:end + 1]) / n
 
@@ -95,9 +101,9 @@ def close_events(ms):
         if m1 is None or m0 is None:
             continue
         if c0 <= m0 and c1 > m1:
-            out.append(("ma_close", f"Closed above its {n}-day MA ({m1:.4g})", 1))
+            out.append(("ma_close", f"Closed above its {n}-day MA ({f(m1)})", 1))
         elif c0 >= m0 and c1 < m1:
-            out.append(("ma_close", f"Closed below its {n}-day MA ({m1:.4g})", -1))
+            out.append(("ma_close", f"Closed below its {n}-day MA ({f(m1)})", -1))
     for a, b in PAIRS:
         a1, b1, a0, b0 = ms["now"][a], ms["now"][b], ms["prev"][a], ms["prev"][b]
         if None in (a1, b1, a0, b0):
@@ -113,9 +119,9 @@ def close_events(ms):
         if m1 is None or m0 is None:
             continue
         if c0 <= m0 and c1 > m1:
-            out.append(("ema_close", f"Closed above its {n}-day EMA ({m1:.4g})", 1))
+            out.append(("ema_close", f"Closed above its {n}-day EMA ({f(m1)})", 1))
         elif c0 >= m0 and c1 < m1:
-            out.append(("ema_close", f"Closed below its {n}-day EMA ({m1:.4g})", -1))
+            out.append(("ema_close", f"Closed below its {n}-day EMA ({f(m1)})", -1))
     for a, b in EPAIRS:
         a1, b1, a0, b0 = en.get(a), en.get(b), ep.get(a), ep.get(b)
         if None in (a1, b1, a0, b0):
@@ -144,16 +150,16 @@ def intraday_events(bars, prior_close, mas, w52, st, open_ts, emas=None):
         # a trend day prints a new high every few bars: one event per symbol per 30 minutes (the tile always shows the current high)
         if hi is None or h > hi:
             if hi is not None and settle and (not st.get("eh") or ts >= st["eh"]):
-                out.append((ts, "day_high", f"New day high {h:.4g}", 1)); st["eh"] = _plus(ts, 30)
+                out.append((ts, "day_high", f"New day high {f(h)}", 1)); st["eh"] = _plus(ts, 30)
             hi = h
         if lo is None or l < lo:
             if lo is not None and settle and (not st.get("el") or ts >= st["el"]):
-                out.append((ts, "day_low", f"New day low {l:.4g}", -1)); st["el"] = _plus(ts, 30)
+                out.append((ts, "day_low", f"New day low {f(l)}", -1)); st["el"] = _plus(ts, 30)
             lo = l
         if w52 and w52.get("hi") is not None and h > w52["hi"] and not st.get("w52h"):
-            st["w52h"] = 1; out.append((ts, "w52_high", f"52-week high {h:.4g} (prior {w52['hi']:.4g})", 1))
+            st["w52h"] = 1; out.append((ts, "w52_high", f"52-week high {f(h)} (prior {f(w52['hi'])})", 1))
         if w52 and w52.get("lo") is not None and l < w52["lo"] and not st.get("w52l"):
-            st["w52l"] = 1; out.append((ts, "w52_low", f"52-week low {l:.4g} (prior {w52['lo']:.4g})", -1))
+            st["w52l"] = 1; out.append((ts, "w52_low", f"52-week low {f(l)} (prior {f(w52['lo'])})", -1))
         for n in MAS:
             m = mas.get(n) if mas else None
             if m is None or prior_close is None:
@@ -161,7 +167,7 @@ def intraday_events(bars, prior_close, mas, w52, st, open_ts, emas=None):
             s0 = side.get(str(n), 1 if prior_close > m else -1)
             s1 = 1 if c > m else -1 if c < m else s0
             if s1 != s0:
-                out.append((ts, "ma_px", f"Crossed {'above' if s1 > 0 else 'below'} its {n}-day MA ({m:.4g}) — provisional until the close", s1))
+                out.append((ts, "ma_px", f"Crossed {'above' if s1 > 0 else 'below'} its {n}-day MA ({f(m)}) — provisional until the close", s1))
             side[str(n)] = s1
         for n in EMA_LIVE:
             m = emas.get(n) if emas else None
@@ -170,7 +176,7 @@ def intraday_events(bars, prior_close, mas, w52, st, open_ts, emas=None):
             s0 = side.get("e" + str(n), 1 if prior_close > m else -1)
             s1 = 1 if c > m else -1 if c < m else s0
             if s1 != s0:
-                out.append((ts, "ema_px", f"Crossed {'above' if s1 > 0 else 'below'} its {n}-day EMA ({m:.4g}) — provisional until the close", s1))
+                out.append((ts, "ema_px", f"Crossed {'above' if s1 > 0 else 'below'} its {n}-day EMA ({f(m)}) — provisional until the close", s1))
             side["e" + str(n)] = s1
         st["last_ts"] = ts
     st["hi"], st["lo"] = hi, lo

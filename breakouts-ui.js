@@ -61,12 +61,28 @@
   }
   function paintHead() { var h = P.querySelector(".brk-hd"); if (h) h.outerHTML = head(); }
   function seg(attr, list, cur) { return list.map(function (x) { return '<button type="button" class="st-b" data-' + attr + '="' + x[0] + '" aria-selected="' + (cur === x[0]) + '">' + x[1] + "</button>"; }).join(""); }
+  /* event text: numbers in plain price format (older runs wrote 5.087e+04), levels set in mono, the provisional note muted */
+  function txt(t) {
+    var h = esc(String(t).replace(/-?\d+(?:\.\d+)?e[+-]?\d+/gi, function (n) { return num(+n); }));
+    h = h.replace(/\(([−\d.,]+)\)/g, '<b class="brk-lv">$1</b>').replace(/\(prior ([\d.,]+)\)/g, '<small>prior $1</small>');
+    return h.replace(/ — provisional until the close/, ' <small class="brk-pv">provisional · confirms at the close</small>');
+  }
+  /* one line per name per minute: several crossings in the same bar read as one event with all its parts */
+  function merge(L) {
+    var out = [], by = {};
+    L.forEach(function (e) { var k = e.s + "|" + String(e.t).slice(0, 16) + "|" + (e.dir > 0 ? 1 : -1); var g = by[k];
+      if (!g) { g = by[k] = { id: e.id, t: e.t, s: e.s, n: e.n, c: e.c, k: e.k, dir: e.dir, px: e.px, pct: e.pct, parts: [] }; out.push(g); }
+      g.parts.push(e); if (fresh[e.id]) g.id = e.id; });
+    out.forEach(function (g) { var ks = {}; g.parts.forEach(function (p) { ks[p.k] = 1; }); g.multi = Object.keys(ks).length > 1;
+      g.txt = g.parts.length === 1 ? g.parts[0].txt : g.parts.map(function (p) { return p.txt.replace(/ — provisional until the close/, ""); }).join(" · ") + (g.parts.some(function (p) { return /provisional/.test(p.txt); }) ? " — provisional until the close" : ""); });
+    return out;
+  }
   function row(e) {
     var f = fresh[e.id] && Date.now() - fresh[e.id] < 60000;
     return '<li class="brk-e ' + (e.dir > 0 ? "u" : e.dir < 0 ? "d" : "") + (f ? " new" : "") + '"><time>' + ET.format(new Date(e.t)) + "</time>" +
-      '<span class="brk-tag ' + (e.dir > 0 ? "u" : "d") + '">' + (TAG[e.k] || e.k) + "</span>" +
+      '<span class="brk-tag ' + (e.dir > 0 ? "u" : "d") + '">' + (e.multi ? (e.dir > 0 ? "BREAKOUT ×" : "BREAKDOWN ×") + e.parts.length : (TAG[e.k] || e.k) + (e.parts && e.parts.length > 1 ? " ×" + e.parts.length : "")) + "</span>" +
       '<span class="brk-nm"><b>' + esc(e.c === "sp100" || e.c === "watch" ? e.s : e.n) + "</b><small>" + esc(CNAME[e.c] || "") + "</small></span>" +
-      '<span class="brk-tx">' + esc(e.txt) + "</span>" +
+      '<span class="brk-tx">' + txt(e.txt) + "</span>" +
       '<span class="brk-px">' + num(e.px) + ' <i class="' + (e.pct > 0 ? "up" : e.pct < 0 ? "dn" : "") + '">' + sg(e.pct) + "</i></span></li>";
   }
   function breadth() {
@@ -124,7 +140,7 @@
       (V.view === "status" ? '<div class="brk-bar"><input type="search" placeholder="Filter: symbol or name…" value="' + esc(V.q) + '" data-brkqi></div>' + statusView() :
       '<div class="brk-bar"><span class="brk-seg">' + seg("brkk", KIND, V.kind) + '</span><input type="search" placeholder="Filter: symbol, name or event…" value="' + esc(V.q) + '" data-brkqi>' +
       '<button type="button" class="brk-pause" data-brkp>' + (V.paused ? "Paused · resume (" + missed + " new)" : "Pause") + "</button></div>" +
-      '<div class="brk-lay"><section class="brk-main"><ol class="brk-feed">' + (L.length ? L.slice(0, 300).map(row).join("") : '<li class="brk-none">No events match yet today. The stream fills as the session trades.</li>') + "</ol>" +
+      '<div class="brk-lay"><section class="brk-main"><ol class="brk-feed">' + (L.length ? merge(L).slice(0, 300).map(row).join("") : '<li class="brk-none">No events match yet today. The stream fills as the session trades.</li>') + "</ol>" +
       '<p class="brk-note">Every line is stamped with the 5-minute bar that produced it (ET). Day high/low: the first 15 minutes only set the range, then at most one event per name per 30 minutes (the price shown is the latest). MA crossings during the day are provisional; “Closed above/below” and MA × MA crosses use the completed daily close. ' +
       "Prices: " + esc(B.provider) + " · universe: watchlist, North American indexes, currencies and " + esc(B.universe_src) + (B.counts && B.counts.missing && B.counts.missing.length ? " · not returned this run: " + esc(B.counts.missing.join(", ")) : "") + ".</p></section>" + breadth() + "</div>");
   }
@@ -145,7 +161,7 @@
   if (root.MutationObserver) new MutationObserver(function () { if (on() && !P.querySelector(".brk-hd")) paint(); }).observe(P, { attributes: true, attributeFilter: ["class"] });
   poll(true);
   var css = doc.createElement("style");
-  css.textContent = "#panel-breakouts{background:#000;font-family:'Libre Franklin',system-ui,sans-serif}" +
+  css.textContent = "#panel-breakouts{background:#000;padding-right:44px;font-family:'Libre Franklin',system-ui,sans-serif}" +
     ".brk-hd{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;padding:12px 4px 10px;border-bottom:1px solid #1a1a1a}.brk-t{font:600 20px 'Libre Franklin',system-ui,sans-serif;color:#fff}.brk-sp{flex:1}" +
     ".brk-chip{font:700 10px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.06em;border:1px solid;border-radius:3px;padding:1px 6px}.brk-chip.dl{color:#e8b93d}.brk-chip.er{color:#e0655f}" +
     ".brk-k{font:12px 'JetBrains Mono','IBM Plex Mono',monospace;color:#8a8a8a}.brk-k b{color:#e8eef4;font-weight:500}" +
@@ -158,10 +174,10 @@
     ".brk-e.new{animation:brkNew 2.5s ease-out}@keyframes brkNew{0%{background:rgba(217,180,106,.25)}100%{background:transparent}}" +
     ".brk-tag{font:700 9.5px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.04em;border-radius:3px;padding:2px 6px;text-align:center;color:#000}.brk-tag.u{background:#3fb97f}.brk-tag.d{background:#e0655f}" +
     ".brk-nm{display:flex;flex-direction:column;min-width:0}.brk-nm b{color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brk-nm small{color:#666;font-size:10.5px}" +
-    ".brk-tx{color:#c9d4e2;min-width:0}.brk-px{font:12.5px 'JetBrains Mono','IBM Plex Mono',monospace;color:#e8eef4;text-align:right;white-space:nowrap}.brk-px i{font-style:normal;margin-left:6px}.brk-px .up,.up{color:#3fb97f}.brk-px .dn,.dn{color:#e0655f}" +
+    ".brk-tx{color:#c9d4e2;min-width:0}.brk-lv{font:500 12.5px 'JetBrains Mono','IBM Plex Mono',monospace;color:#fff;margin:0 2px}.brk-tx small{color:#777;font-size:11px;margin-left:6px}.brk-pv{border:1px solid #2a2a2a;border-radius:3px;padding:0 5px;font:10px 'JetBrains Mono','IBM Plex Mono',monospace!important;letter-spacing:.03em}.brk-px{font:12.5px 'JetBrains Mono','IBM Plex Mono',monospace;color:#e8eef4;text-align:right;white-space:nowrap}.brk-px i{font-style:normal;margin-left:6px}.brk-px .up,.up{color:#3fb97f}.brk-px .dn,.dn{color:#e0655f}" +
     ".brk-none{color:#8a8a8a;padding:14px;font-size:13px;list-style:none}.brk-note{font-size:11px;color:#666;line-height:1.5;margin:8px 2px}" +
     ".brk-side{display:flex;flex-direction:column;gap:12px}.brk-box{border:1px solid #1a1a1a;border-radius:8px;padding:10px 12px}.brk-box h3{margin:0 0 8px;font:600 12px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;color:#d9b46a}.brk-box h3 small{text-transform:none;letter-spacing:0;color:#666;font-weight:400}" +
-    ".brk-kv{display:flex;justify-content:space-between;font-size:12.5px;color:#8a8a8a;padding:2px 0}.brk-kv b{color:#e8eef4;font:500 13px 'JetBrains Mono','IBM Plex Mono',monospace}" +
+    ".brk-kv{display:flex;justify-content:space-between;font-size:12.5px;color:#8a8a8a;padding:2px 0}.brk-kv b{white-space:nowrap;color:#e8eef4;font:500 13px 'JetBrains Mono','IBM Plex Mono',monospace}" +
     ".brk-br{display:grid;grid-template-columns:96px minmax(0,1fr) 40px;gap:8px;align-items:center;font-size:12px;color:#8a8a8a;margin:4px 0}.brk-br i{height:8px;background:#151515;border-radius:4px;overflow:hidden}.brk-br em{display:block;height:100%;background:#38b6c9}.brk-br b{text-align:right;color:#e8eef4;font:500 12px 'JetBrains Mono','IBM Plex Mono',monospace}" +
     ".brk-chipb{all:unset;cursor:pointer;display:inline-block;margin:0 6px 6px 0;border:1px solid #2a2a2a;border-radius:4px;padding:2px 8px;font:12px 'JetBrains Mono','IBM Plex Mono',monospace;color:#e8eef4}.brk-chipb:hover{border-color:#d9b46a}" +
     ".brk-n{margin-left:6px;font:700 10px 'JetBrains Mono','IBM Plex Mono',monospace;color:#000;background:#d9b46a;border-radius:8px;padding:0 5px}.brk-n:empty{display:none}" +
@@ -173,6 +189,7 @@
     ".brk-st tbody th{text-align:left;font-family:'Libre Franklin',system-ui,sans-serif}.brk-st tbody th b{color:#fff;font-weight:600;margin-right:6px}.brk-st tbody th small{color:#666;font-size:10.5px}" +
     ".brk-st td b{font-weight:500}.brk-st td i{display:block;font-style:normal;font-size:10.5px;opacity:.75}.brk-st td.up{color:#3fb97f}.brk-st td.dn{color:#e0655f}.brk-st td.na{color:#444}" +
     ".brk-st td.vd{text-align:left}.brk-st td.vd i{color:#777}.vd.bull,.vd.bull2{color:#3fb97f}.vd.bear,.vd.bear2{color:#e0655f}.vd.mix{color:#e8b93d}.vd.bull2 b,.vd.bear2 b{font-weight:700}" +
+    "@media (max-width:760px){#panel-breakouts{padding-right:0}}" +
     "@media (max-width:980px){.brk-lay{grid-template-columns:1fr}}" +
     "@media (max-width:640px){.brk-e{grid-template-columns:44px minmax(0,1fr) auto;grid-template-areas:'t n p' 't g g' 't x x'}.brk-e time{grid-area:t}.brk-tag{grid-area:g;justify-self:start}.brk-nm{grid-area:n}.brk-tx{grid-area:x}.brk-px{grid-area:p}.brk-bar .brk-seg{overflow-x:auto;flex-wrap:nowrap}}";
   doc.head.appendChild(css);
