@@ -109,7 +109,8 @@
     if (L && root.COMPANY && COMPANY.status) {
       var st = COMPANY.status(L), cur = view().view === "company";
       th = '<span class="ux-tl">' + esc(L) + (st.state === "loading" ? ' <i class="ux-spin"></i>' : st.state === "err" ? ' <span class="ux-err">load failed</span> <button class="ue-btn" data-coretry="' + esc(L) + '">Retry</button>' : "") + "</span>" +
-        st.groups.map(function (g) { var c = g.ready === null ? "sk" : g.ready ? "ok" : "na";
+        /* section tabs moved into one tab bar under the search (earnings-ui nav, Nov 17 2026): this row keeps only the company and its load state */
+        [].filter.call(st.groups, function () { return false; }).map(function (g) { var c = g.ready === null ? "sk" : g.ready ? "ok" : "na";
           return '<button type="button" class="ux-tb ' + c + '" data-uxtab="' + esc(g.first) + '"' + (c === "sk" ? ' disabled aria-busy="true"' : c === "na" ? ' title="No figures for this section in the company\'s SEC filings"' : ' title="Open ' + esc(g.label) + '"') + ">" + esc(g.label) + "</button>"; }).join("");
     }
     if (tb.innerHTML !== th) tb.innerHTML = th; tb.hidden = !th;

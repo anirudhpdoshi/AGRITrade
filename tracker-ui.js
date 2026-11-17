@@ -414,7 +414,7 @@
   /* -------- shell -------- */
   var css = document.createElement("style");
   css.textContent = '#usm{display:none;gap:10px;grid-template-columns:minmax(0,1fr);grid-template-areas:"a" "c" "t" "b" "d" "f" "g"}#usm:has(#panel-earnings.active){display:grid}' +
-    '#usmTabs{grid-area:t}#usmTabs:empty{display:none}#usm:not([data-v="intel"]) #usmTabs{display:none}#usm[data-mode="search"] #usmTabs,#usm[data-mode="calendar"] #usmTabs{display:none}' +
+    '#usmTabs{grid-area:t;position:sticky;top:0;z-index:6;align-self:start}#usmTabs .un-nav{box-shadow:0 8px 18px rgba(0,0,0,.55);margin-top:2px}@media (max-width:760px){#usmTabs{position:static}}#usmTabs:empty{display:none}#usm:not([data-v="intel"]) #usmTabs{display:none}#usm[data-mode="search"] #usmTabs,#usm[data-mode="calendar"] #usmTabs{display:none}' +
     '.usm-a{grid-area:a;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:8px 12px}.usm-a b{font-size:14px;color:var(--ink);letter-spacing:.02em}' +
     '.usm-s{flex:1 1 240px;max-width:460px;background:var(--panel2);color:var(--ink);border:1px solid var(--line2);border-radius:6px;padding:7px 10px;font:inherit;font-size:13px}.usm-s:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}' +
     '.usm-st{margin-left:auto;display:flex;gap:10px;align-items:center;font:500 12px "IBM Plex Mono",monospace;color:var(--muted);flex-wrap:wrap}' +

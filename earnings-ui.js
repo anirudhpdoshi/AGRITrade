@@ -84,6 +84,23 @@
     ".ut-lock[aria-pressed=true]{border-color:var(--amber);color:var(--amber);background:rgba(232,163,61,.08)}" +
     ".ut-shell{display:block}" +
     ".ut-nav{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px}" +
+    ".un-nav{display:flex;flex-direction:column;gap:0;margin:6px 0 10px;border:1px solid var(--line);border-radius:12px;background:#05070b;overflow:hidden}" +
+    ".un-r1{display:flex;align-items:center;gap:10px;padding:8px 10px;flex-wrap:wrap}.un-hint{font-size:12px;color:var(--faint)}" +
+    ".un-seg{display:inline-flex;border:1px solid var(--line2);border-radius:9px;padding:2px;gap:2px}" +
+    ".un-seg button,.un-co{appearance:none;border:0;background:transparent;color:var(--muted);font:600 12.5px 'IBM Plex Sans',sans-serif;padding:6px 12px;border-radius:7px;cursor:pointer;white-space:nowrap}" +
+    ".un-seg button:hover,.un-co:hover{color:#fff}.un-seg button[aria-current=true]{background:var(--amber);color:#101825}" +
+    ".un-co{margin-left:auto;border:1px solid var(--line2);border-radius:9px;display:inline-flex;gap:8px;align-items:center}.un-co b{font-family:'IBM Plex Mono',monospace;color:var(--amber);letter-spacing:.04em}" +
+    ".un-co[aria-current=true]{border-color:var(--amber);color:#fff;background:rgba(232,163,61,.08)}" +
+    ".un-g{display:flex;gap:2px;padding:0 6px;border-top:1px solid var(--line);overflow-x:auto;scrollbar-width:none}.un-g::-webkit-scrollbar{display:none}" +
+    ".un-g button{appearance:none;background:transparent;border:0;border-bottom:2px solid transparent;color:var(--muted);font:600 12.5px 'IBM Plex Sans',sans-serif;padding:10px 11px 8px;cursor:pointer;white-space:nowrap;display:inline-flex;gap:6px;align-items:baseline}" +
+    ".un-g button small{font:500 10px 'IBM Plex Mono',monospace;color:var(--faint)}.un-g button:hover:not(:disabled){color:#fff}" +
+    ".un-g button[aria-selected=true]{color:#fff;border-bottom-color:var(--amber)}.un-g button[aria-selected=true] small{color:var(--amber)}" +
+    ".un-g button.nd,.un-c button.nd{opacity:.32;cursor:not-allowed}.un-g button.ld,.un-c button.ld{opacity:.55;cursor:progress}" +
+    ".un-c{display:flex;flex-wrap:wrap;gap:6px;padding:9px 10px;border-top:1px solid var(--line);background:#080b11}" +
+    ".un-c button{appearance:none;background:transparent;border:1px solid var(--line2);border-radius:999px;color:#c9d3e0;font:500 12px 'IBM Plex Sans',sans-serif;padding:5px 12px;cursor:pointer;white-space:nowrap}" +
+    ".un-c button:hover:not(:disabled){border-color:#4a6488;color:#fff}.un-c button[aria-current=true]{border-color:var(--amber);color:var(--amber);background:rgba(232,163,61,.1)}" +
+    ".un-c button.nd{text-decoration:line-through;text-decoration-color:rgba(255,255,255,.25)}" +
+    "@media (max-width:860px){.un-co{margin-left:0}.un-seg{width:100%}.un-seg button{flex:1;padding:6px 6px}.un-c{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.un-c::-webkit-scrollbar{display:none}}" +
     ".ut-nav .g{align-self:center;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);padding:0 4px 0 8px}" +
     ".ut-nav button{appearance:none;display:inline-flex;align-items:center;gap:7px;font:700 13.5px 'IBM Plex Sans',sans-serif;color:var(--muted);background:transparent;border:1px solid var(--line2);border-radius:8px;padding:8px 14px;cursor:pointer;white-space:nowrap}" +
     ".ut-nav button:hover:not(:disabled){color:#fff;background:#14213a}.ut-nav button[aria-current=true]{color:#101825;background:var(--amber);border-color:var(--amber)}" +
@@ -374,12 +391,31 @@
     ["wc-ar", "Receivables", 1], ["wc-inv", "Inventory", 1], ["wc-ap", "Payables", 1], ["wc-ccc", "Cash conversion cycle", 1], ["cfo", "Operating cash flow", 1], ["fcf", "Free cash flow", 1], ["capex", "Capex", 1], ["alloc", "Capital allocation", 1],
     ["debt", "Debt structure", 1], ["costdebt", "Cost of debt", 1], ["maturity", "Maturities", 1], ["service", "Debt servicing", 1], ["liq", "Liquidity", 1], ["returns", "Returns", 1], ["lev", "Leverage", 1], ["eff", "Efficiency", 1], ["warn", "Early warnings", 1],
     ["peers", "Industry comparison"], ["research", "Earnings research"]];
+  /* section tabs (owner, Nov 17 2026): market views as one segmented control; company research as group tabs with the
+     group's cards underneath. Every tab opens its card; a card the company does not report is dimmed and cannot be opened. */
+  var NAVG = { "Company overview": "Overview", "Valuation & market": "Valuation", "Earnings & financial statements": "Earnings", "Working capital": "Working capital",
+    "Cash flow & capital allocation": "Cash flow", "Debt & financing": "Debt", "Ratios & warnings": "Ratios", "Industry comparison": "Peers", "Earnings intelligence": "Research" };
+  var navGrp = null;
   function nav() {
-    function b(id, label, on, note) { return '<button data-utgo="' + id + '" aria-current="' + (V.view === id) + '"' + (on ? "" : " disabled") + ">" + label + (note ? "<small>" + note + "</small>" : "") + "</button>"; }
-    var lk = V.lock && V.sel;
-    return '<nav class="ut-nav" aria-label="US earnings sections"><div class="g">Market</div>' + b("market", "Market overview", 1) + b("season", "Seasonality", 1) + b("plan", "Data &amp; plan coverage", 1) +
-      '<div class="g">Company' + (lk ? " · " + esc(V.sel) : "") + "</div>" + (lk ? b("company", "All research cards", 1) : "") +
-      CO_NAV.map(function (c) { return '<button data-cocard="' + c[0] + '" data-utgo="company"' + (c[2] && lk ? "" : " disabled") + ">" + c[1] + "<small>" + (c[2] ? (lk ? "" : "lock") : "next") + "</small></button>"; }).join("") + "</nav>";
+    function seg(id, label) { return '<button data-utgo="' + id + '" aria-current="' + (V.view === id) + '">' + label + "</button>"; }
+    var lk = V.lock && V.sel, C = window.COMPANY, short = {}; CO_NAV.forEach(function (c) { short[c[0]] = c[1]; }); short.matrix = "Quarterly matrix";
+    var h = '<nav class="un-nav" aria-label="US earnings sections"><div class="un-r1"><div class="un-seg">' + seg("market", "Market overview") + seg("season", "Seasonality") + seg("plan", "Data &amp; plan") + "</div>";
+    if (!lk || !C || !C.parts) return h + (lk ? "" : '<span class="un-hint">Lock a company to open its research tabs</span>') + "</div></nav>";
+    var cur = V.view === "company" ? C.card() : null, P = C.parts();
+    function av(id) { return C.has(V.sel, id); }
+    var G = P.map(function (p) { var cards = p[1].map(function (c) { var a = av(c[0]); return { id: c[0], label: short[c[0]] || c[1], a: a }; });
+      var ok = cards.filter(function (c) { return c.a === true; }), load = cards.some(function (c) { return c.a === null; });
+      return { name: NAVG[p[0]] || p[0], cards: cards, ok: ok.length, n: cards.length, load: load, first: ok[0] ? ok[0].id : null }; });
+    var act = G.filter(function (g) { return g.cards.some(function (c) { return c.id === cur; }); })[0] || G.filter(function (g) { return g.name === navGrp; })[0] || null;
+    h += '<button class="un-co" data-cocard="" data-utgo="company" aria-current="' + (V.view === "company" && !cur) + '"><b>' + esc(V.sel) + "</b> All research cards</button></div>";
+    h += '<div class="un-g" role="tablist">' + G.map(function (g) {
+      var on = act === g, dis = !g.load && !g.ok;
+      return '<button role="tab" class="' + (g.load ? "ld" : dis ? "nd" : "") + '" data-ungrp="' + esc(g.name) + '"' + (g.first ? ' data-cocard="' + g.first + '" data-utgo="company"' : "") + ' aria-selected="' + on + '"' + (dis ? " disabled title=\"No data for this company yet\"" : "") + ">" +
+        g.name + "<small>" + (g.load ? "…" : g.ok + "/" + g.n) + "</small></button>"; }).join("") + "</div>";
+    if (act) h += '<div class="un-c">' + act.cards.map(function (c) {
+      var dis = c.a !== true;
+      return '<button data-cocard="' + c.id + '" data-utgo="company" class="' + (c.a === null ? "ld" : c.a === false ? "nd" : "") + '" aria-current="' + (cur === c.id) + '"' + (dis ? " disabled" + (c.a === false ? ' title="Not reported by this company"' : "") : "") + ">" + esc(c.label) + "</button>"; }).join("") + "</div>";
+    return h + "</nav>";
   }
   /* ---------- right: earnings intelligence feed (independent of the company lock) ---------- */
   function addDays(iso, n) { var d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
@@ -609,7 +645,8 @@
     var centre = V.view === "season" ? seasonView() : V.view === "plan" ? '<div class="tile"><h2>Data &amp; plan coverage</h2>' + topStrip() + "</div>" + planTile() + footer()
       : V.view === "company" && V.lock && V.sel && window.COMPANY ? COMPANY.html(V.sel) : boardHTML();
     var tabsHost = document.getElementById("usmTabs"), navHtml = nav();
-    if (tabsHost) tabsHost.innerHTML = navHtml;   /* tracker shell: tabs sit above the slicer, outside the panel */
+    if (tabsHost) { tabsHost.innerHTML = navHtml;   /* sticky under the status strip and the menu bar */
+      try { var ss = document.getElementById("status-strip"), tb = document.getElementById("gnav") || document.querySelector(".tabs"), top = (ss && getComputedStyle(ss).position === "sticky" ? ss.offsetHeight : 0) + (tb && getComputedStyle(tb).position === "sticky" ? tb.offsetHeight : 0); tabsHost.style.top = top + "px"; } catch (e) {} }   /* tracker shell: tabs sit above the slicer, outside the panel */
     P.innerHTML = protoBar() + header() + indexDetail() + tickerBar() + (flashMsg ? '<div class="ut-ask" style="margin:-4px 0 10px">' + esc(flashMsg) + "</div>" : "") +
       '<div class="ut-shell">' + (tabsHost ? "" : navHtml) + '<main class="ut-main" style="min-width:0">' + centre + "</main></div>";
     if (hadQ) { var i = P.querySelector("[data-utq]"); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch (e) {} } }
@@ -642,6 +679,7 @@
     var b = t.closest("[data-utgo]"); if (b) { V.view = b.getAttribute("data-utgo"); if (b.hasAttribute("data-utidx")) { V.idx = b.getAttribute("data-utidx"); idxOpen = null; } seaCell = null; save(); render(); return; }
     if (t.closest("[data-cocard]")) { if (V.lock && V.sel) { V.view = "company"; save(); } return; }
   });
+  document.addEventListener("click", function (ev) { var g = ev.target.closest && ev.target.closest("[data-ungrp]"); if (g) navGrp = g.getAttribute("data-ungrp"); }, true);
   P.addEventListener("input", function (ev) { if (ev.target.hasAttribute && ev.target.hasAttribute("data-utq")) { q = ev.target.value; liveSearch(); render(); } });
   P.addEventListener("keydown", function (ev) {
     if (!(ev.target.hasAttribute && ev.target.hasAttribute("data-utq"))) return;

@@ -56,7 +56,7 @@
     ".co-skc .sk{display:block;height:14px;border-radius:5px;background:linear-gradient(90deg,rgba(255,255,255,.05) 25%,rgba(255,255,255,.13) 37%,rgba(255,255,255,.05) 63%);background-size:400% 100%;animation:coSk 1.3s ease infinite}" +
     ".co-skc .sk:nth-child(2){width:70%}.co-skc .sk:nth-child(3){width:85%}.co-skc .sk.ch{height:140px}@keyframes coSk{0%{background-position:100% 50%}100%{background-position:0 50%}}" +
     "@media (prefers-reduced-motion:reduce){.co-skc .sk{animation:none}}" +
-    ".cx-prs{border:1px solid rgba(224,69,58,.55);border-left:4px solid #e0453a;background:rgba(224,69,58,.08);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:13px}.cx-prs small{color:var(--muted)}.cx-prs a{color:#7dd8e6}.cx-new.old,.cx-prs.old{border-color:var(--line2);border-left-color:#38b6c9;background:var(--panel2)}.cx-new.old .cx-new-b,.cx-prs.old .cx-new-b{background:#38b6c9;color:#06222a}.cx-new{border:1px solid rgba(224,69,58,.6);border-left:4px solid #e0453a;background:rgba(224,69,58,.09);border-radius:10px;padding:12px 14px;margin-bottom:12px}.cx-new-h{font-weight:700;font-size:14px}.cx-new-b{display:inline-block;font:700 10.5px \"IBM Plex Mono\",monospace;letter-spacing:.1em;background:#e0453a;color:#fff;border-radius:3px;padding:1px 6px;margin-right:6px}.cx-new-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:8px}.cx-new .lab{font:600 10.5px \"IBM Plex Mono\",monospace;text-transform:uppercase;color:var(--muted)}.cx-new .m{font:600 20px \"IBM Plex Mono\",monospace}.cx-new .n{font-size:12.5px;color:var(--muted)}.cx-new .pos{color:#3fb97f}.cx-new .neg{color:#ff8a84}.cx-h{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:4px}.cx-h h2{margin:0}.cx-sub{font-size:12.5px;color:var(--muted)}" +
+    ".cx-prs{border:1px solid rgba(224,69,58,.55);border-left:4px solid #e0453a;background:rgba(224,69,58,.08);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:13px}.cx-prs small{color:var(--muted)}.cx-prs a{color:#7dd8e6}.cx-new.old,.cx-prs.old{border-color:var(--line2);border-left-color:#38b6c9;background:var(--panel2)}.cx-new.old .cx-new-b,.cx-prs.old .cx-new-b{background:#38b6c9;color:#06222a}.cx-new{border:1px solid rgba(224,69,58,.6);border-left:4px solid #e0453a;background:rgba(224,69,58,.09);border-radius:10px;padding:12px 14px;margin-bottom:12px}.cx-new-h{font-weight:700;font-size:14px}.cx-new-b{display:inline-block;font:700 10.5px \"IBM Plex Mono\",monospace;letter-spacing:.1em;background:#e0453a;color:#fff;border-radius:3px;padding:1px 6px;margin-right:6px}.cx-new-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:8px}.cx-new .lab{font:600 10.5px \"IBM Plex Mono\",monospace;text-transform:uppercase;color:var(--muted)}.cx-new .m{font:600 20px \"IBM Plex Mono\",monospace}.cx-new .n{font-size:12.5px;color:var(--muted)}.cx-new .pos{color:#3fb97f}.cx-new .neg{color:#ff8a84}.cx-h{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:4px}.cx-h h2{margin:0}.cx-sub{font-size:12.5px;color:var(--muted)}" +
     ".cx-part{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:16px 0 6px}" +
     ".cx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:10px}" +
     ".cx-card{appearance:none;text-align:left;font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:11px 13px;display:flex;flex-direction:column;gap:3px;min-height:132px;transition:border-color .12s,transform .12s}" +
@@ -371,7 +371,21 @@
   /* a release is "ahead of the filings" only when the latest filed quarter is the one BEFORE it: a release comes ~3–8 weeks
      after its quarter ends, so once the reported quarter is filed (release − quarter end < ~75 days) the cards are current */
   function afterFiled(relDate, qEnd) { return (Date.parse(relDate + "T12:00:00Z") - Date.parse(qEnd + "T12:00:00Z")) / 864e5 > 75; }
-  function prFor(M) { var P = window.DESK_EARN_PR || {}, x = P[M.co.ticker], q = L(M); return x && afterFiled(x.date, q.end) ? x : null; }
+  function prFor(M) { var P = window.DESK_EARN_PR || {}, a = P[M.co.ticker], b = LPR[M.co.ticker], x = a && b ? (b.date > a.date ? b : a) : a || b, q = L(M); return x && afterFiled(x.date, q.end) ? x : null; }
+  /* latest earnings release read in this browser (owner, Nov 17 2026): the fast lane only reads releases for companies on the
+     earnings calendar, so a company outside it (e.g. POWL) showed last quarter until its 10-K/10-Q reached XBRL. When the
+     company's newest 8-K Item 2.02 is ahead of the filed quarters, exhibit 99.1 is fetched through the SEC Worker and read
+     with the same press-release reader the earnings lock uses. Figures are the company's own (GAAP, unaudited). */
+  var LPR = {}, PRQ = {};
+  function prFetch(M) {
+    var co = M.co, t = co.ticker, rel = E.latestRelease(co), q = L(M); if (!rel || !rel.accn || !worker() || !window.ELOCK || !ELOCK.parsePR) return;
+    var have = prFor(M); if (have && have.date >= rel.filed) return;
+    if (!afterFiled(rel.filed, q.end) || PRQ[t + rel.accn]) return; PRQ[t + rel.accn] = 1;
+    fetch(worker() + "/exhibit?t=" + encodeURIComponent(t) + "&acc=" + encodeURIComponent(rel.accn)).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      if (!j || !j.html) return; var o = ELOCK.parsePR(j.html); if (!o || o.unread || (o.rev == null && o.eps_d == null)) return;
+      LPR[t] = Object.assign({}, o, { date: rel.filed, acc: rel.accn, exhibit: j.url, src: "browser" }); delete READY[t]; delete RC[t]; rerender();
+    }).catch(function () {});
+  }
   function nextQ(q) { return q.fl.q === 4 ? { q: 1, fy: q.fl.fy + 1 } : { q: q.fl.q + 1, fy: q.fl.fy }; }
   function prStrip(M, k) {
     var x = prFor(M); if (!x || x[k] == null) return "";
@@ -388,7 +402,7 @@
   function justReleased(M) {
     var co = M.co, q = L(M), D = window.EARNINGS && EARNINGS._data && EARNINGS._data(), C = D && D.calendar;
     var r = C && C.rows ? C.rows.filter(function (x) { return x.symbol === co.ticker && (x.epsActual != null || x.revenueActual != null); }).sort(function (a, b) { return a.date < b.date ? 1 : -1; })[0] : null;
-    if (!r || Date.now() - Date.parse(r.date + "T12:00:00Z") > 10 * 864e5 || !afterFiled(r.date, q.end)) return "";
+    if (!r || Date.now() - Date.parse(r.date + "T12:00:00Z") > 10 * 864e5 || !afterFiled(r.date, q.end)) return prBanner(M);
     var nq = q.fl.q === 4 ? "Q1 FY" + String(q.fl.fy + 1).slice(2) : "Q" + (q.fl.q + 1) + " FY" + String(q.fl.fy).slice(2);
     var e = r.eps_surprise_pct, v = r.rev_surprise_pct, rel = E.latestRelease(co), relNow = rel && rel.filed >= r.date;
     function m(x) { return x == null ? "—" : Math.abs(x) >= 1e9 ? "$" + (x / 1e9).toFixed(2) + "B" : "$" + (x / 1e6).toFixed(0) + "M"; }
@@ -400,8 +414,22 @@
       '<div><div class="lab">Revenue</div><div class="m">' + m(r.revenueActual) + '</div><div class="n">vs est ' + m(r.revenueEstimated) + pc(v) + "</div></div>" +
       (function () { var x = prFor(M); if (!x) return ""; function c(k, l) { return x[k] == null ? "" : '<div><div class="lab">' + l + '</div><div class="m">' + fv(k, x[k]) + "</div><div class=\"n\">press release (GAAP, unaudited)</div></div>"; }
         return c("gm", "Gross margin") + c("opinc", "Operating income") + c("opm", "Operating margin") + c("ni", "Net income") + c("eps_d", "Diluted EPS · GAAP"); })() +
-      '<div><div class="lab">On EDGAR</div><div class="n">' + (relNow ? 'Earnings release 8-K (Item 2.02) filed ' + esc(rel.filed) + (rel.a ? ' · <a href="https://www.sec.gov/Archives/edgar/data/' + (+co.cik) + "/" + rel.a.replace(/-/g, "") + "/" + rel.a + '-index.htm" target="_blank" rel="noopener noreferrer">open ↗</a>' : "") : "Earnings 8-K not on EDGAR yet — usually within hours of the release") + "</div></div></div>" +
+      '<div><div class="lab">On EDGAR</div><div class="n">' + (relNow ? 'Earnings release 8-K (Item 2.02) filed ' + esc(rel.filed) + (rel.accn ? ' · <a href="https://www.sec.gov/Archives/edgar/data/' + (+co.cik) + "/" + rel.accn.replace(/-/g, "") + "/" + rel.accn + '-index.htm" target="_blank" rel="noopener noreferrer">open ↗</a>' : "") : "Earnings 8-K not on EDGAR yet — usually within hours of the release") + "</div></div></div>" +
       '<div class="n" style="margin-top:6px">The cards below still show ' + esc(q.fl.label) + " (" + esc(q.end) + "): the full " + nq + " statements reach EDGAR’s data feed only with the " + (q.fl.q === 3 ? "annual 10-K (the fourth quarter is filed inside the 10-K, typically within a few weeks)" : "10-Q (typically within a few weeks)") + ", and are picked up automatically then. Headline EPS / revenue: FMP earnings calendar; GAAP lines: the company’s press release (8-K exhibit 99.1), shown with a red RELEASED line on each card.</div></div>";
+  }
+  /* results banner from the press release alone (no calendar row → no consensus shown; nothing is estimated) */
+  function prBanner(M) {
+    var x = prFor(M); if (!x || Date.now() - Date.parse(x.date + "T12:00:00Z") > 21 * 864e5) return "";
+    var co = M.co, q = L(M), n = nextQ(q), lab = "Q" + n.q + " FY" + String(n.fy).slice(2), py = x.py || {};
+    var td = x.date === new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+    function yo(k) { var a = x[k], b = py[k]; if (a == null || b == null) return ""; if (PCT[k]) { var d = a - b; return '<span class="' + (d >= 0 ? "pos" : "neg") + '">' + (d >= 0 ? "+" : "") + d.toFixed(1) + " pp YoY</span>"; }
+      if (!(b > 0)) return ""; var g = (a / b - 1) * 100; return '<span class="' + (g >= 0 ? "pos" : "neg") + '">' + (g >= 0 ? "+" : "") + g.toFixed(1) + "% YoY</span> · yr ago " + fv(k, b); }
+    function c(k, l) { return x[k] == null ? "" : '<div><div class="lab">' + l + '</div><div class="m">' + fv(k, x[k]) + '</div><div class="n">' + (yo(k) || "press release") + "</div></div>"; }
+    return '<div class="cx-new' + (td ? "" : " old") + '"><div class="cx-new-h"><span class="cx-new-b">' + (td ? "JUST RELEASED" : "LATEST RESULTS") + "</span> " + esc(co.ticker) + " " + lab + (n.q === 4 ? " (fiscal fourth quarter)" : "") + " results · " +
+      esc(new Date(x.date + "T12:00:00Z").toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" })) + "</div>" +
+      '<div class="cx-new-g">' + c("rev", "Revenue") + c("eps_d", "Diluted EPS · GAAP") + c("ni", "Net income") + c("gm", "Gross margin") + c("opinc", "Operating income") + c("opm", "Operating margin") +
+      '<div><div class="lab">Source</div><div class="n">Earnings release 8-K (Item 2.02) filed ' + esc(x.date) + (x.exhibit ? ' · <a href="' + (window.safeUrl ? safeUrl(x.exhibit) : "#") + '" target="_blank" rel="noopener noreferrer">exhibit 99.1 ↗</a>' : "") + "</div></div></div>" +
+      '<div class="n" style="margin-top:6px">Company press release, GAAP, unaudited. The cards below still show ' + esc(q.fl.label) + " (" + esc(q.end) + ") until the " + (n.q === 4 ? "10-K" : "10-Q") + " reaches EDGAR’s data feed; they update automatically then.</div></div>";
   }
   function grid(M, VV) {
     var q = L(M), co = M.co;
@@ -420,7 +448,8 @@
           kv = '<div class="k">' + act.length + ' <small style="font-size:12px;color:var(--muted)">active of 12</small></div><div class="n">' + (act.length ? act.map(function (w) { return '<span class="cx-vd ' + (w.severity === "WATCH" ? "WEAK" : "NEGATIVE") + '" style="font-size:9px;padding:1px 5px">' + w.id + "</span>"; }).join(" ") : "none triggered") + "</div>"; }
         if (c[0] === "verdicts") kv = '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">' + VV.verdicts.map(function (v) { return '<span class="cx-vd ' + v.verdict + '" title="' + esc(v.name) + '">' + v.name.split(" ").map(function (w) { return w[0]; }).join("") + " " + v.verdict + "</span>"; }).join("") + "</div>";
         if (c[0] === "health") { var st = E.streak(VV.history, "eq"); kv = '<div class="n" style="margin-top:6px">' + VV.history.map(function (h) { return '<span class="cx-vd ' + h.eq + '" style="padding:1px 4px;font-size:9px">' + h.eq[0] + "</span>"; }).join(" ") + "</div>" + (st.n ? '<div class="n">' + st.n + " quarter" + (st.n > 1 ? "s" : "") + " " + (st.dir > 0 ? "improving" : "deteriorating") + "</div>" : ""); }
-        return '<button class="cx-card" data-cocard="' + c[0] + '"' + (b ? "" : " disabled") + '><span class="t">' + esc(c[1]) + "</span>" + kv + (sp ? "<div>" + sp + "</div>" : "") + '<span class="q">' + esc(c[2] || "") + (b ? "" : " · next phase") + "</span></button>"; }).join("") + "</div>"; }).join("") +
+        var nd = b && has(M.co.ticker, c[0]) === false;
+        return '<button class="cx-card' + (nd ? " nodata" : "") + '" data-cocard="' + c[0] + '"' + (b && !nd ? "" : " disabled") + (nd ? ' title="Not reported by this company"' : "") + '><span class="t">' + esc(c[1]) + "</span>" + kv + (sp ? "<div>" + sp + "</div>" : "") + '<span class="q">' + esc(c[2] || "") + (b ? (nd ? " · not reported" : "") : " · next phase") + "</span></button>"; }).join("") + "</div>"; }).join("") +
       '<div class="stamp">Cards draw on SEC EDGAR filings fetched live for this visit only — nothing is stored. Greyed cards are specified and arrive in the next build phases.</div></div>';
   }
   function shell(M, id, body) {
@@ -953,15 +982,32 @@
     if (D.loading) return skeleton(t);
     if (D.err) return '<div class="tile"><h2>' + esc(t) + '</h2><div class="unreach">⚠ Could not load ' + esc(t) + " <small>— " + esc(D.err) + '</small></div><button class="ue-btn" data-coretry="' + esc(t) + '" style="margin-top:8px">Try again</button></div>';
     if (!D.M.quarters.length) return '<div class="tile"><h2>' + esc(t) + '</h2><div class="ue-ph">' + esc(D.co.name) + " has no US-GAAP quarterly figures in SEC XBRL" + (D.co.ifrs ? " (it files under IFRS)" : "") + ".</div></div>";
+    prFetch(D.M); if (Date.now() - Date.parse(D.at) > 20 * 6e4) refresh(t);
     return card && CARDS[card] ? CARDS[card](D.M, D.V) : grid(D.M, D.V);
+  }
+  /* a company stays open for hours: refetch quietly every 20 minutes so a new filing shows without a reload */
+  function refresh(t) {
+    var D = MEM[t]; if (!D || !D.M || D.bg) return; D.bg = 1;
+    Promise.all([fetch(worker() + "/company?t=" + encodeURIComponent(t)).then(function (r) { return r.ok ? r.json() : null; }), fetch(worker() + "/prices?r=5y&t=" + encodeURIComponent(t)).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })])
+      .then(function (x) { if (MEM[t] !== D) return; if (!co_ok(x[0], t)) { D.bg = 0; D.at = new Date().toISOString(); return; }
+        var M = E.build(x[0]); MEM[t] = { co: x[0], M: M, P: x[1] || D.P, V: E.verdicts(M, x[1] || D.P), at: new Date().toISOString() }; delete READY[t]; delete RC[t]; rerender(); })
+      .catch(function () { D.bg = 0; D.at = new Date().toISOString(); });
   }
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t) return;
-    var b = t.closest("[data-cocard]"); if (b && b.closest("#panel-earnings")) { card = b.getAttribute("data-cocard") || null; rerender(); var m = document.querySelector("#panel-earnings .ut-main"); if (m) m.scrollIntoView({ block: "start", behavior: "smooth" }); return; }
-    b = t.closest("[data-mxtab]"); if (b && b.closest("#panel-earnings")) { MX = b.getAttribute("data-mxtab"); rerender(); return; }
+    var b = t.closest("[data-mxtab]"); if (b && b.closest("#panel-earnings")) { MX = b.getAttribute("data-mxtab"); rerender(); return; }
     b = t.closest("[data-coretry]"); if (b) { delete MEM[b.getAttribute("data-coretry")]; rerender(); }
     b = t.closest("[data-scnreset]"); if (b) { delete SCN[b.getAttribute("data-scnreset")]; rerender(); }
   });
+  /* card tabs and card tiles: capture phase, so the card is set before the panel re-renders (a bubbling handler would see a
+     detached button and miss it — the reason tabs did nothing) */
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest && ev.target.closest("[data-cocard]"); if (!b || b.disabled || !b.closest("#panel-earnings, #usmTabs")) return;
+    card = b.getAttribute("data-cocard") || null; var inTabs = !b.closest(".ut-main");
+    setTimeout(function () { rerender(); var m = document.querySelector("#panel-earnings .ut-main"); if (!m) return;
+      var nv = document.querySelector("#usmTabs .un-nav"); m.style.scrollMarginTop = (nv && getComputedStyle(nv.parentNode).position === "sticky" ? nv.offsetHeight + 12 + (parseFloat(nv.parentNode.style.top) || 0) : 8) + "px";
+      var y = m.getBoundingClientRect().top; if (!inTabs || y < 0 || y > innerHeight * 0.5) m.scrollIntoView({ block: "start", behavior: "smooth" }); }, 0);
+  }, true);
   document.addEventListener("change", function (ev) {
     var el = ev.target; if (!el || !el.getAttribute || !el.getAttribute("data-scn")) return;
     var parts = el.getAttribute("data-scn").split("|"), tk = parts[0];
@@ -984,5 +1030,12 @@
       if (R[g[0]] === undefined) { var ok = null; g[2].some(function (k) { try { var h = CARDS[k] && CARDS[k](D.M, D.V); if (hasData(h)) { ok = k; return true; } } catch (e) {} return false; }); R[g[0]] = ok; }
       return { id: g[0], label: g[1], first: R[g[0]] || g[2][0], ready: !!R[g[0]] }; }) };
   }
-  window.COMPANY = { status: status, show: function (key) { card = key || null; rerender(); }, html: html, search: search, configured: function () { return !!worker(); }, reset: function (keep) { card = null; cancelAll(keep); }, retry: function (t) { delete MEM[t]; delete READY[t]; rerender(); }, _mem: MEM };
+  /* per-card availability for the tabs: true = has figures, false = this company does not report it, null = still loading */
+  var RC = {};
+  function has(t, id) {
+    var D = MEM[t]; if (!D || D.loading || D.err || !D.M) return null; if (!BUILT[id]) return false;
+    var R = RC[t] || (RC[t] = {}); if (R[id] === undefined) { try { R[id] = id === "verdicts" || id === "health" || id === "warn" || id === "matrix" ? D.M.quarters.length > 0 : hasData(CARDS[id] && CARDS[id](D.M, D.V)); } catch (e) { R[id] = false; } }
+    return R[id];
+  }
+  window.COMPANY = { status: status, has: has, card: function () { return card; }, parts: function () { return PARTS; }, show: function (key) { card = key || null; rerender(); }, html: html, search: search, configured: function () { return !!worker(); }, reset: function (keep) { card = null; cancelAll(keep); }, retry: function (t) { delete MEM[t]; delete READY[t]; rerender(); }, _mem: MEM };
 })();
