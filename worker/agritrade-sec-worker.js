@@ -151,7 +151,15 @@ async function exhibit(req, t, acc) {
   const base = `https://www.sec.gov/Archives/edgar/data/${hit.cik}/${acc.replace(/-/g, "")}/`;
   const idx = await getJSON(base + "index.json", 86400);
   const names = ((idx.directory && idx.directory.item) || []).map((i) => i.name).filter((n) => /\.html?$/i.test(n));
-  const pick = names.find((n) => /ex-?99[._-]?0?1|ex991|exhibit991|ex99/i.test(n));
+  let pick = names.find((n) => /ex-?99[._-]?0?1|ex991|exhibit991|ex99/i.test(n));
+  if (!pick) {   /* not named ex99 (e.g. NVIDIA's q3fy27pr.htm): the document the filing index types EX-99.1 */
+    const ih = await getText(base + acc + "-index.htm", 86400), hit2 = {};
+    for (const r of ih.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || []) {
+      const m = r.match(/href="[^"]*\/([^"\/]+\.html?)"/i), ty = r.match(/<td[^>]*>\s*(EX-99(?:\.\d+)?)\s*<\/td>/i);
+      if (m && ty && !hit2[ty[1].toUpperCase()]) hit2[ty[1].toUpperCase()] = m[1];
+    }
+    pick = hit2["EX-99.1"] || Object.keys(hit2).sort().map((k) => hit2[k])[0];
+  }
   if (!pick) return json(req, { error: "no exhibit 99.1 in this filing", files: names.slice(0, 20) }, 404);
   let html = await getText(base + pick, 86400);
   html = html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<img[^>]*>/gi, "").slice(0, 900000);

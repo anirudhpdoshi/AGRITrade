@@ -196,4 +196,18 @@ def exhibit_url(get, cik, acc):
     items = j.get("directory", {}).get("item", [])
     names = [i["name"] for i in items if i["name"].lower().endswith((".htm", ".html"))]
     pick = next((n for n in names if re.search(r"ex-?99[._-]?0?1|ex991|exhibit991|ex99", n.lower())), None)
+    if not pick:   # file not named ex99 (e.g. NVIDIA's q3fy27pr.htm): take the document the filing index types as EX-99.1
+        pick = exhibit_by_type(get(base + acc + "-index.htm").text)
     return base + pick if pick else None
+
+
+def exhibit_by_type(index_html):
+    """Document name typed EX-99.1 (else the first EX-99.x) in an EDGAR filing-index page, or None."""
+    rows = re.findall(r"<tr[^>]*>(.*?)</tr>", index_html or "", re.S | re.I)
+    hit = {}
+    for r in rows:
+        m = re.search(r'href="[^"]*/([^"/]+\.html?)"', r, re.I)
+        t = re.search(r"<td[^>]*>\s*(EX-99(?:\.\d+)?)\s*</td>", r, re.I)
+        if m and t:
+            hit.setdefault(t.group(1).upper(), m.group(1))
+    return hit.get("EX-99.1") or next((hit[k] for k in sorted(hit)), None)
