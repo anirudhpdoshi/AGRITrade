@@ -7,6 +7,7 @@ name: Scheduler (keepalive)
 #
 #   Refresh desk data   every 15 min, 11:00–22:45 UTC Mon–Fri, plus 00:30 UTC Tue–Sat (evening sweep)
 #   World markets       every 15 min, Sun–Fri (UTC), offset 7 min
+#   Breakouts           every 5 min at :02/:07/…, 13:00–22:57 UTC Mon–Fri
 #   Global grains       12:20 and 17:20 UTC Mon–Fri
 #   Live feed           every 30 min at :20/:50, Sun 22:20 UTC → Sat 00:20 UTC (each run loops ~33 min; hand-over kept off release minutes)
 #   Intelligence        hourly at :50, 10:50–22:50 UTC Mon–Fri
@@ -54,6 +55,8 @@ jobs:
               if [ "$m" -eq 30 ] && [ "$h" -eq 0 ] && [ "$dow" -ge 2 ] && [ "$dow" -le 6 ]; then fire refresh-data.yml; fi
               # world-markets: :07 :22 :37 :52 Sun–Fri
               if [ $((m % 15)) -eq 7 ] && { [ "$dow" -le 5 ] || [ "$dow" -eq 7 ]; }; then fire world-markets.yml; fi
+              # breakouts: every 5 min at :02 :07 … 13–22 UTC weekdays
+              if [ $((m % 5)) -eq 2 ] && [ "$dow" -le 5 ] && [ "$h" -ge 13 ] && [ "$h" -le 22 ]; then fire breakouts.yml; fi
               # global-grains: 12:20 and 17:20 UTC weekdays (after CONAB / USDA morning releases and the noon-ET WASDE)
               if [ "$m" -eq 20 ] && [ "$dow" -le 5 ] && { [ "$h" -eq 12 ] || [ "$h" -eq 17 ]; }; then fire global-grains.yml; fi
               # intel: :50 every hour, 10–22 UTC weekdays (institutional data + headlines)
