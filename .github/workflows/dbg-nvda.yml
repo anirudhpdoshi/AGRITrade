@@ -1,0 +1,29 @@
+name: dbg nvda pr
+on:
+  push:
+    branches: [dbg-nvda]
+jobs:
+  r:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -q requests
+      - run: |
+          cd scripts && python - <<'PY'
+          import json, requests, pr_parse as PP
+          from desknet import sec_ua
+          H = sec_ua() if callable(sec_ua) else sec_ua
+          get = lambda x: requests.get(x, headers=H, timeout=20)
+          u = PP.exhibit_url(get, 1045810, "0001045810-26-000088")
+          print("exhibit", u)
+          if u:
+              t = get(u).text
+              print("len", len(t))
+              r = PP.parse(t)
+              print(json.dumps(r, default=str)[:3000])
+              import re
+              s = re.sub(r"<[^>]+>", " ", t); s = re.sub(r"\s+", " ", s)
+              i = s.find("Condensed Consolidated Statements of Income"); print("TXT", s[i:i+2500] if i >= 0 else s[:2500])
+          PY
