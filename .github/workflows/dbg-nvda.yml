@@ -10,7 +10,9 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - run: pip install -q requests
-      - run: |
+      - env:
+          SEC_CONTACT: ${{ secrets.SEC_CONTACT }}
+        run: |
           cd scripts && python - <<'PY'
           import json, requests, pr_parse as PP
           from desknet import sec_ua
