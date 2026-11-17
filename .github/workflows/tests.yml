@@ -39,6 +39,7 @@ jobs:
       - run: python tests/test_yields.py
       - run: python tests/test_cot_schedule.py
       - run: python tests/test_macro_parts.py
+      - run: python tests/test_breakouts.py
       - run: python tests/test_policy_intel.py
       - name: Lint (syntax errors and undefined names only)
         run: pip install -q ruff && ruff check scripts tests --select E9,F63,F7,F82

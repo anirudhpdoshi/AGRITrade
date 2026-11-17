@@ -1,0 +1,29 @@
+name: Breakouts
+# Breakouts stream: watchlist, North American indexes, FX and the S&P 100 — new day highs/lows, 52-week touches, MA
+# crossings and MA crossovers, timestamped. Every 5 min on weekdays from 8:00 a.m. to 5:55 p.m. ET (13:00–22:55 UTC
+# covers both EST and EDT). Publishes breakouts.json to the `breakouts` branch.
+on:
+  schedule:
+    - cron: "2-57/5 13-22 * * 1-5"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: breakouts
+  cancel-in-progress: false
+jobs:
+  breakouts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+      - run: pip install -r scripts/requirements.txt
+      - run: python tests/test_breakouts.py
+      - name: Fetch, detect breakouts, publish breakouts.json
+        run: python scripts/breakouts.py
