@@ -48,7 +48,7 @@ from ud_grains import (  # noqa: F401  (re-exported: live_loop, tests and other 
     merge_follow, expired_track, season_contract, season_month, seasonality_track, roll_fronts, grains_quote, option_month_quotes,
     YIELD_YF, YIELD_PROXY, PROXY_MIN_R2, PROXY_MAX_BP, fit_sensitivity, _proxy_fits, _proxy_estimate, yields_live,
     energy, crosses, NEWS_Q, news, MONTHS, _set_release, releases, _yahoo_settles,
-    _fan_from, settles, _yahoo_hl, optflow, FAS, ESR_MATCH, _ESR_COUNTRIES, _destinations,
+    _fan_from, settles, spreads, _yahoo_hl, optflow, FAS, ESR_MATCH, _ESR_COUNTRIES, _destinations,
     exports, PSD, PSD_CODE, BU_PER_MT, HA_TO_AC, SD_ROWS, _psd_us, _PSD_REF,
     _LAST_PSD, _sd_values, wasde, sd_hist, INPUT_FRED, WB_COLS, _weekly, _worldbank_monthly,
     inputs, grain_long)
@@ -81,7 +81,7 @@ sys.modules[__name__].__class__ = _Module
 
 BLOCKS = [("seasonality_track", seasonality_track), ("expired_track", expired_track), ("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("yields_live", yields_live), ("energy", energy),
-          ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("cpi_detail", cpi_detail), ("grain_long", grain_long), ("release_hist", release_hist), ("cpi_detail_ca", cpi_detail_ca), ("macro_parts", macro_parts), ("ca_cpi_weights", ca_cpi_weights), ("settles", settles), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow), ("ust", ust), ("ust_dashboard", ust_dashboard)]
+          ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("cpi_detail", cpi_detail), ("grain_long", grain_long), ("release_hist", release_hist), ("cpi_detail_ca", cpi_detail_ca), ("macro_parts", macro_parts), ("ca_cpi_weights", ca_cpi_weights), ("settles", settles), ("spreads", spreads), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow), ("ust", ust), ("ust_dashboard", ust_dashboard)]
 
 
 def main():

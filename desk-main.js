@@ -2935,6 +2935,7 @@ function renderGrain(key){ try{ oiSanitize(DATA); }catch(e){}
   /* insight + curve (both computed from the data) */
   OV+='<div class="tile wide" data-src="model"><h2>Insight</h2><p class="read">'+grainInsight(key)+'</p><div class="stamp">Generated from the current settles, options and CFTC data</div></div>';
   DV+=positioningKpiHTML(key)+cockpitHTML(key)+volTermHTML(key)+grainSpreadsHTML(key).replace('class="tile"','class="tile wide"');
+  if(window.SPREADC) DV+=SPREADC.tile(key);   /* calendar-spread charts: front roll + next roll, 9-day EMA, high/low (spread-chart.js) */
   /* positioning (toggle target) */
   DV+='<div class="tile wide" data-src="options" id="pos-'+key+'">'+positioningHTML(key)+'</div>';
   /* OI chart (toggle target) */
@@ -3500,7 +3501,7 @@ document.querySelector('main').addEventListener('click', function(ev){
 var SECG={
   grain:{
     overview:[['snap','Snapshot & KPIs',/kpi-strip|dash-head/],['cone','Volatility cone',/vcone-tile/],['season','Seasonality',/ssn-tile/],['insight','Insight',/\bInsight\b/],['ask','Ask Claude',/ask-tile/]],
-    deriv:[['cockpit','Derivatives cockpit',/kpi-strip/],['pos','Positioning KPIs',/poskpi|ckwrap/],['cftc','CFTC managed money',/cftc_grains/],['opt','Options data',/Options positioning|Open-interest change/],['vol','Volatility & skew',/Volatility|IV skew/],['optflow','Options flow & expirations',/of-tile|Options flow &amp; expirations|Options flow & expirations/],['flow','Position flow signal',/fl-tile|Position flow/],['carry','Carry & roll',/tr-tile|Curve & calendar|Futures roll/],['oi','Open interest by strike',/\boi-(corn|wheat|soybeans)\b/]],
+    deriv:[['cockpit','Derivatives cockpit',/kpi-strip/],['pos','Positioning KPIs',/poskpi|ckwrap/],['cftc','CFTC managed money',/cftc_grains/],['opt','Options data',/Options positioning|Open-interest change/],['vol','Volatility & skew',/Volatility|IV skew/],['optflow','Options flow & expirations',/of-tile|Options flow &amp; expirations|Options flow & expirations/],['flow','Position flow signal',/fl-tile|Position flow/],['spc','Spread charts',/spc-tile/],['carry','Carry & roll',/tr-tile|Curve & calendar|Futures roll/],['oi','Open interest by strike',/\boi-(corn|wheat|soybeans)\b/]],
     fund:[['cmp','Crop-year comparison',/Crop-year comparison/],['xcmp','Export comparison',/Export comparison/],['wmap','World map',/production map/i],['wdet','Country detail',/ detail /],['wprod','Top producers',/Top producers/],['wexp','Top exporters',/Top exporters/],['brsurvey','CONAB survey',/CONAB crop survey/],['brsd','Brazil supply & demand',/Brazil (soybean )?supply/i],['brvs','CONAB vs USDA',/CONAB vs USDA/],['brexp','Brazil exports',/exports \u2014 actual|exports — actual/],['brl','USD/BRL',/USD\/BRL/],['sd','Supply & demand (WASDE)',/supply & demand/i],['dest','Export destinations',/Export destinations/i],['exp','Export sales',/Export Sales/i],['cal','Agri calendar',/agri calendar/i],['caprod','Production & farm prices',/production by crop year|farm price/i],['ca','Canada / Ontario stats',/Canada|Ontario/]],
     inputs:[['cost','Input cost summary',/input costs/i],['paths','Price paths & events',/price paths/i]]
   },

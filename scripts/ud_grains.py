@@ -224,6 +224,10 @@ def option_month_quotes(g):
     front = (g.get("roll") or [{}])[0].get("contract")
     if front and front not in want:
         want.insert(0, front)
+    for r in (g.get("roll") or [])[1:3]:   # next two contracts: live end of the spread charts (front–next, front–2nd, next–2nd)
+        c = r.get("contract")
+        if c and c not in want:
+            want.append(c)
     for c in want:
         try:
             px, ts, prev = yahoo_last(f"{c}.CBT")
@@ -637,6 +641,56 @@ def settles(D, N):
     D["meta"]["asof"]["grains_settle"] = datetime.fromisoformat(last_settle + "T14:20:00").replace(tzinfo=TOR).isoformat()
     print("  settles:", done)
     return True
+
+
+# ------------------------------------------------------------------ calendar-spread history (front / next two contracts)
+def _spread_pairs(roll):
+    c = [r["contract"] for r in (roll or [])[:3] if r.get("contract")]
+    if len(c) < 2:
+        return []
+    return [(c[0], c[1])] + ([(c[0], c[2]), (c[1], c[2])] if len(c) > 2 else [])
+
+
+def spread_series(a, b):
+    """near − far in cents/bu on the dates both legs settled (Barchart convention: negative = carry)."""
+    B = dict(b)
+    return [[d, round((v - B[d]) * 100, 2)] for d, v in a if d in B]
+
+
+def spreads(D, N):
+    """Daily settle-basis calendar spreads for each grain: front–next, front–2nd, next–2nd, about six months.
+    Re-read at most every 3 hours, and at once after a roll changes the contracts."""
+    now = UDC.NOW.astimezone(TOR)
+    done, errs = [], {}
+    for k, g in D["grains"].items():
+        try:
+            pairs = _spread_pairs(g.get("roll"))
+            if not pairs:
+                continue
+            old = g.get("spreads") or {}
+            same = [[p["near"], p["far"]] for p in old.get("pairs", [])] == [list(p) for p in pairs]
+            if same and old.get("checked") and (now - datetime.fromisoformat(old["checked"])).total_seconds() < 3 * 3600:
+                continue
+            legs = {}
+            for c in {x for p in pairs for x in p}:
+                legs[c] = _yahoo_settles(c, "9mo")
+            out = []
+            for a_, b_ in pairs:
+                pts = spread_series(legs[a_], legs[b_])[-130:]
+                if len(pts) < 10:
+                    raise RuntimeError(f"{a_}-{b_}: only {len(pts)} common settles")
+                out.append({"near": a_, "far": b_, "pts": pts})
+            g["spreads"] = {"pairs": out, "asof": max(p["pts"][-1][0] for p in out), "checked": now.isoformat(),
+                            "src": "Yahoo daily settles per contract (CBOT, delayed); spread = near − far, ¢/bu"}
+            done.append(f"{k} {len(out)} pairs to {g['spreads']['asof']}")
+        except Exception as e:
+            errs[k] = str(e)[:200]
+            print(f"  spreads {k}: {e}")
+    if errs and not done:
+        raise RuntimeError("; ".join(errs.values()))
+    if done:
+        print("  spreads:", done)
+    return bool(done)
 
 
 # ------------------------------------------------------------------ options flow & expiration intelligence (daily tier)
