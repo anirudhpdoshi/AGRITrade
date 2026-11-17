@@ -1,0 +1,140 @@
+/* breakouts-ui.js — the Breakouts menu: a live, timestamped stream of price events for the watchlist, the North American
+   indexes, the currency market and the S&P 100 (owner, Nov 17 2026).
+   Data: breakouts.json on the `breakouts` branch, written every 5 min on weekdays by scripts/breakouts.py from Yahoo
+   prices delayed ~15 min. Polled every 30 s with an ETag (an unchanged file costs nothing against GitHub's limit).
+   Nothing is computed here except filters, counts and the share of names above each moving average. */
+(function (root) {
+  var doc = root.document, P = doc.getElementById("panel-breakouts"); if (!P) return;
+  var REPO = "anirudhpdoshi/AGRITrade", API = "https://api.github.com/repos/" + REPO + "/contents/breakouts.json?ref=breakouts",
+    RAW = "https://raw.githubusercontent.com/" + REPO + "/breakouts/breakouts.json";
+  var B = null, etag = "", lastTry = 0, lastOk = 0, err = null, seen = {}, fresh = {};
+  var V = { cls: "all", kind: "all", q: "", paused: false, snapN: 0 };
+  try { var sv = JSON.parse(localStorage.getItem("desk.brk") || "{}"); if (sv.cls) V.cls = sv.cls; if (sv.kind) V.kind = sv.kind; } catch (e) {}
+  function save() { try { localStorage.setItem("desk.brk", JSON.stringify({ cls: V.cls, kind: V.kind })); } catch (e) {} }
+  var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+  var ET = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit", hour12: false }),
+    ETS = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit", second: "2-digit" });
+  var CLS = [["all", "All"], ["sp100", "S&P 100"], ["watch", "Watchlist"], ["index", "Indexes"], ["fx", "Currencies"]];
+  var KIND = [["all", "All events"], ["hl", "Day highs / lows"], ["w52", "52-week"], ["ma", "MA crossings"], ["close", "Closing breaks & MA crosses"]];
+  var KMAP = { day_high: "hl", day_low: "hl", w52_high: "w52", w52_low: "w52", ma_px: "ma", ma_close: "close", ma_cross: "close" };
+  var TAG = { day_high: "DAY HIGH", day_low: "DAY LOW", w52_high: "52W HIGH", w52_low: "52W LOW", ma_px: "MA CROSS", ma_close: "CLOSE vs MA", ma_cross: "MA × MA" };
+  var CNAME = { sp100: "S&P 100", watch: "Watchlist", index: "Index", fx: "FX" };
+  function dec(x) { var a = Math.abs(x); return a >= 1000 ? 2 : a >= 10 ? 2 : 4; }
+  function num(x) { return x == null ? "—" : (+x).toLocaleString("en-US", { minimumFractionDigits: dec(x), maximumFractionDigits: dec(x) }); }
+  function sg(x) { return x == null ? "—" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(2) + "%"; }
+  function poll(force) {
+    if (!force && Date.now() - lastTry < 30000) return; lastTry = Date.now();
+    var h = { Accept: "application/vnd.github.raw+json" }; if (etag) h["If-None-Match"] = etag;
+    fetch(API, { headers: h, cache: "no-store" }).then(function (r) {
+      if (r.status === 304) return null; if (!r.ok) throw r.status; etag = r.headers.get("ETag") || ""; return r.json();
+    }).catch(function () { return fetch(RAW + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { if (!r.ok) throw r.status; return r.json(); }); })
+      .then(function (j) { err = null; lastOk = Date.now(); if (j) take(j); else if (on()) paintHead(); })
+      .catch(function (e) { err = String(e); if (on()) paintHead(); });
+  }
+  function take(j) {
+    var first = !B; B = j;
+    (B.events || []).forEach(function (e) { if (!seen[e.id]) { seen[e.id] = 1; if (!first) fresh[e.id] = Date.now(); } });
+    badge(); if (on()) paint();
+  }
+  function on() { return P.classList.contains("active"); }
+  function badge() {
+    var b = doc.getElementById("tabbtn-breakouts"), n = B ? (B.events || []).length : 0;
+    if (b) b.setAttribute("data-brk-n", n);
+    [].forEach.call(doc.querySelectorAll('[data-gnav="breakouts"]'), function (g) { var s = g.querySelector(".brk-n"); if (!s) { s = doc.createElement("span"); s.className = "brk-n"; g.appendChild(s); } s.textContent = n ? n : ""; });
+  }
+  function nextRun() { /* the engine runs at :02, :07, … every 5 min, 8:00–17:55 ET on weekdays */
+    var t = new Date(), m = t.getUTCMinutes(), k = ((m - 2) % 5 + 5) % 5, d = new Date(t.getTime() + (5 - k) * 60000); d.setUTCSeconds(0); return d; }
+  function events() {
+    var q = V.q.toLowerCase();
+    return (B && B.events || []).filter(function (e) {
+      return (V.cls === "all" || e.c === V.cls) && (V.kind === "all" || KMAP[e.k] === V.kind) && (!q || (e.s + " " + e.n + " " + e.txt).toLowerCase().indexOf(q) >= 0);
+    });
+  }
+  function head() {
+    var up = B ? Date.parse(B.updated_at) : 0, age = up ? Math.round((Date.now() - up) / 60000) : null, nx = nextRun(), s = Math.max(0, Math.round((nx - Date.now()) / 1000));
+    var wk = new Date().getUTCDay() % 6 === 0;
+    return '<div class="brk-hd"><span class="brk-t">Breakouts</span><span class="brk-chip dl">DELAYED ~15 MIN</span>' +
+      (B ? '<span class="brk-k">last run <b>' + ETS.format(new Date(up)) + " ET</b>" + (age != null ? " · " + age + " min ago" : "") + "</span>" : '<span class="brk-k">loading…</span>') +
+      (wk ? '<span class="brk-k">weekend — engine resumes Monday 8:00 ET</span>' : '<span class="brk-k">next check <b data-brkcd>' + Math.floor(s / 60) + ":" + ("0" + s % 60).slice(-2) + "</b></span>") +
+      (err ? '<span class="brk-chip er">fetch failed — retrying</span>' : "") +
+      '<span class="brk-sp"></span><span class="brk-k">' + (B ? B.items.length + " names · " + (B.events || []).length + " events today" : "") + "</span></div>";
+  }
+  function paintHead() { var h = P.querySelector(".brk-hd"); if (h) h.outerHTML = head(); }
+  function seg(attr, list, cur) { return list.map(function (x) { return '<button type="button" class="st-b" data-' + attr + '="' + x[0] + '" aria-selected="' + (cur === x[0]) + '">' + x[1] + "</button>"; }).join(""); }
+  function row(e) {
+    var f = fresh[e.id] && Date.now() - fresh[e.id] < 60000;
+    return '<li class="brk-e ' + (e.dir > 0 ? "u" : e.dir < 0 ? "d" : "") + (f ? " new" : "") + '"><time>' + ET.format(new Date(e.t)) + "</time>" +
+      '<span class="brk-tag ' + (e.dir > 0 ? "u" : "d") + '">' + (TAG[e.k] || e.k) + "</span>" +
+      '<span class="brk-nm"><b>' + esc(e.c === "sp100" || e.c === "watch" ? e.s : e.n) + "</b><small>" + esc(CNAME[e.c] || "") + "</small></span>" +
+      '<span class="brk-tx">' + esc(e.txt) + "</span>" +
+      '<span class="brk-px">' + num(e.px) + ' <i class="' + (e.pct > 0 ? "up" : e.pct < 0 ? "dn" : "") + '">' + sg(e.pct) + "</i></span></li>";
+  }
+  function breadth() {
+    if (!B) return "";
+    var S = B.items.filter(function (i) { return i.c === "sp100" || i.c === "watch"; });
+    var pct = function (n) { var h = S.filter(function (i) { return i.above && i.above[n] != null; }); return h.length ? Math.round(h.filter(function (i) { return i.above[n]; }).length / h.length * 100) : null; };
+    var E = B.events || [], cnt = function (k) { return E.filter(function (e) { return e.k === k; }).length; };
+    var bar = function (n) { var p = pct(n); return '<div class="brk-br"><span>Above ' + n + "-day</span><i><em style=\"width:" + (p || 0) + '%"></em></i><b>' + (p == null ? "—" : p + "%") + "</b></div>"; };
+    var NM = {}; E.forEach(function (e) { NM[e.s] = e.c === "fx" || e.c === "index" ? e.n : e.s; });
+    var lead = function (k) { var m = {}; E.filter(function (e) { return e.k === k; }).forEach(function (e) { m[e.s] = (m[e.s] || 0) + 1; }); return Object.keys(m).sort(function (a, b) { return m[b] - m[a]; }).slice(0, 6); };
+    var chips = function (a) { return a.length ? a.map(function (s) { return '<button type="button" class="brk-chipb" data-brkq="' + esc(NM[s] || s) + '">' + esc(NM[s] || s) + "</button>"; }).join("") : '<span class="brk-k">none yet</span>'; };
+    return '<aside class="brk-side"><div class="brk-box"><h3>Today so far</h3>' +
+      '<div class="brk-kv"><span>New day highs</span><b class="up">' + cnt("day_high") + '</b></div><div class="brk-kv"><span>New day lows</span><b class="dn">' + cnt("day_low") + "</b></div>" +
+      '<div class="brk-kv"><span>52-week highs / lows</span><b>' + cnt("w52_high") + " / " + cnt("w52_low") + '</b></div><div class="brk-kv"><span>MA crossings</span><b>' + cnt("ma_px") + "</b></div>" +
+      '<div class="brk-kv"><span>Closing breaks · MA crosses</span><b>' + (cnt("ma_close") + cnt("ma_cross")) + "</b></div></div>" +
+      '<div class="brk-box"><h3>Stocks above their moving averages <small>S&amp;P 100 + watchlist, now</small></h3>' + bar(20) + bar(50) + bar(100) + bar(200) + "</div>" +
+      '<div class="brk-box"><h3>Most new highs</h3>' + chips(lead("day_high")) + '<h3 style="margin-top:10px">Most new lows</h3>' + chips(lead("day_low")) + "</div></aside>";
+  }
+  function paint() {
+    if (!B) { P.innerHTML = head() + '<p class="brk-none">Loading the breakout stream…</p>'; return; }
+    var L = V.paused ? (V.snap || []) : events(), missed = V.paused ? Math.max(0, events().length - V.snapN) : 0;
+    P.innerHTML = head() +
+      '<div class="st-nav brk-nav" role="tablist" aria-label="Universe">' + seg("brkc", CLS, V.cls) + "</div>" +
+      '<div class="brk-bar"><span class="brk-seg">' + seg("brkk", KIND, V.kind) + '</span><input type="search" placeholder="Filter: symbol, name or event…" value="' + esc(V.q) + '" data-brkqi>' +
+      '<button type="button" class="brk-pause" data-brkp>' + (V.paused ? "Paused · resume (" + missed + " new)" : "Pause") + "</button></div>" +
+      '<div class="brk-lay"><section class="brk-main"><ol class="brk-feed">' + (L.length ? L.slice(0, 300).map(row).join("") : '<li class="brk-none">No events match yet today. The stream fills as the session trades.</li>') + "</ol>" +
+      '<p class="brk-note">Every line is stamped with the 5-minute bar that produced it (ET). Day high/low: the first 15 minutes only set the range, then at most one event per name per 30 minutes (the price shown is the latest). MA crossings during the day are provisional; “Closed above/below” and MA × MA crosses use the completed daily close. ' +
+      "Prices: " + esc(B.provider) + " · universe: watchlist, North American indexes, currencies and " + esc(B.universe_src) + (B.counts && B.counts.missing && B.counts.missing.length ? " · not returned this run: " + esc(B.counts.missing.join(", ")) : "") + ".</p></section>" + breadth() + "</div>";
+  }
+  doc.addEventListener("click", function (ev) {
+    var t = ev.target.closest && ev.target.closest("[data-brkc],[data-brkk],[data-brkp],[data-brkq]"); if (!t || !P.contains(t)) return;
+    if (t.hasAttribute("data-brkc")) { V.cls = t.getAttribute("data-brkc"); save(); }
+    else if (t.hasAttribute("data-brkk")) { V.kind = t.getAttribute("data-brkk"); save(); }
+    else if (t.hasAttribute("data-brkq")) { V.q = t.getAttribute("data-brkq"); }
+    else if (t.hasAttribute("data-brkp")) { V.paused = !V.paused; if (V.paused) { V.snap = events(); V.snapN = V.snap.length; } }
+    if (V.paused && !t.hasAttribute("data-brkp")) { V.snap = events(); V.snapN = V.snap.length; }
+    paint();
+  });
+  doc.addEventListener("input", function (ev) { if (ev.target.hasAttribute && ev.target.hasAttribute("data-brkqi")) { V.q = ev.target.value; var pos = ev.target.selectionStart; paint(); var i = P.querySelector("[data-brkqi]"); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch (e) {} } } });
+  setInterval(function () { if (root.DESK_LOCKED) return; poll(); var c = P.querySelector("[data-brkcd]"); if (c && on()) { var s = Math.max(0, Math.round((nextRun() - Date.now()) / 1000)); c.textContent = Math.floor(s / 60) + ":" + ("0" + s % 60).slice(-2); } }, 1000);
+  setInterval(function () { if (on() && B && Object.keys(fresh).length) { var n = Date.now(), any = false; Object.keys(fresh).forEach(function (k) { if (n - fresh[k] > 60000) { delete fresh[k]; any = true; } }); if (any && !V.paused) paint(); } }, 15000);
+  if (root.MutationObserver) new MutationObserver(function () { if (on() && !P.querySelector(".brk-hd")) paint(); }).observe(P, { attributes: true, attributeFilter: ["class"] });
+  poll(true);
+  var css = doc.createElement("style");
+  css.textContent = "#panel-breakouts{background:#000;font-family:'Libre Franklin',system-ui,sans-serif}" +
+    ".brk-hd{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;padding:12px 4px 10px;border-bottom:1px solid #1a1a1a}.brk-t{font:600 20px 'Libre Franklin',system-ui,sans-serif;color:#fff}.brk-sp{flex:1}" +
+    ".brk-chip{font:700 10px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.06em;border:1px solid;border-radius:3px;padding:1px 6px}.brk-chip.dl{color:#e8b93d}.brk-chip.er{color:#e0655f}" +
+    ".brk-k{font:12px 'JetBrains Mono','IBM Plex Mono',monospace;color:#8a8a8a}.brk-k b{color:#e8eef4;font-weight:500}" +
+    ".brk-nav{margin:6px 0 4px}.brk-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:6px 0 12px}.brk-seg{display:flex;flex-wrap:wrap;gap:0 2px}" +
+    ".brk-bar input{flex:1 1 220px;min-width:0;background:#000;border:1px solid #2a2a2a;border-radius:6px;color:#e8eef4;padding:6px 10px;font:13px 'Libre Franklin',system-ui,sans-serif}" +
+    ".brk-pause{all:unset;cursor:pointer;border:1px solid #2a2a2a;border-radius:6px;padding:5px 12px;font:12px 'JetBrains Mono','IBM Plex Mono',monospace;color:#c9d4e2}.brk-pause:hover{border-color:#555}" +
+    ".brk-lay{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}.brk-main{min-width:0}" +
+    ".brk-feed{list-style:none;margin:0;padding:0;border:1px solid #1a1a1a;border-radius:8px}.brk-e{display:grid;grid-template-columns:52px 92px 150px minmax(0,1fr) 150px;gap:10px;align-items:center;padding:7px 12px;border-bottom:1px solid #111;font-size:13px}" +
+    ".brk-e:last-child{border-bottom:0}.brk-e time{font:12px 'JetBrains Mono','IBM Plex Mono',monospace;color:#8a8a8a}.brk-e.u{box-shadow:inset 3px 0 0 #3fb97f}.brk-e.d{box-shadow:inset 3px 0 0 #e0655f}" +
+    ".brk-e.new{animation:brkNew 2.5s ease-out}@keyframes brkNew{0%{background:rgba(217,180,106,.25)}100%{background:transparent}}" +
+    ".brk-tag{font:700 9.5px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.04em;border-radius:3px;padding:2px 6px;text-align:center;color:#000}.brk-tag.u{background:#3fb97f}.brk-tag.d{background:#e0655f}" +
+    ".brk-nm{display:flex;flex-direction:column;min-width:0}.brk-nm b{color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brk-nm small{color:#666;font-size:10.5px}" +
+    ".brk-tx{color:#c9d4e2;min-width:0}.brk-px{font:12.5px 'JetBrains Mono','IBM Plex Mono',monospace;color:#e8eef4;text-align:right;white-space:nowrap}.brk-px i{font-style:normal;margin-left:6px}.brk-px .up,.up{color:#3fb97f}.brk-px .dn,.dn{color:#e0655f}" +
+    ".brk-none{color:#8a8a8a;padding:14px;font-size:13px;list-style:none}.brk-note{font-size:11px;color:#666;line-height:1.5;margin:8px 2px}" +
+    ".brk-side{display:flex;flex-direction:column;gap:12px}.brk-box{border:1px solid #1a1a1a;border-radius:8px;padding:10px 12px}.brk-box h3{margin:0 0 8px;font:600 12px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;color:#d9b46a}.brk-box h3 small{text-transform:none;letter-spacing:0;color:#666;font-weight:400}" +
+    ".brk-kv{display:flex;justify-content:space-between;font-size:12.5px;color:#8a8a8a;padding:2px 0}.brk-kv b{color:#e8eef4;font:500 13px 'JetBrains Mono','IBM Plex Mono',monospace}" +
+    ".brk-br{display:grid;grid-template-columns:96px minmax(0,1fr) 40px;gap:8px;align-items:center;font-size:12px;color:#8a8a8a;margin:4px 0}.brk-br i{height:8px;background:#151515;border-radius:4px;overflow:hidden}.brk-br em{display:block;height:100%;background:#38b6c9}.brk-br b{text-align:right;color:#e8eef4;font:500 12px 'JetBrains Mono','IBM Plex Mono',monospace}" +
+    ".brk-chipb{all:unset;cursor:pointer;display:inline-block;margin:0 6px 6px 0;border:1px solid #2a2a2a;border-radius:4px;padding:2px 8px;font:12px 'JetBrains Mono','IBM Plex Mono',monospace;color:#e8eef4}.brk-chipb:hover{border-color:#d9b46a}" +
+    ".brk-n{margin-left:6px;font:700 10px 'JetBrains Mono','IBM Plex Mono',monospace;color:#000;background:#d9b46a;border-radius:8px;padding:0 5px}.brk-n:empty{display:none}" +
+    "@media (max-width:980px){.brk-lay{grid-template-columns:1fr}}" +
+    "@media (max-width:640px){.brk-e{grid-template-columns:44px minmax(0,1fr) auto;grid-template-areas:'t n p' 't g g' 't x x'}.brk-e time{grid-area:t}.brk-tag{grid-area:g;justify-self:start}.brk-nm{grid-area:n}.brk-tx{grid-area:x}.brk-px{grid-area:p}.brk-bar .brk-seg{overflow-x:auto;flex-wrap:nowrap}}";
+  doc.head.appendChild(css);
+  root.BREAKOUTS = { poll: poll, data: function () { return B; } };
+})(window);
+/* "Open Breakouts →" buttons elsewhere on the desk */
+document.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-gnav-go]"); if (!b) return; var g = document.querySelector('[data-gnav="' + b.getAttribute("data-gnav-go") + '"]'); if (g) g.click(); });

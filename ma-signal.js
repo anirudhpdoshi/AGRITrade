@@ -55,16 +55,29 @@
     return '<span class="ma-row" title="Closing basis · ' + esc(label || "") + " close " + fmt(b.close, d) + " on " + esc(b.asof) + '"><span class="ma-chips">' + chips + '</span><span class="ma-v ' + r.cls + '">' + esc(r.v) + "</span>" + (badges ? '<span class="ma-bs">' + badges + "</span>" : "") + "</span>";
   }
   /* desk series: grains (settles) and USD/CAD (closes) */
+  /* closing basis only: grains end at the last verified settle (the series also carries today's unfinished bar);
+     USD/CAD drops today's row until the 5 p.m. ET FX close */
+  var TZD = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }),
+    TZH = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", hour12: false });
   function deskBlock(k) {
     var D = root.DATA; if (!D || !D.grain_long) return null;
-    if (k === "fx") { var u = (D.grain_long.other || {}).usdcad || []; return calc(u.map(function (r) { return r[0]; }), u.map(function (r) { return +r[1]; })); }
-    var s = (D.grain_long.series || {})[k] || [], dates = s.map(function (r) { return r[0]; }), c = s.map(function (r) { return +r[4]; });
-    var R0 = D.grains && D.grains[k] && (D.grains[k].roll || [])[0];
-    if (R0 && R0.settle != null && R0.settle_date && dates.length && R0.settle_date > dates[dates.length - 1]) { dates.push(R0.settle_date); c.push(+R0.settle); }
-    return calc(dates, c);
+    if (k === "fx") {
+      var u = ((D.grain_long.other || {}).usdcad || []).slice(), today = TZD.format(new Date());
+      while (u.length && (u[u.length - 1][0] > today || (u[u.length - 1][0] === today && +TZH.format(new Date()) < 17))) u.pop();
+      return calc(u.map(function (r) { return r[0]; }), u.map(function (r) { return +r[1]; }));
+    }
+    var s = (D.grain_long.series || {})[k] || [], R0 = D.grains && D.grains[k] && (D.grains[k].roll || [])[0], cut = R0 && R0.settle_date;
+    if (cut) s = s.filter(function (r) { return r[0] <= cut; });
+    var dates = s.map(function (r) { return r[0]; }), c = s.map(function (r) { return +r[4]; });
+    if (R0 && R0.settle != null && cut) { if (dates[dates.length - 1] === cut) c[c.length - 1] = +R0.settle; else if (!dates.length || cut > dates[dates.length - 1]) { dates.push(cut); c.push(+R0.settle); } }
+    var b = calc(dates, c);
+    /* withdraw any announcement made from an unfinished session before this fix */
+    if (b && root.EVENTS && EVENTS.unlog) EVENTS.unlog(function (m) { var q = String(m.id || "").split("|"); return q[0] === "ma" && q[1] === k && q[2] > b.asof; });
+    return b;
   }
   var NAMES = { corn: "Corn", soybeans: "Soybeans", wheat: "Wheat", fx: "USD/CAD" };
-  function tileLine(k) { var b = deskBlock(k); announce(k, NAMES[k], b, k === "fx" ? 4 : 4, k === "fx" ? "fx:overview" : k + ":overview"); return line(b, 4, k === "fx" ? "USD/CAD" : "settle"); }
+  function fxPurge(b) { if (b && root.EVENTS && EVENTS.unlog) EVENTS.unlog(function (m) { var q = String(m.id || "").split("|"); return q[0] === "ma" && q[1] === "fx" && q[2] > b.asof; }); }
+  function tileLine(k) { var b = deskBlock(k); if (k === "fx") fxPurge(b); announce(k, NAMES[k], b, k === "fx" ? 4 : 4, k === "fx" ? "fx:overview" : k + ":overview"); return line(b, 4, k === "fx" ? "USD/CAD" : "settle"); }
   /* World markets: the server's `ma` block for each instrument */
   function worldLine(i) { if (!i || !i.ma) return ""; var d = i.kind === "price" ? +i.dec : 3; announce("w-" + i.id, i.name, i.ma, d, "world"); return line(i.ma, d, i.name); }
   /* Feed: once per market, per close, per event */

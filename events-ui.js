@@ -697,7 +697,8 @@
   (function () { var ra = window.renderAll; if (ra && !ra._ev) { window.renderAll = function () { var r = ra.apply(this, arguments); try { decorate(); } catch (e) {} return r; }; window.renderAll._ev = 1; } })();
   document.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest(".tab-btn, [data-sub], [data-sec-v]")) setTimeout(function () { try { decorate(); } catch (e) {} }, 60); });
   window.addEventListener("desk:unlock", function () { base = null; setTimeout(function () { diff(); render(); paintBadge(); }, 800); });
-  window.EVENTS = { today: function () { return todayEvents(Date.now()); }, on: todayEvents, landed: landed, decorate: decorate, render: render, log: log, _feed: function () { return feed; }, _diff: diff, _snap: snap, _base: function () { return base; } };
+  function unlog(fn) { var n = feed.length; feed = feed.filter(function (m) { return !fn(m); }); if (feed.length !== n) { store.set(FEED_KEY, feed); paintBadge(); if (active()) paintFeed(); } }
+  window.EVENTS = { today: function () { return todayEvents(Date.now()); }, on: todayEvents, landed: landed, decorate: decorate, render: render, log: log, unlog: unlog, _feed: function () { return feed; }, _diff: diff, _snap: snap, _base: function () { return base; } };
   if (ready()) { lastDay = dayIso(Date.now()); render(); paintBadge(); diff(); hookToast(); }
   var evcss = document.createElement("style");
   evcss.textContent = ".evdays{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border-bottom:1px solid var(--line);margin:-4px -4px 10px}.evday{background:none;border:0;border-bottom:2px solid transparent;color:var(--text);padding:8px 4px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;font:600 13.5px 'IBM Plex Sans',sans-serif}.evday[aria-pressed=true]{background:rgba(110,168,255,.08);border-bottom-color:#6ea8ff}" +

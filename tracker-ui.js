@@ -309,6 +309,10 @@
   }
   function paintDock() {
     var el = document.getElementById("usmF"); if (!el) return;
+    /* Nov 17: the stream has its own Breakouts menu (breakouts-ui.js); US Markets no longer docks it */
+    el.innerHTML = ""; el.style.display = "none";
+    if (cat === "c5") document.getElementById("usmView").innerHTML = '<section class="usm-card"><div class="usm-rowh"><h3>Breakout stream moved</h3></div><p class="usm-none">Day highs and lows, 52-week touches and moving-average breaks for the S&amp;P 100, your watchlist, the North American indexes and currencies now stream on their own menu.</p><p><button class="usm-mini" data-gnav-go="breakouts">Open Breakouts →</button></p></section>' + stockHighs();
+    return;
     var now = streamRows(), R = ST.paused && ST.snap ? ST.snap : now, missed = ST.paused && ST.snap ? Math.max(0, now.length - ST.snap.length) : 0, onC5 = cat === "c5";
     el.innerHTML = '<div class="h"><b>Breakout stream</b><span class="usm-b dl">Delayed stream (~15 min)</span><span class="usm-cnt">' + now.length + " today</span>" +
       (ST.paused ? '<button class="usm-mini usm-cu" data-usmresume>Paused · catch up (' + missed + " missed)</button>" : '<button class="usm-mini" data-usmpause>Pause</button>') +

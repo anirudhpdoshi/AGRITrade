@@ -144,6 +144,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
     <button class="tab-btn" role="tab" id="tabbtn-earnings" aria-selected="false" aria-controls="panel-earnings" data-tab="earnings">US Earnings<span class="sym">Live</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-treasury" aria-selected="false" aria-controls="panel-treasury" data-tab="treasury">Treasury<span class="sym">Debt wall</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-aidebt" aria-selected="false" aria-controls="panel-aidebt" data-tab="aidebt">AI Debt<span class="sym">AI raises</span></button>
+    <button class="tab-btn" role="tab" id="tabbtn-breakouts" aria-selected="false" aria-controls="panel-breakouts" data-tab="breakouts">Breakouts<span class="sym">Live</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-health" aria-selected="false" aria-controls="panel-health" data-tab="health">System<span class="sym">Health</span></button>
   </nav>
 
@@ -157,6 +158,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
   <section class="tab-panel" id="panel-macro" role="tabpanel" aria-labelledby="tabbtn-macro"></section>
   <section class="tab-panel" id="panel-world" role="tabpanel" aria-labelledby="tabbtn-world"></section>
   <section class="tab-panel" id="panel-health" role="tabpanel" aria-labelledby="tabbtn-health"></section>
+  <section class="tab-panel" id="panel-breakouts" role="tabpanel" aria-labelledby="tabbtn-breakouts"></section>
   <section class="tab-panel" id="panel-events" role="tabpanel" aria-labelledby="tabbtn-events"></section>
   <section class="tab-panel" id="panel-intel" role="tabpanel" aria-labelledby="tabbtn-intel"></section>
   <section class="tab-panel" id="panel-briefing" role="tabpanel" aria-labelledby="tabbtn-briefing"></section>
@@ -324,15 +326,16 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="fwd.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="world-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="gg-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
-<script>(function(){var f=document.createElement("script");f.src="events-ui.js?v=20261114d"+Date.now();document.body.appendChild(f);})();</script>
+<script>(function(){var f=document.createElement("script");f.src="events-ui.js?v=20261117a"+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="intel-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="briefing-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="glossary.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script src="grain-prices.js?v=20261113d"></script>
-<script src="ma-signal.js?v=20261116b"></script>
+<script src="ma-signal.js?v=20261117a"></script>
 <script src="grains-ui.js?v=20261114a"></script>
 <script src="volcone.js?v=20261114a"></script>
 <script src="sectabs.js?v=20261113e"></script>
+<script src="breakouts-ui.js?v=20261117c"></script>
 <script src="history-nav.js?v=20261117a"></script>
 <script src="rows-ui.js?v=20261113a"></script>
 <script src="obs-ui.js?v=20261110c"></script>
@@ -346,7 +349,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script src="narrative-ui.js?v=20261110a"></script>
 <script src="macro-table.js?v=20261110a"></script>
 <script src="macro-nav.js?v=20261116g"></script>
-<script src="nav-ui.js?v=20261113b"></script>
+<script src="nav-ui.js?v=20261117a"></script>
 <script src="usm-cal.js?v=20261110a"></script>
 <script src="usm-nav.js?v=20261111a"></script>
 <script src="earn-lock.js?v=20261110a"></script>

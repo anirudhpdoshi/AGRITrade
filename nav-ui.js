@@ -16,6 +16,7 @@
     ["events", "Events", ["events"], "Today's and upcoming releases"],
     ["intel", "Intelligence", ["intel", "policy"], "Global intel, central banks and policy"],
     ["usm", "US Markets", ["earnings"], "Market overview, stock search, company analysis, earnings calendar"],
+    ["breakouts", "Breakouts", ["breakouts"], "Live stream: day highs/lows, 52-week, moving-average breaks — S&P 100, watchlist, indexes, FX"],
     ["health", "Health", ["health"], "Data, API and scheduler health"]
   ];
   var LAST = {}; try { LAST = JSON.parse(localStorage.getItem("desk.gnav") || "{}") || {}; } catch (e) {}
