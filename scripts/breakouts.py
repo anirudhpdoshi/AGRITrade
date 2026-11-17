@@ -20,6 +20,9 @@ NY = ZoneInfo("America/New_York")
 WT = "/tmp/breakouts-wt"
 PREV = "https://raw.githubusercontent.com/anirudhpdoshi/AGRITrade/breakouts/breakouts.json"
 MAS = (20, 50, 100, 200)
+EMAS = (9, 21, 50, 200)          # exponential averages shown for every name
+EMA_LIVE = (21, 50, 200)         # crossings reported intraday (the 9-day flips too often to be news)
+EPAIRS = ((9, 21), (21, 50), (50, 200))
 PAIRS = ((20, 50), (50, 200), (100, 200))
 
 INDEXES = [("^GSPC", "S&P 500"), ("^NDX", "Nasdaq 100"), ("^IXIC", "Nasdaq Composite"), ("^DJI", "Dow Jones"), ("^RUT", "Russell 2000"),
@@ -58,12 +61,27 @@ def sma(c, n, end):
     return None if end + 1 < n else sum(c[end - n + 1:end + 1]) / n
 
 
+def ema_series(c, n):
+    """standard EMA (alpha 2/(n+1)) seeded with the simple average of the first n closes; None until then"""
+    if len(c) < n:
+        return [None] * len(c)
+    k, out = 2 / (n + 1), [None] * (n - 1)
+    e = sum(c[:n]) / n
+    out.append(e)
+    for x in c[n:]:
+        e = x * k + e * (1 - k)
+        out.append(e)
+    return out
+
+
 def ma_state(closes):
-    """MAs on completed daily closes, now and one close earlier"""
+    """SMAs and EMAs on completed daily closes, now and one close earlier"""
     e = len(closes) - 1
     if e < 21:
         return None
-    return {"now": {n: sma(closes, n, e) for n in MAS}, "prev": {n: sma(closes, n, e - 1) for n in MAS}, "close": closes[e], "prev_close": closes[e - 1]}
+    es = {n: ema_series(closes, n) for n in EMAS}
+    return {"now": {n: sma(closes, n, e) for n in MAS}, "prev": {n: sma(closes, n, e - 1) for n in MAS},
+            "enow": {n: es[n][e] for n in EMAS}, "eprev": {n: es[n][e - 1] for n in EMAS}, "close": closes[e], "prev_close": closes[e - 1]}
 
 
 def close_events(ms):
@@ -89,6 +107,23 @@ def close_events(ms):
             out.append(("ma_cross", f"{a}-day MA crossed above the {b}-day{tag}", 1))
         elif a0 >= b0 and a1 < b1:
             out.append(("ma_cross", f"{a}-day MA crossed below the {b}-day{' — death cross' if (a, b) == (50, 200) else ''}", -1))
+    en, ep = ms.get("enow") or {}, ms.get("eprev") or {}
+    for n in EMA_LIVE:
+        m1, m0 = en.get(n), ep.get(n)
+        if m1 is None or m0 is None:
+            continue
+        if c0 <= m0 and c1 > m1:
+            out.append(("ema_close", f"Closed above its {n}-day EMA ({m1:.4g})", 1))
+        elif c0 >= m0 and c1 < m1:
+            out.append(("ema_close", f"Closed below its {n}-day EMA ({m1:.4g})", -1))
+    for a, b in EPAIRS:
+        a1, b1, a0, b0 = en.get(a), en.get(b), ep.get(a), ep.get(b)
+        if None in (a1, b1, a0, b0):
+            continue
+        if a0 <= b0 and a1 > b1:
+            out.append(("ema_cross", f"{a}-day EMA crossed above the {b}-day EMA", 1))
+        elif a0 >= b0 and a1 < b1:
+            out.append(("ema_cross", f"{a}-day EMA crossed below the {b}-day EMA", -1))
     return out
 
 
@@ -96,7 +131,7 @@ def _plus(ts, minutes):
     return (datetime.fromisoformat(ts) + timedelta(minutes=minutes)).isoformat()
 
 
-def intraday_events(bars, prior_close, mas, w52, st, open_ts):
+def intraday_events(bars, prior_close, mas, w52, st, open_ts, emas=None):
     """bars [(ts_utc_iso, high, low, close)] of today's session, oldest first; st = this symbol's saved state (mutated).
     Returns [(ts, kind, text, dir)]."""
     out = []
@@ -128,6 +163,15 @@ def intraday_events(bars, prior_close, mas, w52, st, open_ts):
             if s1 != s0:
                 out.append((ts, "ma_px", f"Crossed {'above' if s1 > 0 else 'below'} its {n}-day MA ({m:.4g}) — provisional until the close", s1))
             side[str(n)] = s1
+        for n in EMA_LIVE:
+            m = emas.get(n) if emas else None
+            if m is None or prior_close is None:
+                continue
+            s0 = side.get("e" + str(n), 1 if prior_close > m else -1)
+            s1 = 1 if c > m else -1 if c < m else s0
+            if s1 != s0:
+                out.append((ts, "ema_px", f"Crossed {'above' if s1 > 0 else 'below'} its {n}-day EMA ({m:.4g}) — provisional until the close", s1))
+            side["e" + str(n)] = s1
         st["last_ts"] = ts
     st["hi"], st["lo"] = hi, lo
     return out
@@ -210,7 +254,8 @@ def main():
         open_ts = None
         if bars and cls in ("index", "watch", "sp100"):
             o = datetime.fromisoformat(bars[0][0]); open_ts = (o + timedelta(minutes=15)).isoformat()
-        evs = intraday_events(bars, prior_close, mas_now, w52, st, open_ts)
+        ema_now = ms["enow"] if ms else {}
+        evs = intraday_events(bars, prior_close, mas_now, w52, st, open_ts, ema_now)
         if ms and not live_today and st.get("close_done") != done_d[-1] and done_d[-1] == today:
             st["close_done"] = done_d[-1]
             ct = datetime.combine(datetime.fromisoformat(today), datetime.min.time(), NY).replace(hour=16).astimezone(timezone.utc).isoformat()
@@ -229,7 +274,9 @@ def main():
         items.append({"s": s, "n": name, "c": cls, "last": round(last, 6), "pct": None if pct is None else round(pct, 2),
                       "hi": st.get("hi"), "lo": st.get("lo"), "ts": bars[-1][0] if bars else None,
                       "ma": {str(n): (None if mas_now.get(n) is None else round(mas_now[n], 6)) for n in MAS},
-                      "above": {str(n): (None if mas_now.get(n) is None else last > mas_now[n]) for n in MAS}})
+                      "above": {str(n): (None if mas_now.get(n) is None else last > mas_now[n]) for n in MAS},
+                      "ema": {str(n): (None if ema_now.get(n) is None else round(ema_now[n], 6)) for n in EMAS},
+                      "above_ema": {str(n): (None if ema_now.get(n) is None else last > ema_now[n]) for n in EMAS}})
     events.sort(key=lambda e: e["t"], reverse=True)
     body = {"updated_at": now.isoformat(timespec="seconds").replace("+00:00", "Z"), "session": today,
             "provider": "Yahoo Finance, delayed ~15 min (free)", "universe_src": sp_src,

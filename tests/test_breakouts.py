@@ -26,4 +26,11 @@ check(any("Closed above its 20-day" in t for _, t, _ in ce) and any("Closed abov
 c2 = [100.0 - i * 0.01 for i in range(250)] + [160.0]
 check(any("50-day MA crossed above the 200-day — golden cross" in t for _, t, _ in B.close_events(B.ma_state(c2))), "golden cross")
 check(B.ma_state([1.0] * 10) is None, "short history")
+e = B.ema_series([1.0, 2.0, 3.0, 4.0, 5.0], 3)
+check(e[:2] == [None, None] and e[2] == 2.0 and abs(e[3] - 3.0) < 1e-9 and abs(e[4] - 4.0) < 1e-9, "EMA seeded with SMA, alpha 2/(n+1)")
+st2 = {}
+ev2 = B.intraday_events([(T(50), 101, 99, 100.5), (T(55), 102, 100, 98)], 99.0, {}, None, st2, None, {21: 100.0, 50: None, 200: 90.0})
+check([x[2][:30] for x in ev2 if x[1] == "ema_px"] == ["Crossed above its 21-day EMA (", "Crossed below its 21-day EMA ("], "21-day EMA crossed up then down")
+up = [100.0 - i * 0.05 for i in range(220)] + [80.0, 130.0]
+check(any(k == "ema_cross" and "9-day EMA crossed above the 21-day" in t for k, t, _ in B.close_events(B.ma_state(up))), "9/21 EMA bullish cross at the close")
 print(f"{ok}/{ok} passed")
