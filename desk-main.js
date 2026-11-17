@@ -956,7 +956,7 @@ function pflowRead(key, S){
   return {lines:out, levels:lv, bias:B, s5:s5};
 }
 function flowSVG(S, key){
-  var w=S.w, W=760, H=300, PL=54, PR=96, PT=16, mid=170, PB=26, pw=W-PL-PR, n=w.length, bw=pw/n;
+  var w=S.w, sm=window.innerWidth<700, W=sm?460:760, H=sm?330:316, PL=sm?44:54, PR=sm?78:96, PT=16, mid=sm?178:170, PB=42, pw=W-PL-PR, n=w.length, bw=pw/n;
   var ps=w.map(function(x){ return x.P; }).concat([w[0].P-w[0].dP/100]); if(S.ns) ps.push(S.ns.px); if(S.nl) ps.push(S.nl.px);
   var lo=Math.min.apply(null,ps), hi=Math.max.apply(null,ps), pad=(hi-lo)*0.12||0.02; lo-=pad; hi+=pad;
   function Y(p){ return PT+(mid-PT-14)*(1-(p-lo)/(hi-lo)); }
@@ -973,7 +973,12 @@ function flowSVG(S, key){
   w.forEach(function(x,i){ var cx=PL+i*bw+bw/2, q=FLOWQ[x.q], h=Math.abs(x.dOI)/mx*bh, bw2=Math.max(3,bw*0.55);
     s+='<rect x="'+(cx-bw2/2).toFixed(1)+'" y="'+(x.dOI>=0?z-h:z).toFixed(1)+'" width="'+bw2.toFixed(1)+'" height="'+Math.max(1,h).toFixed(1)+'" fill="'+q.c+'"'+(x.dw?' opacity=".55"':'')+'/>';
     s+='<circle cx="'+cx.toFixed(1)+'" cy="'+Y(x.P).toFixed(1)+'" r="4.2" fill="'+q.c+'" stroke="#0b1220" stroke-width="1.2"/>';
-    if(i%Math.ceil(n/10)===0||i===n-1) s+='<text x="'+cx.toFixed(1)+'" y="'+(H-8)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">'+x.lab+'</text>';
+    /* session date labels (owner, Nov 17 2026): weekday over the date, every session when they fit, the latest highlighted, preliminary OI marked */
+    var stp=Math.ceil(n/(sm?5:10)), last=i===n-1;
+    if((n-1-i)%stp===0){ var yr=new Date().getFullYear(), mo=+x.d.slice(0,2); if(mo>new Date().getMonth()+1) yr--; var dt=new Date(Date.UTC(yr,mo-1,+x.d.slice(3,5),12)), wd=dt.toLocaleDateString('en-US',{timeZone:'UTC',weekday:'short'});
+      s+='<line x1="'+cx.toFixed(1)+'" x2="'+cx.toFixed(1)+'" y1="'+(H-PB+2)+'" y2="'+(H-PB+6)+'" stroke="'+(last?'#e8a33d':'#5b6b82')+'"/>'+
+        '<text x="'+cx.toFixed(1)+'" y="'+(H-PB+18)+'" fill="'+(last?'#e8a33d':'#c9d3e0')+'" font-size="'+(sm?12:11.5)+'" font-weight="'+(last?700:500)+'" font-family="IBM Plex Mono, monospace" text-anchor="middle">'+x.lab+(x.prelim?'*':'')+'</text>'+
+        '<text x="'+cx.toFixed(1)+'" y="'+(H-PB+32)+'" fill="'+(last?'#e8a33d':'#8f9db3')+'" font-size="'+(sm?10.5:10)+'" font-family="IBM Plex Mono, monospace" text-anchor="middle">'+(last?'LATEST · ':'')+wd.toUpperCase()+'</text>'; }
     var tip=x.lab+(x.prelim?' (prelim)':'')+' · '+q.l+'|'+esc(S.ref)+' '+x.P.toFixed(4)+' ('+sgn(x.dP,1,'¢')+')|Open interest '+sgn(x.dOI,0)+' (front '+sgn(x.dF,0)+' · next '+sgn(x.dD,0)+')'+(x.vol!=null?'|Volume '+fmt(x.vol)+(x.rv?' ('+fmt(x.rv,1)+'× normal)':''):'')+(x.dw?'|delivery window — half weight':'');
     s+='<rect class="oi-hit" x="'+(PL+i*bw).toFixed(1)+'" y="'+PT+'" width="'+bw.toFixed(1)+'" height="'+(H-PB-PT)+'" fill="transparent" data-tip="'+tip+'"/>'; });
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Price and open-interest flow by session">'+s+'</svg>';
@@ -1003,7 +1008,7 @@ function flowTileHTML(key){
       '<div><span>Current run</span><b>'+S.sameSign+' session'+(S.sameSign>1?'s':'')+'</b><small>'+(FLOWQ[S.last.q].w<0?'sell side':FLOWQ[S.last.q].w>0?'buy side':'flat')+' · latest '+FLOWQ[S.last.q].l.toLowerCase()+'</small></div>'+
       '<div><span>CFTC managed money w/w</span><b class="'+cls(mmD||0)+'">'+(mmD==null?'—':sgn(Math.round(mmD/100)/10,1,'k'))+'</b><small>'+(mmAgree?mmAgree+' with the flow · '+esc(fmtShortDate(c1.date)):'')+'</small></div>'+
     '</div></div>'+mixBar+
-    '<div class="fl-body"><div class="fl-chart">'+flowSVG(S,key)+'<div class="legend">'+['NL','SC','LL','NS'].map(function(q){ return '<span><span class="sw" style="background:'+FLOWQ[q].c+'"></span>'+FLOWQ[q].l+'</span>'; }).join('')+'<span>dots = '+esc(S.ref)+' settle · dashed = average price where the window’s new shorts / longs were built</span></div></div>'+
+    '<div class="fl-body"><div class="fl-chart">'+flowSVG(S,key)+'<div class="legend">'+['NL','SC','LL','NS'].map(function(q){ return '<span><span class="sw" style="background:'+FLOWQ[q].c+'"></span>'+FLOWQ[q].l+'</span>'; }).join('')+'<span>dots = '+esc(S.ref)+' settle · dashed = average price where the window’s new shorts / longs were built · dates are trading sessions'+(S.w.some(function(x){ return x.prelim; })?' · * = preliminary open interest':'')+'</span></div></div>'+
     '<div class="fl-read"><h3>What the flow is saying</h3><ul>'+R.lines.map(function(l){ return '<li>'+l+'</li>'; }).join('')+'</ul>'+
       (Who?'<h3>Who is behind it <span class="h2note">— CFTC weekly</span></h3><ul>'+Who.lines.map(function(l){ return '<li>'+l+'</li>'; }).join('')+'</ul>':'')+
       '<h3>Confirmation checklist <span class="h2note">— confidence '+conf+' ('+fmt(CK.sc,1)+' of '+CK.mx+')</span></h3><div class="fl-ck">'+CK.list.map(function(x){ var ic=x[1]==null?'○':x[1]>=1?'✓':x[1]>0?'◐':'✗', c=x[1]==null?'neu':x[1]>=1?'up':x[1]>0?'neu':'dn';
