@@ -311,6 +311,7 @@
       var bar = P.querySelector(":scope > .today-bar"), J = jumps[k];
       if (!J || !J.length) { if (bar) bar.remove(); return; }
       if (!bar) { bar = document.createElement("div"); bar.className = "today-bar"; P.insertBefore(bar, P.firstChild); }
+      J = J.slice().sort(function (x, y) { return (x.at || 0) - (y.at || 0); });
       var h = '<span class="tb-k">Updated today</span>' + J.map(function (j) { return '<button class="tb-go" data-evgo="' + esc(j.go) + '" data-evsel="' + esc(j.sel) + '" title="Go to ' + esc(j.where) + '">' + esc(j.n) + ' <small>' + hm(j.at) + '</small> →</button>'; }).join("");
       if (bar.innerHTML !== h) bar.innerHTML = h; });
     /* BRD 16D red dots (owner amendment: clear at 00:00 ET, matching 16C): every menu item whose data landed today */

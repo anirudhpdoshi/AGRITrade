@@ -230,11 +230,18 @@
         '<div><b>How to read it</b><p>' + (gd === "down" ? "Lower is better for the economy's balance — a print above consensus is a hot (hawkish) surprise." : gd === "up" ? "Higher is better — a print above consensus is a positive surprise for growth." : "Read it against its own trend and the consensus.") + "</p></div></div>" +
       '<div class="mn2-ft">Source: ' + esc(m.src || "—") + (m.seen_at ? " · on the desk " + when(Date.parse(m.seen_at)) : "") + '</div></div>';
   }
+  /* today's agenda as one clean timeline: released items dimmed with ✓, the next one highlighted with a countdown */
+  function inT(ms) { var m = Math.round(ms / 60000); return m < 60 ? "in " + m + "m" : "in " + Math.floor(m / 60) + "h " + ("0" + m % 60).slice(-2) + "m"; }
   function todayStrip(c) {
     var ev = []; try { ev = (root.fxEvList ? fxEvList() : []).filter(function (e) { return dayET(e.t) === dayET(Date.now()) && (e.ccy === (c === "us" ? "USD" : "CAD")); }); } catch (e) {}
-    if (!ev.length) return '<div class="mn2-today"><b>Today</b> <span class="neu">No ' + COUNTRY[c].short + " releases on today’s calendar.</span></div>";
-    return '<div class="mn2-today"><b>Today</b>' + ev.sort(function (a, b) { return a.t - b.t; }).map(function (e) {
-      var past = e.t <= Date.now(); return '<span class="mn2-ev' + (past ? " out" : "") + '"><i></i>' + hm(e.t) + " · " + esc(String(e.label).replace(/^(USD|CAD)\s+/, "")) + (e.impact === "High" ? " <em>high impact</em>" : "") + "</span>"; }).join("") + "</div>";
+    if (!ev.length) return '<div class="mn3-ag"><span class="mn3-agk">Today</span><span class="mn3-none">No ' + COUNTRY[c].short + " releases on today’s calendar.</span></div>";
+    var now = Date.now(); ev.sort(function (a, b) { return a.t - b.t; });
+    var nxt = ev.filter(function (e) { return e.t > now; })[0], done = ev.filter(function (e) { return e.t <= now; }).length;
+    return '<div class="mn3-ag"><span class="mn3-agk">Today<small>' + done + " of " + ev.length + ' out</small></span><div class="mn3-tl">' + ev.map(function (e) {
+      var past = e.t <= now, isN = e === nxt, nm = String(e.label).replace(/^(USD|CAD)\s+/, "");
+      return '<div class="mn3-ev' + (past ? " out" : "") + (isN ? " nx" : "") + '" title="' + esc(nm + " · " + hm(e.t) + (e.impact === "High" ? " · high impact" : "")) + '">' +
+        '<span class="mn3-tm">' + esc(hm(e.t).replace(" ET", "")) + (past ? ' <b class="ok">✓</b>' : isN ? ' <b class="cd">' + inT(e.t - now) + "</b>" : "") + "</span>" +
+        '<span class="mn3-nm">' + (e.impact === "High" ? '<i class="hi" title="High impact"></i>' : "") + esc(nm) + "</span></div>"; }).join("") + "</div></div>";
   }
   function render() {
     if (!root.DATA || !DATA.macro) return;
@@ -259,8 +266,9 @@
         '<div class="mn2-key"><i class="mn2-dot"></i> out today <i class="mn2-dot due"></i> due today</div></nav>' +
         '<div class="mn2-c">' + (sel ? cardHTML(sel, S.g) : '<p class="note">No indicators in this group.</p>') + "</div></div>";
     }
-    box.innerHTML = '<div class="mn2-lay">' + left + '<div class="mn2-main"><div class="tile wide mn2-head"><h2>' + COUNTRY[S.c].name + ' macro <span class="h2note">— categories as Trading Economics groups them · each data point tagged leading, coincident or lagging · red dot = released or due today</span></h2>' + todayStrip(S.c) + tabs + "</div>" + main + "</div></div>";
+    box.innerHTML = '<div class="mn2-lay">' + left + '<div class="mn2-main"><div class="tile wide mn2-head mn3-head"><div class="mn3-ttl"><h2>' + COUNTRY[S.c].name + '<span>Macro</span></h2><span class="mn3-sub" title="Categories as Trading Economics groups them · each data point tagged leading, coincident or lagging · red dot = released or due today">Trading Economics categories · leading / coincident / lagging tags · <i class="mn3-dot"></i> out or due today</span></div>' + todayStrip(S.c) + tabs + "</div>" + main + "</div></div>";
     toEnd();
+    var tl = box.querySelector(".mn3-tl"), nx = tl && (tl.querySelector(".mn3-ev.nx") || tl.lastElementChild); if (tl && nx) tl.scrollLeft = Math.max(0, nx.offsetLeft - tl.offsetLeft - 140);
   }
   function toEnd() { [].forEach.call(P.querySelectorAll("[data-mn2scroll]"), function (w) { w.scrollLeft = w.scrollWidth; }); }
   P.addEventListener("click", function (ev) {
@@ -320,6 +328,17 @@
     ".mn2-rk{font:700 9.5px 'JetBrains Mono','IBM Plex Mono',monospace;font-style:normal;letter-spacing:.03em;margin-left:8px;padding:1px 5px;border-radius:3px;color:#000}.mn2-rk.g{background:#3fb97f}.mn2-rk.d{background:#e0655f}" +
     ".mn2-wt{font:700 9.5px 'JetBrains Mono','IBM Plex Mono',monospace;font-style:normal;margin-left:8px;padding:0 5px;border:1px solid #d9b46a;border-radius:3px;color:#d9b46a}.mn2-dt2 td.wbig{color:#d9b46a;font-weight:700}.mn2-dt2 td.wsm{color:#666}" +
     ".mn2-dt2 td.bc{white-space:nowrap}.mn2-tk{display:inline-block;position:relative;width:44px;height:11px;vertical-align:middle;margin-right:8px;border-left:0}.mn2-tk:before{content:'';position:absolute;left:50%;top:-2px;bottom:-2px;border-left:1px solid #2a2a2a}.mn2-bar{position:absolute;top:0;bottom:0;border-radius:2px}.mn2-bar.p{background:#3fb97f}.mn2-bar.n{background:#e0655f}.mn2-dn{font-size:11px;color:#777;margin:6px 0 0;line-height:1.45}";
+  css.textContent += ".mn3-head{padding-top:14px}.mn3-ttl{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;margin-bottom:12px}.mn3-ttl h2{margin:0;font:600 20px 'Libre Franklin',system-ui,sans-serif!important;color:#fff!important;letter-spacing:0!important;text-transform:none!important}" +
+    ".mn3-ttl h2 span{margin-left:8px;font:500 12px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#d9b46a}.mn3-sub{font-size:12px;color:#777}.mn3-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#e0655f;vertical-align:middle;margin-right:2px}" +
+    ".mn3-ag{display:flex;align-items:stretch;gap:12px;border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;padding:10px 0;margin-bottom:6px}" +
+    ".mn3-agk{flex:0 0 auto;display:flex;flex-direction:column;justify-content:center;font:600 11px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#d9b46a;padding-right:12px;border-right:1px solid #1a1a1a}.mn3-agk small{letter-spacing:0;text-transform:none;color:#777;font-weight:400;margin-top:2px}" +
+    ".mn3-tl{display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin;min-width:0;padding-bottom:2px}" +
+    ".mn3-ev{flex:0 0 auto;display:flex;flex-direction:column;gap:2px;min-width:118px;max-width:190px;padding:6px 10px;border:1px solid #1a1a1a;border-radius:6px;background:#050505}" +
+    ".mn3-ev.out{opacity:.55}.mn3-ev.nx{border-color:#d9b46a;background:rgba(217,180,106,.06)}" +
+    ".mn3-tm{font:500 11px 'JetBrains Mono','IBM Plex Mono',monospace;color:#8a8a8a;white-space:nowrap}.mn3-tm .ok{color:#3fb97f;font-weight:600}.mn3-tm .cd{color:#d9b46a;font-weight:600;margin-left:4px}" +
+    ".mn3-nm{font-size:12.5px;color:#e8eef4;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mn3-nm .hi{display:inline-block;width:6px;height:6px;border-radius:50%;background:#e0655f;margin-right:6px;vertical-align:middle}" +
+    ".mn3-none{font-size:12.5px;color:#777;align-self:center}" +
+    "@media (max-width:760px){.mn3-ag{flex-direction:column;gap:6px}.mn3-agk{flex-direction:row;justify-content:flex-start;align-items:baseline;gap:8px;border-right:0;padding:0}}";
   doc.head.appendChild(css);
   /* ---- Full history: what drove the print (Nov 16). Momentum from the series itself for every indicator; internals from the
      official component series where the desk holds them (CPI: BLS / Statistics Canada categories; others: DATA.macro_parts). ---- */

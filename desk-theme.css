@@ -193,3 +193,10 @@ body.fxo .tab-panel.active :is(.wh-c,.wh-t,.sn-b,.sw-b,.wh-g){background:#000!im
 /* ---- awaiting (Nov 13): the card keeps its last data; a thin running bar and a status line on top say a new release is being fetched ---- */
 .awaiting::before,.awaiting.aw-sm::before{inset:0 0 auto 0!important;height:3px;border-radius:0;background:linear-gradient(90deg,transparent,#e8b93d,transparent) 0 0/200% 100% no-repeat!important;animation:skel 1.4s linear infinite}
 .awaiting::after,.awaiting.aw-sm::after{top:6px;bottom:auto!important;left:auto!important;right:10px!important;max-width:70%;text-align:right!important;background:rgba(0,0,0,.82);padding:2px 8px;border-radius:4px;font-size:10.5px!important}
+
+/* "Updated today" strip (every page) — OLED: hairline, one line, quiet chips (Nov 17) */
+.today-bar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;gap:6px;margin:0 0 12px;padding:8px 10px;border:1px solid #1a1a1a;border-left:1px solid #1a1a1a;border-radius:8px;background:#000}
+.today-bar .tb-k{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;font:600 10.5px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.08em;color:#8a8a8a;margin-right:6px;padding-right:10px;border-right:1px solid #1a1a1a}
+.today-bar .tb-k:before{content:"";width:7px;height:7px;border-radius:50%;background:#3fb97f;box-shadow:0 0 6px #3fb97f}
+.tb-go{flex:0 0 auto;white-space:nowrap;font:500 12.5px 'Libre Franklin',system-ui,sans-serif;color:#e8eef4;background:#050505;border:1px solid #1f1f1f;border-radius:999px;padding:3px 12px}
+.tb-go small{color:#8a8a8a;font:11px 'JetBrains Mono','IBM Plex Mono',monospace;margin-left:4px}.tb-go:hover{background:#0d0d0d;border-color:#d9b46a;color:#fff}
