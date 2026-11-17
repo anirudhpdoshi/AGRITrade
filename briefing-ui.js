@@ -56,7 +56,7 @@
   function pulse() {
     var D = window.DATA; if (!D || !D.fx) return "";
     var fx = D.fx, Y = fx.yields_live || {}, y10 = Y["10Y"] || {}, y2 = Y["2Y"] || {}, w = (fx.energy || [])[0] || {}, x = fx.fxcross || {}, P = fx.policy || {};
-    var spot = +fx.feed.mid, ch = (spot / fx.spot.ref - 1) * 100;
+    var bsx = window.PRICE_SYNC && PRICE_SYNC.best("CAD=X"), spot = (bsx && bsx.px) || +fx.feed.mid, ch = (spot / fx.spot.ref - 1) * 100;
     var fedM = /(\d{3})-(\d{3})/.exec(P.fed_range || ""), boc = P.boc_decided && P.boc_decided.rate != null ? P.boc_decided.rate : P.corra_now;
     function k(n, v, c, sub) { return '<div class="br-k"><div class="br-kn">' + n + '</div><div class="br-kv">' + v + '</div><div class="br-kc ' + (c || "") + '">' + (sub || "") + "</div></div>"; }
     return '<div class="rail-card br-card"><div class="rail-title"><span>Markets pulse</span><span class="hint">desk data · ' + pulseAsOf(D) + '</span></div><div class="br-kg">' +

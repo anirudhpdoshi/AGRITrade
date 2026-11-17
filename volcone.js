@@ -47,7 +47,7 @@
     var lastD = dates[dates.length - 1];
     if (fx) {
       var F = D.fx || {}, fd = F.feed || {};
-      m.px = +fd.mid || close[close.length - 1]; m.settle = (F.spot && +F.spot.ref) || close[close.length - 2]; m.settleLab = "prior close";
+      var bs = root.PRICE_SYNC && PRICE_SYNC.best("CAD=X"); m.px = (bs && bs.px) || +fd.mid || close[close.length - 1]; m.settle = (F.spot && +F.spot.ref) || close[close.length - 2]; m.settleLab = "prior close";
       m.contract = "SPOT"; m.unit = "CAD per USD"; m.state = root.isAuto && !isAuto("fx_spot") ? "DELAYED" : "LIVE";
       var lr = []; for (var i = close.length - 20; i < close.length; i++) lr.push(Math.log(close[i] / close[i - 1]));
       var mu = lr.reduce(function (a, b) { return a + b; }, 0) / lr.length;
@@ -231,7 +231,7 @@
     var d = m.dec, ch = m.px - m.settle, pc = (m.px / m.settle - 1) * 100, fxm = root.DATA.fx && root.DATA.fx.feed && +root.DATA.fx.feed.mid;
     return '<div class="vc-head"><span class="vc-nm">AGRITRADE // ' + esc(NAME[m.k].toUpperCase()) + " " + esc(m.contract) + ' <i class="vc-st ' + m.state.toLowerCase() + '">' + m.state + "</i></span>" +
       '<span class="vc-hp"><b class="vc-roll" data-vcpx>' + m.px.toFixed(d) + "</b> <small>" + esc(m.unit) + '</small> <span class="' + (ch > 0 ? "up" : ch < 0 ? "dn" : "") + '">' + (ch >= 0 ? "+" : "−") + Math.abs(ch).toFixed(d) + " (" + (pc >= 0 ? "+" : "−") + Math.abs(pc).toFixed(2) + "%)</span></span>" +
-      (m.fx ? "" : '<span class="vc-hk">USD/CAD <b>' + (fxm ? fxm.toFixed(4) : "—") + "</b></span>") + '<span class="vc-hk">' + (m.fx ? "RVOL 20D" : m.rvOn ? "RVOL 30D" : "CHAIN IV") + " <b>" + (m.sd ? (m.sd * Math.sqrt(252) * 100).toFixed(2) + "%" : "—") + "</b></span>" +
+      (m.fx ? "" : '<span class="vc-hk">USD/CAD <b data-live="usdcad">' + (fxm ? fxm.toFixed(5) : "—") + "</b></span>") + '<span class="vc-hk">' + (m.fx ? "RVOL 20D" : m.rvOn ? "RVOL 30D" : "CHAIN IV") + " <b>" + (m.sd ? (m.sd * Math.sqrt(252) * 100).toFixed(2) + "%" : "—") + "</b></span>" +
       '<span class="vc-hk vc-cycle">CYCLE <b data-vccyc>01:00</b><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" class="vc-cbg"/><circle cx="12" cy="12" r="10" class="vc-cfg" pathLength="100"/></svg></span></div>';
   }
   function tileHTML(k) {
