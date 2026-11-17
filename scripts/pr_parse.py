@@ -6,7 +6,7 @@ Only rows with an unambiguous label are taken; anything not found stays absent (
 """
 import os, re
 
-VERSION = 2   # bump when the reader changes: stored reads from an older version are re-read
+VERSION = 3   # bump when the reader changes: stored reads from an older version are re-read
 from html.parser import HTMLParser
 
 from desknet import sec_ua
@@ -80,14 +80,18 @@ def parse(html):
     p.feed(html)
     text = " ".join(" ".join(p.text).split()).lower()
     out = {}
-    for T in p.tables:
+    # the full income statement first (it has a cost-of-revenue line and exact figures); summary tables ("$ in billions",
+    # margins in %) only when a release has no full statement (owner, Nov 17 2026: NVIDIA's summary read $115.8 as $115.8M)
+    def _full(T):
+        return 0 if re.search(r"cost of (sales|revenues?|goods)", " ".join(" ".join(c for c in r if c) for r in T).lower()) else 1
+    for T in sorted(p.tables, key=_full):
         rows = [_row(r) for r in T]
         labels = " | ".join(l for l, _ in rows)
         if not re.search(r"net income|net earnings", labels) or not re.search(r"revenue|net sales|sales", labels):
             continue   # the income statement table only
         tt = " ".join(" ".join(c for c in r if c) for r in T).lower()
         # the table's own unit wins; the narrative ("$701.5 million …") must not override "(in thousands)" on the table
-        mult = (1e3 if "in thousands" in tt else 1e6 if "in millions" in tt else 1 if "in dollars" in tt else
+        mult = (1e3 if "in thousands" in tt else 1e6 if "in millions" in tt else 1e9 if "in billions" in tt else 1 if "in dollars" in tt else
                 1e3 if "in thousands" in text[:20000] else 1e6)
         # column order: some companies put the prior year first (e.g. 2025 | 2026) — take the latest year's column
         yrs = []
@@ -100,7 +104,9 @@ def parse(html):
         col = 1 if len(yrs) >= 2 and yrs[1] > yrs[0] else 0
         in_eps, total_rev, pyc = False, None, 0 if col == 1 else 1   # the other three-month column = same quarter last year
         py = out.setdefault("py", {})
-        for lab, raw in rows:
+        for (lab, raw), cells in zip(rows, T):
+            if any("%" in (c or "") for c in cells):
+                continue   # a percentage row ("Gross margin 74.8%") is not a dollar line
             nums = raw[col:] if len(raw) > col else raw
             prior = raw[pyc] if len(raw) > max(col, pyc) else None
             if not nums:
