@@ -8,9 +8,9 @@
   var REPO = "anirudhpdoshi/AGRITrade", API = "https://api.github.com/repos/" + REPO + "/contents/breakouts.json?ref=breakouts",
     RAW = "https://raw.githubusercontent.com/" + REPO + "/breakouts/breakouts.json";
   var B = null, etag = "", lastTry = 0, lastOk = 0, err = null, seen = {}, fresh = {};
-  var V = { cls: "all", kind: "all", q: "", paused: false, snapN: 0, view: "stream", sort: "score", dir: -1 };
-  try { var sv = JSON.parse(localStorage.getItem("desk.brk") || "{}"); if (sv.cls) V.cls = sv.cls; if (sv.kind) V.kind = sv.kind; if (sv.view) V.view = sv.view; } catch (e) {}
-  function save() { try { localStorage.setItem("desk.brk", JSON.stringify({ cls: V.cls, kind: V.kind, view: V.view })); } catch (e) {} }
+  var V = { cls: "all", kind: "all", q: "", paused: false, snapN: 0, view: "stream", sort: "score", dir: -1, avg: "both" };
+  try { var sv = JSON.parse(localStorage.getItem("desk.brk") || "{}"); if (sv.cls) V.cls = sv.cls; if (sv.kind) V.kind = sv.kind; if (sv.view) V.view = sv.view; if (sv.avg) V.avg = sv.avg; } catch (e) {}
+  function save() { try { localStorage.setItem("desk.brk", JSON.stringify({ cls: V.cls, kind: V.kind, view: V.view, avg: V.avg })); } catch (e) {} }
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
   var ET = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit", hour12: false }),
     ETS = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit", second: "2-digit" });
@@ -44,10 +44,14 @@
   }
   function nextRun() { /* the engine runs at :02, :07, … every 5 min, 8:00–17:55 ET on weekdays */
     var t = new Date(), m = t.getUTCMinutes(), k = ((m - 2) % 5 + 5) % 5, d = new Date(t.getTime() + (5 - k) * 60000); d.setUTCSeconds(0); return d; }
+  /* which averages are shown: SMA, EMA or both (owner, Nov 17) */
+  function SMs() { return V.avg === "ema" ? [] : ["20", "50", "100", "200"]; }
+  function EMs() { return V.avg === "sma" ? [] : ["9", "21", "50", "200"]; }
+  function avgOk(k) { return !(V.avg === "sma" && /^ema_/.test(k)) && !(V.avg === "ema" && /^ma_/.test(k)); }
   function events() {
     var q = V.q.toLowerCase();
     return (B && B.events || []).filter(function (e) {
-      return (V.cls === "all" || e.c === V.cls) && (V.kind === "all" || KMAP[e.k] === V.kind) && (!q || (e.s + " " + e.n + " " + e.txt).toLowerCase().indexOf(q) >= 0);
+      return (V.cls === "all" || e.c === V.cls) && avgOk(e.k) && (V.kind === "all" || KMAP[e.k] === V.kind) && (!q || (e.s + " " + e.n + " " + e.txt).toLowerCase().indexOf(q) >= 0);
     });
   }
   function head() {
@@ -100,15 +104,14 @@
       '<div class="brk-kv"><span>New day highs</span><b class="up">' + cnt("day_high") + '</b></div><div class="brk-kv"><span>New day lows</span><b class="dn">' + cnt("day_low") + "</b></div>" +
       '<div class="brk-kv"><span>52-week highs / lows</span><b>' + cnt("w52_high") + " / " + cnt("w52_low") + '</b></div><div class="brk-kv"><span>SMA · EMA crossings</span><b>' + cnt("ma_px") + " · " + cnt("ema_px") + "</b></div>" +
       '<div class="brk-kv"><span>Closing breaks · MA crosses</span><b>' + (cnt("ma_close") + cnt("ma_cross") + cnt("ema_close") + cnt("ema_cross")) + "</b></div></div>" +
-      '<div class="brk-box"><h3>Stocks above their averages <small>S&amp;P 100 + watchlist, now</small></h3>' + bar(20) + bar(50) + bar(100) + bar(200) + ebar(21) + ebar(50) + ebar(200) + "</div>" +
+      '<div class="brk-box"><h3>Stocks above their averages <small>S&amp;P 100 + watchlist, now</small></h3>' + (V.avg !== "ema" ? bar(20) + bar(50) + bar(100) + bar(200) : "") + (V.avg !== "sma" ? ebar(21) + ebar(50) + ebar(200) : "") + "</div>" +
       '<div class="brk-box"><h3>Most new highs</h3>' + chips(lead("day_high")) + '<h3 style="margin-top:10px">Most new lows</h3>' + chips(lead("day_low")) + "</div></aside>";
   }
   /* Price vs averages: every name, above (▲) or below (▼) each simple and exponential average, with the level and distance */
-  var SM = ["20", "50", "100", "200"], EM = ["9", "21", "50", "200"];
-  function score(i) { var a = SM.map(function (n) { return i.above && i.above[n]; }).concat(EM.map(function (n) { return i.above_ema && i.above_ema[n]; })).filter(function (x) { return x != null; }); return a.length ? a.filter(Boolean).length / a.length : null; }
+  function score(i) { var SM = SMs(), EM = EMs(); var a = SM.map(function (n) { return i.above && i.above[n]; }).concat(EM.map(function (n) { return i.above_ema && i.above_ema[n]; })).filter(function (x) { return x != null; }); return a.length ? a.filter(Boolean).length / a.length : null; }
   function verdict(i) {
     var sc = score(i); if (sc == null) return ["—", ""];
-    var e = i.ema || {}, sU = e["9"] != null && e["21"] != null && e["50"] != null && e["9"] > e["21"] && e["21"] > e["50"], sD = e["9"] != null && e["21"] != null && e["50"] != null && e["9"] < e["21"] && e["21"] < e["50"];
+    var e = V.avg === "sma" ? { "9": (i.ma || {})["20"], "21": (i.ma || {})["50"], "50": (i.ma || {})["100"] } : i.ema || {}, sU = e["9"] != null && e["21"] != null && e["50"] != null && e["9"] > e["21"] && e["21"] > e["50"], sD = e["9"] != null && e["21"] != null && e["50"] != null && e["9"] < e["21"] && e["21"] < e["50"];
     if (sc === 1 && sU) return ["Strong uptrend", "bull2"]; if (sc === 0 && sD) return ["Strong downtrend", "bear2"];
     if (sc >= 0.75) return ["Bullish", "bull"]; if (sc <= 0.25) return ["Bearish", "bear"];
     return [(i.above_ema && i.above_ema["200"] ? "Mixed · above 200 EMA" : i.above_ema && i.above_ema["200"] === false ? "Mixed · below 200 EMA" : "Mixed"), "mix"];
@@ -123,30 +126,33 @@
     var key = { name: function (i) { return (i.c === "sp100" || i.c === "watch" ? i.s : i.n); }, pct: function (i) { return i.pct == null ? -1e9 : i.pct; }, score: function (i) { var x = score(i); return x == null ? -1 : x; } };
     L.sort(function (a, b) { var A = key[V.sort](a), B2 = key[V.sort](b); return (A > B2 ? 1 : A < B2 ? -1 : 0) * V.dir; });
     var th = function (k, t) { return '<th><button type="button" data-brks="' + k + '">' + t + (V.sort === k ? (V.dir < 0 ? " ▼" : " ▲") : "") + "</button></th>"; };
-    return '<div class="brk-stw"><table class="brk-st"><thead><tr class="grp"><th colspan="3"></th><th colspan="4">Simple moving averages (SMA)</th><th colspan="4">Exponential moving averages (EMA)</th><th></th></tr><tr>' +
+    var SM = SMs(), EM = EMs(), N = SM.length + EM.length;
+    return '<div class="brk-stw"><table class="brk-st"><thead><tr class="grp"><th colspan="3"></th>' + (SM.length ? '<th colspan="4">Simple moving averages (SMA)</th>' : "") + (EM.length ? '<th colspan="4">Exponential moving averages (EMA)</th>' : "") + "<th></th></tr><tr>" +
       th("name", "Name") + "<th>Last</th>" + th("pct", "Chg") + SM.map(function (n) { return "<th>" + n + "-day</th>"; }).join("") + EM.map(function (n) { return "<th>" + n + "-day</th>"; }).join("") + th("score", "Trend") + "</tr></thead><tbody>" +
       L.map(function (i) { var v = verdict(i), sc = score(i);
         return '<tr><th><b>' + esc(i.c === "sp100" || i.c === "watch" ? i.s : i.n) + "</b><small>" + esc(CNAME[i.c] || "") + "</small></th><td>" + num(i.last) + '</td><td class="' + (i.pct > 0 ? "up" : i.pct < 0 ? "dn" : "") + '">' + sg(i.pct) + "</td>" +
           SM.map(function (n) { return cell(i.ma && i.ma[n], i.last); }).join("") + EM.map(function (n) { return cell(i.ema && i.ema[n], i.last); }).join("") +
-          '<td class="vd ' + v[1] + '"><b>' + v[0] + "</b>" + (sc != null ? "<i>above " + Math.round(sc * 8) + " of 8</i>" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>" +
-      '<p class="brk-note">▲ = price above that average, ▼ = below; the level and the distance from the latest price are shown. Averages use completed daily closes; the price is the latest delayed quote. Trend: strong uptrend = above all 8 averages with the 9 &gt; 21 &gt; 50-day EMAs stacked; bullish = above at least 6 of 8; bearish = above 2 or fewer. EMA weights recent closes more (factor 2/(n+1)), so it turns sooner than the SMA of the same length.</p>';
+          '<td class="vd ' + v[1] + '"><b>' + v[0] + "</b>" + (sc != null ? "<i>above " + Math.round(sc * N) + " of " + N + "</i>" : "") + "</td></tr>"; }).join("") + "</tbody></table></div>" +
+      '<p class="brk-note">▲ = price above that average, ▼ = below; the level and the distance from the latest price are shown. Averages use completed daily closes; the price is the latest delayed quote. Trend (on the averages shown): strong uptrend = above every one with the short averages stacked (9 &gt; 21 &gt; 50 EMA, or 20 &gt; 50 &gt; 100 SMA); bullish = above at least 3 in 4; bearish = above 1 in 4 or fewer. EMA weights recent closes more (factor 2/(n+1)), so it turns sooner than the SMA of the same length.</p>';
   }
   function paint() {
     if (!B) { P.innerHTML = head() + '<p class="brk-none">Loading the breakout stream…</p>'; return; }
     var L = V.paused ? (V.snap || []) : events(), missed = V.paused ? Math.max(0, events().length - V.snapN) : 0;
     P.innerHTML = head() +
       '<div class="st-nav brk-nav" role="tablist" aria-label="Universe">' + seg("brkc", CLS, V.cls) + "</div>" +
-      '<div class="brk-vw">' + seg("brkv", [["stream", "Live stream"], ["status", "Price vs averages (SMA · EMA)"]], V.view) + "</div>" +
+      '<div class="brk-vw">' + seg("brkv", [["stream", "Live stream"], ["status", "Price vs averages"]], V.view) +
+        '<span class="brk-avg" role="group" aria-label="Averages shown"><span>Averages</span>' + seg("brka", [["sma", "SMA"], ["ema", "EMA"], ["both", "Both"]], V.avg) + "</span></div>" +
       (V.view === "status" ? '<div class="brk-bar"><input type="search" placeholder="Filter: symbol or name…" value="' + esc(V.q) + '" data-brkqi></div>' + statusView() :
-      '<div class="brk-bar"><span class="brk-seg">' + seg("brkk", KIND, V.kind) + '</span><input type="search" placeholder="Filter: symbol, name or event…" value="' + esc(V.q) + '" data-brkqi>' +
+      '<div class="brk-bar"><span class="brk-seg">' + seg("brkk", KIND.filter(function (k) { return !(V.avg === "sma" && k[0] === "ema") && !(V.avg === "ema" && k[0] === "ma"); }), V.kind) + '</span><input type="search" placeholder="Filter: symbol, name or event…" value="' + esc(V.q) + '" data-brkqi>' +
       '<button type="button" class="brk-pause" data-brkp>' + (V.paused ? "Paused · resume (" + missed + " new)" : "Pause") + "</button></div>" +
       '<div class="brk-lay"><section class="brk-main"><ol class="brk-feed">' + (L.length ? merge(L).slice(0, 300).map(row).join("") : '<li class="brk-none">No events match yet today. The stream fills as the session trades.</li>') + "</ol>" +
       '<p class="brk-note">Every line is stamped with the 5-minute bar that produced it (ET). Day high/low: the first 15 minutes only set the range, then at most one event per name per 30 minutes (the price shown is the latest). MA crossings during the day are provisional; “Closed above/below” and MA × MA crosses use the completed daily close. ' +
       "Prices: " + esc(B.provider) + " · universe: watchlist, North American indexes, currencies and " + esc(B.universe_src) + (B.counts && B.counts.missing && B.counts.missing.length ? " · not returned this run: " + esc(B.counts.missing.join(", ")) : "") + ".</p></section>" + breadth() + "</div>");
   }
   doc.addEventListener("click", function (ev) {
-    var t = ev.target.closest && ev.target.closest("[data-brkc],[data-brkk],[data-brkp],[data-brkq],[data-brkv],[data-brks]"); if (!t || !P.contains(t)) return;
-    if (t.hasAttribute("data-brkv")) { V.view = t.getAttribute("data-brkv"); save(); }
+    var t = ev.target.closest && ev.target.closest("[data-brkc],[data-brkk],[data-brkp],[data-brkq],[data-brkv],[data-brks],[data-brka]"); if (!t || !P.contains(t)) return;
+    if (t.hasAttribute("data-brka")) { V.avg = t.getAttribute("data-brka"); if ((V.avg === "sma" && V.kind === "ema") || (V.avg === "ema" && V.kind === "ma")) V.kind = "all"; save(); }
+    else if (t.hasAttribute("data-brkv")) { V.view = t.getAttribute("data-brkv"); save(); }
     else if (t.hasAttribute("data-brks")) { var k = t.getAttribute("data-brks"); if (V.sort === k) V.dir = -V.dir; else { V.sort = k; V.dir = k === "name" ? 1 : -1; } }
     else if (t.hasAttribute("data-brkc")) { V.cls = t.getAttribute("data-brkc"); save(); }
     else if (t.hasAttribute("data-brkk")) { V.kind = t.getAttribute("data-brkk"); save(); }
@@ -182,10 +188,12 @@
     ".brk-chipb{all:unset;cursor:pointer;display:inline-block;margin:0 6px 6px 0;border:1px solid #2a2a2a;border-radius:4px;padding:2px 8px;font:12px 'JetBrains Mono','IBM Plex Mono',monospace;color:#e8eef4}.brk-chipb:hover{border-color:#d9b46a}" +
     ".brk-n{margin-left:6px;font:700 10px 'JetBrains Mono','IBM Plex Mono',monospace;color:#000;background:#d9b46a;border-radius:8px;padding:0 5px}.brk-n:empty{display:none}" +
     ".brk-vw{display:flex;gap:6px;margin:4px 0 8px}.brk-vw .st-b{border:1px solid #1f1f1f;border-radius:999px;padding:5px 14px;margin:0}.brk-vw .st-b[aria-selected=true]{border-color:#d9b46a;color:#d9b46a}" +
+    ".brk-vw{align-items:center;flex-wrap:wrap}.brk-avg{margin-left:auto;display:inline-flex;align-items:center;border:1px solid #1f1f1f;border-radius:999px;padding:2px}.brk-avg>span{font:600 10px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#777;padding:0 8px 0 10px}" +
+    ".brk-avg .st-b{border:0!important;border-radius:999px;padding:4px 12px;margin:0}.brk-avg .st-b[aria-selected=true]{background:#1a1a1a;color:#d9b46a}" +
     ".brk-br{grid-template-columns:120px minmax(0,1fr) 40px}.brk-br.e em{background:#9b7be0}" +
     ".brk-stw{overflow-x:auto;border:1px solid #1a1a1a;border-radius:8px}.brk-st{border-collapse:collapse;width:100%;font:12px 'JetBrains Mono','IBM Plex Mono',monospace}" +
     ".brk-st th,.brk-st td{padding:6px 8px;border-bottom:1px solid #111;text-align:right;white-space:nowrap}.brk-st thead th{background:#050505;color:#777;font-weight:500;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em}" +
-    ".brk-st thead tr.grp th{color:#d9b46a;text-align:center;border-bottom:1px solid #1a1a1a}.brk-st thead button{all:unset;cursor:pointer}.brk-st thead button:hover{color:#fff}" +
+    ".brk-st thead tr:last-child th:first-child{text-align:left}.brk-st thead tr.grp th{color:#d9b46a;text-align:center;border-bottom:1px solid #1a1a1a}.brk-st thead button{all:unset;cursor:pointer}.brk-st thead button:hover{color:#fff}" +
     ".brk-st tbody th{text-align:left;font-family:'Libre Franklin',system-ui,sans-serif}.brk-st tbody th b{color:#fff;font-weight:600;margin-right:6px}.brk-st tbody th small{color:#666;font-size:10.5px}" +
     ".brk-st td b{font-weight:500}.brk-st td i{display:block;font-style:normal;font-size:10.5px;opacity:.75}.brk-st td.up{color:#3fb97f}.brk-st td.dn{color:#e0655f}.brk-st td.na{color:#444}" +
     ".brk-st td.vd{text-align:left}.brk-st td.vd i{color:#777}.vd.bull,.vd.bull2{color:#3fb97f}.vd.bear,.vd.bear2{color:#e0655f}.vd.mix{color:#e8b93d}.vd.bull2 b,.vd.bear2 b{font-weight:700}" +
