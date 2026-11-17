@@ -536,7 +536,7 @@
   });
   document.getElementById("usmWs").addEventListener("change", function (ev) { var w = PRESET.concat(saved())[+ev.target.value]; ev.target.value = ""; if (w) applyWs(w); });
   document.addEventListener("keydown", function (ev) {
-    if ((ev.ctrlKey || ev.metaKey) && (ev.key === "k" || ev.key === "K") && P.classList.contains("active")) { ev.preventDefault(); palOpen(); }
+    if ((ev.ctrlKey || ev.metaKey) && (ev.key === "k" || ev.key === "K") && P.classList.contains("active")) { ev.preventDefault(); var x1 = document.getElementById("usmX"); if (x1 && x1.offsetParent) x1.focus(); else palOpen(); }   /* one search bar: Ctrl+K focuses it */
     if (ev.key === "Escape" && sel && P.classList.contains("active") && document.getElementById("usmP").hidden) { sel = null; paintE(); crumbs(); }
   });
 

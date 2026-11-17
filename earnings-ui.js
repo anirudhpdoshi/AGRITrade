@@ -89,7 +89,7 @@
     ".un-seg{display:inline-flex;border:1px solid var(--line2);border-radius:9px;padding:2px;gap:2px}" +
     ".un-seg button,.un-co{appearance:none;border:0;background:transparent;color:var(--muted);font:600 12.5px 'IBM Plex Sans',sans-serif;padding:6px 12px;border-radius:7px;cursor:pointer;white-space:nowrap}" +
     ".un-seg button:hover,.un-co:hover{color:#fff}.un-seg button[aria-current=true]{background:var(--amber);color:#101825}" +
-    ".un-co{margin-left:auto;border:1px solid var(--line2);border-radius:9px;display:inline-flex;gap:8px;align-items:center}.un-co b{font-family:'IBM Plex Mono',monospace;color:var(--amber);letter-spacing:.04em}" +
+    ".un-co{border:1px solid var(--line2);border-radius:9px;display:inline-flex;gap:8px;align-items:center;max-width:100%;overflow:hidden;text-overflow:ellipsis}.un-all{font:600 10.5px 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);border-left:1px solid var(--line2);padding-left:8px}.un-seg{margin-left:auto}.un-co b{font-family:'IBM Plex Mono',monospace;color:var(--amber);letter-spacing:.04em}" +
     ".un-co[aria-current=true]{border-color:var(--amber);color:#fff;background:rgba(232,163,61,.08)}" +
     ".un-g{display:flex;gap:2px;padding:0 6px;border-top:1px solid var(--line);overflow-x:auto;scrollbar-width:none}.un-g::-webkit-scrollbar{display:none}" +
     ".un-g button{appearance:none;background:transparent;border:0;border-bottom:2px solid transparent;color:var(--muted);font:600 12.5px 'IBM Plex Sans',sans-serif;padding:10px 11px 8px;cursor:pointer;white-space:nowrap;display:inline-flex;gap:6px;align-items:baseline}" +
@@ -100,7 +100,7 @@
     ".un-c button{appearance:none;background:transparent;border:1px solid var(--line2);border-radius:999px;color:#c9d3e0;font:500 12px 'IBM Plex Sans',sans-serif;padding:5px 12px;cursor:pointer;white-space:nowrap}" +
     ".un-c button:hover:not(:disabled){border-color:#4a6488;color:#fff}.un-c button[aria-current=true]{border-color:var(--amber);color:var(--amber);background:rgba(232,163,61,.1)}" +
     ".un-c button.nd{text-decoration:line-through;text-decoration-color:rgba(255,255,255,.25)}" +
-    "@media (max-width:860px){.un-co{margin-left:0}.un-seg{width:100%}.un-seg button{flex:1;padding:6px 6px}.un-c{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.un-c::-webkit-scrollbar{display:none}}" +
+    "@media (max-width:860px){.un-seg{width:100%;margin-left:0}.un-seg button{flex:1;padding:6px 6px}.un-c{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.un-c::-webkit-scrollbar{display:none}}" +
     ".ut-nav .g{align-self:center;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);padding:0 4px 0 8px}" +
     ".ut-nav button{appearance:none;display:inline-flex;align-items:center;gap:7px;font:700 13.5px 'IBM Plex Sans',sans-serif;color:var(--muted);background:transparent;border:1px solid var(--line2);border-radius:8px;padding:8px 14px;cursor:pointer;white-space:nowrap}" +
     ".ut-nav button:hover:not(:disabled){color:#fff;background:#14213a}.ut-nav button[aria-current=true]{color:#101825;background:var(--amber);border-color:var(--amber)}" +
@@ -399,15 +399,15 @@
   function nav() {
     function seg(id, label) { return '<button data-utgo="' + id + '" aria-current="' + (V.view === id) + '">' + label + "</button>"; }
     var lk = V.lock && V.sel, C = window.COMPANY, short = {}; CO_NAV.forEach(function (c) { short[c[0]] = c[1]; }); short.matrix = "Quarterly matrix";
-    var h = '<nav class="un-nav" aria-label="US earnings sections"><div class="un-r1"><div class="un-seg">' + seg("market", "Market overview") + seg("season", "Seasonality") + seg("plan", "Data &amp; plan") + "</div>";
-    if (!lk || !C || !C.parts) return h + (lk ? "" : '<span class="un-hint">Lock a company to open its research tabs</span>') + "</div></nav>";
+    var sg = '<div class="un-seg">' + seg("market", "Market overview") + seg("season", "Seasonality") + seg("plan", "Data &amp; plan") + "</div>", h = '<nav class="un-nav" aria-label="US earnings sections"><div class="un-r1">';
+    if (!lk || !C || !C.parts) return h + '<span class="un-hint">Search a company above to open its research</span>' + sg + "</div></nav>";
     var cur = V.view === "company" ? C.card() : null, P = C.parts();
     function av(id) { return C.has(V.sel, id); }
     var G = P.map(function (p) { var cards = p[1].map(function (c) { var a = av(c[0]); return { id: c[0], label: short[c[0]] || c[1], a: a }; });
       var ok = cards.filter(function (c) { return c.a === true; }), load = cards.some(function (c) { return c.a === null; });
       return { name: NAVG[p[0]] || p[0], cards: cards, ok: ok.length, n: cards.length, load: load, first: ok[0] ? ok[0].id : null }; });
     var act = G.filter(function (g) { return g.cards.some(function (c) { return c.id === cur; }); })[0] || G.filter(function (g) { return g.name === navGrp; })[0] || null;
-    h += '<button class="un-co" data-cocard="" data-utgo="company" aria-current="' + (V.view === "company" && !cur) + '"><b>' + esc(V.sel) + "</b> All research cards</button></div>";
+    h += '<button class="un-co" data-cocard="" data-utgo="company" aria-current="' + (V.view === "company" && !cur) + '"><b>' + esc(V.sel) + "</b>" + esc(C.name ? C.name(V.sel) : "") + '<span class="un-all">All tiles</span></button>' + sg + "</div>";
     h += '<div class="un-g" role="tablist">' + G.map(function (g) {
       var on = act === g, dis = !g.load && !g.ok;
       return '<button role="tab" class="' + (g.load ? "ld" : dis ? "nd" : "") + '" data-ungrp="' + esc(g.name) + '"' + (g.first ? ' data-cocard="' + g.first + '" data-utgo="company"' : "") + ' aria-selected="' + on + '"' + (dis ? " disabled title=\"No data for this company yet\"" : "") + ">" +
