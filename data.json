@@ -26735,7 +26735,7 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-11-18T09:45:23-05:00",
+   "updated_at": "2026-11-18T09:54:05-05:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
     "fx_spot": "2026-11-18T09:45:00-05:00",
@@ -26767,7 +26767,7 @@
     "policy_watch": "2026-10-28T14:00:21-04:00",
     "yields_live": "2026-11-18T09:40:00-05:00",
     "optflow": "2026-11-18T09:45:23-05:00",
-    "ust": "2026-11-18T09:00:23-05:00",
+    "ust": "2026-11-18T09:54:05-05:00",
     "ust_dashboard": "2026-11-18T09:00:23-05:00",
     "options_final": "2026-11-13T22:01:53+00:00",
     "spread_monitor": "2026-11-17T17:00:00-04:00",
@@ -26782,45 +26782,10 @@
    },
    "last_run": {
     "ok": [
-     "seasonality_track",
-     "expired_track",
-     "policy_watch",
-     "fx_spot",
-     "fx_alpha",
-     "fx_closes",
-     "yields",
-     "spread_monitor",
-     "us_states",
-     "cftc_fx",
-     "cftc_grains",
-     "grains_quote",
-     "yields_live",
-     "energy",
-     "crosses",
-     "news",
-     "calendar",
-     "fed_odds",
-     "releases",
-     "macro",
-     "cpi_detail",
-     "grain_long",
-     "release_hist",
-     "macro_parts",
-     "settles",
-     "spreads",
-     "exports",
-     "wasde",
-     "ca_calendar",
-     "sd_hist",
-     "inputs",
-     "ext",
-     "fx_model",
-     "optflow",
-     "ust",
-     "ust_dashboard"
+     "ust"
     ],
     "failed": [],
-    "at": "2026-11-18T09:45:23-05:00"
+    "at": "2026-11-18T09:54:05-05:00"
    },
    "releases_checked": "2026-11-18T09:00:23-05:00",
    "exports_checked": "2026-11-18T09:00:23-05:00",
@@ -26904,7 +26869,6 @@
     "ok": true,
     "at": "2026-11-18T09:45:23-05:00"
    },
-   "ust_checked": "2026-11-18T09:00:23-05:00",
    "bls_fast_at": "2026-11-13T13:15:25-05:00",
    "wasde_checked": "2026-11-18T09:00:23-05:00",
    "ust_dashboard_checked": "2026-11-18T09:00:23-05:00",
@@ -26915,7 +26879,8 @@
     "32100077: 403 Client Error: Forbidden for url: https://www150.statcan.gc.ca/t1/wds/rest/getFullTableDownloadCSV/32100077/en | products seen: []",
     "32100007: 403 Client Error: Forbidden for url: https://www150.statcan.gc.ca/t1/wds/rest/getFullTableDownloadCSV/32100007/en | crops: [] | kinds: []"
    ],
-   "us_states_checked": "2026-11-18T07:04:50-05:00"
+   "us_states_checked": "2026-11-18T07:04:50-05:00",
+   "ust_checked": "2026-11-18T09:54:05-05:00"
   },
   "macro": [
    {
@@ -131572,6 +131537,36 @@
      }
     }
    }
+  },
+  "ust_sched": {
+   "next": [
+    {
+     "name": "Debt to the Penny",
+     "t": "2026-11-18T15:00:00-05:00",
+     "note": "daily, 3:00–4:15 PM ET, prior business day"
+    },
+    {
+     "name": "Daily Treasury Statement (cash, TGA)",
+     "t": "2026-11-18T16:00:00-05:00",
+     "note": "daily, 4:00 PM ET, prior business day"
+    },
+    {
+     "name": "Treasury auction results",
+     "t": "2026-11-18T11:30:00-05:00",
+     "note": "bills 11:30 AM, notes/bonds 1:00 PM ET (auction days)"
+    },
+    {
+     "name": "Monthly Statement of the Public Debt",
+     "t": "2026-12-04T15:00:00-05:00",
+     "note": "4th business day, 3–4 PM ET"
+    },
+    {
+     "name": "Monthly Treasury Statement",
+     "t": "2026-12-10T14:00:00-05:00",
+     "note": "8th business day, 2:00 PM ET"
+    }
+   ],
+   "src": "https://fiscaldata.treasury.gov/release-calendar/"
   }
  },
  "NEWS": {
