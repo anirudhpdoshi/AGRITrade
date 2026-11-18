@@ -247,7 +247,8 @@ def page_text(h):
     if h.startswith(PDF_MARK):
         return h[len(PDF_MARK):]
     h = re.sub(r"(?is)<(script|style|nav|header|footer|aside|form|noscript)[^>]*>.*?</\1>", " ", h)
-    m = re.search(r"(?is)<(main|article)[^>]*>(.*)</\1>", h) or re.search(r'(?is)<div[^>]+(?:id|class)="[^"]*(?:article|content|main|post)[^"]*"[^>]*>(.*)', h)
+    h = re.sub(r'(?is)<(section|div)[^>]+class="[^"]*usa-banner[^"]*"[^>]*>.*?</\1>', " ", h)   # US .gov site banner
+    m = re.search(r'(?is)<div[^>]+id="article"[^>]*>(.*)', h) or re.search(r"(?is)<(main|article)[^>]*>(.*)</\1>", h) or re.search(r'(?is)<div[^>]+(?:id|class)="[^"]*(?:article|content|main|post)[^"]*"[^>]*>(.*)', h)
     body = m.group(m.lastindex) if m else h
     body = re.sub(r"(?i)</(p|div|li|h\d|br|tr)>|<br\s*/?>", "\n", body)
     t = _html.unescape(re.sub(r"(?s)<[^>]+>", " ", body))

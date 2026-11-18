@@ -201,7 +201,10 @@
   P.addEventListener("change", function (ev) { var s = ev.target.closest && ev.target.closest("[data-pisel]"); if (s) { V.doc = s.value; save(); render(); } });
   document.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("#tabbtn-policy")) { render(); poll(true); } });
   /* every minute while the tab is open; every 5 minutes in the background so new statements reach the Events feed */
-  setInterval(function () { if (P.classList.contains("active") || Date.now() - lastTry > 300000) poll(); }, 60000);
+  /* …and every 30 s from 2 minutes before to 40 minutes after any scheduled decision / minutes release (owner, Nov 18 2026) */
+  function hot() { var n = Date.now(); return !!(J && (J.calendar || []).some(function (c) { var t = calTime(c); return t && n > t - 12e4 && n < t + 24e5; })); }
+  setInterval(function () { if (P.classList.contains("active") || Date.now() - lastTry > (hot() ? 25000 : 300000)) poll(); }, hot() ? 30000 : 60000);
+  setInterval(function () { if (hot() && Date.now() - lastTry > 25000) poll(); }, 30000);
   window.addEventListener("desk:unlock", function () { poll(true); });
   window.POLICY = { render: render, poll: poll, _data: function () { return J; }, minutesFor: minutesFor, summaryHTML: function (d) { return summaryHTML(d); },
     open: function (id) { if (id === "minutes" || id === "calendar" || id === "monitor") V.sub = id; else { V.doc = id; V.sub = "transcript"; } save(); render(); } };
