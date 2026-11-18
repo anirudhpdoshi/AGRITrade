@@ -60,6 +60,7 @@ from ud_macro import (  # noqa: F401  (re-exported: live_loop, tests and other j
     external, SC_CROP, SC_PRICE, SC_GEOS, _sc_table, _sc_release_times, AAFC_INDEX, _MDY,
     _strip_html, ca_calendar, _num0, canada, policy_watch, cpi_detail, cpi_detail_ca, release_hist)
 from macro_parts import macro_parts, ca_cpi_weights  # noqa: E402
+from ud_regions import us_states, US_STATES, US_IND  # noqa: F401
 from ud_treasury import (  # noqa: F401  (re-exported: live_loop, tests and other jobs use update_data.<name>)
     FISCAL, UST_TYPES, _fd, ust, DASH_PATH, DASH_FRED_YIELDS, DASH_REFI_FIXED, _fd_paged,
     _fy_end_bday, _mspd_months, _mspd_snapshot, _dash_window_total, _dtp_on, _air_on, _auctions_fy_gross, _mts_fy,
@@ -79,7 +80,7 @@ class _Module(sys.modules[__name__].__class__):
 
 sys.modules[__name__].__class__ = _Module
 
-BLOCKS = [("seasonality_track", seasonality_track), ("expired_track", expired_track), ("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("spread_monitor", spread_monitor), ("cftc_fx", cftc_fx),
+BLOCKS = [("seasonality_track", seasonality_track), ("expired_track", expired_track), ("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("spread_monitor", spread_monitor), ("us_states", us_states), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("yields_live", yields_live), ("energy", energy),
           ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("cpi_detail", cpi_detail), ("grain_long", grain_long), ("release_hist", release_hist), ("cpi_detail_ca", cpi_detail_ca), ("macro_parts", macro_parts), ("ca_cpi_weights", ca_cpi_weights), ("settles", settles), ("spreads", spreads), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow), ("ust", ust), ("ust_dashboard", ust_dashboard)]
 
