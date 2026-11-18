@@ -17,7 +17,7 @@
   if (!(LIVE || on) || !P || !BTN) return;
 
   var CATS = [["c1", "C1", "Snapshot"], ["c2", "C2", "Indexes"], ["c3", "C3", "Sectors"], ["c4", "C4", "Breadth"],
-    ["c5", "C5", "Breakout Stream"], ["c6", "C6", "Earnings"], ["c9", "C7", "Northbook"]];
+    ["c6", "C6", "Earnings"], ["c9", "C7", "Northbook"]];   /* Breakout Stream removed (owner, Nov 17 2026): it lives in the Breakouts menu */
   var INDEX = ["^GSPC", "^NDX", "^IXIC", "^DJI", "^RUT"], SHORT = { "^GSPC": "S&P 500", "^NDX": "Nasdaq 100", "^IXIC": "Nasdaq Comp", "^DJI": "Dow Jones", "^RUT": "Russell 2000", "^VIX": "VIX" };
   var cat = "c1"; try { cat = localStorage.getItem("desk.usmCat") || "c1"; } catch (e) {}
   if (!CATS.some(function (c) { return c[0] === cat; })) cat = "c1";
@@ -362,7 +362,7 @@
       stockHighs();
   }
   /* -------- A: command palette + saved workspaces -------- */
-  var PRESET = [{ n: "Pre-Market Brief", cat: "c1", dock: true }, { n: "Intraday Momentum", cat: "c5", f: "all" }, { n: "Earnings Night", cat: "c6", sub: "cal", per: "q", state: "done", today: true, dock: false }];
+  var PRESET = [{ n: "Pre-Market Brief", cat: "c1", dock: true }, { n: "Earnings Night", cat: "c6", sub: "cal", per: "q", state: "done", today: true, dock: false }];
   function saved() { try { return JSON.parse(localStorage.getItem("desk.usmWs") || "[]"); } catch (e) { return []; } }
   function setSaved(a) { try { localStorage.setItem("desk.usmWs", JSON.stringify(a)); } catch (e) {} }
   function capture(n) { return { n: n, cat: cat, sub: C6.sub, per: C6.per, state: C6.state, wl: C6.wl, day: C6.day, pv: PV, dock: ST.dock, f: ST.f }; }
