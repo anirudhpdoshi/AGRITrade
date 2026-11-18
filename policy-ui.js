@@ -153,7 +153,8 @@
     if (W.length) {
       var lab = { hawk: "Leans hawkish", dove: "Leans dovish", mixed: "Two-sided", neutral: "Observation" };
       h += '<div class="pi-views"><div class="pi-l">Where participants stood <span class="h2note">— the minutes’ own wording, largest group first · the Fed’s scale: one &lt; a couple &lt; a few &lt; some &lt; several &lt; many &lt; most &lt; almost all &lt; all</span></div>' +
-        W.map(function (v) { return '<div class="pi-vw"><span class="pi-vq"><span class="pi-vb" style="width:' + (v.rank / 7 * 100).toFixed(0) + '%"></span><b>' + esc(v.who) + '</b></span><span class="pi-vs ' + v.stance + '">' + lab[v.stance] + '</span><span class="pi-vt">“' + esc(v.q) + '” <small>¶' + v.para + "</small></span></div>"; }).join("") + "</div>";
+        (function () { var row = function (v) { return '<div class="pi-vw"><span class="pi-vq"><span class="pi-vb" style="width:' + (v.rank / 7 * 100).toFixed(0) + '%"></span><b>' + esc(v.who) + '</b></span><span class="pi-vs ' + v.stance + '">' + lab[v.stance] + '</span><span class="pi-vt">“' + esc(v.q) + '” <small>¶' + v.para + "</small></span></div>"; }, A = W.filter(function (v) { return v.stance !== "neutral"; }), B = W.filter(function (v) { return v.stance === "neutral"; });
+          return A.map(row).join("") + (B.length ? '<details class="pi-more"><summary>' + B.length + " more observations (no rate lean)</summary>" + B.map(row).join("") + "</details>" : ""); })() + "</div>";
     }
     return h ? '<div class="pi-part">' + h + "</div>" : "";
   }
