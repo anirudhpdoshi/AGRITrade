@@ -49,5 +49,5 @@
   function first() { var v = snap(); if (v) { last = ""; record(); } else setTimeout(first, 400); }
   root.addEventListener("desk:unlock", function () { setTimeout(first, 600); });
   setTimeout(first, 1500);
-  root.DESK_HISTORY = { snap: snap, record: record };
+  root.DESK_HISTORY = { snap: snap, record: record, restore: restore };
 })(window);
