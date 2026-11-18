@@ -29,6 +29,11 @@
     div: ["PaymentsOfDividends", "PaymentsOfDividendsCommonStock"], buyback: ["PaymentsForRepurchaseOfCommonStock"],
     dissue: ["ProceedsFromIssuanceOfLongTermDebt"], drepay: ["RepaymentsOfLongTermDebt"],
     d_ar: ["IncreaseDecreaseInAccountsReceivable"], d_inv: ["IncreaseDecreaseInInventories"], d_ap: ["IncreaseDecreaseInAccountsPayable"],
+    /* banks (owner, Nov 17 2026) — tags absent for other companies, so nothing changes for them */
+    nii: ["InterestIncomeExpenseNet", "InterestIncomeExpenseAfterProvisionForLoanLoss"], intinc: ["InterestAndDividendIncomeOperating", "InterestIncomeOperating"], intexp_op: ["InterestExpenseOperating", "InterestExpense"],
+    nonii: ["NoninterestIncome"], nonie: ["NoninterestExpense"], prov: ["ProvisionForLoanLeaseAndOtherLosses", "ProvisionForCreditLossesNet", "CreditLossExpenseReversal", "ProvisionForLoanAndLeaseLosses", "FinancingReceivableExcludingAccruedInterestCreditLossExpenseReversal"],
+    nco: ["FinancingReceivableExcludingAccruedInterestAllowanceForCreditLossWriteoffAfterRecovery", "FinancingReceivableAllowanceForCreditLossWriteoffAfterRecovery", "AllowanceForLoanAndLeaseLossesWriteOffsNet"],
+    revb: ["RevenuesNetOfInterestExpense"],
     acq: ["PaymentsToAcquireBusinessesNetOfCashAcquired"], invgain: ["EquitySecuritiesFvNiGainLoss", "EquitySecuritiesFvNiUnrealizedGainLoss"], eqiss: ["ProceedsFromIssuanceOfCommonStock"], invwd: ["InventoryWriteDown"],
   };
   var INST = {
@@ -41,6 +46,10 @@
     ltd_nc: ["LongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligations"], ltd: ["LongTermDebt", "DebtLongtermAndShorttermCombinedAmount"], oplease: ["OperatingLeaseLiability"], finlease: ["FinanceLeaseLiability"],
     accr: ["AccruedLiabilitiesCurrent"], defrev: ["ContractWithCustomerLiabilityCurrent"], ctrasset: ["ContractWithCustomerAssetNetCurrent"],
     allow: ["AllowanceForDoubtfulAccountsReceivableCurrent"], inv_raw: ["InventoryRawMaterials"], inv_wip: ["InventoryWorkInProcess"], inv_fg: ["InventoryFinishedGoods"],
+    loans_g: ["FinancingReceivableExcludingAccruedInterestBeforeAllowanceForCreditLoss", "LoansAndLeasesReceivableGrossCarryingAmount", "LoansAndLeasesReceivableNetOfDeferredIncome", "FinancingReceivableBeforeAllowanceForCreditLoss"],
+    acl: ["FinancingReceivableAllowanceForCreditLossExcludingAccruedInterest", "FinancingReceivableAllowanceForCreditLosses", "LoansAndLeasesReceivableAllowance"],
+    npl: ["FinancingReceivableExcludingAccruedInterestNonaccrual", "FinancingReceivableRecordedInvestmentNonaccrualStatus", "FinancingReceivableNonaccrual", "LoansAndLeasesReceivableNonperformingNonaccrualOfInterest"],
+    deposits: ["Deposits"],
     rpo: ["RevenueRemainingPerformanceObligation"], revolver: ["LineOfCreditFacilityRemainingBorrowingCapacity"],
     mat1: ["LongTermDebtMaturitiesRepaymentsOfPrincipalInNextTwelveMonths"], mat2: ["LongTermDebtMaturitiesRepaymentsOfPrincipalInYearTwo"],
     mat3: ["LongTermDebtMaturitiesRepaymentsOfPrincipalInYearThree"], mat4: ["LongTermDebtMaturitiesRepaymentsOfPrincipalInYearFour"],
@@ -150,10 +159,38 @@
     ["dso", "dio", "dpo", "ccc", "roe", "roic", "nd_ebitda", "int_cov", "effcost", "cashcost", "capexda", "cr", "qr"].forEach(function (k) { Q.forEach(function (q, i) { var y = yoyOf(Q, i), p = Q[i - 1];
       if (val(q, k) != null && val(y, k) != null) q.m[k + "_yoy"] = { v: val(q, k) - val(y, k), st: "CALCULATED", how: "change vs " + y.fl.label, unit: "abs" };
       if (val(q, k) != null && val(p, k) != null) q.m[k + "_qoq"] = { v: val(q, k) - val(p, k), st: "CALCULATED", how: "change vs " + p.fl.label, unit: "abs" }; }); });
+    if (Q.some(function (q) { return q.m.nii && q.m.loans_g; })) bankDerive(Q);
     var A = annual(F, co.fiscalYearEnd);
     var mod = model(co);
     if (Q.length && Q.length < 4 && mod.kind === "operating") mod = { kind: "operating", note: "Only " + Q.length + " quarter" + (Q.length > 1 ? "s" : "") + " filed under this registrant (CIK " + co.cik + ") — often a new holding company or a recent listing. A predecessor’s filings are not merged in." };
     return { co: co, quarters: Q, annual: A, model: mod, sector: sectorOf(co.sic) };
+  }
+  /* bank ratios, quarter by quarter. Margins on assets are annualised (×4); averages use opening and closing balances. */
+  function bankDerive(Q) {
+    Q.forEach(function (q, i) {
+      var p = Q[i - 1], L = val(q, "loans_g"), D = val(q, "deposits"), A = val(q, "assets"), pA = val(p, "assets"), avA = A != null && pA != null ? (A + pA) / 2 : A;
+      if (val(q, "revb") != null) q.m.rev = { v: val(q, "revb"), st: "REPORTED", how: "total net revenue (net of interest expense)" };
+      else if (val(q, "nii") != null && val(q, "nonii") != null) setC(q, "rev", val(q, "nii") + val(q, "nonii"), "net interest income + non-interest income", ["nii", "nonii"]);
+      if (val(q, "nii") != null && avA) setC(q, "nim_a", val(q, "nii") * 4 / avA * 100, "net interest income × 4 ÷ average total assets (earning assets are not in SEC data)", ["nii", "assets"]);
+      if (val(q, "nonie") != null && val(q, "rev")) setC(q, "eff", val(q, "nonie") / val(q, "rev") * 100, "non-interest expense ÷ total net revenue", ["nonie", "rev"]);
+      if (val(q, "nonii") != null && val(q, "rev")) setC(q, "fee_mix", val(q, "nonii") / val(q, "rev") * 100, "non-interest income ÷ total net revenue", ["nonii", "rev"]);
+      if (L && D) setC(q, "ldr", L / D * 100, "gross loans ÷ deposits", ["loans_g", "deposits"]);
+      if (L && val(q, "acl") != null) setC(q, "acl_pct", val(q, "acl") / L * 100, "allowance for credit losses ÷ gross loans", ["acl", "loans_g"]);
+      if (L && val(q, "npl") != null) setC(q, "npl_pct", val(q, "npl") / L * 100, "non-accrual loans ÷ gross loans", ["npl", "loans_g"]);
+      if (val(q, "npl") && val(q, "acl") != null) setC(q, "acl_npl", val(q, "acl") / val(q, "npl"), "allowance ÷ non-accrual loans", ["acl", "npl"]);
+      if (L && val(q, "nco") != null) setC(q, "nco_pct", val(q, "nco") * 4 / L * 100, "net charge-offs × 4 ÷ gross loans", ["nco", "loans_g"]);
+      if (L && val(q, "prov") != null) setC(q, "prov_pct", val(q, "prov") * 4 / L * 100, "provision for credit losses × 4 ÷ gross loans", ["prov", "loans_g"]);
+      if (A && val(q, "eq") != null) setC(q, "eq_a", val(q, "eq") / A * 100, "shareholders’ equity ÷ total assets", ["eq", "assets"]);
+      if (avA && val(q, "ni") != null) setC(q, "roa", val(q, "ni") * 4 / avA * 100, "net income × 4 ÷ average total assets", ["ni", "assets"]);
+    });
+    var AMT = ["nii", "nonii", "nonie", "prov", "nco", "loans_g", "deposits", "acl", "npl", "rev"], RAT = ["nim_a", "eff", "fee_mix", "ldr", "acl_pct", "npl_pct", "acl_npl", "nco_pct", "prov_pct", "eq_a", "roa"];
+    Q.forEach(function (q, i) { var y = yoyOf(Q, i), p = Q[i - 1];
+      AMT.forEach(function (k) { var a = val(q, k), b = val(y, k), c = val(p, k);
+        if (a != null && b) q.m[k + "_yoy"] = { v: (a / b - 1) * 100 * (b < 0 ? -1 : 1), st: "CALCULATED", how: "vs " + y.fl.label, unit: "pct" };
+        if (a != null && c) q.m[k + "_qoq"] = { v: (a / c - 1) * 100 * (c < 0 ? -1 : 1), st: "CALCULATED", how: "vs " + p.fl.label, unit: "pct" }; });
+      RAT.forEach(function (k) { var a = val(q, k), b = val(y, k), c = val(p, k);
+        if (a != null && b != null) q.m[k + "_yoy"] = { v: a - b, st: "CALCULATED", how: "change vs " + y.fl.label, unit: "abs" };
+        if (a != null && c != null) q.m[k + "_qoq"] = { v: a - c, st: "CALCULATED", how: "change vs " + p.fl.label, unit: "abs" }; }); });
   }
   function yoyOf(Q, i) { for (var j = i - 1; j >= 0; j--) { var d = days(Q[j].end, Q[i].end); if (d >= 350 && d <= 380) return Q[j]; if (d > 380) break; } return null; }
   function val(q, k) { return q && q.m[k] ? q.m[k].v : null; }
@@ -212,7 +249,7 @@
   /* ---------------------------------------------------------------- business model & sector */
   function model(co) {
     var s = +co.sic || 0;
-    if (s >= 6000 && s <= 6299) return { kind: "financial", note: "Bank / broker model: gross margin, FCF and EBITDA-based leverage are not meaningful — the bank template (NII, NIM, CET1, charge-offs) is not built yet." };
+    if (s >= 6000 && s <= 6299) return { kind: "financial", note: (co.facts && (co.facts.InterestIncomeExpenseNet || co.facts.Deposits)) ? "" : "Bank / broker model: gross margin, FCF and EBITDA-based leverage are not meaningful for this filer." };
     if (s >= 6300 && s <= 6411) return { kind: "insurer", note: "Insurance model: underwriting metrics (combined ratio, loss ratio) are not built yet; FCF and gross margin are not meaningful." };
     if (s >= 4900 && s <= 4991) return { kind: "utility", note: "Regulated utility: rate base, allowed ROE and regulatory recovery are the right lens and are not built yet; heavy capex usually makes FCF negative by design." };
     if (s === 6798) return { kind: "reit", note: "REIT: FFO / AFFO, occupancy and same-property NOI are the right lens and are not built yet; FCF is shown with that caveat." };

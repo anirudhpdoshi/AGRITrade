@@ -395,16 +395,17 @@
     ["peers", "Industry comparison"], ["research", "Earnings research"]];
   /* section tabs (owner, Nov 17 2026): market views as one segmented control; company research as group tabs with the
      group's cards underneath. Every tab opens its card; a card the company does not report is dimmed and cannot be opened. */
-  var NAVG = { "Company overview": "Overview", "Income statement": "Income statement", "Balance sheet": "Balance sheet", "Cash flow": "Cash flow", "Estimates": "Estimates", "Ownership": "Ownership",
+  var NAVG = { "Loans & deposits": "Loans & deposits", "Asset quality": "Asset quality", "Capital & returns": "Capital & returns", "Capital intensity & cash flow": "Capex & cash flow", "Balance sheet & leverage": "Balance sheet", "Returns & warnings": "Returns",
+    "Commodity inventory & working capital": "Inventory & working capital", "Balance sheet & financing": "Balance sheet", "Regulatory & disclosed only": "Disclosed only", "Disclosed by the company only": "Disclosed only", "Company overview": "Overview", "Income statement": "Income statement", "Balance sheet": "Balance sheet", "Cash flow": "Cash flow", "Estimates": "Estimates", "Ownership": "Ownership",
     "Valuation & market": "Valuation", "Ratios & warnings": "Ratios", "Industry comparison": "Peers", "Earnings intelligence": "Research" };
-  var FIN = { "Income statement": 1, "Balance sheet": 1, "Cash flow": 1 };
+  var FIN = { "Income statement": 1, "Balance sheet": 1, "Cash flow": 1, "Loans & deposits": 1, "Asset quality": 1, "Capital & returns": 1, "Capex & cash flow": 1, "Inventory & working capital": 1 };
   var navGrp = null;
   function nav() {
     function seg(id, label) { return '<button data-utgo="' + id + '" aria-current="' + (V.view === id) + '">' + label + "</button>"; }
     var lk = V.lock && V.sel, C = window.COMPANY, short = {}; CO_NAV.forEach(function (c) { short[c[0]] = c[1]; }); short.matrix = "Quarterly matrix";
     var sg = '<div class="un-seg">' + seg("market", "Market overview") + seg("season", "Seasonality") + seg("plan", "Data &amp; plan") + "</div>", h = '<nav class="un-nav" aria-label="US earnings sections"><div class="un-r1">';
     if (!lk || !C || !C.parts) return h + '<span class="un-hint">Search a company above to open its research</span>' + sg + "</div></nav>";
-    var cur = V.view === "company" ? C.card() : null, P = C.parts();
+    var cur = V.view === "company" ? C.card() : null, P = C.parts(V.sel);
     function av(id) { return C.has(V.sel, id); }
     var G = P.map(function (p) { var cards = p[1].map(function (c) { var a = av(c[0]); return { id: c[0], label: short[c[0]] || c[1], a: a }; });
       var ok = cards.filter(function (c) { return c.a === true; }), load = cards.some(function (c) { return c.a === null; });

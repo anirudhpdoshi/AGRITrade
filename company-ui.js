@@ -20,7 +20,7 @@
   function sgc(v, txt) { return '<span class="' + (v == null || Math.abs(v) < 0.05 ? "neu" : v > 0 ? "up" : "dn") + '">' + txt + "</span>"; }
   function money(v) { return v == null ? "—" : v < 0 ? "−$" + f$(-v) : "$" + f$(v); }
   /* direction that is GOOD for each metric: +1 higher is better, −1 lower is better, 0 neutral (colour by sign is misleading) */
-  var GOOD = { gdebt: -1, ndebt: -1, dso: -1, dio: -1, ccc: -1, effcost: -1, cashcost: -1, nd_ebitda: -1, de: -1, da_r: -1, intburden: -1, sh_d: -1, cogs: -1,
+  var GOOD = { eff: -1, npl_pct: -1, nco_pct: -1, prov_pct: -1, prov: -1, nco: -1, npl: -1, nonie: -1, ldr: 0, acl_pct: 0, fee_mix: 0, gdebt: -1, ndebt: -1, dso: -1, dio: -1, ccc: -1, effcost: -1, cashcost: -1, nd_ebitda: -1, de: -1, da_r: -1, intburden: -1, sh_d: -1, cogs: -1,
     capex: 0, sga: 0, rnd: 0, dpo: 0, da: 0, intexp: -1, tax: 0 };
   function tone(k, v) { var base = String(k).replace(/_(yoy|qoq)$/, ""), g = GOOD[base]; return v == null ? null : g === 0 ? 0 : g === -1 ? -v : v; }
 
@@ -109,6 +109,8 @@
     ".cd-l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}.cd-l li{display:flex;gap:9px;align-items:center;font-size:13px;color:var(--muted)}.cd-l li span{width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;border:1px solid var(--line2)}" +
     ".cd-l li.ok{color:#dfe6f0}.cd-l li.ok span{background:#3fb97f;border-color:#3fb97f;color:#06210f}.cd-l li.na span{border-color:#5b6b82;color:#8f9db3}.cd-l li.wt span{border-color:#e8a33d;border-top-color:transparent;animation:cdS 0.9s linear infinite}" +
     ".cd-l li small{color:var(--faint)}.cd-n{margin:10px 0 0;font-size:12px;color:var(--faint)}@keyframes cdS{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.cd-l li.wt span{animation:none}}" +
+    ".mc-d{font-size:13px;color:#cfd8e6;line-height:1.5;margin:0 0 10px}.mc-d small{display:block;color:var(--faint);margin-top:4px}.cx-prof{font:600 10.5px 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#7dd8e6;border:1px solid rgba(125,216,230,.4);border-radius:4px;padding:2px 7px;margin-left:8px}" +
+    ".cx-asof{font:600 9.5px 'IBM Plex Mono',monospace;color:#e8a33d;border:1px solid rgba(232,163,61,.4);border-radius:3px;padding:0 4px;margin-left:4px}" +
     ".cx-part.dim{opacity:.45}.cx-part.dim span{letter-spacing:0;text-transform:none;color:var(--faint)}" +
     "@media (max-width:640px){.rs-g{grid-template-columns:1fr 1fr}.rs-t .v{font-size:18px}.rs-sc{margin-left:0}.cx-vw{width:100%}.cx-vw button{flex:1}}" +
     ".cx-card{appearance:none;text-align:left;font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:11px 13px;display:flex;flex-direction:column;gap:3px;min-height:132px;transition:border-color .12s,transform .12s}" +
@@ -292,6 +294,14 @@
   function stB(m) { if (!m) return '<span class="cx-st">UNAVAILABLE</span>'; return '<span class="cx-st ' + (m.st === "CALCULATED" ? "C" : "") + '" title="' + esc(m.how || "") + '">' + m.st + (m.approx ? " ≈" : "") + "</span>"; }
   function ttmI(M, k) { return E.ttm(M.quarters, M.quarters.length - 1, k); }
   var DEF = {
+    nii: ["Net interest income", "Interest earned on loans and securities less interest paid on deposits and borrowings."], nonii: ["Non-interest income", "Fees, commissions, trading and other income that is not interest."],
+    nonie: ["Non-interest expense", "Operating costs: compensation, occupancy, technology, other."], prov: ["Provision for credit losses", "Charge to earnings for expected loan losses (CECL)."], nco: ["Net charge-offs", "Loans written off less recoveries."],
+    loans_g: ["Gross loans", "Loans and leases before the allowance for credit losses."], deposits: ["Deposits", "Customer deposits — the main funding source."], acl: ["Allowance for credit losses", "Reserve held against expected loan losses."], npl: ["Non-accrual loans", "Loans no longer accruing interest (the US non-performing measure)."],
+    nim_a: ["Net interest margin (on assets)", "Net interest income, annualised, as a share of average total assets. Banks report NIM on earning assets, which SEC data does not carry, so this reads lower than the reported figure."],
+    eff: ["Efficiency ratio", "Non-interest expense ÷ total net revenue. Lower = more efficient."], fee_mix: ["Fee income share", "Non-interest income ÷ total net revenue."], ldr: ["Loan-to-deposit ratio", "Gross loans ÷ deposits."],
+    acl_pct: ["Allowance ÷ loans", "Allowance for credit losses ÷ gross loans."], npl_pct: ["Non-performing (non-accrual) loans", "Non-accrual loans ÷ gross loans — the US counterpart of the GNPA ratio."], acl_npl: ["Allowance ÷ non-performing loans", "How many times the reserve covers non-accrual loans."],
+    nco_pct: ["Net charge-off rate", "Net charge-offs, annualised, ÷ gross loans."], prov_pct: ["Provision rate", "Provision for credit losses, annualised, ÷ gross loans."], eq_a: ["Equity ÷ assets", "Shareholders’ equity ÷ total assets (book leverage; not the regulatory CET1 ratio)."],
+    roa: ["Return on assets", "Net income, annualised, ÷ average total assets."], wcap: ["Working capital", "Current assets − current liabilities."], inv: ["Inventory", "Inventories at quarter end."], capexint: ["Capex ÷ revenue", "Capital expenditure as a share of revenue."], capexda: ["Capex ÷ depreciation", "Above 1× = growing the asset base."],
     rev: ["Revenue", "Total revenue recognised in the quarter (ASC 606 revenue from contracts with customers, else total revenues)."],
     cogs: ["Cost of revenue", "Direct cost of goods and services sold."], gp: ["Gross profit", "Revenue − cost of revenue."], gm: ["Gross margin", "Gross profit ÷ revenue."],
     sga: ["SG&A", "Selling, general and administrative expense."], rnd: ["R&D", "Research and development expense."], opinc: ["Operating income", "GAAP operating income (loss)."],
@@ -333,12 +343,13 @@
     invgain: ["Equity-investment gains/losses", "Gains (losses) on equity securities recognised in net income — often unrealised mark-to-market."],
     rpo: ["Remaining performance obligations", "Contracted revenue not yet recognised (backlog)."], cfoni_ttm: ["Cash conversion (TTM)", "TTM CFO ÷ TTM net income."],
   };
-  var DAYS = { dso: 1, dio: 1, dpo: 1, ccc: 1 }, XR = { cr: 1, qr: 1, cashr: 1, de: 1, nd_ebitda: 1, int_cov: 1, at: 1, invturn: 1, arturn: 1, apturn: 1, capexda: 1, cfoni_ttm: 1 };
+  var DAYS = { dso: 1, dio: 1, dpo: 1, ccc: 1 }, XR = { acl_npl: 1, cr: 1, qr: 1, cashr: 1, de: 1, nd_ebitda: 1, int_cov: 1, at: 1, invturn: 1, arturn: 1, apturn: 1, capexda: 1, cfoni_ttm: 1 };
   function nm(k) { var m = /^(.*)_(yoy|qoq)$/.exec(k); if (m) return nm(m[1]) + (m[2] === "yoy" ? " — YoY" : " — vs prior quarter"); return (DEF[k] || [k])[0]; }
-  var PCT = { effcost: 1, cashcost: 1, roe: 1, roa: 1, roic: 1, da_r: 1, intburden: 1, fcf_debt: 1, ebitm: 1, gm: 1, opm: 1, nm: 1, ebitdam: 1, fcfm: 1, etr: 1, capexint: 1, fcfconv: 1 };
+  var PCT2 = { nim_a: 1, nco_pct: 1, prov_pct: 1, acl_pct: 1, npl_pct: 1, roa: 1 };
+  var PCT = { nim_a: 1, eff: 1, fee_mix: 1, ldr: 1, acl_pct: 1, npl_pct: 1, nco_pct: 1, prov_pct: 1, eq_a: 1, effcost: 1, cashcost: 1, roe: 1, roa: 1, roic: 1, da_r: 1, intburden: 1, fcf_debt: 1, ebitm: 1, gm: 1, opm: 1, nm: 1, ebitdam: 1, fcfm: 1, etr: 1, capexint: 1, fcfconv: 1 };
   function fv(k, v) { if (v == null) return "—"; var g = /^(.*)_(yoy|qoq)$/.exec(k);
     if (g) { if (DAYS[g[1]]) return (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + " d"; if (XR[g[1]]) return (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "×"; return PCT[g[1]] ? pp(v) : pc(v); }
-    if (k === "nd_ebitda" && v < 0) return "net cash"; if (DAYS[k]) return v.toFixed(1) + " d"; if (XR[k]) return v.toFixed(2) + "×"; if (PCT[k]) return v.toFixed(1) + "%"; if (k === "eps_d") return "$" + v.toFixed(2); if (k === "cfoni") return v.toFixed(2) + "×"; if (k === "sh_d") return f$(v); return money(v); }
+    if (k === "nd_ebitda" && v < 0) return "net cash"; if (DAYS[k]) return v.toFixed(1) + " d"; if (XR[k]) return v.toFixed(2) + "×"; if (PCT[k]) return v.toFixed(PCT2[k] ? 2 : 1) + "%"; if (k === "eps_d") return "$" + v.toFixed(2); if (k === "cfoni") return v.toFixed(2) + "×"; if (k === "sh_d") return f$(v); return money(v); }
 
   /* ---------------- interpretation (rule-based, data-referenced; 9-part contract) ---------------- */
   function interp(M, k, extra) {
@@ -418,8 +429,59 @@
     ["Industry comparison", [["peers", "Peer benchmarks", "Industry median, percentile and named competitors."]]],
     ["Earnings intelligence", [["guide", "Guidance & revisions"], ["mgmt", "Management commentary"], ["aieco", "AI economics"]]],
   ];
-  var BUILT = { matrix: 1, "fin-is": 1, "fin-bs": 1, "fin-cf": 1, est: 1, own: 1, "val-snap": 1, "val-scn": 1, "val-pe": 1, "val-rx": 1, snap: 1, verdicts: 1, health: 1, revenue: 1, gross: 1, operating: 1, eps: 1, cfo: 1, fcf: 1, "wc-ar": 1, "wc-inv": 1, "wc-ap": 1, "wc-ccc": 1, capex: 1, alloc: 1, debt: 1, costdebt: 1, maturity: 1, service: 1, liq: 1, returns: 1, lev: 1, eff: 1, warn: 1 };
-  function cardTitle(id) { var t = ""; PARTS.forEach(function (p) { p[1].forEach(function (c) { if (c[0] === id) t = c[1]; }); }); return t; }
+  var BUILT = { "b-nii": 1, "b-nim": 1, "b-fee": 1, "b-eff": 1, "b-prov": 1, "b-loans": 1, "b-dep": 1, "b-ldr": 1, "b-npl": 1, "b-nco": 1, "b-provr": 1, "b-acl": 1, "b-cov": 1, "b-cap": 1, "b-roa": 1,
+    "m-ebitda": 1, "m-capint": 1, "m-capda": 1, "a-inv": 1, "a-wcap": 1, matrix: 1, "fin-is": 1, "fin-bs": 1, "fin-cf": 1, est: 1, own: 1, "val-snap": 1, "val-scn": 1, "val-pe": 1, "val-rx": 1, snap: 1, verdicts: 1, health: 1, revenue: 1, gross: 1, operating: 1, eps: 1, cfo: 1, fcf: 1, "wc-ar": 1, "wc-inv": 1, "wc-ap": 1, "wc-ccc": 1, capex: 1, alloc: 1, debt: 1, costdebt: 1, maturity: 1, service: 1, liq: 1, returns: 1, lev: 1, eff: 1, warn: 1 };
+  /* ---- industry tile sets (owner, Nov 17 2026): the tiles follow how each industry is analysed. Banks are read through
+     net interest income, margin, loan and deposit growth, asset quality and capital; miners through cost, capital
+     intensity and leverage; agribusiness through thin margins, commodity inventory and working-capital financing. ---- */
+  function profileOf(M) {
+    var s = +(M.co && M.co.sic) || 0, q = M.quarters[M.quarters.length - 1] || { m: {} };
+    if (q.m.nii && q.m.loans_g) return "bank";
+    if ((s >= 1000 && s <= 1499) || (s >= 2911 && s <= 2999)) return "mining";
+    if ((s >= 100 && s <= 999) || (s >= 2000 && s <= 2099) || (s >= 2870 && s <= 2879) || (s >= 5150 && s <= 5159) || s === 5191) return "agri";
+    return "general";
+  }
+  var PROFILE_NAME = { bank: "Bank", mining: "Mining & energy", agri: "Agribusiness & food", general: "General" };
+  var SHARED = { est: ["Estimates", [["est", "Street estimates vs actuals", "Consensus mean, high and low against what was reported, and what is expected next.", null]]],
+    own: ["Ownership", [["own", "Ownership", "Institutions, insiders and the largest holders.", null]]],
+    val: ["Valuation & market", [["val-snap", "Investment snapshot", "Valuation, positives, concerns and what to watch.", null], ["val-scn", "Scenario values", "Bear / base / bull on assumptions you can edit.", null],
+      ["val-pe", "Multiple sensitivity", "What each turn of P/E is worth per share.", null], ["val-rx", "Earnings-day reactions", "How the stock moved on each report, and its worst days.", null]]] };
+  var PARTS_BANK = [
+    ["Company overview", [["snap", "Company snapshot", "Size, growth, profitability and financial structure at a glance.", "rev"], ["b-roa", "Return on assets", "Annualised net income on average assets.", "roa"]]],
+    ["Income statement", [["fin-is", "Income statement", "Every line, every quarter, with YoY and QoQ.", "rev"], ["b-nii", "Net interest income", "Is the core lending spread growing?", "nii"], ["b-nim", "Net interest margin", "Is the margin on the balance sheet widening or narrowing?", "nim_a"],
+      ["b-fee", "Fee & other non-interest income", "How much of revenue comes from fees, trading and markets?", "nonii"], ["b-eff", "Efficiency ratio", "Cost per dollar of revenue — lower is better.", "eff"], ["b-prov", "Provision for credit losses", "How much is being set aside for expected loan losses?", "prov"], ["eps", "Net income & EPS", "What reaches shareholders?", "eps_d"]]],
+    ["Loans & deposits", [["fin-bs", "Balance sheet", "Loans, deposits, allowance and capital at each quarter end.", "assets"], ["b-loans", "Loan growth", "Is the loan book growing?", "loans_g"], ["b-dep", "Deposit growth", "Is the funding base growing?", "deposits"], ["b-ldr", "Loan-to-deposit ratio", "How much of the deposit base is lent out?", "ldr"]]],
+    ["Asset quality", [["b-npl", "Non-performing (non-accrual) loans", "Share of loans no longer accruing interest — the US measure behind GNPA.", "npl_pct"], ["b-nco", "Net charge-off rate", "Loans written off after recoveries, annualised.", "nco_pct"],
+      ["b-provr", "Provision rate", "Provision for credit losses as a share of loans, annualised.", "prov_pct"], ["b-acl", "Allowance / loans", "Reserve held against the loan book.", "acl_pct"], ["b-cov", "Allowance / non-performing loans", "How many times the reserve covers bad loans.", "acl_npl"]]],
+    ["Capital & returns", [["b-cap", "Equity / assets", "Book capital against the balance sheet (not the regulatory CET1 ratio).", "eq_a"], ["returns", "Return on equity", "Annualised net income on equity.", "roe"]]],
+    SHARED.est, SHARED.own, SHARED.val,
+    ["Regulatory & disclosed only", [["cet1", "CET1 / Tier 1 capital ratio"], ["nim-rep", "Reported NIM (earning assets)"], ["depcost", "Deposit costs & mix"]]]];
+  var PARTS_MINING = [
+    ["Company overview", [["snap", "Company snapshot", "Size, growth, profitability and financial structure at a glance.", "rev"], ["verdicts", "Four financial verdicts", "Earnings quality · outlook · resilience · market implication.", null], ["health", "Eight-quarter health history", "Consistently strong, weak, or changing?", null]]],
+    ["Income statement", [["fin-is", "Income statement", "Every line, every quarter, with YoY and QoQ.", "rev"], ["revenue", "Revenue intelligence", "Price- and volume-driven growth?", "rev"], ["gross", "Cost of sales & gross margin", "Are site costs rising faster than revenue?", "gm"], ["m-ebitda", "EBITDA margin", "Cash earnings before the heavy depreciation of mines and wells.", "ebitdam"], ["operating", "Operating profitability", "Operating leverage to prices?", "opm"], ["eps", "Net income & EPS", "What reaches shareholders?", "eps_d"]]],
+    ["Capital intensity & cash flow", [["fin-cf", "Cash flow statement", "Operating, investing and financing cash, every quarter.", "cfo"], ["capex", "Capital expenditure", "Sustaining or growing the asset base?", "capex"], ["m-capint", "Capex / revenue", "Share of revenue re-invested.", "capexint"], ["m-capda", "Capex / depreciation", "Above 1× = expanding, below = harvesting.", "capexda"], ["fcf", "Free cash flow", "Cash left after investing?", "fcf"], ["alloc", "Capital allocation", "Dividends, buybacks, debt repayment?", "shret"]]],
+    ["Balance sheet & leverage", [["fin-bs", "Balance sheet", "Assets, liabilities and equity at each quarter end.", "assets"], ["debt", "Debt structure", "How is the company financed?", "gdebt"], ["lev", "Net debt / EBITDA", "Leverage through the commodity cycle.", "nd_ebitda"], ["service", "Debt servicing capacity", "Interest cover at today's prices?", "int_cov"], ["maturity", "Maturities & refinancing", "Is a large refinancing coming?", null], ["liq", "Liquidity", "Can it meet short-term obligations?", "cr"]]],
+    ["Returns & warnings", [["returns", "Profitability & returns", "Return on capital deployed in the ground?", "roe"], ["warn", "Early-warning signals", "Twelve rules, with persistence and evidence.", null]]],
+    SHARED.est, SHARED.own, SHARED.val,
+    ["Disclosed by the company only", [["prod", "Production volumes"], ["ucost", "Unit cash costs (C1 / AISC / lifting cost)"], ["resv", "Reserves & resources"]]]];
+  var PARTS_AGRI = [
+    ["Company overview", [["snap", "Company snapshot", "Size, growth, profitability and financial structure at a glance.", "rev"], ["verdicts", "Four financial verdicts", "Earnings quality · outlook · resilience · market implication.", null], ["health", "Eight-quarter health history", "Consistently strong, weak, or changing?", null]]],
+    ["Income statement", [["fin-is", "Income statement", "Every line, every quarter, with YoY and QoQ.", "rev"], ["revenue", "Revenue intelligence", "Price pass-through or volume?", "rev"], ["gross", "Gross margin (thin-margin trade)", "Are processing and merchandising margins holding?", "gm"], ["operating", "Operating profitability", "Is scale producing leverage?", "opm"], ["eps", "Net income & EPS", "What reaches shareholders?", "eps_d"]]],
+    ["Commodity inventory & working capital", [["wc-inv", "Inventory days", "Commodity stocks carried — the core risk and financing need.", "dio"], ["a-inv", "Inventory value", "Dollar value of commodity inventories.", "inv"], ["wc-ar", "Receivables & collection", "Are customers taking longer to pay?", "dso"], ["wc-ap", "Payables & supplier financing", "Farmer and supplier terms.", "dpo"], ["wc-ccc", "Cash conversion cycle", "How long is cash tied up in grain?", "ccc"], ["a-wcap", "Working capital", "Current assets less current liabilities.", "wcap"]]],
+    ["Balance sheet & financing", [["fin-bs", "Balance sheet", "Assets, liabilities and equity at each quarter end.", "assets"], ["debt", "Debt structure", "Short-term borrowing funds the inventory.", "gdebt"], ["costdebt", "Blended cost of debt", "Is carrying inventory getting more expensive?", "effcost"], ["service", "Debt servicing capacity", "Can earnings carry the debt?", "int_cov"], ["liq", "Liquidity", "Can it meet short-term obligations?", "cr"], ["lev", "Leverage & solvency", "Is leverage rising faster than earnings?", "nd_ebitda"]]],
+    ["Cash flow", [["fin-cf", "Cash flow statement", "Operating, investing and financing cash, every quarter.", "cfo"], ["cfo", "Operating cash flow", "Working-capital swings drive this line.", "cfo"], ["fcf", "Free cash flow", "Cash left after investing?", "fcf"], ["capex", "Capital expenditure", "Plants, elevators, logistics?", "capex"], ["alloc", "Capital allocation", "Where is the cash going?", "shret"]]],
+    ["Returns & warnings", [["returns", "Profitability & returns", "Return on a heavy working-capital base?", "roe"], ["warn", "Early-warning signals", "Twelve rules, with persistence and evidence.", null]]],
+    SHARED.est, SHARED.own, SHARED.val,
+    ["Disclosed by the company only", [["seg", "Segment results (crush, origination, nutrition)"], ["rmi", "Readily marketable inventories"], ["vol", "Volumes handled"]]]];
+  function partsOf(M) { var p = M ? profileOf(M) : "general"; return p === "bank" ? PARTS_BANK : p === "mining" ? PARTS_MINING : p === "agri" ? PARTS_AGRI : PARTS; }
+  /* one card for every ratio tile that has no dedicated card: what it is, how it is calculated, then the detail panel */
+  function metricCard(id, k) {
+    return function (M) {
+      var lab = cardTitle(id) || nm(k), def = DEF[k] || [], q = L(M), m = q.m[k];
+      return shell(M, id, '<p class="mc-d">' + esc(def[1] || "") + (m && m.how ? ' <small>Calculated: ' + esc(m.how) + ".</small>" : "") + "</p>" + gDetail(M, id, k, lab, true));
+    };
+  }
+  function cardTitle(id) { var t = ""; PARTS.concat(PARTS_BANK, PARTS_MINING, PARTS_AGRI).forEach(function (p) { p[1].forEach(function (c) { if (c[0] === id) t = c[1]; }); }); return t; }
 
   /* press-release figures (8-K exhibit 99.1, read by the fast lane minutes after filing) for a quarter not yet in XBRL */
   /* a release is "ahead of the filings" only when the latest filed quarter is the one BEFORE it: a release comes ~3–8 weeks
@@ -873,7 +935,7 @@
     if (DAYS[k]) return { t: (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(1) + " d", v: d };
     if (XR[k]) return { t: (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(2) + "×", v: d };
     if (!b) return null; var g = (a / b - 1) * 100 * (b < 0 ? -1 : 1); return { t: (g > 0 ? "+" : g < 0 ? "−" : "") + Math.abs(g).toFixed(1) + "%", v: g }; }
-  function gDetail(M, id, k, label) {
+  function gDetail(M, id, k, label, inCard) {
     var P = S(M, k).filter(function (z) { return z.v != null; }); if (!P.length) return "";
     var last5 = P.slice(-5), c = last5[last5.length - 1], pq = P.length > 1 ? P[P.length - 2] : null, ya = P.length > 4 ? P[P.length - 5] : null, md = med(last5.map(function (z) { return z.v; }));
     var f = function (v) { return fv(k, v); }, tn = function (x) { return x == null ? "" : tone(k, x.v) > 0.05 ? "pos" : tone(k, x.v) < -0.05 ? "neg" : ""; };
@@ -897,7 +959,7 @@
     if (dq && dy && dq.v && dy.v) read.push((dq.v > 0) === (dy.v > 0) ? (dq.v > 0 ? "Higher" : "Lower") + " than both the prior quarter (" + dq.t + ") and a year ago (" + dy.t + ")." : "Mixed: " + dq.t + " on the prior quarter, " + dy.t + " on a year ago.");
     else if (dq && dy) read.push((dq.v ? dq.t + " on the prior quarter" : "Unchanged on the prior quarter") + ", " + (dy.v ? dy.t + " on a year ago." : "unchanged on a year ago."));
     if (dy && Math.abs(tone(k, dy.v)) > 0.05) read.push("Year on year this is " + (tone(k, dy.v) > 0 ? "an improvement" : "a deterioration") + (DAYS[k] || /debt|ap$|cogs|capex/.test(k) ? " (for this line, lower is better)." : "."));
-    return '<div class="rsd gd" role="region" aria-label="' + esc(label) + ' detail"><div class="rd-h"><b>' + esc(label) + '</b><span>QoQ · YoY · ' + last5.length + '-quarter median</span><button class="ue-btn" data-cocard="' + id + '">Open full card ›</button><button class="ue-btn" data-cogd="' + id + '" aria-label="Close">✕</button></div>' +
+    return '<div class="rsd gd" role="region" aria-label="' + esc(label) + ' detail"><div class="rd-h"><b>' + esc(label) + '</b><span>QoQ · YoY · ' + last5.length + '-quarter median</span>' + (inCard ? "" : '<button class="ue-btn" data-cocard="' + id + '">Open full card ›</button><button class="ue-btn" data-cogd="' + id + '" aria-label="Close">✕</button>') + "</div>" +
       '<div class="rd-g">' + vs + '</div><div class="rd-2"><div><svg class="rd-svg" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(label) + ', last quarters">' + g + "</svg>" +
       (md != null ? '<div class="legend"><span><span class="sw" style="background:#38b6c9"></span>Latest quarter</span><span><span class="sw" style="background:#3a4a60"></span>Earlier quarters</span><span><span class="sw" style="background:#e8a33d"></span>Median ' + f(md) + "</span></div>" : "") + "</div>" + tb + "</div>" +
       (read.length ? '<p class="rd-r">' + read.join(" ") + "</p>" : "") + '<div class="stamp">From SEC 10-Q/10-K filings, calculated the same way as the full card. Green = better, red = worse for this line. Median = middle value of the quarters shown.</div></div>';
@@ -905,17 +967,19 @@
   function grid(M, VV) {
     var q = L(M), co = M.co;
     function tv(id, l) { return '<button data-cotv="' + id + '" aria-pressed="' + (TV === id) + '">' + l + "</button>"; }
-    return '<div class="cx-top"><div class="cx-id"><span class="tk">' + esc(co.ticker) + "</span><div><b>" + esc(co.name) + "</b><small>" + esc(M.sector) + (co.sicDescription ? " · " + esc(co.sicDescription) : "") + " · latest filed quarter " + esc(q.fl.label) + " (" + esc(q.end) + ")</small></div></div>" +
+    return '<div class="cx-top"><div class="cx-id"><span class="tk">' + esc(co.ticker) + "</span><div><b>" + esc(co.name) + "</b><small>" + esc(M.sector) + (co.sicDescription ? " · " + esc(co.sicDescription) : "") + " · latest quarter " + esc(q.fl.label) + " (" + esc(q.end) + ')<span class="cx-prof">' + PROFILE_NAME[profileOf(M)] + " tiles</span></small></div></div>" +
       '<div class="cx-vw" role="group" aria-label="Tile view"><span>Tiles</span>' + tv("chart", "Chart") + tv("table", "Table") + tv("both", "Both") + "</div></div>" +
       results(M) + '<div class="tile">' +
       (M.model.note ? '<div class="ut-ask" style="margin:6px 0">' + esc(M.model.note) + "</div>" : "") +
-      PARTS.map(function (p) {
+      partsOf(M).map(function (p) {
         if (!p[1].some(function (c) { return BUILT[c[0]]; }))
-          return '<div class="cx-part dim">' + p[0] + ' <span>— not available yet: ' + p[1].map(function (c) { return esc(c[1]); }).join(" · ") + "</span></div>";
+          return '<div class="cx-part dim">' + p[0] + ' <span>— ' + (/only/.test(p[0]) ? "in the company’s own reports, not in SEC’s data feed" : "not available yet") + ": " + p[1].map(function (c) { return esc(c[1]); }).join(" · ") + "</span></div>";
         return '<div class="cx-part">' + p[0] + '</div><div class="cx-grid">' + p[1].map(function (c) {
         var b = BUILT[c[0]], k = c[3] === "opm" && E.val(q, "opm") == null ? "ebitm" : c[3], kv = "", sp = "", tb = "", tn = null;
-        if (b && k) { var qx = q; if (!(q.m[k] && q.m[k].v != null) && q.pr && M.quarters.length > 1) qx = M.quarters[M.quarters.length - 2];   /* a line the release does not give: the last filed quarter, labelled */
-          var m = qx.m[k], y = qx.m[k + "_yoy"]; kv = '<div class="k">' + fv(k, m && m.v) + "</div>" + (y ? '<div class="n">' + sgc(tone(k, y.v), fv(k + "_yoy", y.v)) + " YoY · " + esc(qx.fl.label) + "</div>" : '<div class="n">' + esc(qx.fl.label) + "</div>"); sp = TV !== "table" ? spark(S(M, k)) : ""; tb = TV !== "chart" ? miniT(M, k) : ""; tn = y ? tone(k, y.v) : null; }
+        if (b && k) { var qx = q;   /* a line missing in the latest quarter (not in the release, or no longer tagged): the latest quarter that has it, labelled */
+          if (!(q.m[k] && q.m[k].v != null)) for (var jj = M.quarters.length - 2; jj >= Math.max(0, M.quarters.length - 5); jj--) { if (M.quarters[jj].m[k] && M.quarters[jj].m[k].v != null) { qx = M.quarters[jj]; break; } }
+          var m = qx.m[k], y = qx.m[k + "_yoy"], asof = qx !== q ? ' <span class="cx-asof">latest reported</span>' : "";
+          kv = '<div class="k">' + fv(k, m && m.v) + "</div>" + (y ? '<div class="n">' + sgc(tone(k, y.v), fv(k + "_yoy", y.v)) + " YoY · " + esc(qx.fl.label) + asof + "</div>" : '<div class="n">' + esc(qx.fl.label) + asof + "</div>"); sp = TV !== "table" ? spark(S(M, k)) : ""; tb = TV !== "chart" ? miniT(M, k) : ""; tn = y ? tone(k, y.v) : null; }
         if (/^val-/.test(c[0])) { var VV2 = E.valuation(M, (MEM[M.co.ticker] || {}).P);
           kv = VV2 ? '<div class="k">$' + VV2.price.toFixed(2) + '</div><div class="n">' + (c[0] === "val-snap" ? "P/E " + (VV2.pe ? VV2.pe.toFixed(1) + "×" : "n/m") + (VV2.pe_core ? " · core " + VV2.pe_core.toFixed(1) + "×" : "") : c[0] === "val-rx" ? "close " + esc(VV2.date) : "price " + esc(VV2.date)) + "</div>" : '<div class="n">price history unavailable</div>'; }
         if (c[0] === "est") { var C2 = estCols(M), nx2 = C2.filter(function (z) { return z.next; })[0], rc2 = C2.filter(function (z) { return z.past; }).slice(-1)[0];
@@ -927,7 +991,7 @@
           kv = '<div class="k">' + act.length + ' <small style="font-size:12px;color:var(--muted)">active of 12</small></div><div class="n">' + (act.length ? act.map(function (w) { return '<span class="cx-vd ' + (w.severity === "WATCH" ? "WEAK" : "NEGATIVE") + '" style="font-size:9px;padding:1px 5px">' + w.id + "</span>"; }).join(" ") : "none triggered") + "</div>"; }
         if (c[0] === "verdicts") kv = '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">' + VV.verdicts.map(function (v) { return '<span class="cx-vd ' + v.verdict + '" title="' + esc(v.name) + '">' + v.name.split(" ").map(function (w) { return w[0]; }).join("") + " " + v.verdict + "</span>"; }).join("") + "</div>";
         if (c[0] === "health") { var st = E.streak(VV.history, "eq"); kv = '<div class="n" style="margin-top:6px">' + VV.history.map(function (h) { return '<span class="cx-vd ' + h.eq + '" style="padding:1px 4px;font-size:9px">' + h.eq[0] + "</span>"; }).join(" ") + "</div>" + (st.n ? '<div class="n">' + st.n + " quarter" + (st.n > 1 ? "s" : "") + " " + (st.dir > 0 ? "improving" : "deteriorating") + "</div>" : ""); }
-        var nd = b && has(M.co.ticker, c[0]) === false, cls = nd ? " nodata" : tn == null || Math.abs(tn) < 0.05 ? "" : tn > 0 ? " good" : " bad";
+        var nd = b && has(M.co.ticker, c[0]) === false && !(k && S(M, k).some(function (z) { return z.v != null; })), cls = nd ? " nodata" : tn == null || Math.abs(tn) < 0.05 ? "" : tn > 0 ? " good" : " bad";
         var gk = b && !nd && k && S(M, k).filter(function (z) { return z.v != null; }).length ? k : null;
         return (GD && GD.id === c[0] ? "" : "") + '<button class="cx-card' + cls + (GD && GD.id === c[0] ? " on" : "") + '" ' + (gk ? 'data-cogd="' + c[0] + '" data-cok="' + gk + '" data-col="' + esc(c[1]) + '" aria-expanded="' + !!(GD && GD.id === c[0]) + '"' : 'data-cocard="' + c[0] + '"') + (b && !nd ? "" : " disabled") + (nd ? ' title="Not reported by this company"' : "") + '><span class="t">' + esc(c[1]) + "</span>" + kv + (sp ? "<div>" + sp + "</div>" : "") + tb + '<span class="q">' + esc(c[2] || "") + (b ? (nd ? " · not reported" : "") : " · next phase") + "</span></button>" + (GD && GD.id === c[0] ? gDetail(M, c[0], GD.k, c[1]) : ""); }).join("") + "</div>"; }).join("") +
       '<div class="stamp">Cards draw on SEC EDGAR filings fetched live — nothing is stored. Tile shading: green = better than a year ago, red = worse (for costs, debt and days, lower is better). Dimmed tiles have no figures for this company.</div></div>';
@@ -993,6 +1057,10 @@
     bs: [["cash", "Cash & equivalents", "$"], ["sti", "Short-term investments", "$"], ["ar", "Accounts receivable", "$"], ["inv", "Inventory", "$"], ["ca", "Total current assets", "$"], ["assets", "Total assets", "$"],
       ["ap", "Accounts payable", "$"], ["accr", "Accrued liabilities", "$"], ["defrev", "Deferred revenue", "$"], ["stdebt", "Short-term debt", "$"], ["cl", "Total current liabilities", "$"], ["ltd_nc", "Long-term debt", "$"],
       ["oplease", "Operating lease liabilities", "$"], ["liab", "Total liabilities", "$"], ["eq", "Shareholders’ equity", "$"], ["gdebt", "Total debt", "$"], ["ndebt", "Net debt", "$d"], ["wcap", "Working capital", "$d"], ["cr", "Current ratio", "x"]],
+    bpl: [["intinc", "Interest income", "$"], ["intexp_op", "Interest expense", "$"], ["nii", "Net interest income", "$"], ["nonii", "Non-interest income", "$"], ["rev", "Total net revenue", "$"], ["nonie", "Non-interest expense", "$"], ["eff", "Efficiency ratio %", "%"],
+      ["prov", "Provision for credit losses", "$"], ["pretax", "Pre-tax income", "$"], ["tax", "Tax provision", "$"], ["ni", "Net income", "$"], ["eps_d", "Diluted EPS", "eps"], ["nim_a", "NII ÷ avg assets % (annualised)", "%"]],
+    bbs: [["cash", "Cash & equivalents", "$"], ["loans_g", "Gross loans", "$"], ["acl", "Allowance for credit losses", "$"], ["npl", "Non-accrual loans", "$"], ["assets", "Total assets", "$"], ["deposits", "Deposits", "$"], ["ltd", "Long-term debt", "$"],
+      ["liab", "Total liabilities", "$"], ["eq", "Shareholders’ equity", "$"], ["ldr", "Loan-to-deposit %", "%"], ["acl_pct", "Allowance ÷ loans %", "%"], ["npl_pct", "Non-accrual ÷ loans %", "%"], ["eq_a", "Equity ÷ assets %", "%"]],
     cf: [["cfo", "Operating cash flow", "$"], ["da", "Depreciation & amortisation", "$"], ["sbc", "Stock-based compensation", "$"], ["capex", "Capex (PP&E payments)", "$"], ["fcf", "Free cash flow", "$"], ["fcfm", "FCF margin %", "%"],
       ["acq", "Acquisitions", "$"], ["div", "Dividends paid", "$"], ["buyback", "Share buybacks", "$"], ["eqiss", "Stock issued", "$"], ["dissue", "Debt issued", "$"], ["drepay", "Debt repaid", "$"]] };
   function mxv(m, k) {   /* value + whether derived; operating expenses and other income are calculated when not tagged */
@@ -1022,11 +1090,11 @@
     if (t === "%") { var d = Math.round((a - b) * 10) / 10; return { s: (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(1) + " pp", v: d }; }
     if (t === "x") { var dx = a - b; return { s: (dx > 0 ? "+" : dx < 0 ? "−" : "") + Math.abs(dx).toFixed(2) + "×", v: dx }; }
     if (t === "$d" || b === 0 || (a < 0) !== (b < 0)) { var d2 = a - b; return { s: (d2 > 0 ? "+" : d2 < 0 ? "−" : "") + mxf("$", Math.abs(d2)).replace("−", ""), v: d2 }; }
-    var p = (a / b - 1) * 100 * (b < 0 ? -1 : 1); return { s: (p > 0 ? "+" : p < 0 ? "−" : "") + Math.abs(p).toFixed(1) + "%", v: p };
+    var p = Math.round((a / b - 1) * 1000 * (b < 0 ? -1 : 1)) / 10; return { s: (p > 0 ? "+" : p < 0 ? "−" : "") + Math.abs(p).toFixed(1) + "%", v: p };
   }
   function matrixCard(M, kind) {
     MX = kind || "fy";
-    var Q = M.quarters.slice(-10), FY = MX === "bs" ? [] : fyTotals(M).slice(-2), rows = MXROWS[MX === "fy" ? "pl" : MX].filter(function (r) { return Q.some(function (q) { return mxv(q.m, r[0]); }); });   /* lines the company never files stay hidden */
+    var Q = M.quarters.slice(-10), FY = MX === "bs" ? [] : fyTotals(M).slice(-2), rows = MXROWS[profileOf(M) === "bank" && (MX === "pl" || MX === "bs") ? "b" + MX : MX === "fy" ? (profileOf(M) === "bank" ? "bpl" : "pl") : MX].filter(function (r) { return Q.some(function (q) { return mxv(q.m, r[0]); }); });   /* lines the company never files stay hidden */
     var yo = function (q) { var i = M.quarters.indexOf(q); for (var j = i - 1; j >= 0; j--) { var d = (Date.parse(q.end) - Date.parse(M.quarters[j].end)) / 864e5; if (d >= 350 && d <= 380) return M.quarters[j]; if (d > 380) break; } return null; };
     var pq = function (q) { var i = M.quarters.indexOf(q); return i > 0 ? M.quarters[i - 1] : null; };
     var tone = function (k, v) { return v == null || Math.abs(v) < 0.05 ? "" : (/^(rnd|sga|opx|tax|capex|etr|cogs|ap|accr|stdebt|cl|ltd_nc|oplease|liab|gdebt|ndebt|div|buyback|acq|drepay|sbc|sh_d)$/.test(k) ? -v : v) > 0 ? "pos" : "neg"; };
@@ -1457,7 +1525,10 @@
   var CARDS = { snap: snapCard, verdicts: verdictCard, health: healthCard, revenue: revenueCard, gross: grossCard, operating: operatingCard, eps: epsCard, cfo: cfoCard, fcf: fcfCard,
     "wc-ar": arCard, "wc-inv": invCard, "wc-ap": apCard, "wc-ccc": cccCard, capex: capexCard, alloc: allocCard, debt: debtCard, costdebt: costCard, maturity: maturityCard, service: serviceCard,
     matrix: function (M) { return matrixCard(M, "fy"); }, "fin-is": function (M) { return matrixCard(M, "pl"); }, "fin-bs": function (M) { return matrixCard(M, "bs"); }, "fin-cf": function (M) { return matrixCard(M, "cf"); },
-    est: estCard, own: ownCard, liq: liqCard, returns: returnsCard, lev: levCard, eff: effCard, warn: warnCard, "val-snap": vsnapCard, "val-scn": vscnCard, "val-pe": vpeCard, "val-rx": vrxCard };
+    est: estCard, own: ownCard, "b-nii": metricCard("b-nii", "nii"), "b-nim": metricCard("b-nim", "nim_a"), "b-fee": metricCard("b-fee", "nonii"), "b-eff": metricCard("b-eff", "eff"), "b-prov": metricCard("b-prov", "prov"),
+    "b-loans": metricCard("b-loans", "loans_g"), "b-dep": metricCard("b-dep", "deposits"), "b-ldr": metricCard("b-ldr", "ldr"), "b-npl": metricCard("b-npl", "npl_pct"), "b-nco": metricCard("b-nco", "nco_pct"), "b-provr": metricCard("b-provr", "prov_pct"),
+    "b-acl": metricCard("b-acl", "acl_pct"), "b-cov": metricCard("b-cov", "acl_npl"), "b-cap": metricCard("b-cap", "eq_a"), "b-roa": metricCard("b-roa", "roa"),
+    "m-ebitda": metricCard("m-ebitda", "ebitdam"), "m-capint": metricCard("m-capint", "capexint"), "m-capda": metricCard("m-capda", "capexda"), "a-inv": metricCard("a-inv", "inv"), "a-wcap": metricCard("a-wcap", "wcap"), liq: liqCard, returns: returnsCard, lev: levCard, eff: effCard, warn: warnCard, "val-snap": vsnapCard, "val-scn": vscnCard, "val-pe": vpeCard, "val-rx": vrxCard };
   /* every new company opens on animated placeholders, one per section — never the previous company's numbers */
   function skeleton(t) {
     var sec = [["Company profile", 2], ["Price & valuation", 3], ["Revenue & profitability", 3], ["Cash flow", 3], ["Balance sheet", 3], ["Financial verdicts", 4], ["Historical charts", 0]];
@@ -1569,5 +1640,5 @@
       id === "est" || id === "own" ? (STR[t] && STR[t].loading ? null : id === "est" ? !!(SD(D.M) && SD(D.M).hist && (SD(D.M).hist.length || SD(D.M).trend.length)) : !!(SD(D.M) && SD(D.M).own && SD(D.M).own.inst_pct != null)) : hasData(CARDS[id] && CARDS[id](D.M, D.V)); } catch (e) { R[id] = false; } }
     return R[id];
   }
-  window.COMPANY = { _m: function (t) { return MEM[t] && MEM[t].M; }, _prs: function (t) { return PRS[t]; }, status: status, has: has, name: function (t) { var D = MEM[t]; return D && D.co ? D.co.name : ""; }, card: function () { return card; }, parts: function () { return PARTS; }, show: function (key) { card = key || null; rerender(); }, html: html, search: search, configured: function () { return !!worker(); }, reset: function (keep) { card = null; cancelAll(keep); }, retry: function (t) { delete MEM[t]; delete READY[t]; rerender(); }, _mem: MEM };
+  window.COMPANY = { _m: function (t) { return MEM[t] && MEM[t].M; }, _prs: function (t) { return PRS[t]; }, status: status, has: has, name: function (t) { var D = MEM[t]; return D && D.co ? D.co.name : ""; }, card: function () { return card; }, parts: function (t) { var D = t && MEM[t]; return D && D.M ? partsOf(D.M) : PARTS; }, profile: function (t) { var D = t && MEM[t]; return D && D.M ? PROFILE_NAME[profileOf(D.M)] : ""; }, show: function (key) { card = key || null; rerender(); }, html: html, search: search, configured: function () { return !!worker(); }, reset: function (keep) { card = null; cancelAll(keep); }, retry: function (t) { delete MEM[t]; delete READY[t]; rerender(); }, _mem: MEM };
 })();
