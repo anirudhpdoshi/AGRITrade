@@ -44,7 +44,7 @@
     Promise.all([a, b]).then(function (x) {
       if (MEM[t] && MEM[t].ac !== ac) return;   /* superseded or cancelled: never paint a stale reply */
       if (!co_ok(x[0], t)) { MEM[t] = { err: "the reply was for a different company (" + esc(x[0] && x[0].ticker) + ")" }; rerender(); return; }
-      var co = x[0], M = E.build(co); MEM[t] = { co: co, M: M, P: x[1], V: E.verdicts(M, x[1]), at: new Date().toISOString() }; rerender(); ping(t);
+      var co = x[0], M = E.build(co); MEM[t] = { co: co, M: M, P: x[1], V: E.verdicts(M, x[1]), at: new Date().toISOString() }; rerender(); ping(t); prQuarter(t);
     }).catch(function (e) { if (e && e.name === "AbortError") return; if (MEM[t] && MEM[t].ac !== ac) return; MEM[t] = { err: String(e.message || e) }; rerender(); ping(t); });
   }
 
@@ -96,6 +96,13 @@
     ".rd-2{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;margin-top:10px;align-items:start}.rd-svg{width:100%;height:auto;display:block}.rd-p{fill:#3a4a60}.rd-c{fill:#38b6c9}.rd-v{fill:#dfe6f0;font:600 11px 'IBM Plex Mono',monospace}.rd-x{fill:#8f9db3;font:10.5px 'IBM Plex Mono',monospace}.rd-x.c{fill:#7dd8e6;font-weight:700}" +
     ".rd-m{stroke:#e8a33d;stroke-dasharray:5 4;stroke-width:1.5}.rd-ml{fill:#e8a33d;font:600 10.5px 'IBM Plex Mono',monospace}.rd-t td,.rd-t th{text-align:right}.rd-t td:first-child,.rd-t th:first-child{text-align:left}.rd-t tr.rd-now td{background:rgba(56,182,201,.1);font-weight:600}" +
     ".cx-grid>.gd{grid-column:1/-1;margin-top:0}.cx-card.on{outline:2px solid #38b6c9;outline-offset:1px}.rsd .stamp{font-size:11.5px;color:var(--faint);line-height:1.45;margin-top:6px}.rd-r{margin:8px 0 0;font-size:13px;color:#dfe6f0;line-height:1.45}@media (max-width:760px){.rd-g{grid-template-columns:1fr 1fr}.rd-2{grid-template-columns:1fr}}" +
+    ".mi-b{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}.mi-b li{padding:6px 10px 6px 12px;border-radius:6px;font-size:13px;line-height:1.4;border-left:3px solid #5b6b82;background:#0a0e15}" +
+    ".mi-b li.g{border-left-color:#3fb97f;background:rgba(63,185,127,.08)}.mi-b li.r{border-left-color:#e0453a;background:rgba(224,69,58,.09)}.mi-b li.a{border-left-color:#e8a33d;background:rgba(232,163,61,.08)}" +
+    ".mi-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:6px}.mi-c{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#05070b}.mi-c h4{margin:0 0 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}" +
+    ".mi-c.g h4{color:#3fb97f}.mi-c.r h4{color:#ff7b72}.mi-c.a h4{color:#e8a33d}.mi-c h4 small{color:var(--faint);font-weight:400}.mi-c ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}" +
+    ".mi-c li{font-size:12.5px;line-height:1.45;color:#dfe6f0;padding-left:8px;border-left:2px solid}.mi-c li.g{border-color:#3fb97f}.mi-c li.r{border-color:#e0453a}.mi-c li.a{border-color:#e8a33d}" +
+    ".mi-c li em{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;font-style:normal}.mi-c li em i{font:600 9.5px 'IBM Plex Mono',monospace;font-style:normal;padding:1px 6px;border-radius:999px;background:#1a2433;color:#aebbd0}" +
+    "@media (max-width:900px){.mi-g{grid-template-columns:1fr}}" +
     ".cx-part.dim{opacity:.45}.cx-part.dim span{letter-spacing:0;text-transform:none;color:var(--faint)}" +
     "@media (max-width:640px){.rs-g{grid-template-columns:1fr 1fr}.rs-t .v{font-size:18px}.rs-sc{margin-left:0}.cx-vw{width:100%}.cx-vw button{flex:1}}" +
     ".cx-card{appearance:none;text-align:left;font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:11px 13px;display:flex;flex-direction:column;gap:3px;min-height:132px;transition:border-color .12s,transform .12s}" +
@@ -412,10 +419,205 @@
   /* a release is "ahead of the filings" only when the latest filed quarter is the one BEFORE it: a release comes ~3–8 weeks
      after its quarter ends, so once the reported quarter is filed (release − quarter end < ~75 days) the cards are current */
   function afterFiled(relDate, qEnd) { return (Date.parse(relDate + "T12:00:00Z") - Date.parse(qEnd + "T12:00:00Z")) / 864e5 > 75; }
-  function prFor(M) { var P = window.DESK_EARN_PR || {}, a = P[M.co.ticker], b = LPR[M.co.ticker], q = L(M); b = b && b.nums ? b : null;
-    var x = a && b ? (b.date > a.date ? b : a) : a || b; return x && afterFiled(x.date, q.end) ? x : null; }
+  /* ---- press-release statements (owner, Nov 17 2026): between the earnings release and the 10-Q/10-K, the release's own
+     condensed income statement, balance sheet and cash-flow statement stand in for the new quarter, so every tile (inventory,
+     receivables, debt, cash flow…) moves to that quarter instead of staying a quarter behind. Unaudited; marked with *. ---- */
+  var MON = { january: 0, february: 1, march: 2, april: 3, may: 4, june: 5, july: 6, august: 7, september: 8, october: 9, november: 10, december: 11 };
+  function prStatements(html) {
+    var doc = new DOMParser().parseFromString(html, "text/html"), out = { is: {}, bs: {}, cf: {}, py: {} }, ends = [];
+    function txt(n) { return (n.textContent || "").replace(/ /g, " ").replace(/\s+/g, " ").trim(); }
+    function num(c) { var x = c.replace(/[$,\s]/g, ""); if (/^[—–-]+$/.test(x)) return 0; var neg = /^\(.*\)$/.test(x) || /^\(/.test(x); x = x.replace(/[()]/g, ""); return /^-?\d+(\.\d+)?$/.test(x) ? (neg ? -1 : 1) * +x : null; }
+    var lastKind = null;
+    [].forEach.call(doc.querySelectorAll("table"), function (T) {
+      var rows = [].map.call(T.querySelectorAll("tr"), function (tr) { return [].map.call(tr.querySelectorAll("td,th"), txt).filter(function (c) { return c && c !== "$" && c !== ")" && c !== "%"; }); }).filter(function (r) { return r.length; });
+      var all = rows.map(function (r) { return r.join(" "); }).join(" | ").toLowerCase(), prev = "", el = T;
+      for (var i = 0; i < 6 && el; i++) { el = el.previousElementSibling; if (el) prev = txt(el).toLowerCase() + " " + prev; }
+      var unit = /in thousands/.test(all + prev) ? 1e3 : /in billions/.test(all + prev) ? 1e9 : /in millions/.test(all + prev) ? 1e6 : null;
+      var kind = /total assets/.test(all) && /total liabilities/.test(all) ? "bs" : /operating activities/.test(all) && /investing activities/.test(all) ? "cf" : /net income|net earnings/.test(all) && /revenue|net sales/.test(all) && /per share/.test(all) && /cost of/.test(all) ? "is" : null;
+      var cont = false;
+      if (!kind && lastKind === "cf" && /financing activities|dividends paid|repurchase/.test(all)) { kind = "cf"; cont = true; }   /* the statement continues in the next table */
+      if (!kind) { if (rows.some(function (r) { return r.some(function (c) { return num(c) != null; }); })) lastKind = null; return; }
+      if (!cont && out[kind]._done) return;
+      var fr = 0; while (fr < rows.length && !rows[fr].some(function (c) { return num(c) != null && !/^20\d\d$/.test(c.replace(/[,\s]/g, "")); })) fr++;   /* header = the rows before the first figure */
+      var hd = rows.slice(0, Math.max(4, fr)).map(function (r) { return r.join(" "); }).join(" ").toLowerCase() + " " + prev.slice(-300);
+      if (!cont && kind !== "bs" && !/three months|quarter ended|thirteen weeks|fourteen weeks/.test(hd)) return;   /* only a three-month column */
+      lastKind = kind;
+      var dm = hd.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}/), yr = hd.match(/\b(20\d\d)\b/);
+      if (dm && yr && !cont) { var dd = dm[0].split(/\s+/), dt = new Date(Date.UTC(+yr[1], MON[dd[0]], +dd[1])); ends.push(dt.toISOString().slice(0, 10)); }
+      var u = unit || 1e6, L = out[kind], sec = "";
+      /* income statement: the second column is the same quarter a year earlier when the header's second date is a year back */
+      var hds = (hd.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}/g) || []), hys = hd.match(/\b20\d\d\b/g) || [];
+      var pyCol = kind === "is" && hys.length >= 2 && +hys[1] === +hys[0] - 1 && hds.length >= 2;
+      rows.forEach(function (r) {
+        var lab = (r.filter(function (c) { return num(c) == null; })[0] || "").toLowerCase().replace(/:$/, "").trim(), nums = r.map(num).filter(function (v) { return v != null; });
+        if (!nums.length) { if (lab) sec = lab; return; }
+        var v = nums[0], v1 = nums.length > 1 ? nums[1] : null;
+        function put(k, x) { if (L[k] == null) { L[k] = x; if (kind === "is" && pyCol && v1 != null && out.py[k] == null) out.py[k] = k === "eps_d" ? v1 : v1 * u; } }
+        if (kind === "bs") {
+          if (/^cash and cash equivalents$/.test(lab)) put("cash", v * u);
+          else if (/^(marketable (debt )?securities|short-term investments)/.test(lab)) put("sti", v * u);
+          else if (/^accounts receivable/.test(lab)) put("ar", v * u);
+          else if (/^inventor(y|ies)(, net)?$/.test(lab)) put("inv", v * u);
+          else if (/^total current assets$/.test(lab)) put("ca", v * u);
+          else if (/^total assets$/.test(lab)) put("assets", v * u);
+          else if (/^accounts payable$/.test(lab)) put("ap", v * u);
+          else if (/^accrued (and other current )?liabilities|^accrued expenses/.test(lab)) put("accr", v * u);
+          else if (/^(short-term debt|current portion of long-term debt|short-term borrowings)/.test(lab)) put("dcur", v * u);
+          else if (/^total current liabilities$/.test(lab)) put("cl", v * u);
+          else if (/^long-term debt/.test(lab)) put("ltd_nc", v * u);
+          else if (/^total liabilities$/.test(lab)) put("liab", v * u);
+          else if (/^total (shareholders|stockholders)['’]? equity$|^(shareholders|stockholders)['’]? equity$/.test(lab)) put("eq", v * u);
+        } else if (kind === "cf") {
+          if (/^net cash provided by (\(used in\) )?operating activities|^net cash (from|provided by) operating/.test(lab)) put("cfo", v * u);
+          else if (/^(purchases (related to|of) property|capital expenditures|purchases of property)/.test(lab)) put("capex", Math.abs(v) * u);
+          else if (/^depreciation and amortization/.test(lab)) put("da", v * u);
+          else if (/stock-based compensation|share-based compensation/.test(lab)) put("sbc", v * u);
+          else if (/^dividends paid/.test(lab)) put("div", Math.abs(v) * u);
+          else if (/repurchases? of common stock/.test(lab)) put("buyback", Math.abs(v) * u);
+        } else {
+          if (/^(total )?(revenue|revenues|net revenue|net revenues|net sales|total net sales|total net revenue)$/.test(lab)) put("rev", v * u);
+          else if (/^cost of (revenue|sales|goods sold)/.test(lab)) put("cogs", v * u);
+          else if (/^gross (profit|margin)$/.test(lab)) put("gp", v * u);
+          else if (/^research and development/.test(lab)) put("rnd", v * u);
+          else if (/^(sales|selling), general and administrative/.test(lab)) put("sga", v * u);
+          else if (/^(operating income|income from operations)( \(loss\))?$/.test(lab)) put("opinc", v * u);
+          else if (/^income before income tax/.test(lab)) put("pretax", v * u);
+          else if (/^income tax (expense|provision)/.test(lab)) put("tax", v * u);
+          else if (/^net (income|earnings)( \(loss\))?$/.test(lab)) put("ni", v * u);
+          else if (/^diluted$/.test(lab) && /per share/.test(sec) && Math.abs(v) < 1000) put("eps_d", v);
+          else if (/^diluted$/.test(lab) && /shares/.test(sec) && Math.abs(v) >= 1) put("sh_d", v * u);
+        }
+      });
+      L._done = Object.keys(L).length > 2;
+    });
+    ["is", "bs", "cf"].forEach(function (k) { delete out[k]._done; });
+    var I = out.is, Y = out.py; if (I.rev) { if (I.gp == null && I.cogs != null) I.gp = I.rev - I.cogs; if (I.gp != null) I.gm = I.gp / I.rev * 100; if (I.opinc != null) I.opm = I.opinc / I.rev * 100; }
+    if (Y.rev) { if (Y.gp == null && Y.cogs != null) Y.gp = Y.rev - Y.cogs; if (Y.gp != null) Y.gm = Y.gp / Y.rev * 100; if (Y.opinc != null) Y.opm = Y.opinc / Y.rev * 100; }
+    ends.sort(); out.end = ends.length ? ends[ends.length - 1] : null;
+    return out;
+  }
+  var PRS = {};   /* ticker → statements read from the release, with its accession and filing date */
+  var TAG = { rev: "Revenues", cogs: "CostOfRevenue", gp: "GrossProfit", rnd: "ResearchAndDevelopmentExpense", sga: "SellingGeneralAndAdministrativeExpense", opinc: "OperatingIncomeLoss",
+    pretax: "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest", tax: "IncomeTaxExpenseBenefit", ni: "NetIncomeLoss", eps_d: "EarningsPerShareDiluted", sh_d: "WeightedAverageNumberOfDilutedSharesOutstanding",
+    cash: "CashAndCashEquivalentsAtCarryingValue", sti: "ShortTermInvestments", ar: "AccountsReceivableNetCurrent", inv: "InventoryNet", ca: "AssetsCurrent", assets: "Assets", ap: "AccountsPayableCurrent", accr: "AccruedLiabilitiesCurrent",
+    dcur: "DebtCurrent", cl: "LiabilitiesCurrent", ltd_nc: "LongTermDebtNoncurrent", liab: "Liabilities", eq: "StockholdersEquity",
+    cfo: "NetCashProvidedByUsedInOperatingActivities", capex: "PaymentsToAcquirePropertyPlantAndEquipment", da: "DepreciationDepletionAndAmortization", sbc: "ShareBasedCompensation", div: "PaymentsOfDividends", buyback: "PaymentsForRepurchaseOfCommonStock" };
+  /* the company's filed facts plus the release's quarter (only when that quarter is newer than every filed one) */
+  function withRelease(co, st) {
+    if (!st || !st.end || !st.is || st.is.rev == null) return null;
+    var M0 = E.build(co), q0 = M0.quarters[M0.quarters.length - 1]; if (!q0 || !(Date.parse(st.end) > Date.parse(q0.end) + 60 * 864e5)) return null;
+    var start = new Date(Date.parse(q0.end) + 864e5).toISOString().slice(0, 10), F = {}, f0 = co.facts || {};
+    Object.keys(f0).forEach(function (t) { F[t] = f0[t]; });
+    function add(k, v, inst) { var tag = TAG[k]; if (v == null || !tag) return; var unit = k === "eps_d" ? "USD/shares" : k === "sh_d" ? "shares" : "USD", o = F[tag] ? Object.assign({}, F[tag]) : {};
+      var row = { e: st.end, v: v, f: "8-K", d: st.filed, a: st.acc }; if (!inst) row.s = start;
+      o[unit] = (o[unit] || []).concat([row]); F[tag] = o; }
+    Object.keys(st.is).forEach(function (k) { add(k, st.is[k]); }); Object.keys(st.cf).forEach(function (k) { add(k, st.cf[k]); }); Object.keys(st.bs).forEach(function (k) { add(k, st.bs[k], true); });
+    var M = E.build(Object.assign({}, co, { facts: F })), q = M.quarters[M.quarters.length - 1];
+    if (!q || q.end !== st.end) return null;
+    q.pr = { acc: st.acc, filed: st.filed, url: st.url }; q.fl = Object.assign({}, q.fl, { label: q.fl.label + "*" });
+    M.base = M0; return M;
+  }
+  function prQuarter(t) {   /* rebuild a loaded company with its release quarter once the statements are read */
+    var D = MEM[t], st = PRS[t]; if (!D || !D.M || !st || D.M.base) return;
+    var M = withRelease(D.co, st); if (!M) return;
+    D.M = M; D.V = E.verdicts(M, D.P); delete READY[t]; delete RC[t]; rerender();
+  }
+  /* ---- management commentary intelligence (owner, Nov 17 2026): every sentence of the release's narrative is read and sorted —
+     positives in green, risks and negatives in red, guidance and capex in amber — tagged by topic (sector-aware), and the
+     guidance figures are compared with consensus and with the quarter just reported. Rule-based; the sentences are the
+     company's own words. ---- */
+  var PRN = {};
+  var TOPICS = [["AI", /\bAI\b|artificial intelligence|agentic|inference|training/i], ["Data center", /data cent/i], ["Cloud", /\bcloud\b|hyperscal/i], ["Gaming", /gaming/i], ["Automotive", /automotive|vehicle/i],
+    ["Networking", /networking|ethernet|infiniband/i], ["China / export", /china|export (control|licen|restriction)/i], ["Tariffs", /tariff/i], ["Supply", /supply|capacity|shortage|constrain/i], ["Demand", /demand|orders|bookings|backlog/i],
+    ["Margins", /margin/i], ["Pricing", /pric(e|ing)/i], ["Capex", /capital expenditure|capex|capital spending|purchases of property/i], ["Buybacks & dividends", /repurchase|buyback|dividend/i], ["Debt", /\bdebt\b|notes due|borrow/i],
+    ["M&A", /acqui|merger|divest/i], ["Restructuring", /restructur|layoff|workforce reduction|impairment/i], ["Guidance", /outlook|guidance|expects?|expected to/i], ["Inventory", /inventor/i],
+    ["Credit & lending", /net interest|deposits?|loans?|credit quality|provision for credit/i], ["Production", /production|barrels|output|volumes?/i], ["Regulatory", /\bFDA\b|approval|clinical|trial|regulator/i],
+    ["Same-store sales", /comparable sales|same-store|traffic/i], ["Ag & commodities", /crush|origination|grain|oilseed|ethanol/i]];
+  var POS = /record|increas|grew|growth|\bup \d|rose|strong|exceed|raised|expand|accelerat|robust|momentum|launch|ramp|beat|surpass|outperform|best|highest|improv|approved an increase/i;
+  var NEG = /declin|decreas|\blower\b|headwind|challeng|\bweak|soft(er|ness)|impair|restructur|uncertain|tariff|export (control|restriction|licen)|not assuming|exclud(e|ing) .*china|charge|\bloss|delay|shortage|constrain|pressure|\bdown \d|reduced (revenue|guidance|outlook|demand|margin|forecast)|cautious|volatil|litigation|investigation|write-?down/i;
+  var GUIDE = /outlook|guidance|expects?|expected to|anticipat|forecast|is targeting|plans? to/i;
+  function prNotes(html) {
+    var doc = new DOMParser().parseFromString(String(html).replace(/<br\s*\/?>/gi, " ").replace(/<\/(p|div|li|h\d|tr|td|span|font|b|strong)>/gi, " </$1>").replace(/<(p|div|li|h\d)\b/gi, " <$1"), "text/html");
+    [].forEach.call(doc.querySelectorAll("table,script,style"), function (n) { n.remove(); });
+    var t = (doc.body ? doc.body.textContent : "").replace(/ /g, " ").replace(/\s+/g, " ").trim();
+    var cut = t.search(/\b(About [A-Z][\w&.,' -]{2,40}(Corporation|Inc\.?|Company|Corp\.?)?\b [A-Z][\w&.,' -]{1,40} (is|was|has|provides|designs)|Forward-Looking Statements|Cautionary (Note|Statement)|Conference Call and Webcast|Use of Non-GAAP|Non-GAAP (Financial )?Measures)/);
+    if (cut > 200) t = t.slice(0, cut);
+    t = t.replace(/([.!?]["”]?)(["“]?[A-Z][a-z])/g, "$1 $2").replace(/•/g, " ");
+    var S = t.split(/(?<=[.!?]["”]?)\s+(?=["“]?[A-Z])/).map(function (x) { return x.trim(); }).filter(function (x) { return x.length >= 40 && x.length <= 420 && !/^(EX-99|Document)\b/.test(x); });
+    var seen = {}, out = { pos: [], neg: [], guide: [], capex: [], g: {} };
+    S.forEach(function (x) {
+      var k = x.slice(0, 60); if (seen[k]) return; seen[k] = 1;
+      var tags = TOPICS.filter(function (T) { return T[1].test(x); }).map(function (T) { return T[0]; }).filter(function (n) { return n !== "Guidance"; }).slice(0, 4);
+      var isG = GUIDE.test(x) && /\$|%|\bbillion\b|\bmillion\b/.test(x), isC = /capital expenditure|capex|capital spending/i.test(x), neg = NEG.test(x), pos = POS.test(x);
+      var row = { t: x, tags: tags };
+      if (isC) out.capex.push(row);
+      if (neg && !(/record|increase of \$|approved an increase/i.test(x) && !/not assuming|declin|decreas/i.test(x))) out.neg.push(row);
+      else if (isG) out.guide.push(row);
+      else if (pos) out.pos.push(row);
+    });
+    /* guidance figures */
+    var tl = t.replace(/,/g, "");
+    var rv = tl.match(/revenue (?:is|are) expected to be (?:approximately |about )?\$([\d.]+) (billion|million)(?:,? plus or minus ([\d.]+)%)?/i) || tl.match(/revenue (?:is|are) expected to be (?:in the range of |between )\$([\d.]+) (billion|million)? ?(?:and|to) \$([\d.]+) (billion|million)/i);
+    if (rv) { var mu = /billion/i.test(rv[2] || rv[4] || "") ? 1e9 : 1e6;
+      if (rv.length === 4 || rv[3] && !rv[4]) { var mid = +rv[1] * mu, pm = rv[3] ? +rv[3] / 100 : 0; out.g.rev = { mid: mid, lo: mid * (1 - pm), hi: mid * (1 + pm), pm: rv[3] ? +rv[3] : null }; }
+      else { var lo = +rv[1] * (/billion/i.test(rv[2] || rv[4]) ? 1e9 : 1e6), hi = +rv[3] * (/billion/i.test(rv[4]) ? 1e9 : 1e6); out.g.rev = { lo: lo, hi: hi, mid: (lo + hi) / 2 }; } }
+    var gm = tl.match(/gross margins? (?:is|are) expected to be (?:between )?([\d.]+)% (?:and|to) ([\d.]+)%/i) || tl.match(/gross margins? (?:is|are) expected to be (?:approximately |about )?([\d.]+)%(?:,? plus or minus ([\d.]+) basis points)?/i);
+    if (gm) { if (gm[2] && !/basis/.test(gm[0])) out.g.gm = { lo: +gm[1], hi: +gm[2], mid: (+gm[1] + +gm[2]) / 2 }; else { var bp = gm[2] ? +gm[2] / 100 : 0; out.g.gm = { mid: +gm[1], lo: +gm[1] - bp, hi: +gm[1] + bp }; } }
+    var cx = tl.match(/capital expenditures? (?:for [^.]{0,60})?(?:is|are|of|to be|expected to be|will be)[^.$]{0,40}\$([\d.]+) (billion|million)(?: (?:to|and) \$([\d.]+) (billion|million))?/i);
+    if (cx) { var cm = /billion/i.test(cx[2]) ? 1e9 : 1e6; out.g.capex = { lo: +cx[1] * cm, hi: cx[3] ? +cx[3] * (/billion/i.test(cx[4]) ? 1e9 : 1e6) : +cx[1] * cm }; }
+    var fig = function (r) { return /\$[\d.]|\d%|\bup \d|record/i.test(r.t) ? 0 : 1; };
+    out.pos = out.pos.map(function (r, i) { return [fig(r), i, r]; }).sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; }).map(function (z) { return z[2]; });
+    out.pos = out.pos.slice(0, 6); out.neg = out.neg.slice(0, 6); out.guide = out.guide.slice(0, 6); out.capex = out.capex.slice(0, 3);
+    return out;
+  }
+  function intel(M, x, r, lab) {   /* "Smart read": the release's figures against consensus, the last quarters and its own guidance */
+    var t = M.co.ticker, N = PRN[t], A = (MEM[t] && MEM[t].M) || M, Q = A.quarters, c = Q[Q.length - 1], p = Q[Q.length - 2], y = null, D = SD(M), B = [];
+    for (var j = Q.length - 2; j >= 0; j--) { var dd = (Date.parse(c.end) - Date.parse(Q[j].end)) / 864e5; if (dd >= 350 && dd <= 380) { y = Q[j]; break; } }
+    function v(q, k) { return q && q.m[k] ? q.m[k].v : null; }
+    function g(a, b) { return a != null && b ? (a / b - 1) * 100 : null; }
+    function pc2(z) { return (z >= 0 ? "+" : "−") + Math.abs(z).toFixed(1) + "%"; }
+    function add(tone, txt) { B.push({ c: tone, t: txt }); }
+    var rev = x && x.rev != null ? x.rev : r && r.revenueActual, pyr = x && x.py && x.py.rev;
+    if (rev != null) { var yy = g(rev, pyr), qq = c && c.pr ? g(v(c, "rev"), v(p, "rev")) : null, sr = r && r.rev_surprise_pct;
+      add((sr != null ? sr : yy) >= 0 ? "g" : "r", "Revenue " + m$(rev) + (yy != null ? " (" + pc2(yy) + " YoY" + (qq != null ? ", " + pc2(qq) + " QoQ" : "") + ")" : "") + (sr != null ? ", " + pc2(sr) + " vs consensus" : "") + "."); }
+    var hs = D && D.hist && D.hist[D.hist.length - 1];
+    if (r && r.eps_surprise_pct != null) add(r.eps_surprise_pct >= 0 ? "g" : "r", "EPS " + e$(r.epsActual) + " vs " + e$(r.epsEstimated) + " consensus (" + pc2(r.eps_surprise_pct) + ").");
+    else if (hs && hs.surprise_pct != null && hs.q && Date.parse(hs.q) > Date.parse(L(M).end + "T12:00:00Z") + 45 * 864e5) add(hs.surprise_pct >= 0 ? "g" : "r", "Adjusted EPS " + e$(hs.actual) + " vs " + e$(hs.est) + " consensus (" + pc2(hs.surprise_pct) + ").");
+    if (N && N.g.rev) { var nx = D && (D.trend || []).filter(function (z) { return z.period === "0q"; })[0], cons = nx && nx.rev && nx.rev.avg, vc = g(N.g.rev.mid, cons), vq = g(N.g.rev.mid, rev);
+      add(vc == null ? (vq >= 0 ? "g" : "r") : vc >= 0 ? "g" : "r", "Next-quarter revenue guided to " + m$(N.g.rev.mid) + (N.g.rev.pm ? " ±" + N.g.rev.pm + "%" : N.g.rev.lo !== N.g.rev.hi ? " (" + m$(N.g.rev.lo) + "–" + m$(N.g.rev.hi) + ")" : "") + (vq != null ? ": " + pc2(vq) + " on this quarter" : "") + (vc != null ? ", " + pc2(vc) + " vs the " + m$(cons) + " consensus" : "") + "."); }
+    var gmNow = x && x.gm != null ? x.gm : v(c, "gm");
+    if (N && N.g.gm && gmNow != null) { var dgm = N.g.gm.mid - gmNow; add(dgm >= -0.3 ? "g" : "r", "Gross margin guided to " + (N.g.gm.lo !== N.g.gm.hi ? N.g.gm.lo.toFixed(1) + "–" + N.g.gm.hi.toFixed(1) + "%" : N.g.gm.mid.toFixed(1) + "%") + " vs " + gmNow.toFixed(1) + "% this quarter (" + (dgm >= 0 ? "+" : "−") + Math.abs(dgm).toFixed(1) + " pp)."); }
+    var cpx = v(c, "capex"), cpp = v(p, "capex"), cpy = v(y, "capex");
+    if (cpx != null) { var cq = g(cpx, cpp), cy = g(cpx, cpy); add("a", "Capex " + m$(cpx) + " this quarter" + (cq != null ? " (" + pc2(cq) + " QoQ" + (cy != null ? ", " + pc2(cy) + " YoY" : "") + ")" : "") + (v(c, "rev") ? " — " + (cpx / v(c, "rev") * 100).toFixed(1) + "% of revenue" : "") + (N && N.g.capex ? "; guided " + m$(N.g.capex.lo) + (N.g.capex.hi !== N.g.capex.lo ? "–" + m$(N.g.capex.hi) : "") : N && N.capex.length ? "; see capex commentary below" : "; no capex guidance in the release") + "."); }
+    var ri = g(v(c, "rev"), v(p, "rev")), ii = g(v(c, "inv"), v(p, "inv")), ai = g(v(c, "ar"), v(p, "ar"));
+    if (ii != null && ri != null) add(ii > ri + 10 ? "r" : "g", "Inventory " + m$(v(c, "inv")) + " (" + pc2(ii) + " QoQ) against revenue " + pc2(ri) + " QoQ" + (ii > ri + 10 ? " — building faster than sales." : " — in step with sales."));
+    if (ai != null && ri != null) add(ai > ri + 10 ? "r" : "g", "Receivables " + m$(v(c, "ar")) + " (" + pc2(ai) + " QoQ)" + (v(c, "dso") != null ? ", DSO " + v(c, "dso").toFixed(0) + " days" + (v(p, "dso") != null ? " (" + (v(c, "dso") - v(p, "dso") >= 0 ? "+" : "−") + Math.abs(v(c, "dso") - v(p, "dso")).toFixed(0) + " d)" : "") : "") + (ai > ri + 10 ? " — customers taking longer to pay." : "."));
+    var ret = (v(c, "buyback") || 0) + (v(c, "div") || 0); if (ret) add("g", "Returned " + m$(ret) + " to shareholders (buybacks " + m$(v(c, "buyback")) + ", dividends " + m$(v(c, "div")) + ").");
+    return B;
+  }
+  function notesHTML(M, x, r, lab, meta) {
+    var t = M.co.ticker, N = PRN[t], B = intel(M, x, r, lab);
+    function li(row, cls) { return '<li class="' + cls + '"><span>“' + esc(row.t.replace(/^["“]+|["”]+$/g, "")) + "”</span>" + (row.tags.length ? '<em>' + row.tags.map(function (g) { return "<i>" + esc(g) + "</i>"; }).join("") + "</em>" : "") + "</li>"; }
+    function col(h, cls, rows, empty) { return '<div class="mi-c ' + cls + '"><h4>' + h + " <small>" + rows.length + "</small></h4>" + (rows.length ? "<ul>" + rows.map(function (z) { return li(z, cls); }).join("") + "</ul>" : '<p class="rs-mn">' + empty + "</p>") + "</div>"; }
+    var guide = N ? N.guide.concat(N.capex.filter(function (z) { return N.guide.indexOf(z) < 0; })) : [];
+    return '<div class="rs-m"><div class="rs-mh">Smart read <small>figures from the release, filings and consensus — computed, not opinion</small></div>' +
+      (B.length ? '<ul class="mi-b">' + B.map(function (b) { return '<li class="' + b.c + '">' + esc(b.t) + "</li>"; }).join("") + "</ul>" : "") +
+      (N ? '<div class="rs-mh" style="margin-top:12px">Management commentary <small>the company’s own sentences, sorted · topic tags for ' + esc(M.sector) + "</small></div>" +
+        '<div class="mi-g">' + col("Positives", "g", N.pos, "No positive statements with figures.") + col("Risks &amp; negatives", "r", N.neg, "No risks or negatives stated in the release.") + col("Guidance &amp; capex", "a", guide, "No guidance or capex outlook in the release.") + "</div>"
+        : meta && meta.loading ? '<p class="rs-mn"><i class="ux-spin"></i> Reading the release…</p>' : "") + "</div>";
+  }
+  function prFor(M) { M = M.base || M; var P = window.DESK_EARN_PR || {}, a = P[M.co.ticker], b = LPR[M.co.ticker], q = L(M); b = b && b.nums ? b : null;
+    var x = a && b ? (b.date > a.date ? b : a) : a || b; x = x && afterFiled(x.date, q.end) ? x : null;
+    /* the full condensed income statement read from the same release wins over a summary-table read (exact, with its year-ago column) */
+    var st = PRS[M.co.ticker], I = st && st.is;
+    if (I && I.rev != null && st.filed && afterFiled(st.filed, q.end)) {
+      var py = {}; ["rev", "gp", "gm", "opinc", "opm", "ni", "eps_d"].forEach(function (k) { if (st.py[k] != null) py[k] = st.py[k]; });
+      x = Object.assign({}, x || { date: st.filed, acc: st.acc, exhibit: st.url }, { rev: I.rev, gp: I.gp, gm: I.gm, opinc: I.opinc, opm: I.opm, ni: I.ni, eps_d: I.eps_d, py: py });
+    }
+    return x; }
   var LPR = {}, PRQ = {};
   function prFetch(M) {
+    M = M.base || M;
     var co = M.co, t = co.ticker, rel = E.latestRelease(co); if (!rel || !rel.accn || !worker() || !window.ELOCK || !ELOCK.parsePR) return;
     if (Date.now() - Date.parse(rel.filed + "T12:00:00Z") > 30 * 864e5 || PRQ[t + rel.accn]) return; PRQ[t + rel.accn] = 1;
     LPR[t] = { date: rel.filed, acc: rel.accn, loading: 1 };
@@ -425,6 +627,8 @@
       var j = x[0], f = x[1], ac = f && (f.releases || []).filter(function (r) { return r.accn === rel.accn; })[0], o = j && j.html ? ELOCK.parsePR(j.html) : null;
       var nums = !!(o && !o.unread && (o.rev != null || o.eps_d != null));
       LPR[t] = Object.assign({}, nums ? o : {}, { quotes: o && o.quotes || null, date: rel.filed, acc: rel.accn, exhibit: j && j.url || null, accepted: ac && ac.accepted || null, nums: nums, src: "browser" });
+      if (j && j.html) try { PRN[t] = prNotes(j.html); } catch (e) {}
+      if (j && j.html && afterFiled(rel.filed, L(M).end)) { try { var st = prStatements(j.html); st.acc = rel.accn; st.filed = rel.filed; st.url = j.url; PRS[t] = st; prQuarter(t); } catch (e) {} }
       delete READY[t]; delete RC[t]; rerender();
     });
   }
@@ -501,6 +705,7 @@
       (read.length ? '<p class="rd-r">' + read.join(" ") + "</p>" : "") + '<div class="stamp">' + (k === "eps" ? "Adjusted EPS and consensus from the Street history." : "Filed quarters from SEC 10-Q/10-K; the newest quarter from the company’s press release until its 10-Q/10-K is on EDGAR.") + (pct ? " Margin changes are in percentage points." : "") + " Median = middle value of the last five quarters shown.</div></div>";
   }
   function results(M) {
+    M = M.base || M;
     var co = M.co, q = L(M), r = calRow(M), x = prFor(M), meta = LPR[co.ticker] || {}, rel = E.latestRelease(co), n = nextQ(q), lab = "Q" + n.q + " FY" + String(n.fy).slice(2);
     if (!r && !x) return meta.loading && rel && afterFiled(rel.filed, q.end) ? '<div class="rs rs-ld"><i class="ux-spin"></i> Reading ' + esc(co.ticker) + "’s latest earnings release (8-K filed " + esc(rel.filed) + ")…</div>" : "";
     if (!r && Date.now() - Date.parse(x.date + "T12:00:00Z") > 21 * 864e5) return "";
@@ -542,9 +747,10 @@
       '<span class="rs-w">' + esc(when) + (RT ? " · " + ago(Math.max(0, now - RT.t)) : "") + "</span>" +
       '<span class="rs-sc"><i class="g">' + up + " better</i><i class=\"r\">" + dn + " worse</i></span></div>" +
       '<div class="rs-g">' + tiles.map(function (t) { return t.html; }).join("") + "</div>" + rsDetail(M, tiles.filter(function (t) { return t.k === RSD; })[0], x, r, q, lab) +
-      '<div class="rs-m"><div class="rs-mh">Management <small>quoted verbatim from the release</small></div>' + mg + "</div>" +
+      (PRN[co.ticker] || !mg ? notesHTML(M, x, r, lab, meta) : '<div class="rs-m"><div class="rs-mh">Management <small>quoted verbatim from the release</small></div>' + mg + "</div>") +
       '<div class="rs-n">' + (r ? "Consensus from the desk’s earnings calendar. " : "") + (x ? "Figures from the company press release (GAAP, unaudited)" + (ex ? ' · <a href="' + (window.safeUrl ? safeUrl(ex) : "#") + '" target="_blank" rel="noopener noreferrer">exhibit 99.1 ↗</a>' : "") + ". " : "") +
-      "Green = better than consensus or a year ago, red = worse. The tiles below still show " + esc(q.fl.label) + " until the " + (n.q === 4 ? "10-K" : "10-Q") + " reaches EDGAR’s data feed; they update automatically then.</div></section>";
+      "Green = better than consensus or a year ago, red = worse. " + (MEM[co.ticker] && MEM[co.ticker].M && MEM[co.ticker].M.base ? "The tiles below show " + esc(lab) + "* from this release (balance sheet and cash flow included, unaudited) until the " + (n.q === 4 ? "10-K" : "10-Q") + " is on EDGAR; then they switch to the filed figures."
+        : "The tiles below still show " + esc(q.fl.label) + " until the " + (n.q === 4 ? "10-K" : "10-Q") + " reaches EDGAR’s data feed; they update automatically then.") + "</div></section>";
   }
   /* ---------------- Street estimates & ownership (worker /street: analyst consensus and 13F ownership, on demand) ---------------- */
   var STR = {};
@@ -702,7 +908,8 @@
           return '<div class="cx-part dim">' + p[0] + ' <span>— not available yet: ' + p[1].map(function (c) { return esc(c[1]); }).join(" · ") + "</span></div>";
         return '<div class="cx-part">' + p[0] + '</div><div class="cx-grid">' + p[1].map(function (c) {
         var b = BUILT[c[0]], k = c[3] === "opm" && E.val(q, "opm") == null ? "ebitm" : c[3], kv = "", sp = "", tb = "", tn = null;
-        if (b && k) { var m = q.m[k], y = q.m[k + "_yoy"]; kv = '<div class="k">' + fv(k, m && m.v) + "</div>" + (y ? '<div class="n">' + sgc(tone(k, y.v), fv(k + "_yoy", y.v)) + " YoY · " + esc(q.fl.label) + "</div>" : '<div class="n">' + esc(q.fl.label) + "</div>"); sp = TV !== "table" ? spark(S(M, k)) : ""; tb = TV !== "chart" ? miniT(M, k) : ""; tn = y ? tone(k, y.v) : null; }
+        if (b && k) { var qx = q; if (!(q.m[k] && q.m[k].v != null) && q.pr && M.quarters.length > 1) qx = M.quarters[M.quarters.length - 2];   /* a line the release does not give: the last filed quarter, labelled */
+          var m = qx.m[k], y = qx.m[k + "_yoy"]; kv = '<div class="k">' + fv(k, m && m.v) + "</div>" + (y ? '<div class="n">' + sgc(tone(k, y.v), fv(k + "_yoy", y.v)) + " YoY · " + esc(qx.fl.label) + "</div>" : '<div class="n">' + esc(qx.fl.label) + "</div>"); sp = TV !== "table" ? spark(S(M, k)) : ""; tb = TV !== "chart" ? miniT(M, k) : ""; tn = y ? tone(k, y.v) : null; }
         if (/^val-/.test(c[0])) { var VV2 = E.valuation(M, (MEM[M.co.ticker] || {}).P);
           kv = VV2 ? '<div class="k">$' + VV2.price.toFixed(2) + '</div><div class="n">' + (c[0] === "val-snap" ? "P/E " + (VV2.pe ? VV2.pe.toFixed(1) + "×" : "n/m") + (VV2.pe_core ? " · core " + VV2.pe_core.toFixed(1) + "×" : "") : c[0] === "val-rx" ? "close " + esc(VV2.date) : "price " + esc(VV2.date)) + "</div>" : '<div class="n">price history unavailable</div>'; }
         if (c[0] === "est") { var C2 = estCols(M), nx2 = C2.filter(function (z) { return z.next; })[0], rc2 = C2.filter(function (z) { return z.past; }).slice(-1)[0];
@@ -1266,7 +1473,7 @@
     var D = MEM[t]; if (!D || !D.M || D.bg) return; D.bg = 1;
     Promise.all([fetch(worker() + "/company?t=" + encodeURIComponent(t)).then(function (r) { return r.ok ? r.json() : null; }), fetch(worker() + "/prices?r=5y&t=" + encodeURIComponent(t)).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })])
       .then(function (x) { if (MEM[t] !== D) return; if (!co_ok(x[0], t)) { D.bg = 0; D.at = new Date().toISOString(); return; }
-        var M = E.build(x[0]); MEM[t] = { co: x[0], M: M, P: x[1] || D.P, V: E.verdicts(M, x[1] || D.P), at: new Date().toISOString() }; delete READY[t]; delete RC[t]; rerender(); })
+        var M = E.build(x[0]); MEM[t] = { co: x[0], M: M, P: x[1] || D.P, V: E.verdicts(M, x[1] || D.P), at: new Date().toISOString() }; delete READY[t]; delete RC[t]; rerender(); prQuarter(t); })
       .catch(function () { D.bg = 0; D.at = new Date().toISOString(); });
   }
   document.addEventListener("click", function (ev) {
@@ -1318,5 +1525,5 @@
       id === "est" || id === "own" ? (STR[t] && STR[t].loading ? null : id === "est" ? !!(SD(D.M) && SD(D.M).hist && (SD(D.M).hist.length || SD(D.M).trend.length)) : !!(SD(D.M) && SD(D.M).own && SD(D.M).own.inst_pct != null)) : hasData(CARDS[id] && CARDS[id](D.M, D.V)); } catch (e) { R[id] = false; } }
     return R[id];
   }
-  window.COMPANY = { status: status, has: has, name: function (t) { var D = MEM[t]; return D && D.co ? D.co.name : ""; }, card: function () { return card; }, parts: function () { return PARTS; }, show: function (key) { card = key || null; rerender(); }, html: html, search: search, configured: function () { return !!worker(); }, reset: function (keep) { card = null; cancelAll(keep); }, retry: function (t) { delete MEM[t]; delete READY[t]; rerender(); }, _mem: MEM };
+  window.COMPANY = { _m: function (t) { return MEM[t] && MEM[t].M; }, _prs: function (t) { return PRS[t]; }, status: status, has: has, name: function (t) { var D = MEM[t]; return D && D.co ? D.co.name : ""; }, card: function () { return card; }, parts: function () { return PARTS; }, show: function (key) { card = key || null; rerender(); }, html: html, search: search, configured: function () { return !!worker(); }, reset: function (keep) { card = null; cancelAll(keep); }, retry: function (t) { delete MEM[t]; delete READY[t]; rerender(); }, _mem: MEM };
 })();
