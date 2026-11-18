@@ -395,7 +395,7 @@
   function table(M, keys) {
     var Q = M.quarters.slice(-8);
     return '<div class="tbl-scroll"><table class="cx-t"><thead><tr><th>Eight quarters</th>' + Q.map(function (q) { return "<th>" + esc(q.fl.label) + "</th>"; }).join("") + "</tr></thead><tbody>" +
-      keys.map(function (k) { return "<tr><td>" + esc(nm(k)) + "</td>" + Q.map(function (q) { var m = q.m[k]; return "<td" + (m && m.st === "CALCULATED" ? ' style="font-style:italic" title="' + esc(m.how || "") + '"' : "") + ">" + (m ? fv(k, m.v) : '<span class="neu">—</span>') + "</td>"; }).join("") + "</tr>"; }).join("") +
+      keys.map(function (k) { return "<tr><td>" + esc(nm(k)) + "</td>" + Q.map(function (q) { var m = q.m[k]; return "<td" + (m && m.st === "CALCULATED" ? ' class="calc" title="' + esc(m.how || "") + '"' : "") + ">" + (m ? fv(k, m.v) : '<span class="neu">—</span>') + "</td>"; }).join("") + "</tr>"; }).join("") +
       "</tbody></table></div><div class=\"stamp\" style=\"margin-top:6px\">Italic = derived from year-to-date filings (see evidence). “—” = not filed for that quarter; never estimated.</div>";
   }
   function annualT(M, keys) {
@@ -1109,7 +1109,7 @@
     } else {
       var cols = Q.concat(FY), head = "<tr><th>Metric</th>" + cols.map(function (q) { return "<th" + (q.fy ? ' class="mx-fy"' : "") + ">" + esc(q.fl.label) + "</th>"; }).join("") + "</tr>";
       var blk = function (title, f) { return '<tr class="mx-h"><td colspan="' + (cols.length + 1) + '">' + title + "</td></tr>" + rows.map(function (r) { return "<tr><td>" + esc(r[1]) + "</td>" + cols.map(function (q) { return f(q, r); }).join("") + "</tr>"; }).join(""); };
-      var cell = function (q, r) { var x = mxv(q.m, r[0]); return "<td" + (q.fy ? ' class="mx-fy"' : "") + (x && x.c ? ' style="font-style:italic"' : "") + ">" + mxf(r[2], x && x.v) + "</td>"; };
+      var cell = function (q, r) { var x = mxv(q.m, r[0]); return "<td" + (q.fy ? ' class="mx-fy"' : "") + (x && x.c ? ' data-calc="1" title="Calculated from reported lines"' : "") + ">" + mxf(r[2], x && x.v) + "</td>"; };
       var chg = function (ref) { return function (q, r) { var p = q.fy ? (ref === "y" ? FY.filter(function (f) { return f.fy === q.fy - 1; })[0] || fyTotals(M).filter(function (f) { return +f.fy === +q.fy - 1; })[0] : null) : ref === "y" ? yo(q) : pq(q);
         var x = mxv(q.m, r[0]), y = p && mxv(p.m, r[0]), c = mxd(r[2], x && x.v, y && y.v); return "<td" + (q.fy ? ' class="mx-fy ' : ' class="') + tone(r[0], c.v) + '">' + (c.s || "") + "</td>"; }; };
       body = '<div class="tbl-scroll"><table class="cx-t mx-t"><thead>' + head + "</thead><tbody>" + blk("Reported", cell) + blk("YoY — vs same quarter a year earlier", chg("y")) + blk("QoQ — vs prior quarter", chg("q")) + "</tbody></table></div>";
