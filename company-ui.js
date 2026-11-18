@@ -111,7 +111,7 @@
     ".cd-l li small{color:var(--faint)}.cd-n{margin:10px 0 0;font-size:12px;color:var(--faint)}@keyframes cdS{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.cd-l li.wt span{animation:none}}" +
     ".mc-d{font-size:13px;color:#cfd8e6;line-height:1.5;margin:0 0 10px}.mc-d small{display:block;color:var(--faint);margin-top:4px}.cx-prof{font:600 10.5px 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#7dd8e6;border:1px solid rgba(125,216,230,.4);border-radius:4px;padding:2px 7px;margin-left:8px}" +
     ".cx-asof{font:600 9.5px 'IBM Plex Mono',monospace;color:#e8a33d;border:1px solid rgba(232,163,61,.4);border-radius:3px;padding:0 4px;margin-left:4px}" +
-    ".cx-part.dim{opacity:.45}.cx-part.dim span{letter-spacing:0;text-transform:none;color:var(--faint)}" +
+    ".cx-part.dim{opacity:.45}.cx-flow{margin-top:12px;grid-auto-flow:row dense;align-items:stretch}.cx-gl{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:1px}.cx-part.dim span{letter-spacing:0;text-transform:none;color:var(--faint)}" +
     "@media (max-width:640px){.rs-g{grid-template-columns:1fr 1fr}.rs-t .v{font-size:18px}.rs-sc{margin-left:0}.cx-vw{width:100%}.cx-vw button{flex:1}}" +
     ".cx-card{appearance:none;text-align:left;font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:11px 13px;display:flex;flex-direction:column;gap:3px;min-height:132px;transition:border-color .12s,transform .12s}" +
     ".cx-card:hover:not(:disabled){border-color:#3d5a80;transform:translateY(-1px)}.cx-card:disabled{cursor:default;opacity:.45;min-height:0;border-style:dashed}" +
@@ -137,7 +137,7 @@
     ".cx-ai{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.cx-ai>div{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.5;background:var(--panel2)}" +
     ".cx-ai b{display:block;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);margin-bottom:3px}.cx-ai .hyp{color:var(--muted);font-style:italic}" +
     ".cx-st{font-family:'IBM Plex Mono',monospace;font-size:9.5px;padding:1px 5px;border-radius:7px;border:1px solid var(--line2);color:var(--faint);white-space:nowrap}.cx-st.C{border-style:dashed}" +
-    "table.mx-t td,table.mx-t th{white-space:nowrap;font-size:12px}table.mx-t .mx-h td{font-weight:700;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:rgba(110,168,255,.05);text-align:left}table.mx-t .mx-fy{background:rgba(56,182,201,.06);font-weight:600}.mx-t td.mx-hi{color:#34d67f;background:rgba(52,214,127,.12);font-weight:700;border-radius:4px}.mx-t td.mx-lo{color:#ff6262;background:rgba(255,98,98,.12);font-weight:700;border-radius:4px}html[data-theme=light] .mx-t td.mx-hi{color:#0d8a4a}html[data-theme=light] .mx-t td.mx-lo{color:#c62828}table.mx-t td.pos{color:#3fb97f}table.mx-t td.neg{color:#e0655f}" +
+    "table.mx-t td,table.mx-t th{white-space:nowrap;font-size:12px}table.mx-t .mx-h td{font-weight:700;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:rgba(110,168,255,.05);text-align:left}table.mx-t .mx-fy{background:rgba(56,182,201,.06);font-weight:600}.cx-mt td.mx-hi,.mx-t td.mx-hi{color:#34d67f;background:rgba(52,214,127,.12);font-weight:700;border-radius:4px}.cx-mt td.mx-lo,.mx-t td.mx-lo{color:#ff6262;background:rgba(255,98,98,.12);font-weight:700;border-radius:4px}html[data-theme=light] .cx-mt td.mx-hi,.mx-t td.mx-hi{color:#0d8a4a}html[data-theme=light] .cx-mt td.mx-lo,.mx-t td.mx-lo{color:#c62828}table.mx-t td.pos{color:#3fb97f}table.mx-t td.neg{color:#e0655f}" +
     "table.cx-t{width:100%;border-collapse:collapse}table.cx-t td:first-child,table.cx-t th:first-child{text-align:left;font-family:'Libre Franklin',sans-serif}" +
     "details.cx-evd{border:1px solid var(--line);border-radius:8px;padding:8px 11px;margin-top:14px}details.cx-evd summary{cursor:pointer;font-size:12.5px;color:var(--muted)}" +
     ".cx-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin:2px 0 4px}.cx-leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}" +
@@ -473,6 +473,7 @@
     ["Returns & warnings", [["returns", "Profitability & returns", "Return on a heavy working-capital base?", "roe"], ["warn", "Early-warning signals", "Twelve rules, with persistence and evidence.", null]]],
     SHARED.est, SHARED.own, SHARED.val,
     ["Disclosed by the company only", [["seg", "Segment results (crush, origination, nutrition)"], ["rmi", "Readily marketable inventories"], ["vol", "Volumes handled"]]]];
+  var NAVGL = { "Company overview": "Overview", "Inventory & working capital": "Working capital", "Commodity inventory & working capital": "Working capital" };
   var MGMT = ["Management commentary", [["mgmt", "Management commentary", "Positives, risks, guidance and capex from the latest earnings release.", null]]], PXC = {};
   function partsOf(M) { var p = M ? profileOf(M) : "general", a = p === "bank" ? PARTS_BANK : p === "mining" ? PARTS_MINING : p === "agri" ? PARTS_AGRI : PARTS;
     return PXC[p] || (PXC[p] = [a[0], MGMT].concat(a.slice(1))); }
@@ -936,8 +937,12 @@
   /* tiles: chart, table or both (remembered in this browser) */
   var TV = (function () { try { return localStorage.getItem("desk.coTiles") || "chart"; } catch (e) { return "chart"; } })();
   function miniT(M, k) {
-    var a = S(M, k).slice(-5), y = S(M, k + "_yoy").slice(-5); if (!a.some(function (z) { return z.v != null; })) return "";
-    return '<table class="cx-mt"><tbody>' + a.map(function (z, i) { var yy = y[i] && y[i].v; return "<tr><td>" + esc(z.label) + "</td><td>" + fv(k, z.v) + "</td><td>" + (yy == null ? "" : sgc(tone(k, yy), fv(k + "_yoy", yy))) + "</td></tr>"; }).reverse().join("") + "</tbody></table>";
+    var A = S(M, k), Y = S(M, k + "_yoy"), ix = [];   /* last five quarters that have a figure; blank rows hidden */
+    for (var j = A.length - 1; j >= 0 && ix.length < 5; j--) if (A[j].v != null) ix.unshift(j);
+    if (!ix.length) return "";
+    var a = ix.map(function (j) { return A[j]; }), y = ix.map(function (j) { return Y[j]; });
+    var vs = a.map(function (z) { return z.v; }), mg = /%$/.test(fv(k, vs[0])) && !/etr|tax/i.test(k) && a.length >= 3, hi = Math.max.apply(null, vs), lo = Math.min.apply(null, vs); if (hi - lo < 0.05) mg = false;
+    return '<table class="cx-mt"><tbody>' + a.map(function (z, i) { var yy = y[i] && y[i].v; return "<tr><td>" + esc(z.label) + "</td><td" + (mg && z.v === hi ? ' class="mx-hi good"' : mg && z.v === lo ? ' class="mx-lo bad"' : "") + ">" + fv(k, z.v) + "</td><td>" + (yy == null ? "" : sgc(tone(k, yy), fv(k + "_yoy", yy))) + "</td></tr>"; }).reverse().join("") + "</tbody></table>";
   }
   /* ---- tile detail (owner, Nov 17 2026): every metric tile (receivables, inventory, margins, debt…) opens the same panel as the
      results scorecard — latest quarter vs prior quarter (QoQ) and year ago (YoY), median of the last five quarters ---- */
@@ -983,10 +988,9 @@
       '<div class="cx-vw" role="group" aria-label="Tile view"><span>Tiles</span>' + tv("chart", "Chart") + tv("table", "Table") + tv("both", "Both") + "</div></div>" +
       results(M) + '<div class="tile">' +
       (M.model.note ? '<div class="ut-ask" style="margin:6px 0">' + esc(M.model.note) + "</div>" : "") +
-      partsOf(M).map(function (p) {
-        if (!p[1].some(function (c) { return BUILT[c[0]]; }))
-          return '<div class="cx-part dim">' + p[0] + ' <span>— ' + (/only/.test(p[0]) ? "in the company’s own reports, not in SEC’s data feed" : "not available yet") + ": " + p[1].map(function (c) { return esc(c[1]); }).join(" · ") + "</span></div>";
-        return '<div class="cx-part">' + p[0] + '</div><div class="cx-grid">' + p[1].map(function (c) {
+      (function () { var TBL = [], KV = []; partsOf(M).forEach(function (p) {
+        if (!p[1].some(function (c) { return BUILT[c[0]]; })) return;   /* whole group unavailable: hidden (owner, Nov 17 2026) */
+        p[1].forEach(function (c) {
         var b = BUILT[c[0]], k = c[3] === "opm" && E.val(q, "opm") == null ? "ebitm" : c[3], kv = "", sp = "", tb = "", tn = null;
         if (b && k) { var qx = q;   /* a line missing in the latest quarter (not in the release, or no longer tagged): the latest quarter that has it, labelled */
           if (!(q.m[k] && q.m[k].v != null)) for (var jj = M.quarters.length - 2; jj >= Math.max(0, M.quarters.length - 5); jj--) { if (M.quarters[jj].m[k] && M.quarters[jj].m[k].v != null) { qx = M.quarters[jj]; break; } }
@@ -1006,8 +1010,11 @@
         if (c[0] === "health") { var st = E.streak(VV.history, "eq"); kv = '<div class="n" style="margin-top:6px">' + VV.history.map(function (h) { return '<span class="cx-vd ' + h.eq + '" style="padding:1px 4px;font-size:9px">' + h.eq[0] + "</span>"; }).join(" ") + "</div>" + (st.n ? '<div class="n">' + st.n + " quarter" + (st.n > 1 ? "s" : "") + " " + (st.dir > 0 ? "improving" : "deteriorating") + "</div>" : ""); }
         var nd = b && has(M.co.ticker, c[0]) === false && !(k && S(M, k).some(function (z) { return z.v != null; })), cls = nd ? " nodata" : tn == null || Math.abs(tn) < 0.05 ? "" : tn > 0 ? " good" : " bad";
         var gk = b && !nd && k && S(M, k).filter(function (z) { return z.v != null; }).length ? k : null;
-        return (GD && GD.id === c[0] ? "" : "") + '<button class="cx-card' + cls + (GD && GD.id === c[0] ? " on" : "") + '" ' + (gk ? 'data-cogd="' + c[0] + '" data-cok="' + gk + '" data-col="' + esc(c[1]) + '" aria-expanded="' + !!(GD && GD.id === c[0]) + '"' : 'data-cocard="' + c[0] + '"') + (b && !nd ? "" : " disabled") + (nd ? ' title="Not reported by this company"' : "") + '><span class="t">' + esc(c[1]) + "</span>" + kv + (sp ? "<div>" + sp + "</div>" : "") + tb + '<span class="q">' + esc(c[2] || "") + (b ? (nd ? " · not reported" : "") : " · next phase") + "</span></button>" + (GD && GD.id === c[0] ? gDetail(M, c[0], GD.k, c[1]) : ""); }).join("") + "</div>"; }).join("") +
-      '<div class="stamp">Cards draw on SEC EDGAR filings fetched live — nothing is stored. Tile shading: green = better than a year ago, red = worse (for costs, debt and days, lower is better). Dimmed tiles have no figures for this company.</div></div>';
+        var h0 = '<button class="cx-card' + cls + (GD && GD.id === c[0] ? " on" : "") + '" ' + (gk ? 'data-cogd="' + c[0] + '" data-cok="' + gk + '" data-col="' + esc(c[1]) + '" aria-expanded="' + !!(GD && GD.id === c[0]) + '"' : 'data-cocard="' + c[0] + '"') + (b && !nd ? "" : " disabled") + (nd ? ' title="Not reported by this company"' : "") + '><span class="t">' + esc(c[1]) + "</span>" + kv + (sp ? "<div>" + sp + "</div>" : "") + tb + '<span class="q">' + esc(c[2] || "") + "</span></button>" + (GD && GD.id === c[0] ? gDetail(M, c[0], GD.k, c[1]) : "");
+        if (!b || nd || (!kv && !tb && !sp) || (/class="k">\u2014</.test(kv) && !tb && !sp)) return;   /* blank tile: hidden */
+        var gl = NAVGL[p[0]] || p[0]; (tb ? TBL : KV).push(gl.toLowerCase() === String(c[1]).toLowerCase() ? h0 : h0.replace('<span class="t">', '<span class="cx-gl">' + esc(gl) + '</span><span class="t">')); }); });
+        return '<div class="cx-grid cx-flow">' + TBL.join("") + KV.join("") + "</div>"; })() +
+      '<div class="stamp">Cards draw on SEC EDGAR filings fetched live — nothing is stored. Tile shading: green = better than a year ago, red = worse (for costs, debt and days, lower is better). Tiles with no figures for this company are hidden.</div></div>';
   }
   function shell(M, id, body) {
     return '<div class="tile"><div class="cx-h"><button class="ue-btn" data-cocard="">‹ All cards</button><h2>' + esc(cardTitle(id)) + '</h2><span class="cx-sub">' + esc(M.co.ticker) + " · " + esc(M.co.name) + "</span></div>" + body + "</div>";
