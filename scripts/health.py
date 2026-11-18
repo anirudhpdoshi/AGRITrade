@@ -125,7 +125,8 @@ def probe(p):
         rl = {k: r.headers.get(k) for k in ("X-RateLimit-Remaining", "X-RateLimit-Limit", "Retry-After") if r.headers.get(k)}
         ok = r.status_code < 400
         return {"id": pid, "name": name, "delay": delay, "used_for": used, "status": r.status_code, "ms": ms, "ok": ok,
-                "error": None if ok else f"HTTP {r.status_code}", "rate_limit": rl or None}
+                "error": None if ok else (f"HTTP {r.status_code} — StatCan's security check blocks cloud servers (since Nov 17, 2026); not a desk fault"
+                                          if r.status_code == 403 and "curit" in r.text[:400] else f"HTTP {r.status_code}"), "rate_limit": rl or None}
     except Exception as e:
         return {"id": pid, "name": name, "delay": delay, "used_for": used, "status": None, "ms": round((time.monotonic() - t0) * 1000),
                 "ok": False, "error": type(e).__name__}
