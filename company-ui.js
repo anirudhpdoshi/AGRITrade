@@ -958,15 +958,16 @@
   /* tiles: chart, table or both (remembered in this browser) */
   var TV = (function () { try { return localStorage.getItem("desk.coTiles") || "chart"; } catch (e) { return "chart"; } })();
   function miniT(M, k) {
-    var A = S(M, k), Y = S(M, k + "_yoy"), ix = [];   /* last five quarters that have a figure; blank rows hidden */
+    /* comparables only (owner, Nov 18 2026): the tile table shows QoQ and YoY changes for the last four quarters, not the raw figures */
+    var A = S(M, k), Y = S(M, k + "_yoy"), Qq = S(M, k + "_qoq"), ix = [];
     for (var j = A.length - 1; j >= 0 && ix.length < 4; j--) if (A[j].v != null) ix.unshift(j);   /* four quarters fit a tile without scrolling */
     if (!ix.length) return "";
-    var a = ix.map(function (j) { return A[j]; }), y = ix.map(function (j) { return Y[j]; });
-    var vs = a.map(function (z) { return z.v; }), mg = /%$/.test(fv(k, vs[0])) && !/etr|tax/i.test(k) && a.length >= 3, hi = Math.max.apply(null, vs), lo = Math.min.apply(null, vs); if (hi - lo < 0.05) mg = false;
-    var sl = function (l) { var m = /^Q(\d) FY(\d\d)/.exec(l || ""); return m ? "Q" + m[1] + "\u2019" + m[2] : l; };
+    var a = ix.map(function (j) { return A[j]; }), y = ix.map(function (j) { return Y[j]; }), qq = ix.map(function (j) { return Qq[j]; });
+    if (!y.concat(qq).some(function (z) { return z && z.v != null; })) return "";   /* no comparable periods on file: no table */
+    var sl = function (l) { var m = /^Q(\d) FY(\d\d)/.exec(l || ""); return m ? "Q" + m[1] + "’" + m[2] : l; };
+    var row = function (lab, sx, suf) { return "<tr><td class=\"lb\">" + lab + "</td>" + a.map(function (z, i) { var v = sx[i] && sx[i].v; return "<td>" + (v == null ? "—" : sgc(tone(k, v), fv(k + suf, v))) + "</td>"; }).join("") + "</tr>"; };
     return '<div class="cx-mtw"><table class="cx-mt tx-m"><thead><tr><th></th>' + a.map(function (z, i) { return "<th" + (i === a.length - 1 ? ' class="now"' : "") + ' title="' + esc(z.label) + '">' + esc(sl(z.label)) + "</th>"; }).join("") + "</tr></thead><tbody>" +
-      "<tr><td class=\"lb\"></td>" + a.map(function (z) { return "<td" + (mg && z.v === hi ? ' class="mx-hi good"' : mg && z.v === lo ? ' class="mx-lo bad"' : "") + ">" + fv(k, z.v) + "</td>"; }).join("") + "</tr>" +
-      "<tr><td class=\"lb\">YoY</td>" + a.map(function (z, i) { var yy = y[i] && y[i].v; return "<td>" + (yy == null ? "—" : sgc(tone(k, yy), fv(k + "_yoy", yy))) + "</td>"; }).join("") + "</tr></tbody></table></div>";
+      row("QoQ", qq, "_qoq") + row("YoY", y, "_yoy") + "</tbody></table></div>";
   }
   /* ---- tile detail (owner, Nov 17 2026): every metric tile (receivables, inventory, margins, debt…) opens the same panel as the
      results scorecard — latest quarter vs prior quarter (QoQ) and year ago (YoY), median of the last five quarters ---- */
