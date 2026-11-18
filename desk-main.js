@@ -1750,7 +1750,7 @@ function macroLinePanel(m, opt){
 function macroKpiCard(title, us, ca, dec, unit){
   function row(flag, m){ if(!m) return ''; var ch=m.chg, flat=Math.abs(ch)<Math.pow(10,-dec)/2;
     return '<div class="mkc mk-click" data-mkey="'+m.key+'" title="Click for the full breakdown"><div class="mkc-h">'+flagCcy(m.group,12)+' <b>'+flag+'</b> <span>'+esc(m.period)+'</span></div>'+
-      '<div class="mkc-v"><b>'+fmt(m.value,dec)+unit+'</b><span class="mkc-c '+(flat?'neu':cls(ch))+'">'+(flat?'unch.':sgn(ch,dec,unit==='%'?' pp':''))+'</span></div>'+nextReleaseHTML(m.key,true)+'</div>'; }
+      '<div class="mkc-v"><b>'+fmt(m.value,dec)+unit+'</b><span class="mkc-c '+(flat?'neu':cls(ch))+'">'+(flat?'unch.':sgn(ch,dec,unit==='%'?' pp':''))+'</span></div>'+nextReleaseHTML(m.key,true)+(/^(us_nfp|us_ur|ca_emp|ca_ur)$/.test(m.key)?'<button type="button" class="rg-go" data-rgo="'+m.key.slice(0,2)+'" title="Open the regional jobs map">&#x1F5FA; By '+(m.key[0]==='u'?'state':'province')+'</button>':'')+'</div>'; }
   return '<div class="dash-card"><div class="dk">'+title+'</div>'+(MGEO!=='ca'?row('US',us):'')+(MGEO!=='us'?row('CA',ca):'')+'</div>';
 }
 function macroCompareHTML(){
@@ -3458,6 +3458,7 @@ function macroSubnavHTML(){
     {id:'dash', label:'Dashboard · '+(MGEO==='both'?'US + Canada':MGEO==='us'?'US':'Canada'), ev:nextOf(ev, function(e){ return hi(e)&&!cb.test(e.label)&&geo(e); })},
     {id:'cpi', label:'CPI Deep Dive · US + Canada', ev:nextOf(ev, function(e){ return /\bCPI\b/.test(e.label)&&(e.ccy==='USD'||e.ccy==='CAD'); })},
     {id:'cycle', label:'Cycle & Fed Policy', ev:nextOf(ev, function(e){ return e.ccy==='USD'&&(cb.test(e.label)||/CPI|PCE|Payrolls|Employment/i.test(e.label)); })},
+    {id:'reg', label:'Regional Jobs Map · US + Canada', ev:nextOf(ev, function(e){ return /Payrolls|Employment|Unemployment|Jobless|Labour|Labor/i.test(e.label)&&(e.ccy==='USD'||e.ccy==='CAD'); })},
     {id:'trade', label:'Trade & Fiscal', ev:nextOf(ev, function(e){ return (e.ccy==='USD'||e.ccy==='CAD')&&/Trade|Balance|Budget|Current Account/i.test(e.label); })},
     {id:'rel', label:'Releases & Consensus', ev:nextOf(ev, function(e){ return hi(e); })}
   ], '');
@@ -3480,6 +3481,7 @@ function renderMacro(){
     subWrap('macro','dash', macroDashHTML()+fxMacroHTML())+
     subWrap('macro','cpi', cpiCardSafe())+
     subWrap('macro','cycle', (window.cycleHTML?cycleHTML():'')+(window.fedIntelHTML?fedIntelHTML():''))+
+    subWrap('macro','reg', window.REGIONS?REGIONS.html():'')+
     subWrap('macro','trade', tradeFiscalHTML())+
     subWrap('macro','rel', FXT.releases||'')+
     '</div><aside class="rail">'+macroRailHTML()+'</aside></div>';
@@ -3528,7 +3530,7 @@ var SECG={
     rates:[['ys','Yield spreads',/yield spreads/i],['en','Energy',/Energy/],['pol','Policy expectations',/Policy expectations/]]
   }
 };
-var SUBTHEME={ysm:'#ffb84d',overview:'#38b6c9',deriv:'#a78bfa',macro:'#e8b93d',fund:'#e8b93d',rates:'#3fb97f',inputs:'#f08a5d',dash:'#e8b93d',cycle:'#a78bfa',trade:'#38b6c9',rel:'#3fb97f',cpi:'#e8a33d',prices:'#e8b93d'};
+var SUBTHEME={ysm:'#ffb84d',reg:'#3fb97f',overview:'#38b6c9',deriv:'#a78bfa',macro:'#e8b93d',fund:'#e8b93d',rates:'#3fb97f',inputs:'#f08a5d',dash:'#e8b93d',cycle:'#a78bfa',trade:'#38b6c9',rel:'#3fb97f',cpi:'#e8a33d',prices:'#e8b93d'};
 var GTITLE={corn:'Corn · ZCZ26',wheat:'Wheat · ZWZ26',soybeans:'Soybeans · ZSF27',fx:'USD/CAD desk',macro:'Macro · US & Canada'};
 
 /* ---------- left-panel collapse, knowledge bank, per-menu guide ---------- */
