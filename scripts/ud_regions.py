@@ -78,6 +78,6 @@ def us_states(D, N):
     D.setdefault("regions", {})["us"] = {"asof": asof, "units": "thousands of jobs, seasonally adjusted; unemployment rate %",
         "src": "BLS Current Employment Statistics (state) and Local Area Unemployment Statistics, via FRED", "ind_names": US_IND, "states": out}
     meta["us_states_checked"] = iso(UDC.NOW)
-    meta["asof"]["us_states"] = asof + "-01T08:30:00-05:00"
+    meta["asof"]["us_states"] = iso(UDC.NOW)   # when the desk last confirmed the latest published month
     print(f"  states: {len(out)} read, latest month {asof}; missing {miss}")
     return True

@@ -264,7 +264,7 @@
         return '<div class="mn2-lh">' + TL[t] + "</div>" + byT[t].map(function (x) { return '<button type="button" class="mn2-it' + (x === sel ? " on" : "") + '" data-mn2k="' + x.m.key + '"><span>' + esc(x.m.name) + "</span>" +
           (x.today ? '<i class="mn2-dot' + (x.out ? "" : " due") + '" title="' + (x.out ? "Released today" : "Due today " + (x.due ? hm(x.due) : "")) + '"></i>' : "") + "</button>"; }).join(""); }).join("") +
         '<div class="mn2-key"><i class="mn2-dot"></i> out today <i class="mn2-dot due"></i> due today</div></nav>' +
-        '<div class="mn2-c">' + (sel ? cardHTML(sel, S.g) : '<p class="note">No indicators in this group.</p>') + "</div></div>";
+        '<div class="mn2-c">' + (sel ? cardHTML(sel, S.g) : '<p class="note">No indicators in this group.</p>') + (sel && root.REGIONS ? REGIONS.forKey(sel.m.key) : "") + "</div></div>";
     }
     box.innerHTML = '<div class="mn2-lay">' + left + '<div class="mn2-main"><div class="tile wide mn2-head mn3-head"><div class="mn3-ttl"><h2>' + COUNTRY[S.c].name + '<span>Macro</span></h2><span class="mn3-sub" title="Categories as Trading Economics groups them · each data point tagged leading, coincident or lagging · red dot = released or due today">Trading Economics categories · leading / coincident / lagging tags · <i class="mn3-dot"></i> out or due today</span></div>' + todayStrip(S.c) + tabs + "</div>" + main + "</div></div>";
     toEnd();

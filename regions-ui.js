@@ -11,7 +11,7 @@
   function f(v, d) { return v == null || !isFinite(v) ? "—" : (+v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }); }
   function sg(v, d, u) { return v == null || !isFinite(v) ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + f(Math.abs(v), d) + (u || ""); }
   function cl(v, inv) { if (v == null || !isFinite(v) || v === 0) return "rg-n"; return (v > 0) !== !!inv ? "rg-u" : "rg-d"; }
-  function jobs(k) { k = Math.abs(k); return k >= 1 ? f(k, 1) + "K" : f(k * 1000, 0); }
+  function jobs(k) { k = Math.abs(k); return k >= 1000 ? f(k / 1000, 2) + "M" : k >= 1 ? f(k, 1) + "K" : f(k * 1000, 0); }
   function sj(k) { return k == null || !isFinite(k) ? "—" : (k > 0 ? "+" : k < 0 ? "−" : "") + jobs(k); }
 
   function loadGeo() { if (GEO || GEO_LOADING) return; GEO_LOADING = true; fetch("geo-maps.json").then(function (r) { return r.json(); }).then(function (j) { GEO = j; redraw(); }).catch(function () { GEO_LOADING = false; }); }
@@ -151,5 +151,14 @@
     "#rg-tile{container-type:inline-size}@container (max-width:820px){.rg-g{grid-template-columns:1fr}}";
   doc.head.appendChild(st);
   root.US_FIPS = { "01": "AL", "02": "AK", "04": "AZ", "05": "AR", "06": "CA", "08": "CO", "09": "CT", "10": "DE", "11": "DC", "12": "FL", "13": "GA", "15": "HI", "16": "ID", "17": "IL", "18": "IN", "19": "IA", "20": "KS", "21": "KY", "22": "LA", "23": "ME", "24": "MD", "25": "MA", "26": "MI", "27": "MN", "28": "MS", "29": "MO", "30": "MT", "31": "NE", "32": "NV", "33": "NH", "34": "NJ", "35": "NM", "36": "NY", "37": "NC", "38": "ND", "39": "OH", "40": "OK", "41": "OR", "42": "PA", "44": "RI", "45": "SC", "46": "SD", "47": "TN", "48": "TX", "49": "UT", "50": "VT", "51": "VA", "53": "WA", "54": "WV", "55": "WI", "56": "WY" };
-  root.REGIONS = { html: html, redraw: redraw };
+  var LASTKEY = null;
+  /* the Macro page shows the map under a jobs indicator's card (payrolls, employment, unemployment) */
+  function forKey(key) {
+    var m = /^(us|ca)_(nfp|emp|ur)$/.exec(key || ""); if (!m) return "";
+    var c = m[1], R = root.DATA && DATA.regions || {};
+    if (!R[c]) return c === "ca" ? '<div class="tile wide rg-off"><h2>Jobs by province</h2><p class="rg-note">The province map needs Statistics Canada\u2019s Labour Force Survey by province. Statistics Canada is currently blocking requests from our data servers, so the map is held back rather than shown with stale or estimated figures.</p></div>' : "";
+    if (key !== LASTKEY) { LASTKEY = key; S.c = c; S.m = m[2] === "ur" ? "ur" : "mom"; S.sel = null; }
+    return html();
+  }
+  root.REGIONS = { html: html, redraw: redraw, forKey: forKey };
 })(window);
