@@ -22,6 +22,7 @@
   function addDays(s, n) { var d = new Date(s + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
   function addBiz(s, n) { var d = new Date(s + "T12:00:00Z"); while (n > 0) { d.setUTCDate(d.getUTCDate() + 1); if (d.getUTCDay() % 6) n--; } return d.toISOString().slice(0, 10); }
   function bizBetween(a, b) { var n = 0, d = new Date(a + "T12:00:00Z"), e = new Date(b + "T12:00:00Z"); while (d < e) { d.setUTCDate(d.getUTCDate() + 1); if (d.getUTCDay() % 6) n++; } return n; }
+  function emaArr(c, n) { var o = new Array(c.length).fill(null); if (c.length < n + 10) return o; var k = 2 / (n + 1), e = 0, j; for (j = 0; j < n; j++) e += c[j]; e /= n; for (j = n; j < c.length; j++) { e = c[j] * k + e * (1 - k); o[j] = e; } return o; }
   function ma(c, n, i) { if (i + 1 < n) return null; var s = 0; for (var j = i - n + 1; j <= i; j++) s += c[j]; return s / n; }
   function ncdf(x) { var t = 1 / (1 + 0.2316419 * Math.abs(x)), y = 0.3989423 * Math.exp(-x * x / 2) * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return x > 0 ? 1 - y : y; }
   var npdf = function (x) { return Math.exp(-x * x / 2) / 2.5066283; };
@@ -83,7 +84,17 @@
       var cd = (G.cftc || []).map(function (c) { return nextBizOn(dates, addDays(c.date, 6)); }).filter(Boolean);
       m.ratios = { WASDE: eventRatio(dates, close, wd), COT: eventRatio(dates, close, cd) };
     }
-    var n = close.length - 1; m.ma20 = ma(close, 20, n); m.ma50 = ma(close, 50, n); m.ma100 = ma(close, 100, n);
+    /* EMAs (owner, Nov 18 2026): history = EMA of completed closes; today's value = EMA with today's bar at the live price.
+       Grains use the desk's front-contract EMAs (fan + history) so the cone, the tiles and the Insight card agree. */
+    var n = close.length - 1, liveE = function (e, p) { return e == null || !(m.px > 0) ? e : e + (2 / (p + 1)) * (m.px - e); };
+    m.emaS = { 20: emaArr(close, 20), 50: emaArr(close, 50), 100: emaArr(close, 100) };
+    var GG = !fx && (D.grains || {})[k], FN = GG && GG.fan;
+    if (FN && FN.ema20 != null) {
+      var di = {}; dates.forEach(function (x, i) { di[x] = i; });
+      (GG.history || []).forEach(function (h) { var i = di[String(h.d).slice(0, 10)]; if (i == null) return; if (h.ema20 != null) m.emaS[20][i] = +h.ema20; if (h.ema50 != null) m.emaS[50][i] = +h.ema50; });
+      if (FN.ema100 != null) m.emaS[100][n] = +FN.ema100;
+      m.ma20 = liveE(+FN.ema20, 20); m.ma50 = liveE(+FN.ema50, 50); m.ma100 = FN.ema100 != null ? liveE(+FN.ema100, 100) : liveE(m.emaS[100][n], 100);
+    } else { m.ma20 = liveE(m.emaS[20][n], 20); m.ma50 = liveE(m.emaS[50][n], 50); m.ma100 = liveE(m.emaS[100][n], 100); }
     m.lastD = lastD; m.events = events(m);
     return m;
   }
@@ -155,8 +166,13 @@
         s += '<text x="' + (X1 - 2) + '" y="' + (ys(live[F][z][0]) + 11).toFixed(1) + '" class="vc-sig" text-anchor="end">−' + (z + 1) + "σ " + live[F][z][0].toFixed(d) + "</text>"; });
     }
     /* MAs, CFTC price line, price */
-    if (L.ma) [[20, "m20"], [50, "m50"], [100, "m100"]].forEach(function (q2) { var p = []; for (var i = 0; i < N; i++) { var v = ma(m.close, q2[0], base + i); if (v != null) p.push(xs(i).toFixed(1) + "," + ys(v).toFixed(1)); }
-      if (p.length > 1) s += '<polyline class="vc-ma ' + q2[1] + '" points="' + p.join(" ") + '"/>'; });
+    var MAL = [];
+    if (L.ma) [[20, "m20", m.ma20], [50, "m50", m.ma50], [100, "m100", m.ma100]].forEach(function (q2) { var p = [], A = m.emaS[q2[0]]; for (var i = 0; i < N; i++) { var v = A[base + i]; if (v != null) p.push(xs(i).toFixed(1) + "," + ys(v).toFixed(1)); }
+      if (q2[2] != null) p.push(xa.toFixed(1) + "," + ys(q2[2]).toFixed(1));   /* today: EMA at the live price */
+      if (p.length > 1) s += '<polyline class="vc-ma ' + q2[1] + '" points="' + p.join(" ") + '"/>';
+      if (q2[2] != null) MAL.push([q2[0], q2[1], q2[2]]); });
+    MAL.sort(function (a, b) { return ys(a[2]) - ys(b[2]); }).reduce(function (prevY, q) { var y = Math.max(ys(q[2]) + 3.5, prevY + 12);   /* labels at the line ends, never overlapping */
+      s += '<text x="' + (xa - 6).toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="end" class="vc-mal ' + q[1] + '">EMA' + q[0] + " " + q[2].toFixed(d) + "</text>"; return y; }, -1e9);
     var cotLast = m.cot && m.cot.length ? m.cot[m.cot.length - 1] : null;
     if (L.cot && m.cot && m.cot.length) {
       var idx = {}; Dt.forEach(function (x, i) { idx[x] = i; });
@@ -167,7 +183,7 @@
     }
     s += '<polyline class="vc-pxl" points="' + C.map(function (v, i) { return xs(i).toFixed(1) + "," + ys(v).toFixed(1); }).join(" ") + " " + xa.toFixed(1) + "," + ya.toFixed(1) + '"/>';
     /* breaches: MA, OI walls, ±1σ (daily, from settle), COT price */
-    var lv = []; [["MA20", m.ma20], ["MA50", m.ma50], ["MA100", m.ma100]].forEach(function (q3) { if (q3[1] && L.ma) lv.push(q3); });
+    var lv = []; [["EMA20", m.ma20], ["EMA50", m.ma50], ["EMA100", m.ma100]].forEach(function (q3) { if (q3[1] && L.ma) lv.push(q3); });
     walls.forEach(function (w) { lv.push([w[0], w[1]]); });
     if (cotLast && L.cot) lv.push(["COT PX", cotLast.px]);
     var hits = [], badges = "", prevC = m.close[m.close.length - 2];
@@ -199,7 +215,7 @@
   /* ---------- proximity ruler ---------- */
   function ruler(m) {
     var lv = [], live = m._live, F = m._F;
-    [["MA20", m.ma20], ["MA50", m.ma50], ["MA100", m.ma100]].forEach(function (q) { if (q[1]) lv.push(q); });
+    [["EMA20", m.ma20], ["EMA50", m.ma50], ["EMA100", m.ma100]].forEach(function (q) { if (q[1]) lv.push(q); });
     if (m.cw) lv.push(["Call wall", m.cw]); if (m.pw) lv.push(["Put wall", m.pw]); (m.levels || []).forEach(function (x) { lv.push(x); });
     if (live) { lv.push(["10d +1σ", live[F][0][1]]); lv.push(["10d −1σ", live[F][0][0]]); lv.push(["10d +2σ", live[F][1][1]]); lv.push(["10d −2σ", live[F][1][0]]); }
     if (m._cot) lv.push(["COT price", m._cot.px]);
@@ -217,14 +233,14 @@
     var reg = m.gex == null ? (m.fx ? '<div class="vc-reg na">GAMMA REGIME: n/a — no FX options OI</div>' : "") : '<div class="vc-reg ' + (m.gex < 0 ? "short" : "long") + '">GAMMA REGIME: ' + (m.gex < 0 ? "SHORT / VOLATILE" : "LONG / PINNED") + "</div>";
     var cot = m._cot, cotTxt = cot ? (m.px >= cot.px ? "above" : "below") + " by " + (Math.abs(m.px - cot.px) * m.unitMove).toFixed(1) + m.uLab : "—";
     return '<div class="vc-rail">' + reg +
-      '<div class="vc-kvs">' + kv("MA20", m.ma20 ? m.ma20.toFixed(d) : "—") + kv("MA50", m.ma50 ? m.ma50.toFixed(d) : "—") + kv("MA100", m.ma100 ? m.ma100.toFixed(d) : "—") +
+      '<div class="vc-kvs">' + kv("EMA20", m.ma20 ? m.ma20.toFixed(d) : "—") + kv("EMA50", m.ma50 ? m.ma50.toFixed(d) : "—") + kv("EMA100", m.ma100 ? m.ma100.toFixed(d) : "—") +
         kv("10D 95% low", ci ? ci[0].toFixed(d) : "—") + kv("10D 95% high", ci ? ci[1].toFixed(d) : "—") + kv("10D 99% range", ci99 ? ci99[0].toFixed(d) + "–" + ci99[1].toFixed(d) : "—") +
         (m.sdIv && m.sdRv ? kv("Implied vol", (m.sdIv * Math.sqrt(252) * 100).toFixed(1) + "%") + kv("Realised vol 30d", (m.sdRv * Math.sqrt(252) * 100).toFixed(1) + "%") +
           kv("IV − RV", '<span class="' + (m.sdIv > m.sdRv ? "up" : "dn") + '">' + ((m.sdIv - m.sdRv) * Math.sqrt(252) * 100 >= 0 ? "+" : "−") + Math.abs((m.sdIv - m.sdRv) * Math.sqrt(252) * 100).toFixed(1) + " pts</span>") : "") + (m.gex != null ? kv("NET GEX", (m.gex < 0 ? "−$" : "$") + Math.abs(m.gex / 1e6).toFixed(0) + "M") : "") +
         kv("vs " + m.settleLab, ((m.px - m.settle) >= 0 ? "+" : "−") + Math.abs((m.px - m.settle) * m.unitMove).toFixed(1) + m.uLab) +
         kv("COT " + (cot ? md(cot.d) : "price"), cot ? cot.px.toFixed(d) : "—") + kv("Price vs COT", '<span class="' + (cot ? (m.px >= cot.px ? "up" : "dn") : "") + '">' + cotTxt + "</span>") +
         (cot && cot.net != null ? kv("Funds net", (cot.net > 0 ? "+" : "") + cot.net.toLocaleString()) : "") + "</div>" +
-      '<div class="vc-tgs">' + tg("dual", "Dual cone") + tg("walls", m.fx ? "Key levels" : "GEX / OI walls") + tg("ma", "MA 20/50/100") + tg("events", "Event gates") + tg("cot", "CFTC price line") + (m.sdIv && m.sdRv ? tg("rv", "σ: realised, not implied") : "") + "</div>" +
+      '<div class="vc-tgs">' + tg("dual", "Dual cone") + tg("walls", m.fx ? "Key levels" : "GEX / OI walls") + tg("ma", "EMA 20/50/100") + tg("events", "Event gates") + tg("cot", "CFTC price line") + (m.sdIv && m.sdRv ? tg("rv", "σ: realised, not implied") : "") + "</div>" +
       '<div class="vc-log"><b>Breach telemetry</b>' + (L2.length ? L2.slice(-6).reverse().map(function (x) { return "<div><span>" + HM.format(new Date(x.t)) + "</span>" + esc(x.txt) + "</div>"; }).join("") : '<div class="neu">No tests or breaches this session.</div>') + "</div></div>";
   }
   function head(m) {
@@ -303,7 +319,7 @@
     ".vc-tg[aria-pressed=true]{color:#e8eef4}.vc-tg[aria-pressed=true] i{background:#2b2b2b}.vc-tg[aria-pressed=true] i:after{left:16px;background:#d0d0d0}.vc-tg:focus-visible{outline:2px solid #38b6c9}" +
     ".vc-log{border-top:1px solid #1a1a1a;padding-top:10px;font-size:11px;color:#c9d4e2;display:flex;flex-direction:column;gap:3px;margin-top:auto}.vc-log b{font-size:10.5px;letter-spacing:.06em;color:#8a8a8a;font-weight:500;text-transform:uppercase}.vc-log span{color:#777;margin-right:8px}" +
     ".vc-main{min-width:0}.vc-svg{width:100%;height:auto;display:block}.vc-g{stroke:#1a1a1a}.vc-ax{fill:#777;font:11px 'JetBrains Mono','IBM Plex Mono',monospace}.vc-ax2{fill:#8a8a8a;font:9.5px 'JetBrains Mono','IBM Plex Mono',monospace}" +
-    ".vc-pxl{fill:none;stroke:#f2f2f2;stroke-width:1.4}.vc-ma{fill:none;stroke-width:1.4}.vc-ma.m20{stroke:#c9b07a}.vc-ma.m50{stroke:#7b6fd0}.vc-ma.m100{stroke:#474c86}" +
+    ".vc-pxl{fill:none;stroke:#f2f2f2;stroke-width:1.4}.vc-ma{fill:none;stroke-width:1.4}.vc-ma.m20{stroke:#c9b07a}.vc-ma.m50{stroke:#7b6fd0}.vc-ma.m100{stroke:#474c86}.vc-mal{font:700 10px 'JetBrains Mono','IBM Plex Mono',monospace;paint-order:stroke;stroke:#000;stroke-width:3px}.vc-mal.m20{fill:#e0c78f}.vc-mal.m50{fill:#9d93e6}.vc-mal.m100{fill:#8a90d0}" +
     ".vc-cone{transition:d .6s ease}.vc-cone.z1{fill:rgba(56,224,190,.30);stroke:rgba(80,240,210,.7);stroke-width:1}.vc-cone.z2{fill:rgba(56,224,190,.16);stroke:rgba(80,240,210,.45);stroke-width:1}.vc-cone.z3{fill:rgba(56,224,190,.07);stroke:rgba(80,240,210,.3);stroke-width:1}" +
     ".vc-wire{fill:rgba(217,140,40,.04);stroke:#d99a3a;stroke-width:1;stroke-dasharray:4 3;transition:d .6s ease}.vc-sig{fill:#6fe0c6;font:10px 'JetBrains Mono','IBM Plex Mono',monospace;paint-order:stroke;stroke:#000;stroke-width:3}" +
     ".vc-call{fill:#2fae6a}.vc-put{fill:#c0392b}.vc-wall{stroke-width:1;stroke-dasharray:2 4}.vc-wall.c{stroke:#2fae6a}.vc-wall.p{stroke:#c0392b}.vc-lvl{stroke:#8a8a8a;stroke-dasharray:3 3}" +
