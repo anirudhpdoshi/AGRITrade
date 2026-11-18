@@ -396,7 +396,7 @@
   /* section tabs (owner, Nov 17 2026): market views as one segmented control; company research as group tabs with the
      group's cards underneath. Every tab opens its card; a card the company does not report is dimmed and cannot be opened. */
   var NAVG = { "Loans & deposits": "Loans & deposits", "Asset quality": "Asset quality", "Capital & returns": "Capital & returns", "Capital intensity & cash flow": "Capex & cash flow", "Balance sheet & leverage": "Balance sheet", "Returns & warnings": "Returns",
-    "Commodity inventory & working capital": "Inventory & working capital", "Balance sheet & financing": "Balance sheet", "Regulatory & disclosed only": "Disclosed only", "Disclosed by the company only": "Disclosed only", "Company overview": "Overview", "Income statement": "Income statement", "Balance sheet": "Balance sheet", "Cash flow": "Cash flow", "Estimates": "Estimates", "Ownership": "Ownership",
+    "Commodity inventory & working capital": "Inventory & working capital", "Balance sheet & financing": "Balance sheet", "Regulatory & disclosed only": "Disclosed only", "Disclosed by the company only": "Disclosed only", "Company overview": "Overview", "Income statement": "Income statement", "Balance sheet": "Balance sheet", "Cash flow": "Cash flow", "Management commentary": "Commentary", "Estimates": "Estimates", "Ownership": "Ownership",
     "Valuation & market": "Valuation", "Ratios & warnings": "Ratios", "Industry comparison": "Peers", "Earnings intelligence": "Research" };
   var FIN = { "Income statement": 1, "Balance sheet": 1, "Cash flow": 1, "Loans & deposits": 1, "Asset quality": 1, "Capital & returns": 1, "Capex & cash flow": 1, "Inventory & working capital": 1 };
   var navGrp = null;

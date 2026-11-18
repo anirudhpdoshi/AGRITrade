@@ -52,8 +52,8 @@
   st.textContent =
     "body{font-variant-numeric:tabular-nums lining-nums}" +
     ".nf{font-weight:700;white-space:nowrap;font-style:normal}" +
-    ".nf-up{color:#34d67f}.nf-dn{color:#ff6262}.nf-pc{color:#6cc0ff}" +
-    "html[data-theme=light] .nf-up{color:#0d8a4a}html[data-theme=light] .nf-dn{color:#c62828}html[data-theme=light] .nf-pc{color:#0b63b6}" +
+    ".nf-up{color:#34d67f}.nf-dn{color:#ff6262}.nf-pc{color:#ffb84d}" +
+    "html[data-theme=light] .nf-up{color:#0d8a4a}html[data-theme=light] .nf-dn{color:#c62828}html[data-theme=light] .nf-pc{color:#a85d00}" +
     "td,th{font-style:normal}" +
     ".cx-t td{font-size:13.5px;font-weight:500;color:var(--ink)}" +
     ".cx-t td[data-calc],.cx-t td.calc{text-decoration:underline dotted rgba(140,160,190,.55);text-underline-offset:3px}";
