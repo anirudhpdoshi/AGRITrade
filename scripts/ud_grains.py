@@ -575,12 +575,23 @@ def _fan_from(settles):
             e = v * k + e * (1 - k)
         return e
     ema20, ema50, ema100 = ema(20), ema(50), ema(100)
+
+    def ema_series(n):   # EMA at every settle (None until seeded)
+        out, k = [None] * len(t), 2 / (n + 1)
+        if len(t) < n + 10:
+            return out
+        e = sum(t[:n]) / n
+        for i in range(n, len(t)):
+            e = t[i] * k + e * (1 - k); out[i] = e
+        return out
+    E20, E50 = ema_series(20), ema_series(50)
     z = (a - ma20) / statistics.stdev(t[-20:])
     w5, w10 = sig * 5 ** .5, sig * 10 ** .5
     hist = []
     for j in range(len(t) - 25, len(t)):
         hist.append({"d": settles[j][0] + "T00:00:00", "s": t[j],
-                     "ma20": round(sum(t[j-19:j+1]) / 20, 4), "ma50": round(sum(t[j-49:j+1]) / 50, 4)})
+                     "ma20": round(sum(t[j-19:j+1]) / 20, 4), "ma50": round(sum(t[j-49:j+1]) / 50, 4),
+                     "ema20": round(E20[j], 4) if E20[j] is not None else None, "ema50": round(E50[j], 4) if E50[j] is not None else None})
     return {"anchor": a, "sig": sig, "settle_date": settles[-1][0],
             "r5": [round(a - 1.96*w5, 2), round(a + 1.96*w5, 2)], "r10": [round(a - 1.96*w10, 2), round(a + 1.96*w10, 2)],
             "r10_99": [round(a - 2.576*w10, 2), round(a + 2.576*w10, 2)],
@@ -606,7 +617,7 @@ def settles(D, N):
             worst = max((abs(a - b) for a, b in both), default=0)
             if worst > 0.0101:
                 raise RuntimeError(f"{front}: source differs from verified settles by up to {worst:.4f} — not used")
-            if st_[-1][0] <= g["fan"]["settle_date"] and g["fan"].get("ma50") and g["fan"].get("ema20") and abs(dict(st_).get(newest, mine.get(newest, 0)) - mine.get(newest, 0)) < 1e-9:
+            if st_[-1][0] <= g["fan"]["settle_date"] and g["fan"].get("ma50") and g["fan"].get("ema20") and (g.get("history") or [{}])[-1].get("ema20") is not None and abs(dict(st_).get(newest, mine.get(newest, 0)) - mine.get(newest, 0)) < 1e-9:
                 continue  # nothing new
             fan, hist, tail = _fan_from(st_)
             g["fan"].update(fan)

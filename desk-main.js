@@ -153,9 +153,15 @@ function oiShiftHTML(g){
     (S.items.length?'<ul>'+S.items.map(function(i){ return '<li class="'+i.lvl+'">'+i.t+'</li>'; }).join('')+'</ul>':'<p>No substantial change at any strike (threshold: \u00b11,500 contracts and 5% of the strike\u2019s open interest, or \u00b1500 and 25%).</p>')+
     '<div class="oikey-r">Range the options market is defining now: <b>'+money2(S.range[0])+'</b> (put wall, support) \u2013 <b>'+money2(S.range[1])+'</b> (call wall, resistance) around the underlying \u2248 '+money2(S.U)+'. Interpretation, not a forecast.</div></div>';
 }
+/* volatility cone: the two average lines are EMAs when the data carries them (owner, Nov 18 2026). History points are
+   EMAs of completed settles; the label/extension is the EMA with today's bar at the live price, like the tiles. */
+function fanHist(g){ var H=g.history||[]; if(!H.length||H[H.length-1].ema20==null) return H;
+  return H.map(function(h){ return Object.assign({},h,{ma20:h.ema20!=null?h.ema20:h.ma20, ma50:h.ema50!=null?h.ema50:h.ma50, _ema:true}); }); }
+function fanLiveAvg(g,n,v){ var L=+g.fan.intraday[0]; return (g.history||[]).length&&g.history[g.history.length-1].ema20!=null&&L>0&&v!=null?v+(2/(n+1))*(L-v):v; }
 function fanLevels(g, meta){
   var f=g.fan, L=f.intraday[0], w10=f.sig*Math.sqrt(10), ivH=L*f.iv_10d_rel;
-  var lastH=g.history[g.history.length-1];
+  var FH=fanHist(g), lastH=Object.assign({},FH[FH.length-1]), EU=lastH._ema?'EMA':'MA';
+  lastH.ma20=fanLiveAvg(g,20,lastH.ma20); lastH.ma50=fanLiveAvg(g,50,lastH.ma50);
   var cw=g.near.call_wall, pwl=g.near.put_wall, cl=meta.chainNear, WS=g.near.wall_shift;
   var E="#e8eef4", C99="#ff9d9d", CY="#38b6c9";
   var levels=[
@@ -164,8 +170,8 @@ function fanLevels(g, meta){
     {key:"p2", name:"+2σ ≈ 95% CI", label:"+2σ ≈ 95% CI "+money2(L+2*w10), value:L+2*w10, color:E},
     {key:"ivp", name:"IV +2σ", label:"IV +2σ "+money2(L+ivH), value:L+ivH, color:CY},
     {key:"p1", name:"+1σ", label:"+1σ "+money2(L+w10), value:L+w10, color:E},
-    {key:"ma50", name:"exp MA50", label:"exp MA50 "+money2(lastH.ma50), value:lastH.ma50, color:"#b18cff"},
-    {key:"ma20", name:"exp MA20", label:"exp MA20 "+money2(lastH.ma20), value:lastH.ma20, color:"#f0c169"},
+    {key:"ma50", name:EU+"50", label:EU+"50 "+money2(lastH.ma50), value:lastH.ma50, color:"#b18cff"},
+    {key:"ma20", name:EU+"20", label:EU+"20 "+money2(lastH.ma20), value:lastH.ma20, color:"#f0c169"},
     {key:"ctr", name:"anchor", label:"Live anchor "+money2(L), value:L, color:CY, bold:true},
     {key:"m1", name:"−1σ", label:"−1σ "+money2(L-w10), value:L-w10, color:E},
     {key:"ivm", name:"IV −2σ", label:"IV −2σ "+money2(L-ivH), value:L-ivH, color:CY},
@@ -268,7 +274,7 @@ function fanRulerHTML(g, FL){
 }
 function fanSVG2(g, meta, FL){
   var fk=String(meta.name||'').toLowerCase(), Z=FANZ[fk]||{z:1,pan:0,n:0};
-  var f=g.fan, hist=Z.n?g.history.slice(-Z.n):g.history, A=f.anchor, sig=f.sig, L=f.intraday[0];
+  var FHs=fanHist(g), f=g.fan, hist=Z.n?FHs.slice(-Z.n):FHs, A=f.anchor, sig=f.sig, L=f.intraday[0];
   var W=860,H=400,PL=46,PR=250,PT=16,PB=30, pw=W-PL-PR, ph=H-PT-PB;
   var NH=hist.length, FD=10, span=NH-1+FD;
   var lo=Infinity, hi=-Infinity, i, d;
@@ -315,8 +321,8 @@ function fanSVG2(g, meta, FL){
     return '<path d="'+p+'" fill="none" stroke="'+color+'" stroke-width="1.8"/>';
   }
   s+=maLine('ma20','#f0c169')+maLine('ma50','#b18cff');
-  var lastH=hist[NH-1];
-  /* exp MA extensions: flat zero-drift lines at the last trailing values */
+  var lastH=Object.assign({},hist[NH-1]); lastH.ma20=fanLiveAvg(g,20,lastH.ma20); lastH.ma50=fanLiveAvg(g,50,lastH.ma50);
+  /* average extensions: flat lines at today's value (EMA with today's bar at the live price) */
   if(FANV.ma!==false){
   s+='<line x1="'+X(NH-1)+'" y1="'+Y(lastH.ma20)+'" x2="'+X(span)+'" y2="'+Y(lastH.ma20)+'" stroke="#f0c169" stroke-width="1.4" stroke-dasharray="2 3"/>';
   s+='<line x1="'+X(NH-1)+'" y1="'+Y(lastH.ma50)+'" x2="'+X(span)+'" y2="'+Y(lastH.ma50)+'" stroke="#b18cff" stroke-width="1.4" stroke-dasharray="2 3"/>'; }
@@ -1271,7 +1277,7 @@ function grainKpiHTML(key){
   var spark=sparkPath(g.history.map(function(h){ return h.s; }),120,26);
   return '<div class="tile wide kpi-strip">'+
     kpi(meta.contract+' (delayed)', '<span class="g-kpi" data-grain="'+key+'" data-tick="kpi-'+key+'" data-roll>$'+fmt(q,4)+'</span>', '<span class="'+cls(chg)+'">'+sgn(chg,2,'%')+'</span> vs settle · '+esc(f.intraday[1]), spark)+
-    kpi('Settle · '+fmtShortDate(f.settle_date), '$'+fmt(+f.anchor,4), 'z '+f.z+' · MA20 $'+f.ma20)+
+    kpi('Settle · '+fmtShortDate(f.settle_date), '$'+fmt(+f.anchor,4), 'z '+f.z+' · '+(f.ema20!=null?'EMA20 $'+fmt(+f.ema20+(2/21)*(+f.intraday[0]-f.ema20),2):'MA20 $'+f.ma20))+
     kpi('Options ('+meta.chainNear+')', 'P/C '+f.pcr, 'P $'+fmt(f.put_wall[0],2)+' · C $'+fmt(f.call_wall[0],2))+
     kpi('Managed money', sgn(Math.round(last.net/1000),0)+'<small>k</small>', '<span class="'+cls(last.net-prev.net)+'">'+sgn(Math.round((last.net-prev.net)/100)/10,1)+'k</span> w/w · '+fmtShortDate(last.date))+
     kpi('Export sales', fmt(Math.round(w[2]/1000))+'<small>k MT</small>', (v?'<span class="'+(v==='BEAT'?'up':v==='MISS'?'dn':'neu')+'">'+(v==='BEAT'?'above':v==='MISS'?'below':'inside')+' range</span>':'no estimate')+' · w/e '+fmtShortDate(w[0]))+
@@ -2625,7 +2631,7 @@ function checklistItems(key){
   var tech, agree;
   if(isFx){ var fx=DATA.fx, sp=+fx.feed.mid, L=fx.levels; tech='USD/CAD '+fmt(sp,4)+' vs 20-day range '+fmt(L.s20,4)+'\u2013'+fmt(L.r20,4)+', pivot '+fmt(L.pivot,4);
     agree=(K.net<0&&sp>L.pivot)||(K.net>0&&sp<L.pivot); }
-  else { var f=DATA.grains[key].fan, px=+f.intraday[0], m20=+f.ma20, m50=+f.ma50; tech='Price '+fmt(px,4)+' vs MA20 '+fmt(m20,2)+' / MA50 '+fmt(m50,2);
+  else { var f=DATA.grains[key].fan, px=+f.intraday[0], EE=f.ema20!=null, m20=EE?+f.ema20+(2/21)*(px-f.ema20):+f.ma20, m50=EE?+f.ema50+(2/51)*(px-f.ema50):+f.ma50; tech='Price '+fmt(px,4)+' vs '+(EE?'EMA':'MA')+'20 '+fmt(m20,2)+' / '+(EE?'EMA':'MA')+'50 '+fmt(m50,2);
     agree=(K.net>0&&px>m50)||(K.net<0&&px<m50); }
   it(agree,'Technicals', tech+' \u2014 '+(agree?'price trend agrees with fund positioning.':'price trend is <b>against</b> fund positioning; wait for a technical trigger.'),'CFTC data is 3 days old on release. Positioning shows structural risk; price levels give the timing.');
   return items;
