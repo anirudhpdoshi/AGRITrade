@@ -103,6 +103,12 @@
     ".mi-c li{font-size:12.5px;line-height:1.45;color:#dfe6f0;padding-left:8px;border-left:2px solid}.mi-c li.g{border-color:#3fb97f}.mi-c li.r{border-color:#e0453a}.mi-c li.a{border-color:#e8a33d}" +
     ".mi-c li em{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;font-style:normal}.mi-c li em i{font:600 9.5px 'IBM Plex Mono',monospace;font-style:normal;padding:1px 6px;border-radius:999px;background:#1a2433;color:#aebbd0}" +
     "@media (max-width:900px){.mi-g{grid-template-columns:1fr}}" +
+    "#coDlg{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(2,4,8,.55);backdrop-filter:blur(2px)}#coDlg[hidden]{display:none}" +
+    ".cd-box{min-width:300px;max-width:92vw;background:#0b111b;border:1px solid var(--line2);border-radius:12px;padding:16px 18px;box-shadow:0 18px 40px rgba(0,0,0,.6)}" +
+    ".cd-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}.cd-h b{font-size:15px;color:#fff}.cd-h span{font:12px 'IBM Plex Mono',monospace;color:var(--muted)}" +
+    ".cd-l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}.cd-l li{display:flex;gap:9px;align-items:center;font-size:13px;color:var(--muted)}.cd-l li span{width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;border:1px solid var(--line2)}" +
+    ".cd-l li.ok{color:#dfe6f0}.cd-l li.ok span{background:#3fb97f;border-color:#3fb97f;color:#06210f}.cd-l li.na span{border-color:#5b6b82;color:#8f9db3}.cd-l li.wt span{border-color:#e8a33d;border-top-color:transparent;animation:cdS 0.9s linear infinite}" +
+    ".cd-l li small{color:var(--faint)}.cd-n{margin:10px 0 0;font-size:12px;color:var(--faint)}@keyframes cdS{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.cd-l li.wt span{animation:none}}" +
     ".cx-part.dim{opacity:.45}.cx-part.dim span{letter-spacing:0;text-transform:none;color:var(--faint)}" +
     "@media (max-width:640px){.rs-g{grid-template-columns:1fr 1fr}.rs-t .v{font-size:18px}.rs-sc{margin-left:0}.cx-vw{width:100%}.cx-vw button{flex:1}}" +
     ".cx-card{appearance:none;text-align:left;font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:11px 13px;display:flex;flex-direction:column;gap:3px;min-height:132px;transition:border-color .12s,transform .12s}" +
@@ -422,7 +428,7 @@
   /* ---- press-release statements (owner, Nov 17 2026): between the earnings release and the 10-Q/10-K, the release's own
      condensed income statement, balance sheet and cash-flow statement stand in for the new quarter, so every tile (inventory,
      receivables, debt, cash flow…) moves to that quarter instead of staying a quarter behind. Unaudited; marked with *. ---- */
-  var MON = { january: 0, february: 1, march: 2, april: 3, may: 4, june: 5, july: 6, august: 7, september: 8, october: 9, november: 10, december: 11 };
+  var MONIX = { january: 0, february: 1, march: 2, april: 3, may: 4, june: 5, july: 6, august: 7, september: 8, october: 9, november: 10, december: 11 };
   function prStatements(html) {
     var doc = new DOMParser().parseFromString(html, "text/html"), out = { is: {}, bs: {}, cf: {}, py: {} }, ends = [];
     function txt(n) { return (n.textContent || "").replace(/ /g, " ").replace(/\s+/g, " ").trim(); }
@@ -443,7 +449,7 @@
       if (!cont && kind !== "bs" && !/three months|quarter ended|thirteen weeks|fourteen weeks/.test(hd)) return;   /* only a three-month column */
       lastKind = kind;
       var dm = hd.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}/), yr = hd.match(/\b(20\d\d)\b/);
-      if (dm && yr && !cont) { var dd = dm[0].split(/\s+/), dt = new Date(Date.UTC(+yr[1], MON[dd[0]], +dd[1])); ends.push(dt.toISOString().slice(0, 10)); }
+      if (dm && yr && !cont) { var dd = dm[0].split(/\s+/), dt = new Date(Date.UTC(+yr[1], MONIX[dd[0]], +dd[1])); ends.push(dt.toISOString().slice(0, 10)); }
       var u = unit || 1e6, L = out[kind], sec = "";
       /* income statement: the second column is the same quarter a year earlier when the header's second date is a year back */
       var hds = (hd.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}/g) || []), hys = hd.match(/\b20\d\d\b/g) || [];
@@ -1013,7 +1019,7 @@
     var a = Math.abs(v), s = v < 0 ? "−" : ""; return s + (a >= 1e9 ? (a / 1e9).toFixed(2) + "B" : a >= 1e6 ? (a / 1e6).toFixed(0) + "M" : a >= 1e3 ? (a / 1e3).toFixed(1) + "K" : a.toFixed(0)); }
   function mxd(t, a, b) {   /* change cell: % for amounts, pp for ratios, $ for small sign-flipping lines (other income) */
     if (a == null || b == null) return { s: "", v: null };
-    if (t === "%") { var d = a - b; return { s: (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(1) + " pp", v: d }; }
+    if (t === "%") { var d = Math.round((a - b) * 10) / 10; return { s: (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(1) + " pp", v: d }; }
     if (t === "x") { var dx = a - b; return { s: (dx > 0 ? "+" : dx < 0 ? "−" : "") + Math.abs(dx).toFixed(2) + "×", v: dx }; }
     if (t === "$d" || b === 0 || (a < 0) !== (b < 0)) { var d2 = a - b; return { s: (d2 > 0 ? "+" : d2 < 0 ? "−" : "") + mxf("$", Math.abs(d2)).replace("−", ""), v: d2 }; }
     var p = (a / b - 1) * 100 * (b < 0 ? -1 : 1); return { s: (p > 0 ? "+" : p < 0 ? "−" : "") + Math.abs(p).toFixed(1) + "%", v: p };
@@ -1462,12 +1468,50 @@
   function html(t) {
     if (!worker()) return '<div class="tile"><h2>Company research</h2><div class="ue-ph">Live search needs the AGRITrade SEC Worker. Once it is deployed, open the desk once with <code>?worker=https://&lt;name&gt;.workers.dev</code> — the address is remembered in this browser.</div></div>';
     var D = MEM[t]; if (!D) { load(t); D = MEM[t]; }
-    if (D.loading) return skeleton(t);
+    if (D.loading) { dlg(t); return skeleton(t); }
     if (D.err) return '<div class="tile"><h2>' + esc(t) + '</h2><div class="unreach">⚠ Could not load ' + esc(t) + " <small>— " + esc(D.err) + '</small></div><button class="ue-btn" data-coretry="' + esc(t) + '" style="margin-top:8px">Try again</button></div>';
     if (!D.M.quarters.length) return '<div class="tile"><h2>' + esc(t) + '</h2><div class="ue-ph">' + esc(D.co.name) + " has no US-GAAP quarterly figures in SEC XBRL" + (D.co.ifrs ? " (it files under IFRS)" : "") + ".</div></div>";
-    prFetch(D.M); strFetch(t); if (Date.now() - Date.parse(D.at) > 20 * 6e4) refresh(t);
+    prFetch(D.M); strFetch(t); watch8k(t); if (Date.now() - Date.parse(D.at) > 20 * 6e4) refresh(t);
+    if (!SHOWN[t]) { dlg(t); return skeleton(t); }   /* nothing is painted until every source has answered and the view is compiled */
     return card && CARDS[card] ? CARDS[card](D.M, D.V) : grid(D.M, D.V);
   }
+  /* ---- search dialog (owner, Nov 17 2026): "Fetching info" while each source answers (ticked as it arrives), then
+     "Compiling info" while statements, ratios, Smart read and commentary are built, then the whole view appears at once ---- */
+  var SHOWN = {}, DLG = null, DT = {};
+  function srcState(t) {
+    var D = MEM[t] || {}, rel = D.co ? E.latestRelease(D.co) : null, needRel = !!(rel && Date.now() - Date.parse(rel.filed + "T12:00:00Z") <= 30 * 864e5);
+    var S2 = STR[t], lp = LPR[t];
+    return [["SEC filings & statements", D.loading ? 0 : D.err ? -1 : 1], ["Share prices", D.loading ? 0 : D.P ? 1 : -1],
+      ["Analyst estimates & ownership", !S2 || S2.loading ? 0 : S2.d ? 1 : -1]].concat(needRel ? [["Latest earnings release (" + rel.filed + ")", !lp || lp.loading ? 0 : lp.date ? 1 : -1]] : []);
+  }
+  function dlg(t) {
+    var pe = document.getElementById("panel-earnings"); if (pe && !pe.offsetParent) { if (DLG) DLG.hidden = true; return; }
+    if (!DLG) { DLG = document.createElement("div"); DLG.id = "coDlg"; DLG.setAttribute("role", "status"); DLG.setAttribute("aria-live", "polite"); document.body.appendChild(DLG); }
+    if (!DT[t]) DT[t] = Date.now();
+    var D = MEM[t] || {}, L2 = srcState(t), pend = L2.some(function (x) { return x[1] === 0; }), late = Date.now() - DT[t] > 25000;
+    var phase = D.err ? "err" : pend && !late ? "fetch" : "compile";
+    var nm = (D.co && D.co.name) || "";
+    DLG.innerHTML = '<div class="cd-box"><div class="cd-h"><i class="ux-spin"></i><b>' + (phase === "fetch" ? "Fetching info" : phase === "err" ? "Could not load" : "Compiling info") + "</b><span>" + esc(t) + (nm ? " · " + esc(nm) : "") + "</span></div>" +
+      '<ul class="cd-l">' + L2.map(function (x) { return '<li class="' + (x[1] === 1 ? "ok" : x[1] === -1 ? "na" : "wt") + '"><span>' + (x[1] === 1 ? "✓" : x[1] === -1 ? "–" : "") + "</span>" + esc(x[0]) + (x[1] === -1 ? " <small>not available</small>" : "") + "</li>"; }).join("") +
+      '<li class="' + (phase === "compile" ? "wt" : "") + '"><span></span>Statements, ratios, Smart read &amp; commentary</li></ul>' + (late && pend ? '<p class="cd-n">A source is slow — showing what has arrived.</p>' : "") + "</div>";
+    DLG.hidden = false;
+    if (D.err) { SHOWN[t] = 1; DLG.hidden = true; return; }
+    if (phase === "compile" && D.M && !DLG._c) { DLG._c = t; setTimeout(function () { DLG._c = null; SHOWN[t] = 1; DLG.hidden = true; rerender(); }, 450); }
+    if (pend && !late) { clearTimeout(DLG._r); DLG._r = setTimeout(function () { if (!SHOWN[t]) rerender(); }, 1500); }
+  }
+  /* results the moment they are filed (owner, Nov 17 2026): while a company is open, its earnings 8-Ks are checked every two
+     minutes (SEC acceptance list, 60 s cache); a new release is read at once — scorecard, tiles, Smart read, commentary */
+  var W8 = {};
+  function watch8k(t) {
+    var D = MEM[t]; if (!D || !D.co || !worker() || (W8[t] && Date.now() - W8[t] < 120000)) return; W8[t] = Date.now();
+    fetch(worker() + "/filings?t=" + encodeURIComponent(t)).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      var n = j && (j.releases || [])[0], D2 = MEM[t]; if (!n || !D2 || !D2.co) return;
+      var F = D2.co.filings || []; if (F.some(function (f) { return f.accn === n.accn; })) return;
+      D2.co = Object.assign({}, D2.co, { filings: [{ form: "8-K", filed: n.filed, period: n.period, accn: n.accn, items: n.items, url: n.url }].concat(F) });
+      D2.M = E.build(D2.co); D2.V = E.verdicts(D2.M, D2.P); delete PRS[t]; delete PRN[t]; delete LPR[t]; delete READY[t]; delete RC[t]; rerender();
+    }).catch(function () {});
+  }
+  setInterval(function () { try { var a = document.querySelector("#panel-earnings.active, #usm[data-mode=company]"); if (a) Object.keys(MEM).forEach(function (t) { if (MEM[t] && MEM[t].M) watch8k(t); }); } catch (e) {} }, 125000);
   /* a company stays open for hours: refetch quietly every 20 minutes so a new filing shows without a reload */
   function refresh(t) {
     var D = MEM[t]; if (!D || !D.M || D.bg) return; D.bg = 1;
