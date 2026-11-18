@@ -20,10 +20,9 @@ US_STATES = [("01", "AL", "Alabama"), ("02", "AK", "Alaska"), ("04", "AZ", "Ariz
     ("40", "OK", "Oklahoma"), ("41", "OR", "Oregon"), ("42", "PA", "Pennsylvania"), ("44", "RI", "Rhode Island"), ("45", "SC", "South Carolina"),
     ("46", "SD", "South Dakota"), ("47", "TN", "Tennessee"), ("48", "TX", "Texas"), ("49", "UT", "Utah"), ("50", "VT", "Vermont"),
     ("51", "VA", "Virginia"), ("53", "WA", "Washington"), ("54", "WV", "West Virginia"), ("55", "WI", "Wisconsin"), ("56", "WY", "Wyoming")]
-US_IND = {"10000000": "Mining & logging", "15000000": "Mining, logging & construction", "20000000": "Construction", "30000000": "Manufacturing",
-          "40000000": "Trade, transport & utilities", "50000000": "Information", "55000000": "Financial activities",
-          "60000000": "Professional & business services", "65000000": "Education & health", "70000000": "Leisure & hospitality",
-          "80000000": "Other services", "90000000": "Government"}
+US_IND = {"NRMN": "Mining & logging", "CONS": "Construction", "MFG": "Manufacturing", "TRAD": "Trade, transport & utilities", "INFO": "Information",
+          "FIRE": "Financial activities", "PBSV": "Professional & business services", "EDUH": "Education & health", "LEIH": "Leisure & hospitality",
+          "SRVO": "Other services", "GOVT": "Government"}   # FRED's state supersector series ids: <state><code>, seasonally adjusted
 
 
 def _fred_multi(ids, start):
@@ -63,14 +62,14 @@ def us_states(D, N):
     start = f"{UDC.NOW.year - 2}-{UDC.NOW.month:02d}-01"
     out, miss = {}, []
     for fips, ab, name in US_STATES:
-        ids = [ab + "NA", ab + "UR"] + [f"SMS{fips}00000{c}01" for c in US_IND]
+        ids = [ab + "NA", ab + "UR"] + [ab + c for c in US_IND]
         S = _fetch_split(ids, start)
         if not S.get(ab + "NA"):
             miss.append(ab); continue
         nf, ur = S.get(ab + "NA") or [], S.get(ab + "UR") or []
         if len(nf) < 13:
             miss.append(ab); continue
-        ind = {c: S[f"SMS{fips}00000{c}01"][-14:] for c in US_IND if len(S.get(f"SMS{fips}00000{c}01") or []) >= 13}
+        ind = {c: S[ab + c][-14:] for c in US_IND if len(S.get(ab + c) or []) >= 13}
         out[ab] = {"n": name, "fips": fips, "nf": nf[-25:], "ur": ur[-25:], "ind": ind}
     if len(out) < 45:
         raise RuntimeError(f"only {len(out)} states read; missing {miss[:12]}")
