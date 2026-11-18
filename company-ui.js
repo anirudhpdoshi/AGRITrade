@@ -988,7 +988,7 @@
       '<div class="cx-vw" role="group" aria-label="Tile view"><span>Tiles</span>' + tv("chart", "Chart") + tv("table", "Table") + tv("both", "Both") + "</div></div>" +
       results(M) + '<div class="tile">' +
       (M.model.note ? '<div class="ut-ask" style="margin:6px 0">' + esc(M.model.note) + "</div>" : "") +
-      (function () { var TBL = [], KV = []; partsOf(M).forEach(function (p) {
+      (function () { var TBL = [], KV = [], SEEN = {}, GEN = { snap: 1, "fin-is": 1, "fin-bs": 1, "fin-cf": 1 }; partsOf(M).forEach(function (p) {
         if (!p[1].some(function (c) { return BUILT[c[0]]; })) return;   /* whole group unavailable: hidden (owner, Nov 17 2026) */
         p[1].forEach(function (c) {
         var b = BUILT[c[0]], k = c[3] === "opm" && E.val(q, "opm") == null ? "ebitm" : c[3], kv = "", sp = "", tb = "", tn = null;
@@ -1012,7 +1012,8 @@
         var gk = b && !nd && k && S(M, k).filter(function (z) { return z.v != null; }).length ? k : null;
         var h0 = '<button class="cx-card' + cls + (GD && GD.id === c[0] ? " on" : "") + '" ' + (gk ? 'data-cogd="' + c[0] + '" data-cok="' + gk + '" data-col="' + esc(c[1]) + '" aria-expanded="' + !!(GD && GD.id === c[0]) + '"' : 'data-cocard="' + c[0] + '"') + (b && !nd ? "" : " disabled") + (nd ? ' title="Not reported by this company"' : "") + '><span class="t">' + esc(c[1]) + "</span>" + kv + (sp ? "<div>" + sp + "</div>" : "") + tb + '<span class="q">' + esc(c[2] || "") + "</span></button>" + (GD && GD.id === c[0] ? gDetail(M, c[0], GD.k, c[1]) : "");
         if (!b || nd || (!kv && !tb && !sp) || (/class="k">\u2014</.test(kv) && !tb && !sp)) return;   /* blank tile: hidden */
-        var gl = NAVGL[p[0]] || p[0]; (tb ? TBL : KV).push(gl.toLowerCase() === String(c[1]).toLowerCase() ? h0 : h0.replace('<span class="t">', '<span class="cx-gl">' + esc(gl) + '</span><span class="t">')); }); });
+        var gl = NAVGL[p[0]] || p[0]; if (k && SEEN[k] != null) { if (GEN[c[0]]) return; if (GEN[SEEN[k][0]]) { SEEN[k][1].splice(SEEN[k][1].indexOf(SEEN[k][2]), 1); } else return; }   /* same figure twice: keep the specific card (owner, Nov 17 2026) */
+        var arr = tb ? TBL : KV, hh = gl.toLowerCase() === String(c[1]).toLowerCase() ? h0 : h0.replace('<span class="t">', '<span class="cx-gl">' + esc(gl) + '</span><span class="t">'); arr.push(hh); if (k) SEEN[k] = [c[0], arr, hh]; }); });
         return '<div class="cx-grid cx-flow">' + TBL.join("") + KV.join("") + "</div>"; })() +
       '<div class="stamp">Cards draw on SEC EDGAR filings fetched live — nothing is stored. Tile shading: green = better than a year ago, red = worse (for costs, debt and days, lower is better). Tiles with no figures for this company are hidden.</div></div>';
   }
@@ -1582,8 +1583,8 @@
   function dlg(t) {
     var pe = document.getElementById("panel-earnings"); if (pe && !pe.offsetParent) { if (DLG) DLG.hidden = true; return; }
     if (!DLG) { DLG = document.createElement("div"); DLG.id = "coDlg"; DLG.setAttribute("role", "status"); DLG.setAttribute("aria-live", "polite"); document.body.appendChild(DLG); }
-    if (!DT[t]) DT[t] = Date.now();
-    var D = MEM[t] || {}, L2 = srcState(t), pend = L2.some(function (x) { return x[1] === 0; }), late = Date.now() - DT[t] > 25000;
+    if (!DT[t]) { DT[t] = Date.now(); setTimeout(function () { if (!SHOWN[t]) { SHOWN[t] = 1; if (DLG) DLG.hidden = true; try { rerender(); } catch (e) {} } }, 15000); }   /* failsafe: never more than 15 s behind the dialog */
+    var D = MEM[t] || {}, L2 = srcState(t), pend = L2.some(function (x) { return x[1] === 0; }), late = Date.now() - DT[t] > 12000;
     var phase = D.err ? "err" : pend && !late ? "fetch" : "compile";
     var nm = (D.co && D.co.name) || "";
     DLG.innerHTML = '<div class="cd-box"><div class="cd-h"><i class="ux-spin"></i><b>' + (phase === "fetch" ? "Fetching info" : phase === "err" ? "Could not load" : "Compiling info") + "</b><span>" + esc(t) + (nm ? " · " + esc(nm) : "") + "</span></div>" +
