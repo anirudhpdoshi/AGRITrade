@@ -83,7 +83,7 @@
         '<div class="rg-kv"><div><span>Jobs added, month</span><b class="' + cl(tot) + '">' + sj(tot) + '</b></div><div><span>Jobs added, 12 months</span><b class="' + cl(totY) + '">' + sj(totY) + "</b></div></div>" +
         '<div class="rg-h">' + (inv ? "Lowest unemployment" : "Biggest gains") + '</div><ul class="rg-ls">' + (inv ? by.slice().reverse() : by).slice(0, 5).map(li).join("") + "</ul>" +
         '<div class="rg-h">' + (inv ? "Highest unemployment" : "Biggest losses") + '</div><ul class="rg-ls">' + (inv ? by : by.slice().reverse()).slice(0, 5).map(li).join("") + "</ul>" +
-        '<div class="rg-note">Sum of state payroll changes; the national payroll survey is estimated separately, so totals differ slightly from the headline number.</div></div>';
+        '<div class="rg-note">' + (S.c === "us" ? "Sum of state payroll changes; the national payroll survey is estimated separately, so totals differ slightly from the headline number." : "Sum of provincial Labour Force Survey changes. The territories are not in the monthly survey.") + "</div></div>";
     }
     var s = o.s, IN = M.R.ind_names || {};
     var ind = Object.keys(s.ind || {}).map(function (c) { var a = s.ind[c], L = a[a.length - 1], P = a[a.length - 2], Y = a[a.length - 13]; return { n: IN[c] || c, lvl: L[1], mom: P ? L[1] - P[1] : null, yoy: Y ? L[1] - Y[1] : null, yoyp: Y ? (L[1] / Y[1] - 1) * 100 : null }; })
@@ -91,10 +91,10 @@
     var mx = Math.max.apply(null, ind.map(function (x) { return Math.abs(x.mom || 0); }).concat([0.1]));
     var rows = ind.map(function (x) { var w = Math.abs(x.mom || 0) / mx * 50;
       return "<tr><td>" + e(x.n) + '</td><td class="rg-bar"><span class="' + (x.mom >= 0 ? "pos" : "neg") + '" style="width:' + w.toFixed(1) + '%;' + (x.mom >= 0 ? "left:50%" : "right:50%") + '"></span></td><td class="' + cl(x.mom) + '">' + sj(x.mom) + '</td><td class="' + cl(x.yoyp) + '">' + sg(x.yoyp, 1, "%") + "</td><td>" + jobs(x.lvl) + "</td></tr>"; }).join("");
-    return '<div class="rg-p"><div class="rg-pt">' + e(o.n) + ' <button class="rg-x" data-rg="" title="Back to all">✕</button></div><div class="rg-ps">' + ym(o.mo) + " · payroll jobs and unemployment, seasonally adjusted</div>" +
+    return '<div class="rg-p"><div class="rg-pt">' + e(o.n) + ' <button class="rg-x" data-rg="" title="Back to all">✕</button></div><div class="rg-ps">' + ym(o.mo) + " · " + (S.c === "us" ? "payroll jobs" : "employment (Labour Force Survey)") + " and unemployment, seasonally adjusted</div>" +
       '<div class="rg-kv"><div><span>Jobs added, month</span><b class="' + cl(o.mom) + '">' + sj(o.mom) + '</b><i class="' + cl(o.momp) + '">' + sg(o.momp, 2, "%") + '</i></div><div><span>Jobs added, 12 months</span><b class="' + cl(o.yoy) + '">' + sj(o.yoy) + '</b><i class="' + cl(o.yoyp) + '">' + sg(o.yoyp, 1, "%") + "</i></div>" +
-      '<div><span>Unemployment rate</span><b>' + f(o.ur, 1) + '%</b><i class="' + cl(o.urd, true) + '">' + sg(o.urd, 1, " pp") + ' m/m</i></div><div><span>Total payroll jobs</span><b>' + jobs(o.lvl) + "</b><i class=\"rg-n\">" + sg(o.ury, 1, " pp") + " unemp. y/y</i></div></div>" +
-      '<div class="rg-h">Payroll jobs · 12-month trend</div>' + spark(s.nf, 320, 90) +
+      '<div><span>Unemployment rate</span><b>' + f(o.ur, 1) + '%</b><i class="' + cl(o.urd, true) + '">' + sg(o.urd, 1, " pp") + ' m/m</i></div><div><span>' + (S.c === "us" ? "Total payroll jobs" : "Total employed") + '</span><b>' + jobs(o.lvl) + "</b><i class=\"rg-n\">" + sg(o.ury, 1, " pp") + " unemp. y/y</i></div></div>" +
+      '<div class="rg-h">' + (S.c === "us" ? "Payroll jobs" : "Employment") + ' · 12-month trend</div>' + spark(s.nf, 320, 90) +
       '<div class="rg-h">Unemployment rate · 12-month trend</div>' + spark(s.ur || [], 320, 80, true) +
       (rows ? '<div class="rg-h">Jobs by industry · month</div><table class="rg-t rg-ti"><thead><tr><th>Industry</th><th></th><th>Month</th><th>Y/Y</th><th>Jobs</th></tr></thead><tbody>' + rows + "</tbody></table>" + (s.ind && !s.ind.GOVT ? '<div class="rg-note">Government jobs are not published as a separate seasonally adjusted series for this state.</div>' : "") : '<div class="rg-note">No industry detail published for this region.</div>') + "</div>";
   }
@@ -112,7 +112,7 @@
     var M = model(); if (!M) return "";
     var btn = function (a, v, t, dis) { return '<button data-rg-' + a + '="' + v + '" class="' + (S[a] === v ? "on" : "") + '"' + (dis ? " disabled title=\"" + e(dis) + "\"" : "") + ">" + t + "</button>"; };
     return '<div class="tile wide no-nf" id="rg-tile" data-src="us_states"><h2>Regional jobs map <span class="h2note">— ' + e(M.R.src) + " · latest " + ym(M.list[0] ? M.list[0].mo : "") + "</span></h2>" +
-      '<div class="rg-bar0"><span class="rg-sw">' + btn("c", "us", "United States") + btn("c", "ca", "Canada", has.ca ? "" : "Canada's Labour Force Survey by province is not available: Statistics Canada is blocking our data servers") + '</span><span class="rg-sw">' +
+      '<div class="rg-bar0"><span class="rg-sw">' + btn("c", "us", "United States") + btn("c", "ca", "Canada", has.ca ? "" : "Province data arrives with the first Statistics Canada run on your computer (the desk's StatCan runner)") + '</span><span class="rg-sw">' +
       btn("m", "mom", "Jobs added · month") + btn("m", "yoyp", "Jobs · % y/y") + btn("m", "ur", "Unemployment rate") + '</span><span class="rg-lg"><i style="background:rgba(255,98,98,.8)"></i>' + (S.m === "ur" ? "higher" : "losses") + '<i style="background:rgba(52,214,127,.8)"></i>' + (S.m === "ur" ? "lower" : "gains") + "</span></div>" +
       '<div class="rg-g"><div class="rg-m">' + mapSVG(M) + "</div>" + panel(M) + "</div>" + tableHTML(M) +
       '<div class="stamp">Fixed map, no zoom: hover for figures, click a ' + (S.c === "us" ? "state" : "province") + " to open its jobs, unemployment, 12-month trend and industry detail. Figures are the published seasonally adjusted estimates; grey = no published figure. Map: " + e(GEO && GEO[S.c] ? GEO[S.c].src : "") + ".</div></div>";
@@ -156,7 +156,7 @@
   function forKey(key) {
     var m = /^(us|ca)_(nfp|emp|ur)$/.exec(key || ""); if (!m) return "";
     var c = m[1], R = root.DATA && DATA.regions || {};
-    if (!R[c]) return c === "ca" ? '<div class="tile wide rg-off"><h2>Jobs by province</h2><p class="rg-note">The province map needs Statistics Canada\u2019s Labour Force Survey by province. Statistics Canada is currently blocking requests from our data servers, so the map is held back rather than shown with stale or estimated figures.</p></div>' : "";
+    if (!R[c]) return c === "ca" ? '<div class="tile wide rg-off"><h2>Jobs by province</h2><p class="rg-note">The province map needs Statistics Canada\u2019s Labour Force Survey by province. Statistics Canada blocks cloud servers, so this data is fetched by the desk\u2019s runner on your own computer; the map appears after its first successful run.</p></div>' : "";
     if (key !== LASTKEY) { LASTKEY = key; S.c = c; S.m = m[2] === "ur" ? "ur" : "mom"; S.sel = null; }
     return html();
   }
