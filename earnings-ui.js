@@ -96,6 +96,8 @@
     ".un-g button small{font:500 10px 'IBM Plex Mono',monospace;color:var(--faint)}.un-g button:hover:not(:disabled){color:#fff}" +
     ".un-g button[aria-selected=true]{color:#fff;border-bottom-color:var(--amber)}.un-g button[aria-selected=true] small{color:var(--amber)}" +
     ".un-g button.nd,.un-c button.nd{opacity:.32;cursor:not-allowed}.un-g button.ld,.un-c button.ld{opacity:.55;cursor:progress}" +
+    ".un-fin{align-self:center;font:700 9.5px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);border:1px solid rgba(232,163,61,.45);border-radius:4px;padding:2px 6px;margin:0 2px 0 8px;white-space:nowrap}" +
+    ".un-sep{align-self:stretch;width:1px;background:var(--line2);margin:8px 6px}.un-g button.fin{color:#dfe6f0}" +
     ".un-c{display:flex;flex-wrap:wrap;gap:6px;padding:9px 10px;border-top:1px solid var(--line);background:#080b11}" +
     ".un-c button{appearance:none;background:transparent;border:1px solid var(--line2);border-radius:999px;color:#c9d3e0;font:500 12px 'IBM Plex Sans',sans-serif;padding:5px 12px;cursor:pointer;white-space:nowrap}" +
     ".un-c button:hover:not(:disabled){border-color:#4a6488;color:#fff}.un-c button[aria-current=true]{border-color:var(--amber);color:var(--amber);background:rgba(232,163,61,.1)}" +
@@ -393,8 +395,9 @@
     ["peers", "Industry comparison"], ["research", "Earnings research"]];
   /* section tabs (owner, Nov 17 2026): market views as one segmented control; company research as group tabs with the
      group's cards underneath. Every tab opens its card; a card the company does not report is dimmed and cannot be opened. */
-  var NAVG = { "Company overview": "Overview", "Valuation & market": "Valuation", "Earnings & financial statements": "Earnings", "Working capital": "Working capital",
-    "Cash flow & capital allocation": "Cash flow", "Debt & financing": "Debt", "Ratios & warnings": "Ratios", "Industry comparison": "Peers", "Earnings intelligence": "Research" };
+  var NAVG = { "Company overview": "Overview", "Income statement": "Income statement", "Balance sheet": "Balance sheet", "Cash flow": "Cash flow", "Estimates": "Estimates", "Ownership": "Ownership",
+    "Valuation & market": "Valuation", "Ratios & warnings": "Ratios", "Industry comparison": "Peers", "Earnings intelligence": "Research" };
+  var FIN = { "Income statement": 1, "Balance sheet": 1, "Cash flow": 1 };
   var navGrp = null;
   function nav() {
     function seg(id, label) { return '<button data-utgo="' + id + '" aria-current="' + (V.view === id) + '">' + label + "</button>"; }
@@ -408,10 +411,10 @@
       return { name: NAVG[p[0]] || p[0], cards: cards, ok: ok.length, n: cards.length, load: load, first: ok[0] ? ok[0].id : null }; });
     var act = G.filter(function (g) { return g.cards.some(function (c) { return c.id === cur; }); })[0] || G.filter(function (g) { return g.name === navGrp; })[0] || null;
     h += '<button class="un-co" data-cocard="" data-utgo="company" aria-current="' + (V.view === "company" && !cur) + '"><b>' + esc(V.sel) + "</b>" + esc(C.name ? C.name(V.sel) : "") + '<span class="un-all">All tiles</span></button>' + sg + "</div>";
-    h += '<div class="un-g" role="tablist">' + G.map(function (g) {
-      var on = act === g, dis = !g.load && !g.ok;
-      return '<button role="tab" class="' + (g.load ? "ld" : dis ? "nd" : "") + '" data-ungrp="' + esc(g.name) + '"' + (g.first ? ' data-cocard="' + g.first + '" data-utgo="company"' : "") + ' aria-selected="' + on + '"' + (dis ? " disabled title=\"No data for this company yet\"" : "") + ">" +
-        g.name + "<small>" + (g.load ? "…" : g.ok + "/" + g.n) + "</small></button>"; }).join("") + "</div>";
+    h += '<div class="un-g" role="tablist">' + G.map(function (g, gi) {
+      var on = act === g, dis = !g.load && !g.ok, pre = FIN[g.name] && !(G[gi - 1] && FIN[G[gi - 1].name]) ? '<span class="un-fin">Financials</span>' : "", post = FIN[g.name] && !(G[gi + 1] && FIN[G[gi + 1].name]) ? '<span class="un-sep"></span>' : "";
+      return pre + '<button role="tab" class="' + (g.load ? "ld" : dis ? "nd" : "") + (FIN[g.name] ? " fin" : "") + '" data-ungrp="' + esc(g.name) + '"' + (g.first ? ' data-cocard="' + g.first + '" data-utgo="company"' : "") + ' aria-selected="' + on + '"' + (dis ? " disabled title=\"No data for this company yet\"" : "") + ">" +
+        g.name + "<small>" + (g.load ? "…" : g.ok + "/" + g.n) + "</small></button>" + post; }).join("") + "</div>";
     if (act) h += '<div class="un-c">' + act.cards.map(function (c) {
       var dis = c.a !== true;
       return '<button data-cocard="' + c.id + '" data-utgo="company" class="' + (c.a === null ? "ld" : c.a === false ? "nd" : "") + '" aria-current="' + (cur === c.id) + '"' + (dis ? " disabled" + (c.a === false ? ' title="Not reported by this company"' : "") : "") + ">" + esc(c.label) + "</button>"; }).join("") + "</div>";

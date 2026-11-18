@@ -79,6 +79,16 @@
     ".rs-mn{margin:6px 0 0;font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:center}.rs-n{margin-top:10px;font-size:11.5px;color:var(--faint);line-height:1.45}.rs-n a{color:#7dd8e6}" +
     ".cx-card.good{border-left:3px solid #3fb97f;background:linear-gradient(90deg,rgba(63,185,127,.08),transparent 60%),var(--panel)}.cx-card.bad{border-left:3px solid #e0453a;background:linear-gradient(90deg,rgba(224,69,58,.09),transparent 60%),var(--panel)}" +
     ".cx-mt{width:100%;border-collapse:collapse;font:11.5px 'IBM Plex Mono',monospace}.cx-mt td{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.05)}.cx-mt td:nth-child(2),.cx-mt td:nth-child(3){text-align:right}.cx-mt td:first-child{color:var(--faint)}" +
+    ".fin-cap{font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.12em;color:var(--faint);align-self:center;padding:0 8px 0 4px}" +
+    ".es-bar{display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 10px}.es-svg{width:100%;height:auto;display:block;margin:4px 0}.es-ax{fill:#8f9db3;font:10px 'IBM Plex Mono',monospace}.es-xl{fill:#c9d3e0;font:600 10.5px 'IBM Plex Mono',monospace}.es-xl.nx{fill:#e8a33d}" +
+    ".es-bg{fill:#3fb97f}.es-bb{fill:#e0453a}.es-bn{fill:#5b6b82}.es-rg{stroke:#8fa3bf;stroke-width:1.5}.es-cs{fill:#e8a33d}" +
+    ".es-t th small{display:block;font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--faint);text-transform:uppercase}.es-t td,.es-t th{text-align:right;white-space:nowrap}.es-t td:first-child,.es-t th:first-child{text-align:left}" +
+    ".es-t .es-nx{background:rgba(232,163,61,.08)}.es-t th.es-nx small{color:var(--amber)}.es-t .es-new{background:rgba(56,182,201,.12)}.es-t th.es-new small{color:#7dd8e6}.es-t .es-fy{color:var(--muted)}.es-t tr.es-act td{border-top:1px solid var(--line2)}" +
+    ".es-h3{margin:16px 0 6px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#fff}.es-h3 small{text-transform:none;letter-spacing:0;color:var(--faint);font-weight:400;margin-left:6px}" +
+    ".ow-wrap{display:grid;grid-template-columns:minmax(260px,1.2fr) 1fr;gap:16px;align-items:center}.ow-bub{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;min-height:200px}" +
+    ".ow-b{border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}.ow-b b{font:700 14px 'IBM Plex Mono',monospace}.ow-b span{font-size:11px;opacity:.9}" +
+    ".ow-k{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ow-k div{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#05070b}.ow-k span{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}.ow-k b{font:600 14px 'IBM Plex Mono',monospace;color:#fff}" +
+    "@media (max-width:760px){.ow-wrap{grid-template-columns:1fr}}" +
     ".cx-part.dim{opacity:.45}.cx-part.dim span{letter-spacing:0;text-transform:none;color:var(--faint)}" +
     "@media (max-width:640px){.rs-g{grid-template-columns:1fr 1fr}.rs-t .v{font-size:18px}.rs-sc{margin-left:0}.cx-vw{width:100%}.cx-vw button{flex:1}}" +
     ".cx-card{appearance:none;text-align:left;font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:11px 13px;display:flex;flex-direction:column;gap:3px;min-height:132px;transition:border-color .12s,transform .12s}" +
@@ -374,19 +384,21 @@
   }
 
   /* ---------------- card catalogue ---------------- */
-  var PARTS = [
+  var PARTS = [   /* owner, Nov 17 2026: every financial item labelled under Income statement · Balance sheet · Cash flow */
     ["Company overview", [["snap", "Company snapshot", "Size, growth, profitability and financial structure at a glance.", "rev"], ["verdicts", "Four financial verdicts", "Earnings quality · outlook · resilience · market implication.", null], ["health", "Eight-quarter health history", "Consistently strong, weak, or changing?", null]]],
+    ["Income statement", [["fin-is", "Income statement", "Every line, every quarter, with YoY and QoQ.", "rev"], ["revenue", "Revenue intelligence", "Is growth accelerating or slowing?", "rev"], ["gross", "Cost of revenue & gross profit", "Is the company keeping more of each dollar after direct costs?", "gm"], ["operating", "Operating profitability", "Is growth producing operating leverage?", "opm"], ["eps", "Net income & EPS", "Is earnings growth operating, tax, buyback or adjustment driven?", "eps_d"], ["matrix", "Fiscal year vs fiscal year", "Full-year totals side by side.", "rev"]]],
+    ["Balance sheet", [["fin-bs", "Balance sheet", "Assets, liabilities and equity at each quarter end.", "assets"], ["wc-ar", "Receivables & collection", "Are customers taking longer to pay?", "dso"], ["wc-inv", "Inventory efficiency", "Is inventory building faster than demand?", "dio"], ["wc-ap", "Payables & supplier financing", "Better terms, or delayed payments?", "dpo"], ["wc-ccc", "Cash conversion cycle", "How long is cash tied up in operations?", "ccc"],
+      ["debt", "Debt structure", "How is the company financed?", "gdebt"], ["costdebt", "Blended cost of debt", "Is borrowing getting more expensive?", "effcost"], ["maturity", "Maturities & refinancing", "Is a large refinancing coming?", null], ["service", "Debt servicing capacity", "Can earnings and cash carry the debt?", "int_cov"], ["liq", "Liquidity", "Can it meet short-term obligations?", "cr"], ["lev", "Leverage & solvency", "Is leverage rising faster than earnings?", "nd_ebitda"]]],
+    ["Cash flow", [["fin-cf", "Cash flow statement", "Operating, investing and financing cash, every quarter.", "cfo"], ["cfo", "Operating cash flow", "Does accounting profit turn into cash?", "cfo"], ["fcf", "Free cash flow", "Cash left after investing in the asset base?", "fcf"], ["capex", "Capital expenditure", "Investing for growth or maintaining?", "capex"], ["alloc", "Capital allocation", "Where is the cash going?", "shret"]]],
+    ["Estimates", [["est", "Street estimates vs actuals", "Consensus mean, high and low against what was reported, and what is expected next.", null]]],
+    ["Ownership", [["own", "Ownership", "Institutions, insiders and the largest holders.", null]]],
     ["Valuation & market", [["val-snap", "Investment snapshot", "Valuation, positives, concerns and what to watch.", null], ["val-scn", "Scenario values", "Bear / base / bull on assumptions you can edit.", null],
       ["val-pe", "Multiple sensitivity", "What each turn of P/E is worth per share.", null], ["val-rx", "Earnings-day reactions", "How the stock moved on each report, and its worst days.", null]]],
-    ["Earnings & financial statements", [["matrix", "Quarterly matrix", "Every line, every quarter: YoY, QoQ and fiscal-year totals in one grid.", "rev"], ["revenue", "Revenue intelligence", "Is growth accelerating or slowing?", "rev"], ["gross", "Cost of revenue & gross profit", "Is the company keeping more of each dollar after direct costs?", "gm"], ["operating", "Operating profitability", "Is growth producing operating leverage?", "opm"], ["eps", "Net income & EPS", "Is earnings growth operating, tax, buyback or adjustment driven?", "eps_d"]]],
-    ["Working capital", [["wc-ar", "Receivables & collection", "Are customers taking longer to pay?", "dso"], ["wc-inv", "Inventory efficiency", "Is inventory building faster than demand?", "dio"], ["wc-ap", "Payables & supplier financing", "Better terms, or delayed payments?", "dpo"], ["wc-ccc", "Cash conversion cycle", "How long is cash tied up in operations?", "ccc"]]],
-    ["Cash flow & capital allocation", [["cfo", "Operating cash flow", "Does accounting profit turn into cash?", "cfo"], ["fcf", "Free cash flow", "Cash left after investing in the asset base?", "fcf"], ["capex", "Capital expenditure", "Investing for growth or maintaining?", "capex"], ["alloc", "Capital allocation", "Where is the cash going?", "shret"]]],
-    ["Debt & financing", [["debt", "Debt structure", "How is the company financed?", "gdebt"], ["costdebt", "Blended cost of debt", "Is borrowing getting more expensive?", "effcost"], ["maturity", "Maturities & refinancing", "Is a large refinancing coming?", null], ["service", "Debt servicing capacity", "Can earnings and cash carry the debt?", "int_cov"]]],
-    ["Ratios & warnings", [["liq", "Liquidity", "Can it meet short-term obligations?", "cr"], ["returns", "Profitability & returns", "Better returns on the capital deployed?", "roe"], ["lev", "Leverage & solvency", "Is leverage rising faster than earnings?", "nd_ebitda"], ["eff", "Efficiency", "Is the asset base working harder?", "at"], ["warn", "Early-warning signals", "Twelve rules, with persistence and evidence.", null]]],
+    ["Ratios & warnings", [["returns", "Profitability & returns", "Better returns on the capital deployed?", "roe"], ["eff", "Efficiency", "Is the asset base working harder?", "at"], ["warn", "Early-warning signals", "Twelve rules, with persistence and evidence.", null]]],
     ["Industry comparison", [["peers", "Peer benchmarks", "Industry median, percentile and named competitors."]]],
-    ["Earnings intelligence", [["street", "Street vs actual"], ["guide", "Guidance & revisions"], ["mgmt", "Management commentary"], ["aieco", "AI economics"]]],
+    ["Earnings intelligence", [["guide", "Guidance & revisions"], ["mgmt", "Management commentary"], ["aieco", "AI economics"]]],
   ];
-  var BUILT = { matrix: 1, "val-snap": 1, "val-scn": 1, "val-pe": 1, "val-rx": 1, snap: 1, verdicts: 1, health: 1, revenue: 1, gross: 1, operating: 1, eps: 1, cfo: 1, fcf: 1, "wc-ar": 1, "wc-inv": 1, "wc-ap": 1, "wc-ccc": 1, capex: 1, alloc: 1, debt: 1, costdebt: 1, maturity: 1, service: 1, liq: 1, returns: 1, lev: 1, eff: 1, warn: 1 };
+  var BUILT = { matrix: 1, "fin-is": 1, "fin-bs": 1, "fin-cf": 1, est: 1, own: 1, "val-snap": 1, "val-scn": 1, "val-pe": 1, "val-rx": 1, snap: 1, verdicts: 1, health: 1, revenue: 1, gross: 1, operating: 1, eps: 1, cfo: 1, fcf: 1, "wc-ar": 1, "wc-inv": 1, "wc-ap": 1, "wc-ccc": 1, capex: 1, alloc: 1, debt: 1, costdebt: 1, maturity: 1, service: 1, liq: 1, returns: 1, lev: 1, eff: 1, warn: 1 };
   function cardTitle(id) { var t = ""; PARTS.forEach(function (p) { p[1].forEach(function (c) { if (c[0] === id) t = c[1]; }); }); return t; }
 
   /* press-release figures (8-K exhibit 99.1, read by the fast lane minutes after filing) for a quarter not yet in XBRL */
@@ -441,6 +453,9 @@
     if (!r && !x) return meta.loading && rel && afterFiled(rel.filed, q.end) ? '<div class="rs rs-ld"><i class="ux-spin"></i> Reading ' + esc(co.ticker) + "’s latest earnings release (8-K filed " + esc(rel.filed) + ")…</div>" : "";
     if (!r && Date.now() - Date.parse(x.date + "T12:00:00Z") > 21 * 864e5) return "";
     var py = (x && x.py) || {}, RT = relTime(x, meta, r), now = Date.now();
+    /* no calendar row: the Street history's latest quarter, when it is the quarter just reported (ends after the last filed one) */
+    var SH = SD(M) && SD(M).hist, sh0 = !r && SH && SH.length ? SH[SH.length - 1] : null;
+    if (sh0 && !(sh0.q && Date.parse(sh0.q) > Date.parse(q.end + "T12:00:00Z") + 45 * 864e5 && sh0.actual != null && sh0.est != null)) sh0 = null;
     var fresh = RT && (RT.exact ? now - RT.t >= 0 && now - RT.t < 864e5 : RT.day === TODAY() || (r && r.date === TODAY()));
     function T(k, label, v, est, sur, prev, cardId, fmt) {
       if (v == null) return null;
@@ -458,7 +473,7 @@
     function d2(v) { return (v < 0 ? "−$" : "$") + Math.abs(v).toFixed(2); }
     var tiles = [
       T("rev", "Revenue", r && r.revenueActual != null ? r.revenueActual : x && x.rev, r && r.revenueEstimated, r && r.rev_surprise_pct, py.rev, "revenue", fk("rev")),
-      r && r.epsActual != null ? T("eps", "EPS vs consensus", r.epsActual, r.epsEstimated, r.eps_surprise_pct, null, "eps", d2) : null,
+      r && r.epsActual != null ? T("eps", "EPS vs consensus", r.epsActual, r.epsEstimated, r.eps_surprise_pct, null, "est", d2) : sh0 ? T("eps", "EPS vs consensus · adjusted", sh0.actual, sh0.est, sh0.surprise_pct, null, "est", d2) : null,
       T("eps_d", "Diluted EPS · GAAP", x && x.eps_d, null, null, py.eps_d, "eps", d2),
       T("ni", "Net income", x && x.ni, null, null, py.ni, "eps", fk("ni")),
       T("gm", "Gross margin", x && x.gm, null, null, py.gm, "gross", fk("gm")),
@@ -479,6 +494,107 @@
       '<div class="rs-n">' + (r ? "Consensus from the desk’s earnings calendar. " : "") + (x ? "Figures from the company press release (GAAP, unaudited)" + (ex ? ' · <a href="' + (window.safeUrl ? safeUrl(ex) : "#") + '" target="_blank" rel="noopener noreferrer">exhibit 99.1 ↗</a>' : "") + ". " : "") +
       "Green = better than consensus or a year ago, red = worse. The tiles below still show " + esc(q.fl.label) + " until the " + (n.q === 4 ? "10-K" : "10-Q") + " reaches EDGAR’s data feed; they update automatically then.</div></section>";
   }
+  /* ---------------- Street estimates & ownership (worker /street: analyst consensus and 13F ownership, on demand) ---------------- */
+  var STR = {};
+  function strFetch(t) {
+    if (STR[t] || !worker()) return; STR[t] = { loading: 1 };
+    fetch(worker() + "/street?t=" + encodeURIComponent(t)).then(function (r) { return r.json().then(function (j) { return r.ok ? j : { error: j.error || "HTTP " + r.status }; }); })
+      .then(function (j) { STR[t] = j && !j.error ? { d: j, at: Date.now() } : { err: (j && j.error) || "unavailable" }; delete READY[t]; delete RC[t]; rerender(); })
+      .catch(function (e) { STR[t] = { err: String(e && e.message || e) }; delete READY[t]; delete RC[t]; rerender(); });
+  }
+  function SD(M) { var x = STR[M.co.ticker]; return x && x.d ? x.d : null; }
+  function fl(M, end) { return end ? E.fiscalLabel(end, M.co.fiscalYearEnd).label : ""; }
+  var EV = { k: "eps", v: "both" };
+  function m$(v) { if (v == null) return "—"; var a = Math.abs(v), s = v < 0 ? "−$" : "$"; return s + (a >= 1e9 ? (a / 1e9).toFixed(2) + "B" : a >= 1e6 ? (a / 1e6).toFixed(0) + "M" : a.toFixed(0)); }
+  function e$(v) { return v == null ? "—" : (v < 0 ? "−$" : "$") + Math.abs(v).toFixed(2); }
+  function pc(v, d) { if (v == null) return "—"; var dd = d == null ? (Math.abs(v) < 0.1 && v !== 0 ? 2 : 1) : d; return (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(dd) + "%"; }
+  /* the reported quarters (SEC, else the press release, else the source's own actuals) and the forward consensus, one column each */
+  function estCols(M) {
+    var D = SD(M); if (!D) return [];
+    var C = [], qs = M.quarters;
+    function secQ(end) { var t = Date.parse(end + "T12:00:00Z"); return qs.filter(function (q) { return Math.abs(Date.parse(q.end + "T12:00:00Z") - t) < 20 * 864e5; })[0] || null; }
+    function ago(end) { var t = Date.parse(end + "T12:00:00Z") - 365 * 864e5; return qs.filter(function (q) { return Math.abs(Date.parse(q.end + "T12:00:00Z") - t) < 25 * 864e5; })[0] || null; }
+    (D.hist || []).forEach(function (h, i) {
+      if (!h.q) return; var sq = secQ(h.q), yq = ago(h.q), pr = prFor(M), fin = (D.qfin || [])[i] || null;
+      var rev = sq && sq.m.rev ? sq.m.rev.v : pr && pr.rev != null && !sq ? pr.rev : fin && fin.rev;
+      var yrev = yq && yq.m.rev ? yq.m.rev.v : null;
+      var hy = (D.hist || []).filter(function (z) { return z.q && Math.abs(Date.parse(z.q) - (Date.parse(h.q) - 365 * 864e5)) < 25 * 864e5; })[0];
+      C.push({ lab: fl(M, h.q), end: h.q, past: true, eps: { avg: h.est, act: h.actual, sur: h.surprise_pct, yoy: hy && hy.actual ? (h.actual / hy.actual - 1) * 100 * (hy.actual < 0 ? -1 : 1) : null },
+        rev: { act: rev, yoy: rev != null && yrev ? (rev / yrev - 1) * 100 : null } });
+    });
+    (D.trend || []).forEach(function (t) {
+      if (!t.end) return; var fy = /y$/.test(t.period);
+      C.push({ lab: fy ? "FY" + String(E.fiscalLabel(t.end, M.co.fiscalYearEnd).fy).slice(2) : fl(M, t.end), end: t.end, fy: fy, next: t.period === "0q",
+        eps: t.eps && { avg: t.eps.avg, hi: t.eps.high, lo: t.eps.low, n: t.eps.n, ya: t.eps.year_ago, g: t.eps.growth != null ? t.eps.growth * 100 : null },
+        rev: t.rev && { avg: t.rev.avg, hi: t.rev.high, lo: t.rev.low, n: t.rev.n, ya: t.rev.year_ago, g: t.rev.growth != null ? t.rev.growth * 100 : null }, tr: t.trend_eps, rv: t.rev30 });
+    });
+    return C;
+  }
+  function estChart(C, k) {
+    var f = k === "eps" ? e$ : m$, P = C.filter(function (c) { return !c.fy && c[k]; }), vals = [];
+    P.forEach(function (c) { var x = c[k]; [x.act, x.avg, x.hi, x.lo].forEach(function (v) { if (v != null) vals.push(v); }); });
+    if (vals.length < 2) return "";
+    var wide = window.innerWidth > 1100, W = wide ? 1100 : window.innerWidth < 700 ? 420 : 640, H = wide ? 260 : 220, PL = 10, PR = 70, PT = 14, PB = 30, pw = W - PL - PR, ph = H - PT - PB, lo = Math.min(0, Math.min.apply(null, vals)), hi = Math.max.apply(null, vals) * 1.08, n = P.length, bw = pw / n;
+    function Y(v) { return PT + ph * (1 - (v - lo) / (hi - lo)); }
+    var s = '<line x1="' + PL + '" x2="' + (PL + pw) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="#2a3446"/>';
+    for (var g = 1; g <= 4; g++) { var v = lo + (hi - lo) * g / 4; s += '<line x1="' + PL + '" x2="' + (PL + pw) + '" y1="' + Y(v).toFixed(1) + '" y2="' + Y(v).toFixed(1) + '" stroke="#141c28"/><text x="' + (PL + pw + 6) + '" y="' + (Y(v) + 3.5).toFixed(1) + '" class="es-ax">' + f(v) + "</text>"; }
+    P.forEach(function (c, i) {
+      var x = c[k], cx = PL + bw * (i + 0.5), w = Math.min(34, bw * 0.5);
+      if (x.act != null) { var y0 = Y(Math.max(0, Math.min(x.act, 0))), y1 = Y(Math.max(x.act, 0)); s += '<rect x="' + (cx - w / 2).toFixed(1) + '" y="' + Math.min(Y(x.act), Y(0)).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + Math.abs(Y(x.act) - Y(0)).toFixed(1) + '" rx="2" class="' + (x.avg != null && x.act >= x.avg ? "es-bg" : x.avg != null ? "es-bb" : "es-bn") + '"/>'; }
+      if (x.hi != null && x.lo != null) s += '<line x1="' + cx + '" x2="' + cx + '" y1="' + Y(x.hi).toFixed(1) + '" y2="' + Y(x.lo).toFixed(1) + '" class="es-rg"/><line x1="' + (cx - 6) + '" x2="' + (cx + 6) + '" y1="' + Y(x.hi).toFixed(1) + '" y2="' + Y(x.hi).toFixed(1) + '" class="es-rg"/><line x1="' + (cx - 6) + '" x2="' + (cx + 6) + '" y1="' + Y(x.lo).toFixed(1) + '" y2="' + Y(x.lo).toFixed(1) + '" class="es-rg"/>';
+      if (x.avg != null) s += '<rect x="' + (cx - w / 2 - 3).toFixed(1) + '" y="' + (Y(x.avg) - 1.5).toFixed(1) + '" width="' + (w + 6).toFixed(1) + '" height="3" class="es-cs"/>';
+      s += '<text x="' + cx.toFixed(1) + '" y="' + (H - 14) + '" class="es-xl' + (c.next ? " nx" : "") + '" text-anchor="middle">' + esc(c.lab) + "</text>" + (c.next ? '<text x="' + cx.toFixed(1) + '" y="' + (H - 3) + '" class="es-xl nx" text-anchor="middle">NEXT</text>' : "");
+    });
+    return '<svg class="es-svg" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Actual vs consensus">' + s + "</svg>" +
+      '<div class="legend"><span><span class="sw" style="background:#3fb97f"></span>Actual ≥ consensus</span><span><span class="sw" style="background:#e0453a"></span>Actual &lt; consensus</span><span><span class="sw" style="background:#e8a33d"></span>Consensus mean</span><span><span class="sw" style="background:#8fa3bf"></span>High–low range</span></div>';
+  }
+  function estCard(M) {
+    var X = STR[M.co.ticker] || {}, C = estCols(M), k = EV.k;
+    if (!SD(M)) return shell(M, "est", '<div class="ue-ph">' + (X.loading ? '<i class="ux-spin"></i> Loading consensus…' : "Consensus estimates are not available for " + esc(M.co.ticker) + (X.err ? " (" + esc(X.err) + ")" : "") + ".") + "</div>");
+    var f = k === "eps" ? e$ : m$, rec = C.filter(function (c) { return c.past; }).slice(-1)[0];
+    var fresh = rec && Date.now() - Date.parse(rec.end + "T12:00:00Z") < 120 * 864e5 && prFor(M) ? rec.end : null;
+    function seg(attr, cur, opts) { return '<div class="seg mi-vs">' + opts.map(function (o) { return "<button " + attr + '="' + o[0] + '" aria-pressed="' + (cur === o[0]) + '">' + o[1] + "</button>"; }).join("") + "</div>"; }
+    var head = '<div class="es-bar">' + seg("data-esk", k, [["eps", "EPS"], ["rev", "Revenue"]]) + seg("data-esv", EV.v, [["table", "Table"], ["chart", "Chart"], ["both", "Both"]]) + "</div>";
+    function row(lab, fn, cls) { return "<tr" + (cls ? ' class="' + cls + '"' : "") + "><td>" + lab + "</td>" + C.map(function (c) { var x = c[k]; return '<td class="' + (c.next ? "es-nx " : "") + (c.fy ? "es-fy " : "") + (fresh && c.end === fresh ? "es-new " : "") + '">' + (x ? fn(x, c) : "—") + "</td>"; }).join("") + "</tr>"; }
+    function sg(v, s2) { return v == null ? "—" : '<span class="' + (v >= 0 ? "pos" : "neg") + '">' + s2 + "</span>"; }
+    var tbl = '<div class="tbl-scroll"><table class="cx-t es-t"><thead><tr><th>' + (k === "eps" ? "EPS (adjusted)" : "Revenue") + "</th>" + C.map(function (c) { return '<th class="' + (c.next ? "es-nx" : c.fy ? "es-fy" : fresh && c.end === fresh ? "es-new" : "") + '">' + esc(c.lab) + (c.next ? "<small>NEXT REPORT</small>" : fresh && c.end === fresh ? "<small>JUST REPORTED</small>" : c.past ? "<small>reported</small>" : c.fy ? "<small>fiscal year</small>" : "<small>following</small>") + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      '<tr class="mx-h"><td colspan="' + (C.length + 1) + '">Wall St. consensus</td></tr>' +
+      row("Mean", function (x) { return f(x.avg); }) + row("High", function (x) { return f(x.hi); }) + row("Low", function (x) { return f(x.lo); }) + row("Analysts", function (x) { return x.n == null ? "—" : String(x.n); }) +
+      '<tr class="mx-h"><td colspan="' + (C.length + 1) + '">Actuals</td></tr>' +
+      row("Actual", function (x) { return x.act == null ? "—" : "<b>" + f(x.act) + "</b>"; }, "es-act") +
+      (k === "eps" ? row("Surprise", function (x) { return sg(x.sur, pc(x.sur)); }) : "") +
+      row("YoY growth", function (x, c) { var g = c.past ? x.yoy : x.g; return sg(g, pc(g, 0)); }) +
+      "</tbody></table></div>";
+    var rv = C.filter(function (c) { return !c.past && c.tr; }).map(function (c) { var t = c.tr, ch = t.d30 ? (t.now / t.d30 - 1) * 100 : null, ch90 = t.d90 ? (t.now / t.d90 - 1) * 100 : null;
+      return "<tr><td>" + esc(c.lab) + (c.next ? " · next" : "") + "</td><td>" + e$(t.now) + "</td><td>" + e$(t.d30) + "</td><td>" + sg(ch, pc(ch)) + "</td><td>" + e$(t.d90) + "</td><td>" + sg(ch90, pc(ch90)) + "</td><td>" + (c.rv ? '<span class="pos">▲ ' + (c.rv.up30 || 0) + '</span> <span class="neg">▼ ' + (c.rv.down30 || 0) + "</span>" : "—") + "</td></tr>"; }).join("");
+    var D = SD(M), notes = [], nx = C.filter(function (c) { return c.next; })[0];
+    if (rec && rec.eps && rec.eps.sur != null) notes.push(rec.lab + ": EPS " + e$(rec.eps.act) + " vs " + e$(rec.eps.avg) + " consensus (" + pc(rec.eps.sur) + (rec.eps.sur >= 0 ? " beat" : " miss") + ").");
+    var beats = C.filter(function (c) { return c.past && c.eps && c.eps.sur != null; }), nb = beats.filter(function (c) { return c.eps.sur >= 0; }).length;
+    if (beats.length) notes.push("Beat EPS consensus in " + nb + " of the last " + beats.length + " quarters.");
+    if (nx && nx.rev && nx.rev.avg) notes.push(nx.lab + " consensus: revenue " + m$(nx.rev.avg) + " (" + m$(nx.rev.lo) + "–" + m$(nx.rev.hi) + ", " + nx.rev.n + " analysts), EPS " + e$(nx.eps && nx.eps.avg) + ".");
+    return shell(M, "est", head + (EV.v !== "table" ? estChart(C, k) : "") + (EV.v !== "chart" ? tbl : "") +
+      (rv ? '<h3 class="es-h3">EPS estimate revisions</h3><div class="tbl-scroll"><table class="cx-t es-t"><thead><tr><th>Period</th><th>Now</th><th>30 days ago</th><th>Change</th><th>90 days ago</th><th>Change</th><th>Revisions, 30 days</th></tr></thead><tbody>' + rv + "</tbody></table></div>" : "") +
+      (notes.length ? '<div class="obs-box"><b>OBSERVATIONS</b><ul>' + notes.map(function (n) { return "<li>" + esc(n) + "</li>"; }).join("") + "</ul></div>" : "") +
+      '<div class="stamp">Consensus: ' + esc(D.provider) + " · fetched " + esc(new Date(D.fetched_at).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET. EPS consensus and actual are on the analysts’ adjusted basis. Revenue actuals come from SEC filings (or the company’s press release before the 10-Q). " +
+      "High and low for reported quarters are not published by the source, so they show “—”. Nothing is estimated here.</div>");
+  }
+  function ownCard(M) {
+    var X = STR[M.co.ticker] || {}, D = SD(M), O = D && D.own;
+    if (!O || (O.inst_pct == null && O.insiders_pct == null)) return shell(M, "own", '<div class="ue-ph">' + (X.loading ? '<i class="ux-spin"></i> Loading ownership…' : "Ownership data is not available for " + esc(M.co.ticker) + (X.err ? " (" + esc(X.err) + ")" : "") + ".") + "</div>");
+    var ins = O.inst_pct, isd = O.insiders_pct, oth = ins != null && isd != null ? Math.max(0, 100 - ins - isd) : null;
+    var B = [["Institutions", ins, "#e8a33d"], ["Insiders", isd, "#3b82f6"], ["Others", oth, "#5b6b82"]].filter(function (b) { return b[1] != null; });
+    var R = 92, bub = B.map(function (b) { var r = Math.max(26, Math.sqrt(b[1] / 100) * R); return '<div class="ow-b" style="width:' + (2 * r).toFixed(0) + "px;height:" + (2 * r).toFixed(0) + "px;background:" + b[2] + '"><b>' + b[1].toFixed(2) + "%</b><span>" + b[0] + "</span></div>"; }).join("");
+    function kv(l, v) { return v == null || v === "" ? "" : '<div><span>' + l + "</span><b>" + v + "</b></div>"; }
+    function sh(v) { return v == null ? null : v >= 1e9 ? (v / 1e9).toFixed(2) + "B" : (v / 1e6).toFixed(1) + "M"; }
+    var stats = '<div class="ow-k">' + kv("Institutions", ins != null ? ins.toFixed(2) + "% of shares" : null) + kv("Institutions, % of float", O.inst_float_pct != null ? O.inst_float_pct.toFixed(2) + "%" : null) + kv("Number of institutions", O.inst_count != null ? O.inst_count.toLocaleString("en-US") : null) +
+      kv("Insiders", isd != null ? isd.toFixed(2) + "%" : null) + kv("Shares outstanding", sh(O.shares_out)) + kv("Float", sh(O.float)) + kv("Short interest", O.short_shares != null ? sh(O.short_shares) + (O.short_pct_float != null ? " · " + O.short_pct_float.toFixed(2) + "% of float" : "") : null) + "</div>";
+    var H = (O.holders || []).filter(function (h) { return h.name; });
+    var tb = H.length ? '<h3 class="es-h3">Largest institutional holders <small>13F filings</small></h3><div class="tbl-scroll"><table class="cx-t es-t ow-t"><thead><tr><th>Holder</th><th>% held</th><th>Shares</th><th>Value</th><th>Change in position</th><th>As of</th></tr></thead><tbody>' +
+      H.map(function (h) { return "<tr><td>" + esc(h.name) + "</td><td>" + (h.pct != null ? h.pct.toFixed(2) + "%" : "—") + "</td><td>" + (sh(h.shares) || "—") + "</td><td>" + m$(h.value) + '</td><td class="' + (h.chg_pct > 0 ? "pos" : h.chg_pct < 0 ? "neg" : "") + '">' + pc(h.chg_pct) + "</td><td>" + esc(h.asof || "—") + "</td></tr>"; }).join("") + "</tbody></table></div>" : "";
+    return shell(M, "own", '<div class="ow-wrap"><div class="ow-bub">' + bub + "</div>" + stats + "</div>" + tb +
+      '<div class="stamp">' + esc(D.provider) + ". Institutions = holders filing 13F reports (quarterly, up to 45 days after quarter end); insiders = officers, directors and 10% owners; others = the rest of the shares (retail and non-filers), calculated as 100% less the two. Value at the holder’s report date.</div>");
+  }
+
   /* tiles: chart, table or both (remembered in this browser) */
   var TV = (function () { try { return localStorage.getItem("desk.coTiles") || "chart"; } catch (e) { return "chart"; } })();
   function miniT(M, k) {
@@ -500,6 +616,10 @@
         if (b && k) { var m = q.m[k], y = q.m[k + "_yoy"]; kv = '<div class="k">' + fv(k, m && m.v) + "</div>" + (y ? '<div class="n">' + sgc(tone(k, y.v), fv(k + "_yoy", y.v)) + " YoY · " + esc(q.fl.label) + "</div>" : '<div class="n">' + esc(q.fl.label) + "</div>"); sp = TV !== "table" ? spark(S(M, k)) : ""; tb = TV !== "chart" ? miniT(M, k) : ""; tn = y ? tone(k, y.v) : null; }
         if (/^val-/.test(c[0])) { var VV2 = E.valuation(M, (MEM[M.co.ticker] || {}).P);
           kv = VV2 ? '<div class="k">$' + VV2.price.toFixed(2) + '</div><div class="n">' + (c[0] === "val-snap" ? "P/E " + (VV2.pe ? VV2.pe.toFixed(1) + "×" : "n/m") + (VV2.pe_core ? " · core " + VV2.pe_core.toFixed(1) + "×" : "") : c[0] === "val-rx" ? "close " + esc(VV2.date) : "price " + esc(VV2.date)) + "</div>" : '<div class="n">price history unavailable</div>'; }
+        if (c[0] === "est") { var C2 = estCols(M), nx2 = C2.filter(function (z) { return z.next; })[0], rc2 = C2.filter(function (z) { return z.past; }).slice(-1)[0];
+          kv = SD(M) ? '<div class="k">' + (nx2 && nx2.eps ? e$(nx2.eps.avg) : "—") + '</div><div class="n">' + (nx2 ? esc(nx2.lab) + " EPS consensus" + (nx2.eps && nx2.eps.n ? " · " + nx2.eps.n + " analysts" : "") : "") + "</div>" + (rc2 && rc2.eps && rc2.eps.sur != null ? '<div class="n">' + esc(rc2.lab) + " " + sgc(rc2.eps.sur, pc(rc2.eps.sur)) + (rc2.eps.sur >= 0 ? " beat" : " miss") + "</div>" : "") : '<div class="n">' + (STR[M.co.ticker] && STR[M.co.ticker].loading ? "loading…" : "not available") + "</div>";
+          tn = rc2 && rc2.eps && rc2.eps.sur != null ? rc2.eps.sur : null; }
+        if (c[0] === "own") { var O2 = SD(M) && SD(M).own; kv = O2 && O2.inst_pct != null ? '<div class="k">' + O2.inst_pct.toFixed(1) + '%</div><div class="n">held by ' + (O2.inst_count ? O2.inst_count.toLocaleString("en-US") + " " : "") + "institutions" + (O2.insiders_pct != null ? " · insiders " + O2.insiders_pct.toFixed(1) + "%" : "") + "</div>" : '<div class="n">' + (STR[M.co.ticker] && STR[M.co.ticker].loading ? "loading…" : "not available") + "</div>"; }
         if (c[0] === "maturity") { var mt = E.maturities(M); kv = '<div class="k">' + (mt && mt.buckets[0] ? money(mt.buckets[0].v) : "—") + '</div><div class="n">due within 12 months' + (mt ? " · " + esc(mt.label) : " · not tagged") + "</div>"; }
         if (c[0] === "warn") { var WW = E.warnings(M), act = WW.filter(function (w) { return w.status === "ACTIVE"; }); tn = act.length ? -1 : 1;
           kv = '<div class="k">' + act.length + ' <small style="font-size:12px;color:var(--muted)">active of 12</small></div><div class="n">' + (act.length ? act.map(function (w) { return '<span class="cx-vd ' + (w.severity === "WATCH" ? "WEAK" : "NEGATIVE") + '" style="font-size:9px;padding:1px 5px">' + w.id + "</span>"; }).join(" ") : "none triggered") + "</div>"; }
@@ -564,14 +684,19 @@
   }
   /* ---------------- quarterly matrix (owner's workbook view): metrics × quarters, fiscal-year totals, YoY / QoQ, FY vs FY ---------------- */
   var MX = "pl";
-  var MXROWS = { pl: [["rev", "Total revenue", "$"], ["gp", "Gross profit", "$"], ["gm", "Gross margin %", "%"], ["rnd", "R&D", "$"], ["sga", "SG&A", "$"], ["opx", "Total operating expenses", "$"],
+  var MXROWS = { pl: [["rev", "Total revenue", "$"], ["cogs", "Cost of revenue", "$"], ["gp", "Gross profit", "$"], ["gm", "Gross margin %", "%"], ["rnd", "R&D", "$"], ["sga", "SG&A", "$"], ["opx", "Total operating expenses", "$"],
       ["opinc", "Operating income", "$"], ["opm", "Operating margin %", "%"], ["oth", "Other income / (expense)", "$d"], ["pretax", "Pre-tax income", "$"], ["tax", "Tax provision", "$"], ["etr", "Effective tax rate %", "%"],
-      ["ni", "Net income", "$"], ["nm", "Net margin %", "%"], ["eps_d", "Diluted EPS", "eps"]],
-    cf: [["cfo", "Operating cash flow", "$"], ["capex", "Capex (PP&E payments)", "$"], ["fcf", "Free cash flow", "$"], ["fcfm", "FCF margin %", "%"]] };
+      ["ni", "Net income", "$"], ["nm", "Net margin %", "%"], ["eps_d", "Diluted EPS", "eps"], ["eps_b", "Basic EPS", "eps"], ["sh_d", "Diluted shares", "sh"]],
+    bs: [["cash", "Cash & equivalents", "$"], ["sti", "Short-term investments", "$"], ["ar", "Accounts receivable", "$"], ["inv", "Inventory", "$"], ["ca", "Total current assets", "$"], ["assets", "Total assets", "$"],
+      ["ap", "Accounts payable", "$"], ["accr", "Accrued liabilities", "$"], ["defrev", "Deferred revenue", "$"], ["stdebt", "Short-term debt", "$"], ["cl", "Total current liabilities", "$"], ["ltd_nc", "Long-term debt", "$"],
+      ["oplease", "Operating lease liabilities", "$"], ["liab", "Total liabilities", "$"], ["eq", "Shareholders’ equity", "$"], ["gdebt", "Total debt", "$"], ["ndebt", "Net debt", "$d"], ["wcap", "Working capital", "$d"], ["cr", "Current ratio", "x"]],
+    cf: [["cfo", "Operating cash flow", "$"], ["da", "Depreciation & amortisation", "$"], ["sbc", "Stock-based compensation", "$"], ["capex", "Capex (PP&E payments)", "$"], ["fcf", "Free cash flow", "$"], ["fcfm", "FCF margin %", "%"],
+      ["acq", "Acquisitions", "$"], ["div", "Dividends paid", "$"], ["buyback", "Share buybacks", "$"], ["eqiss", "Stock issued", "$"], ["dissue", "Debt issued", "$"], ["drepay", "Debt repaid", "$"]] };
   function mxv(m, k) {   /* value + whether derived; operating expenses and other income are calculated when not tagged */
     var g = function (x) { return m[x] && m[x].v != null ? m[x].v : null; };
     if (k === "opx") { if (g("opex") != null) return { v: g("opex"), c: m.opex.st === "CALCULATED" }; if (g("gp") != null && g("opinc") != null) return { v: g("gp") - g("opinc"), c: true }; return null; }
     if (k === "oth") return g("pretax") != null && g("opinc") != null ? { v: g("pretax") - g("opinc"), c: true } : null;
+    if (k === "stdebt") { var sd = ["stb", "cp", "dcur"].map(g).filter(function (x) { return x != null; }); return sd.length ? { v: sd.reduce(function (a, b) { return a + b; }, 0), c: sd.length > 1 } : null; }
     return g(k) == null ? null : { v: g(k), c: m[k].st === "CALCULATED" };
   }
   function fyTotals(M) {   /* a fiscal year counts only when all four quarters are on file; reported 10-K totals win where they exist */
@@ -586,20 +711,23 @@
       return { fl: { label: "FY" + String(y).slice(2) }, fy: y, m: m, annual: !!A };
     });
   }
-  function mxf(t, v) { if (v == null) return "—"; if (t === "%") return v.toFixed(1) + "%"; if (t === "eps") return (v < 0 ? "−$" : "$") + Math.abs(v).toFixed(2);
+  function mxf(t, v) { if (v == null) return "—"; if (t === "%") return v.toFixed(1) + "%"; if (t === "eps") return (v < 0 ? "−$" : "$") + Math.abs(v).toFixed(2); if (t === "x") return v.toFixed(2) + "×";
+    if (t === "sh") return (v / 1e6).toFixed(0) + "M";
     var a = Math.abs(v), s = v < 0 ? "−" : ""; return s + (a >= 1e9 ? (a / 1e9).toFixed(2) + "B" : a >= 1e6 ? (a / 1e6).toFixed(0) + "M" : a >= 1e3 ? (a / 1e3).toFixed(1) + "K" : a.toFixed(0)); }
   function mxd(t, a, b) {   /* change cell: % for amounts, pp for ratios, $ for small sign-flipping lines (other income) */
     if (a == null || b == null) return { s: "", v: null };
     if (t === "%") { var d = a - b; return { s: (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(1) + " pp", v: d }; }
+    if (t === "x") { var dx = a - b; return { s: (dx > 0 ? "+" : dx < 0 ? "−" : "") + Math.abs(dx).toFixed(2) + "×", v: dx }; }
     if (t === "$d" || b === 0 || (a < 0) !== (b < 0)) { var d2 = a - b; return { s: (d2 > 0 ? "+" : d2 < 0 ? "−" : "") + mxf("$", Math.abs(d2)).replace("−", ""), v: d2 }; }
     var p = (a / b - 1) * 100 * (b < 0 ? -1 : 1); return { s: (p > 0 ? "+" : p < 0 ? "−" : "") + Math.abs(p).toFixed(1) + "%", v: p };
   }
-  function matrixCard(M) {
-    var Q = M.quarters.slice(-10), FY = fyTotals(M).slice(-2), rows = MXROWS[MX === "cf" ? "cf" : "pl"].filter(function (r) { return Q.some(function (q) { return mxv(q.m, r[0]); }); });   /* lines the company never files stay hidden */
+  function matrixCard(M, kind) {
+    MX = kind || "fy";
+    var Q = M.quarters.slice(-10), FY = MX === "bs" ? [] : fyTotals(M).slice(-2), rows = MXROWS[MX === "fy" ? "pl" : MX].filter(function (r) { return Q.some(function (q) { return mxv(q.m, r[0]); }); });   /* lines the company never files stay hidden */
     var yo = function (q) { var i = M.quarters.indexOf(q); for (var j = i - 1; j >= 0; j--) { var d = (Date.parse(q.end) - Date.parse(M.quarters[j].end)) / 864e5; if (d >= 350 && d <= 380) return M.quarters[j]; if (d > 380) break; } return null; };
     var pq = function (q) { var i = M.quarters.indexOf(q); return i > 0 ? M.quarters[i - 1] : null; };
-    var tone = function (k, v) { return v == null || Math.abs(v) < 0.05 ? "" : (/^(rnd|sga|opx|tax|capex|etr)$/.test(k) ? -v : v) > 0 ? "pos" : "neg"; };
-    var tabs = '<div class="seg mi-vs" style="margin:2px 0 10px">' + [["pl", "P&L"], ["cf", "Cash flow"], ["fy", "FY vs FY"]].map(function (x) { return '<button data-mxtab="' + x[0] + '" aria-pressed="' + (MX === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>";
+    var tone = function (k, v) { return v == null || Math.abs(v) < 0.05 ? "" : (/^(rnd|sga|opx|tax|capex|etr|cogs|ap|accr|stdebt|cl|ltd_nc|oplease|liab|gdebt|ndebt|div|buyback|acq|drepay|sbc|sh_d)$/.test(k) ? -v : v) > 0 ? "pos" : "neg"; };
+    var tabs = '<div class="seg mi-vs fin-tabs" style="margin:2px 0 10px"><span class="fin-cap">FINANCIALS</span>' + [["fin-is", "pl", "Income statement"], ["fin-bs", "bs", "Balance sheet"], ["fin-cf", "cf", "Cash flow"], ["matrix", "fy", "FY vs FY"]].map(function (x) { return '<button data-cocard="' + x[0] + '" aria-pressed="' + (MX === x[1]) + '">' + x[2] + "</button>"; }).join("") + "</div>";
     var body;
     if (MX === "fy") {
       if (FY.length < 2) body = '<div class="ue-ph">Two complete fiscal years (all four quarters on file) are needed for this view.</div>';
@@ -618,8 +746,8 @@
     var lq = Q[Q.length - 1], ly = lq && yo(lq), rv = lq && mxv(lq.m, "rev"), ry = ly && mxv(ly.m, "rev"), notes = [];
     if (rv && ry) notes.push("Latest quarter " + lq.fl.label + ": revenue " + mxf("$", rv.v) + ", " + mxd("$", rv.v, ry.v).s + " YoY.");
     if (FY.length === 2 && FY[0].m.rev && FY[1].m.rev) notes.push(FY[1].fl.label + " revenue " + mxf("$", FY[1].m.rev.v) + " vs " + mxf("$", FY[0].m.rev.v) + " in " + FY[0].fl.label + " (" + mxd("$", FY[1].m.rev.v, FY[0].m.rev.v).s + ").");
-    return shell(M, "matrix", tabs + body + (notes.length ? '<div class="obs-box"><b>OBSERVATIONS</b><ul>' + notes.map(function (n) { return "<li>" + esc(n) + "</li>"; }).join("") + "</ul></div>" : "") +
-      '<div class="stamp">From SEC 10-Q/10-K filings. Italic = calculated (fourth quarter = annual less nine months; other income = pre-tax less operating income). Fiscal-year columns need all four quarters on file and use the 10-K total where one is reported. ' +
+    return shell(M, { pl: "fin-is", bs: "fin-bs", cf: "fin-cf", fy: "matrix" }[MX], tabs + body + (notes.length ? '<div class="obs-box"><b>OBSERVATIONS</b><ul>' + notes.map(function (n) { return "<li>" + esc(n) + "</li>"; }).join("") + "</ul></div>" : "") +
+      '<div class="stamp">From SEC 10-Q/10-K filings. ' + (MX === "bs" ? "Balance-sheet lines are quarter-end balances (no fiscal-year columns). " : "") + 'Italic = calculated (fourth quarter = annual less nine months; other income = pre-tax less operating income). Fiscal-year columns need all four quarters on file and use the 10-K total where one is reported. ' +
       "YoY on a margin is in percentage points; on other income it is the dollar change, since % moves on small, sign-flipping numbers mislead. Blank = no comparable period on file, never estimated. Segment and geography splits are not in SEC’s free data feed.</div>");
   }
   function revenueCard(M) {
@@ -1025,7 +1153,8 @@
   /* ---------------- public ---------------- */
   var CARDS = { snap: snapCard, verdicts: verdictCard, health: healthCard, revenue: revenueCard, gross: grossCard, operating: operatingCard, eps: epsCard, cfo: cfoCard, fcf: fcfCard,
     "wc-ar": arCard, "wc-inv": invCard, "wc-ap": apCard, "wc-ccc": cccCard, capex: capexCard, alloc: allocCard, debt: debtCard, costdebt: costCard, maturity: maturityCard, service: serviceCard,
-    matrix: matrixCard, liq: liqCard, returns: returnsCard, lev: levCard, eff: effCard, warn: warnCard, "val-snap": vsnapCard, "val-scn": vscnCard, "val-pe": vpeCard, "val-rx": vrxCard };
+    matrix: function (M) { return matrixCard(M, "fy"); }, "fin-is": function (M) { return matrixCard(M, "pl"); }, "fin-bs": function (M) { return matrixCard(M, "bs"); }, "fin-cf": function (M) { return matrixCard(M, "cf"); },
+    est: estCard, own: ownCard, liq: liqCard, returns: returnsCard, lev: levCard, eff: effCard, warn: warnCard, "val-snap": vsnapCard, "val-scn": vscnCard, "val-pe": vpeCard, "val-rx": vrxCard };
   /* every new company opens on animated placeholders, one per section — never the previous company's numbers */
   function skeleton(t) {
     var sec = [["Company profile", 2], ["Price & valuation", 3], ["Revenue & profitability", 3], ["Cash flow", 3], ["Balance sheet", 3], ["Financial verdicts", 4], ["Historical charts", 0]];
@@ -1039,7 +1168,7 @@
     if (D.loading) return skeleton(t);
     if (D.err) return '<div class="tile"><h2>' + esc(t) + '</h2><div class="unreach">⚠ Could not load ' + esc(t) + " <small>— " + esc(D.err) + '</small></div><button class="ue-btn" data-coretry="' + esc(t) + '" style="margin-top:8px">Try again</button></div>';
     if (!D.M.quarters.length) return '<div class="tile"><h2>' + esc(t) + '</h2><div class="ue-ph">' + esc(D.co.name) + " has no US-GAAP quarterly figures in SEC XBRL" + (D.co.ifrs ? " (it files under IFRS)" : "") + ".</div></div>";
-    prFetch(D.M); if (Date.now() - Date.parse(D.at) > 20 * 6e4) refresh(t);
+    prFetch(D.M); strFetch(t); if (Date.now() - Date.parse(D.at) > 20 * 6e4) refresh(t);
     return card && CARDS[card] ? CARDS[card](D.M, D.V) : grid(D.M, D.V);
   }
   /* a company stays open for hours: refetch quietly every 20 minutes so a new filing shows without a reload */
@@ -1052,7 +1181,8 @@
   }
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t) return;
-    var b = t.closest("[data-cotv]"); if (b) { TV = b.getAttribute("data-cotv"); try { localStorage.setItem("desk.coTiles", TV); } catch (e) {} rerender(); return; }
+    var b = t.closest("[data-esk],[data-esv]"); if (b) { if (b.hasAttribute("data-esk")) EV.k = b.getAttribute("data-esk"); else EV.v = b.getAttribute("data-esv"); rerender(); return; }
+    b = t.closest("[data-cotv]"); if (b) { TV = b.getAttribute("data-cotv"); try { localStorage.setItem("desk.coTiles", TV); } catch (e) {} rerender(); return; }
     b = t.closest("[data-mxtab]"); if (b && b.closest("#panel-earnings")) { MX = b.getAttribute("data-mxtab"); rerender(); return; }
     b = t.closest("[data-coretry]"); if (b) { delete MEM[b.getAttribute("data-coretry")]; rerender(); }
     b = t.closest("[data-scnreset]"); if (b) { delete SCN[b.getAttribute("data-scnreset")]; rerender(); }
@@ -1092,7 +1222,8 @@
   var RC = {};
   function has(t, id) {
     var D = MEM[t]; if (!D || D.loading || D.err || !D.M) return null; if (!BUILT[id]) return false;
-    var R = RC[t] || (RC[t] = {}); if (R[id] === undefined) { try { R[id] = id === "verdicts" || id === "health" || id === "warn" || id === "matrix" ? D.M.quarters.length > 0 : hasData(CARDS[id] && CARDS[id](D.M, D.V)); } catch (e) { R[id] = false; } }
+    var R = RC[t] || (RC[t] = {}); if (R[id] === undefined) { try { R[id] = id === "verdicts" || id === "health" || id === "warn" || id === "matrix" ? D.M.quarters.length > 0 :
+      id === "est" || id === "own" ? (STR[t] && STR[t].loading ? null : id === "est" ? !!(SD(D.M) && SD(D.M).hist && (SD(D.M).hist.length || SD(D.M).trend.length)) : !!(SD(D.M) && SD(D.M).own && SD(D.M).own.inst_pct != null)) : hasData(CARDS[id] && CARDS[id](D.M, D.V)); } catch (e) { R[id] = false; } }
     return R[id];
   }
   window.COMPANY = { status: status, has: has, name: function (t) { var D = MEM[t]; return D && D.co ? D.co.name : ""; }, card: function () { return card; }, parts: function () { return PARTS; }, show: function (key) { card = key || null; rerender(); }, html: html, search: search, configured: function () { return !!worker(); }, reset: function (keep) { card = null; cancelAll(keep); }, retry: function (t) { delete MEM[t]; delete READY[t]; rerender(); }, _mem: MEM };
