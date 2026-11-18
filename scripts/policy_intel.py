@@ -89,7 +89,7 @@ DOVE = [
     (r"tighter (?:financing|financial|credit)|credit stress|financial (?:instability|stress)|strains?", "financial"),
     (r"(?:lower|reduce|cut)\w* (?:the |our )?(?:policy |interest |bank )?rates?|further (?:easing|cuts?|reductions?)|less restrictive|room to (?:ease|cut)|easing (?:may|could|would) be (?:warranted|appropriate)", "guidance"),
 ]
-AV = 6   # analysis version (6: Fed #article text, Nov 18 2026): stored items scored by an older version are re-read
+AV = 7   # analysis version (7: minutes vote record + participant views; 6: Fed #article text): stored items scored by an older version are re-read
 FOREIGN = re.compile(r"\b(?:In the United States|U\.S\. economy|China|Chinese|euro area|Europe(?:an)? economy|Japan(?:ese)? economy|global (?:growth|economy|activity)|emerging market|other countries|abroad)\b", re.I)
 DISSENT = re.compile(r"voting against|dissent|preferred (?:instead )?to (?:raise|lower|cut|reduce|increase|hold|maintain|leave|keep)|voted (?:in favour|in favor|for) (?:a |an )?(?:increase|reduction|cut|hike)|(?:\d+|one|two|three|four)[–-](?:\d+|one|two|three|four) vote|(?:majority|minority) of|\d+[–-]\d+ majority vote|proposed to (?:raise|lower|cut|increase|reduce)", re.I)
 NEG = re.compile(r"\b(?:not|no longer|nor|never|without|unlikely)\b")
@@ -115,6 +115,54 @@ def sentences(text):
             if 24 <= len(s) <= 600:
                 out.append((i + 1, s))
     return out
+
+
+# ---------------------------------------------------------------- minutes: the vote and the spread of views (owner, Nov 18 2026)
+QUANT = [("all", 7), ("almost all", 6.5), ("nearly all", 6.5), ("most", 6), ("a large majority of", 6), ("a substantial majority of", 6), ("a majority of", 5.5),
+         ("many", 5), ("several", 4), ("some", 3.5), ("a number of", 3.5), ("a minority of", 2.5), ("a few", 2), ("a couple of", 1.5), ("two", 1.2), ("one", 1)]
+QUANT_RX = re.compile(r"\b(" + "|".join(sorted((re.escape(q) for q, _ in QUANT), key=len, reverse=True)) + r")\s+(?:of\s+(?:the\s+)?)?(?:other\s+|these\s+|those\s+)?(participants|members|policymakers)\b", re.I)
+VIEW_H = re.compile(r"rais(?:e|ing)\b|increase in the (?:target|policy rate)|further tightening|tighten|upside risks? to inflation|inflation (?:could|might|would) (?:remain|prove) (?:elevated|persistent)|restrictive for longer|hike", re.I)
+VIEW_D = re.compile(r"lower(?:ing)? the (?:target|policy rate)|reduc(?:e|tion) in the (?:target|policy rate)|cut\b|eas(?:e|ing) (?:policy|the stance)|downside risks? to (?:employment|growth|the labor)|weaken(?:ing)? labor", re.I)
+
+
+def votes(text):
+    """FOMC vote record: who voted for and against, and what the dissenters preferred — read from the minutes' own lines."""
+    def seg(label):
+        m = re.search(label + r"\s*", text)
+        if not m:
+            return None
+        rest = text[m.end():m.end() + 700]
+        stop = re.search(r"(?<![A-Z])\.(?=\s+(?:[A-Z][a-z]{2,}|\n|$))|\n|Voting (?:for|against) this action", rest)   # sentence end that is not an initial
+        return rest[:stop.start()] if stop else rest
+    def names(s):
+        s = re.sub(r"\s+", " ", s).strip().rstrip(".")
+        return [n.strip() for n in re.split(r",\s*(?:and\s+)?|\s+and\s+", s) if 3 < len(n.strip()) < 40 and n.strip()[0].isupper()]
+    f, a = seg(r"Voting for this action:"), seg(r"Voting against this action:")
+    if f is None and a is None:
+        return None
+    against, pref = [], ""
+    if a:
+        m = re.search(r",?\s*who (?:preferred|would have preferred)\s+(.*)", a)
+        if m:
+            pref, a = m.group(1).strip(), a[:m.start()]
+        against = names(a)
+    return {"for": names(f) if f else [], "against": against, "preferred": pref[:200]}
+
+
+def views(text):
+    out = []
+    for para, s in sentences(text):
+        m = QUANT_RX.search(s)
+        if not m or m.start() > 60:   # the quantifier has to lead the sentence ("A few participants noted …")
+            continue
+        q = m.group(1).lower()
+        h, d = bool(VIEW_H.search(s)), bool(VIEW_D.search(s))
+        if d and re.search(r"downside risks?[^.]{0,60}(?:diminish|recede|receded|lessen|eased|declin)", s, re.I):
+            h, d = True, False   # "downside risks to employment had diminished" leans hawkish
+        out.append({"q": s[:420], "para": para, "who": m.group(1)[0].upper() + m.group(1)[1:] + " " + m.group(2).lower(),
+                    "rank": dict(QUANT)[q], "stance": "hawk" if h and not d else "dove" if d and not h else "mixed" if h and d else "neutral"})
+    out.sort(key=lambda v: (-(v["stance"] != "neutral"), -v["rank"]))
+    return out[:16]
 
 
 def analyse(text):
@@ -168,7 +216,7 @@ def analyse(text):
     ev.sort(key=lambda e: -e["w"])
     dissent = [{"q": s, "para": p} for p, s in sentences(text) if DISSENT.search(s)][:4]
     rel = sum(1 for _, s in sentences(text) if re.search(THEMES["inflation"] + "|" + THEMES["guidance"], s.lower()))
-    return {"av": AV, "dissent": dissent, "relevance": rel, "policy_relevant": rel >= 4, "score": score, "label": lab, "themes": {k: round(v, 1) for k, v in th.items()}, "hawk_n": round(H, 1), "dove_n": round(D, 1),
+    return {"av": AV, "votes": votes(text), "views": views(text), "dissent": dissent, "relevance": rel, "policy_relevant": rel >= 4, "score": score, "label": lab, "themes": {k: round(v, 1) for k, v in th.items()}, "hawk_n": round(H, 1), "dove_n": round(D, 1),
             "guidance": {"direction": g_dir, "conditional": g_cond, "quote": g_sent, "next_action": nxt},
             "evidence": [e for e in ev if e["dir"] == "hawk"][:4] + [e for e in ev if e["dir"] == "dove"][:4]}
 
