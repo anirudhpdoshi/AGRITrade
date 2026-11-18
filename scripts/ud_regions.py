@@ -38,6 +38,22 @@ def _fred_multi(ids, start):
     return out
 
 
+def _fetch_split(ids, start, depth=0):
+    """FRED rejects a whole multi-series request when one id does not exist (e.g. a state with no separate mining series):
+    split the batch until the bad ids are isolated and dropped. Transient timeouts get one retry."""
+    for _try in range(2):
+        try:
+            return _fred_multi(ids, start)
+        except Exception:
+            pass
+    if len(ids) == 1 or depth > 5:
+        return {}
+    h = len(ids) // 2
+    out = _fetch_split(ids[:h], start, depth + 1)
+    out.update(_fetch_split(ids[h:], start, depth + 1))
+    return out
+
+
 def us_states(D, N):
     meta = D["meta"]
     last = meta.get("us_states_checked")
@@ -48,13 +64,9 @@ def us_states(D, N):
     out, miss = {}, []
     for fips, ab, name in US_STATES:
         ids = [ab + "NA", ab + "UR"] + [f"SMS{fips}00000{c}01" for c in US_IND]
-        try:
-            S = _fred_multi(ids, start)
-        except Exception:   # one bad id can fail the whole request: fall back to the two headline series
-            try:
-                S = _fred_multi(ids[:2], start)
-            except Exception as e:
-                miss.append(ab); print("  ", ab, e); continue
+        S = _fetch_split(ids, start)
+        if not S.get(ab + "NA"):
+            miss.append(ab); continue
         nf, ur = S.get(ab + "NA") or [], S.get(ab + "UR") or []
         if len(nf) < 13:
             miss.append(ab); continue
