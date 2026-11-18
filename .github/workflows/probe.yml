@@ -1,0 +1,20 @@
+name: Data source probe
+# Manual diagnostics: runs scripts/probe.py (checked-in code only) and saves its output to the sec-audit branch.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -q requests
+      - run: python scripts/probe.py > probe.txt 2>&1 || true
+      - run: |
+          git init -q r && cd r && git config user.name desk-audit-bot && git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git fetch -q origin sec-audit && git checkout -q -b sec-audit FETCH_HEAD
+          cp ../probe.txt . && git add probe.txt && git commit -qm "probe $(date -u +%FT%TZ)" && git push -q origin HEAD:sec-audit
