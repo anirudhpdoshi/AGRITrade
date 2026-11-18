@@ -38,5 +38,9 @@ jobs:
           git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
           git fetch -q origin sec-audit && git checkout -q -b sec-audit FETCH_HEAD || git checkout -q --orphan sec-audit
           curl -s -m 60 -H "Origin: https://anirudhpdoshi.github.io" "${{ inputs.url }}/exhibit?t=NVDA&acc=0001045810-26-000088" -o nvda-exhibit.json || true
+          T="${{ inputs.ticker }}"; curl -s -m 60 -H "Origin: https://anirudhpdoshi.github.io" "${{ inputs.url }}/filings?t=$T" -o filings-$T.json || true
+          A=$(python3 -c "import json;print((json.load(open('filings-$T.json')).get('releases') or [{}])[0].get('accn',''))" 2>/dev/null)
+          [ -n "$A" ] && curl -s -m 60 -H "Origin: https://anirudhpdoshi.github.io" "${{ inputs.url }}/exhibit?t=$T&acc=$A" -o exhibit-$T.json || true
+          git add filings-*.json exhibit-*.json 2>/dev/null || true
           cp ../adm.json company-${{ inputs.ticker }}.json 2>/dev/null || true; cp ../adm.json company-sample.json 2>/dev/null || true
           cp ../smoke.txt worker-smoke.txt && git add worker-smoke.txt nvda-exhibit.json company-sample.json company-*.json && git commit -qm "worker smoke $(date -u +%FT%TZ)" && git push -q origin HEAD:sec-audit
