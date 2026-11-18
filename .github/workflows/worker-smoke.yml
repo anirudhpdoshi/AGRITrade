@@ -38,5 +38,5 @@ jobs:
           git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
           git fetch -q origin sec-audit && git checkout -q -b sec-audit FETCH_HEAD || git checkout -q --orphan sec-audit
           curl -s -m 60 -H "Origin: https://anirudhpdoshi.github.io" "${{ inputs.url }}/exhibit?t=NVDA&acc=0001045810-26-000088" -o nvda-exhibit.json || true
-          cp ../adm.json company-sample.json 2>/dev/null || true
-          cp ../smoke.txt worker-smoke.txt && git add worker-smoke.txt nvda-exhibit.json company-sample.json && git commit -qm "worker smoke $(date -u +%FT%TZ)" && git push -q origin HEAD:sec-audit
+          cp ../adm.json company-${{ inputs.ticker }}.json 2>/dev/null || true; cp ../adm.json company-sample.json 2>/dev/null || true
+          cp ../smoke.txt worker-smoke.txt && git add worker-smoke.txt nvda-exhibit.json company-sample.json company-*.json && git commit -qm "worker smoke $(date -u +%FT%TZ)" && git push -q origin HEAD:sec-audit
