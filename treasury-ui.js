@@ -11,6 +11,24 @@
   var P = document.getElementById("panel-treasury"), BTN = document.getElementById("tabbtn-treasury");
   if (!P || !BTN) return;
   var MON = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  /* release schedule + countdown (owner, Nov 18 2026): when Treasury publishes each figure and when the desk reads it */
+  function schedHTML() {
+    var Sd = window.DATA && DATA.ust_sched; if (!Sd || !Sd.next) return "";
+    var chk = DATA.meta && DATA.meta.ust_checked;
+    return '<div class="tile wide ust-sch"><h2>Release schedule <span class="h2note">— Treasury Fiscal Data publication times (ET); the desk checks every 15 minutes on business days and picks up each figure on the first check after it lands' + (chk ? " · last checked " + new Date(chk).toLocaleString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " ET" : "") + "</span></h2>" +
+      '<div class="ust-sg">' + Sd.next.map(function (x) {
+        return '<div class="ust-si"><span class="n">' + x.name + '</span><b data-ustcd="' + x.t + '">—</b><span class="w">' + new Date(x.t).toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " ET</span><small>" + x.note + "</small></div>";
+      }).join("") + '</div><div class="stamp">Source: <a href="' + Sd.src + '" target="_blank" rel="noopener noreferrer">Fiscal Data release calendar ↗</a>. Auction days follow the Treasury tentative auction schedule; holidays shift releases by a day.</div></div>';
+  }
+  setInterval(function () {
+    [].forEach.call(document.querySelectorAll("[data-ustcd]"), function (e) {
+      var ms = Date.parse(e.getAttribute("data-ustcd")) - Date.now(), t;
+      if (ms <= 0) t = "due — next check picks it up"; else { var m = Math.floor(ms / 6e4), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60); t = "in " + (d ? d + "d " + h + "h" : h ? h + "h " + (m % 60) + "m" : (m % 60) + "m " + String(Math.floor(ms / 1000) % 60).padStart(2, "0") + "s"); }
+      if (e.textContent !== t) e.textContent = t;
+    });
+  }, 1000);
+  (function () { var st = document.createElement("style"); st.textContent = ".ust-sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:8px}.ust-si{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:3px}.ust-si .n{font-size:12px;font-weight:700}.ust-si b{font-size:18px;color:#e8a33d;font-variant-numeric:tabular-nums}.ust-si .w{font-size:12px;color:var(--dim,#9aa7b8)}.ust-si small{font-size:11px;color:var(--faint)}"; document.head.appendChild(st); })();
+
   function esc(s) { return DeskCore.esc(s); }
   function T(v, d) { return v == null ? "N/A" : "$" + (+v).toFixed(d == null ? 2 : d) + "T"; }
   function B(v) { return v == null ? "—" : "$" + Math.round(v).toLocaleString("en-US") + " B"; }
@@ -391,7 +409,7 @@
       "). Marketable totals and maturities are summed from the security-level MSPD; MSPD is monthly, Debt to the Penny daily." +
       (D ? " Dashboard data: us-debt-dashboard.json (prepared " + esc(D.prepared || "") + ", data as of " + esc(D.data_as_of || "") + ") — annual history, forward, servicing and risk from FiscalData, FRED and CBO as cited per section." : "") + "</div>";
 
-    P.innerHTML = '<div class="tq">' + head + kp + ann + ledger +
+    P.innerHTML = '<div class="tq">' + head + schedHTML() + kp + ann + ledger +
       '<div class="tq-g">' + wall + '<div class="tq-side">' + prof + sc + "</div></div>" +
       fwdSum + rc + comp + svc + risk + verd + foot + "</div>";
     /* tooltip element for the annual chart (recreated each render; listeners are on P, attached once below) */

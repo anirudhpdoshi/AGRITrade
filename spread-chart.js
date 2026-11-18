@@ -86,6 +86,11 @@
       kp("9-day EMA", c2(eNow), "ema") + kp("High", c2(hiV) + " <small>" + dAt(hiI) + "</small>", "up") + kp("Low", c2(loV) + " <small>" + dAt(loI) + "</small>", "dn") + rng + "</div>" +
       '<div class="spc-cw">' + svg + '<div class="spc-tip" hidden></div></div><p class="spc-rd">' + esc(read) + "</p>";
   }
+  function qAge(g, p) {   /* when the delayed quotes behind the live end were stamped */
+    var Q = g.quotes || {}, a = Q[p.near], b = Q[p.far], t = Math.max(a && Date.parse(a.ts) || 0, b && Date.parse(b.ts) || 0);
+    if (!t) return "Delayed quotes · not streaming now (market closed or feed paused)";
+    return "Delayed quotes · last print " + new Date(t).toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" }) + " ET";
+  }
   function tile(key) {
     var D = root.DATA, g = D && D.grains && D.grains[key]; if (!g || !g.spreads) return "";
     var P = pairs(g); if (!P.front) return "";
@@ -93,12 +98,13 @@
     function head(p, sub, extra) { return '<div class="spc-h"><b>' + esc(shortC(p.near)) + "−" + esc(shortC(p.far)) + "</b><span>" + sub + "</span>" + (extra || "") + "</div>"; }
     var tg = P.fromFront && P.fromNext ? '<span class="spc-pt">' + ["next", "front"].map(function (m) { var q = m === "front" ? P.fromFront : P.fromNext; return '<button data-spcp="' + key + ":" + m + '" aria-pressed="' + (mode === m) + '">' + esc(shortC(q.near)) + "−" + esc(shortC(q.far)) + "</button>"; }).join("") + "</span>" : "";
     return '<div class="tile wide spc-tile" data-src="grains_settle" data-spck="' + key + '"><h2>Calendar spread charts <span class="h2note">— front roll and next roll · daily settles, live end from the delayed quotes · ¢/bu, near − far</span></h2>' +
+      '<div class="spc-cdb"><span class="spc-dot"></span><span class="spc-qa">' + qAge(g, P.front) + '</span><span class="spc-cd" data-spccd>next update —</span></div>' +
       '<div class="spc-grid"><div class="spc-c">' + head(P.front, "Front roll") + chart(g, P.front, key, "a") + "</div>" +
       (p2 ? '<div class="spc-c">' + head(p2, "Next roll", tg) + chart(g, p2, key, "b") + "</div>" : "") + "</div>" +
       '<div class="legend"><span><span class="sw" style="background:#38b6c9"></span>Spread (settle)</span><span><span class="sw" style="background:#e8a33d"></span>9-day EMA</span><span><span class="sw" style="background:#3fb97f"></span>Period high</span><span><span class="sw" style="background:#e0655f"></span>Period low</span><span><span class="sw" style="background:#fff"></span>Live (delayed quote)</span></div>' +
       '<div class="stamp">' + esc(g.spreads.src || "") + " · settles through " + esc(dl(g.spreads.asof)) + " · negative = carry (deferred above nearby); a rising spread means the nearby is gaining · hover a chart for each day</div></div>";
   }
-  function repaint(key) { var el = doc.querySelector('.spc-tile[data-spck="' + key + '"]'); if (!el) return; var w = doc.createElement("div"); w.innerHTML = tile(key); if (w.firstChild) el.replaceWith(w.firstChild); }
+  function repaint(key) { [].forEach.call(doc.querySelectorAll('.spc-tile[data-spck="' + key + '"]'), function (el) { var w = doc.createElement("div"); w.innerHTML = tile(key); if (w.firstChild) el.replaceWith(w.firstChild); }); }   /* every copy of the tile (it can sit in more than one sub-tab) */
   doc.addEventListener("click", function (ev) {
     var b = ev.target.closest && ev.target.closest("[data-spcp],[data-spcr]"); if (!b) return;
     if (b.hasAttribute("data-spcp")) { var a = b.getAttribute("data-spcp").split(":"); PAIR2[a[0]] = a[1]; try { localStorage.setItem("desk.spc.pair2", JSON.stringify(PAIR2)); } catch (e) {} repaint(a[0]); }
@@ -117,8 +123,14 @@
   doc.addEventListener("mouseout", function (ev) { var svg = ev.target.closest && ev.target.closest(".spc-svg"); if (!svg || svg.contains(ev.relatedTarget)) return; svg.querySelector(".spc-x").style.display = "none"; svg.parentNode.querySelector(".spc-tip").hidden = true; });
   /* live end: repaint visible tiles every 30 s (the quotes refresh in DATA through the live feed) */
   setInterval(function () { if (root.DESK_LOCKED) return; [].forEach.call(doc.querySelectorAll(".spc-tile"), function (el) { if (el.offsetParent && !el.matches(":hover")) repaint(el.getAttribute("data-spck")); }); }, 30000);
+  /* countdown to the next delayed-quote read (live.json, every 60 s) */
+  setInterval(function () {
+    var n = root.DESK_LIVE_NEXT, els = doc.querySelectorAll("[data-spccd]"); if (!els.length) return;
+    var s = n ? Math.max(0, Math.round((n - Date.now()) / 1000)) : null, t = s == null ? "next update —" : s === 0 ? "updating…" : "next update in " + Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+    [].forEach.call(els, function (e) { if (e.textContent !== t) e.textContent = t; });
+  }, 1000);
   var css = doc.createElement("style");
-  css.textContent = ".spc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px;margin-top:8px}.spc-c{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#05070b;min-width:0}" +
+  css.textContent = ".spc-cdb{display:flex;align-items:center;gap:10px;margin:2px 0 8px;font-size:12px;color:var(--faint)}.spc-dot{width:7px;height:7px;border-radius:50%;background:#e8a33d;box-shadow:0 0 0 3px rgba(232,163,61,.15)}.spc-cd{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:700;color:#e8a33d;border:1px solid rgba(232,163,61,.4);border-radius:999px;padding:2px 10px}.spc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px;margin-top:8px}.spc-c{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#05070b;min-width:0}" +
     ".spc-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}.spc-h b{font:600 15px 'IBM Plex Mono',monospace;color:#fff}.spc-h>span{font:600 10.5px 'IBM Plex Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}" +
     ".spc-pt,.spc-rg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;padding:2px;gap:2px;margin-left:auto}.spc-pt button,.spc-rg button{appearance:none;border:0;background:transparent;color:var(--muted);font:600 11.5px 'IBM Plex Mono',monospace;padding:3px 9px;border-radius:6px;cursor:pointer}" +
     ".spc-pt button[aria-pressed=true],.spc-rg button[aria-pressed=true]{background:var(--amber);color:#101825}" +

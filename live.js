@@ -522,8 +522,9 @@
     setInterval(paintPills, 5000);   /* change-only writes; tiles drawn by a sub-tab click get their badge at once */
     document.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("[data-sub],[data-subp]")) setTimeout(paintPills, 50); });
     setInterval(pollData, (CFG.dataPollSec || 300) * 1000);
-    pollLive();
-    setInterval(pollLive, (CFG.livePollSec || 60) * 1000);
+    var LMS = (CFG.livePollSec || 60) * 1000;
+    pollLive(); window.DESK_LIVE_NEXT = Date.now() + LMS;   /* read by the spread charts' next-update countdown */
+    setInterval(function () { pollLive(); window.DESK_LIVE_NEXT = Date.now() + LMS; }, LMS);
     setInterval(pollRef, (CFG.refPollSec || 30) * 1000);
     document.addEventListener("visibilitychange", function () { if (!document.hidden) { pollData(); pollRef(); pollLive(); } });
   }

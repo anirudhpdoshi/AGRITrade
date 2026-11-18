@@ -30,13 +30,89 @@ def _fd(path, **params):
     return get(FISCAL + path + "?" + q).json().get("data") or []
 
 
+ET_TZ = ZoneInfo("America/New_York")
+# Treasury publication times (Fiscal Data release calendar; owner's schedule, Nov 18 2026). Each slot carries a few
+# minutes' margin after the published time, so the desk reads the new figure on the first refresh after it lands.
+UST_DAILY = [(16, 20)]                     # Debt to the Penny (3:00–4:15 PM) and Daily Treasury Statement (4:00 PM), 1-day lag
+UST_AUCTION = [(11, 40), (13, 10)]         # bill auctions 11:30 AM, note/bond auctions 1:00 PM
+UST_MSPD_BDAY, UST_MSPD_AT = 4, (16, 15)   # Monthly Statement of the Public Debt: 4th business day, 3–4 PM
+UST_MTS_BDAY, UST_MTS_AT = 8, (14, 10)     # Monthly Treasury Statement: 8th business day, 2:00 PM
+
+
+def _bday(d):
+    return d.weekday() < 5
+
+
+def _last_daily_slot(now, slots):
+    """Latest business-day publication slot at or before now (ET)."""
+    n = now.astimezone(ET_TZ)
+    for back in range(0, 8):
+        d = (n - timedelta(days=back)).date()
+        if not _bday(d):
+            continue
+        for hh, mm in sorted(slots, reverse=True):
+            t = datetime(d.year, d.month, d.day, hh, mm, tzinfo=ET_TZ)
+            if t <= n:
+                return t
+    return n - timedelta(days=7)
+
+
+def _nth_bday(y, m, k, at):
+    d, c = datetime(y, m, 1, at[0], at[1], tzinfo=ET_TZ), 0
+    while True:
+        if _bday(d.date()):
+            c += 1
+            if c == k:
+                return d
+        d += timedelta(days=1)
+
+
+def _last_monthly_slot(now, k, at):
+    n = now.astimezone(ET_TZ); t = _nth_bday(n.year, n.month, k, at)
+    if t <= n:
+        return t
+    y, m = (n.year, n.month - 1) if n.month > 1 else (n.year - 1, 12)
+    return _nth_bday(y, m, k, at)
+
+
+def _next_slots(now):
+    """Next expected publication of each Treasury release, for the tab's schedule strip."""
+    n = now.astimezone(ET_TZ)
+    def nxt_daily(slots):
+        for fwd in range(0, 8):
+            d = (n + timedelta(days=fwd)).date()
+            if not _bday(d):
+                continue
+            for hh, mm in sorted(slots):
+                t = datetime(d.year, d.month, d.day, hh, mm, tzinfo=ET_TZ)
+                if t > n:
+                    return t
+    def nxt_monthly(k, at):
+        t = _nth_bday(n.year, n.month, k, at)
+        if t > n:
+            return t
+        y, m = (n.year, n.month + 1) if n.month < 12 else (n.year + 1, 1)
+        return _nth_bday(y, m, k, at)
+    return [{"name": "Debt to the Penny", "t": nxt_daily([(15, 0)]).isoformat(), "note": "daily, 3:00–4:15 PM ET, prior business day"},
+            {"name": "Daily Treasury Statement (cash, TGA)", "t": nxt_daily([(16, 0)]).isoformat(), "note": "daily, 4:00 PM ET, prior business day"},
+            {"name": "Treasury auction results", "t": nxt_daily([(11, 30), (13, 0)]).isoformat(), "note": "bills 11:30 AM, notes/bonds 1:00 PM ET (auction days)"},
+            {"name": "Monthly Statement of the Public Debt", "t": nxt_monthly(UST_MSPD_BDAY, (15, 0)).isoformat(), "note": "4th business day, 3–4 PM ET"},
+            {"name": "Monthly Treasury Statement", "t": nxt_monthly(UST_MTS_BDAY, (14, 0)).isoformat(), "note": "8th business day, 2:00 PM ET"}]
+
+
+def _due(last, slot):
+    return not last or datetime.fromisoformat(last) < slot
+
+
 def ust(D, N):
     """Debt to the Penny (daily) + Monthly Statement of the Public Debt (every marketable security with its maturity) +
     average interest rates. Everything on the tab is computed from these official figures; nothing is modelled."""
     meta = D["meta"]
     last = meta.get("ust_checked")
-    if last and UDC.NOW - datetime.fromisoformat(last) < timedelta(hours=6):
-        print("  checked <6h ago - skipping")
+    D["ust_sched"] = {"next": _next_slots(UDC.NOW), "src": "https://fiscaldata.treasury.gov/release-calendar/"}
+    slot = max(_last_daily_slot(UDC.NOW, UST_DAILY), _last_monthly_slot(UDC.NOW, UST_MSPD_BDAY, UST_MSPD_AT))
+    if not _due(last, slot) and UDC.NOW - datetime.fromisoformat(last) < timedelta(hours=12):
+        print(f"  up to date with the {slot:%a %H:%M} ET publication - skipping")
         return False
     pen = _fd("v2/accounting/od/debt_to_penny", sort="-record_date", **{"page[size]": 1})[0]
     t1 = _fd("v1/debt/mspd/mspd_table_1", sort="-record_date", **{"page[size]": 40})
@@ -370,10 +446,12 @@ def ust_dashboard(D, N):
     meta = D["meta"]
     last6 = meta.get("ust_dashboard_checked")
     last_mts = meta.get("ust_dashboard_mts_checked")
-    do_fast = not last6 or UDC.NOW - datetime.fromisoformat(last6) >= timedelta(hours=6)
-    do_mts = not last_mts or UDC.NOW - datetime.fromisoformat(last_mts) >= timedelta(days=30)
+    fslot = max(_last_daily_slot(UDC.NOW, UST_DAILY + UST_AUCTION), _last_monthly_slot(UDC.NOW, UST_MSPD_BDAY, UST_MSPD_AT))
+    do_fast = _due(last6, fslot) or UDC.NOW - datetime.fromisoformat(last6) >= timedelta(hours=12)
+    mslot = _last_monthly_slot(UDC.NOW, UST_MTS_BDAY, UST_MTS_AT)
+    do_mts = _due(last_mts, mslot) or (UDC.NOW - mslot < timedelta(days=3) and UDC.NOW - datetime.fromisoformat(last_mts) >= timedelta(hours=3))   # after each MTS release, re-check for 3 days (holiday shifts)
     if not do_fast and not do_mts:
-        print("  checked <6h ago (MTS <30d) - skipping")
+        print("  up to date with the latest Treasury publications - skipping")
         return False
     if not DASH_PATH.exists():
         raise RuntimeError("us-debt-dashboard.json not found — a full rebuild is a manual research step, not a pipeline refresh")
