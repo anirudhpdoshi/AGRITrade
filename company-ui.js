@@ -89,6 +89,13 @@
     ".ow-b{border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}.ow-b b{font:700 14px 'IBM Plex Mono',monospace}.ow-b span{font-size:11px;opacity:.9}" +
     ".ow-k{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ow-k div{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#05070b}.ow-k span{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}.ow-k b{font:600 14px 'IBM Plex Mono',monospace;color:#fff}" +
     "@media (max-width:760px){.ow-wrap{grid-template-columns:1fr}}" +
+    ".rs-t.on{outline:2px solid #fff;outline-offset:1px}.rsd{margin-top:10px;border:1px solid var(--line2);border-radius:10px;background:#05070b;padding:12px 14px}" +
+    ".rd-h{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.rd-h b{font-size:15px;color:#fff}.rd-h span{font:11px 'IBM Plex Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}.rd-h .ue-btn:first-of-type{margin-left:auto}" +
+    ".rd-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.rd-b{border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:#0a0e15;display:flex;flex-direction:column;gap:2px}" +
+    ".rd-b span{font:600 10px 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}.rd-b b{font:600 19px 'IBM Plex Mono',monospace;color:#fff}.rd-b small{font:11px 'IBM Plex Mono',monospace;color:var(--muted)}.rd-b i{font:600 12px 'IBM Plex Mono',monospace;font-style:normal}" +
+    ".rd-2{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;margin-top:10px;align-items:start}.rd-svg{width:100%;height:auto;display:block}.rd-p{fill:#3a4a60}.rd-c{fill:#38b6c9}.rd-v{fill:#dfe6f0;font:600 11px 'IBM Plex Mono',monospace}.rd-x{fill:#8f9db3;font:10.5px 'IBM Plex Mono',monospace}.rd-x.c{fill:#7dd8e6;font-weight:700}" +
+    ".rd-m{stroke:#e8a33d;stroke-dasharray:5 4;stroke-width:1.5}.rd-ml{fill:#e8a33d;font:600 10.5px 'IBM Plex Mono',monospace}.rd-t td,.rd-t th{text-align:right}.rd-t td:first-child,.rd-t th:first-child{text-align:left}.rd-t tr.rd-now td{background:rgba(56,182,201,.1);font-weight:600}" +
+    ".rsd .stamp{font-size:11.5px;color:var(--faint);line-height:1.45;margin-top:6px}.rd-r{margin:8px 0 0;font-size:13px;color:#dfe6f0;line-height:1.45}@media (max-width:760px){.rd-g{grid-template-columns:1fr 1fr}.rd-2{grid-template-columns:1fr}}" +
     ".cx-part.dim{opacity:.45}.cx-part.dim span{letter-spacing:0;text-transform:none;color:var(--faint)}" +
     "@media (max-width:640px){.rs-g{grid-template-columns:1fr 1fr}.rs-t .v{font-size:18px}.rs-sc{margin-left:0}.cx-vw{width:100%}.cx-vw button{flex:1}}" +
     ".cx-card{appearance:none;text-align:left;font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:11px 13px;display:flex;flex-direction:column;gap:3px;min-height:132px;transition:border-color .12s,transform .12s}" +
@@ -448,6 +455,51 @@
   }
   function ago(ms) { var h = ms / 36e5; return h < 1 ? Math.max(1, Math.round(ms / 6e4)) + " min ago" : h < 48 ? Math.round(h) + "h ago" : Math.round(h / 24) + " days ago"; }
   var TODAY = function () { return new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" }); };
+  /* ---- scorecard detail (owner, Nov 17 2026): click a figure → this quarter vs prior quarter (QoQ) and the same quarter a year
+     earlier (YoY), and the median of the last five quarters, with the five quarters drawn and tabled ---- */
+  var RSD = null;
+  var RSK = { rev: "rev", eps_d: "eps_d", ni: "ni", gm: "gm", opinc: "opinc", opm: "opm" };
+  function med(a) { var b = a.slice().sort(function (x, y) { return x - y; }), n = b.length; return n ? (n % 2 ? b[(n - 1) / 2] : (b[n / 2 - 1] + b[n / 2]) / 2) : null; }
+  function rsDetail(M, T, x, r, q, lab) {
+    if (!T) return "";
+    var k = T.k, pct = !!PCT[k], f = T.fmt, P = [];
+    if (k === "eps") {   /* adjusted EPS against consensus: the Street history */
+      ((SD(M) && SD(M).hist) || []).forEach(function (h) { if (h.actual != null) P.push({ lab: fl(M, h.q), v: h.actual, est: h.est }); });
+      if (r && r.epsActual != null && (!P.length || P[P.length - 1].v !== r.epsActual)) P.push({ lab: lab, v: r.epsActual, est: r.epsEstimated });
+    } else {
+      var sk = RSK[k]; if (!sk) return "";
+      M.quarters.forEach(function (z) { var m = z.m[sk]; if (m && m.v != null) P.push({ lab: z.fl.label, v: m.v, end: z.end }); });
+      var cur = T.v, newer = !!(x && x[k] != null && x[k] === cur && afterFiled(x.date, q.end));
+      if (newer) P.push({ lab: lab, v: cur, now: 1 }); else if (P.length && Math.abs(P[P.length - 1].v - cur) > Math.abs(cur) * 0.001 + 1e-9 && !(r && k === "rev")) P.push({ lab: lab, v: cur, now: 1 });
+    }
+    P = P.slice(-9); if (!P.length) return "";
+    var c = P[P.length - 1], pq = P.length > 1 ? P[P.length - 2] : null, ya = P.length > 4 ? P[P.length - 5] : null;
+    if (x && x.py && x.py[k] != null && c.now) ya = { lab: (ya && ya.lab) || "year ago", v: x.py[k] };   /* the release's own year-ago column, same basis as this quarter */
+    var last5 = P.slice(-5), md = med(last5.map(function (z) { return z.v; }));
+    function d(a, b) { if (a == null || b == null) return null; if (pct) { var dp = Math.round((a - b) * 10) / 10; return { t: (dp > 0 ? "+" : dp < 0 ? "−" : "") + Math.abs(dp).toFixed(1) + " pp", v: dp }; } if (!b) return null; var g = (a / b - 1) * 100 * (b < 0 ? -1 : 1); return { t: (g >= 0 ? "+" : "−") + Math.abs(g).toFixed(1) + "%", v: g }; }
+    function box(l, ref, dd) { var z = dd; return '<div class="rd-b"><span>' + l + "</span><b>" + (ref ? f(ref.v) : "—") + "</b>" + (ref && ref.lab ? "<small>" + esc(ref.lab) + "</small>" : "") + (z ? '<i class="' + (z.v >= 0 ? "pos" : "neg") + '">' + esc(c.lab) + " " + z.t + "</i>" : "") + "</div>"; }
+    var vs = [box("This quarter", c, null), box("vs prior quarter (QoQ)", pq, d(c.v, pq && pq.v)), box("vs year ago (YoY)", ya, d(c.v, ya && ya.v)), box("Median, last " + last5.length + " quarters", md == null ? null : { v: md, lab: last5.length + " quarters: " + last5[0].lab + "–" + c.lab }, d(c.v, md))].join("");
+    /* bars: five quarters, the median dashed, the current bar highlighted */
+    var vals = last5.map(function (z) { return z.v; }).concat(md != null ? [md] : []), lo = Math.min(0, Math.min.apply(null, vals)), hi = Math.max.apply(null, vals);
+    if (pct) { lo = Math.max(0, Math.min.apply(null, vals) - 5); hi = Math.max.apply(null, vals) + 3; } else hi *= 1.12;
+    var W = window.innerWidth < 700 ? 340 : 520, H = window.innerWidth < 700 ? 190 : 170, PL = 8, PR = 8, PT = 18, PB = 26, pw = W - PL - PR, ph = H - PT - PB, n = last5.length, bw = pw / n;
+    function Y(v) { return PT + ph * (1 - (v - lo) / ((hi - lo) || 1)); }
+    var g = last5.map(function (z, i) { var cx = PL + bw * (i + 0.5), w = Math.min(56, bw * 0.55), y = Y(Math.max(z.v, lo)), y0 = Y(Math.max(0, lo));
+      return '<rect x="' + (cx - w / 2).toFixed(1) + '" y="' + Math.min(y, y0).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + Math.abs(y0 - y).toFixed(1) + '" rx="3" class="' + (i === n - 1 ? "rd-c" : "rd-p") + '"/>' +
+        '<text x="' + cx.toFixed(1) + '" y="' + (Math.min(y, y0) - 5).toFixed(1) + '" text-anchor="middle" class="rd-v">' + f(z.v) + '</text><text x="' + cx.toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" class="rd-x' + (i === n - 1 ? " c" : "") + '">' + esc(z.lab) + "</text>"; }).join("");
+    if (md != null) g += '<line x1="' + PL + '" x2="' + (W - PR) + '" y1="' + Y(md).toFixed(1) + '" y2="' + Y(md).toFixed(1) + '" class="rd-m"/>';
+    var tb = '<div class="tbl-scroll"><table class="cx-t rd-t"><thead><tr><th>Quarter</th><th>' + esc(T.label) + "</th><th>QoQ</th><th>YoY</th>" + (k === "eps" ? "<th>Consensus</th><th>Surprise</th>" : "") + "</tr></thead><tbody>" +
+      P.map(function (z, i) { if (i < P.length - 5) return ""; var a = d(z.v, P[i - 1] && P[i - 1].v), b = i === P.length - 1 ? d(z.v, ya && ya.v) : d(z.v, P[i - 4] && P[i - 4].v), sur = z.est ? (z.v / z.est - 1) * 100 * (z.est < 0 ? -1 : 1) : null;
+        return "<tr" + (i === P.length - 1 ? ' class="rd-now"' : "") + "><td class=\"lbl\">" + esc(z.lab) + '</td><td data-l="' + esc(T.label) + '">' + f(z.v) + '</td><td data-l="QoQ" class="' + (a ? (a.v >= 0 ? "pos" : "neg") : "") + '">' + (a ? a.t : "—") + '</td><td data-l="YoY" class="' + (b ? (b.v >= 0 ? "pos" : "neg") : "") + '">' + (b ? b.t : "—") + "</td>" +
+          (k === "eps" ? '<td data-l="Consensus">' + (z.est != null ? f(z.est) : "—") + '</td><td data-l="Surprise" class="' + (sur == null ? "" : sur >= 0 ? "pos" : "neg") + '">' + (sur == null ? "—" : (sur >= 0 ? "+" : "−") + Math.abs(sur).toFixed(1) + "%") + "</td>" : "") + "</tr>"; }).join("") + "</tbody></table></div>";
+    var read = [];
+    var dq = d(c.v, pq && pq.v), dy = d(c.v, ya && ya.v), dm = d(c.v, md);
+    if (dm) read.push(esc(T.label) + " of " + f(c.v) + " is " + (Math.abs(dm.v) < (pct ? 0.1 : 0.5) ? "in line with" : dm.v > 0 ? "above" : "below") + " its five-quarter median of " + f(md) + (Math.abs(dm.v) < (pct ? 0.1 : 0.5) ? "." : " (" + dm.t + ")."));
+    if (dq && dy) read.push((dq.v >= 0) === (dy.v >= 0) ? (dq.v >= 0 ? "Higher" : "Lower") + " than both the prior quarter (" + dq.t + ") and a year ago (" + dy.t + ")." : "Mixed: " + dq.t + " on the prior quarter, " + dy.t + " on a year ago.");
+    return '<div class="rsd" role="region" aria-label="' + esc(T.label) + ' detail"><div class="rd-h"><b>' + esc(T.label) + '</b><span>QoQ · YoY · five-quarter median</span><button class="ue-btn" data-cocard="' + T.card + '">Open full card ›</button><button class="ue-btn" data-rsd="' + k + '" aria-label="Close">✕</button></div>' +
+      '<div class="rd-g">' + vs + "</div>" + '<div class="rd-2"><div><svg class="rd-svg" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(T.label) + ', last five quarters">' + g + "</svg>" + (md != null ? '<div class="legend"><span><span class="sw" style="background:#38b6c9"></span>This quarter</span><span><span class="sw" style="background:#3a4a60"></span>Earlier quarters</span><span><span class="sw" style="background:#e8a33d"></span>Median ' + f(md) + "</span></div>" : "") + "</div>" + tb + "</div>" +
+      (read.length ? '<p class="rd-r">' + read.join(" ") + "</p>" : "") + '<div class="stamp">' + (k === "eps" ? "Adjusted EPS and consensus from the Street history." : "Filed quarters from SEC 10-Q/10-K; the newest quarter from the company’s press release until its 10-Q/10-K is on EDGAR.") + (pct ? " Margin changes are in percentage points." : "") + " Median = middle value of the last five quarters shown.</div></div>";
+  }
   function results(M) {
     var co = M.co, q = L(M), r = calRow(M), x = prFor(M), meta = LPR[co.ticker] || {}, rel = E.latestRelease(co), n = nextQ(q), lab = "Q" + n.q + " FY" + String(n.fy).slice(2);
     if (!r && !x) return meta.loading && rel && afterFiled(rel.filed, q.end) ? '<div class="rs rs-ld"><i class="ux-spin"></i> Reading ' + esc(co.ticker) + "’s latest earnings release (8-K filed " + esc(rel.filed) + ")…</div>" : "";
@@ -466,7 +518,7 @@
         else if (prev > 0) { var g = (v / prev - 1) * 100; if (sur == null) { tone = g >= 0.5 ? 1 : g <= -0.5 ? -1 : 0; tag = (g >= 0 ? "▲ +" : "▼ ") + g.toFixed(1) + "% YoY"; } sub.push((sur == null ? "" : (g >= 0 ? "+" : "") + g.toFixed(1) + "% YoY · ") + "yr ago " + fmt(prev)); }
         else if (prev < 0 && sur == null) { tone = v > prev ? 1 : -1; tag = v > prev ? "▲ IMPROVED" : "▼ WORSE"; sub.push("yr ago " + fmt(prev)); }
       }
-      return { tone: tone, html: '<button class="rs-t ' + (tone > 0 ? "good" : tone < 0 ? "bad" : "neu") + '" data-cocard="' + cardId + '"><span class="l">' + label + "</span><span class=\"v\">" + fmt(v) + "</span>" +
+      return { k: k, tone: tone, v: v, label: label, fmt: fmt, card: cardId, html: '<button class="rs-t ' + (tone > 0 ? "good" : tone < 0 ? "bad" : "neu") + (RSD === k ? " on" : "") + '" data-rsd="' + k + '" aria-expanded="' + (RSD === k) + '"><span class="l">' + label + "</span><span class=\"v\">" + fmt(v) + "</span>" +
         (tag ? '<span class="tg">' + tag + "</span>" : "") + '<span class="s">' + esc(sub.join(" · ") || "no comparison published") + "</span></button>" };
     }
     function fk(k) { return function (v) { return fv(k, v); }; }
@@ -489,7 +541,7 @@
     return '<section class="rs' + (fresh ? " fresh" : "") + '" aria-label="Latest results"><div class="rs-h"><span class="rs-b">' + (fresh ? "NEW · LAST 24H" : "LATEST RESULTS") + "</span><b>" + esc(co.ticker) + " " + lab + (n.q === 4 ? " (fiscal Q4)" : "") + " results</b>" +
       '<span class="rs-w">' + esc(when) + (RT ? " · " + ago(Math.max(0, now - RT.t)) : "") + "</span>" +
       '<span class="rs-sc"><i class="g">' + up + " better</i><i class=\"r\">" + dn + " worse</i></span></div>" +
-      '<div class="rs-g">' + tiles.map(function (t) { return t.html; }).join("") + "</div>" +
+      '<div class="rs-g">' + tiles.map(function (t) { return t.html; }).join("") + "</div>" + rsDetail(M, tiles.filter(function (t) { return t.k === RSD; })[0], x, r, q, lab) +
       '<div class="rs-m"><div class="rs-mh">Management <small>quoted verbatim from the release</small></div>' + mg + "</div>" +
       '<div class="rs-n">' + (r ? "Consensus from the desk’s earnings calendar. " : "") + (x ? "Figures from the company press release (GAAP, unaudited)" + (ex ? ' · <a href="' + (window.safeUrl ? safeUrl(ex) : "#") + '" target="_blank" rel="noopener noreferrer">exhibit 99.1 ↗</a>' : "") + ". " : "") +
       "Green = better than consensus or a year ago, red = worse. The tiles below still show " + esc(q.fl.label) + " until the " + (n.q === 4 ? "10-K" : "10-Q") + " reaches EDGAR’s data feed; they update automatically then.</div></section>";
@@ -1181,7 +1233,8 @@
   }
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t) return;
-    var b = t.closest("[data-esk],[data-esv]"); if (b) { if (b.hasAttribute("data-esk")) EV.k = b.getAttribute("data-esk"); else EV.v = b.getAttribute("data-esv"); rerender(); return; }
+    var b = t.closest("[data-rsd]"); if (b) { var k0 = b.getAttribute("data-rsd"); RSD = RSD === k0 ? null : k0; rerender(); return; }
+    b = t.closest("[data-esk],[data-esv]"); if (b) { if (b.hasAttribute("data-esk")) EV.k = b.getAttribute("data-esk"); else EV.v = b.getAttribute("data-esv"); rerender(); return; }
     b = t.closest("[data-cotv]"); if (b) { TV = b.getAttribute("data-cotv"); try { localStorage.setItem("desk.coTiles", TV); } catch (e) {} rerender(); return; }
     b = t.closest("[data-mxtab]"); if (b && b.closest("#panel-earnings")) { MX = b.getAttribute("data-mxtab"); rerender(); return; }
     b = t.closest("[data-coretry]"); if (b) { delete MEM[b.getAttribute("data-coretry")]; rerender(); }
