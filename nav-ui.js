@@ -41,6 +41,7 @@
   tabs.parentNode.insertBefore(chips, tabs.nextSibling);
   function paintChips(p) {
     var X = root.GNAV_CHIPS && GNAV_CHIPS[p];
+    if (X && !X.list().length) { chips.innerHTML = ""; chips.hidden = true; return; }   /* a page with one view has no section chips */
     if (X) { var XL = X.list(), xh = XL.map(function (x) { return '<button type="button" class="gsub-b" data-gx="' + p + "|" + x[0] + '" aria-pressed="' + !!x[2] + '">' + x[1] + "</button>"; }).join("");
       if (chips.innerHTML !== xh) chips.innerHTML = xh; chips.hidden = false; return; }
     var P = doc.getElementById("panel-" + p), seen = {}, L = [];

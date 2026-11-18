@@ -10,8 +10,12 @@
   function esc(s) { return DeskCore.esc(s); }
   function getL(k) { try { var a = JSON.parse(localStorage.getItem(k) || "null"); return Array.isArray(a) ? a : null; } catch (e) { return null; } }
   function setL(k, a) { try { localStorage.setItem(k, JSON.stringify(a)); } catch (e) {} }
-  var MODES = [["overview", "Market Overview"], ["search", "Stock Search"], ["company", "Company Analysis"], ["calendar", "Earnings Calendar"]];
+  var MODES = [["overview", "Market"], ["company", "Company"]];
   var mode = "overview"; try { mode = localStorage.getItem(MK) || "overview"; } catch (e) {}
+  /* one US Market view (owner, Nov 17 2026): Market Overview, Stock Search, Company Analysis and Earnings Calendar tabs removed.
+     One search bar; with no company open the page shows the market (exchanges, sectors, indexes) with recent and saved
+     companies; picking a company opens it in the same page, and "✕ Market view" closes it. */
+  if (mode === "search" || mode === "calendar") mode = "overview";
   if (!MODES.some(function (m) { return m[0] === mode; })) mode = "overview";
   var Q = { q: "", hits: [], seq: 0, busy: false, err: "", i: -1, open: false, t: 0 }, NAMES = {};
 
@@ -115,15 +119,16 @@
     }
     if (tb.innerHTML !== th) tb.innerHTML = th; tb.hidden = !th;
     if (L) u.setAttribute("data-co", L); else u.removeAttribute("data-co");
-    var h = L ? 'Company: <b>' + esc(L) + "</b> " + esc(nameOf(L)) + ' <button class="ue-btn" data-uxmode="company">Open analysis</button> <button class="ux-star" data-uxsave="' + esc(L) + '" aria-pressed="' + (saved().indexOf(L) >= 0) + '">' + (saved().indexOf(L) >= 0 ? "★ Saved" : "☆ Save") + "</button>" +
+    var h = L ? 'Company: <b>' + esc(L) + "</b> " + esc(nameOf(L)) + (mode === "company" ? ' <button class="ue-btn" data-uxmode="overview" title="Close the company and show the market">✕ Market view</button>' : ' <button class="ue-btn" data-uxmode="company">Open analysis</button>') + ' <button class="ux-star" data-uxsave="' + esc(L) + '" aria-pressed="' + (saved().indexOf(L) >= 0) + '">' + (saved().indexOf(L) >= 0 ? "★ Saved" : "☆ Save") + "</button>" +
         (root.ELOCK ? ' <button class="ue-btn ux-elk" data-ellock="' + esc(L) + '" data-eln="' + esc(nameOf(L)) + '" aria-pressed="' + lockedE(L) + '">' + (lockedE(L) ? "🔔 Locked for earnings" : "🔕 Lock for earnings") + "</button>" : "")
-      : '<span class="ux-none">' + (mode === "company" ? "Search a company above to open its analysis." : "No company selected — market data is shown for the whole market.") + "</span>";
+      : '<span class="ux-none">Search a company to open its analysis. Below: the whole market.</span>';
     if (ctx.innerHTML !== h) ctx.innerHTML = h;
     var kc = doc.getElementById("usmK");
     if (mode === "calendar" && root.USMCAL) { if (!kc) { var w = doc.createElement("div"); w.innerHTML = USMCAL.html(); kc = w.firstChild; kc.classList.add("ux-page"); bar.after(kc); } }
     else if (kc) kc.remove();
     var sp = doc.getElementById("usmXs");
-    if (mode === "search") { if (!sp) { sp = doc.createElement("section"); sp.id = "usmXs"; sp.className = "usm-card ux-page"; bar.after(sp); } sp.innerHTML = '<h3>Stock search</h3><p class="ux-none" style="margin:0 0 10px">Type a ticker or company name above. Picking a company opens Company Analysis; index, sector and earnings data stay market-wide.</p>' + listsHTML(); }
+    if (mode === "overview") { if (!sp) { sp = doc.createElement("section"); sp.id = "usmXs"; sp.className = "usm-card ux-page ux-mini"; bar.after(sp); } var lh = listsHTML(); if (sp.innerHTML !== lh) sp.innerHTML = lh; }
+    else if (mode === "search") { if (!sp) { sp = doc.createElement("section"); sp.id = "usmXs"; sp.className = "usm-card ux-page"; bar.after(sp); } sp.innerHTML = '<h3>Stock search</h3><p class="ux-none" style="margin:0 0 10px">Type a ticker or company name above. Picking a company opens Company Analysis; index, sector and earnings data stay market-wide.</p>' + listsHTML(); }
     else if (sp) sp.remove();
   }
   function wire(bar) {
@@ -153,7 +158,7 @@
 
   /* chips for the top navigation's section row (nav-ui.js asks GNAV_CHIPS for the active page) */
   root.GNAV_CHIPS = root.GNAV_CHIPS || {};
-  root.GNAV_CHIPS.earnings = { list: function () { return MODES.map(function (m) { return [m[0], m[1], m[0] === mode]; }); }, go: function (id) { setMode(id); } };
+  root.GNAV_CHIPS.earnings = { list: function () { return []; }, go: function (id) { setMode(id); } };
 
   var css = doc.createElement("style");
   css.textContent =
@@ -169,6 +174,7 @@
     ".ux-msg{padding:10px;color:var(--muted);font-size:13px}.ux-err{color:var(--red)}.ux-spin{display:inline-block;width:12px;height:12px;border:2px solid var(--line2);border-top-color:var(--cyan);border-radius:50%;margin-right:8px;vertical-align:-2px;animation:uxs .8s linear infinite}@keyframes uxs{to{transform:rotate(360deg)}}" +
     ".ux-lists{display:grid;grid-template-columns:1fr 1fr;gap:12px}.ux-h{font:700 11px 'IBM Plex Sans',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:4px 8px 4px}.ux-h small{text-transform:none;letter-spacing:0;font-weight:500}.ux-none{color:var(--muted);font-size:12.5px;margin:4px 8px}" +
     ".ux-page{flex:1 1 100%;order:10;box-sizing:border-box}" +
+    "#usm[data-mode=overview] [data-usmcat=c6]{display:none!important}.ux-mini{padding:8px 12px}.ux-mini .ux-lists{margin:0}" +
     "#usmQ{display:none!important}#usm[data-mode=company] #usmWs,#usm[data-mode=company] #usmXt,#usm[data-mode=company] .el-bar,#usm[data-mode=company] #usmCrumb,#usm[data-mode=company] #usmSub,#usm[data-mode=company] #usmLock,#usm[data-mode=company] #panel-earnings .ut-bar,#usm[data-mode=company] .un-seg,#usm[data-mode=company] #usmXc [data-uxmode=company]{display:none!important}" +
     ".ux-tabs{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.ux-tabs[hidden]{display:none}.ux-tl{font:700 13px 'IBM Plex Mono',monospace;color:#fff;margin-right:4px;display:inline-flex;align-items:center;gap:6px}" +
     ".ux-tb{appearance:none;font:600 12.5px 'IBM Plex Sans',sans-serif;border-radius:999px;padding:5px 12px;border:1px solid var(--line2);background:transparent;color:var(--muted);cursor:pointer}" +

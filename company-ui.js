@@ -95,7 +95,7 @@
     ".rd-b span{font:600 10px 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}.rd-b b{font:600 19px 'IBM Plex Mono',monospace;color:#fff}.rd-b small{font:11px 'IBM Plex Mono',monospace;color:var(--muted)}.rd-b i{font:600 12px 'IBM Plex Mono',monospace;font-style:normal}" +
     ".rd-2{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;margin-top:10px;align-items:start}.rd-svg{width:100%;height:auto;display:block}.rd-p{fill:#3a4a60}.rd-c{fill:#38b6c9}.rd-v{fill:#dfe6f0;font:600 11px 'IBM Plex Mono',monospace}.rd-x{fill:#8f9db3;font:10.5px 'IBM Plex Mono',monospace}.rd-x.c{fill:#7dd8e6;font-weight:700}" +
     ".rd-m{stroke:#e8a33d;stroke-dasharray:5 4;stroke-width:1.5}.rd-ml{fill:#e8a33d;font:600 10.5px 'IBM Plex Mono',monospace}.rd-t td,.rd-t th{text-align:right}.rd-t td:first-child,.rd-t th:first-child{text-align:left}.rd-t tr.rd-now td{background:rgba(56,182,201,.1);font-weight:600}" +
-    ".rsd .stamp{font-size:11.5px;color:var(--faint);line-height:1.45;margin-top:6px}.rd-r{margin:8px 0 0;font-size:13px;color:#dfe6f0;line-height:1.45}@media (max-width:760px){.rd-g{grid-template-columns:1fr 1fr}.rd-2{grid-template-columns:1fr}}" +
+    ".cx-grid>.gd{grid-column:1/-1;margin-top:0}.cx-card.on{outline:2px solid #38b6c9;outline-offset:1px}.rsd .stamp{font-size:11.5px;color:var(--faint);line-height:1.45;margin-top:6px}.rd-r{margin:8px 0 0;font-size:13px;color:#dfe6f0;line-height:1.45}@media (max-width:760px){.rd-g{grid-template-columns:1fr 1fr}.rd-2{grid-template-columns:1fr}}" +
     ".cx-part.dim{opacity:.45}.cx-part.dim span{letter-spacing:0;text-transform:none;color:var(--faint)}" +
     "@media (max-width:640px){.rs-g{grid-template-columns:1fr 1fr}.rs-t .v{font-size:18px}.rs-sc{margin-left:0}.cx-vw{width:100%}.cx-vw button{flex:1}}" +
     ".cx-card{appearance:none;text-align:left;font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:11px 13px;display:flex;flex-direction:column;gap:3px;min-height:132px;transition:border-color .12s,transform .12s}" +
@@ -653,6 +653,43 @@
     var a = S(M, k).slice(-5), y = S(M, k + "_yoy").slice(-5); if (!a.some(function (z) { return z.v != null; })) return "";
     return '<table class="cx-mt"><tbody>' + a.map(function (z, i) { var yy = y[i] && y[i].v; return "<tr><td>" + esc(z.label) + "</td><td>" + fv(k, z.v) + "</td><td>" + (yy == null ? "" : sgc(tone(k, yy), fv(k + "_yoy", yy))) + "</td></tr>"; }).reverse().join("") + "</tbody></table>";
   }
+  /* ---- tile detail (owner, Nov 17 2026): every metric tile (receivables, inventory, margins, debt…) opens the same panel as the
+     results scorecard — latest quarter vs prior quarter (QoQ) and year ago (YoY), median of the last five quarters ---- */
+  var GD = null;
+  function gDiff(k, a, b) { if (a == null || b == null) return null; var d = a - b; d = Math.round(d * (XR[k] ? 100 : 10)) / (XR[k] ? 100 : 10);
+    if (PCT[k]) return { t: (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(1) + " pp", v: d };
+    if (DAYS[k]) return { t: (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(1) + " d", v: d };
+    if (XR[k]) return { t: (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(2) + "×", v: d };
+    if (!b) return null; var g = (a / b - 1) * 100 * (b < 0 ? -1 : 1); return { t: (g > 0 ? "+" : g < 0 ? "−" : "") + Math.abs(g).toFixed(1) + "%", v: g }; }
+  function gDetail(M, id, k, label) {
+    var P = S(M, k).filter(function (z) { return z.v != null; }); if (!P.length) return "";
+    var last5 = P.slice(-5), c = last5[last5.length - 1], pq = P.length > 1 ? P[P.length - 2] : null, ya = P.length > 4 ? P[P.length - 5] : null, md = med(last5.map(function (z) { return z.v; }));
+    var f = function (v) { return fv(k, v); }, tn = function (x) { return x == null ? "" : tone(k, x.v) > 0.05 ? "pos" : tone(k, x.v) < -0.05 ? "neg" : ""; };
+    function box(l, ref, dd) { return '<div class="rd-b"><span>' + l + "</span><b>" + (ref ? f(ref.v) : "—") + "</b>" + (ref && ref.label ? "<small>" + esc(ref.label) + "</small>" : "") + (dd ? '<i class="' + tn(dd) + '">' + esc(c.label) + " " + dd.t + "</i>" : "") + "</div>"; }
+    var dq = gDiff(k, c.v, pq && pq.v), dy = gDiff(k, c.v, ya && ya.v), dm = gDiff(k, c.v, md);
+    var vs = box("Latest quarter", c, null) + box("vs prior quarter (QoQ)", pq, dq) + box("vs year ago (YoY)", ya, dy) + box("Median, last " + last5.length + " quarters", md == null ? null : { v: md, label: last5[0].label + "–" + c.label }, dm);
+    var vals = last5.map(function (z) { return z.v; }).concat(md != null ? [md] : []), lo = Math.min(0, Math.min.apply(null, vals)), hi = Math.max(0, Math.max.apply(null, vals));
+    if (PCT[k] || DAYS[k] || XR[k]) { var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals), pad = (mx - mn) * 0.4 || Math.abs(mx) * 0.1 || 1; lo = Math.min(lo, mn - pad); if (mn > 0) lo = Math.max(0, mn - pad); hi = mx + pad * 0.6; } else hi *= 1.12;
+    var W = window.innerWidth < 700 ? 340 : 520, H = window.innerWidth < 700 ? 190 : 170, PL = 8, PR = 8, PT = 18, PB = 26, pw = W - PL - PR, ph = H - PT - PB, n = last5.length, bw = pw / n;
+    function Y(v) { return PT + ph * (1 - (v - lo) / ((hi - lo) || 1)); }
+    var y0 = Y(Math.max(lo, Math.min(0, hi))), g = last5.map(function (z, i) { var cx = PL + bw * (i + 0.5), w = Math.min(56, bw * 0.55), y = Y(z.v);
+      return '<rect x="' + (cx - w / 2).toFixed(1) + '" y="' + Math.min(y, y0).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + Math.max(1, Math.abs(y0 - y)).toFixed(1) + '" rx="3" class="' + (i === n - 1 ? "rd-c" : "rd-p") + '"/>' +
+        '<text x="' + cx.toFixed(1) + '" y="' + (Math.min(y, y0) - 5).toFixed(1) + '" text-anchor="middle" class="rd-v">' + f(z.v) + '</text><text x="' + cx.toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" class="rd-x' + (i === n - 1 ? " c" : "") + '">' + esc(z.label) + "</text>"; }).join("");
+    if (md != null) g += '<line x1="' + PL + '" x2="' + (W - PR) + '" y1="' + Y(md).toFixed(1) + '" y2="' + Y(md).toFixed(1) + '" class="rd-m"/>';
+    var idx = P.length - last5.length;
+    var tb = '<div class="tbl-scroll"><table class="cx-t rd-t"><thead><tr><th>Quarter</th><th>' + esc(label) + "</th><th>QoQ</th><th>YoY</th></tr></thead><tbody>" + last5.map(function (z, i) {
+      var a = gDiff(k, z.v, P[idx + i - 1] && P[idx + i - 1].v), b = gDiff(k, z.v, P[idx + i - 4] && P[idx + i - 4].v);
+      return "<tr" + (i === n - 1 ? ' class="rd-now"' : "") + '><td class="lbl">' + esc(z.label) + '</td><td data-l="' + esc(label) + '">' + f(z.v) + '</td><td data-l="QoQ" class="' + tn(a) + '">' + (a ? a.t : "—") + '</td><td data-l="YoY" class="' + tn(b) + '">' + (b ? b.t : "—") + "</td></tr>"; }).join("") + "</tbody></table></div>";
+    var read = [];
+    if (dm) read.push(esc(label) + " of " + f(c.v) + " is " + (Math.abs(dm.v) < 0.05 ? "in line with" : dm.v > 0 ? "above" : "below") + " its " + last5.length + "-quarter median of " + f(md) + (Math.abs(dm.v) < 0.05 ? "." : " (" + dm.t + ")."));
+    if (dq && dy && dq.v && dy.v) read.push((dq.v > 0) === (dy.v > 0) ? (dq.v > 0 ? "Higher" : "Lower") + " than both the prior quarter (" + dq.t + ") and a year ago (" + dy.t + ")." : "Mixed: " + dq.t + " on the prior quarter, " + dy.t + " on a year ago.");
+    else if (dq && dy) read.push((dq.v ? dq.t + " on the prior quarter" : "Unchanged on the prior quarter") + ", " + (dy.v ? dy.t + " on a year ago." : "unchanged on a year ago."));
+    if (dy && Math.abs(tone(k, dy.v)) > 0.05) read.push("Year on year this is " + (tone(k, dy.v) > 0 ? "an improvement" : "a deterioration") + (DAYS[k] || /debt|ap$|cogs|capex/.test(k) ? " (for this line, lower is better)." : "."));
+    return '<div class="rsd gd" role="region" aria-label="' + esc(label) + ' detail"><div class="rd-h"><b>' + esc(label) + '</b><span>QoQ · YoY · ' + last5.length + '-quarter median</span><button class="ue-btn" data-cocard="' + id + '">Open full card ›</button><button class="ue-btn" data-cogd="' + id + '" aria-label="Close">✕</button></div>' +
+      '<div class="rd-g">' + vs + '</div><div class="rd-2"><div><svg class="rd-svg" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(label) + ', last quarters">' + g + "</svg>" +
+      (md != null ? '<div class="legend"><span><span class="sw" style="background:#38b6c9"></span>Latest quarter</span><span><span class="sw" style="background:#3a4a60"></span>Earlier quarters</span><span><span class="sw" style="background:#e8a33d"></span>Median ' + f(md) + "</span></div>" : "") + "</div>" + tb + "</div>" +
+      (read.length ? '<p class="rd-r">' + read.join(" ") + "</p>" : "") + '<div class="stamp">From SEC 10-Q/10-K filings, calculated the same way as the full card. Green = better, red = worse for this line. Median = middle value of the quarters shown.</div></div>';
+  }
   function grid(M, VV) {
     var q = L(M), co = M.co;
     function tv(id, l) { return '<button data-cotv="' + id + '" aria-pressed="' + (TV === id) + '">' + l + "</button>"; }
@@ -678,7 +715,8 @@
         if (c[0] === "verdicts") kv = '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">' + VV.verdicts.map(function (v) { return '<span class="cx-vd ' + v.verdict + '" title="' + esc(v.name) + '">' + v.name.split(" ").map(function (w) { return w[0]; }).join("") + " " + v.verdict + "</span>"; }).join("") + "</div>";
         if (c[0] === "health") { var st = E.streak(VV.history, "eq"); kv = '<div class="n" style="margin-top:6px">' + VV.history.map(function (h) { return '<span class="cx-vd ' + h.eq + '" style="padding:1px 4px;font-size:9px">' + h.eq[0] + "</span>"; }).join(" ") + "</div>" + (st.n ? '<div class="n">' + st.n + " quarter" + (st.n > 1 ? "s" : "") + " " + (st.dir > 0 ? "improving" : "deteriorating") + "</div>" : ""); }
         var nd = b && has(M.co.ticker, c[0]) === false, cls = nd ? " nodata" : tn == null || Math.abs(tn) < 0.05 ? "" : tn > 0 ? " good" : " bad";
-        return '<button class="cx-card' + cls + '" data-cocard="' + c[0] + '"' + (b && !nd ? "" : " disabled") + (nd ? ' title="Not reported by this company"' : "") + '><span class="t">' + esc(c[1]) + "</span>" + kv + (sp ? "<div>" + sp + "</div>" : "") + tb + '<span class="q">' + esc(c[2] || "") + (b ? (nd ? " · not reported" : "") : " · next phase") + "</span></button>"; }).join("") + "</div>"; }).join("") +
+        var gk = b && !nd && k && S(M, k).filter(function (z) { return z.v != null; }).length ? k : null;
+        return (GD && GD.id === c[0] ? "" : "") + '<button class="cx-card' + cls + (GD && GD.id === c[0] ? " on" : "") + '" ' + (gk ? 'data-cogd="' + c[0] + '" data-cok="' + gk + '" data-col="' + esc(c[1]) + '" aria-expanded="' + !!(GD && GD.id === c[0]) + '"' : 'data-cocard="' + c[0] + '"') + (b && !nd ? "" : " disabled") + (nd ? ' title="Not reported by this company"' : "") + '><span class="t">' + esc(c[1]) + "</span>" + kv + (sp ? "<div>" + sp + "</div>" : "") + tb + '<span class="q">' + esc(c[2] || "") + (b ? (nd ? " · not reported" : "") : " · next phase") + "</span></button>" + (GD && GD.id === c[0] ? gDetail(M, c[0], GD.k, c[1]) : ""); }).join("") + "</div>"; }).join("") +
       '<div class="stamp">Cards draw on SEC EDGAR filings fetched live — nothing is stored. Tile shading: green = better than a year ago, red = worse (for costs, debt and days, lower is better). Dimmed tiles have no figures for this company.</div></div>';
   }
   function shell(M, id, body) {
@@ -1233,7 +1271,8 @@
   }
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t) return;
-    var b = t.closest("[data-rsd]"); if (b) { var k0 = b.getAttribute("data-rsd"); RSD = RSD === k0 ? null : k0; rerender(); return; }
+    var b = t.closest("[data-cogd]"); if (b && b.closest("#panel-earnings")) { var id0 = b.getAttribute("data-cogd"); GD = GD && GD.id === id0 ? null : { id: id0, k: b.getAttribute("data-cok") || (GD && GD.k) }; if (GD && !GD.k) GD = null; rerender(); return; }
+    b = t.closest("[data-rsd]"); if (b) { var k0 = b.getAttribute("data-rsd"); RSD = RSD === k0 ? null : k0; rerender(); return; }
     b = t.closest("[data-esk],[data-esv]"); if (b) { if (b.hasAttribute("data-esk")) EV.k = b.getAttribute("data-esk"); else EV.v = b.getAttribute("data-esv"); rerender(); return; }
     b = t.closest("[data-cotv]"); if (b) { TV = b.getAttribute("data-cotv"); try { localStorage.setItem("desk.coTiles", TV); } catch (e) {} rerender(); return; }
     b = t.closest("[data-mxtab]"); if (b && b.closest("#panel-earnings")) { MX = b.getAttribute("data-mxtab"); rerender(); return; }
