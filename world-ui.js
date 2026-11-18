@@ -609,9 +609,10 @@
     if (V.sub !== "alerts") V.sub = "markets";   /* Overview, Sessions, Data health and Guide were retired (Nov 14) */
     var B = document.getElementById("wBody");
     if (!W) { B.innerHTML = err ? '<div class="tile wide"><div class="unreach">\u26a0 Sorry, we can\u2019t be reached now <small>\u2014 global market data did not load; retrying every minute</small></div></div>' : '<div class="tile wide"><p class="note">Loading global market data…</p></div>'; return; }
-    B.innerHTML = V.sub === "alerts" ? alertsHTML() : marketsHTML();
+    B.innerHTML = V.sub === "alerts" ? alertsHTML() : ((V.grp === "all" || V.grp === "desk" || /ind|equit/i.test(V.grp || "")) && window.WXMAP ? '<div class="wx-host">' + WXMAP() + "</div>" : "") + marketsHTML();
     kbDecorateW(B);
     if (window.MOTION) window.MOTION.scan();
+    if (!window.WXMAP && !render._wx) { render._wx = 1; var _n = 0, _t = setInterval(function () { if (window.WXMAP || ++_n > 20) { clearInterval(_t); if (window.WXMAP) render(); } }, 1000); }
   }
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest ? ev.target : null; if (!t || !t.closest("#panel-world")) return;

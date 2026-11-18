@@ -72,7 +72,7 @@
       return '<section class="usm-card">' + (e || late ? '<p class="usm-degr" role="alert"><b>Market snapshot not loaded</b> — the index feed did not answer' + (e ? " (network or GitHub)" : " within 10 s") + '; retrying every 15 s. <button class="usm-mini" data-usmworld>Retry now</button></p>' : '<p class="note">Loading the market read…</p>') + "</section>"; }
     var A = w.instruments || [], g = function (name, f) { return A.filter(function (i) { return i.group === name && (!f || f(i)); }); };
     var fut = function (i) { return /=F$/.test(i.sym || ""); };
-    return glance() + worldMap() + sectorHeat(PV.c3) + '<div class="usm-2">' +
+    return glance() + sectorHeat(PV.c3) + '<div class="usm-2">' +
       table("Volatility & US yields", g("Rates & Vol", function (i) { return i.sym === "^VIX" || /^US Treasury/.test(i.sym || ""); }), "Cash") +
       table("Currencies", g("FX", function (i) { return ["DX-Y.NYB", "CAD=X", "EURUSD=X", "JPY=X"].indexOf(i.sym) >= 0; }), "Spot") +
       table("Energy & metals", g("Energy", fut).concat(g("Metals", fut)), "Futures") +
@@ -113,6 +113,7 @@
       '<div class="sx-g">' + L.map(function (r) { var v = r[o], a = 0.18 + 0.72 * Math.min(1, Math.abs(v) / mx);
         return '<div class="sx-t" data-usmx="' + esc(r.sym) + '" role="button" tabindex="0" style="background:' + (v >= 0 ? "rgba(46,160,95," : "rgba(214,54,48,") + a.toFixed(2) + ')"><b>' + esc(r.name) + "</b><span>" + sg(v, 2, "%") + "</span><small>" + esc(r.sym) + "</small></div>"; }).join("") + "</div>" + asOf(L[0]) + "</section>";
   }
+  window.WXMAP = worldMap;   /* the world-exchanges map lives on World Markets (owner, Nov 17 2026) */
   function holding(c) {
     if (c[3] === "na") return '<section class="usm-card usm-hold"><span class="usm-b na">Unavailable</span><h3>' + esc(c[2]) + "</h3><p>No verified data source is connected for this view yet, so no figures are shown.</p></section>";
     return '<section class="usm-card usm-hold"><span class="usm-b cl">Planned · Phase ' + c[4] + "</span><h3>" + esc(c[2]) + "</h3><p>This view is built in Phase " + c[4] + ". Nothing is shown until its data is verified.</p></section>";
@@ -486,7 +487,7 @@
     '.usm-lock{border-color:#3d5a80}.usm-lock.fresh{background:rgba(63,185,127,.08);border-color:var(--green)}.usm-lh{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:9px}.usm-lh b{font:600 18px "IBM Plex Mono",monospace;color:var(--ink)}.usm-lh>span:nth-child(2){color:var(--muted);font-size:13px;margin-right:auto}.usm-lg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.usm-lg small{display:block;color:var(--faint);font-size:11.5px}.usm-lg b{display:block;font:600 18px "IBM Plex Mono",monospace;color:var(--ink)}.usm-lg em{font-style:normal;font-size:11.5px;color:var(--muted)}.usm-lock .usm-q{margin-top:8px}.usm-skg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:8px}.usm-skg i{display:block;height:44px;border-radius:5px;background:linear-gradient(90deg,var(--panel2),var(--line2),var(--panel2));background-size:200% 100%;animation:usmSk 1.3s linear infinite}@keyframes usmSk{to{background-position:-200% 0}}' +
     '@media (max-width:760px){.usm-lg,.usm-skg{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (prefers-reduced-motion:reduce){.usm-skg i{animation:none}}' +
     '@media (prefers-reduced-motion:reduce){.usm-g{overflow-x:auto}.usm-g>div{animation:none;padding-left:8px}}' +
-    '.wx-svg{width:100%;height:auto;display:block}.wx-land circle{fill:#2b3546}.wx-p{cursor:pointer}.wx-p .dot{stroke:#05070b;stroke-width:1.5}.wx-p.up .dot{fill:#2ea05f}.wx-p.dn .dot{fill:#d63630}' +
+    '.wx-host{margin:0 0 14px}.wx-svg{width:100%;height:auto;max-height:440px;display:block;margin:0 auto}.wx-p{cursor:default}.wx-land circle{fill:#2b3546}.wx-p{cursor:pointer}.wx-p .dot{stroke:#05070b;stroke-width:1.5}.wx-p.up .dot{fill:#2ea05f}.wx-p.dn .dot{fill:#d63630}' +
     '.wx-p .ring{fill:none;stroke:#7dd8e6;stroke-width:2;animation:wxR 2s ease-in-out infinite}@keyframes wxR{50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.wx-p .ring{animation:none}}' +
     '.wx-p text{font:600 12px "IBM Plex Mono",monospace;paint-order:stroke;stroke:#05070b;stroke-width:4px}.wx-p .nm{fill:#dfe6f0}.wx-p.up .pc{fill:#4fd18b}.wx-p.dn .pc{fill:#ff7b72}.wx-t{font:12px "IBM Plex Mono",monospace;color:var(--muted)}' +
     '.wx-strip{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font:12px "IBM Plex Mono",monospace}.wx-s b{color:#fff;font-weight:600}.wx-s.op{color:#7dd8e6}.wx-s.pr{color:#e8a33d}.wx-s.cl{color:var(--muted)}.wx-s i{font-style:normal;margin-left:2px}.wx-s i.up{color:#4fd18b}.wx-s i.dn{color:#ff7b72}' +
