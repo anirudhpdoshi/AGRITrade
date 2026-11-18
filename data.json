@@ -42,7 +42,10 @@
      "ma50": "4.85",
      "ma100": "4.84",
      "intraday_src": "ZCZ26.CBT",
-     "front": "ZCZ26"
+     "front": "ZCZ26",
+     "ema20": 4.5283,
+     "ema50": 4.7091,
+     "ema100": 4.7959
     },
     "history": [
      {
@@ -4187,7 +4190,7 @@
      {
       "contract": "ZCH27",
       "expiry": "Mar-27",
-      "settle": 4.595,
+      "settle": 4.5925,
       "oi_oct19": 425970,
       "oi_pct": 34.1,
       "prev": 4.59,
@@ -4196,7 +4199,7 @@
      {
       "contract": "ZCK27",
       "expiry": "May-27",
-      "settle": 4.68,
+      "settle": 4.675,
       "oi_oct19": null,
       "oi_pct": 0.0,
       "prev": 4.665,
@@ -5240,13 +5243,13 @@
      },
      {
       "contract": "ZCH27",
-      "settle": 4.595,
+      "settle": 4.5925,
       "prev": 4.59,
       "settle_date": "2026-11-17"
      },
      {
       "contract": "ZCK27",
-      "settle": 4.68,
+      "settle": 4.675,
       "prev": 4.665,
       "settle_date": "2026-11-17"
      },
@@ -5258,13 +5261,13 @@
      },
      {
       "contract": "ZCU27",
-      "settle": 4.685,
+      "settle": 4.6825,
       "prev": 4.665,
       "settle_date": "2026-11-17"
      },
      {
       "contract": "ZCZ27",
-      "settle": 4.8275,
+      "settle": 4.825,
       "prev": 4.805,
       "settle_date": "2026-11-17"
      },
@@ -5276,25 +5279,25 @@
      },
      {
       "contract": "ZCK28",
-      "settle": 5.035,
+      "settle": 5.0375,
       "prev": 5.0175,
       "settle_date": "2026-11-17"
      },
      {
       "contract": "ZCN28",
-      "settle": 5.08,
+      "settle": 5.07,
       "prev": 5.05,
       "settle_date": "2026-11-17"
      },
      {
       "contract": "ZCU28",
-      "settle": 4.875,
+      "settle": 4.865,
       "prev": 4.85,
       "settle_date": "2026-11-17"
      },
      {
       "contract": "ZCZ28",
-      "settle": 4.92,
+      "settle": 4.91,
       "prev": 4.895,
       "settle_date": "2026-11-17"
      }
@@ -6926,7 +6929,10 @@
      "ma50": "12.79",
      "ma100": "12.55",
      "intraday_src": "ZSF27.CBT",
-     "front": "ZSF27"
+     "front": "ZSF27",
+     "ema20": 12.3265,
+     "ema50": 12.5265,
+     "ema100": 12.4661
     },
     "history": [
      {
@@ -10246,7 +10252,7 @@
      {
       "contract": "ZSK27",
       "expiry": "May-27",
-      "settle": 12.3825,
+      "settle": 12.3875,
       "prev": 12.39,
       "oi_pct": 0.0,
       "settle_date": "2026-11-17"
@@ -11295,37 +11301,37 @@
      },
      {
       "contract": "ZSK27",
-      "settle": 12.3825,
+      "settle": 12.3875,
       "prev": 12.39,
       "settle_date": "2026-11-17"
      },
      {
       "contract": "ZSN27",
-      "settle": 12.435,
+      "settle": 12.4425,
       "prev": 12.44,
       "settle_date": "2026-11-17"
      },
      {
       "contract": "ZSQ27",
-      "settle": 12.2775,
+      "settle": 12.285,
       "prev": 12.2725,
       "settle_date": "2026-11-17"
      },
      {
       "contract": "ZSU27",
-      "settle": 11.9375,
+      "settle": 11.9475,
       "prev": 11.9175,
       "settle_date": "2026-11-17"
      },
      {
       "contract": "ZSX27",
-      "settle": 11.865,
+      "settle": 11.875,
       "prev": 11.835,
       "settle_date": "2026-11-17"
      },
      {
       "contract": "ZSF28",
-      "settle": 11.975,
+      "settle": 11.98,
       "prev": 11.9375,
       "settle_date": "2026-11-17"
      },
@@ -11343,15 +11349,15 @@
      },
      {
       "contract": "ZSN28",
-      "settle": 12.075,
+      "settle": 12.0525,
       "prev": 12.005,
       "settle_date": "2026-11-17"
      },
      {
       "contract": "ZSQ28",
-      "settle": 11.895,
-      "prev": 11.9225,
-      "settle_date": "2026-11-16"
+      "settle": 11.9425,
+      "prev": 11.895,
+      "settle_date": "2026-11-17"
      }
     ],
     "spreads": {
@@ -12981,7 +12987,10 @@
      "ma50": "6.59",
      "ma100": "6.72",
      "intraday_src": "ZWZ26.CBT",
-     "front": "ZWZ26"
+     "front": "ZWZ26",
+     "ema20": 6.0812,
+     "ema50": 6.4055,
+     "ema100": 6.5601
     },
     "history": [
      {
@@ -26725,7 +26734,7 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-11-18T14:30:27-05:00",
+   "updated_at": "2026-11-18T14:38:33-05:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
     "fx_spot": "2026-11-18T14:29:00-05:00",
@@ -26772,45 +26781,10 @@
    },
    "last_run": {
     "ok": [
-     "seasonality_track",
-     "expired_track",
-     "policy_watch",
-     "fx_spot",
-     "fx_alpha",
-     "fx_closes",
-     "yields",
-     "spread_monitor",
-     "us_states",
-     "cftc_fx",
-     "cftc_grains",
-     "grains_quote",
-     "yields_live",
-     "energy",
-     "crosses",
-     "news",
-     "calendar",
-     "fed_odds",
-     "releases",
-     "macro",
-     "cpi_detail",
-     "grain_long",
-     "release_hist",
-     "macro_parts",
-     "settles",
-     "spreads",
-     "exports",
-     "wasde",
-     "ca_calendar",
-     "sd_hist",
-     "inputs",
-     "ext",
-     "fx_model",
-     "optflow",
-     "ust",
-     "ust_dashboard"
+     "settles"
     ],
     "failed": [],
-    "at": "2026-11-18T14:30:27-05:00"
+    "at": "2026-11-18T14:38:33-05:00"
    },
    "releases_checked": "2026-11-18T12:00:27-05:00",
    "exports_checked": "2026-11-18T09:00:23-05:00",
