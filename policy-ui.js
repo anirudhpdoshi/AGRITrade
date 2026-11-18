@@ -33,12 +33,36 @@
     try { return zonedMs(+p[0], +p[1], +p[2], +h[0], +h[1], tz); } catch (e) { return null; } }
 
   /* ---------- top strip: one card per bank ---------- */
+  /* NEW markers (owner, Nov 18 2026): anything published in the last 24 h that you have not opened yet */
+  var SEEN = {}; try { SEEN = JSON.parse(localStorage.getItem("desk.pi.seen") || "{}"); } catch (e) {}
+  function isNew(d) { return !!(d && d.published_at && Date.now() - Date.parse(d.published_at) < 864e5 && !SEEN[d.id]); }
+  function seen(id) { SEEN[id] = Date.now(); try { localStorage.setItem("desk.pi.seen", JSON.stringify(SEEN)); } catch (e) {} }
+  function newOf(b) { return docs().filter(function (d) { return (!b || d.bank === b) && isNew(d); }); }
+  var DOT = '<i class="pi-dot" aria-label="new"></i>';
+  function who(d) { if (d.speaker && !/^unattributed$/i.test(d.speaker)) return d.speaker; var m = /^([A-Z][A-Za-z'’-]+),\s/.exec(d.title || ""); return m ? m[1] : d.speaker || ""; }
+  function freshHTML() {   /* the latest committee documents, up top, in a few lines */
+    var F = docs().filter(function (d) { return Date.now() - Date.parse(d.published_at || 0) < 864e5 && (d.type === "minutes" || d.type === "statement") && (V.bank === "all" || d.bank === V.bank); })
+      .sort(function (a, b) { return (b.published_at || "") < (a.published_at || "") ? -1 : 1; }).slice(0, 2);
+    if (!F.length) return "";
+    return F.map(function (d) {
+      var pick = (d.summary || []).filter(function (x) { return /Decision|Outlook|Differing|Inflation/.test(x.topic); }).slice(0, 3);
+      var g = d.guidance || {};
+      return '<div class="tile wide pi-fresh' + (isNew(d) ? " is-new" : "") + '"><div class="pf-top">' + (isNew(d) ? DOT + '<span class="pf-new">NEW</span>' : '<span class="pf-new seen">LAST 24H</span>') +
+        '<span class="pf-k">' + fl(J.banks[d.bank].cc) + " " + esc(bname(d.bank)) + " · " + esc(TYPE[d.type] || d.type) + '</span><span class="pf-t">' + esc(new Date(d.published_at).toLocaleString("en-US", { timeZone: TZ, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET</span>" +
+        '<span class="pi-badge ' + lcls(d.label) + '">' + sgn(d.score) + "</span></div>" +
+        '<div class="pf-h">' + esc(d.title) + "</div>" +
+        (g.next_action ? '<div class="pf-g ' + (g.direction === "tighten" ? "hawk" : g.direction === "ease" ? "dove" : "neu") + '"><b>Guidance:</b> ' + esc(g.next_action) + "</div>" : "") +
+        (pick.length ? '<ul class="pf-l">' + pick.map(function (x) { return "<li><b>" + esc(x.topic) + ".</b> " + esc(String(x.text).slice(0, 220)) + (String(x.text).length > 220 ? "…" : "") + "</li>"; }).join("") + "</ul>" : "") +
+        '<div class="pf-a"><button data-pidoc="' + d.id + '">Read the full summary ›</button><a href="' + esc(d.url) + '" target="_blank" rel="noopener noreferrer">Official document ↗</a></div></div>';
+    }).join("");
+  }
   function strip() {
     var now = Date.now();
     return '<div class="pi-strip">' + Object.keys(J.banks).map(function (b) {
       var s = J.stance[b] || {}, st = s.statement, nx = (J.calendar || []).filter(function (c) { return c.bank === b && c.kind === "decision" && (calTime(c) || Date.parse(c.date + "T23:59:00Z")) > now; })[0];
       var chgS = st && s.speeches_mean != null ? s.speeches_mean - st.score : null;
-      return '<button class="pi-card ' + (V.bank === b ? "on" : "") + '" data-pib="' + b + '"><div class="pi-ch">' + fl(J.banks[b].cc) + " " + esc(bname(b)) + "</div>" +
+      var nn = newOf(b).length;
+      return '<button class="pi-card ' + (V.bank === b ? "on" : "") + (nn ? " has-new" : "") + '" data-pib="' + b + '"><div class="pi-ch">' + fl(J.banks[b].cc) + " " + esc(bname(b)) + (nn ? ' <span class="pi-nb">' + DOT + nn + " new</span>" : "") + "</div>" +
         (st ? '<div class="pi-sc ' + lcls(st.label) + '">' + sgn(st.score) + ' <small>' + esc(st.label.toLowerCase()) + "</small></div><div class=\"pi-sub\">last statement " + day(st.published_at) + "</div>" : '<div class="pi-sc neu">—</div><div class="pi-sub">no statement read yet</div>') +
         '<div class="pi-sub">' + (s.speeches_since ? s.speeches_since + " remark" + (s.speeches_since > 1 ? "s" : "") + " since: " + chg(chgS) : "no remarks since") + "</div>" +
         '<div class="pi-sub">next decision <b>' + (nx ? esc(day(nx.date + "T12:00:00Z")) : '<span title="The stored calendar has no later decision for this bank yet">not yet scheduled in the desk calendar</span>') + "</b></div></button>"; }).join("") + "</div>";
@@ -65,13 +89,13 @@
       var head = '<div class="pm-h"><div class="pm-b">' + fl(J.banks[b].cc) + " <b>" + esc(bname(b)) + "</b></div>" +
         (st ? '<div class="pm-s"><span class="pi-badge ' + lcls(st.label) + '">' + sgn(st.score) + '</span> <span class="pm-l ' + lcls(st.label) + '">' + esc((st.label || "").toLowerCase()) + "</span>" +
           '<span class="pm-g">' + esc(st.guidance.next_action) + "</span><span class=\"pm-d\">statement " + esc(day(st.published_at)) + "</span></div>" : '<div class="pm-s"><span class="neu">no committee statement read yet</span></div>') + "</div>";
-      var rows = D.slice(0, 8).map(function (d) {
+      var rows = D.slice(0, 5).map(function (d) {
         var sb = d.baseline.speaker || (d.type !== "statement" ? d.baseline.institution : null);
-        return '<li class="pm-r" data-pidoc="' + d.id + '" title="Open the evidence"><span class="pm-dt">' + esc(day(d.published_at)) + '</span><span class="pm-ty">' + esc(TYPE[d.type] || d.type) + "</span>" +
-          '<span class="pm-ti"><b>' + esc(d.speaker) + "</b> — " + esc(d.title) + (d.dissent && d.dissent.length ? ' <span class="evc" style="--ec:#e8b93d">DISSENT</span>' : "") + "</span>" +
+        return '<li class="pm-r' + (isNew(d) ? " is-new" : "") + '" data-pidoc="' + d.id + '" title="Open the evidence"><span class="pm-dt">' + (isNew(d) ? DOT : "") + esc(day(d.published_at)) + '</span><span class="pm-ty">' + esc(TYPE[d.type] || d.type) + "</span>" +
+          '<span class="pm-ti"><span class="pm-tt"><b>' + esc(who(d)) + "</b> — " + esc(d.title) + "</span>" + (d.dissent && d.dissent.length ? '<span class="evc" style="--ec:#e8b93d">DISSENT</span>' : "") + "</span>" +
           '<span class="pm-sc"><span class="pi-badge ' + lcls(d.label) + '">' + sgn(d.score) + "</span></span>" +
           '<span class="pm-vs">' + (sb && sb.change != null ? '<span class="' + (sb.change >= 1 ? "hawk" : sb.change <= -1 ? "dove" : "neu") + '" title="' + (sb.change >= 1 ? "more hawkish" : sb.change <= -1 ? "more dovish" : "little change") + ' than ' + (d.baseline.speaker ? "this speaker\u2019s own baseline" : "the bank\u2019s statement") + '">' + sgn(sb.change) + "</span>" + ' <small>vs ' + (d.baseline.speaker ? "own" : "bank") + "</small>" : '<small class="neu">first read</small>') + "</span></li>"; }).join("");
-      return '<div class="pm-card">' + head + guidanceHTML(b, D, st) + (rows ? '<ul class="pm-list">' + rows + "</ul>" : '<p class="note">No documents yet.</p>') + (D.length > 8 ? '<div class="pm-more">+' + (D.length - 8) + " older — open Transcript intelligence</div>" : "") + "</div>";
+      return '<div class="pm-card">' + head + guidanceHTML(b, D, st) + (rows ? '<ul class="pm-list">' + rows + "</ul>" : '<p class="note">No documents yet.</p>') + (D.length > 5 ? '<div class="pm-more">+' + (D.length - 5) + " older — open Transcript intelligence</div>" : "") + "</div>";
     }).join("");
     return '<div class="tile wide"><h2>Stance monitor <span class="h2note">— per bank: the committee\u2019s latest statement, then every statement, minute and speech since · score −10 dovish … +10 hawkish · click a line for the evidence</span></h2>' +
       '<div class="pm-grid">' + panels + "</div></div>";
@@ -88,7 +112,7 @@
     var rows = since.map(function (d) {
       var g = d.guidance || {}, dir = DIR[g.direction], ch = d.baseline && d.baseline.institution && d.score != null ? d.score - d.baseline.institution.score : null;
       if (dir) votes[dir[0]]++; if (ch != null && d.policy_relevant !== false) toneD.push(ch);   /* off-topic talks do not move the tone read */
-      return '<li class="pg-r"><span class="pg-t">' + esc(tm(d.published_at)) + '</span><span class="pg-w"><b>' + esc(d.speaker || "") + "</b> · " + esc(TYPE[d.type] || d.type) + "</span>" +
+      return '<li class="pg-r"><span class="pg-t">' + esc(tm(d.published_at)) + '</span><span class="pg-w"><b>' + esc(who(d)) + "</b> · " + esc(TYPE[d.type] || d.type) + "</span>" +
         '<span class="pg-s"><span class="pi-badge ' + lcls(d.label) + '">' + sgn(d.score) + "</span>" + (ch != null ? ' <small class="' + (ch >= 1 ? "hawk" : ch <= -1 ? "dove" : "neu") + '">' + (ch >= 0 ? "+" : "−") + Math.abs(ch).toFixed(1) + " vs meeting</small>" : "") + "</span>" +
         (dir ? '<span class="pg-g ' + dir[1] + '">' + dir[0] + (g.conditional ? " (conditional)" : "") + "</span>" : '<span class="pg-g neu">' + (d.policy_relevant === false ? "not about policy" : "no explicit guidance") + "</span>") +
         (g.quote ? '<q class="pg-q">' + esc(g.quote) + "</q>" : "") + "</li>";
@@ -124,10 +148,10 @@
     var opts = L.slice(0, 60).map(function (x) { return '<option value="' + x.id + '"' + (x.id === d.id ? " selected" : "") + ">" + esc(x.bank.toUpperCase() + " · " + day(x.published_at) + " · " + x.speaker + " — " + x.title.slice(0, 70)) + "</option>"; }).join("");
     var g = d.guidance;
     return '<div class="tile wide"><h2>Transcript intelligence <span class="h2note">— what was said, what changed, what it may mean</span></h2><select class="pi-sel" data-pisel>' + opts + "</select>" +
-      '<div class="pi-doc"><div class="pi-dh">' + fl(J.banks[d.bank].cc) + " <b>" + esc(d.title) + '</b><div class="pi-sub">' + esc(bname(d.bank)) + " · " + esc(TYPE[d.type] || d.type) + " · " + esc(d.speaker) + " · voting " + esc(d.voting_status.replace("_", " ").toLowerCase()) + " · published " + esc(day(d.published_at)) + " · " + d.words + " words · v" + d.version +
+      '<div class="pi-doc"><div class="pi-dh">' + fl(J.banks[d.bank].cc) + " <b>" + esc(d.title) + '</b><div class="pi-sub">' + esc(bname(d.bank)) + " · " + esc(TYPE[d.type] || d.type) + " · " + esc(who(d)) + " · voting " + esc(d.voting_status.replace("_", " ").toLowerCase()) + " · published " + esc(day(d.published_at)) + " · " + d.words + " words · v" + d.version +
         "</div></div>" +
       '<div class="pi-3"><div><div class="pi-l">1 · What was said (rhetoric score)</div><div class="pi-big ' + lcls(d.label) + '">' + sgn(d.score) + " <small>" + esc(d.label) + "</small></div><div class=\"pi-sub\">hawkish weight " + d.hawk_n + " · dovish " + d.dove_n + " · confidence <b>" + esc(d.confidence.level) + "</b>" + (d.confidence.why.length ? " (" + esc(d.confidence.why.join(", ")) + ")" : "") + "</div></div>" +
-        '<div><div class="pi-l">2 · What changed</div>' + (d.baseline.speaker ? '<div class="pi-sub">vs ' + esc(d.speaker) + "’s own baseline (" + d.baseline.speaker.n + " item" + (d.baseline.speaker.n > 1 ? "s" : "") + " since " + esc(d.baseline.speaker.since) + (d.baseline.speaker.low_confidence ? ", thin — extended past 60 days" : "") + "): " + chg(d.baseline.speaker.change) + "</div>" : '<div class="pi-sub">first item on record for this speaker</div>') +
+        '<div><div class="pi-l">2 · What changed</div>' + (d.baseline.speaker ? '<div class="pi-sub">vs ' + esc(who(d)) + "’s own baseline (" + d.baseline.speaker.n + " item" + (d.baseline.speaker.n > 1 ? "s" : "") + " since " + esc(d.baseline.speaker.since) + (d.baseline.speaker.low_confidence ? ", thin — extended past 60 days" : "") + "): " + chg(d.baseline.speaker.change) + "</div>" : '<div class="pi-sub">first item on record for this speaker</div>') +
           (d.baseline.institution && d.type !== "statement" ? '<div class="pi-sub">vs the bank’s last statement (' + esc(d.baseline.institution.date) + ", " + sgn(d.baseline.institution.score) + "): " + chg(d.baseline.institution.change) + "</div>" : "") +
           (d.dissent && d.dissent.length ? '<div class="pi-l" style="margin-top:8px">Disagreement on record</div>' + d.dissent.map(function (x) { return '<blockquote class="pi-q g">“' + esc(x.q) + "” <small>¶" + x.para + "</small></blockquote>"; }).join("") : "") +
           (d.revised_from ? '<div class="pi-sub">⚠ the official text was revised after first publication (score was ' + sgn(d.revised_from.score) + ")</div>" : "") + "</div>" +
@@ -186,9 +210,9 @@
       return esc(b.toUpperCase()) + " " + ok + "/" + n; }).join(" · ");
     P.innerHTML = '<div class="pi-lay"><aside class="pi-left"><div class="gr-col-h">Central Banks</div>' + strip() +
       '<button class="pi-card pi-all ' + (V.bank === "all" ? "on" : "") + '" data-pib="all"><div class="pi-ch">All banks</div><div class="pi-sub">Fed · ECB · BoE · BoC · BoJ</div></button></aside><div class="pi-main"><div class="tile wide pi-head"><h2>Central bank policy intelligence <span class="h2note">— read from the banks’ own sites</span></h2>' +
-      '<div class="pi-nav">' + subs.map(function (s) { return '<button data-pisub="' + s[0] + '" aria-pressed="' + (V.sub === s[0]) + '">' + s[1] + "</button>"; }).join("") +
+      '<div class="pi-nav">' + subs.map(function (s) { var nw = s[0] === "minutes" ? newOf().some(function (d) { return d.type === "minutes"; }) : s[0] === "monitor" || s[0] === "transcript" ? newOf().length > 0 : false; return '<button data-pisub="' + s[0] + '" aria-pressed="' + (V.sub === s[0]) + '">' + s[1] + (nw ? " " + DOT : "") + "</button>"; }).join("") +
 '</div><div class="stamp">Updated ' + esc(new Date(J.updated_at).toLocaleString("en-US", { timeZone: TZ, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET</div></div>" +
-      (V.sub === "minutes" ? minutesHTML() : V.sub === "calendar" ? calendarHTML() : V.sub === "transcript" ? transcriptHTML() : V.sub === "markets" ? marketsHTML() : monitorHTML()) +
+      (V.sub !== "transcript" ? freshHTML() : "") + (V.sub === "minutes" ? minutesHTML() : V.sub === "calendar" ? calendarHTML() : V.sub === "transcript" ? transcriptHTML() : V.sub === "markets" ? marketsHTML() : monitorHTML()) +
       '<div class="tile wide"><div class="stamp">Method: ' + esc(J.method || "") + " Evidence is quoted word-for-word with its paragraph number and the official link; voting status is shown only where it is certain for that date (BoC decides by consensus).</div></div></div></div>";
   }
   P.addEventListener("click", function (ev) {
@@ -196,7 +220,7 @@
     var b = t.closest("[data-pib]"); if (b) { V.bank = b.getAttribute("data-pib"); save(); render(); return; }
     b = t.closest("[data-pisub]"); if (b) { V.sub = b.getAttribute("data-pisub"); save(); render(); return; }
     b = t.closest("[data-pisort]"); if (b) { V.sort = b.getAttribute("data-pisort"); save(); render(); return; }
-    b = t.closest("[data-pidoc]"); if (b && !t.closest("a")) { V.doc = b.getAttribute("data-pidoc"); V.sub = "transcript"; save(); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+    b = t.closest("[data-pidoc]"); if (b && !t.closest("a")) { seen(b.getAttribute("data-pidoc")); V.doc = b.getAttribute("data-pidoc"); V.sub = "transcript"; save(); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
   });
   P.addEventListener("change", function (ev) { var s = ev.target.closest && ev.target.closest("[data-pisel]"); if (s) { V.doc = s.value; save(); render(); } });
   document.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("#tabbtn-policy")) { render(); poll(true); } });
@@ -214,7 +238,12 @@
     ".pg{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:8px 0;background:rgba(155,140,255,.05)}.pg-h{font:700 11px 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#b9aefc}.pg-x{font-size:13px;margin-top:4px}.pg-m{font:11.5px 'IBM Plex Mono',monospace;color:var(--muted);margin-top:3px}.pg-l{list-style:none;margin:6px 0 0;padding:0;max-height:260px;overflow:auto}.pg-r{display:grid;grid-template-columns:120px 1fr auto auto;gap:4px 8px;align-items:center;padding:5px 0;border-top:1px dashed var(--line);font-size:12.5px}.pg-t{font:11px 'IBM Plex Mono',monospace;color:var(--faint)}.pg-g{font:700 10.5px 'IBM Plex Mono',monospace}.pg-g.hawk,.pg-x b.hawk{color:#ff8a84}.pg-g.dove,.pg-x b.dove{color:#7dd8e6}.pg-g.neu{color:var(--muted);font-weight:400}.pg-q{grid-column:1/-1;color:#d4deea;font-style:italic}.pm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(560px,1fr));gap:14px}.pm-card{border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:12px 14px}" +
     ".pm-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}.pm-b{font-size:15px;display:flex;align-items:center;gap:6px}" +
     ".pm-s{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:12.5px}.pm-l{font:600 11.5px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.06em}.pm-g{color:var(--muted)}.pm-d{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint)}" +
-    ".pm-list{list-style:none;margin:6px 0 0;padding:0}.pm-r{display:grid;grid-template-columns:52px 112px minmax(0,1fr) 54px 84px;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px dashed var(--line);cursor:pointer;font-size:13px}" +
+    ".pi-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff4d4d;box-shadow:0 0 0 3px rgba(255,77,77,.18);margin-right:6px;vertical-align:1px;animation:piPulse 2s ease-in-out infinite}@keyframes piPulse{50%{box-shadow:0 0 0 6px rgba(255,77,77,.05)}}" +
+    ".pi-nb{font-size:10px;font-weight:800;color:#ff6b6b;letter-spacing:.04em;margin-left:4px;white-space:nowrap}.pi-card.has-new{border-color:rgba(255,77,77,.55)!important}.pm-r.is-new{background:rgba(255,77,77,.07)}.pm-r.is-new .pm-dt{color:#ff8a8a;font-weight:700}" +
+    ".pi-fresh{border:1px solid rgba(255,184,77,.45);background:linear-gradient(180deg,rgba(255,184,77,.06),transparent 70%)}.pi-fresh.is-new{border-color:rgba(255,77,77,.6);background:linear-gradient(180deg,rgba(255,77,77,.08),transparent 70%)}.pf-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px}.pf-new{font-weight:800;letter-spacing:.08em;color:#ff6b6b}.pf-new.seen{color:#ffb84d}.pf-k{font-weight:700}.pf-t{color:var(--faint);margin-right:auto}" +
+    ".pf-h{font-size:17px;font-weight:800;margin:8px 0 6px;line-height:1.3}.pf-g{font-size:14px;margin-bottom:8px}.pf-l{margin:0 0 10px;padding-left:18px;font-size:13.5px;line-height:1.55}.pf-l li{margin-bottom:4px}.pf-a{display:flex;gap:14px;align-items:center}.pf-a button{all:unset;cursor:pointer;font-weight:700;font-size:13px;padding:6px 12px;border:1px solid var(--line);border-radius:8px}.pf-a button:hover{border-color:#ffb84d;color:#ffb84d}.pf-a a{font-size:13px}" +
+    ".pm-ti{display:flex;align-items:center;gap:8px;min-width:0}.pm-tt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.pm-ti .evc{flex:none}" +
+    ".pm-list{list-style:none;margin:6px 0 0;padding:0}.pm-r{display:grid;grid-template-columns:52px 112px minmax(0,1fr) 54px 84px;gap:10px;align-items:center;padding:9px 6px;border-bottom:1px dashed var(--line);border-radius:6px;cursor:pointer;font-size:13px}" +
     ".pm-r:hover{background:rgba(56,182,201,.07)}.pm-dt{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint)}.pm-ty{font:600 11px 'IBM Plex Mono',monospace;color:var(--cyan);text-transform:uppercase;letter-spacing:.04em}" +
     ".pm-ti{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}.pm-ti b{color:var(--ink);font-weight:600}.pm-sc{text-align:right}.pm-vs{font:12px 'IBM Plex Mono',monospace;text-align:right}.pm-vs small{color:var(--faint)}" +
     ".pm-more{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint);margin-top:6px}" +
