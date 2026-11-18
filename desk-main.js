@@ -1277,14 +1277,26 @@ function grainKpiHTML(key){
     kpi('Export sales', fmt(Math.round(w[2]/1000))+'<small>k MT</small>', (v?'<span class="'+(v==='BEAT'?'up':v==='MISS'?'dn':'neu')+'">'+(v==='BEAT'?'above':v==='MISS'?'below':'inside')+' range</span>':'no estimate')+' · w/e '+fmtShortDate(w[0]))+
     '</div>';
 }
+/* keep "above / below the N-day average" in step with the live price the KPI strip shows */
+setInterval(function(){
+  [].forEach.call(document.querySelectorAll('[data-mapx]'),function(e){
+    var k=e.getAttribute('data-mapx'), g=DATA.grains&&DATA.grains[k], q=g&&+g.fan.intraday[0], el=document.querySelector('.g-kpi[data-grain="'+k+'"]');
+    var t=el?parseFloat(String(el.textContent).replace(/[^0-9.]/g,'')):NaN; if(isFinite(t)&&t>0) q=t; if(!(q>0)) return;
+    var s=money2(q); if(e.textContent!==s) e.textContent=s;
+    [].forEach.call(document.querySelectorAll('[data-marel="'+k+'"]'),function(b){ var v=+b.getAttribute('data-ma'), up=q>=v, w=up?'above':'below'; if(b.textContent!==w){ b.textContent=w; b.className=up?'up':'dn'; } });
+  });
+},2000);
 function grainInsight(key){
   var g=DATA.grains[key], f=g.fan, meta=GMETA[key], a=f.anchor, m20=+f.ma20, m50=+f.ma50, m100=f.ma100?+f.ma100:null, z=+f.z;
-  function rel(v,n){ return v==null?'':(a>=v?'above':'below')+' the '+n+' ($'+fmt(v,2)+')'; }
+  /* above/below uses the LATEST delayed price (same number as the KPI strip), not yesterday's settle, and re-checks on
+     every live tick (maLiveSync below). The averages themselves are simple averages of completed daily settles. (owner, Nov 18 2026) */
+  var px=+f.intraday[0]>0?+f.intraday[0]:a;
+  function rel(v,n){ return v==null||!isFinite(v)?'':'<b data-marel="'+key+'" data-ma="'+v+'" class="'+(px>=v?'up':'dn')+'">'+(px>=v?'above':'below')+'</b> the '+n+' average ($'+fmt(v,2)+')'; }
   var mas=[rel(m20,'20-day'),rel(m50,'50-day'),m100?rel(m100,'100-day'):''].filter(Boolean);
   var band=Math.abs(z)>=2?'beyond '+(z<0?'−':'+')+'2σ — statistically stretched':Math.abs(z)>=1?'between 1σ and 2σ '+(z<0?'below':'above')+' the mean':'within 1σ of the mean';
   var pc=+f.pcr, lean=!isFinite(pc)?'undefined (no call open interest)':pc<0.8?'call-heavy':pc>1.2?'put-heavy':'balanced';
   var last=g.cftc[g.cftc.length-1];
-  return 'Settle <b>'+money2(a)+'</b> ('+fmtShortDate(f.settle_date)+') sits '+mas.join(', ')+'; z-score <b>'+f.z+'</b> — '+band+'. '+
+  return 'Latest delayed price <b data-mapx="'+key+'">'+money2(px)+'</b> sits '+mas.join(', ')+' (settle '+money2(a)+' on '+fmtShortDate(f.settle_date)+'); settle z-score <b>'+f.z+'</b> — '+band+'. '+
     meta.chainNear+' options: call wall $'+fmt(f.call_wall[0],2)+' ('+f.call_wall[1]+'), put wall $'+fmt(f.put_wall[0],2)+' ('+f.put_wall[1]+'), P/C '+f.pcr+' reads '+lean+'. '+
     'Managed money is net '+(last.net>=0?'long ':'short ')+fmt(Math.abs(last.net))+' contracts ('+fmtShortDate(last.date)+').'+
     (g.oishift&&g.oishift.items.length?' <b>Options open interest:</b> '+g.oishift.items.slice(0,2).map(function(i){ return i.t.replace(/<[^>]+>/g,''); }).join(' '):'');
@@ -2938,7 +2950,7 @@ function renderGrain(key){ try{ oiSanitize(DATA); }catch(e){}
   /* export sales — 10-week trend */
   FU+=wasdeTableHTML(key)+exportTileHTML(key)+destTileHTML(key);
   /* insight + curve (both computed from the data) */
-  OV+='<div class="tile wide" data-src="model"><h2>Insight</h2><p class="read">'+grainInsight(key)+'</p><div class="stamp">Generated from the current settles, options and CFTC data</div></div>';
+  OV+='<div class="tile wide" data-src="model"><h2>Insight</h2><p class="read">'+grainInsight(key)+'</p><div class="stamp">Above / below uses the latest delayed price and re-checks every refresh; averages are simple averages of completed daily settles. Generated from the current settles, options and CFTC data</div></div>';
   DV+=positioningKpiHTML(key)+cockpitHTML(key)+volTermHTML(key)+grainSpreadsHTML(key).replace('class="tile"','class="tile wide"');
   if(window.SPREADC) DV+=SPREADC.tile(key);   /* calendar-spread charts: front roll + next roll, 9-day EMA, high/low (spread-chart.js) */
   /* positioning (toggle target) */
