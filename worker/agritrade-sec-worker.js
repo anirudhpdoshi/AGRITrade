@@ -194,6 +194,57 @@ async function cmeBulletin(req, s, k) {
   return new Response(r.body, { status: 200, headers: h });
 }
 
+/* /street?t= — analyst estimates and ownership for one company (owner, Nov 17 2026), on demand only: Yahoo Finance
+   quoteSummary (earningsTrend: consensus EPS and revenue avg/low/high and analyst counts for the current and next quarter
+   and years; earningsHistory: estimate vs actual EPS for the last four quarters; majorHoldersBreakdown: insider / institution
+   percentages; institutionOwnership: largest 13F holders). Yahoo needs a session cookie and a crumb, kept per isolate. */
+const BUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
+let YC = null;
+async function ycrumb(force) {
+  if (YC && !force && Date.now() - YC.at < 3600e3) return YC;
+  let ck = "";
+  for (const u of ["https://fc.yahoo.com/", "https://finance.yahoo.com/"]) {
+    const r = await fetch(u, { headers: { "User-Agent": BUA }, redirect: "manual" });
+    const sc = r.headers.get("set-cookie") || ""; const m = sc.match(/(A3=[^;]+)/) || sc.match(/(A1=[^;]+)/);
+    if (m) { ck = m[1]; break; }
+  }
+  const c = await fetch("https://query2.finance.yahoo.com/v1/test/getcrumb", { headers: { "User-Agent": BUA, "Cookie": ck } });
+  const crumb = (await c.text()).trim();
+  if (!c.ok || !crumb || crumb.length > 40 || /</.test(crumb)) throw new Error("estimates source unavailable (crumb HTTP " + c.status + ")");
+  YC = { ck, crumb, at: Date.now() }; return YC;
+}
+async function street(req, t) {
+  t = (t || "").trim().toUpperCase().replace(/[^A-Z0-9.-]/g, "").replace(".", "-");
+  if (!t) return json(req, { error: "ticker required" }, 400);
+  const mods = "earningsTrend,earningsHistory,majorHoldersBreakdown,institutionOwnership,earnings,defaultKeyStatistics";
+  let j = null, st = 0;
+  for (let i = 0; i < 2; i++) {
+    const y = await ycrumb(i > 0);
+    const r = await fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(t)}?modules=${mods}&crumb=${encodeURIComponent(y.crumb)}`,
+      { headers: { "User-Agent": BUA, "Cookie": y.ck, "Accept": "application/json" }, cf: { cacheTtl: 1800, cacheEverything: true, cacheTtlByStatus: { "200-299": 1800, "400-599": 0 } } });
+    st = r.status; if (r.ok) { j = await r.json(); break; }
+  }
+  const R = j && j.quoteSummary && j.quoteSummary.result && j.quoteSummary.result[0];
+  if (!R) return json(req, { error: "no estimates or ownership for " + t + " (HTTP " + st + ")" }, 404, 300);
+  const v = (x) => (x && typeof x === "object" && "raw" in x ? x.raw : x == null || typeof x === "object" ? null : x);
+  const trend = ((R.earningsTrend || {}).trend || []).map((p) => ({ period: p.period, end: p.endDate || null, growth: v(p.growth),
+    eps: p.earningsEstimate && { avg: v(p.earningsEstimate.avg), low: v(p.earningsEstimate.low), high: v(p.earningsEstimate.high), n: v(p.earningsEstimate.numberOfAnalysts), year_ago: v(p.earningsEstimate.yearAgoEps), growth: v(p.earningsEstimate.growth) },
+    rev: p.revenueEstimate && { avg: v(p.revenueEstimate.avg), low: v(p.revenueEstimate.low), high: v(p.revenueEstimate.high), n: v(p.revenueEstimate.numberOfAnalysts), year_ago: v(p.revenueEstimate.yearAgoRevenue), growth: v(p.revenueEstimate.growth) },
+    rev30: p.epsRevisions && { up30: v(p.epsRevisions.upLast30days), down30: v(p.epsRevisions.downLast30days) },
+    trend_eps: p.epsTrend && { now: v(p.epsTrend.current), d7: v(p.epsTrend["7daysAgo"]), d30: v(p.epsTrend["30daysAgo"]), d60: v(p.epsTrend["60daysAgo"]), d90: v(p.epsTrend["90daysAgo"]) } }));
+  const hist = ((R.earningsHistory || {}).history || []).map((h) => ({ q: v(h.quarter) ? new Date(v(h.quarter) * 1000).toISOString().slice(0, 10) : null, period: h.period, actual: v(h.epsActual), est: v(h.epsEstimate), surprise_pct: v(h.surprisePercent) != null ? v(h.surprisePercent) * 100 : null }));
+  const ec = (R.earnings || {}).earningsChart || {}, fc = (R.earnings || {}).financialsChart || {};
+  const qeps = (ec.quarterly || []).map((x) => ({ q: x.date, actual: v(x.actual), est: v(x.estimate) }));
+  const qfin = (fc.quarterly || []).map((x) => ({ q: x.date, rev: v(x.revenue), ni: v(x.earnings) }));
+  const mh = R.majorHoldersBreakdown || {}, ks = R.defaultKeyStatistics || {};
+  const own = { insiders_pct: v(mh.insidersPercentHeld) != null ? v(mh.insidersPercentHeld) * 100 : null, inst_pct: v(mh.institutionsPercentHeld) != null ? v(mh.institutionsPercentHeld) * 100 : null,
+    inst_float_pct: v(mh.institutionsFloatPercentHeld) != null ? v(mh.institutionsFloatPercentHeld) * 100 : null, inst_count: v(mh.institutionsCount),
+    shares_out: v(ks.sharesOutstanding), float: v(ks.floatShares), short_pct_float: v(ks.shortPercentOfFloat) != null ? v(ks.shortPercentOfFloat) * 100 : null, short_shares: v(ks.sharesShort),
+    holders: ((R.institutionOwnership || {}).ownershipList || []).slice(0, 10).map((o) => ({ name: o.organization, pct: v(o.pctHeld) != null ? v(o.pctHeld) * 100 : null, shares: v(o.position), value: v(o.value), asof: v(o.reportDate) ? new Date(v(o.reportDate) * 1000).toISOString().slice(0, 10) : null, chg_pct: v(o.pctChange) != null ? v(o.pctChange) * 100 : null })) };
+  return json(req, { ticker: t, trend, hist, qeps, qfin, next_q: ec.currentQuarterEstimateDate ? ec.currentQuarterEstimateDate + " " + (ec.currentQuarterEstimateYear || "") : null, own,
+    provider: "Yahoo Finance analyst consensus and ownership (13F) data, delayed", fetched_at: new Date().toISOString() }, 200, 1800);
+}
+
 export default {
   async fetch(req, env) {
     if (env && env.SEC_CONTACT) CONTACT = "AGRITrade desk " + String(env.SEC_CONTACT).trim();
@@ -207,6 +258,7 @@ export default {
       if (u.pathname === "/prices") return await prices(req, u.searchParams.get("t"), u.searchParams.get("r"));
       if (u.pathname === "/filings") return await filings8k(req, u.searchParams.get("t"));
       if (u.pathname === "/cme") return await cmeBulletin(req, u.searchParams.get("s"), u.searchParams.get("k"));
+      if (u.pathname === "/street") return await street(req, u.searchParams.get("t"));
       if (u.pathname === "/exhibit") return await exhibit(req, u.searchParams.get("t"), u.searchParams.get("acc"));
       return json(req, { error: "unknown route", routes: ["/search?q=", "/company?t=", "/prices?t=&r=", "/health"] }, 404);
     } catch (e) {
