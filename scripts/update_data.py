@@ -39,7 +39,7 @@ from ud_common import (  # noqa: F401  (re-exported: live_loop, tests and other 
     yf, yahoo_last, pctile, valet, _num, _fred, _valet_series, _release_times,
     recent_release, WASDE_DATES)
 from ud_fx import (  # noqa: F401  (re-exported: live_loop, tests and other jobs use update_data.<name>)
-    fx_spot, fx_closes, US_COLS, CA_LABEL, us_curve, ca_curve, yields, socrata,
+    fx_spot, fx_closes, spread_monitor, US_COLS, CA_LABEL, us_curve, ca_curve, yields, socrata,
     _daily_closes, _week_means, _fund_basis, _tag_prices, _fieldnum, _pos_kpis, cftc_fx, fx_alpha,
     FF_FEEDS, CAL_TZ, calendar, _closes_yf, fx_model, _month_code, fed_odds, GRAIN_CFTC,
     cftc_grains, GRAIN_YF)
@@ -79,7 +79,7 @@ class _Module(sys.modules[__name__].__class__):
 
 sys.modules[__name__].__class__ = _Module
 
-BLOCKS = [("seasonality_track", seasonality_track), ("expired_track", expired_track), ("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("cftc_fx", cftc_fx),
+BLOCKS = [("seasonality_track", seasonality_track), ("expired_track", expired_track), ("policy_watch", policy_watch), ("fx_spot", fx_spot), ("fx_alpha", fx_alpha), ("fx_closes", fx_closes), ("yields", yields), ("spread_monitor", spread_monitor), ("cftc_fx", cftc_fx),
           ("cftc_grains", cftc_grains), ("grains_quote", grains_quote), ("yields_live", yields_live), ("energy", energy),
           ("crosses", crosses), ("news", news), ("calendar", calendar), ("fed_odds", fed_odds), ("releases", releases), ("macro", macro), ("cpi_detail", cpi_detail), ("grain_long", grain_long), ("release_hist", release_hist), ("cpi_detail_ca", cpi_detail_ca), ("macro_parts", macro_parts), ("ca_cpi_weights", ca_cpi_weights), ("settles", settles), ("spreads", spreads), ("exports", exports), ("wasde", wasde), ("canada", canada), ("ca_calendar", ca_calendar), ("sd_hist", sd_hist), ("inputs", inputs), ("ext", external), ("ca_retail", ca_retail), ("fx_model", fx_model), ("optflow", optflow), ("ust", ust), ("ust_dashboard", ust_dashboard)]
 

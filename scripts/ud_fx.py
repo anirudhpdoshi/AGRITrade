@@ -191,6 +191,71 @@ def yields(D, N):
     return bool(changed)
 
 
+YSM_TENORS = ["ON", "1M", "3M", "6M", "1Y", "2Y", "5Y", "10Y", "30Y"]
+YSM_BILLS = {"1M": "TB.CDN.30D.MID", "3M": "TB.CDN.90D.MID", "6M": "TB.CDN.180D.MID", "1Y": "TB.CDN.1Y.MID"}
+YSM_SRC = {"ON": ["SOFR · New York Fed", "CORRA · Bank of Canada"],
+           "1M": ["US Treasury 1-month CMT", "BoC 1-month T-bill"], "3M": ["US Treasury 3-month CMT", "BoC 3-month T-bill"],
+           "6M": ["US Treasury 6-month CMT", "BoC 6-month T-bill"], "1Y": ["US Treasury 1-year CMT", "BoC 1-year T-bill"],
+           "2Y": ["US Treasury 2-year CMT", "GoC 2-year benchmark"], "5Y": ["US Treasury 5-year CMT", "GoC 5-year benchmark"],
+           "10Y": ["US Treasury 10-year CMT", "GoC 10-year benchmark"], "30Y": ["US Treasury 30-year CMT", "GoC long benchmark"]}
+
+
+def spread_monitor(D, N):
+    """US–Canada yield-spread monitor (owner, Nov 18 2026): official daily closes for both curves, overnight to 30Y, ~90 sessions.
+    Overnight leg = SOFR vs CORRA (the two countries' risk-free overnight benchmarks). Each value is the published print for that
+    date — nothing is carried forward or estimated; a tenor with no print that day is simply absent."""
+    us = us_curve()
+    ca = {}
+    j = valet("observations/group/bond_yields_benchmark/json?recent=95")
+    code_for = {}
+    for code in j.get("seriesDetail", {}):
+        m = re.search(r"\.(\d+)YR\.", code.upper())
+        if m and m.group(1) + "Y" in ("2Y", "5Y", "10Y"):
+            code_for[m.group(1) + "Y"] = code
+        elif "LONG" in code.upper():
+            code_for["30Y"] = code
+    for o in j["observations"]:
+        for t, c in code_for.items():
+            v = _num((o.get(c) or {}).get("v"))
+            if v is not None and 0 <= v < 15:
+                ca.setdefault(o["d"], {})[t] = v
+    obs = valet("observations/" + ",".join(YSM_BILLS.values()) + "/json?recent=95")["observations"]
+    for o in obs:
+        for t, c in YSM_BILLS.items():
+            v = _num((o.get(c) or {}).get("v"))
+            if v is not None and 0 <= v < 15:
+                ca.setdefault(o["d"], {})[t] = v
+    try:
+        for o in valet("observations/AVG.INTWO/json?recent=95")["observations"]:
+            v = _num((o.get("AVG.INTWO") or {}).get("v"))
+            if v is not None and 0 <= v < 15:
+                ca.setdefault(o["d"], {})["ON"] = v
+    except Exception as e:
+        print("  CORRA skipped:", e)
+    try:
+        for r in get("https://markets.newyorkfed.org/api/rates/secured/sofr/last/95.json").json()["refRates"]:
+            v = _num(r.get("percentRate"))
+            if v is not None and 0 <= v < 15:
+                us.setdefault(r["effectiveDate"], {})["ON"] = v
+    except Exception as e:
+        print("  SOFR skipped:", e)
+    dates = sorted(d for d in set(us) & set(ca) if any(t in us[d] and t in ca[d] for t in YSM_TENORS))[-90:]
+    if len(dates) < 5:
+        raise RuntimeError(f"too few common US/CA dates ({len(dates)})")
+    hist = []
+    for d in dates:
+        u = {t: round(us[d][t], 3) for t in YSM_TENORS if t in us[d]}
+        c = {t: round(ca[d][t], 3) for t in YSM_TENORS if t in ca[d]}
+        hist.append({"d": d, "us": u, "ca": c})
+    last = {t: max((h["d"] for h in hist if t in h["us"] and t in h["ca"]), default=None) for t in YSM_TENORS}
+    D["fx"]["ysm"] = {"tenors": [t for t in YSM_TENORS if last[t]], "src": YSM_SRC, "last": last, "hist": hist,
+                      "note": "Official daily closes · spread = US − Canada in basis points · US ON = SOFR, CA ON = CORRA"}
+    D["meta"]["asof"]["spread_monitor"] = dates[-1] + "T17:00:00-04:00"
+    D["meta"].setdefault("sources", {})["spread_monitor"] = "US Treasury par curve, NY Fed SOFR, Bank of Canada Valet (GoC benchmarks, T-bills, CORRA)"
+    print("  spread monitor:", len(hist), "sessions", dates[0], "→", dates[-1], "latest per tenor:", last)
+    return True
+
+
 def socrata(dataset, code, n):
     url = (f"https://publicreporting.cftc.gov/resource/{dataset}.json?cftc_contract_market_code={code}"
            f"&$order=report_date_as_yyyy_mm_dd%20DESC&$limit={n}")
