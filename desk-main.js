@@ -1283,7 +1283,9 @@ setInterval(function(){
     var k=e.getAttribute('data-mapx'), g=DATA.grains&&DATA.grains[k], q=g&&+g.fan.intraday[0], el=document.querySelector('.g-kpi[data-grain="'+k+'"]');
     var t=el?parseFloat(String(el.textContent).replace(/[^0-9.]/g,'')):NaN; if(isFinite(t)&&t>0) q=t; if(!(q>0)) return;
     var s=money2(q); if(e.textContent!==s) e.textContent=s;
-    [].forEach.call(document.querySelectorAll('[data-marel="'+k+'"]'),function(b){ var v=+b.getAttribute('data-ma'), up=q>=v, w=up?'above':'below'; if(b.textContent!==w){ b.textContent=w; b.className=up?'up':'dn'; } });
+    [].forEach.call(document.querySelectorAll('[data-marel="'+k+'"]'),function(b){ var v=+b.getAttribute('data-ma'), ep=b.getAttribute('data-ema');
+      if(ep!=null){ var n=+b.getAttribute('data-n'); v=+ep+(2/(n+1))*(q-+ep); var ev=document.querySelector('[data-emav="'+k+'-'+n+'"]'); if(ev){ var es='$'+fmt(v,2); if(ev.textContent!==es) ev.textContent=es; } }
+      var up=q>=v, w=up?'above':'below'; if(b.textContent!==w){ b.textContent=w; b.className=up?'up':'dn'; } });
   });
 },2000);
 function grainInsight(key){
@@ -1291,8 +1293,12 @@ function grainInsight(key){
   /* above/below uses the LATEST delayed price (same number as the KPI strip), not yesterday's settle, and re-checks on
      every live tick (maLiveSync below). The averages themselves are simple averages of completed daily settles. (owner, Nov 18 2026) */
   var px=+f.intraday[0]>0?+f.intraday[0]:a;
-  function rel(v,n){ return v==null||!isFinite(v)?'':'<b data-marel="'+key+'" data-ma="'+v+'" class="'+(px>=v?'up':'dn')+'">'+(px>=v?'above':'below')+'</b> the '+n+' average ($'+fmt(v,2)+')'; }
-  var mas=[rel(m20,'20-day'),rel(m50,'50-day'),m100?rel(m100,'100-day'):''].filter(Boolean);
+  /* EMA like a charting platform: settles through yesterday, today's bar = the live price: E = E_prev + k*(price − E_prev) */
+  function eLive(e,n,p){ return e==null?null:e+(2/(n+1))*(p-e); }
+  var EM=f.ema20!=null?[[20,f.ema20],[50,f.ema50],[100,f.ema100]].filter(function(x){ return x[1]!=null; }):null;
+  function rel(v,n,ep){ if(v==null||!isFinite(v)) return ''; var lv=ep?eLive(+ep[1],ep[0],px):v;
+    return '<b data-marel="'+key+'" data-ma="'+v+'"'+(ep?' data-ema="'+ep[1]+'" data-n="'+ep[0]+'"':'')+' class="'+(px>=lv?'up':'dn')+'">'+(px>=lv?'above':'below')+'</b> the '+n+(ep?' EMA (<span data-emav="'+key+'-'+ep[0]+'">$'+fmt(lv,2)+'</span>)':' average ($'+fmt(v,2)+')'); }
+  var mas=EM?EM.map(function(x){ return rel(x[1],x[0]+'-day',x); }):[rel(m20,'20-day'),rel(m50,'50-day'),m100?rel(m100,'100-day'):''].filter(Boolean);
   var band=Math.abs(z)>=2?'beyond '+(z<0?'−':'+')+'2σ — statistically stretched':Math.abs(z)>=1?'between 1σ and 2σ '+(z<0?'below':'above')+' the mean':'within 1σ of the mean';
   var pc=+f.pcr, lean=!isFinite(pc)?'undefined (no call open interest)':pc<0.8?'call-heavy':pc>1.2?'put-heavy':'balanced';
   var last=g.cftc[g.cftc.length-1];
@@ -2950,7 +2956,7 @@ function renderGrain(key){ try{ oiSanitize(DATA); }catch(e){}
   /* export sales — 10-week trend */
   FU+=wasdeTableHTML(key)+exportTileHTML(key)+destTileHTML(key);
   /* insight + curve (both computed from the data) */
-  OV+='<div class="tile wide" data-src="model"><h2>Insight</h2><p class="read">'+grainInsight(key)+'</p><div class="stamp">Above / below uses the latest delayed price and re-checks every refresh; averages are simple averages of completed daily settles. Generated from the current settles, options and CFTC data</div></div>';
+  OV+='<div class="tile wide" data-src="model"><h2>Insight</h2><p class="read">'+grainInsight(key)+'</p><div class="stamp">Above / below uses the latest delayed price and re-checks every refresh. EMAs are exponential averages of completed daily settles with today’s bar taken at the live price, as charting platforms draw them. Generated from the current settles, options and CFTC data</div></div>';
   DV+=positioningKpiHTML(key)+cockpitHTML(key)+volTermHTML(key)+grainSpreadsHTML(key).replace('class="tile"','class="tile wide"');
   if(window.SPREADC) DV+=SPREADC.tile(key);   /* calendar-spread charts: front roll + next roll, 9-day EMA, high/low (spread-chart.js) */
   /* positioning (toggle target) */
