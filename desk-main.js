@@ -3304,6 +3304,7 @@ function fxSubnavHTML(){
   return subnavHTML('fx', [
     {id:'overview', label:'Overview', ev:nextOf(ev, function(e){ return e.impact==='High'; })},
     {id:'deriv', label:'Derivatives', ev:nextOf(ev.filter(function(e){ return cb.test(e.label); }).concat(cftc))},
+    {id:'ysm', label:'Yield Spreads', ev:nextOf(ev, function(e){ return cb.test(e.label)||/Treasury|Bond|Auction|CPI|GDP|Employment|Payroll/i.test(e.label); })},
     {id:'rates', label:'Rates, Policy & Energy', ev:nextOf(ev, function(e){ return cb.test(e.label)||/Crude|Oil|Treasury|Bond|Auction/i.test(e.label); })},
     {id:'fwd', label:'Forward Rates', ev:nextOf(ev, function(e){ return cb.test(e.label); })}
   ], live);
@@ -3357,6 +3358,7 @@ function renderFX(){
     var live=(u.v-c.v)*100, isLive=(u.m!=='close'&&u.m!=='stored')||(c.m!=='close'&&c.m!=='stored');
     var cs=(closeOf(YLU[r.t], r.us)-closeOf(YLC[r.t], r.ca))*100;          /* close spread on the SAME legs (US 20Y uses today's official close, not the stored row) */
     return {r:r, u:u, c:c, sp:live, cs:cs, d:live-cs, live:isLive}; });
+  window.YSM_LIVE={}; SP.forEach(function(x){ window.YSM_LIVE[x.r.t]={us:x.u.v, ca:x.c.v, um:x.u.m, cm:x.c.m, live:x.live&&x.c.m!=='stored', closeDate:x.r.asof}; });   /* feeds the spread monitor (ysm.js) */
   var nLive=SP.filter(function(x){ return x.live; }).length, wideL=SP.slice().sort(function(a,b){ return b.sp-a.sp; })[0];
   var srows=SP.map(function(x){ var r=x.r;
     return '<tr><td class="lbl" data-l="">'+r.t+(x===wideL?' <small class="sl-k">widest</small>':'')+'</td>'+
@@ -3440,7 +3442,8 @@ function renderFX(){
     subWrap('fx','overview', fxKpiHTML()+liveFxHTML()+T.spot+T.closes+T.model+askTileHTML('fx'))+
     subWrap('fx','deriv', positioningKpiHTML('fx')+T.cftc+T.sentiment.replace('class="tile"','class="tile wide"'))+
     /* macro sections now live on the Macro tab (renderMacro) */
-    subWrap('fx','rates', ylLiveHTML()+T.yields+T.energy.replace('class="tile wide"','class="tile"')+T.policy)+
+    subWrap('fx','ysm', (window.YSM&&DATA.fx.ysm?YSM.html():T.yields)+ylLiveHTML())+
+    subWrap('fx','rates', (window.YSM&&DATA.fx.ysm?'':T.yields)+T.energy.replace('class="tile wide"','class="tile"')+T.policy)+
     subWrap('fx','fwd', '<div class="tile wide fxmx-tile" data-src="fx_spot"><div class="fxmx-head"><h2>Forward Rates Matrix<span class="h2note" style="display:none"> — 1M to 24M</span></h2><div class="fxmx-meta"><span class="fxmx-tg" id="fxmx-view"></span><span class="fxmx-tg" id="fxmx-inv"></span><span><b class="fxmx-g" id="fxmx-pair">USD / CAD forward curve</b> · covered-interest-parity outrights · theoretical</span><span class="fxmx-pill">SPOT REF <b id="fxmx-spot">—</b></span><span class="fxmx-pill">24M FORWARD <b id="fxmx-12">—</b></span></div></div><div id="fx-fwdmx" class="fxmx"></div><div class="stamp">Outright = spot × DF<sub>USD</sub> ÷ DF<sub>CAD</sub> from US Treasury and Government of Canada yields · points in pips (1 pip = 0.0001 CAD) · reprices on every live spot tick · not a dealer quote</div></div>'+T.forwards);
   html+='</div><aside class="rail">'+liveMonitorHTML()+fxAlertsHTML()+'</aside></div>';
   document.getElementById('panel-fx').innerHTML=html;
@@ -3521,10 +3524,11 @@ var SECG={
     overview:[['snap','Snapshot',/kpi-strip/],['cone','Volatility cone',/vcone-tile/],['live','Live USD/CAD',/live-fx/],['spot','Spot & key levels',/spot & key levels/i],['daily','Daily chart',/daily closes/i],['model','Model view',/Model view/],['ask','Ask Claude',/ask-tile/]],
     deriv:[['pos','Positioning KPIs',/poskpi|ckwrap/],['fwd','Forward rates',/Forward rates|Forward curve/],['cftc','CFTC CAD funds',/cftc_fx|CFTC CAD/],['sent','Sentiment & FX options',/Retail sentiment/]],
     macro:[['live','Live USD/CAD',/live-fx/],['dash','Macro dashboard',/macro dashboard/i],['tf','Trade & fiscal',/Trade & fiscal/i],['cycle','Cycle composites',/Cycle composites/],['fed','Fed policy',/Fed policy intelligence/],['allind','All indicators',/All macro indicators/],['rel','Latest releases',/Latest releases/]],
+    ysm:[['ysm','Spread monitor',/ysm-tile|US–Canada yield spreads/],['ust','US Treasury live',/US Treasury yields/]],
     rates:[['ys','Yield spreads',/yield spreads/i],['en','Energy',/Energy/],['pol','Policy expectations',/Policy expectations/]]
   }
 };
-var SUBTHEME={overview:'#38b6c9',deriv:'#a78bfa',macro:'#e8b93d',fund:'#e8b93d',rates:'#3fb97f',inputs:'#f08a5d',dash:'#e8b93d',cycle:'#a78bfa',trade:'#38b6c9',rel:'#3fb97f',cpi:'#e8a33d',prices:'#e8b93d'};
+var SUBTHEME={ysm:'#ffb84d',overview:'#38b6c9',deriv:'#a78bfa',macro:'#e8b93d',fund:'#e8b93d',rates:'#3fb97f',inputs:'#f08a5d',dash:'#e8b93d',cycle:'#a78bfa',trade:'#38b6c9',rel:'#3fb97f',cpi:'#e8a33d',prices:'#e8b93d'};
 var GTITLE={corn:'Corn · ZCZ26',wheat:'Wheat · ZWZ26',soybeans:'Soybeans · ZSF27',fx:'USD/CAD desk',macro:'Macro · US & Canada'};
 
 /* ---------- left-panel collapse, knowledge bank, per-menu guide ---------- */
