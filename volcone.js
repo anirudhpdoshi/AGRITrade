@@ -171,17 +171,23 @@
       if (q2[2] != null) p.push(xa.toFixed(1) + "," + ys(q2[2]).toFixed(1));   /* today: EMA at the live price */
       if (p.length > 1) s += '<polyline class="vc-ma ' + q2[1] + '" points="' + p.join(" ") + '"/>';
       if (q2[2] != null) MAL.push([q2[0], q2[1], q2[2]]); });
-    MAL.sort(function (a, b) { return ys(a[2]) - ys(b[2]); }).reduce(function (prevY, q) { var y = Math.max(ys(q[2]) + 3.5, prevY + 12);   /* labels at the line ends, never overlapping */
-      s += '<text x="' + (xa - 6).toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="end" class="vc-mal ' + q[1] + '">EMA' + q[0] + " " + q[2].toFixed(d) + "</text>"; return y; }, -1e9);
     var cotLast = m.cot && m.cot.length ? m.cot[m.cot.length - 1] : null;
     if (L.cot && m.cot && m.cot.length) {
       var idx = {}; Dt.forEach(function (x, i) { idx[x] = i; });
       var pts = m.cot.filter(function (c) { return idx[c.d] != null; }), st = "";
       pts.forEach(function (c, i) { var x = xs(idx[c.d]), y = ys(c.px), nx = i < pts.length - 1 ? xs(idx[pts[i + 1].d]) : xa; st += (i ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1) + "L" + nx.toFixed(1) + "," + y.toFixed(1); });
       if (st) s += '<path class="vc-cot" d="' + st + '"/>' + pts.map(function (c) { return '<circle class="vc-cotd" cx="' + xs(idx[c.d]).toFixed(1) + '" cy="' + ys(c.px).toFixed(1) + '" r="2.6"><title>COT ' + md(c.d) + ": " + c.px.toFixed(d) + " · managed money net " + (c.net > 0 ? "+" : "") + (c.net || 0).toLocaleString() + "</title></circle>"; }).join("");
-      if (cotLast) s += '<text x="' + (xa - 6).toFixed(1) + '" y="' + (ys(cotLast.px) + (cotLast.px > m.px ? -6 : 14)).toFixed(1) + '" class="vc-cotl" text-anchor="end">COT ' + md(cotLast.d) + " " + cotLast.px.toFixed(d) + "</text>";
+      if (cotLast) MAL.push(["COT " + md(cotLast.d), "cot", cotLast.px]);
     }
     s += '<polyline class="vc-pxl" points="' + C.map(function (v, i) { return xs(i).toFixed(1) + "," + ys(v).toFixed(1); }).join(" ") + " " + xa.toFixed(1) + "," + ya.toFixed(1) + '"/>';
+    /* line-end tags (owner, Nov 19 2026): EMA and COT values as solid pills drawn above every line, stacked 15px apart so
+       they never overlap each other or sit on a line; a short tick ties each pill to its line's end */
+    var TG = MAL.map(function (q) { return { t: (typeof q[0] === "number" ? "EMA" + q[0] : q[0]) + " " + q[2].toFixed(d), c: q[1], y0: ys(q[2]) }; }).sort(function (a, b) { return a.y0 - b.y0; });
+    TG.forEach(function (g, i) { g.y = Math.max(g.y0, i ? TG[i - 1].y + 15 : PT + 7); });
+    for (var ti = TG.length - 1; ti >= 0; ti--) { var lim = ti < TG.length - 1 ? TG[ti + 1].y - 15 : VH - PB - 7; if (TG[ti].y > lim) TG[ti].y = lim; }
+    TG.forEach(function (g) { var w = g.t.length * 6.3 + 12, x1 = xa - 14, x0 = x1 - w;
+      s += '<g class="vc-tag ' + g.c + '"><line x1="' + x1.toFixed(1) + '" x2="' + xa.toFixed(1) + '" y1="' + g.y.toFixed(1) + '" y2="' + g.y0.toFixed(1) + '"/><rect x="' + x0.toFixed(1) + '" y="' + (g.y - 7).toFixed(1) + '" width="' + w.toFixed(1) + '" height="14" rx="3"/>' +
+        '<text x="' + (x0 + 6).toFixed(1) + '" y="' + (g.y + 3.6).toFixed(1) + '">' + esc(g.t) + "</text></g>"; });
     /* breaches: MA, OI walls, ±1σ (daily, from settle), COT price */
     var lv = []; [["EMA20", m.ma20], ["EMA50", m.ma50], ["EMA100", m.ma100]].forEach(function (q3) { if (q3[1] && L.ma) lv.push(q3); });
     walls.forEach(function (w) { lv.push([w[0], w[1]]); });
@@ -321,6 +327,9 @@
     ".vc-log{border-top:1px solid #1a1a1a;padding-top:10px;font-size:11px;color:#c9d4e2;display:flex;flex-direction:column;gap:3px;margin-top:auto}.vc-log b{font-size:10.5px;letter-spacing:.06em;color:#8a8a8a;font-weight:500;text-transform:uppercase}.vc-log span{color:#777;margin-right:8px}" +
     ".vc-main{min-width:0}.vc-svg{width:100%;height:auto;display:block}.vc-g{stroke:#1a1a1a}.vc-ax{fill:#777;font:11px 'JetBrains Mono','IBM Plex Mono',monospace}.vc-ax2{fill:#8a8a8a;font:9.5px 'JetBrains Mono','IBM Plex Mono',monospace}" +
     ".vc-pxl{fill:none;stroke:#f2f2f2;stroke-width:1.4}.vc-ma{fill:none;stroke-width:1.4}.vc-ma.m20{stroke:#c9b07a}.vc-ma.m50{stroke:#7b6fd0}.vc-ma.m100{stroke:#474c86}.vc-mal{font:700 10px 'JetBrains Mono','IBM Plex Mono',monospace;paint-order:stroke;stroke:#000;stroke-width:3px}.vc-mal.m20{fill:#e0c78f}.vc-mal.m50{fill:#9d93e6}.vc-mal.m100{fill:#8a90d0}" +
+    ".vc-tag rect{fill:#0b0f15;stroke-width:1.2}.vc-tag text{font:700 10.5px 'JetBrains Mono','IBM Plex Mono',monospace}.vc-tag line{stroke-width:1}" +
+    ".vc-tag.m20 rect,.vc-tag.m20 line{stroke:#e0c78f}.vc-tag.m20 text{fill:#e0c78f}.vc-tag.m50 rect,.vc-tag.m50 line{stroke:#9d93e6}.vc-tag.m50 text{fill:#b3abf0}.vc-tag.m100 rect,.vc-tag.m100 line{stroke:#6f76c4}.vc-tag.m100 text{fill:#a6acec}.vc-tag.cot rect,.vc-tag.cot line{stroke:#e8a33d}.vc-tag.cot text{fill:#ffb84d}" +
+    "html[data-theme=light] .vc-tag rect{fill:#fff}html[data-theme=light] .vc-tag.m20 text{fill:#7a5a12}html[data-theme=light] .vc-tag.m50 text{fill:#4b3fb0}html[data-theme=light] .vc-tag.m100 text{fill:#2e347a}html[data-theme=light] .vc-tag.cot text{fill:#9a5a00}" +
     ".vc-cone{transition:d .6s ease}.vc-cone.z1{fill:rgba(56,224,190,.30);stroke:rgba(80,240,210,.7);stroke-width:1}.vc-cone.z2{fill:rgba(56,224,190,.16);stroke:rgba(80,240,210,.45);stroke-width:1}.vc-cone.z3{fill:rgba(56,224,190,.07);stroke:rgba(80,240,210,.3);stroke-width:1}" +
     ".vc-wire{fill:rgba(217,140,40,.04);stroke:#d99a3a;stroke-width:1;stroke-dasharray:4 3;transition:d .6s ease}.vc-sig{fill:#6fe0c6;font:10px 'JetBrains Mono','IBM Plex Mono',monospace;paint-order:stroke;stroke:#000;stroke-width:3}" +
     ".vc-call{fill:#2fae6a}.vc-put{fill:#c0392b}.vc-wall{stroke-width:1;stroke-dasharray:2 4}.vc-wall.c{stroke:#2fae6a}.vc-wall.p{stroke:#c0392b}.vc-lvl{stroke:#8a8a8a;stroke-dasharray:3 3}" +
