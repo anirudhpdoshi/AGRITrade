@@ -142,6 +142,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
     <button class="tab-btn" role="tab" id="tabbtn-briefing" aria-selected="false" aria-controls="panel-briefing" data-tab="briefing">Briefing<span class="sym">US · CA</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-policy" aria-selected="false" aria-controls="panel-policy" data-tab="policy">Policy<span class="sym">CB intel</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-earnings" aria-selected="false" aria-controls="panel-earnings" data-tab="earnings">US Earnings<span class="sym">Live</span></button>
+    <button class="tab-btn" role="tab" id="tabbtn-indices" aria-selected="false" aria-controls="panel-indices" data-tab="indices">US Indices<span class="sym">since election</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-treasury" aria-selected="false" aria-controls="panel-treasury" data-tab="treasury">Treasury<span class="sym">Debt wall</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-aidebt" aria-selected="false" aria-controls="panel-aidebt" data-tab="aidebt">AI Debt<span class="sym">AI raises</span></button>
     <button class="tab-btn" role="tab" id="tabbtn-breakouts" aria-selected="false" aria-controls="panel-breakouts" data-tab="breakouts">Breakouts<span class="sym">Live</span></button>
@@ -164,6 +165,7 @@ body.locked > :not(#gateOverlay){filter:blur(14px);pointer-events:none;user-sele
   <section class="tab-panel" id="panel-briefing" role="tabpanel" aria-labelledby="tabbtn-briefing"></section>
   <section class="tab-panel" id="panel-policy" role="tabpanel" aria-labelledby="tabbtn-policy"></section>
   <section class="tab-panel" id="panel-earnings" role="tabpanel" aria-labelledby="tabbtn-earnings"></section>
+  <section class="tab-panel" id="panel-indices" role="tabpanel" aria-labelledby="tabbtn-indices"></section>
   <section class="tab-panel" id="panel-treasury" role="tabpanel" aria-labelledby="tabbtn-treasury"></section>
   <section class="tab-panel" id="panel-aidebt" role="tabpanel" aria-labelledby="tabbtn-aidebt"></section>
 </main>
@@ -366,6 +368,7 @@ window.LIVE_CONFIG = { finnhubKey: "", dataPollSec: 300, refPollSec: 30, livePol
 <script>(function(){var f=document.createElement("script");f.src="tracker-ui.js?v=20261117ae"+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="treasury-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="ai-debt-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
+<script>(function(){var f=document.createElement("script");f.src="indices-ui.js?v="+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var f=document.createElement("script");f.src="positioning-ui.js?v=20261113b"+Date.now();document.body.appendChild(f);})();</script>
 <script>(function(){var v=Date.now(),a=document.createElement("script");a.src="co-engine.js?v=20261117ac"+v;a.onload=function(){var b=document.createElement("script");b.src="company-ui.js?v=20261118b"+v;document.body.appendChild(b);};document.body.appendChild(a);})();</script>
 <script>/* GitHub API allowance (60 requests/hour per browser) is reserved for the live feed (live.json, every minute).

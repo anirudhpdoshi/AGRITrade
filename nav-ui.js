@@ -10,7 +10,7 @@
     ["grains", "Grains", ["grains", "fx"], "Corn · Soybeans · Wheat · USD/CAD — price tiles open each report"],
     ["positioning", "Positioning / OI", ["positioning"], "Open interest, CFTC funds, options, volatility"],
     ["macro", "Macro", ["macro"], "Macro table, CPI, US · Canada"],
-    ["world", "World Markets", ["world"], "Every venue: sessions, markets, alerts"],
+    ["world", "World Markets", ["world", "indices"], "Every venue: sessions, markets, alerts · Indices: S&P 500, Nasdaq-100, Dow since the election, seasonality, Nifty correlation"],
     ["treasury", "US Treasury", ["treasury"], "US government debt — borrowing, maturity & refinancing risk"],
     ["aidebt", "AI Debt", ["aidebt"], "AI-company debt raises, Jan 2021 – Nov 2026"],
     ["events", "Events", ["events"], "Today's and upcoming releases"],
