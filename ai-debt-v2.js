@@ -111,10 +111,17 @@
     return '<div class="a2-tw"><table class="a2-t"><thead><tr><th></th>' + periods.map(function (p) { return "<th>" + esc(yl(p.year)) + "</th>"; }).join("") + "</tr></thead><tbody>" +
       rows.map(function (r) { return '<tr class="' + (r[2] || "") + '"><th scope="row">' + r[0] + "</th>" + periods.map(function (p) { return "<td>" + r[1](p) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table></div>" + (note ? '<p class="a2-note">' + note + "</p>" : "");
   }
-  function det(title, body, open) { return '<details class="a2-x"' + (open ? " open" : "") + "><summary>" + title + "</summary>" + body + "</details>"; }
+  /* view mode (owner, Nov 19 2026): Both = chart and table side by side, Chart = charts only (tables one click away), Table = tables only */
+  var VM = "both"; try { VM = localStorage.getItem("desk.ad2.vm") || "both"; } catch (e) {}
+  function det(title, body, big) {
+    if (VM === "chart" || (big && VM === "both")) return '<details class="a2-x"><summary>' + title + "</summary>" + body + "</details>";
+    return '<div class="a2-tb"><div class="a2-tbh">' + title + "</div>" + body + "</div>";
+  }
   function sec(no, title, sub, chart, more, side) {
-    return '<section class="a2-sec"><div class="a2-sh"><span class="a2-no">' + no + "</span><div><h3>" + title + '</h3><p class="a2-ss">' + sub + "</p></div></div>" +
-      (side ? '<div class="a2-two"><div>' + chart + "</div><div>" + side + "</div></div>" : chart) + more + "</section>";
+    var ch = VM === "table" ? "" : (side ? '<div class="a2-two"><div>' + chart + "</div><div>" + side + "</div></div>" : chart);
+    var m1 = Array.isArray(more) ? more[0] : more, m2 = Array.isArray(more) ? more[1] : "";
+    var body = VM === "both" && !side && chart && m1 && m1.indexOf("<details") < 0 ? '<div class="a2-pair"><div class="a2-pc">' + chart + '</div><div class="a2-pt">' + m1 + "</div></div>" + m2 : ch + m1 + m2;
+    return '<div class="tile wide a2-sec"><h2><span class="a2-no">' + no + "</span>" + title + ' <span class="h2note">— ' + sub + "</span></h2>" + body + "</div>";
   }
   function cls(v, inv) { v = n(v); return v == null || v === 0 ? "" : (v > 0) !== !!inv ? "a2-up" : "a2-dn"; }
 
@@ -149,7 +156,8 @@
       '<div class="a2-fl">' + [["refinancing_risk", "Refinancing risk"], ["rising_cost_of_debt", "Rising cost of debt"], ["cash_flow_stress", "Cash-flow stress"], ["leverage_deterioration", "Leverage deterioration"]].map(function (k) {
         var f2 = WF[k[0]]; if (!f2) return ""; return '<span class="a2-f ' + (f2.flag ? "on" : "off") + '" title="' + esc(f2.detail || "") + '">' + (f2.flag ? "⚠ " : "✓ ") + k[1] + "</span>"; }).join("") + "</div>";
 
-    var out = '<div class="a2-head"><div><h2>AI Debt Intelligence</h2><p class="a2-ss">Balance-sheet debt (stock) is kept apart from money raised and repaid (flow). USD billions · SEC filings · raises ' + esc(R.window) + " · data " + esc(E.meta && E.meta.generated || R.updated) + "</p></div></div>" + chips +
+    var vm = '<div class="a2-vm" role="group" aria-label="View">' + [["both", "Chart + table"], ["chart", "Chart"], ["table", "Table"]].map(function (q) { return '<button data-a2vm="' + q[0] + '" aria-pressed="' + (VM === q[0]) + '">' + q[1] + "</button>"; }).join("") + "</div>";
+    var out = '<div class="a2-head">' + vm + '<div><h2>AI Debt Intelligence</h2><p class="a2-ss">Balance-sheet debt (stock) is kept apart from money raised and repaid (flow). USD billions · SEC filings · raises ' + esc(R.window) + " · data " + esc(E.meta && E.meta.generated || R.updated) + "</p></div></div>" + chips +
       '<div class="a2-co"><h3>' + esc(c.company) + (c.ticker ? ' <small>' + esc(c.ticker) + " · FY ends " + esc(String(c.fiscal_year_end || "").slice(5)) + "</small>" : "") + "</h3>" + heads + "</div>";
     if (un) out += '<div class="a2-ph big">' + esc(un) + "</div>";
 
@@ -180,9 +188,12 @@
       var aiAmt = reg.filter(function (r) { return r.include_in_total !== false && AI_RX.test((r.instrument_type || "") + " " + (r.notes || "")); }).reduce(function (s, r) { return s + (n(r.amount_usd_b) || 0); }, 0);
       out += sec("03", "Funding sources", "Where the money came from — share of each year's raises by instrument." + (aiAmt ? " AI-infrastructure-tagged financing (GPU, data centre, power, project, equipment leases): <b>" + B(aiAmt) + "</b> since 2021." : ""),
         (r3.length ? stacked(r3, keys3.map(function (k) { return { k: k, label: ICN[k], color: C[k] }; }), { pct: 1, label: "Funding mix" }) + legend(keys3.map(function (k) { return [ICN[k], C[k]]; })) : '<div class="a2-ph">No raises recorded for this company in the window.</div>'),
-        det("Breakdown — every raise: instrument, issuer, amount, rate, maturity (" + reg.length + ")", '<div class="a2-tw"><table class="a2-t a2-reg no-tx"><thead><tr><th>Issued</th><th>Instrument</th><th>Type</th><th>Issuer</th><th>Amount</th><th>Rate</th><th>Matures</th><th>AI infra</th></tr></thead><tbody>' +
+        [r3.length ? det("Funding mix by issue year", '<div class="a2-tw"><table class="a2-t no-tx"><thead><tr><th></th>' + r3.map(function (r) { return "<th>" + r.lab + "</th>"; }).join("") + "</tr></thead><tbody>" +
+          keys3.map(function (k) { return '<tr><th scope="row"><i class="a2-sw" style="background:' + C[k] + '"></i>' + ICN[k] + "</th>" + r3.map(function (r) { var t = 0; Object.keys(r.v).forEach(function (q) { t += r.v[q] || 0; }); var v = r.v[k] || 0; return "<td>" + (v ? B(v) + ' <small class="a2-pc2">' + (v / t * 100).toFixed(0) + "%</small>" : "—") + "</td>"; }).join("") + "</tr>"; }).join("") +
+          '<tr class="b"><th scope="row">Total raised</th>' + r3.map(function (r) { var t = 0; Object.keys(r.v).forEach(function (q) { t += r.v[q] || 0; }); return "<td>" + B(t) + "</td>"; }).join("") + "</tr></tbody></table></div>") : "",
+        det("Every raise — instrument, issuer, amount, rate, maturity (" + reg.length + ")", '<div class="a2-tw"><table class="a2-t a2-reg no-tx"><thead><tr><th>Issued</th><th>Instrument</th><th>Type</th><th>Issuer</th><th>Amount</th><th>Rate</th><th>Matures</th><th>AI infra</th></tr></thead><tbody>' +
           reg.map(function (r) { var ai = AI_RX.test((r.instrument_type || "") + " " + (r.notes || "")); return "<tr" + (r.include_in_total === false ? ' class="ex" title="Not counted in totals (e.g. exchange offer, non-cash)"' : "") + "><td>" + esc(r.issue_month) + "</td><td>" + esc(r.instrument_type) + "</td><td>" + esc(ICN[instClass(r.instrument_type)]) + "</td><td>" + esc(r.issuer_legal_entity || "") + "</td><td>" + B(r.amount_usd_b) + (r.currency && r.currency !== "USD" ? " <small>" + esc(r.currency) + "</small>" : "") + "</td><td>" + (n(r.yield_or_coupon_pct) != null ? rate(r.yield_or_coupon_pct) + " <small>" + esc(r.yield_type || "") + "</small>" : "—") + "</td><td>" + esc(dueYear(r.instrument_type)) + "</td><td>" + (ai ? '<span class="a2-tag">AI infra</span>' : "") + "</td></tr>"; }).join("") +
-          "</tbody></table></div><p class=\"a2-note\">Lender names are not disclosed in the register; the issuing entity is shown. Rows struck through are not counted in totals. AI-infra tag = instrument or note mentions GPUs, data centres, power, project, equipment or lease financing.</p>"));
+          "</tbody></table></div><p class=\"a2-note\">Lender names are not disclosed in the register; the issuing entity is shown. Rows struck through are not counted in totals. AI-infra tag = instrument or note mentions GPUs, data centres, power, project, equipment or lease financing.</p>", true)]);
 
       /* 4 Maturity & cost */
       var ML = c.maturity_ladder || {}, PM = ML.principal_maturing_usd_b || null;
@@ -219,18 +230,21 @@
   function css() {
     if (doc.getElementById("a2-css")) return;
     var s = doc.createElement("style"); s.id = "a2-css";
-    s.textContent = ".a2{display:flex;flex-direction:column;gap:14px}.a2 h2{margin:0;font-size:20px}.a2-ss{margin:3px 0 0;color:var(--muted,#9aa7b8);font-size:13px;line-height:1.45}" +
+    s.textContent = ".a2{display:flex;flex-direction:column;gap:14px}.a2-head h2{margin:0;font-size:20px}.a2-ss{margin:3px 0 0;color:var(--muted,#9aa7b8);font-size:13px;line-height:1.45}" +
       ".a2-cos{display:flex;flex-wrap:wrap;gap:6px}.a2-cos button{all:unset;cursor:pointer;padding:6px 12px;border:1px solid var(--line2,#2a3442);border-radius:999px;font-size:12.5px;font-weight:600;color:var(--muted,#9aa7b8)}.a2-cos button small{opacity:.7;font-weight:500}.a2-cos button[aria-pressed=true]{background:#ffb84d;color:#101825;border-color:#ffb84d}" +
       ".a2-co h3{margin:4px 0 10px;font-size:18px}.a2-co h3 small{font-size:12px;color:var(--faint,#7d8a9c);font-weight:500}" +
-      ".a2-ks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.a2-k{background:var(--panel,#0e141c);border:1px solid var(--line,#1f2833);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}" +
+      ".a2-ks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.a2-k{background:var(--panel2,#111a24);border:1px solid var(--line,#1f2833);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}" +
       ".a2-k .kk{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint,#7d8a9c);font-weight:700}.a2-k b{font:700 24px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}.a2-k .ks{font-size:12px;color:var(--muted,#9aa7b8)}" +
       ".a2-fl{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.a2-f{font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid}.a2-f.on{color:#ff6b6b;border-color:rgba(255,107,107,.5);background:rgba(255,107,107,.08)}.a2-f.off{color:#3fb97f;border-color:rgba(63,185,127,.4)}" +
-      ".a2-sec{background:var(--panel,#0e141c);border:1px solid var(--line,#1f2833);border-radius:14px;padding:16px 18px}.a2-sh{display:flex;gap:12px;align-items:flex-start;margin-bottom:8px}.a2-no{font:800 13px 'IBM Plex Mono',monospace;color:#ffb84d;border:1px solid rgba(255,184,77,.45);border-radius:8px;padding:4px 8px}.a2-sh h3{margin:0;font-size:16px;letter-spacing:.02em}" +
+      ".a2-sec{margin:0}.a2-sec>h2{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.a2-sec .a2-no{font-size:12px;padding:2px 7px}.a2-sh{display:flex;gap:12px;align-items:flex-start;margin-bottom:8px}.a2-no{font:800 13px 'IBM Plex Mono',monospace;color:#ffb84d;border:1px solid rgba(255,184,77,.45);border-radius:8px;padding:4px 8px}.a2-sh h3{margin:0;font-size:16px;letter-spacing:.02em}" +
       ".a2-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}.a2-ct{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#9aa7b8);margin-bottom:4px}" +
       ".a2-svg{width:100%;max-width:980px;max-height:380px;height:auto;display:block;margin:0 auto}.a2-two .a2-svg{max-height:300px}.a2-g{stroke:var(--line,#1f2833)}.a2-z{stroke:var(--muted,#9aa7b8)}.a2-ax{fill:var(--faint,#7d8a9c);font:11px 'IBM Plex Mono',monospace}.a2-xl{fill:var(--muted,#9aa7b8);font:600 12px 'IBM Plex Sans',sans-serif}" +
       ".a2-top{fill:var(--ink,#e8eef7);font:700 12px 'IBM Plex Mono',monospace}.a2-in{fill:#fff;font:600 10.5px 'IBM Plex Mono',monospace;paint-order:stroke;stroke:rgba(0,0,0,.45);stroke-width:2px}.a2-dl{fill:#ffb84d;font:700 11.5px 'IBM Plex Mono',monospace;paint-order:stroke;stroke:#000;stroke-width:3px}" +
       ".a2-ref{stroke:#ff6b6b;stroke-width:2;stroke-dasharray:7 5}.a2-refl{fill:#ff8a8a;font:600 11px 'IBM Plex Sans',sans-serif;paint-order:stroke;stroke:#000;stroke-width:3px}.a2-con{stroke:var(--faint,#7d8a9c);stroke-dasharray:3 3}" +
       ".a2-lg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted,#9aa7b8);margin:6px 0 2px}.a2-lg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}" +
+      ".a2-head{display:flex;flex-direction:row-reverse;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}.a2-vm{display:flex;border:1px solid var(--line2,#2a3442);border-radius:9px;overflow:hidden}.a2-vm button{all:unset;cursor:pointer;padding:7px 14px;font-size:12.5px;font-weight:700;color:var(--muted,#9aa7b8)}.a2-vm button+button{border-left:1px solid var(--line2,#2a3442)}.a2-vm button[aria-pressed=true]{background:#ffb84d;color:#101825}" +
+      ".a2-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:18px;align-items:start}.a2-pt .a2-tb{margin-top:0;border-top:0;padding-top:0}.a2-tb{margin-top:12px;border-top:1px solid var(--line,#1f2833);padding-top:10px}.a2-tbh{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint,#7d8a9c);margin-bottom:2px}" +
+      ".a2-sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}.a2-pc2{color:var(--faint,#7d8a9c);font-size:10.5px}.a2-pair .a2-t th,.a2-pair .a2-t td{padding:6px 8px}@media (max-width:1250px){.a2-pair{grid-template-columns:1fr}}" +
       ".a2-x{margin-top:10px;border-top:1px solid var(--line,#1f2833);padding-top:8px}.a2-x summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--ink,#e8eef7)}.a2-x summary::marker{color:#ffb84d}" +
       ".a2-tw{overflow-x:auto;margin-top:8px}.a2-t{border-collapse:collapse;width:100%;font:12.5px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}.a2-t th,.a2-t td{padding:7px 10px;border-bottom:1px solid var(--line,#1f2833);white-space:nowrap;text-align:right}" +
       ".a2-t thead th{font-size:11px;color:var(--faint,#7d8a9c);letter-spacing:.06em}.a2-t tbody th{text-align:left;font-family:'IBM Plex Sans',sans-serif;font-weight:600;color:var(--muted,#9aa7b8);position:sticky;left:0;background:var(--panel,#0e141c)}.a2-t tr.b td{font-weight:700}.a2-t tr.sub th,.a2-t tr.sub td{color:var(--faint,#7d8a9c);font-size:11.5px}" +
@@ -241,7 +255,8 @@
       "@media (max-width:1000px){.a2-ks{grid-template-columns:repeat(2,minmax(0,1fr))}.a2-two{grid-template-columns:1fr}}@media (max-width:480px){.a2-k b{font-size:19px}}";
     doc.head.appendChild(s);
   }
-  doc.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-a2co]"); if (!b) return; SEL = b.getAttribute("data-a2co"); try { localStorage.setItem("desk.ad2.co", SEL); } catch (e) {} render(); });
+  doc.addEventListener("click", function (ev) { var m = ev.target.closest && ev.target.closest("[data-a2vm]"); if (m) { VM = m.getAttribute("data-a2vm"); try { localStorage.setItem("desk.ad2.vm", VM); } catch (e) {} render(); return; }
+    var b = ev.target.closest && ev.target.closest("[data-a2co]"); if (!b) return; SEL = b.getAttribute("data-a2co"); try { localStorage.setItem("desk.ad2.co", SEL); } catch (e) {} render(); });
   Promise.all([fetch("ai-debt-enhancement.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }),
     fetch("ai-debt.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })])
     .then(function (x2) { E = x2[0]; R = x2[1]; render(); }).catch(function (e) { ERR = String(e.message || e); render(); });
