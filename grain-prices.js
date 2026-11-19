@@ -48,7 +48,7 @@
     var qn = L.filter(function (r) { return quoteFor(g, r.contract, r.settle_date, r.settle); }).length;
     return '<div class="tile wide gp-tile" data-src="grains_settle" data-src2="grains_quote"><h2>Futures <span class="h2note">— ' + NAME[k] + " · all active months on file (" + L.length + ") · $/bu</span></h2>" + sw() +
       (VIEW === "tiles" ? '<div class="gp-cg">' + tiles.join("") + "</div>" :
-      '<div class="tbl-scroll"><table class="gp-tbl"><thead><tr><th>Month</th><th>Contract</th><th>Price</th><th>Change</th><th>Settle</th><th>Prior settle</th><th>Spread vs front</th></tr></thead><tbody>' + rows + "</tbody></table></div>") +
+      '<div class="tbl-scroll"><table class="gp-tbl no-tx"><thead><tr><th>Month</th><th>Contract</th><th>Price</th><th>Change</th><th>Settle</th><th>Prior settle</th><th>Spread vs front</th></tr></thead><tbody>' + rows + "</tbody></table></div>") +
       '<div class="stamp">Price = Yahoo delayed CBOT quote (about 10 min) where one is on file (' + qn + " of " + L.length + " months), otherwise the latest settlement · change vs the prior settlement · spread = month minus front, in cents</div></div>";
   }
   function optionsHTML(k) {
@@ -75,7 +75,7 @@
     }).join("");
     return '<div class="tile wide gp-tile" data-src="options"><h2>Options <span class="h2note">— ' + NAME[k] + " options by expiry · underlying in $/bu</span></h2>" + sw() +
       (VIEW === "tiles" ? '<div class="gp-cg">' + tiles.join("") + "</div>" :
-      '<div class="tbl-scroll"><table class="gp-tbl"><thead><tr><th>Option month</th><th>Underlying</th><th>Price</th><th>Change</th><th>Expires</th><th>ATM IV</th><th>Expected range</th><th>Put/call OI</th></tr></thead><tbody>' + rows + "</tbody></table></div>") +
+      '<div class="tbl-scroll"><table class="gp-tbl no-tx"><thead><tr><th>Option month</th><th>Underlying</th><th>Price</th><th>Change</th><th>Expires</th><th>ATM IV</th><th>Expected range</th><th>Put/call OI</th></tr></thead><tbody>' + rows + "</tbody></table></div>") +
       '<div class="stamp">' + (CM.length ? "Months marked “CME final” come from CME Daily Bulletin #" + esc(g.cme_months.bulletin || "") + " (" + day(g.cme_months.date) + " close): open interest is CME’s final count and ATM IV is computed (Black-76) from CME’s at-the-money settlements · " : "") + 'Option chains as of ' + esc(new Date(O.asof).toLocaleString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET · expected range = market-implied move to expiry, not a forecast · put/call = open-interest ratio</div></div>";
   }
   document.addEventListener("click", function (ev) {

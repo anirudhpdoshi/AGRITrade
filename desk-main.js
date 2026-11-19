@@ -1200,7 +1200,7 @@ function oiMonthsHTML(key){
       '<td>'+fmt(ds.call_wall[0],2)+' · '+fmt(ds.call_wall[1])+mv(S.cw0,ds.call_wall,'resistance')+'</td><td>'+fmt(ds.put_wall[0],2)+' · '+fmt(ds.put_wall[1])+mv(S.pw0,ds.put_wall,'support')+'</td>'+
       '<td class="oi-asof">'+esc(oiLabel(ds).replace(/^.*OI as of /,'OI ').replace(' close (preliminary)',' close · prelim'))+(S.from?'<br>Δ vs '+esc(fmtShortDate(S.from))+' pull'+(ds._prev_sessions>1?' <b class="oi-gapn">('+ds._prev_sessions+' sessions)</b>':''):ds._prev_bad?'<br>Δ n/a — '+esc(ds._prev_bad):'<br>Δ from next pull')+'</td></tr>';
   }).join('');
-  return '<div class="oi-months"><div class="oi-mt">What happened in each option month</div><table class="oi-mtab"><thead><tr><th>Month</th><th>Calls · Δ</th><th>Puts · Δ</th><th>P/C</th><th>Call wall</th><th>Put wall</th><th>Data</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  return '<div class="oi-months"><div class="oi-mt">What happened in each option month</div><table class="oi-mtab no-tx"><thead><tr><th>Month</th><th>Calls · Δ</th><th>Puts · Δ</th><th>P/C</th><th>Call wall</th><th>Put wall</th><th>Data</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 /* change in open interest by strike (bars above zero = contracts added, below = closed) */
 function oiDeltaSVG(ds, prev, cp, key, lab){
