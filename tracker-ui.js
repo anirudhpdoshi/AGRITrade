@@ -47,7 +47,18 @@
   function tile(s) {
     var i = bySym(s);
     if (!i || i.last == null) return '<div class="usm-t"><div class="n">' + esc(SHORT[s]) + '</div><span class="usm-b na">Unavailable</span></div>';
-    return '<div class="usm-t" data-usmi="' + esc(i.id) + '" role="button" tabindex="0"><div class="n">' + esc(SHORT[s]) + badge(i) + '</div><div class="v">' + num(i.last, dec(i)) + '</div><div class="c ' + dirCls(i.chg) + '">' + move(i) + "</div>" + range(i) + "</div>";
+    return '<div class="usm-t" data-usmi="' + esc(i.id) + '" role="button" tabindex="0"><div class="n">' + esc(SHORT[s]) + badge(i) + '</div><div class="v">' + num(i.last, dec(i)) + '</div><div class="c ' + dirCls(i.chg) + '">' + move(i) + "</div>" + range(i) + emaBox(i) + "</div>";
+  }
+  /* EMA 20/50/100/200 boxes on each US index (owner, Nov 19 2026), as on the grain tiles: today's EMA moves with the live price
+     (EMA of completed closes + today's bar at the last price), so "above / below" always matches the price shown */
+  function emaBox(i) {
+    var E = i.ma && i.ma.ema; if (!E || i.last == null) return "";
+    var live = i.ma.asof !== i.session_date, A = [20, 50, 100, 200].map(function (n) { var e = E[String(n)]; if (e == null) return null; if (live) e = e + 2 / (n + 1) * (i.last - e); return [n, e, (i.last / e - 1) * 100]; }).filter(Boolean);
+    if (!A.length) return "";
+    var bel = A.filter(function (a) { return a[2] < 0; }).length, ab = A.length - bel, d = dec(i);
+    var verdict = bel === A.length ? ["dn", "Bearish — below " + bel + " of " + A.length + " EMAs"] : ab === A.length ? ["up", "Bullish — above " + ab + " of " + A.length + " EMAs"] : [ab > bel ? "up" : bel > ab ? "dn" : "flat", "Mixed — above " + ab + ", below " + bel + " of " + A.length + " EMAs"];
+    return '<div class="usm-ema">' + A.map(function (a) { var up = a[2] >= 0; return '<div class="' + (up ? "up" : "dn") + '"><span>' + a[0] + "D EMA " + (up ? "▲" : "▼") + " " + (up ? "+" : "−") + Math.abs(a[2]).toFixed(1) + "%</span><b>" + num(a[1], d) + "</b></div>"; }).join("") +
+      '</div><div class="usm-emv ' + verdict[0] + '">' + verdict[1] + "</div>";
   }
   function table(title, rows, note) {
     rows = rows.filter(Boolean); if (!rows.length) return "";
@@ -469,7 +480,10 @@
 
   /* -------- shell -------- */
   var css = document.createElement("style");
-  css.textContent = '#usm{display:none;gap:10px;grid-template-columns:minmax(0,1fr);grid-template-areas:"a" "c" "t" "b" "d" "f" "g"}#usm:has(#panel-earnings.active),body:has(#panel-usmkt.active) #usm{display:grid}' +
+  css.textContent = '.usm-ema{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px}.usm-ema>div{border:1px solid var(--line2);border-radius:6px;padding:4px 7px;min-width:0}.usm-ema>div.up{border-color:rgba(63,185,127,.55)}.usm-ema>div.dn{border-color:rgba(214,54,48,.55)}' +
+    '.usm-ema span{display:block;font:600 10px "IBM Plex Mono",monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.usm-ema .up span{color:var(--green)}.usm-ema .dn span{color:var(--red)}.usm-ema b{font:600 13px "IBM Plex Mono",monospace;color:var(--ink)}' +
+    '.usm-emv{margin-top:6px;font-size:12px;font-weight:600}.usm-emv.up{color:var(--green)}.usm-emv.dn{color:var(--red)}.usm-emv.flat{color:var(--muted)}' +
+    '#usm{display:none;gap:10px;grid-template-columns:minmax(0,1fr);grid-template-areas:"a" "c" "t" "b" "d" "f" "g"}#usm:has(#panel-earnings.active),body:has(#panel-usmkt.active) #usm{display:grid}' +
     '#usmTabs{grid-area:t;position:sticky;top:0;z-index:6;align-self:start}#usmTabs .un-nav{box-shadow:0 8px 18px rgba(0,0,0,.55);margin-top:2px}@media (max-width:760px){#usmTabs{position:static}}#usmTabs:empty{display:none}#usm:not([data-v="intel"]) #usmTabs{display:none}#usm[data-mode="search"] #usmTabs,#usm[data-mode="calendar"] #usmTabs{display:none}' +
     '.usm-a{grid-area:a;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:8px 12px}.usm-a b{font-size:14px;color:var(--ink);letter-spacing:.02em}' +
     '.usm-s{flex:1 1 240px;max-width:460px;background:var(--panel2);color:var(--ink);border:1px solid var(--line2);border-radius:6px;padding:7px 10px;font:inherit;font-size:13px}.usm-s:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}' +

@@ -238,7 +238,18 @@ def ma_block(dates, closes):
         return round(sum(closes[end - n + 1:end + 1]) / n, 6) if end + 1 >= n else None
     e = len(closes) - 1
     return {"asof": dates[e], "close": round(closes[e], 6), "prev_close": round(closes[e - 1], 6), "prev_asof": dates[e - 1],
-            "ma": {str(n): avg(n, e) for n in (20, 50, 100, 200)}, "prev_ma": {str(n): avg(n, e - 1) for n in (20, 50, 100, 200)}}
+            "ma": {str(n): avg(n, e) for n in (20, 50, 100, 200)}, "prev_ma": {str(n): avg(n, e - 1) for n in (20, 50, 100, 200)},
+            "ema": {str(n): ema_last(closes, n) for n in (20, 50, 100, 200)}}
+
+
+def ema_last(closes, n):
+    """exponential average of completed closes (seeded with the first n-close simple average); None without n+10 closes"""
+    if len(closes) < n + 10:
+        return None
+    k, e = 2 / (n + 1), sum(closes[:n]) / n
+    for c in closes[n:]:
+        e += k * (c - e)
+    return round(e, 6)
 
 
 def _quote_prev_close(sym):
@@ -268,7 +279,7 @@ def fetch_yahoo(universe, now_utc):
 
 def _fetch_batch(universe, now_utc):
     syms = [u["sym"] for u in universe]
-    daily = yf().download(syms, period="1y", interval="1d", group_by="ticker", auto_adjust=False, progress=False, threads=True)
+    daily = yf().download(syms, period="2y", interval="1d", group_by="ticker", auto_adjust=False, progress=False, threads=True)
     intra = yf().download(syms, period="5d", interval="5m", group_by="ticker", auto_adjust=False, progress=False, threads=True, prepost=False)
     recs, failed = {}, []
     for u in universe:
