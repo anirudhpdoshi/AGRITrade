@@ -230,7 +230,7 @@
     var d = m.dec, live = m._live, F = m._F, VF = live ? Math.sqrt(path(m, F)[F]) : 0, ci = live ? [m.px * Math.exp(-1.96 * VF), m.px * Math.exp(1.96 * VF)] : null, ci99 = live ? [m.px * Math.exp(-2.576 * VF), m.px * Math.exp(2.576 * VF)] : null;
     var kv = function (a, b) { return '<div class="vc-kv"><span>' + a + "</span><b>" + b + "</b></div>"; };
     var tg = function (k2, lab) { return '<button type="button" class="vc-tg" data-vctg="' + k2 + '" aria-pressed="' + L[k2] + '"><span>' + lab + "</span><i></i></button>"; };
-    var reg = m.gex == null ? (m.fx ? '<div class="vc-reg na">GAMMA REGIME: n/a — no FX options OI</div>' : "") : '<div class="vc-reg ' + (m.gex < 0 ? "short" : "long") + '">GAMMA REGIME: ' + (m.gex < 0 ? "SHORT / VOLATILE" : "LONG / PINNED") + "</div>";
+    var reg = m.gex == null ? "" : '<div class="vc-reg ' + (m.gex < 0 ? "short" : "long") + '">GAMMA REGIME: ' + (m.gex < 0 ? "SHORT / VOLATILE" : "LONG / PINNED") + "</div>";
     var cot = m._cot, cotTxt = cot ? (m.px >= cot.px ? "above" : "below") + " by " + (Math.abs(m.px - cot.px) * m.unitMove).toFixed(1) + m.uLab : "—";
     return '<div class="vc-rail">' + reg +
       '<div class="vc-kvs">' + kv("EMA20", m.ma20 ? m.ma20.toFixed(d) : "—") + kv("EMA50", m.ma50 ? m.ma50.toFixed(d) : "—") + kv("EMA100", m.ma100 ? m.ma100.toFixed(d) : "—") +
@@ -238,9 +238,10 @@
         (m.sdIv && m.sdRv ? kv("Implied vol", (m.sdIv * Math.sqrt(252) * 100).toFixed(1) + "%") + kv("Realised vol 30d", (m.sdRv * Math.sqrt(252) * 100).toFixed(1) + "%") +
           kv("IV − RV", '<span class="' + (m.sdIv > m.sdRv ? "up" : "dn") + '">' + ((m.sdIv - m.sdRv) * Math.sqrt(252) * 100 >= 0 ? "+" : "−") + Math.abs((m.sdIv - m.sdRv) * Math.sqrt(252) * 100).toFixed(1) + " pts</span>") : "") + (m.gex != null ? kv("NET GEX", (m.gex < 0 ? "−$" : "$") + Math.abs(m.gex / 1e6).toFixed(0) + "M") : "") +
         kv("vs " + m.settleLab, ((m.px - m.settle) >= 0 ? "+" : "−") + Math.abs((m.px - m.settle) * m.unitMove).toFixed(1) + m.uLab) +
-        kv("COT " + (cot ? md(cot.d) : "price"), cot ? cot.px.toFixed(d) : "—") + kv("Price vs COT", '<span class="' + (cot ? (m.px >= cot.px ? "up" : "dn") : "") + '">' + cotTxt + "</span>") +
+        (m.fx && m.sd ? kv("Realised vol 20d", (m.sd * Math.sqrt(252) * 100).toFixed(1) + "%") : "") +
+        (cot ? kv("COT " + md(cot.d), cot.px.toFixed(d)) + kv("Price vs COT", '<span class="' + (m.px >= cot.px ? "up" : "dn") + '">' + cotTxt + "</span>") : "") +
         (cot && cot.net != null ? kv("Funds net", (cot.net > 0 ? "+" : "") + cot.net.toLocaleString()) : "") + "</div>" +
-      '<div class="vc-tgs">' + tg("dual", "Dual cone") + tg("walls", m.fx ? "Key levels" : "GEX / OI walls") + tg("ma", "EMA 20/50/100") + tg("events", "Event gates") + tg("cot", "CFTC price line") + (m.sdIv && m.sdRv ? tg("rv", "σ: realised, not implied") : "") + "</div>" +
+      '<div class="vc-tgs">' + tg("dual", "Dual cone") + tg("walls", m.fx ? "Key levels" : "GEX / OI walls") + tg("ma", "EMA 20/50/100") + tg("events", "Event gates") + (m.cot && m.cot.length ? tg("cot", "CFTC price line") : "") + (m.sdIv && m.sdRv ? tg("rv", "σ: realised, not implied") : "") + "</div>" +
       '<div class="vc-log"><b>Breach telemetry</b>' + (L2.length ? L2.slice(-6).reverse().map(function (x) { return "<div><span>" + HM.format(new Date(x.t)) + "</span>" + esc(x.txt) + "</div>"; }).join("") : '<div class="neu">No tests or breaches this session.</div>') + "</div></div>";
   }
   function head(m) {

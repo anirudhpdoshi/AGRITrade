@@ -115,23 +115,32 @@
     var nLive = R.filter(function (x) { return x.live; }).length, lastD = M.Y.hist[M.Y.hist.length - 1].d;
     var k = function (t) { var x = R.filter(function (z) { return z.t === t; })[0]; if (!x) return ""; return '<button class="ys-k' + (t === sel ? " on" : "") + '" data-ysm-t="' + t + '"><span class="kl">' + (t === "ON" ? "Overnight · SOFR − CORRA" : t + " spread") + '</span><b>' + f(x.sp, 1) + ' <small>bps</small></b><span class="' + cl(x.d1) + '">' + sg(x.d1, 1) + " 1D · " + sg(x.d5, 1) + " 1W</span></button>"; };
     var ONr = R.filter(function (x) { return x.t === "ON"; })[0];
-    var rows = R.map(function (x) {
-      var w = x.hi - x.lo || 1, pos = Math.max(0, Math.min(100, (x.sp - x.lo) / w * 100));
-      return '<tr class="ys-r' + (x.t === sel ? " on" : "") + '" data-ysm-t="' + x.t + '" tabindex="0">' +
-        '<td data-l="Tenor"><b>' + x.t + "</b>" + (x === wide ? ' <small class="ys-w">widest</small>' : x === nar ? ' <small class="ys-w">narrowest</small>' : "") + "</td>" +
-        '<td data-l="United States" title="' + e(x.src[0]) + '"><b class="ys-cu">' + f(x.us, 3) + "%</b> " + tag(x, "us") + "</td>" +
-        '<td data-l="Canada" title="' + e(x.src[1]) + '"><b class="ys-cc">' + f(x.ca, 3) + "%</b> " + tag(x, "ca") + "</td>" +
-        '<td data-l="Spread (bps)" class="ys-sp"><b>' + f(x.sp, 1) + "</b></td>" +
-        '<td data-l="vs close" class="' + (x.live ? cl(x.dLive) : "ys-n") + '">' + (x.live ? sg(x.dLive, 1) : "—") + "</td>" +
-        '<td data-l="Δ 1D" class="' + cl(x.d1) + '">' + sg(x.d1, 1) + "</td>" +
-        '<td data-l="Δ 1W" class="' + cl(x.d5) + '">' + sg(x.d5, 1) + "</td>" +
-        '<td data-l="Δ 1M" class="' + cl(x.d21) + '">' + sg(x.d21, 1) + "</td>" +
-        '<td data-l="US − SOFR" class="ys-o">' + (ONr && x.t !== "ON" ? sg((x.us - ONr.us) * 100, 0) : "—") + "</td>" +
-        '<td data-l="CA − CORRA" class="ys-o">' + (ONr && x.t !== "ON" ? sg((x.ca - ONr.ca) * 100, 0) : "—") + "</td>" +
-        '<td data-l="90-day range" class="ys-rg"><span class="ys-rl">' + f(x.lo, 0) + '</span><span class="ys-bar"><i style="left:' + pos.toFixed(0) + '%"></i></span><span class="ys-rl">' + f(x.hi, 0) + "</span></td>" +
-        '<td data-l="Percentile">' + ord(x.pct) + "</td>" +
-        '<td data-l="Close date" class="ys-dt">' + md(x.close.d) + "</td></tr>";
-    }).join("");
+    /* table (owner, Nov 19 2026): tenors run ACROSS as columns (money market, then the curve), the measures run DOWN as rows,
+       grouped — yields (US, Canada), the spread between them and its moves, each curve over its overnight rate, then range */
+    var G = [["Money market", R.filter(function (x) { return /^(ON|\d+M)$/.test(x.t); })], ["Curve", R.filter(function (x) { return /Y$/.test(x.t); })]].filter(function (g) { return g[1].length; });
+    var C = [].concat.apply([], G.map(function (g) { return g[1]; }));
+    var cell = function (x, inner, cls, ttl) { return '<td data-ysm-t="' + x.t + '" class="' + (x.t === sel ? "on " : "") + (cls || "") + '"' + (ttl ? ' title="' + e(ttl) + '"' : "") + ">" + inner + "</td>"; };
+    var row = function (lab, fn, cls) { return '<tr><th scope="row" class="ys-rl' + (cls ? " " + cls : "") + '">' + lab + "</th>" + C.map(fn).join("") + "</tr>"; };
+    var grp = function (lab) { return '<tr class="ys-g"><th colspan="' + (C.length + 1) + '">' + lab + "</th></tr>"; };
+    var rows = grp("Yields") +
+      row('<span class="ys-cu">● United States</span>', function (x) { return cell(x, '<b class="ys-cu">' + f(x.us, 3) + "%</b><br>" + tag(x, "us"), "", x.src[0]); }) +
+      row('<span class="ys-cc">● Canada</span>', function (x) { return cell(x, '<b class="ys-cc">' + f(x.ca, 3) + "%</b><br>" + tag(x, "ca"), "", x.src[1]); }) +
+      grp("Spread · US − Canada, bps") +
+      row("Spread", function (x) { return cell(x, "<b>" + f(x.sp, 1) + "</b>" + (x === wide ? '<br><small class="ys-w">widest</small>' : x === nar ? '<br><small class="ys-w">narrowest</small>' : ""), "ys-sp"); }, "ys-spl") +
+      row("vs close", function (x) { return cell(x, x.live ? sg(x.dLive, 1) : "—", x.live ? cl(x.dLive) : "ys-n"); }) +
+      row("Δ 1 day", function (x) { return cell(x, sg(x.d1, 1), cl(x.d1)); }) +
+      row("Δ 1 week", function (x) { return cell(x, sg(x.d5, 1), cl(x.d5)); }) +
+      row("Δ 1 month", function (x) { return cell(x, sg(x.d21, 1), cl(x.d21)); }) +
+      (ONr ? grp("Over the overnight rate, bps") +
+        row("US − SOFR", function (x) { return cell(x, x.t !== "ON" ? sg((x.us - ONr.us) * 100, 0) : "—", "ys-o"); }) +
+        row("Canada − CORRA", function (x) { return cell(x, x.t !== "ON" ? sg((x.ca - ONr.ca) * 100, 0) : "—", "ys-o"); }) : "") +
+      grp("Spread range · official closes") +
+      row("90-day low – high", function (x) { var w = x.hi - x.lo || 1, pos = Math.max(0, Math.min(100, (x.sp - x.lo) / w * 100));
+        return cell(x, '<span class="ys-bar"><i style="left:' + pos.toFixed(0) + '%"></i></span><br><span class="ys-rl2">' + f(x.lo, 0) + " – " + f(x.hi, 0) + "</span>", "ys-rg"); }) +
+      row("Percentile", function (x) { return cell(x, ord(x.pct)); }) +
+      row("Close date", function (x) { return cell(x, md(x.close.d), "ys-dt"); });
+    var thead = '<tr><th rowspan="2" class="ys-c0">Tenor</th>' + G.map(function (g) { return '<th colspan="' + g[1].length + '" class="ys-gh">' + g[0] + "</th>"; }).join("") + "</tr><tr>" +
+      C.map(function (x) { return '<th data-ysm-t="' + x.t + '" class="ys-th' + (x.t === sel ? " on" : "") + '" tabindex="0">' + x.t + "</th>"; }).join("") + "</tr>";
     var read = "Canada yields sit below the US at every tenor shown: the spread runs " + f(nar.sp, 0) + "–" + f(wide.sp, 0) + " bps, widest at " + wide.t + ", narrowest at " + nar.t + ". " +
       (X.d5 != null ? "The " + X.t + " spread is " + (Math.abs(X.d5) < 0.5 ? "flat" : X.d5 > 0 ? "<b class=\"ys-u\">" + f(X.d5, 1) + " bps wider</b>" : "<b class=\"ys-d\">" + f(-X.d5, 1) + " bps narrower</b>") + " on the week" + (Math.abs(X.d5) >= 0.5 ? (X.d5 > 0 ? " — more rate support for USD/CAD." : " — less rate support for USD/CAD.") : ".") : "");
     if (!R.some(function (x) { return x.sp < 0; })) {} else read = read.replace("Canada yields sit below the US at every tenor shown: ", "");
@@ -142,8 +151,8 @@
       '<div class="ys-c"><div class="ys-ct">' + (S.hm === "all" ? "All tenors · spread history" : sel + " spread · history") + ' <span class="ys-rng"><button data-ysm-h="all" class="' + (S.hm === "all" ? "on" : "") + '">All tenors</button><button data-ysm-h="one" class="' + (S.hm === "one" ? "on" : "") + '">' + sel + " only</button>" + [[21, "1M"], [63, "3M"], [90, "90D"]].map(function (z) { return '<button data-ysm-r="' + z[0] + '" class="' + (S.rng === z[0] ? "on" : "") + '">' + z[1] + "</button>"; }).join("") + "</span></div>" +
         '<div class="ys-lg2"><i class="ys-cs">' + (S.hm === "all" ? "Selected tenor (" + sel + ") in bold · click a line, label or table row to switch" : "High, low and average marked · official closes") + "</i></div>" + (S.hm === "all" ? histAllSVG(M, sel, S.rng) : histSVG(X, S.rng)) + "</div></div>" +
       '<p class="ys-read">' + read + "</p>" +
-      '<div class="ys-tw"><table class="ys-t"><thead><tr><th>Tenor</th><th>United States</th><th>Canada</th><th>Spread</th><th>vs close</th><th>Δ 1D</th><th>Δ 1W</th><th>Δ 1M</th><th title="Tenor yield minus SOFR, bps">US − SOFR</th><th title="Tenor yield minus CORRA, bps">CA − CORRA</th><th>90-day range</th><th>%ile</th><th>Close</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
-      '<div class="stamp">Click any row, chip, curve point or history line to select a tenor — every chart and the table follow. “vs SOFR / CORRA” shows each curve over its own overnight rate (US − SOFR, Canada − CORRA): how much term premium each market prices above its policy-anchored overnight rate. Overnight: SOFR (New York Fed) vs CORRA (Bank of Canada). 1M–1Y: US Treasury CMT vs BoC T-bill mid yields. 2Y–30Y: US Treasury CMT vs Government of Canada benchmark bonds (30Y = GoC long benchmark). ' +
+      '<div class="ys-tw"><table class="ys-t ys-tx no-tx"><thead>' + thead + '</thead><tbody>' + rows + "</tbody></table></div>" +
+      '<div class="stamp">Click any tenor column, chip, curve point or history line to select a tenor — every chart and the table follow. “vs SOFR / CORRA” shows each curve over its own overnight rate (US − SOFR, Canada − CORRA): how much term premium each market prices above its policy-anchored overnight rate. Overnight: SOFR (New York Fed) vs CORRA (Bank of Canada). 1M–1Y: US Treasury CMT vs BoC T-bill mid yields. 2Y–30Y: US Treasury CMT vs Government of Canada benchmark bonds (30Y = GoC long benchmark). ' +
       "CLOSE = official print for the date shown; DELAYED / EST / INTERP = today's intraday leg from the live-yield feed. Δ columns and range use official closes only; a tenor with no print on a date is left out, never filled. 20Y is not shown: Canada has no 20-year benchmark.</div></div>";
   }
 
@@ -158,7 +167,10 @@
       ".ys-ls{fill:none;stroke:var(--ys-sp);stroke-width:2.2}.ys-avg{stroke:var(--faint);stroke-dasharray:4 4}.ys-hi{fill:#34d67f}.ys-lo{fill:#ff6262}text.ys-hi{fill:#34d67f}text.ys-lo{fill:#ff6262}.ys-last{fill:var(--ys-sp)}.ys-live{fill:#6cc0ff}text.ys-live{fill:#6cc0ff}" +
       ".ys-rng button{all:unset;cursor:pointer;padding:2px 8px;border:1px solid var(--line);border-radius:999px;margin-left:4px;font-size:11px;text-transform:none}.ys-rng button.on{border-color:var(--ys-sp);color:var(--ys-sp)}" +
       ".ys-read{margin:12px 2px;font-size:14px;line-height:1.5}.ys-tw{overflow-x:auto}.ys-t{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}.ys-t th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);text-align:right;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}.ys-t th:first-child,.ys-t td:first-child{text-align:left}.ys-t td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}" +
-      ".ys-r{cursor:pointer}.ys-r:hover{background:rgba(255,184,77,.05)}.ys-r.on{background:rgba(255,184,77,.10);box-shadow:inset 3px 0 0 var(--ys-sp)}.ys-cu{color:var(--ys-us)}.ys-cc{color:var(--ys-ca)}.ys-cs{color:var(--ys-sp)}.ys-sp b{font-size:15px;color:var(--ys-sp)}.ys-u{color:#34d67f;font-weight:700}.ys-d{color:#ff6262;font-weight:700}.ys-n{color:var(--faint)}html[data-theme=light] .ys-u{color:#0d8a4a}html[data-theme=light] .ys-d{color:#c62828}" +
+      ".ys-tx th.ys-rl{text-align:left;font-size:12.5px;font-weight:600;color:var(--ink);letter-spacing:0;text-transform:none;position:sticky;left:0;background:var(--panel,#0b1016);z-index:1}.ys-tx th.ys-spl{color:var(--ys-sp)}" +
+      ".ys-tx tr.ys-g th{text-align:left;font-size:10.5px;letter-spacing:.12em;color:var(--ys-sp);padding:12px 10px 4px;border-bottom:1px solid var(--line)}.ys-tx th.ys-gh{text-align:center;color:var(--dim,#9aa7b8)}" +
+      ".ys-tx th.ys-c0{text-align:left;vertical-align:bottom}.ys-tx th.ys-th{cursor:pointer;font-size:13px;color:var(--ink)}.ys-tx th.ys-th.on{color:var(--ys-sp);box-shadow:inset 0 -2px 0 var(--ys-sp)}" +
+      ".ys-tx td{cursor:pointer;line-height:1.35}.ys-tx td.on{background:rgba(255,184,77,.08)}.ys-tx td .ys-tag{margin-top:3px;display:inline-block}.ys-tx td .ys-bar{display:inline-block;width:64px}.ys-rl2{font-size:11px;color:var(--faint)}" +".ys-r{cursor:pointer}.ys-r:hover{background:rgba(255,184,77,.05)}.ys-r.on{background:rgba(255,184,77,.10);box-shadow:inset 3px 0 0 var(--ys-sp)}.ys-cu{color:var(--ys-us)}.ys-cc{color:var(--ys-ca)}.ys-cs{color:var(--ys-sp)}.ys-sp b{font-size:15px;color:var(--ys-sp)}.ys-u{color:#34d67f;font-weight:700}.ys-d{color:#ff6262;font-weight:700}.ys-n{color:var(--faint)}html[data-theme=light] .ys-u{color:#0d8a4a}html[data-theme=light] .ys-d{color:#c62828}" +
       ".ys-w{font-size:10px;color:var(--ys-sp);letter-spacing:.06em;text-transform:uppercase}.ys-tag{font-size:9.5px;font-weight:700;letter-spacing:.06em;padding:1px 5px;border-radius:4px;border:1px solid var(--line);color:var(--faint);vertical-align:1px}.ys-tag.ok{color:#34d67f;border-color:rgba(52,214,127,.4)}.ys-tag.warn{color:var(--ys-sp);border-color:rgba(255,184,77,.4)}" +
       ".ys-rg{min-width:150px}.ys-rl{font-size:11px;color:var(--faint)}.ys-bar{position:relative;display:inline-block;width:70px;height:6px;margin:0 6px;border-radius:3px;background:linear-gradient(90deg,rgba(255,98,98,.35),rgba(52,214,127,.35));vertical-align:1px}.ys-bar i{position:absolute;top:-3px;width:3px;height:12px;margin-left:-1px;background:var(--ink);border-radius:2px}.ys-dt{color:var(--faint);font-size:12px}.ys-ph{padding:40px;text-align:center;color:var(--faint)}" +
       ".ysm-tile{container-type:inline-size}@container (max-width:980px){.ys-ch{grid-template-columns:1fr}}.ys-t thead{display:table-header-group!important}.ys-t tbody{display:table-row-group!important}.ys-t tr{display:table-row!important}.ys-t td,.ys-t th{display:table-cell!important}.ys-t td:before{content:none!important}@container (max-width:560px){.ys-t td:nth-child(n+8),.ys-t th:nth-child(n+8),.ys-t td:nth-child(5),.ys-t th:nth-child(5){display:none!important}.ys-t{font-size:12px}.ys-t td,.ys-t th{padding:7px 5px}.ys-tag{display:none}.ys-ks{grid-template-columns:repeat(2,minmax(0,1fr))}.ys-k b{font-size:18px}}";
