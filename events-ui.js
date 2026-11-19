@@ -616,7 +616,7 @@
     Object.keys(s.wa).forEach(function (k) {
       if (base.wa[k] == null || s.wa[k] === base.wa[k] || !s.wa[k]) return;
       var W = WORLD._data(), i = (W.instruments || []).filter(function (x) { return (x.id || x.name) === k; })[0];
-      log("world", "<b>" + esc(i ? i.name : k) + "</b> sets a new 52-week " + (s.wa[k].indexOf("H") >= 0 ? "high" : "low"), "world", "w52|" + k + "|" + s.wa[k] + "|" + dayIso(Date.now()));
+      log("world", "<b>" + esc(i ? i.name : k) + "</b> sets a new 52-week " + (s.wa[k].indexOf("H") >= 0 ? "high" : "low") + (i && i.last != null ? " at <b>" + (+i.last).toLocaleString("en-US", { minimumFractionDigits: i.dec != null ? i.dec : 2, maximumFractionDigits: i.dec != null ? i.dec : 2 }) + "</b>" + (i.pct != null ? " (" + (i.pct > 0 ? "+" : i.pct < 0 ? "−" : "") + Math.abs(i.pct).toFixed(2) + "% on the day)" : "") : ""), "world", "w52|" + k + "|" + s.wa[k] + "|" + dayIso(Date.now()));
     });
     base = s;
   }

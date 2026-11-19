@@ -35,6 +35,9 @@
   function esc(s) { return DeskCore.esc(s); }
   function nf(v, d) { return v == null || !isFinite(v) ? "—" : (+v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }); }
   function sg(v, d, u) { return v == null || !isFinite(v) ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + nf(Math.abs(v), d) + (u || ""); }
+  /* price label on every alert (owner, Nov 19 2026): the instrument's last price, in its own decimals, and the reference it moved from */
+  function apx(a, v) { var i = W && (W.instruments || []).filter(function (x) { return x.id === a.id; })[0], p = v != null ? v : a.last != null ? a.last : i && i.last; if (p == null) return "";
+    var d = i && i.dec != null ? i.dec : Math.abs(p) >= 1000 ? 2 : Math.abs(p) >= 10 ? 2 : 4; return nf(p, d) + (a.unit === "bp" || (i && i.kind === "yield") ? "%" : ""); }
   function cl(v) { return v > 0 ? "up" : v < 0 ? "dn" : "neu"; }
   function ago(ms) { var m = Math.round(ms / 60000); return m < 1 ? "<1m" : m < 60 ? m + "m" : m < 2880 ? Math.round(m / 60) + "h" : Math.round(m / 1440) + "d"; }
   function tClock(iso, tz) { try { return new Date(iso).toLocaleTimeString("en-US", { timeZone: tz || "America/Toronto", hour: "numeric", minute: "2-digit" }); } catch (e) { return ""; } }
@@ -130,9 +133,9 @@
     var first = !W; W = j; lastOk = Date.now(); err = null;
     var fresh = (j.alerts || []).filter(function (a) { var k = a.id + a.basis + a.at; if (seen[k]) return false; seen[k] = 1; return !first; });
     if (fresh.length) {
-      if (window.DESK_LIVE && window.DESK_LIVE.toast) window.DESK_LIVE.toast("<b>World alert</b> — " + fresh.slice(0, 3).map(function (a) { return esc(a.name) + " " + sg(a.move, 2, a.unit === "bp" ? " bp" : "%") + " (" + a.severity + ")"; }).join(" · "));
+      if (window.DESK_LIVE && window.DESK_LIVE.toast) window.DESK_LIVE.toast("<b>World alert</b> — " + fresh.slice(0, 3).map(function (a) { return esc(a.name) + " <b>" + apx(a) + "</b> " + sg(a.move, 2, a.unit === "bp" ? " bp" : "%") + (a.ref != null ? " from " + apx(a, a.ref) : "") + " (" + a.severity + ")"; }).join(" · "));
       if (NOTIFY && "Notification" in window && Notification.permission === "granted") fresh.filter(function (a) { return a.tier >= 2; }).slice(0, 3).forEach(function (a) {
-        try { new Notification("Global market alert — " + a.severity, { body: a.name + " " + sg(a.move, 2, a.unit === "bp" ? " bp" : "%") + " vs " + (a.basis === "prev_close" ? "previous close" : "session open") }); } catch (e) {}
+        try { new Notification("Global market alert — " + a.severity, { body: a.name + " " + apx(a) + " " + sg(a.move, 2, a.unit === "bp" ? " bp" : "%") + " vs " + (a.basis === "prev_close" ? "previous close" : "session open") }); } catch (e) {}
       });
     }
     render();
