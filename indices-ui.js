@@ -57,6 +57,14 @@
       ".ix-chips button[aria-pressed=\"true\"]{color:#101825;background:var(--amber);border-color:var(--amber)}" +
       ".ix-sec{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}" +
       "#panel-indices details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);margin:6px 0}" +
+      ".ixw-gap{flex:0 0 14px}.ixw-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:middle}" +
+      "table.ixw-t td,table.ixw-cm td{vertical-align:top;line-height:1.35}table.ixw-t td b,table.ixw-cm td b{font-weight:600}table.ixw-t td small,table.ixw-cm td small{display:block;font-size:10.5px;color:var(--muted)}" +
+      "table.ixw-t td small.up,table.ixw-t .up{color:var(--up,#4fd18b)}table.ixw-t td small.dn,table.ixw-t .dn{color:var(--down,#ff7b72)}table.ixw-t td.na,table.ixw-cm td.na{color:var(--faint)}" +
+      "table.ixw-t th small.ixw-run{display:block;font-size:9.5px;color:var(--amber)}table.ixw-t td:first-child,table.ixw-cm td:first-child{position:sticky;left:0;background:var(--panel);z-index:1}" +
+      "table.ixw-cm td span{color:var(--muted);font-size:11px}.ixw-xs{grid-template-columns:repeat(5,minmax(0,1fr))!important}.ixw-x .kpi-v{font-size:18px}.ixw-x .kpi-s{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}" +
+      ".ixw-rb{position:relative;height:10px;margin:8px 0 3px;border-radius:5px;background:var(--line)}.ixw-rb .b1{position:absolute;top:0;bottom:0;border:1px solid;border-radius:5px}" +
+      ".ixw-rb .c{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:var(--ink)}.ixw-rl{display:flex;justify-content:space-between;font:10px \"IBM Plex Mono\",monospace;color:var(--faint)}.ixw-rl b{color:var(--ink)}" +
+      ".ixw-im{color:#c9a0f0}@media (max-width:1100px){.ixw-xs{grid-template-columns:repeat(2,minmax(0,1fr))!important}}" +
       "@media (max-width:760px){.ix-kpis{grid-template-columns:1fr}}";
     doc.head.appendChild(s);
   }
@@ -281,6 +289,81 @@
       '<details><summary>Year-over-year returns by month (%) — the trend divergence</summary><div class="tbl-scroll"><table class="ix-t"><thead><tr><th>Month</th><th>S&amp;P 500</th><th>Nasdaq-100</th><th>Dow</th><th>Nifty · INR</th><th>Nifty · USD</th></tr></thead><tbody>' + yoyRows + "</tbody></table></div>" +
       '<p class="note">' + esc(C.yoy_note) + "</p></details></div>";
   }
+  /* ---------- weekly monitor (owner, Nov 19 2026): each week's level, wick, return and points for the US indices and Nifty,
+     rolling correlation, the expected range for next month and the correlated move — all computed in scripts/indices.py ---------- */
+  var WK_KEYS = ["SPX", "NDX", "DJIA", "NIFTY", "NIFTY_USD"], WK_COL = { SPX: COL.SPX, NDX: COL.NDX, DJIA: COL.DJIA, NIFTY: COL.NIFTY, NIFTY_USD: "#f07178" };
+  var WV = "ret", WN = 12; try { WV = localStorage.getItem("desk.ix.wv") || "ret"; WN = +localStorage.getItem("desk.ix.wn") || 12; } catch (e) {}
+  function wkLbl(d) { var p = String(d).split("-"); return MON[+p[1] - 1] + " " + (+p[2]); }
+  function wName(k) { var s = D.weekly.series[k]; return s ? s.name : k; }
+  function rngBar(lo2, lo1, c, hi1, hi2, col) {
+    var span = hi2 - lo2 || 1, P = function (v) { return ((v - lo2) / span * 100).toFixed(1) + "%"; };
+    return '<div class="ixw-rb"><span class="b2"></span><span class="b1" style="left:' + P(lo1) + ";right:calc(100% - " + P(hi1) + ');background:' + col + '33;border-color:' + col + '"></span><span class="c" style="left:' + P(c) + '"></span></div>' +
+      '<div class="ixw-rl"><span>' + num(lo2, 0) + '</span><span>' + num(lo1, 0) + '</span><b>' + num(c, 0) + '</b><span>' + num(hi1, 0) + '</span><span>' + num(hi2, 0) + "</span></div>";
+  }
+  function weeklySection() {
+    var W = D.weekly; if (!W || !W.series || !W.series.SPX) return "";
+    var keys = WK_KEYS.filter(function (k) { return W.series[k] && W.series[k].weeks.length; });
+    var weeks = W.series.SPX.weeks.slice(-WN).map(function (w) { return w.wk; });
+    var lastWk = weeks[weeks.length - 1], today = new Date().toISOString().slice(0, 10);
+    var V = { lvl: "Level", ret: "Returns %", pts: "Change · points", wick: "Wicks · high–low" };
+    var chips = '<div class="ix-chips">' + Object.keys(V).map(function (v) { return '<button type="button" data-ixwv="' + v + '" aria-pressed="' + (WV === v) + '">' + V[v] + "</button>"; }).join("") +
+      '<span class="ixw-gap"></span>' + [12, 26].map(function (n) { return '<button type="button" data-ixwn="' + n + '" aria-pressed="' + (WN === n) + '">' + n + " weeks</button>"; }).join("") + "</div>";
+    var head = "<tr><th>Index</th>" + weeks.map(function (wk) { var s = W.series.SPX.weeks.filter(function (w) { return w.wk === wk; })[0];
+      return "<th>wk " + esc(wkLbl(wk)) + (s && s.end >= today.slice(0, 10) || wk === lastWk && s && s.sessions < 5 ? '<small class="ixw-run">to date</small>' : "") + "</th>"; }).join("") + "</tr>";
+    var body = keys.map(function (k) {
+      var M = {}; W.series[k].weeks.forEach(function (w) { M[w.wk] = w; });
+      return '<tr><td><i class="ixw-dot" style="background:' + WK_COL[k] + '"></i>' + esc(wName(k)) + "</td>" + weeks.map(function (wk) {
+        var w = M[wk], d = k === "NIFTY_USD" ? 2 : 0; if (!w) return '<td class="na">—</td>';
+        if (WV === "lvl") return '<td><b>' + num(w.close, d) + '</b><small class="' + dirCls(w.ret_pct) + '">' + sgn(w.ret_pct) + "</small></td>";
+        if (WV === "ret") return '<td class="' + dirCls(w.ret_pct) + '" style="' + cellBg(w.ret_pct) + '"><b>' + sgn(w.ret_pct) + "</b></td>";
+        if (WV === "pts") return '<td class="' + dirCls(w.pts) + '"><b>' + sgnPts(w.pts, d) + "</b><small>" + num(w.close, d) + "</small></td>";
+        return '<td><b>' + num(w.range_pts, d) + '</b><small>' + num(w.range_pct, 2) + '% · <span class="up">▲' + num(w.upper_wick, d) + '</span> <span class="dn">▼' + num(w.lower_wick, d) + "</span></small></td>";
+      }).join("") + "</tr>";
+    }).join("");
+    var note = { lvl: "Weekly close, with that week's % change beneath.", ret: "Close-to-close % change on the prior week.", pts: "Close-to-close change in index points, with the close beneath.",
+      wick: "High–low range in points, with range % and the wicks: ▲ upper = high − max(open, close), ▼ lower = min(open, close) − low." }[WV];
+    /* chart: every series indexed to 100 at the first week shown, so levels in different units sit on one scale */
+    var lines = keys.map(function (k) { var M = {}; W.series[k].weeks.forEach(function (w) { M[w.wk] = w.close; }); var b = null;
+      return { label: wName(k), color: WK_COL[k], dash: k === "NIFTY_USD", vals: weeks.map(function (wk) { var v = M[wk]; if (v == null) return null; if (b == null) b = v; return v / b * 100; }) }; });
+    var levelChart = lineSVG(lines, weeks.map(wkLbl), "Weekly close, indexed (first week = 100)", function (v) { return num(v, 0); }, 260) +
+      legend(lines.map(function (L) { var v = L.vals.filter(function (x) { return x != null; }); return { label: L.label + " " + sgn(v.length ? v[v.length - 1] - 100 : null), color: L.color, dash: L.dash }; }));
+    /* rolling correlation */
+    var RC = W.rolling_corr || {}, rcl = [], rlab = null;
+    [["NIFTY", "SPX"], ["NIFTY", "NDX"], ["NIFTY", "DJIA"], ["NIFTY_USD", "SPX"]].forEach(function (p) { var s = RC[p[0]] && RC[p[0]][p[1]]; if (!s || !s.length) return; rlab = rlab || s.map(function (x) { return wkLbl(x.wk); });
+      rcl.push({ label: wName(p[0]) + " vs " + NAME[p[1]], color: COL[p[1]], dash: p[0] === "NIFTY_USD", vals: s.map(function (x) { return x.r; }) }); });
+    var corrChart = rcl.length ? lineSVG(rcl, rlab, "Rolling " + W.corr_window + "-week correlation (r)", function (v) { return num(Math.abs(v) < 0.05 ? 0 : v, 1); }, 240) +
+      legend(rcl.map(function (L) { return { label: L.label + " · now " + r2(L.vals[L.vals.length - 1]), color: L.color, dash: L.dash }; })) : "";
+    /* expected next-month range */
+    var cards = keys.map(function (k) { var e = W.expected[k]; if (!e) return ""; var d = k === "NIFTY_USD" ? 2 : 0, im = e.implied;
+      return '<div class="kpi ixw-x"><div class="kpi-k"><i class="ixw-dot" style="background:' + WK_COL[k] + '"></i>' + esc(wName(k)) + '</div>' +
+        '<div class="kpi-v">±' + num(e.sigma_month_pct, 2) + '% <small>±' + num(e.pts_1s, d) + " pts · 1σ</small></div>" + rngBar(e.r2[0], e.r1[0], e.basis_close, e.r1[1], e.r2[1], WK_COL[k]) +
+        '<div class="kpi-s">1σ (~68%) ' + num(e.r1[0], d) + " – " + num(e.r1[1], d) + "<br>2σ (~95%) " + num(e.r2[0], d) + " – " + num(e.r2[1], d) +
+        (im ? '<br><span class="ixw-im">Implied (' + esc(im.index.replace("^", "")) + " " + num(im.level, 2) + ") ±" + num(im.sigma_month_pct, 2) + "% → " + num(im.r1[0], d) + " – " + num(im.r1[1], d) + "</span>" : "") +
+        "<br>from " + num(e.basis_close, d) + " (" + esc(e.basis_date) + ") · weekly σ " + num(e.sigma_week_pct, 2) + "%</div></div>"; }).join("");
+    /* correlated move */
+    var drv = ["SPX", "NDX", "DJIA"], tg = keys;
+    var cm = '<table class="ix-t ixw-cm no-tx"><thead><tr><th>Index</th>' + drv.map(function (d) { var e = W.expected[d]; return "<th>If " + esc(NAME[d]) + " moves ±" + (e ? num(e.sigma_month_pct, 2) : "—") + "%</th>"; }).join("") + "</tr></thead><tbody>" +
+      tg.map(function (k) { var C = (W.correlated || {})[k] || {}, dd = k === "NIFTY_USD" ? 2 : 0;
+        return '<tr><td><i class="ixw-dot" style="background:' + WK_COL[k] + '"></i>' + esc(wName(k)) + "</td>" + drv.map(function (d) { if (d === k) return '<td class="na">—</td>'; var c = C[d]; if (!c) return '<td class="na">—</td>';
+          return '<td><b>±' + num(Math.abs(c.move_pct), 2) + "%</b> <span>±" + num(Math.abs(c.move_pts), dd) + ' pts</span><small>β ' + num(c.beta, 2) + " · r " + r2(c.r) + " · " + num(c.band[0], dd) + "–" + num(c.band[1], dd) + (c.beta < 0 ? " · moves opposite" : "") + "</small></td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table>";
+    /* takeaway from the numbers */
+    var take = (function () {
+      var n = W.correlated && W.correlated.NIFTY, best = null;
+      if (n) Object.keys(n).forEach(function (d) { if (!best || Math.abs(n[d].r) > Math.abs(n[best].r)) best = d; });
+      var ex = keys.map(function (k) { return [k, W.expected[k] && W.expected[k].sigma_month_pct]; }).filter(function (x) { return x[1] != null; }).sort(function (a, b) { return b[1] - a[1]; });
+      var s = ex.length ? "Widest expected month: <b>" + esc(wName(ex[0][0])) + " ±" + num(ex[0][1], 2) + "%</b>; narrowest " + esc(wName(ex[ex.length - 1][0])) + " ±" + num(ex[ex.length - 1][1], 2) + "%. " : "";
+      if (best) { var c = n[best], a = Math.abs(c.r); s += "Nifty tracks <b>" + esc(NAME[best]) + "</b> most closely over " + W.weeks_used + " weeks (r " + r2(c.r) + ", " + (a >= 0.7 ? "strong" : a >= 0.4 ? "moderate" : a >= 0.2 ? "weak" : "little") + " link): a typical ±" + num(c.driver_move_pct, 2) + "% month there carries ±" + num(Math.abs(c.move_pct), 2) + "% (±" + num(Math.abs(c.move_pts), 0) + " pts) into Nifty" + (c.beta < 0 ? " <b>in the opposite direction</b>" : "") + "; r² " + num(c.r2, 2) + " means the rest of Nifty's move is its own."; }
+      return s;
+    })();
+    return '<div class="tile"><h2>Weekly monitor — US indices vs Nifty 50 <span class="h2note">— ' + esc(W.window) + " · " + W.weeks_used + " complete weeks for σ, β and r</span></h2>" + chips +
+      '<div class="tbl-scroll"><table class="ix-t ixw-t no-tx"><thead>' + head + "</thead><tbody>" + body + '</tbody></table></div><p class="note">' + esc(note) + " Weeks run Monday–Friday; Nifty on IST dates, Nifty · USD = Nifty ÷ USD/INR.</p>" +
+      levelChart + '<p class="ix-take">' + take + "</p>" +
+      '<div class="ix-sec">Expected range — next month</div><div class="ix-kpis ixw-xs">' + cards + "</div>" +
+      '<p class="note">Realised: weekly σ of the last ' + W.weeks_used + " complete weeks × √" + num(W.month_weeks, 1) + " (one month ≈ 21 sessions), applied to the latest close. Implied: the index's own volatility gauge × √(21/252), shown where Yahoo carries one. A statistical band, not a forecast.</p>" +
+      '<div class="ix-sec">Correlated move expected next month</div><div class="tbl-scroll">' + cm + "</div>" +
+      '<p class="note">Correlated move = β × the driver\'s 1σ monthly move; β and r from ' + W.weeks_used + " weekly returns. The band beneath is the target's latest close ± that move.</p>" +
+      (corrChart ? '<div class="ix-sec">Rolling correlation — Nifty vs the US</div>' + corrChart : "") + "</div>";
+  }
   function footer() {
     return '<div class="tile"><div class="stamp">Source: ' + esc(D.provider) + ". " + esc(D.basis) +
       " S&amp;P 500 total return from ^SP500TR (valid: TR/price ratio rises smoothly); Nasdaq-100 total return not shown — Yahoo ^NDXT is unreliable; Dow total return unavailable (^DJITR has 1 day of history). " +
@@ -294,7 +377,7 @@
       return;
     }
     P.innerHTML = '<div class="tile" style="margin-bottom:14px"><h2>US Indices — since the election <span class="h2note">— ' + esc(D.meta.baseline) + " · to " + esc(D.meta.end_date) + "</span></h2></div>" +
-      kpiStrip() + splitTile() + cumChart() + retChart() + volChart() + rollChart() + seasonSection() + riskTable() + niftySection() + footer();
+      weeklySection() + kpiStrip() + splitTile() + cumChart() + retChart() + volChart() + rollChart() + seasonSection() + riskTable() + niftySection() + footer();
   }
   function load() {
     return fetch("indices-data.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
@@ -309,6 +392,9 @@
   var WCH = { list: function () { var on = P.classList.contains("active"); return [["world", "Markets &amp; sessions", !on], ["indices", "US Indices · since the election", on]]; },
     go: function (id) { var b = doc.getElementById("tabbtn-" + id); if (b) b.click(); if (id === "indices") setTimeout(maybeLoad, 30); } };
   root.GNAV_CHIPS.world = WCH; root.GNAV_CHIPS.indices = WCH;
+  P.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-ixwv],[data-ixwn]"); if (!b) return;
+    if (b.dataset.ixwv) WV = b.dataset.ixwv; if (b.dataset.ixwn) WN = +b.dataset.ixwn;
+    try { localStorage.setItem("desk.ix.wv", WV); localStorage.setItem("desk.ix.wn", String(WN)); } catch (e) {} var y = root.scrollY; render(); root.scrollTo(0, y); });
   doc.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("#tabbtn-indices"); if (b) setTimeout(maybeLoad, 30); });
   root.addEventListener("desk:unlock", function () { if (active()) maybeLoad(); });
   timer = setInterval(function () { if (active()) maybeLoad(); }, 60000);
