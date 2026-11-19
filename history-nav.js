@@ -12,7 +12,7 @@
     if ((b = sel(P, '[data-sub][aria-selected="true"]'))) v.s = b.getAttribute("data-sub");
     if ((b = sel(P, '.wt-b[aria-selected="true"]'))) { var a = ["data-wgrp", "data-wflag", "data-wsub"].filter(function (x) { return b.hasAttribute(x); })[0]; if (a) v.w = a + "=" + b.getAttribute(a); }
     if ((b = sel(P, '[data-subpanel].on .st-nav .st-b[aria-selected="true"]') || (P.querySelector("[data-subpanel]") ? null : sel(P, '.st-nav .st-b[aria-selected="true"]')))) { var k = b.getAttribute("data-stk") ? "data-stk" : b.getAttribute("data-st") ? "data-st" : null; if (k) v.t = k + "=" + b.getAttribute(k); }
-    if (doc.getElementById("mdc-overlay")) v.m = (doc.getElementById("mdc-overlay").getAttribute("data-key") || "1");
+    if (doc.querySelector("#mdc-overlay.on")) v.m = (doc.getElementById("mdc-overlay").getAttribute("data-key") || "1");
     return v;
   }
   function key(v) { return v ? [v.p, v.s || "", v.w || "", v.t || "", v.m || ""].join("|") : ""; }

@@ -68,6 +68,20 @@
       if (e.target.closest("[data-po-full]")) { TILE = ""; doc.querySelectorAll(".po-solo").forEach(function (t) { t.classList.remove("po-solo"); }); doc.body.classList.remove("po-has"); e.target.remove(); }
       if (e.target.closest("[data-po-desk]")) root.open(location.pathname, "_blank");
     });
+    /* a pop-out lives 20 minutes (owner, Nov 19 2026): then it signs out, closes, and — where the browser will not let a page
+       close itself — returns to the landing page, which asks for the passcode again */
+    var LIFE = 20 * 60000, born = Date.now();
+    var expire = function () {
+      try { sessionStorage.removeItem("deskGateAt"); sessionStorage.removeItem("deskGateActive"); } catch (e) {}
+      root.DESK_LOCKED = true; try { root.close(); } catch (e) {}
+      setTimeout(function () { location.replace(location.pathname); }, 400);
+    };
+    setInterval(function () {
+      var left = LIFE - (Date.now() - born), el = doc.getElementById("po-life");
+      if (left <= 0) return expire();
+      if (el) { var m = Math.floor(left / 60000), s2 = Math.floor(left % 60000 / 1000); el.textContent = "closes in " + m + ":" + String(s2).padStart(2, "0"); el.classList.toggle("warn", left < 120000); }
+    }, 1000);
+    head.querySelector(".po-sp").insertAdjacentHTML("afterend", '<span id="po-life" title="Pop-out windows close after 20 minutes and ask for the passcode again">closes in 20:00</span>');
     var go = function () { doc.body.insertBefore(head, doc.body.firstChild); if (!TILE) head.querySelector("[data-po-full]").remove(); handoff(); restore(0); };
     if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", function () { setTimeout(go, 50); }); else setTimeout(go, 50);
   }
@@ -81,6 +95,6 @@
     "html.po-win .layout{grid-template-columns:1fr!important}html.po-win .layout>.grid{max-width:none!important}" +
     "body.po-has .tab-panel.active .tile:not(.po-solo){display:none!important}body.po-has .po-solo{grid-column:1/-1!important}" +
     "#po-head{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:8px 16px;background:var(--bg,#0b1016);border-bottom:1px solid var(--line,#2a3442);font-size:13px}" +
-    "#po-head b{font-size:14px;letter-spacing:.02em}#po-head .po-sp{flex:1}#po-head button{all:unset;cursor:pointer;padding:4px 10px;border:1px solid var(--line,#2a3442);border-radius:6px;font-size:12px}#po-head button:hover{border-color:#ffb84d;color:#ffb84d}";
+    "#po-head b{font-size:14px;letter-spacing:.02em}#po-life{font:600 12px 'IBM Plex Mono',monospace;color:var(--faint,#8a97a8);margin-right:6px}#po-life.warn{color:#ff6b6b}#po-head .po-sp{flex:1}#po-head button{all:unset;cursor:pointer;padding:4px 10px;border:1px solid var(--line,#2a3442);border-radius:6px;font-size:12px}#po-head button:hover{border-color:#ffb84d;color:#ffb84d}";
   doc.head.appendChild(st);
 })(window);
