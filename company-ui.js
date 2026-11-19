@@ -37,10 +37,15 @@
   function load(t) {
     if (MEM[t] && (MEM[t].M || MEM[t].loading)) return;
     var ac = typeof AbortController === "function" ? new AbortController() : null, sig = ac ? { signal: ac.signal } : {};
-    MEM[t] = { loading: true, ac: ac, t0: Date.now() };
+    MEM[t] = { loading: true, ac: ac, t0: Date.now() }; delete DT[t]; delete SHOWN[t];
     if (!worker()) { MEM[t] = { err: "nowk" }; return; }
+    /* time limits (owner, Nov 19 2026): a hung request must never leave the "Fetching info" box up — filings get 30 s (then an
+       error with Try again), prices 15 s (then the view opens without them) */
+    var TO = setTimeout(function () { if (MEM[t] && MEM[t].ac === ac && MEM[t].loading) { MEM[t].timedOut = 1; if (ac) ac.abort(); MEM[t] = { err: "SEC data service did not answer within 30 s — try again" }; rerender(); } }, 30000);
+    var pac = typeof AbortController === "function" ? new AbortController() : null, pto = setTimeout(function () { if (pac) pac.abort(); }, 15000);
     var a = fetch(worker() + "/company?t=" + encodeURIComponent(t), sig).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || r.status); return j; }); });
-    var b = fetch(worker() + "/prices?r=5y&t=" + encodeURIComponent(t), sig).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    var b = fetch(worker() + "/prices?r=5y&t=" + encodeURIComponent(t), pac ? { signal: pac.signal } : {}).then(function (r) { clearTimeout(pto); return r.ok ? r.json() : null; }).catch(function () { return null; });
+    a.then(function () { clearTimeout(TO); }, function () { clearTimeout(TO); });
     Promise.all([a, b]).then(function (x) {
       if (MEM[t] && MEM[t].ac !== ac) return;   /* superseded or cancelled: never paint a stale reply */
       if (!co_ok(x[0], t)) { MEM[t] = { err: "the reply was for a different company (" + esc(x[0] && x[0].ticker) + ")" }; rerender(); return; }
@@ -1592,10 +1597,12 @@
     if (!worker()) return '<div class="tile"><h2>Company research</h2><div class="ue-ph">Live search needs the AGRITrade SEC Worker. Once it is deployed, open the desk once with <code>?worker=https://&lt;name&gt;.workers.dev</code> — the address is remembered in this browser.</div></div>';
     var D = MEM[t]; if (!D) { load(t); D = MEM[t]; }
     if (D.loading) { dlg(t); return skeleton(t); }
+    if (D.err && DLG) DLG.hidden = true;   /* an error view replaces the "Fetching info" box */
     if (D.err) return '<div class="tile"><h2>' + esc(t) + '</h2><div class="unreach">⚠ Could not load ' + esc(t) + " <small>— " + esc(D.err) + '</small></div><button class="ue-btn" data-coretry="' + esc(t) + '" style="margin-top:8px">Try again</button></div>';
     if (!D.M.quarters.length) return '<div class="tile"><h2>' + esc(t) + '</h2><div class="ue-ph">' + esc(D.co.name) + " has no US-GAAP quarterly figures in SEC XBRL" + (D.co.ifrs ? " (it files under IFRS)" : "") + ".</div></div>";
     prFetch(D.M); strFetch(t); watch8k(t); if (Date.now() - Date.parse(D.at) > 20 * 6e4) refresh(t);
     if (!SHOWN[t]) { dlg(t); return skeleton(t); }   /* nothing is painted until every source has answered and the view is compiled */
+    if (DLG && !DLG.hidden) DLG.hidden = true;
     return card && CARDS[card] ? CARDS[card](D.M, D.V) : grid(D.M, D.V);
   }
   /* ---- search dialog (owner, Nov 17 2026): "Fetching info" while each source answers (ticked as it arrives), then
@@ -1619,6 +1626,7 @@
       '<li class="' + (phase === "compile" ? "wt" : "") + '"><span></span>Statements, ratios, Smart read &amp; commentary</li></ul>' + (late && pend ? '<p class="cd-n">A source is slow — showing what has arrived.</p>' : "") + "</div>";
     DLG.hidden = false;
     if (D.err) { SHOWN[t] = 1; DLG.hidden = true; return; }
+    if (D.loading && Date.now() - DT[t] > 31000) { DLG.hidden = true; return; }   /* the 30 s limit above turns this into an error view */
     if (phase === "compile" && D.M && !DLG._c) { DLG._c = t; setTimeout(function () { DLG._c = null; SHOWN[t] = 1; DLG.hidden = true; rerender(); }, 450); }
     if (pend && !late) { clearTimeout(DLG._r); DLG._r = setTimeout(function () { if (!SHOWN[t]) rerender(); }, 1500); }
   }
