@@ -119,10 +119,13 @@
     }
     if (tb.innerHTML !== th) tb.innerHTML = th; tb.hidden = !th;
     if (L) u.setAttribute("data-co", L); else u.removeAttribute("data-co");
-    var h = L ? 'Company: <b>' + esc(L) + "</b> " + esc(nameOf(L)) + (mode === "company" ? ' <button class="ue-btn" data-uxmode="overview" title="Close the company and show the market">✕ Market view</button>' : ' <button class="ue-btn" data-uxmode="company">Open analysis</button>') + ' <button class="ux-star" data-uxsave="' + esc(L) + '" aria-pressed="' + (saved().indexOf(L) >= 0) + '">' + (saved().indexOf(L) >= 0 ? "★ Saved" : "☆ Save") + "</button>" +
+    var h = L ? 'Company: <b>' + esc(L) + "</b> " + esc(nameOf(L)) + (mode === "company" ? ' <button class="ue-btn" data-uxclose title="Close this company">✕ Close company</button>' : ' <button class="ue-btn" data-uxmode="company">Open analysis</button>') + ' <button class="ux-star" data-uxsave="' + esc(L) + '" aria-pressed="' + (saved().indexOf(L) >= 0) + '">' + (saved().indexOf(L) >= 0 ? "★ Saved" : "☆ Save") + "</button>" +
         (root.ELOCK ? ' <button class="ue-btn ux-elk" data-ellock="' + esc(L) + '" data-eln="' + esc(nameOf(L)) + '" aria-pressed="' + lockedE(L) + '">' + (lockedE(L) ? "🔔 Locked for earnings" : "🔕 Lock for earnings") + "</button>" : "")
-      : '<span class="ux-none">Search a company to open its analysis. Below: the whole market.</span>';
+      : '<span class="ux-none">Search a company to open its earnings analysis.</span>';
     if (ctx.innerHTML !== h) ctx.innerHTML = h;
+    var em = doc.getElementById("usmEmpty");
+    if (!em) { em = doc.createElement("section"); em.id = "usmEmpty"; em.className = "ux-empty"; em.innerHTML = '<div class="ux-e-ic" aria-hidden="true">⌕</div><h3>Add a company to begin</h3><p>Search any US-listed company above by ticker or name, then pick it from the list. Its earnings, financial statements and analysis tiles open here.</p>'; u.appendChild(em); }
+    em.hidden = !(mode === "company" && !L);
     var kc = doc.getElementById("usmK");
     if (mode === "calendar" && root.USMCAL) { if (!kc) { var w = doc.createElement("div"); w.innerHTML = USMCAL.html(); kc = w.firstChild; kc.classList.add("ux-page"); bar.after(kc); } }
     else if (kc) kc.remove();
@@ -149,12 +152,23 @@
     var b = t.closest("[data-uxpick]"); if (b) { open({ s: b.getAttribute("data-uxpick"), n: b.getAttribute("data-uxn"), x: b.getAttribute("data-uxx") }); return; }
     b = t.closest("[data-uxsave]"); if (b) { ev.stopPropagation(); toggleSave(b.getAttribute("data-uxsave")); paintDD(); return; }
     b = t.closest("[data-uxmode]"); if (b) { setMode(b.getAttribute("data-uxmode")); return; }
+    if (t.closest("[data-uxclose]")) { var ul = doc.querySelector("#panel-earnings [data-utlock]"); if (ul) ul.click(); else { var v = view(); v.lock = false; v.sel = null; v.pend = null; if (root.EARNINGS) EARNINGS.render(); } setTimeout(paint, 40); return; }
     b = t.closest("[data-uxtab]"); if (b && !b.disabled) { setMode("company"); if (root.COMPANY && COMPANY.show) COMPANY.show(b.getAttribute("data-uxtab")); setTimeout(function () { var m = doc.querySelector("#panel-earnings .ut-main"); if (m) m.scrollIntoView({ block: "start", behavior: "smooth" }); }, 80); return; }
     if (t.closest("[data-uxretry]")) { search(Q.q); return; }
+    /* a company opened from the World Markets → US Markets page goes to the Earnings tab (owner, Nov 19 2026) */
+    if (page() === "mkt" && t.closest("[data-usmopen],[data-usmwo],[data-utswitch],[data-uxpick]")) setTimeout(function () { var eb = doc.getElementById("tabbtn-earnings"); if (eb) eb.click(); setMode("company"); }, 60);
     /* anything inside the tracker that opens a company also means Company Analysis */
     if (t.closest("[data-usmopen],[data-utswitch],[data-utlock]")) setTimeout(function () { if (locked()) { mode = "company"; try { localStorage.setItem(MK, mode); } catch (e) {} } paint(); if (root.GNAV) GNAV.paint(); }, 60);
     if (t.closest("[data-usmcat]")) setTimeout(function () { var c = USM_cat(); if (c !== "c6" && mode !== "overview") { mode = "overview"; try { localStorage.setItem(MK, mode); } catch (e) {} paint(); if (root.GNAV) GNAV.paint(); } }, 60);
   });
+
+  /* one shell, two pages (owner, Nov 19 2026): World Markets → US Markets shows the market (indexes, snapshot, sectors);
+     the Earnings menu shows only the company search and, once a company is chosen, its tiles */
+  function page() { var a = doc.getElementById("panel-usmkt"), b = doc.getElementById("panel-earnings"); return a && a.classList.contains("active") ? "mkt" : b && b.classList.contains("active") ? "earn" : ""; }
+  function sync() { var u = U(), pg = page(); if (!u || !pg) return; u.setAttribute("data-page", pg);
+    var hd = u.querySelector(".usm-a > b"); if (hd) hd.textContent = pg === "mkt" ? "US Markets" : "Earnings";
+    if (pg === "mkt" && mode !== "overview") setMode("overview"); else if (pg === "earn" && mode !== "company") setMode("company"); }
+  ["panel-usmkt", "panel-earnings"].forEach(function (id) { var el = doc.getElementById(id); if (el) new MutationObserver(function () { if (ready()) sync(); }).observe(el, { attributes: true, attributeFilter: ["class"] }); });
 
   /* chips for the top navigation's section row (nav-ui.js asks GNAV_CHIPS for the active page) */
   root.GNAV_CHIPS = root.GNAV_CHIPS || {};
@@ -183,11 +197,15 @@
     "@media (prefers-reduced-motion:reduce){.ux-tb.sk{animation:none}}" +
     "#usmB [data-usmcat=c4],#usmB [data-usmcat=c6],#usmB [data-usmcat=c9],#usmWlB{display:none!important}#usm[data-mode=company]:not([data-co]) .usm-d{display:none!important}.ux-lk{background:none;border:0;cursor:pointer;font-size:14px;padding:0 8px;opacity:.55}.ux-lk[aria-pressed=true]{opacity:1}.ux-elk[aria-pressed=true]{border-color:#e8b93d;color:#e8b93d}" +
     "#usm[data-mode=company] #usmWlB{display:none!important}#usm[data-mode=search] #usmC,#usm[data-mode=search] #usmB,#usm[data-mode=search] .usm-d,#usm[data-mode=company] #usmC,#usm[data-mode=company] #usmB,#usm[data-mode=calendar] #usmC,#usm[data-mode=calendar] #usmB,#usm[data-mode=calendar] .usm-d{display:none!important}" +
+    "#usm[data-mode=overview] #usmXb,#usm[data-mode=overview] #usmXs,#usm[data-mode=overview] .el-bar,#usm[data-mode=overview] #usmTabs{display:none!important}" +
+    "#usm[data-mode=company] #usmG,#usm[data-mode=company] #usmF,#usm[data-mode=company] #usmE,#usm[data-mode=company] #usmSt{display:none!important}" +
+    ".ux-empty{grid-column:1/-1;min-height:52vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;background:#000;border:1px dashed var(--line2);border-radius:12px;padding:40px 20px;color:var(--muted)}.ux-empty[hidden]{display:none}" +
+    ".ux-empty h3{margin:0;color:var(--ink,#fff);font-size:20px}.ux-empty p{margin:0;max-width:520px;font-size:14px;line-height:1.5}.ux-e-ic{font-size:44px;color:var(--cyan,#38b6c9);line-height:1}" +
     "@media (max-width:760px){.ux-lists{grid-template-columns:1fr}.ux-ex{display:none}.ux-in{flex-basis:100%}}";
   doc.head.appendChild(css);
 
   (function boot(n) {
-    if (ready()) { paint(); if (mode !== "overview") setMode(mode); if (root.GNAV) GNAV.paint(); root.addEventListener("desk:earnboard", paint); return; }
+    if (ready()) { paint(); if (mode !== "overview") setMode(mode); sync(); if (root.GNAV) GNAV.paint(); root.addEventListener("desk:earnboard", paint); return; }
     if (n > 0) setTimeout(function () { boot(n - 1); }, 400);
   })(60);
   root.addEventListener("desk:company", function () { paint(); });

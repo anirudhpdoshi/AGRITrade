@@ -469,7 +469,7 @@
 
   /* -------- shell -------- */
   var css = document.createElement("style");
-  css.textContent = '#usm{display:none;gap:10px;grid-template-columns:minmax(0,1fr);grid-template-areas:"a" "c" "t" "b" "d" "f" "g"}#usm:has(#panel-earnings.active){display:grid}' +
+  css.textContent = '#usm{display:none;gap:10px;grid-template-columns:minmax(0,1fr);grid-template-areas:"a" "c" "t" "b" "d" "f" "g"}#usm:has(#panel-earnings.active),body:has(#panel-usmkt.active) #usm{display:grid}' +
     '#usmTabs{grid-area:t;position:sticky;top:0;z-index:6;align-self:start}#usmTabs .un-nav{box-shadow:0 8px 18px rgba(0,0,0,.55);margin-top:2px}@media (max-width:760px){#usmTabs{position:static}}#usmTabs:empty{display:none}#usm:not([data-v="intel"]) #usmTabs{display:none}#usm[data-mode="search"] #usmTabs,#usm[data-mode="calendar"] #usmTabs{display:none}' +
     '.usm-a{grid-area:a;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:8px 12px}.usm-a b{font-size:14px;color:var(--ink);letter-spacing:.02em}' +
     '.usm-s{flex:1 1 240px;max-width:460px;background:var(--panel2);color:var(--ink);border:1px solid var(--line2);border-radius:6px;padding:7px 10px;font:inherit;font-size:13px}.usm-s:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}' +
@@ -527,7 +527,7 @@
     '<div class="usm-d"><div class="usm-crumb" id="usmCrumb"></div><div id="usmSub"></div><section class="usm-card" id="usmWlB"><div class="usm-wlt"><h3>Watchlist</h3><div class="usm-wls"><input id="usmWlQ" type="search" autocomplete="off" spellcheck="false" aria-label="Search a company to add to the watchlist" placeholder="Search a company to add to your watchlist"><div id="usmWlR" hidden></div></div></div><div id="usmWlL"></div></section><div id="usmLock"></div><div id="usmView"></div></div><aside id="usmE" aria-label="Inspector"></aside><div class="usm-f" id="usmF"></div><div class="usm-g" id="usmG" aria-hidden="true"></div><div id="usmP" hidden role="dialog" aria-label="Command palette"><div class="usm-pb"><input id="usmPq" type="text" autocomplete="off" spellcheck="false" placeholder="Type a ticker, category or period (monthly sectors)"><div id="usmPl" role="listbox"></div></div></div>';
   P.parentNode.insertBefore(root, P);
   root.querySelector(".usm-d").appendChild(P);   /* C6 hosts the existing page */
-  var lab = BTN.firstChild; if (lab && lab.nodeType === 3) lab.nodeValue = "US Market";
+  var lab = BTN.firstChild; if (lab && lab.nodeType === 3) lab.nodeValue = "Earnings";
 
   function paintRail() {
     root.dataset.cat = cat;

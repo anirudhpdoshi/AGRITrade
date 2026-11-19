@@ -10,12 +10,12 @@
     ["grains", "Grains", ["grains", "fx"], "Corn · Soybeans · Wheat · USD/CAD — price tiles open each report"],
     ["positioning", "Positioning / OI", ["positioning"], "Open interest, CFTC funds, options, volatility"],
     ["macro", "Macro", ["macro"], "Macro table, CPI, US · Canada"],
-    ["world", "World Markets", ["world", "indices"], "Every venue: sessions, markets, alerts · Indices: S&P 500, Nasdaq-100, Dow since the election, seasonality, Nifty correlation"],
+    ["world", "World Markets", ["world", "indices", "usmkt"], "Every venue: sessions, markets, alerts · US Markets: indexes, snapshot, sectors · US Indices: weekly monitor, Nifty correlation"],
     ["treasury", "US Treasury", ["treasury"], "US government debt — borrowing, maturity & refinancing risk"],
     ["aidebt", "AI Debt", ["aidebt"], "AI-company debt raises, Jan 2021 – Nov 2026"],
     ["events", "Events", ["events"], "Today's and upcoming releases"],
     ["intel", "Intelligence", ["intel", "policy"], "Global intel, central banks and policy"],
-    ["usm", "US Markets", ["earnings"], "Market overview, stock search, company analysis, earnings calendar"],
+    ["usm", "Earnings", ["earnings"], "Search a company — its earnings and financial analysis"],
     ["breakouts", "Breakouts", ["breakouts"], "Live stream: day highs/lows, 52-week, moving-average breaks — S&P 100, watchlist, indexes, FX"],
     ["health", "Health", ["health"], "Data, API and scheduler health"]
   ];

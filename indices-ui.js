@@ -389,9 +389,10 @@
   root.INDICES = { _data: function () { return D; } };
   /* World Markets section row: Markets · US Indices (nav-ui.js paints GNAV_CHIPS for the active page) */
   root.GNAV_CHIPS = root.GNAV_CHIPS || {};
-  var WCH = { list: function () { var on = P.classList.contains("active"); return [["world", "Markets &amp; sessions", !on], ["indices", "US Indices · since the election", on]]; },
+  var WCH = { list: function () { var on = P.classList.contains("active"), um = doc.getElementById("panel-usmkt"), uo = !!(um && um.classList.contains("active"));
+      return [["world", "Markets &amp; sessions", !on && !uo], ["usmkt", "US Markets", uo], ["indices", "US Indices · weekly & Nifty", on]]; },
     go: function (id) { var b = doc.getElementById("tabbtn-" + id); if (b) b.click(); if (id === "indices") setTimeout(maybeLoad, 30); } };
-  root.GNAV_CHIPS.world = WCH; root.GNAV_CHIPS.indices = WCH;
+  root.GNAV_CHIPS.world = WCH; root.GNAV_CHIPS.indices = WCH; root.GNAV_CHIPS.usmkt = WCH;
   P.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-ixwv],[data-ixwn]"); if (!b) return;
     if (b.dataset.ixwv) WV = b.dataset.ixwv; if (b.dataset.ixwn) WN = +b.dataset.ixwn;
     try { localStorage.setItem("desk.ix.wv", WV); localStorage.setItem("desk.ix.wn", String(WN)); } catch (e) {} var y = root.scrollY; render(); root.scrollTo(0, y); });
