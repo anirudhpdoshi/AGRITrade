@@ -219,35 +219,35 @@
   }
   /* Markets (Nov 14): sub-categories ranked by how much they matter to a grain & USD/CAD desk. Every sub-category says
      why it matters and reads its own numbers; the tier is a fixed desk judgement, the read-outs are computed live. */
-  var TIER = { d: ["DIRECT", "Prices what the desk trades"], h: ["HIGH", "Moves grain or USD/CAD within days"], m: ["MEDIUM", "Shapes demand and risk appetite"], c: ["CONTEXT", "Background — little direct link"] };
+  var TIER = { d: ["WHAT WE TRADE", "Prices the desk trades directly"], h: ["PRICE DRIVERS", "Move grain or USD/CAD within days"], m: ["DEMAND & RISK MOOD", "Shape buying demand and risk appetite"], c: ["BACKGROUND", "Wider context — little direct link"] };
   var SUBS = [
     ["grains", "Grains & softs", "d", ["corn", "soy", "wheat", "sugar"], "The desk’s own markets (CBOT front month). Sugar competes with corn as an ethanol feedstock and for Brazil’s acreage.",
       { corn: "CBOT corn — desk market", soy: "CBOT soybeans — desk market", wheat: "CBOT wheat — desk market", sugar: "Brazil cane vs corn ethanol; Brazil acreage" }],
     ["usd", "USD/CAD & the dollar", "d", ["usdcad", "dxy"], "USD/CAD converts every Canadian grain price; a firmer US dollar (DXY) makes US grain dearer abroad and is a headwind for CBOT.",
       { usdcad: "Converts CBOT into CAD bids", dxy: "Dollar strength = export headwind" }],
-    ["spread", "US–Canada rates", "d", ["usca2y", "usca10y", "ca2y", "ca10y"], "The US-over-Canada yield gap is the main driver of USD/CAD: a wider US premium usually lifts USD/CAD.",
+    ["spread", "US–Canada rate gap", "d", ["usca2y", "usca10y", "ca2y", "ca10y"], "The US-over-Canada yield gap is the main driver of USD/CAD: a wider US premium usually lifts USD/CAD.",
       { usca2y: "Main rate driver of USD/CAD", usca10y: "Longer-term USD/CAD driver", ca2y: "Bank of Canada path", ca10y: "Canada term rates" }],
-    ["energy", "Energy", "h", ["wti", "brent", "natgas", "rbob", "heatoil"], "Crude sets ethanol and soybean-oil demand and supports CAD (Canada exports oil); natural gas feeds nitrogen fertilizer; diesel is farm and freight cost.",
+    ["energy", "Energy & fertilizer inputs", "h", ["wti", "brent", "natgas", "rbob", "heatoil"], "Crude sets ethanol and soybean-oil demand and supports CAD (Canada exports oil); natural gas feeds nitrogen fertilizer; diesel is farm and freight cost.",
       { wti: "Ethanol / soy-oil value; CAD support", brent: "World crude; CAD terms of trade", natgas: "Nitrogen fertilizer cost", rbob: "Gasoline blend = ethanol demand", heatoil: "Diesel: farm & freight cost" }],
-    ["ust", "US Treasuries", "h", ["us2y", "us5y", "us10y", "us30y"], "The Fed path: sets the US side of the rate gap and the dollar’s direction, and the cost of carrying grain inventory.",
+    ["ust", "Fed path · US Treasuries", "h", ["us2y", "us5y", "us10y", "us30y"], "The Fed path: sets the US side of the rate gap and the dollar’s direction, and the cost of carrying grain inventory.",
       { us2y: "Fed path; US side of the spread", us5y: "Medium-term rates", us10y: "Benchmark; mortgage & carry cost", us30y: "Long end" }],
-    ["comfx", "Commodity currencies", "h", ["audusd", "nzdusd"], "Trade with global commodity demand like CAD; AUD also tracks Australia’s wheat exports and China demand.",
+    ["comfx", "CAD peers · commodity FX", "h", ["audusd", "nzdusd"], "Trade with global commodity demand like CAD; AUD also tracks Australia’s wheat exports and China demand.",
       { audusd: "Australian wheat competitor; China proxy", nzdusd: "Dairy/ag exporter currency" }],
-    ["vol", "Volatility", "m", ["vix"], "The fear gauge: VIX spikes make funds cut risk — CAD usually weakens and crowded commodity longs get sold.",
+    ["vol", "Fear gauge · VIX", "m", ["vix"], "The fear gauge: VIX spikes make funds cut risk — CAD usually weakens and crowded commodity longs get sold.",
       { vix: "Risk-off = CAD weaker, fund selling" }],
-    ["namer", "North American equities", "m", ["spx", "ndx", "ixic", "dji", "rut", "tsx"], "Risk appetite: rising stocks usually support CAD and commodity fund flows; the TSX is heavy in energy and materials.",
+    ["namer", "US & Canada stocks", "m", ["spx", "ndx", "ixic", "dji", "rut", "tsx"], "Risk appetite: rising stocks usually support CAD and commodity fund flows; the TSX is heavy in energy and materials.",
       { spx: "US risk appetite", ndx: "Growth / tech risk", ixic: "Broad US tech", dji: "US blue chips", rut: "US small caps — domestic economy", tsx: "Energy & materials — CAD linked" }],
-    ["asia", "Asia-Pacific equities", "m", ["shcomp", "hsi", "n225", "asx200", "nifty"], "Demand side: China and Asia are the largest buyers of US and Canadian soybeans, canola and wheat.",
+    ["asia", "Asian buyers · equities", "m", ["shcomp", "hsi", "n225", "asx200", "nifty"], "Demand side: China and Asia are the largest buyers of US and Canadian soybeans, canola and wheat.",
       { shcomp: "China — #1 soybean buyer", hsi: "China sentiment", n225: "Japan — corn & wheat buyer", asx200: "Australia — wheat competitor", nifty: "India — pulses & edible-oil buyer" }],
-    ["indmet", "Industrial metals", "m", ["copper", "aluminium"], "A read on China and industrial demand; copper tends to move with CAD and risk appetite.",
+    ["indmet", "China & industrial metals", "m", ["copper", "aluminium"], "A read on China and industrial demand; copper tends to move with CAD and risk appetite.",
       { copper: "China growth gauge; moves with CAD", aluminium: "Industrial demand" }],
-    ["majors", "Major currencies", "m", ["eurusd", "usdjpy", "gbpusd", "usdchf"], "These make up most of the DXY; EUR also prices EU and Black Sea wheat competing with North American wheat.",
+    ["majors", "Dollar index components", "c", ["eurusd", "usdjpy", "gbpusd", "usdchf"], "These make up most of the DXY; EUR also prices EU and Black Sea wheat competing with North American wheat.",
       { eurusd: "EU wheat competitiveness; ~58% of DXY", usdjpy: "Japan import demand; risk tone", gbpusd: "Part of DXY", usdchf: "Safe-haven flows" }],
-    ["europe", "European equities", "c", ["ftse", "dax", "cac", "sx5e"], "Global risk tone; the EU is a wheat competitor and a canola buyer.",
+    ["europe", "Europe · EU wheat rivals", "c", ["ftse", "dax", "cac", "sx5e"], "Global risk tone; the EU is a wheat competitor and a canola buyer.",
       { ftse: "UK risk tone", dax: "German industry", cac: "France — EU’s biggest wheat grower", sx5e: "Eurozone risk tone" }],
-    ["precious", "Precious metals", "c", ["gold", "silver", "platinum", "palladium"], "Safe-haven and dollar-hedge flows; little direct grain link.",
+    ["precious", "Safe havens · precious metals", "c", ["gold", "silver", "platinum", "palladium"], "Safe-haven and dollar-hedge flows; little direct grain link.",
       { gold: "Safe haven; dollar hedge", silver: "Precious / industrial mix", platinum: "Autos / industrial", palladium: "Autos" }],
-    ["em", "Emerging-market FX", "c", ["usdinr"], "India is a large buyer of Canadian lentils and peas and of edible oils; a weaker rupee cuts its buying power.",
+    ["em", "India demand · rupee", "c", ["usdinr"], "India is a large buyer of Canadian lentils and peas and of edible oils; a weaker rupee cuts its buying power.",
       { usdinr: "India import buying power" }]];
   var MA_SUBS = { grains: 1, usd: 1, energy: 1, indmet: 1, precious: 1, comfx: 1 };
   var SUB_BY = {}; SUBS.forEach(function (s) { SUB_BY[s[0]] = s; });
@@ -285,7 +285,7 @@
     }
     var L = inst(), cur = V.flagged ? "" : V.grp;
     var deskRows = []; deskSubs().forEach(function (s) { deskRows = deskRows.concat(subRows(s)); });
-    var html = '<aside class="wm-left"><div class="gr-col-h">Views</div>' + tile("desk", cur === "desk", "Desk-relevant", deskRows) + tile("all", cur === "all", "All markets", L) +
+    var html = '<aside class="wm-left"><div class="gr-col-h">Views</div>' + tile("desk", cur === "desk", "Grain & CAD drivers", deskRows) + tile("all", cur === "all", "All markets", L) +
       tile("1", V.flagged, "52-week signals", L.filter(sigF), null, "data-wflag");
     ["d", "h", "m", "c"].forEach(function (t) {
       html += '<div class="gr-col-h wm-th">' + TIER[t][0].charAt(0) + TIER[t][0].slice(1).toLowerCase() + " relevance <small>" + esc(TIER[t][1]) + "</small></div>";
@@ -302,7 +302,7 @@
     var q = (V.q || "").toLowerCase(), sigF = function (i) { return i.w52 && (i.w52.new_high || i.w52.new_low || i.w52.near_high || i.w52.near_low); };
     var subs = V.flagged || V.grp === "all" ? SUBS : V.grp === "desk" ? deskSubs() : [SUB_BY[V.grp]];
     var keep = function (i) { return (!V.flagged || sigF(i)) && (!q || (i.name + " " + i.sym + " " + i.region).toLowerCase().indexOf(q) >= 0); };
-    var title = V.flagged ? "52-week signals" : V.grp === "all" ? "All markets — by desk relevance" : V.grp === "desk" ? "Desk-relevant markets" : SUB_BY[V.grp][1];
+    var title = V.flagged ? "52-week signals" : V.grp === "all" ? "All markets — grouped by impact on grain & CAD" : V.grp === "desk" ? "Grain & CAD drivers — what we trade and what moves it" : SUB_BY[V.grp][1];
     var all = []; subs.forEach(function (S) { all = all.concat(subRows(S).filter(keep)); });
     var filt = '<div class="wfil"><input type="search" placeholder="Search markets…" value="' + esc(V.q) + '" data-wq></div>';
     var VIEWSW = '<span class="wv-sw"><button type="button" data-wview="tiles" aria-pressed="' + (V.view !== "table") + '">Tiles</button><button type="button" data-wview="table" aria-pressed="' + (V.view === "table") + '">Rows</button></span>';
@@ -544,7 +544,7 @@
     function tb(attr, val, on, lab, rows, t) { return '<button type="button" role="tab" class="wt-b' + (t ? " t-" + t : "") + '" ' + attr + '="' + val + '" aria-selected="' + on + '"><b>' + esc(lab) + "</b><small>" + rows.length + " " + ud(rows) + "</small></button>"; }
     var mk = V.sub === "markets", cur = mk && !V.flagged ? V.grp : "", deskRows = [];
     deskSubs().forEach(function (S) { deskRows = deskRows.concat(subRows(S)); });
-    var h = tb("data-wgrp", "desk", cur === "desk", "Desk-relevant", deskRows);
+    var h = tb("data-wgrp", "desk", cur === "desk", "Grain & CAD drivers", deskRows);
     ["d", "h", "m", "c"].forEach(function (t) { h += '<span class="wt-sep" title="' + esc(TIER[t][1]) + '">' + TIER[t][0] + "</span>" + SUBS.filter(function (S) { return S[2] === t; }).map(function (S) { return tb("data-wgrp", S[0], cur === S[0], S[1], subRows(S), t); }).join(""); });
     h += '<span class="wt-sep">VIEWS</span>' + tb("data-wgrp", "all", cur === "all", "All markets", L) + tb("data-wflag", "1", mk && V.flagged, "52-week signals", L.filter(sigF));
     var al = W.alerts || [];
@@ -558,7 +558,7 @@
   }
   function ctxHTML() {
     var lab = { overview: "Overview", sessions: "Sessions", markets: "Markets", alerts: "Alerts", health: "Data health", guide: "Guide" }[V.sub] || "Overview";
-    var sec = V.sub === "markets" ? (V.flagged ? "52-week signals only" : V.grp === "all" ? "All markets" : V.grp === "desk" ? "Desk-relevant" : (SUB_BY[V.grp] ? SUB_BY[V.grp][1] : V.grp)) : V.sub === "alerts" ? ({ all: "All alerts", major: "Major and above", up: "Upward", down: "Downward" }[V.sev] || "") : "";
+    var sec = V.sub === "markets" ? (V.flagged ? "52-week signals only" : V.grp === "all" ? "All markets" : V.grp === "desk" ? "Grain & CAD drivers" : (SUB_BY[V.grp] ? SUB_BY[V.grp][1] : V.grp)) : V.sub === "alerts" ? ({ all: "All alerts", major: "Major and above", up: "Upward", down: "Downward" }[V.sev] || "") : "";
     return '<span class="sc-pill"><i></i>' + lab + "</span>" + (sec ? '<span class="sc-sec">› ' + esc(sec) + "</span>" : "") + refreshHTML() + (typeof window.kbSwitchHTML === "function" ? window.kbSwitchHTML() : "");
   }
 
