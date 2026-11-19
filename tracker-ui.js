@@ -82,26 +82,45 @@
      coloured green/red by the move, ringed while the exchange is open (session status from the index feed) ---------- */
   var LAND = "24.1.3.2.4.4.2.20.14.2.1.1.30.1.35|22.4.4.1.1.1.1.2.9.16.31.2.11.9.9.4.17|19.2.1.1.2.1.1.5.1.5.9.11.1.1.30.1.10.16.1.2.24|5.3.16.3.3.2.1.8.6.11.20.3.14.37.12|2.20.3.2.2.4.1.2.3.4.4.9.19.9.2.1.1.54.2|1.33.5.4.5.4.8.3.11.3.2.3.2.60|3.29.8.3.5.4.19.5.1.63.4|3.6.1.21.6.4.9.1.20.5.1.2.1.51.2.4.7|5.1.8.17.7.6.22.1.6.2.3.47.7.1.11|3.1.11.19.4.6.23.1.4.1.4.46.8.2.11|17.19.1.9.19.1.1.2.2.55.5.1.12|17.1.1.26.21.1.2.57.18|19.23.3.2.20.57.1.1.18|19.23.1.1.24.12.2.1.1.39.21|19.21.25.5.3.1.1.5.5.37.3.2.17|19.20.26.4.5.4.1.41.4.1.19|19.19.27.3.5.2.2.1.1.37.3.1.4.1.19|20.18.30.5.10.33.3.1.2.2.20|22.15.28.8.10.34.3.2.22|22.14.29.52.27|24.6.5.1.27.19.1.5.1.28.27|25.5.33.19.1.6.3.24.28|24.1.1.3.6.2.25.21.1.8.4.19.29|26.4.2.2.4.1.23.21.1.8.6.5.3.5.1.1.31|28.5.4.1.24.22.1.6.7.4.4.5.33|31.4.27.22.1.4.9.3.7.4.4.1.27|33.2.27.25.11.3.7.4.32|34.1.3.4.21.23.1.2.10.1.10.2.5.2.25|37.8.18.25.12.1.7.1.8.2.25|37.10.18.3.3.17.21.1.5.1.28|37.11.24.15.20.1.1.1.3.3.28|36.12.24.14.22.2.2.4.1.1.26|36.15.21.13.24.1.3.2.1.1.3.2.1.1.20|36.17.20.11.26.1.5.1.6.4.17|37.18.19.10.27.3.10.3.17|37.17.20.10.32.1.1.1.8.1.4.1.11|38.15.21.11.40.1.18|38.15.20.12.3.1.30.4.2.1.18|40.13.20.11.2.2.29.7.1.2.17|40.13.21.9.3.2.29.11.16|40.12.22.9.3.2.26.14.16|40.10.24.9.3.1.27.15.15|40.9.26.7.32.16.14|40.9.26.6.33.16.14|40.8.28.4.35.5.2.8.14|40.5.1.1.29.1.38.1.7.6.15|39.7.78.4.10.1.5|39.5.94.1.5|40.2.85.1.9.1.6|39.3.94.1.7|39.3.102|38.3.103|38.3.3.1.99|40.2.102|144";   /* land mask, 2.5° grid from lat 78 to −55, lon −170 to 187.5, run-length rows (sea first) */
   var EXCH = [["^GSPC", "NYSE · Nasdaq", "S&P 500", 40.7, -74.0], ["^GSPTSE", "TSX", "S&P/TSX", 43.65, -79.4], ["^FTSE", "LSE", "FTSE 100", 51.5, -0.1], ["^FCHI", "Euronext Paris", "CAC 40", 48.9, 2.35],
-    ["^GDAXI", "Xetra", "DAX", 50.1, 8.7], ["^NSEI", "NSE", "Nifty 50", 19.1, 72.9], ["^HSI", "HKEX", "Hang Seng", 22.3, 114.2], ["^N225", "TSE", "Nikkei 225", 35.7, 139.7], ["^AXJO", "ASX", "S&P/ASX 200", -33.9, 151.2]];
+    ["^GDAXI", "Xetra", "DAX", 50.1, 8.7], ["^NSEI", "NSE", "Nifty 50", 19.1, 72.9], ["^HSI", "HKEX", "Hang Seng", 22.3, 114.2], ["000001.SS", "SSE", "Shanghai", 31.2, 121.5], ["^N225", "TSE", "Nikkei 225", 35.7, 139.7], ["^AXJO", "ASX", "S&P/ASX 200", -33.9, 151.2]];
+  /* commodity venues (owner, Nov 19 2026): each futures exchange is pinned where it trades, with a callout listing its contracts —
+     last price and % on the day from the same world feed. A contract with no quote is left out; a venue with none is not drawn.
+     [venue, city, lat, lon, [symbols], box x, box y] — boxes sit in open ocean so they never cover a pin */
+  var CVEN = [["CBOT", "Chicago", 41.9, -87.6, ["ZC=F", "ZS=F", "ZW=F"], 6, 8],
+    ["NYMEX · COMEX", "New York", 40.7, -74.0, ["CL=F", "NG=F", "RB=F", "HO=F", "GC=F", "SI=F", "HG=F", "PL=F", "PA=F", "ALI=F"], 6, 222],
+    ["ICE", "London · New York", 51.5, -0.1, ["BZ=F", "SB=F"], 286, 4]];
+  var CNM = { "ZC=F": "Corn", "ZS=F": "Soybeans", "ZW=F": "Wheat", "CL=F": "WTI crude", "NG=F": "Nat gas", "RB=F": "RBOB gasoline", "HO=F": "Heating oil", "GC=F": "Gold", "SI=F": "Silver",
+    "HG=F": "Copper", "PL=F": "Platinum", "PA=F": "Palladium", "ALI=F": "Aluminium", "BZ=F": "Brent crude", "SB=F": "Sugar #11" };
+  function lastFmt(v) { var a = Math.abs(v); return num(v, a >= 1000 ? 0 : a >= 100 ? 1 : a >= 10 ? 2 : 3); }
   function worldMap() {
-    var W0 = 1000, H0 = 360, X = function (lon) { return (lon + 170) / 360 * W0; }, Y = function (lat) { return (78 - lat) / 135 * H0 * 1.05 + 6; }, s = "";
+    var W0 = 1000, H0 = 420, X = function (lon) { return (lon + 170) / 360 * W0; }, Y = function (lat) { return (78 - lat) / 135 * 360 * 1.05 + 6; }, s = "";
     LAND.split("|").forEach(function (row, ri) { var lat = 78 - ri * 2.5, x = 0, land = false; row.split(".").forEach(function (n) { n = +n; if (land) for (var k = 0; k < n; k++) s += '<circle cx="' + X(-170 + (x + k) * 2.5).toFixed(1) + '" cy="' + Y(lat).toFixed(1) + '" r="2.3"/>'; x += n; land = !land; }); });
     var E = EXCH.map(function (e) { return { e: e, i: bySym(e[0]) }; }).filter(function (z) { return z.i && z.i.pct != null; });
     if (!E.length) return "";
-    var mx = Math.max.apply(null, E.map(function (z) { return Math.abs(z.i.pct); })) || 1, pins = "", strip = "";
-    E.forEach(function (z, k) {
-      var e = z.e, i = z.i, x = X(e[4]), y = Y(e[3]), up = i.pct >= 0, st = i.status || "", open = st === "open", r = 6 + 7 * Math.min(1, Math.abs(i.pct) / mx);
-      /* label placement per exchange so the European cluster and the map edges stay readable: [dx, dy, anchor] */
-      var LP = { "^GSPC": [12, 24, "start"], "^GSPTSE": [-12, -12, "end"], "^FTSE": [-14, -12, "end"], "^FCHI": [-14, 20, "end"], "^GDAXI": [14, -12, "start"], "^NSEI": [-12, 5, "end"], "^HSI": [12, 22, "start"], "^N225": [-14, -14, "end"], "^AXJO": [-16, 5, "end"] }[e[0]] || [12, 4, "start"];
-      var lx = x + LP[0], ly = y + LP[1], anchor = LP[2];
-      pins += '<g class="wx-p ' + (up ? "up" : "dn") + (open ? " op" : "") + '" data-usmi="' + esc(i.id) + '" role="button" tabindex="0"><title>' + esc(e[1] + " · " + e[2] + " " + sg(i.pct, 2, "%") + " · " + (i.status_label || "")) + "</title>" +
+    var mx = Math.max.apply(null, E.map(function (z) { return Math.abs(z.i.pct); })) || 1, pins = "", strip = "", boxes = "";
+    /* label placement per exchange so the European and East-Asian clusters stay readable: [dx, dy, anchor] (dy = first line) */
+    var LP = { "^GSPC": [14, 22, "start"], "^GSPTSE": [-14, 34, "end"], "^FTSE": [-16, -8, "end"], "^FCHI": [-14, 24, "end"], "^GDAXI": [14, -30, "start"], "^NSEI": [-14, 4, "end"],
+      "^HSI": [14, 20, "start"], "000001.SS": [-14, -26, "end"], "^N225": [14, -20, "start"], "^AXJO": [-16, 2, "end"] };
+    E.forEach(function (z) {
+      var e = z.e, i = z.i, x = X(e[4]), y = Y(e[3]), up = i.pct >= 0, st = i.status || "", open = st === "open", r = 5 + 6 * Math.min(1, Math.abs(i.pct) / mx);
+      var L = LP[e[0]] || [12, 4, "start"], lx = x + L[0], ly = y + L[1];
+      pins += '<g class="wx-p ' + (up ? "up" : "dn") + (open ? " op" : "") + '" data-usmi="' + esc(i.id) + '" role="button" tabindex="0"><title>' + esc(e[1] + " · " + e[2] + " " + (i.last != null ? lastFmt(i.last) + " " : "") + sg(i.pct, 2, "%") + " · " + (i.status_label || "")) + "</title>" +
         (open ? '<circle class="ring" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (r + 5).toFixed(1) + '"/>' : "") + '<circle class="dot" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + r.toFixed(1) + '"/>' +
-        '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="' + anchor + '"><tspan class="nm">' + esc(e[2]) + '</tspan> <tspan class="pc">' + sg(i.pct, 2, "%") + "</tspan></text></g>";
+        '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="' + L[2] + '"><tspan class="nm">' + esc(e[2]) + '</tspan> <tspan class="pc">' + sg(i.pct, 2, "%") + "</tspan>" +
+        (i.last != null ? '<tspan class="lv" x="' + lx.toFixed(1) + '" dy="13">' + lastFmt(i.last) + "</tspan>" : "") + "</text></g>";
       strip += '<span class="wx-s ' + (open ? "op" : st === "pre" ? "pr" : "cl") + '"><b>' + esc(e[1]) + "</b> " + esc((i.status_label || st || "").toUpperCase()) + ' <i class="' + dirCls(i.pct) + '">' + sg(i.pct, 2, "%") + "</i></span>";
     });
+    CVEN.forEach(function (v) {
+      var R = v[4].map(function (sy) { return { s: sy, i: bySym(sy) }; }).filter(function (z) { return z.i && z.i.last != null; }); if (!R.length) return;
+      var bx = v[5], by = v[6], bw = 196, bh = 22 + R.length * 14, vx = X(v[3]), vy = Y(v[2]), ax = Math.max(bx, Math.min(bx + bw, vx)), ay = vy < by ? by : by + bh;
+      boxes += '<g class="wx-c"><line x1="' + vx.toFixed(1) + '" y1="' + vy.toFixed(1) + '" x2="' + ax.toFixed(1) + '" y2="' + ay.toFixed(1) + '"/><rect class="vp" x="' + (vx - 4).toFixed(1) + '" y="' + (vy - 4).toFixed(1) + '" width="8" height="8" transform="rotate(45 ' + vx.toFixed(1) + " " + vy.toFixed(1) + ')"/>' +
+        '<rect class="bx" x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" rx="5"/><text x="' + (bx + 8) + '" y="' + (by + 15) + '" class="vh">' + esc(v[0]) + ' <tspan class="vc">' + esc(v[1]) + "</tspan></text>" +
+        R.map(function (z, k) { var yy = by + 31 + k * 14, p = z.i.pct;
+          return '<text x="' + (bx + 8) + '" y="' + yy + '" class="cn">' + esc(CNM[z.s] || z.i.name) + '</text><text x="' + (bx + 138) + '" y="' + yy + '" text-anchor="end" class="cl">' + lastFmt(z.i.last) + '</text><text x="' + (bx + bw - 7) + '" y="' + yy + '" text-anchor="end" class="cp ' + (p == null ? "" : p >= 0 ? "up" : "dn") + '">' + (p == null ? "" : sg(p, 2, "%")) + "</text>"; }).join("") + "</g>";
+    });
     var ts = E.map(function (z) { return Date.parse(z.i.ts || "") || 0; }).reduce(function (a, b) { return Math.max(a, b); }, 0);
-    return '<section class="usm-card wx"><div class="usm-rowh"><h3>World exchanges <small>benchmark index, % change on the day · ringed = open now</small></h3><span class="wx-t">' + (ts ? esc(new Date(ts).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET" : "") + "</span></div>" +
-      '<svg class="wx-svg" viewBox="0 0 ' + W0 + " " + H0 + '" role="img" aria-label="World exchanges map"><g class="wx-land">' + s + "</g>" + pins + "</svg>" +
+    return '<section class="usm-card wx"><div class="usm-rowh"><h3>World exchanges <small>benchmark index: last value and % on the day · ◆ commodity futures venues with their contracts · ringed = open now</small></h3><span class="wx-t">' + (ts ? esc(new Date(ts).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET" : "") + "</span></div>" +
+      '<svg class="wx-svg" viewBox="0 0 ' + W0 + " " + H0 + '" role="img" aria-label="World exchanges and commodity venues map"><g class="wx-land">' + s + "</g>" + boxes + pins + "</svg>" +
       '<div class="wx-strip">' + strip + "</div></section>";
   }
   /* ---------- sector heatmap: one tile per sector fund, shade = size of the move for the chosen period ---------- */
@@ -487,7 +506,10 @@
     '.usm-lock{border-color:#3d5a80}.usm-lock.fresh{background:rgba(63,185,127,.08);border-color:var(--green)}.usm-lh{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:9px}.usm-lh b{font:600 18px "IBM Plex Mono",monospace;color:var(--ink)}.usm-lh>span:nth-child(2){color:var(--muted);font-size:13px;margin-right:auto}.usm-lg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.usm-lg small{display:block;color:var(--faint);font-size:11.5px}.usm-lg b{display:block;font:600 18px "IBM Plex Mono",monospace;color:var(--ink)}.usm-lg em{font-style:normal;font-size:11.5px;color:var(--muted)}.usm-lock .usm-q{margin-top:8px}.usm-skg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:8px}.usm-skg i{display:block;height:44px;border-radius:5px;background:linear-gradient(90deg,var(--panel2),var(--line2),var(--panel2));background-size:200% 100%;animation:usmSk 1.3s linear infinite}@keyframes usmSk{to{background-position:-200% 0}}' +
     '@media (max-width:760px){.usm-lg,.usm-skg{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (prefers-reduced-motion:reduce){.usm-skg i{animation:none}}' +
     '@media (prefers-reduced-motion:reduce){.usm-g{overflow-x:auto}.usm-g>div{animation:none;padding-left:8px}}' +
-    '.wx-host{margin:0 0 14px}.wx-svg{width:100%;height:auto;max-height:440px;display:block;margin:0 auto}.wx-p{cursor:default}.wx-land circle{fill:#2b3546}.wx-p{cursor:pointer}.wx-p .dot{stroke:#05070b;stroke-width:1.5}.wx-p.up .dot{fill:#2ea05f}.wx-p.dn .dot{fill:#d63630}' +
+    '.wx-host{margin:0 0 14px;grid-column:1/-1;width:100%}.wx-host>.wx{width:auto}.wx-p .lv{fill:#c9d4e2;font-weight:500;font-size:11px}' +
+    '.wx-c line{stroke:#ffb84d;stroke-width:1;stroke-dasharray:3 3;opacity:.7}.wx-c .vp{fill:#ffb84d;stroke:#05070b;stroke-width:1.2}.wx-c .bx{fill:rgba(11,16,22,.92);stroke:rgba(255,184,77,.55)}' +
+    '.wx-c text{font:500 11px "IBM Plex Mono",monospace;fill:#c9d4e2}.wx-c .vh{font-weight:700;fill:#ffb84d}.wx-c .vc{fill:#8a97a8;font-weight:500}.wx-c .cn{fill:#dfe6f0}.wx-c .cp.up{fill:#4fd18b}.wx-c .cp.dn{fill:#ff7b72}' +
+    '.wx-host{margin:0 0 14px}.wx-svg{width:100%;height:auto;max-height:620px;display:block;margin:0 auto}.wx-p{cursor:default}.wx-land circle{fill:#2b3546}.wx-p{cursor:pointer}.wx-p .dot{stroke:#05070b;stroke-width:1.5}.wx-p.up .dot{fill:#2ea05f}.wx-p.dn .dot{fill:#d63630}' +
     '.wx-p .ring{fill:none;stroke:#7dd8e6;stroke-width:2;animation:wxR 2s ease-in-out infinite}@keyframes wxR{50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.wx-p .ring{animation:none}}' +
     '.wx-p text{font:600 12px "IBM Plex Mono",monospace;paint-order:stroke;stroke:#05070b;stroke-width:4px}.wx-p .nm{fill:#dfe6f0}.wx-p.up .pc{fill:#4fd18b}.wx-p.dn .pc{fill:#ff7b72}.wx-t{font:12px "IBM Plex Mono",monospace;color:var(--muted)}' +
     '.wx-strip{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font:12px "IBM Plex Mono",monospace}.wx-s b{color:#fff;font-weight:600}.wx-s.op{color:#7dd8e6}.wx-s.pr{color:#e8a33d}.wx-s.cl{color:var(--muted)}.wx-s i{font-style:normal;margin-left:2px}.wx-s i.up{color:#4fd18b}.wx-s i.dn{color:#ff7b72}' +

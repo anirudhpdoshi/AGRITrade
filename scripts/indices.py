@@ -286,6 +286,121 @@ def yoy_series(rows):
         out.append({"month": label, "yoy": me / prior[-1][4] - 1})
     return out
 
+# ---------- weekly monitor (owner, Nov 19 2026): levels, wicks, returns, points; rolling correlation;
+# next-month expected range from realised (and, where a vol index exists, implied) volatility; correlated moves ----------
+WK_N = 26            # weeks shown and used for sigma / beta
+WK_CORR = 12         # rolling-correlation window (weeks)
+MONTH_WEEKS = 21 / 5  # one month ~ 21 sessions = 4.2 trading weeks
+
+
+def weekly_bars(rows):
+    """Mon-Fri weeks: [{wk (ISO Monday), end (last session), o, h, l, c, n}] from daily (date, o, h, l, c)."""
+    out, cur = [], None
+    for d, o, h, l, c in rows:
+        dt = datetime.strptime(d, "%Y-%m-%d")
+        wk = (dt - timedelta(days=dt.weekday())).strftime("%Y-%m-%d")
+        if not cur or cur["wk"] != wk:
+            cur = {"wk": wk, "end": d, "o": o, "h": h, "l": l, "c": c, "n": 0}
+            out.append(cur)
+        cur["end"], cur["c"], cur["n"] = d, c, cur["n"] + 1
+        cur["h"], cur["l"] = max(cur["h"], h), min(cur["l"], l)
+    return out
+
+
+def usd_rows(rows, fx):
+    """Index in USD: each bar divided by that day's USD/INR close (last available on/before the date)."""
+    out, j, last = [], 0, None
+    fx = sorted(fx)
+    for d, o, h, l, c in rows:
+        while j < len(fx) and fx[j][0] <= d:
+            last = fx[j][4]
+            j += 1
+        if last:
+            out.append((d, o / last, h / last, l / last, c / last))
+    return out
+
+
+def weekly_series(bars):
+    """Adds ret %, points, range and wick sizes against the prior week's close."""
+    out = []
+    for i, b in enumerate(bars):
+        if i == 0:
+            continue
+        pc = bars[i - 1]["c"]
+        out.append({"wk": b["wk"], "end": b["end"], "open": rnd(b["o"]), "high": rnd(b["h"]), "low": rnd(b["l"]), "close": rnd(b["c"]),
+                    "ret_pct": rnd((b["c"] / pc - 1) * 100), "pts": rnd(b["c"] - pc), "range_pts": rnd(b["h"] - b["l"]),
+                    "range_pct": rnd((b["h"] / b["l"] - 1) * 100), "upper_wick": rnd(b["h"] - max(b["o"], b["c"])),
+                    "lower_wick": rnd(min(b["o"], b["c"]) - b["l"]), "sessions": b["n"]})
+    return out
+
+
+def beta(y, x):
+    pairs = [(a, b) for a, b in zip(y, x) if a is not None and b is not None]
+    if len(pairs) < 8:
+        return None
+    my, mx = sum(p[0] for p in pairs) / len(pairs), sum(p[1] for p in pairs) / len(pairs)
+    vx = sum((p[1] - mx) ** 2 for p in pairs)
+    return round(sum((p[0] - my) * (p[1] - mx) for p in pairs) / vx, 2) if vx else None
+
+
+def weekly_block(series, vol_idx, today_wk):
+    """series: {key: (name, weekly rows incl. the running week)}; vol_idx: {key: (sym, daily rows) or None}."""
+    keys = list(series)
+    done = {k: [w for w in series[k][1] if w["wk"] < today_wk] for k in keys}        # complete weeks only for statistics
+    common = sorted(set.intersection(*[set(w["wk"] for w in done[k]) for k in keys]))[-WK_N:]
+    R = {k: {w["wk"]: w["ret_pct"] for w in done[k]} for k in keys}
+    ret = {k: [R[k].get(w) for w in common] for k in keys}
+    blk = {"weeks_used": len(common), "window": f"{common[0]} to {common[-1]}" if common else "", "corr_window": WK_CORR,
+           "month_weeks": MONTH_WEEKS, "series": {}, "expected": {}, "rolling_corr": {}, "correlated": {}}
+    for k in keys:
+        name, rows = series[k]
+        blk["series"][k] = {"name": name, "weeks": rows[-WK_N:]}
+        last = rows[-1]["close"]
+        sw = stdev(ret[k])
+        exp = None
+        if sw and last:
+            sm = sw * math.sqrt(MONTH_WEEKS)
+            exp = {"basis_close": last, "basis_date": rows[-1]["end"], "sigma_week_pct": rnd(sw), "sigma_month_pct": rnd(sm),
+                   "r1": [rnd(last * math.exp(-sm / 100)), rnd(last * math.exp(sm / 100))],
+                   "r2": [rnd(last * math.exp(-2 * sm / 100)), rnd(last * math.exp(2 * sm / 100))],
+                   "pts_1s": rnd(last * sm / 100)}
+            v = vol_idx.get(k)
+            if v and v[1]:
+                iv = v[1][-1][4]
+                ism = iv * math.sqrt(21 / 252)
+                exp["implied"] = {"index": v[0], "level": rnd(iv), "date": v[1][-1][0], "sigma_month_pct": rnd(ism),
+                                  "r1": [rnd(last * math.exp(-ism / 100)), rnd(last * math.exp(ism / 100))], "pts_1s": rnd(last * ism / 100)}
+        blk["expected"][k] = exp
+    drivers = [k for k in ("SPX", "NDX", "DJIA") if k in keys]
+    for k in keys:
+        blk["rolling_corr"][k] = {}
+        blk["correlated"][k] = {}
+        for d in drivers:
+            if d == k:
+                continue
+            rc = []
+            for i in range(WK_CORR - 1, len(common)):
+                rc.append({"wk": common[i], "r": pearson(ret[k][i - WK_CORR + 1:i + 1], ret[d][i - WK_CORR + 1:i + 1])})
+            blk["rolling_corr"][k][d] = rc
+            b, r = beta(ret[k], ret[d]), pearson(ret[k], ret[d])
+            de = blk["expected"].get(d)
+            ke = blk["expected"].get(k)
+            if b is None or not de or not ke:
+                continue
+            mv = b * de["sigma_month_pct"]
+            blk["correlated"][k][d] = {"r": r, "r2": rnd(r * r) if r is not None else None, "beta": b, "driver_move_pct": de["sigma_month_pct"],
+                                       "move_pct": rnd(mv), "move_pts": rnd(ke["basis_close"] * mv / 100),
+                                       "band": [rnd(ke["basis_close"] * math.exp(-abs(mv) / 100)), rnd(ke["basis_close"] * math.exp(abs(mv) / 100))]}
+    return blk
+
+
+def opt_daily(sym, tz):
+    try:
+        return fetch_daily(sym, tz)
+    except Exception as e:
+        print(f"  (optional {sym} unavailable: {e})")
+        return None
+
 
 def main():
     now = datetime.now(timezone.utc)
@@ -520,7 +635,23 @@ def main():
         "rolling_vol": rolling,
         "nifty": nifty_block,
     }
+    try:
+        wk_series = {k: (US[k][1], weekly_series(weekly_bars(data[k]))) for k in US}
+        wk_series["NIFTY"] = ("Nifty 50 · INR", weekly_series(weekly_bars(nifty)))
+        wk_series["NIFTY_USD"] = ("Nifty 50 · USD", weekly_series(weekly_bars(usd_rows(nifty, inr))))
+        vix_map = {"SPX": ("^VIX", vix), "NDX": ("^VXN", opt_daily("^VXN", NY_TZ)), "DJIA": ("^VXD", opt_daily("^VXD", NY_TZ)),
+                   "NIFTY": ("^INDIAVIX", opt_daily("^INDIAVIX", IST))}
+        today = datetime.now(NY)
+        body["weekly"] = weekly_block(wk_series, vix_map, (today - timedelta(days=today.weekday())).strftime("%Y-%m-%d"))
+    except Exception as e:
+        print(f"! weekly block skipped: {e}")
     if "--dry-run" in sys.argv:
+        w = body.get("weekly") or {}
+        for k, e in (w.get("expected") or {}).items():
+            if e:
+                print(f"  wk {k}: close {e['basis_close']} sigma_m {e['sigma_month_pct']}% 1s {e['r1']} implied {(e.get('implied') or {}).get('sigma_month_pct')}")
+        for k, c in (w.get("correlated") or {}).items():
+            print(f"  corr {k}: " + ", ".join(f"{d} r{v['r']} b{v['beta']} {v['move_pct']}%" for d, v in c.items()))
         for sym in US:
             x = indices[sym]
             print(f"{x['name']}: cum {x['cum_pct']}% | 2025 {x['y2025_pct']}% | 2026 YTD {x['y2026_ytd_pct']}% | "
