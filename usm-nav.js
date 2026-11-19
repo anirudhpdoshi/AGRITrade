@@ -167,6 +167,7 @@
   function page() { var a = doc.getElementById("panel-usmkt"), b = doc.getElementById("panel-earnings"); return a && a.classList.contains("active") ? "mkt" : b && b.classList.contains("active") ? "earn" : ""; }
   function sync() { var u = U(), pg = page(); if (!u || !pg) return; u.setAttribute("data-page", pg);
     var hd = u.querySelector(".usm-a > b"); if (hd) hd.textContent = pg === "mkt" ? "US Markets" : "Earnings";
+    if (pg === "mkt" && root.USM && USM.closeCo) USM.closeCo();
     if (pg === "mkt" && mode !== "overview") setMode("overview"); else if (pg === "earn" && mode !== "company") setMode("company"); }
   ["panel-usmkt", "panel-earnings"].forEach(function (id) { var el = doc.getElementById(id); if (el) new MutationObserver(function () { if (ready()) sync(); }).observe(el, { attributes: true, attributeFilter: ["class"] }); });
 
@@ -197,6 +198,7 @@
     "@media (prefers-reduced-motion:reduce){.ux-tb.sk{animation:none}}" +
     "#usmB [data-usmcat=c4],#usmB [data-usmcat=c6],#usmB [data-usmcat=c9],#usmWlB{display:none!important}#usm[data-mode=company]:not([data-co]) .usm-d{display:none!important}.ux-lk{background:none;border:0;cursor:pointer;font-size:14px;padding:0 8px;opacity:.55}.ux-lk[aria-pressed=true]{opacity:1}.ux-elk[aria-pressed=true]{border-color:#e8b93d;color:#e8b93d}" +
     "#usm[data-mode=company] #usmWlB{display:none!important}#usm[data-mode=search] #usmC,#usm[data-mode=search] #usmB,#usm[data-mode=search] .usm-d,#usm[data-mode=company] #usmC,#usm[data-mode=company] #usmB,#usm[data-mode=calendar] #usmC,#usm[data-mode=calendar] #usmB,#usm[data-mode=calendar] .usm-d{display:none!important}" +
+    "#usm[data-mode=overview] #usmCrumb,#usm[data-mode=overview] #usmSub,#usm[data-mode=overview] #usmLock,#usm[data-mode=overview] #usmWlB,#usm[data-mode=overview] #panel-earnings,#usm[data-mode=overview] [data-usmseason],#usm[data-mode=overview] .usm-open,#usm[data-mode=overview] #usmF{display:none!important}" +
     "#usm[data-mode=overview] #usmXb,#usm[data-mode=overview] #usmXs,#usm[data-mode=overview] .el-bar,#usm[data-mode=overview] #usmTabs{display:none!important}" +
     "#usm[data-mode=company] #usmG,#usm[data-mode=company] #usmF,#usm[data-mode=company] #usmE,#usm[data-mode=company] #usmSt{display:none!important}" +
     ".ux-empty{grid-column:1/-1;min-height:52vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;background:#000;border:1px dashed var(--line2);border-radius:12px;padding:40px 20px;color:var(--muted)}.ux-empty[hidden]{display:none}" +

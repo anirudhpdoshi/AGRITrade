@@ -633,7 +633,7 @@
     V.q = q.value; save(); var pos = q.selectionStart; render(); var n = document.querySelector("#panel-world [data-wq]"); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} }
   });
   function active() { var P = document.getElementById("panel-world"); return P && P.classList.contains("active"); }
-  function needed() { var U = document.getElementById("panel-earnings"); return active() || (U && U.classList.contains("active")); }   /* US Market reads this feed too */
+  function needed() { var U = document.getElementById("panel-earnings"), M = document.getElementById("panel-usmkt"); return active() || (U && U.classList.contains("active")) || (M && M.classList.contains("active")); }   /* US Market reads this feed too */
   setInterval(function () { if (!window.DESK_LOCKED && (needed() || Date.now() - lastTry > 600000)) poll(); }, 5000);   /* poll() itself throttles to 1 min (15 s after a failure) */
   setInterval(function () { if (active()) { paintHead(); var cx = document.getElementById("wCtx"); if (cx) cx.innerHTML = ctxHTML(); if (W && Date.now() > nextRun(Date.parse(W.updated_at) + 60000) + LAND_MS) poll(true); if (W && (V.sub === "sessions" || ((V.sub === "overview" || V.sub === "markets") && !(document.activeElement && document.activeElement.matches && document.activeElement.matches("[data-wq]"))))) render(); } }, 60000);   /* keep source-time ages current */
   window.addEventListener("desk:unlock", function () { poll(true); });
