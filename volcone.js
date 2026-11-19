@@ -12,8 +12,9 @@
   var doc = root.document;
   var KEYS = ["corn", "soybeans", "wheat", "fx"], NAME = { corn: "Corn", soybeans: "Soybeans", wheat: "Wheat", fx: "USD/CAD" }, MULT = 5000;
   var L = { dual: true, walls: true, ma: true, events: true, cot: true, rv: false };
-  try { var sv = JSON.parse(localStorage.getItem("desk.vcone") || "{}"); for (var q in sv) if (q in L) L[q] = !!sv[q]; } catch (e) {}
-  function save() { try { localStorage.setItem("desk.vcone", JSON.stringify(L)); } catch (e) {} }
+  var FXW = 20;   /* USD/CAD realised-σ window, sessions: 20 · 50 · 100 (owner, Nov 19 2026) */
+  try { var sv = JSON.parse(localStorage.getItem("desk.vcone") || "{}"); for (var q in sv) if (q in L) L[q] = !!sv[q]; if ([20, 50, 100].indexOf(+sv.fxw) >= 0) FXW = +sv.fxw; } catch (e) {}
+  function save() { try { localStorage.setItem("desk.vcone", JSON.stringify(Object.assign({ fxw: FXW }, L))); } catch (e) {} }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   var TZ = "America/Toronto", DF = new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short", day: "numeric" }), DET = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }),
     HM = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
@@ -50,9 +51,9 @@
       var F = D.fx || {}, fd = F.feed || {};
       var bs = root.PRICE_SYNC && PRICE_SYNC.best("CAD=X"); m.px = (bs && bs.px) || +fd.mid || close[close.length - 1]; m.settle = (F.spot && +F.spot.ref) || close[close.length - 2]; m.settleLab = "prior close";
       m.contract = "SPOT"; m.unit = "CAD per USD"; m.state = root.isAuto && !isAuto("fx_spot") ? "DELAYED" : "LIVE";
-      var lr = []; for (var i = close.length - 20; i < close.length; i++) lr.push(Math.log(close[i] / close[i - 1]));
+      var W = Math.min(FXW, close.length - 1), lr = []; for (var i = close.length - W; i < close.length; i++) lr.push(Math.log(close[i] / close[i - 1])); m.win = W;
       var mu = lr.reduce(function (a, b) { return a + b; }, 0) / lr.length;
-      m.sd = Math.sqrt(lr.reduce(function (a, b) { return a + (b - mu) * (b - mu); }, 0) / (lr.length - 1)); m.volLab = "20-day realised vol"; m.thr = 0.0020; m.thrLab = "20 pips";
+      m.sd = Math.sqrt(lr.reduce(function (a, b) { return a + (b - mu) * (b - mu); }, 0) / (lr.length - 1)); m.volLab = W + "-day realised vol"; m.thr = 0.0020; m.thrLab = "20 pips";
       var Lv = F.levels || {}; m.levels = [["S20", Lv.s20], ["R20", Lv.r20], ["S50", Lv.s50], ["R50", Lv.r50]].filter(function (x) { return x[1]; }).map(function (x) { return [x[0], +x[1]]; });
       m.cot = ((F.pos || {}).series || []).filter(function (c) { return c.px; }).map(function (c) { return { d: c.date, px: +c.px, net: c.net }; });
       m.ratios = { COT: eventRatio(dates, close, ((F.pos || {}).series || []).map(function (c) { return nextBizOn(dates, addDays(c.date, 6)); }).filter(Boolean)) };
@@ -244,9 +245,10 @@
         (m.sdIv && m.sdRv ? kv("Implied vol", (m.sdIv * Math.sqrt(252) * 100).toFixed(1) + "%") + kv("Realised vol 30d", (m.sdRv * Math.sqrt(252) * 100).toFixed(1) + "%") +
           kv("IV − RV", '<span class="' + (m.sdIv > m.sdRv ? "up" : "dn") + '">' + ((m.sdIv - m.sdRv) * Math.sqrt(252) * 100 >= 0 ? "+" : "−") + Math.abs((m.sdIv - m.sdRv) * Math.sqrt(252) * 100).toFixed(1) + " pts</span>") : "") + (m.gex != null ? kv("NET GEX", (m.gex < 0 ? "−$" : "$") + Math.abs(m.gex / 1e6).toFixed(0) + "M") : "") +
         kv("vs " + m.settleLab, ((m.px - m.settle) >= 0 ? "+" : "−") + Math.abs((m.px - m.settle) * m.unitMove).toFixed(1) + m.uLab) +
-        (m.fx && m.sd ? kv("Realised vol 20d", (m.sd * Math.sqrt(252) * 100).toFixed(1) + "%") : "") +
+        (m.fx && m.sd ? kv("Realised vol " + m.win + "d", (m.sd * Math.sqrt(252) * 100).toFixed(1) + "%") : "") +
         (cot ? kv("COT " + md(cot.d), cot.px.toFixed(d)) + kv("Price vs COT", '<span class="' + (m.px >= cot.px ? "up" : "dn") + '">' + cotTxt + "</span>") : "") +
         (cot && cot.net != null ? kv("Funds net", (cot.net > 0 ? "+" : "") + cot.net.toLocaleString()) : "") + "</div>" +
+      (m.fx ? '<div class="vc-win"><span>σ window</span>' + [20, 50, 100].map(function (w) { return '<button type="button" data-vcw="' + w + '" aria-pressed="' + (FXW === w) + '">' + w + "D</button>"; }).join("") + "</div>" : "") +
       '<div class="vc-tgs">' + tg("dual", "Dual cone") + tg("walls", m.fx ? "Key levels" : "GEX / OI walls") + tg("ma", "EMA 20/50/100") + tg("events", "Event gates") + (m.cot && m.cot.length ? tg("cot", "CFTC price line") : "") + (m.sdIv && m.sdRv ? tg("rv", "σ: realised, not implied") : "") + "</div>" +
       '<div class="vc-log"><b>Breach telemetry</b>' + (L2.length ? L2.slice(-6).reverse().map(function (x) { return "<div><span>" + HM.format(new Date(x.t)) + "</span>" + esc(x.txt) + "</div>"; }).join("") : '<div class="neu">No tests or breaches this session.</div>') + "</div></div>";
   }
@@ -254,7 +256,7 @@
     var d = m.dec, ch = m.px - m.settle, pc = (m.px / m.settle - 1) * 100, fxm = root.DATA.fx && root.DATA.fx.feed && +root.DATA.fx.feed.mid;
     return '<div class="vc-head"><span class="vc-nm">AGRITRADE // ' + esc(NAME[m.k].toUpperCase()) + " " + esc(m.contract) + ' <i class="vc-st ' + m.state.toLowerCase() + '">' + m.state + "</i></span>" +
       '<span class="vc-hp"><b class="vc-roll" data-vcpx>' + m.px.toFixed(d) + "</b> <small>" + esc(m.unit) + '</small> <span class="' + (ch > 0 ? "up" : ch < 0 ? "dn" : "") + '">' + (ch >= 0 ? "+" : "−") + Math.abs(ch).toFixed(d) + " (" + (pc >= 0 ? "+" : "−") + Math.abs(pc).toFixed(2) + "%)</span></span>" +
-      (m.fx ? "" : '<span class="vc-hk">USD/CAD <b data-live="usdcad">' + (fxm ? fxm.toFixed(5) : "—") + "</b></span>") + '<span class="vc-hk">' + (m.fx ? "RVOL 20D" : m.rvOn ? "RVOL 30D" : "CHAIN IV") + " <b>" + (m.sd ? (m.sd * Math.sqrt(252) * 100).toFixed(2) + "%" : "—") + "</b></span>" +
+      (m.fx ? "" : '<span class="vc-hk">USD/CAD <b data-live="usdcad">' + (fxm ? fxm.toFixed(5) : "—") + "</b></span>") + '<span class="vc-hk">' + (m.fx ? "RVOL " + m.win + "D" : m.rvOn ? "RVOL 30D" : "CHAIN IV") + " <b>" + (m.sd ? (m.sd * Math.sqrt(252) * 100).toFixed(2) + "%" : "—") + "</b></span>" +
       '<span class="vc-hk vc-cycle">CYCLE <b data-vccyc>01:00</b><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" class="vc-cbg"/><circle cx="12" cy="12" r="10" class="vc-cfg" pathLength="100"/></svg></span></div>';
   }
   function tileHTML(k) {
@@ -305,6 +307,8 @@
     LAST[k] = m.px;
   }, 2000);
   doc.addEventListener("click", function (ev) {
+    var w = ev.target.closest && ev.target.closest("[data-vcw]");
+    if (w) { FXW = +w.getAttribute("data-vcw"); save(); var PF = doc.getElementById("panel-fx"); if (PF && PF.querySelector(".vcone-tile")) mount("fx"); return; }
     var b = ev.target.closest && ev.target.closest("[data-vctg]"); if (!b) return;
     var k2 = b.getAttribute("data-vctg"); L[k2] = !L[k2]; save();
     KEYS.forEach(function (k) { var P = doc.getElementById("panel-" + k); if (P && P.querySelector(".vcone-tile")) mount(k); });
@@ -312,6 +316,8 @@
   KEYS.forEach(function (k) { var P = doc.getElementById("panel-" + k); if (P && P.innerHTML) try { mount(k); } catch (e) {} });
   var css = doc.createElement("style");
   css.textContent =
+    ".vc-win{display:flex;align-items:center;gap:6px;margin:10px 0 2px;font:600 11px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#8a97a8}.vc-win span{flex:1}" +
+    ".vc-win button{all:unset;cursor:pointer;padding:3px 10px;border:1px solid #2a3442;border-radius:999px;color:#c9d4e2;font-weight:700}.vc-win button[aria-pressed=true]{background:#ffb84d;border-color:#ffb84d;color:#101825}" +
     ".vc-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 22px;border:1px solid #1a1a1a;border-bottom:0;border-radius:8px 8px 0 0;padding:10px 14px;background:#000;font-family:'JetBrains Mono','IBM Plex Mono',monospace}" +
     ".vc-nm{font-size:14px;color:#e8eef4;letter-spacing:.04em;display:flex;align-items:center;gap:8px}.vc-st{font-style:normal;font-size:9px;font-weight:700;letter-spacing:.06em;border:1px solid;border-radius:3px;padding:0 4px}.vc-st.live{color:#3fb97f}.vc-st.delayed{color:#e8b93d}.vc-st.settle{color:#8f9db3}.vc-st.closed{color:#e0655f}" +
     ".vc-hp b{font-size:22px;font-weight:500;color:#fff;display:inline-block;font-variant-numeric:tabular-nums}.vc-hp small{color:#8a8a8a}.vc-hp .up{color:#3fb97f}.vc-hp .dn{color:#e0655f}.vc-roll.tick{animation:vcRoll .45s ease-out}@keyframes vcRoll{0%{transform:translateY(-60%);opacity:0}100%{transform:none;opacity:1}}" +
