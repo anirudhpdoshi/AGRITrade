@@ -810,6 +810,51 @@ function rollSVG2(R){
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Open interest migration front versus deferred with calendar spread, roll percent labels vertical, spread line labeled first and latest">'+s+'</svg>';
 }
 
+/* Day-by-day roll strip (owner, Nov 20 2026): every session in the chart as a column — dates across, numbers down — so any
+   day's figures are one glance away without labelling the chart. Latest day at the right edge and highlighted; Mondays get a
+   divider; hovering a column lights that day's bar in the chart above (and the reverse). */
+function rollDays(R, tid){
+  var N=R.dailyN, beh={}; (R.beh||[]).forEach(function(b){ beh[String(b[0]).replace(/[^\w ]/g,'').trim()]=b; });
+  function k(v){ return (v/1000).toFixed(1)+'k'; }
+  function dk(v){ if(v!=null&&Math.abs(v)<50) v=0; return v==null?'':'<span class="'+cls(v)+'">'+(v>0?'+':v<0?'−':'')+(Math.abs(v)/1000).toFixed(1)+'k</span>'; }
+  function dp(v,u,d){ return v==null?'':'<span class="'+cls(v)+'">'+(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(d)+u+'</span>'; }
+  var TAG={'new longs':['NL','up'],'new shorts':['NS','dn'],'short covering':['SC','up'],'long liquidation':['LL','dn'],'steady':['–','']};
+  function flow(b){ var m=b&&/→\s*(.+)$/.exec(b); var t=m&&TAG[m[1].trim()]; return t?'<span class="rd-f '+t[1]+'" title="'+esc(m[1])+'">'+t[0]+'</span>':''; }
+  var yr=new Date().getFullYear(), cols=N.map(function(r,i){ var p=i?N[i-1]:null, lab=MON3[r[0].slice(0,2)]+' '+(+r[0].slice(3)), b=beh[lab]||beh[MON3[r[0].slice(0,2)]+' '+r[0].slice(3)];
+    var dow=new Date(yr+'-'+r[0]+'T12:00:00').getDay();
+    return {i:i, lab:lab, mon:dow===1, last:i===N.length-1, pre:/^P/.test((R.src||{})[r[0]]||''), f:r[1], d:r[2], roll:r[3], sp:r[4],
+      df:p?r[1]-p[1]:null, dd:p?r[2]-p[2]:null, dr:p?r[3]-p[3]:null, ds:p?r[4]-p[4]:null, ff:b?flow(b[1]):'', fd:b?flow(b[2]):''}; });
+  function row(name, fn, cl){ return '<tr'+(cl?' class="'+cl+'"':'')+'><th scope="row">'+name+'</th>'+cols.map(function(c){ return '<td data-rday="'+tid+':'+c.i+'" class="'+(c.mon?'mon ':'')+(c.last?'lst':'')+'">'+fn(c)+'</td>'; }).join('')+'</tr>'; }
+  return '<div class="rd-wrap"><div class="rd-h">Day by day <small>every session in the chart · latest at the right · hover a day to light its bar · flow: NL new longs · NS new shorts · SC short covering · LL long liquidation</small></div>'+
+    '<div class="rd-sc"><table class="rd no-tx"><thead><tr><th>Session</th>'+cols.map(function(c){ return '<th data-rday="'+tid+':'+c.i+'" class="'+(c.mon?'mon ':'')+(c.last?'lst':'')+'">'+c.lab+(c.pre?'<sup>p</sup>':'')+'</th>'; }).join('')+'</tr></thead><tbody>'+
+    row('Front OI · '+esc(R.front), function(c){ return '<b class="rd-fo">'+k(c.f)+'</b>'; })+
+    row('Δ front', function(c){ return dk(c.df); }, 'rd-d')+
+    row('Deferred OI · '+esc(R.def), function(c){ return '<b class="rd-do">'+k(c.d)+'</b>'; })+
+    row('Δ deferred', function(c){ return dk(c.dd); }, 'rd-d')+
+    row('Rolled %', function(c){ return '<b class="rd-r">'+c.roll.toFixed(1)+'%</b>'; })+
+    row('Δ pp', function(c){ return dp(c.dr,'',1); }, 'rd-d')+
+    row('Spread', function(c){ return '<b class="rd-s">'+(c.sp<0?'−':'')+Math.abs(c.sp).toFixed(2)+'¢</b>'; })+
+    row('Δ spread', function(c){ return dp(c.ds,'¢',2); }, 'rd-d')+
+    row('Flow · front / deferred', function(c){ return c.ff||c.fd?c.ff+' '+c.fd:''; })+
+    '</tbody></table></div></div>';
+}
+(function(){
+  var st=document.createElement('style');
+  st.textContent='.rd-wrap{margin:10px 0 4px}.rd-h{font-weight:700;font-size:13px;margin-bottom:6px}.rd-h small{font-weight:400;color:var(--muted);margin-left:6px}'+
+    '.rd-sc{height:auto!important;max-height:none!important;overflow-x:auto;border:1px solid var(--line);border-radius:8px}table.rd{display:table!important;height:auto!important;max-height:none!important;border-collapse:collapse;font:12px "IBM Plex Mono",monospace;white-space:nowrap}'+
+    'table.rd th,table.rd td{padding:4px 8px;text-align:right;border-bottom:1px solid var(--line)}table.rd thead th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--panel)}'+
+    'table.rd th[scope=row]{text-align:left;position:sticky;left:0;background:var(--panel);z-index:1;color:var(--ink);font-family:inherit;font-weight:600;min-width:150px}table.rd tr.rd-d td,table.rd tr.rd-d th{font-size:11px;color:var(--muted);border-bottom-color:transparent}'+
+    'table.rd .mon{border-left:1px solid var(--line2)}table.rd .lst{background:rgba(245,197,66,.10)}table.rd .rd-on{background:rgba(79,143,224,.18)!important}'+
+    '.rd-fo{color:#6aa3ea}.rd-do{color:#43b37c}.rd-r,.rd-s{color:#f5c542}.rd-f{display:inline-block;min-width:20px;padding:0 3px;border-radius:3px;font-size:10.5px;font-weight:700;text-align:center;border:1px solid var(--line2)}.rd-f.up{color:var(--green);border-color:rgba(63,185,127,.5)}.rd-f.dn{color:var(--red);border-color:rgba(214,54,48,.5)}';
+  document.head.appendChild(st);
+  function lit(tid,i){ document.querySelectorAll('.rd-on').forEach(function(x){ x.classList.remove('rd-on'); }); if(tid==null) return; document.querySelectorAll('[data-rday="'+tid+':'+i+'"]').forEach(function(x){ x.classList.add('rd-on'); }); }
+  document.addEventListener('mouseover', function(ev){ var t=ev.target.closest?ev.target:null; if(!t) return;
+    var c=t.closest('[data-rday]'); if(c){ var a=c.getAttribute('data-rday').split(':'); lit(a[0],a[1]); var g=document.querySelector('.btip[data-tid="'+a[0]+'"][data-i="'+a[1]+'"]'); if(g&&typeof btShow==='function'&&!BTPIN){ clearTimeout(BTT); btShow(g,false); } return; }
+    var g2=t.closest('.btip'); if(g2) lit(g2.getAttribute('data-tid'), g2.getAttribute('data-i')); });
+  /* start each strip scrolled to the latest day */
+  new MutationObserver(function(){ document.querySelectorAll('.rd-sc:not([data-sc])').forEach(function(x){ x.setAttribute('data-sc','1'); requestAnimationFrame(function(){ x.scrollLeft=x.scrollWidth; setTimeout(function(){ x.scrollLeft=x.scrollWidth; },300); }); }); }).observe(document.documentElement,{childList:true,subtree:true});
+})();
+
 /* Rollover: embedded base series + daily rows from data.json (DATA.rolls_add[key] = [[MM-DD, frontOI, defOI, frontSettle, defSettle, source]]).
    Table, behaviour rows and statistics are recomputed from the merged series so the card never goes stale. */
 var MON3={'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'};
@@ -1083,8 +1128,7 @@ function rollTileHTML(key){
     stat('Deferred OI · '+R.lastLabel, lastT[2]) + stat('Calendar spread', st.sp) +
     stat('Roll pace', st.pace) + stat('Delivery window', st.state) +
     '</div>'+rollNextHTML(key, R)+
-    '<div class="flowwrap">'+rollSVG2(R).replace('<svg ','<svg class="flowchart" ')+'</div>'+
-    rollBadges(R)+
+    (function(){ var svg=rollSVG2(R), m=/data-tid="(b\d+)"/.exec(svg); return '<div class="flowwrap">'+svg.replace('<svg ','<svg class="flowchart" ')+'</div>'+rollBadges(R)+rollDays(R, m?m[1]:''); })()+
     rollSpreadLine(R)+
     '<div class="legend"><span><span class="sw" style="background:#2f6db3"></span>Front OI ('+R.front+')</span><span><span class="sw" style="background:#2b8f61"></span>Deferred OI ('+R.def+')</span><span><span class="sw" style="background:#f5c542"></span>Calendar spread ¢/bu (right axis)</span><span>Bar labels: roll % = deferred OI ÷ (front + deferred OI)</span></div>'+
     '<div class="roll-grid"><div><h3>Daily summary — last 10 sessions</h3><table class="mini"><thead><tr><th>Date</th><th>Front OI</th><th>Δ front</th><th>Next OI</th><th>Δ next</th><th>Net ΔOI</th><th>Roll %</th><th>Δ pp</th><th>Spread</th><th>Δ¢</th></tr></thead><tbody>'+dRows+'</tbody></table></div>'+
