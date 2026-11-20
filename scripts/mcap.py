@@ -17,6 +17,7 @@ Run:  python scripts/mcap.py [--dry-run]
 import json, os, re, sys, time, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ud_common as UDC
@@ -193,7 +194,9 @@ def main():
                 "chg": round((tot[-1] - t0) / 1e9, 1), "pct": r1((tot[-1] / t0 - 1) * 100, 2), "gainers": L[::-1][:10], "losers": L[:10],
                 "up": up, "down": len(L) - up, "companies": len(L), "sectors": S}
 
-    body = {"updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "asof": days[-1],
+    ny = datetime.now(ZoneInfo("America/New_York"))
+    intraday = days[-1] == ny.strftime("%Y-%m-%d") and (ny.hour, ny.minute) < (16, 15)   # today's bar is still trading
+    body = {"updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "asof": days[-1], "intraday": intraday,
             "universe": {"name": "S&P 500 constituents", "listed": len(U["rows"]), "used": len(used), "src": U.get("src"), "shares_asof": U.get("asof")},
             "method": "Market cap = shares outstanding (Yahoo, refreshed weekly) × official daily close (Yahoo, delayed). Shares held constant across the window, so changes are price-driven.",
             "total": round(tot[-1] / 1e9, 1), "weekly": weekly[-26:],

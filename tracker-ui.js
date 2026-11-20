@@ -16,7 +16,7 @@
   var P = document.getElementById("panel-earnings"), BTN = document.getElementById("tabbtn-earnings");
   if (!(LIVE || on) || !P || !BTN) return;
 
-  var CATS = [["c1", "C1", "Snapshot"], ["c2", "C2", "Indexes"], ["c3", "C3", "Sectors"], ["c4", "C4", "Breadth"],
+  var CATS = [["c1", "C1", "Snapshot"], ["c2", "C2", "Indexes"], ["c3", "C3", "Sectors"], ["mc", "C8", "Market cap"], ["c4", "C4", "Breadth"],
     ["c6", "C6", "Earnings"], ["c9", "C7", "Northbook"]];   /* Breakout Stream removed (owner, Nov 17 2026): it lives in the Breakouts menu */
   var INDEX = ["^GSPC", "^NDX", "^IXIC", "^DJI", "^RUT"], SHORT = { "^GSPC": "S&P 500", "^NDX": "Nasdaq 100", "^IXIC": "Nasdaq Comp", "^DJI": "Dow Jones", "^RUT": "Russell 2000", "^VIX": "VIX" };
   var cat = "c1"; try { cat = localStorage.getItem("desk.usmCat") || "c1"; } catch (e) {}
@@ -562,7 +562,7 @@
     paintDock(); paintLock();
     if (sel) paintE();
   }
-  function view() { var C = current(), c = C[0]; document.getElementById("usmView").innerHTML = c === "c1" ? snapshot() : c === "c2" ? c2View() : c === "c3" ? c3View() : c === "c4" ? c4View() : c === "c9" ? c9View() : c === "c5" ? c5View(ST.paused && ST.snap ? ST.snap : streamRows()) : c === "c6" ? c6View() : holding(C); }
+  function view() { var C = current(), c = C[0]; document.getElementById("usmView").innerHTML = c === "c1" ? snapshot() : c === "c2" ? c2View() : c === "c3" ? c3View() : c === "c4" ? c4View() : c === "c9" ? c9View() : c === "mc" ? (window.MCAP_UI ? MCAP_UI.html() : holding(C)) : c === "c5" ? c5View(ST.paused && ST.snap ? ST.snap : streamRows()) : c === "c6" ? c6View() : holding(C); }
   function paintC6() { if (cat === "wl") { view(); return; } document.getElementById("usmSub").innerHTML = subBar(); root.dataset.v = C6.sub === "intel" ? "intel" : "view"; document.getElementById("usmView").innerHTML = c6View(); crumbs(); paintLock(); }
   function go(c) {
     cat = c; try { localStorage.setItem("desk.usmCat", c); } catch (e) {}
