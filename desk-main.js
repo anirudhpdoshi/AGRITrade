@@ -819,13 +819,14 @@ function rollDays(R, tid){
   function dk(v){ if(v!=null&&Math.abs(v)<50) v=0; return v==null?'':'<span class="'+cls(v)+'">'+(v>0?'+':v<0?'−':'')+(Math.abs(v)/1000).toFixed(1)+'k</span>'; }
   function dp(v,u,d){ return v==null?'':'<span class="'+cls(v)+'">'+(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(d)+u+'</span>'; }
   var TAG={'new longs':['NL','up'],'new shorts':['NS','dn'],'short covering':['SC','up'],'long liquidation':['LL','dn'],'steady':['–','']};
-  function flow(b){ var m=b&&/→\s*(.+)$/.exec(b); var t=m&&TAG[m[1].trim()]; return t?'<span class="rd-f '+t[1]+'" title="'+esc(m[1])+'">'+t[0]+'</span>':''; }
+  function flow(b){ var m=b&&/→\s*(.+)$/.exec(b); var t=m&&TAG[m[1].trim()], pm=b&&/\/\s*([+\-−]?[\d.]+)¢/.exec(b);
+    return t?'<span class="rd-f '+t[1]+'" title="'+esc(b)+'">'+t[0]+'</span>'+(pm?'<small class="rd-pm">'+pm[1].replace('-','−')+'¢</small>':''):''; }
   var yr=new Date().getFullYear(), cols=N.map(function(r,i){ var p=i?N[i-1]:null, lab=MON3[r[0].slice(0,2)]+' '+(+r[0].slice(3)), b=beh[lab]||beh[MON3[r[0].slice(0,2)]+' '+r[0].slice(3)];
     var dow=new Date(yr+'-'+r[0]+'T12:00:00').getDay();
     return {i:i, lab:lab, mon:dow===1, last:i===N.length-1, pre:/^P/.test((R.src||{})[r[0]]||''), f:r[1], d:r[2], roll:r[3], sp:r[4],
       df:p?r[1]-p[1]:null, dd:p?r[2]-p[2]:null, dr:p?r[3]-p[3]:null, ds:p?r[4]-p[4]:null, ff:b?flow(b[1]):'', fd:b?flow(b[2]):''}; });
   function row(name, fn, cl){ return '<tr'+(cl?' class="'+cl+'"':'')+'><th scope="row">'+name+'</th>'+cols.map(function(c){ return '<td data-rday="'+tid+':'+c.i+'" class="'+(c.mon?'mon ':'')+(c.last?'lst':'')+'">'+fn(c)+'</td>'; }).join('')+'</tr>'; }
-  return '<div class="rd-wrap"><div class="rd-h">Day by day <small>every session in the chart · latest at the right · hover a day to light its bar · flow: NL new longs · NS new shorts · SC short covering · LL long liquidation</small></div>'+
+  return '<div class="rd-wrap"><div class="rd-h">Day by day <small>every session in the chart · latest at the right · hover a day to light its bar · flow, with that contract’s price change: NL new longs (price↑ OI↑) · NS new shorts (price↓ OI↑) · SC short covering (price↑ OI↓) · LL long liquidation (price↓ OI↓)</small></div>'+
     '<div class="rd-sc"><table class="rd no-tx"><thead><tr><th>Session</th>'+cols.map(function(c){ return '<th data-rday="'+tid+':'+c.i+'" class="'+(c.mon?'mon ':'')+(c.last?'lst':'')+'">'+c.lab+(c.pre?'<sup>p</sup>':'')+'</th>'; }).join('')+'</tr></thead><tbody>'+
     row('Front OI · '+esc(R.front), function(c){ return '<b class="rd-fo">'+k(c.f)+'</b>'; })+
     row('Δ front', function(c){ return dk(c.df); }, 'rd-d')+
@@ -835,7 +836,9 @@ function rollDays(R, tid){
     row('Δ pp', function(c){ return dp(c.dr,'',1); }, 'rd-d')+
     row('Spread', function(c){ return '<b class="rd-s">'+(c.sp<0?'−':'')+Math.abs(c.sp).toFixed(2)+'¢</b>'; })+
     row('Δ spread', function(c){ return dp(c.ds,'¢',2); }, 'rd-d')+
-    row('Flow · front / deferred', function(c){ return c.ff||c.fd?c.ff+' '+c.fd:''; })+
+    row('Net Δ OI · combined', function(c){ return c.df==null?'':dk(c.df+c.dd); })+
+    row('Flow · '+esc(R.front), function(c){ return c.ff; }, 'rd-fl')+
+    row('Flow · '+esc(R.def), function(c){ return c.fd; }, 'rd-fl')+
     '</tbody></table></div></div>';
 }
 (function(){
@@ -844,8 +847,8 @@ function rollDays(R, tid){
     '.rd-sc{height:auto!important;max-height:none!important;overflow-x:auto;border:1px solid var(--line);border-radius:8px}table.rd{display:table!important;height:auto!important;max-height:none!important;border-collapse:collapse;font:12px "IBM Plex Mono",monospace;white-space:nowrap}'+
     'table.rd th,table.rd td{padding:4px 8px;text-align:right;border-bottom:1px solid var(--line)}table.rd thead th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--panel)}'+
     'table.rd th[scope=row]{text-align:left;position:sticky;left:0;background:var(--panel);z-index:1;color:var(--ink);font-family:inherit;font-weight:600;min-width:150px}table.rd tr.rd-d td,table.rd tr.rd-d th{font-size:11px;color:var(--muted);border-bottom-color:transparent}'+
-    'table.rd .mon{border-left:1px solid var(--line2)}table.rd .lst{background:rgba(245,197,66,.10)}table.rd .rd-on{background:rgba(79,143,224,.18)!important}'+
-    '.rd-fo{color:#6aa3ea}.rd-do{color:#43b37c}.rd-r,.rd-s{color:#f5c542}.rd-f{display:inline-block;min-width:20px;padding:0 3px;border-radius:3px;font-size:10.5px;font-weight:700;text-align:center;border:1px solid var(--line2)}.rd-f.up{color:var(--green);border-color:rgba(63,185,127,.5)}.rd-f.dn{color:var(--red);border-color:rgba(214,54,48,.5)}';
+    '.roll-stats{margin-top:14px}.rs-g{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;column-gap:28px}.rs-g .kv{display:flex!important;justify-content:space-between;align-items:baseline;gap:14px;padding:7px 0;border-bottom:1px solid var(--line)}.rs-g .kv .vv{text-align:right}@media(max-width:1000px){.rs-g{grid-template-columns:1fr 1fr!important}}@media(max-width:640px){.rs-g{grid-template-columns:1fr!important}}table.rd .mon{border-left:1px solid var(--line2)}table.rd .lst{background:rgba(245,197,66,.10)}table.rd .rd-on{background:rgba(79,143,224,.18)!important}'+
+    '.rd-fo{color:#6aa3ea}.rd-do{color:#43b37c}.rd-r,.rd-s{color:#f5c542}.rd-pm{display:block;font-size:10px;color:var(--muted)}table.rd tr.rd-fl td{text-align:center}.rd-f{display:inline-block;min-width:20px;padding:0 3px;border-radius:3px;font-size:10.5px;font-weight:700;text-align:center;border:1px solid var(--line2)}.rd-f.up{color:var(--green);border-color:rgba(63,185,127,.5)}.rd-f.dn{color:var(--red);border-color:rgba(214,54,48,.5)}';
   document.head.appendChild(st);
   function lit(tid,i){ document.querySelectorAll('.rd-on').forEach(function(x){ x.classList.remove('rd-on'); }); if(tid==null) return; document.querySelectorAll('[data-rday="'+tid+':'+i+'"]').forEach(function(x){ x.classList.add('rd-on'); }); }
   document.addEventListener('mouseover', function(ev){ var t=ev.target.closest?ev.target:null; if(!t) return;
@@ -900,7 +903,7 @@ function rollSpreadLine(R){
   var rows=R.dailyN, MN=MON3;
   function dl(r){ return MN[r[0].slice(0,2)]+' '+r[0].slice(3); }
   var a=rows[0], b=rows[rows.length-1];
-  return '<p class="spreadline">Spread '+R.front+' − '+R.def+': first '+a[4].toFixed(1)+'¢ ('+dl(a)+') → latest '+b[4].toFixed(1)+'¢ ('+dl(b)+') · roll % labels run vertically above each bar so neighbours never collide</p>';
+  return '<p class="spreadline">Spread '+R.front+' − '+R.def+': first '+a[4].toFixed(1)+'¢ ('+dl(a)+') → latest '+b[4].toFixed(1)+'¢ ('+dl(b)+')</p>';
 }
 
 /* ================= POSITION FLOW SIGNAL =================
@@ -1122,7 +1125,7 @@ function rollTileHTML(key){
   var behRows=bT.map(function(b,i){
     return '<div class="beh-row'+(i===bT.length-1?' hl':'')+'"><span class="bd">'+b[0]+'</span><span class="bt">'+esc(b[1])+'</span><span class="bt">'+esc(b[2])+'</span></div>';
   }).join("");
-  return '<div class="tile wide roll-tile" data-src="grains_settle"><div class="tile-head"><h2>Futures roll — '+R.front+' → '+R.def+' <span class="h2note">· OI migration &amp; calendar spread · through '+esc(R.lastLabel)+'</span></h2></div>'+
+  return '<div class="tile wide roll-tile" data-src="grains_settle" data-roll="'+R.dailyN[R.dailyN.length-1][3].toFixed(1)+'"><div class="tile-head"><h2>Futures roll — '+R.front+' → '+R.def+' <span class="h2note">· OI migration &amp; calendar spread · through '+esc(R.lastLabel)+'</span></h2></div>'+
     '<div class="stat-row" style="margin-top:8px">'+
     stat('Roll progress · '+R.lastLabel, st.roll) + stat('Front OI · '+R.lastLabel, lastT[1]) +
     stat('Deferred OI · '+R.lastLabel, lastT[2]) + stat('Calendar spread', st.sp) +
@@ -1130,13 +1133,8 @@ function rollTileHTML(key){
     '</div>'+rollNextHTML(key, R)+
     (function(){ var svg=rollSVG2(R), m=/data-tid="(b\d+)"/.exec(svg); return '<div class="flowwrap">'+svg.replace('<svg ','<svg class="flowchart" ')+'</div>'+rollBadges(R)+rollDays(R, m?m[1]:''); })()+
     rollSpreadLine(R)+
-    '<div class="legend"><span><span class="sw" style="background:#2f6db3"></span>Front OI ('+R.front+')</span><span><span class="sw" style="background:#2b8f61"></span>Deferred OI ('+R.def+')</span><span><span class="sw" style="background:#f5c542"></span>Calendar spread ¢/bu (right axis)</span><span>Bar labels: roll % = deferred OI ÷ (front + deferred OI)</span></div>'+
-    '<div class="roll-grid"><div><h3>Daily summary — last 10 sessions</h3><table class="mini"><thead><tr><th>Date</th><th>Front OI</th><th>Δ front</th><th>Next OI</th><th>Δ next</th><th>Net ΔOI</th><th>Roll %</th><th>Δ pp</th><th>Spread</th><th>Δ¢</th></tr></thead><tbody>'+dRows+'</tbody></table></div>'+
-    '<div><h3>Roll statistics &amp; timing</h3>'+statRows+'</div></div>'+
+    '<div class="roll-stats"><h3>Roll statistics &amp; timing</h3><div class="rs-g">'+statRows+'</div></div>'+
     '<div class="roll-opt"><h3>Options open interest by month — for roll planning</h3>'+oiMonthsHTML(key).replace('<div class="oi-mt">What happened in each option month</div>','')+'<p class="note" style="margin:6px 0 0">Strike-by-strike view and change chart: <a href="#" data-secjump="'+key+':opt">Options data → Open interest by strike</a> (NEAR · FAR · BOTH)</p></div>'+
-    '<div class="beh-wrap"><h3>Trader behaviour — what each session\u2019s flow says · last 9 session deltas</h3>'+
-    '<div class="beh-row beh-head"><span class="bd">Date</span><span class="bt">Front ('+R.front+') — unwinding</span><span class="bt">Deferred ('+R.def+') — adding</span></div>'+behRows+
-    '<p class="decode">Decode: price↑+OI↑ = new longs · price↓+OI↑ = new shorts · price↑+OI↓ = short covering · price↓+OI↓ = long liquidation</p>'+
     '<div class="stamp" style="border:0;margin-top:4px;padding-top:8px">Latest session ('+esc(R.lastLabel)+') highlighted'+(/prelim/.test(R.lastLabel)?' · preliminary until the exchange final is confirmed (exchange preliminary — has matched the final within ~0.6% on this desk)':'')+
       (R.oldPrelim.length?' · ᵖ '+esc(R.oldPrelim.join(', ').replace(/\s*\(?\b(IBKR|CME)\b\)?/g,''))+': exchange preliminary open interest, the desk uses the preliminary figure (it has matched the exchange final within ~0.6%) from our sources, so the preliminary figure is kept and marked':'')+'</div></div>'+
     '<div class="stamp">Per-contract open interest: rollover-card history through Oct 20, then the exchange daily bulletin (prelim = exchange preliminary OI, published ~10:30 pm ET on trade date; final ~10:30 am ET next day) · settles: CBOT daily settlements · behaviour rule: OI and price change of each contract that session</div></div>';

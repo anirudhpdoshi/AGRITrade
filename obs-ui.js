@@ -88,7 +88,7 @@
 
   var SECOND = {
     vol: function (g) { var S = g.skew || [], c = S.filter(function (x) { return x[2] === "C"; }), p = S.filter(function (x) { return x[2] === "P"; }); if (!c.length || !p.length) return []; var av = function (a) { return a.reduce(function (s, x) { return s + x[1]; }, 0) / a.length; }; return [av(c) > av(p) ? "Calls are priced richer than puts: the market is paying up for upside." : "Puts are priced richer than calls: the market is paying up for protection."]; },
-    carry: function (g, t) { var m = /Roll progress[^\d]*(?:Nov|Oct|Dec|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep)? ?\d* ?(?:\(prelim\))?\s*([\d.]+)%/.exec(t.textContent.replace(/\s+/g, " ")); return m ? ["Roll progress is " + m[1] + "% of open interest: " + (+m[1] < 50 ? "most positions are still in the front." : "most positions have moved to the deferred.")] : []; }
+    carry: function (g, t) { var rt = t.getAttribute && (t.getAttribute("data-roll") || (t.querySelector("[data-roll]") || { getAttribute: function () { return null; } }).getAttribute("data-roll")); var m = rt ? [0, rt] : /Roll progress[^%]*?(100(?:\.0+)?|\d{1,2}(?:\.\d+)?)%/.exec(t.textContent.replace(/\s+/g, " ")); return m ? ["Roll progress is " + m[1] + "% of open interest: " + (+m[1] < 50 ? "most positions are still in the front." : "most positions have moved to the deferred.")] : []; }
   };
   var doc = root.document, GR = ["corn", "soybeans", "wheat"], SKIP = /obs-box/, LOG = {};
   function esc(s) { return (typeof DeskCore !== "undefined" ? DeskCore : require("./core.js")).esc(s); }
