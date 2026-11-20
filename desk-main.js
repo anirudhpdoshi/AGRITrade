@@ -746,10 +746,10 @@ var ROLLS = {"corn":{"front":"ZCZ26","def":"ZCH27","dailyN":[["09-25",926030,392
 
 function rollSVG2(R){
   var rows=R.dailyN, n=rows.length;
-  var W=760,H=300,PL=48,PR=48,PT=30,PB=28, pw=W-PL-PR, ph=H-PT-PB;
+  var W=760,H=310,PL=48,PR=48,PT=40,PB=28, pw=W-PL-PR, ph=H-PT-PB;
   var maxOI=0, spMin=0, i, r;
-  rows.forEach(function(r){ maxOI=Math.max(maxOI,r[1]+r[2]); spMin=Math.min(spMin,r[4]); });
-  var yMax=maxOI*1.30, spLo=spMin*1.18;
+  rows.forEach(function(r){ maxOI=Math.max(maxOI,r[1],r[2]); spMin=Math.min(spMin,r[4]); });
+  var yMax=maxOI*1.22, spLo=spMin*1.18;   /* axis fits the taller bar of each day (owner, Nov 20 2026) — not front+deferred combined */
   var gw=pw/n, bw=Math.max(3,Math.min(15,gw*0.36));
   function Y(v){ return PT+ph*(1-v/yMax); }
   function YS(v){ return PT+ph*(1-(v-spLo)/(0-spLo)); }
@@ -786,19 +786,26 @@ function rollSVG2(R){
   var lp=''; rows.forEach(function(r,i){ lp+=(lp?'L':'M')+X(i).toFixed(1)+' '+YS(r[4]).toFixed(1); });
   s+='<path d="'+lp+'" fill="none" stroke="#f5c542" stroke-width="1.8" pointer-events="none"/>';
   rows.forEach(function(r,i){ s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+YS(r[4]).toFixed(1)+'" r="2.6" fill="#f5c542" pointer-events="none"/>'; });
-  /* spread line labeled with its first and latest values, on the line */
-  s+='<text x="'+X(0).toFixed(1)+'" y="'+(YS(rows[0][4])-8).toFixed(1)+'" fill="#f5c542" font-size="10" font-weight="600" font-family="IBM Plex Mono" text-anchor="middle">'+rows[0][4].toFixed(1)+'¢</text>';
-  s+='<text x="'+X(n-1).toFixed(1)+'" y="'+(YS(rows[n-1][4])-8).toFixed(1)+'" fill="#f5c542" font-size="10" font-weight="600" font-family="IBM Plex Mono" text-anchor="middle">'+rows[n-1][4].toFixed(1)+'¢</text>';
-  /* roll % labels run vertically above each bar — neighbours never collide */
+  /* labels (owner, Nov 20 2026): roll % sits flat above the bars on a spaced subset (first, latest, every k-th day and the
+     day it crosses 50%) so no two touch; spread values sit in solid pills off the line; dates never crowd the last one */
+  function pill(x,y,t,c,anc){ var w=t.length*6.2+10, x0=anc==='end'?x-w:anc==='start'?x:x-w/2;
+    return '<rect x="'+x0.toFixed(1)+'" y="'+(y-11).toFixed(1)+'" width="'+w.toFixed(1)+'" height="15" rx="3" fill="#0b0f15" stroke="'+c+'" stroke-width="1"/><text x="'+(x0+5).toFixed(1)+'" y="'+(y).toFixed(1)+'" fill="'+c+'" font-size="10.5" font-weight="700" font-family="IBM Plex Mono">'+t+'</text>'; }
+  var kStep=Math.max(1,Math.ceil(40/gw)), cross=-1;
+  rows.forEach(function(r,i){ if(cross<0&&i&&rows[i-1][3]<50&&r[3]>=50) cross=i; });
   rows.forEach(function(r,i){
-    var top=Math.max(r[1],r[2]), ty=Y(top)-4, cx=X(i);
-    s+='<text x="'+cx.toFixed(1)+'" y="'+ty.toFixed(1)+'" transform="rotate(-90 '+cx.toFixed(1)+' '+ty.toFixed(1)+')" fill="#f5c542" font-size="9.5" font-weight="600" font-family="IBM Plex Mono" text-anchor="start">'+r[3].toFixed(1)+'%</text>';
+    var show=i===0||i===n-1||i===cross||(i%kStep===0&&n-1-i>=kStep&&Math.abs(i-cross)>=kStep);
+    if(!show) return;
+    var ty=Y(Math.max(r[1],r[2]))-6, cx=X(i);
+    s+='<text x="'+cx.toFixed(1)+'" y="'+ty.toFixed(1)+'" fill="#f5c542" font-size="10" font-weight="700" font-family="IBM Plex Mono" text-anchor="middle"'+(i===cross?' text-decoration="underline"':'')+'>'+r[3].toFixed(0)+'%</text>';
   });
-  var MN=MON3;
+  s+=pill(X(0)+6,YS(rows[0][4])+18,(rows[0][4]<0?'−':'')+Math.abs(rows[0][4]).toFixed(1)+'¢','#f5c542','start');
+  s+=pill(X(n-1)-6,YS(rows[n-1][4])+18,(rows[n-1][4]<0?'−':'')+Math.abs(rows[n-1][4]).toFixed(1)+'¢','#f5c542','end');
+  var MN=MON3, xStep=Math.max(1,Math.ceil(56/gw));
   rows.forEach(function(r,i){
-    if(i%3!==0 && i!==n-1) return;
-    s+='<text x="'+X(i).toFixed(1)+'" y="'+(PT+ph+18)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">'+MN[r[0].slice(0,2)]+' '+r[0].slice(3)+'</text>';
+    if(i!==n-1&&(i%xStep!==0||n-1-i<xStep)) return;
+    s+='<text x="'+X(i).toFixed(1)+'" y="'+(PT+ph+18)+'" fill="#8f9db3" font-size="10.5" font-family="IBM Plex Mono" text-anchor="'+(i===n-1?'end':'middle')+'">'+MN[r[0].slice(0,2)]+' '+r[0].slice(3)+'</text>';
   });
+  s+='<text x="'+PL+'" y="'+(PT-14)+'" fill="#8f9db3" font-size="10" font-family="IBM Plex Mono"><tspan fill="#4f8fe0">■</tspan> Front OI  <tspan fill="#3fbf7f">■</tspan> Deferred OI  <tspan fill="#f5c542">●</tspan> Calendar spread (right axis)  <tspan fill="#f5c542">%</tspan> rolled to deferred</text>';
   s+=trkSVG(['#f5c542','#4f8fe0','#3fbf7f'], PT, PT+ph);
   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Open interest migration front versus deferred with calendar spread, roll percent labels vertical, spread line labeled first and latest">'+s+'</svg>';
 }
