@@ -1,0 +1,51 @@
+name: Canada metal exports & FX
+
+on:
+  schedule:
+    # Prices daily after the US close (21:35 UTC, Mon–Fri); Comtrade trade data re-pulled when the cache is over 6 days old.
+    - cron: "35 21 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      force_trade:
+        description: Re-pull UN Comtrade trade data now
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: metals-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+
+      - name: Install
+        run: pip install -r scripts/requirements.txt
+
+      - name: Recompute metals.json
+        run: python scripts/metals.py ${{ inputs.force_trade && '--force-trade' || '' }}
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- metals.json scripts/data/metals_trade.json && [ -z "$(git status --porcelain -- metals.json scripts/data/metals_trade.json)" ]; then
+            echo "No data changes."
+            exit 0
+          fi
+          git config user.name  "desk-data-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add metals.json scripts/data/metals_trade.json
+          git commit -m "metals: refresh $(date -u +%Y-%m-%dT%H:%MZ)"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push
