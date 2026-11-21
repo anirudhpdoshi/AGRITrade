@@ -106,6 +106,8 @@ UNIVERSE = [
     I("sugar", "Sugar #11 (ICE fut.)", "Industrial & Ags", "Global", "us", "SB=F", "ICE", "USc/lb", 2, note="front-month futures"),
     # volatility
     I("vix", "VIX (S&P 500 vol)", "Rates & Vol", "Americas", "us", "^VIX", "NYSE", "pts", 2),
+    I("vxn", "VXN (Nasdaq-100 vol)", "Rates & Vol", "Americas", "us", "^VXN", "NYSE", "pts", 2),
+    I("vxd", "VXD (Dow vol)", "Rates & Vol", "Americas", "us", "^VXD", "NYSE", "pts", 2),
 ]
 # official daily yields (not Yahoo): built in yields_official()
 YIELDS = [("us2y", "US 2Y Treasury", "us", "UST", "2Y"), ("us5y", "US 5Y Treasury", "us", "UST", "5Y"), ("us10y", "US 10Y Treasury", "us", "UST", "10Y"),

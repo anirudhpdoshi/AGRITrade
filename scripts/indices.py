@@ -73,9 +73,9 @@ def rnd(v, d=2):
     return None if v is None else round(v, d)
 
 
-def fetch_daily(sym, tz):
+def fetch_daily(sym, tz, start=START):
     """[(date, open, high, low, close)] with calendar dates in the market's own tz."""
-    h = UDC.yf().Ticker(sym).history(start=START, interval="1d", auto_adjust=False)
+    h = UDC.yf().Ticker(sym).history(start=start, interval="1d", auto_adjust=False)
     if h.empty:
         raise RuntimeError(f"no bars for {sym}")
     rows = []
@@ -394,12 +394,73 @@ def weekly_block(series, vol_idx, today_wk):
     return blk
 
 
-def opt_daily(sym, tz):
+def opt_daily(sym, tz, start=START):
     try:
-        return fetch_daily(sym, tz)
+        return fetch_daily(sym, tz, start)
     except Exception as e:
         print(f"  (optional {sym} unavailable: {e})")
         return None
+
+
+# ---------- volatility cone (US Markets > Indexes): price action + implied vol ----------
+CONE_START = "2020-06-01"                        # > 5 years (1,260 returns) before today, plus EMA warm-up
+CONE_WIN = {"1m": 21, "1y": 252, "3y": 756, "5y": 1260}
+CONE_IV = {"SPX": ("^VIX", "VIX"), "NDX": ("^VXN", "VXN"), "DJIA": ("^VXD", "VXD")}
+CONE_KEEP = 130                                  # sessions of closes + EMAs shipped to the page
+
+
+def ema_series(c, n):
+    out = [None] * len(c)
+    if len(c) < n:
+        return out
+    k, e = 2 / (n + 1), sum(c[:n]) / n
+    out[n - 1] = e
+    for i in range(n, len(c)):
+        e = c[i] * k + e * (1 - k)
+        out[i] = e
+    return out
+
+
+def vol_cone_block(long_rows, iv_rows):
+    """Per index: daily log-return sigma over 1M/1Y/3Y/5Y of closes, latest implied vol index close,
+    last CONE_KEEP closes with EMA20/50/100 (computed over the full history) and 20-day / 52-week high-low."""
+    series = {}
+    for k, rows in long_rows.items():
+        c = [r[4] for r in rows]
+        lr = [math.log(c[i] / c[i - 1]) for i in range(1, len(c)) if c[i - 1] > 0 and c[i] > 0]
+        sd, n = {}, {}
+        for lab, w in CONE_WIN.items():
+            v = stdev(lr[-w:]) if len(lr) >= w else None
+            if v is not None and not (0.001 <= v <= 0.05):
+                raise RuntimeError(f"vol cone {k} {lab} sigma {v} out of range")
+            sd[lab], n[lab] = (rnd(v, 6), w) if v is not None else (None, len(lr))
+        if sd["1y"] is None:
+            raise RuntimeError(f"vol cone {k}: fewer than 252 returns")
+        e = {p: ema_series(c, p) for p in (20, 50, 100)}
+        tail = rows[-CONE_KEEP:]
+        last20, last252 = rows[-20:], rows[-252:]
+        sym, lab = CONE_IV[k]
+        ivr = iv_rows.get(k) or []
+        iv = None
+        if ivr and 5 <= ivr[-1][4] <= 100:
+            iv = {"sym": sym, "label": lab, "last": rnd(ivr[-1][4]), "date": ivr[-1][0],
+                  "prev": rnd(ivr[-2][4]) if len(ivr) > 1 else None}
+        series[k] = {
+            "name": US[k][1], "yahoo": US[k][0], "last_date": rows[-1][0], "last_close": rnd(c[-1]),
+            "dates": [r[0] for r in tail], "close": [rnd(r[4]) for r in tail],
+            "ema20": [rnd(x) for x in e[20][-CONE_KEEP:]], "ema50": [rnd(x) for x in e[50][-CONE_KEEP:]],
+            "ema100": [rnd(x) for x in e[100][-CONE_KEEP:]],
+            "sd": sd, "n": n, "ann_pct": {lab2: rnd(v * math.sqrt(252) * 100) if v else None for lab2, v in sd.items()},
+            "first_date": rows[-(CONE_WIN["5y"] + 1)][0] if len(rows) > CONE_WIN["5y"] else rows[0][0],
+            "levels": {"hi20": rnd(max(r[2] for r in last20)), "lo20": rnd(min(r[3] for r in last20)),
+                       "hi52": rnd(max(r[2] for r in last252)), "lo52": rnd(min(r[3] for r in last252))},
+            "iv": iv,
+        }
+    return {"asof": max(s["last_date"] for s in series.values()),
+            "method": "sigma = sample std dev (ddof=1) of daily log returns of closes over the last 21 / 252 / 756 / 1,260 sessions; "
+                      "annualised = sigma x sqrt(252). Implied vol = CBOE VIX (S&P 500), VXN (Nasdaq-100), VXD (Dow) close, "
+                      "daily sigma = IV / 100 / sqrt(252). EMAs over the full history from " + CONE_START + ".",
+            "series": series}
 
 
 def main():
@@ -645,7 +706,23 @@ def main():
         body["weekly"] = weekly_block(wk_series, vix_map, (today - timedelta(days=today.weekday())).strftime("%Y-%m-%d"))
     except Exception as e:
         print(f"! weekly block skipped: {e}")
+    try:
+        long_rows = {k: fetch_daily(sym, NY_TZ, CONE_START) for k, (sym, _n) in US.items()}
+        iv_rows = {k: opt_daily(CONE_IV[k][0], NY_TZ, "2026-01-01") for k in US}
+        body["vol_cone"] = vol_cone_block(long_rows, iv_rows)
+    except Exception as e:
+        print(f"! vol cone block skipped: {e}")
+        prev = None
+        try:
+            prev = json.load(open(OUT)).get("vol_cone")
+        except Exception:
+            pass
+        if prev:
+            body["vol_cone"] = prev          # keep the last good cone rather than dropping the card
     if "--dry-run" in sys.argv:
+        vc = body.get("vol_cone") or {}
+        for k, v in (vc.get("series") or {}).items():
+            print(f"  cone {k}: close {v['last_close']} {v['last_date']} ann {v['ann_pct']} iv {(v.get('iv') or {}).get('last')}")
         w = body.get("weekly") or {}
         for k, e in (w.get("expected") or {}).items():
             if e:

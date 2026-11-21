@@ -7,14 +7,19 @@
      short puts — the usual public convention) and the regime it implies; USD/CAD has no options OI, so its axis shows key levels
    · CFTC price line: the price on each COT report date, and where the price sits against the latest one
    · Breach beacons + a timestamped telemetry log when price is within 5¢ (grains) / 20 pips (USD/CAD) of an MA, an OI wall,
-     a ±1σ band or the COT price; bottom proximity ruler gives the nearest support / resistance in ¢ (pips) and σ */
+     a ±1σ band or the COT price; bottom proximity ruler gives the nearest support / resistance in ¢ (pips) and σ
+   · US Markets › Indexes (owner, Nov 21 2026): the same cone for the S&P 500, Nasdaq-100 and Dow, price action only —
+     σ from implied vol (VIX / VXN / VXD, live from the world feed, else the latest close) or from 1-, 3- or 5-year realised σ
+     of daily closes (indices-data.json · vol_cone, refreshed after the US close); right axis = 20-day and 52-week high/low */
 (function (root) {
   var doc = root.document;
-  var KEYS = ["corn", "soybeans", "wheat", "fx"], NAME = { corn: "Corn", soybeans: "Soybeans", wheat: "Wheat", fx: "USD/CAD" }, MULT = 5000;
+  var KEYS = ["corn", "soybeans", "wheat", "fx"], NAME = { corn: "Corn", soybeans: "Soybeans", wheat: "Wheat", fx: "USD/CAD", SPX: "S&P 500", NDX: "Nasdaq 100", DJIA: "Dow Jones" }, MULT = 5000;
+  var IXK = ["SPX", "NDX", "DJIA"], IXS = { SPX: "^GSPC", NDX: "^NDX", DJIA: "^DJI" }, IVS = { SPX: "^VIX", NDX: "^VXN", DJIA: "^VXD" }, IVN = { SPX: "VIX", NDX: "VXN", DJIA: "VXD" };
+  var IXSEL = "SPX", IXB = "iv", IXD = null, IXT = 0;   /* selected index · σ basis iv | 1y | 3y | 5y · indices-data.json */
   var L = { dual: true, walls: true, ma: true, events: true, cot: true, rv: false };
   var FXW = 20;   /* USD/CAD realised-σ window, sessions: 20 · 50 · 100 (owner, Nov 19 2026) */
-  try { var sv = JSON.parse(localStorage.getItem("desk.vcone") || "{}"); for (var q in sv) if (q in L) L[q] = !!sv[q]; if ([20, 50, 100].indexOf(+sv.fxw) >= 0) FXW = +sv.fxw; } catch (e) {}
-  function save() { try { localStorage.setItem("desk.vcone", JSON.stringify(Object.assign({ fxw: FXW }, L))); } catch (e) {} }
+  try { var sv = JSON.parse(localStorage.getItem("desk.vcone") || "{}"); for (var q in sv) if (q in L) L[q] = !!sv[q]; if ([20, 50, 100].indexOf(+sv.fxw) >= 0) FXW = +sv.fxw; if (IXK.indexOf(sv.ix) >= 0) IXSEL = sv.ix; if (["iv", "1y", "3y", "5y"].indexOf(sv.ixb) >= 0) IXB = sv.ixb; } catch (e) {}
+  function save() { try { localStorage.setItem("desk.vcone", JSON.stringify(Object.assign({ fxw: FXW, ix: IXSEL, ixb: IXB }, L))); } catch (e) {} }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   var TZ = "America/Toronto", DF = new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short", day: "numeric" }), DET = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }),
     HM = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
@@ -40,7 +45,40 @@
   }
   function nextBizOn(dates, d) { var set = {}; dates.forEach(function (x) { set[x] = 1; }); for (var i = 0; i < 6; i++) { if (set[d]) return d; d = addDays(d, 1); } return null; }
 
+  /* ---------- US index model (price action + implied vol) ---------- */
+  function wInst(sym) { var W = root.WORLD && WORLD._data ? WORLD._data() : null; return W && (W.instruments || []).filter(function (i) { return i.sym === sym; })[0] || null; }
+  function loadIx(force) {
+    if (!force && IXD && Date.now() - IXT < 10 * 6e4) return;
+    IXT = Date.now();
+    fetch("indices-data.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j && j.vol_cone) { IXD = j; mountIx(); } }).catch(function () {});
+  }
+  function ixModel(k) {
+    var V = IXD && IXD.vol_cone && (IXD.vol_cone.series || {})[k]; if (!V || !V.close || V.close.length < 60) return null;
+    var dates = V.dates.slice(), close = V.close.map(Number), n = close.length - 1, lastD = dates[n];
+    var m = { k: k, ix: true, fx: false, dec: 2, dates: dates, close: close, unitMove: 1, uLab: " pts", contract: "", unit: "index pts", cot: [], ratios: {} };
+    var q = wInst(IXS[k]); m.settle = close[n]; m.settleLab = "close " + md(lastD);
+    m.px = q && q.last != null && q.session_date && q.session_date > lastD ? +q.last : m.settle;
+    m.state = q && q.session_date > lastD ? (q.status === "open" ? "DELAYED" : "CLOSED") : "CLOSE";
+    /* implied vol: live index from the world feed when it is newer than the file's close */
+    var fi = V.iv || {}, qi = wInst(IVS[k]), ivLive = qi && qi.last != null && (!fi.date || (qi.session_date || "") >= fi.date);
+    m.iv = ivLive ? +qi.last : fi.last != null ? +fi.last : null; m.ivName = IVN[k];
+    m.ivWhen = ivLive ? (qi.status === "open" ? "live " + HM.format(new Date(qi.ts)) + " ET" : "close " + md(qi.session_date)) : fi.date ? "close " + md(fi.date) : "";
+    m.sdIv = m.iv > 0 ? m.iv / 100 / Math.sqrt(252) : null;
+    m.rv = V.sd || {}; m.rvAnn = V.ann_pct || {}; m.sdRv = m.rv["1y"] ? +m.rv["1y"] : null;
+    var b = IXB === "iv" && !m.sdIv ? "1y" : IXB; m.basis = b;
+    m.sd = b === "iv" ? m.sdIv : m.rv[b] ? +m.rv[b] : null;
+    var YR = { "1y": "1-year", "3y": "3-year", "5y": "5-year" };
+    m.volLab = b === "iv" ? m.ivName + " " + (m.iv != null ? m.iv.toFixed(2) : "") + " (" + m.ivWhen + ") ÷ √252" : YR[b] + " realised σ of daily closes (" + ((V.n || {})[b] || "") + " sessions)";
+    m.thr = m.px * 0.0025; m.thrLab = "0.25%";
+    var Lv = V.levels || {}; m.levels = [["20D HI", Lv.hi20], ["20D LO", Lv.lo20], ["52W HI", Lv.hi52], ["52W LO", Lv.lo52]].filter(function (x) { return x[1]; }).map(function (x) { return [x[0], +x[1]]; });
+    m.emaS = { 20: (V.ema20 || []).slice(), 50: (V.ema50 || []).slice(), 100: (V.ema100 || []).slice() };
+    var liveE = function (e, p) { return e == null || !(m.px > 0) || m.px === m.settle ? e : e + (2 / (p + 1)) * (m.px - e); };
+    m.ma20 = liveE(m.emaS[20][n], 20); m.ma50 = liveE(m.emaS[50][n], 50); m.ma100 = liveE(m.emaS[100][n], 100);
+    m.lastD = lastD; m.events = events(m);
+    return m;
+  }
   function model(k) {
+    if (IXK.indexOf(k) >= 0) return ixModel(k);
     var D = root.DATA; if (!D || !D.grain_long) return null;
     var fx = k === "fx", raw = fx ? (D.grain_long.other || {}).usdcad : (D.grain_long.series || {})[k];
     if (!raw || raw.length < 60) return null;
@@ -103,7 +141,7 @@
     var out = [], now = Date.now(), end = Date.parse(addBiz(iso(now), 11) + "T23:59:00Z");
     try {
       if (m.fx && root.usdaEvents) usdaEvents("corn", now, 16).filter(function (e) { return e.kind === "cftc" && e.t > now && e.t < end; }).forEach(function (e) { out.push({ t: e.t, lab: "COT", kind: "cftc" }); });
-      if (m.fx) (root.fxEvList ? fxEvList() : []).filter(function (e) { return e.t > now && e.t < end && e.impact === "High"; }).slice(0, 4)
+      if (m.fx || m.ix) (root.fxEvList ? fxEvList() : []).filter(function (e) { return e.t > now && e.t < end && e.impact === "High" && (!m.ix || e.ccy === "USD"); }).slice(0, 4)
         .forEach(function (e) { out.push({ t: e.t, lab: String(e.label).replace(/^(USD|CAD)\s+/, "").replace(/\s+(m\/m|y\/y|q\/q)$/, "").slice(0, 16), kind: "macro" }); });
       else if (root.usdaEvents) { var seen = {};
         usdaEvents(m.k, now, 16).filter(function (e) { return e.t > now && e.t < end && (/wasde|cftc/.test(e.kind) || (e.kind === "contract" && /expire/i.test(e.label))); }).forEach(function (e) {
@@ -134,7 +172,7 @@
     var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals), pad = (hi - lo) * 0.05; lo -= pad; hi += pad;
     var X1 = VW - PR, XS = X0 + 0.6 * (X1 - X0), xs = function (i) { return i <= N - 1 ? X0 + i / (N - 1) * (XS - X0) : XS + (i - N + 1) / F * (X1 - XS); }, ys = function (v) { return PT + (hi - v) / (hi - lo) * (VH - PT - PB); };
     var s = "", xa = xs(N - 1), ya = ys(m.px), HX = X1 + 10;
-    for (var g = 0; g <= 6; g++) { var gv = hi - (hi - lo) * g / 6, gy = ys(gv); s += '<line x1="' + X0 + '" x2="' + (VW - 60) + '" y1="' + gy.toFixed(1) + '" y2="' + gy.toFixed(1) + '" class="vc-g"/><text x="' + (VW - 4) + '" y="' + (gy + 4).toFixed(1) + '" class="vc-ax" text-anchor="end">' + gv.toFixed(m.fx ? 4 : 4) + "</text>"; }
+    for (var g = 0; g <= 6; g++) { var gv = hi - (hi - lo) * g / 6, gy = ys(gv); s += '<line x1="' + X0 + '" x2="' + (VW - 60) + '" y1="' + gy.toFixed(1) + '" y2="' + gy.toFixed(1) + '" class="vc-g"/><text x="' + (VW - 4) + '" y="' + (gy + 4).toFixed(1) + '" class="vc-ax" text-anchor="end">' + gv.toFixed(m.ix ? 0 : 4) + "</text>"; }
     for (var vx = 0; vx < N - 8; vx += Math.ceil(N / 4)) s += '<line x1="' + xs(vx).toFixed(1) + '" x2="' + xs(vx).toFixed(1) + '" y1="' + PT + '" y2="' + (VH - PB) + '" class="vc-g"/><text x="' + xs(vx).toFixed(1) + '" y="' + (VH - 9) + '" class="vc-ax" text-anchor="middle">' + md(Dt[vx]) + "</text>";
     s += '<text x="' + xs(all - 1).toFixed(1) + '" y="' + (VH - 9) + '" class="vc-ax" text-anchor="end">' + md(addBiz(Dt[N - 1], F)) + "</text>";
     /* right dock: OI by strike with ΔOI, or key levels */
@@ -150,7 +188,7 @@
     } else if (L.walls && m.levels) {
       m.levels.forEach(function (lv) { var y = ys(lv[1]); if (y < PT || y > VH - PB) return;
         s += '<line x1="' + HX + '" x2="' + (HX + 64) + '" y1="' + y.toFixed(1) + '" y2="' + y.toFixed(1) + '" class="vc-lvl"/><text x="' + (HX + 68) + '" y="' + (y + 3.5).toFixed(1) + '" class="vc-ax2">' + lv[0] + "</text>"; walls.push([lv[0], lv[1], "l"]); });
-      s += '<text x="' + (VW - 4) + '" y="' + (PT - 12) + '" class="vc-ax2" text-anchor="end">Key levels · no FX options OI on file</text>';
+      s += '<text x="' + (VW - 4) + '" y="' + (PT - 12) + '" class="vc-ax2" text-anchor="end">' + (m.ix ? "Key levels · 20-day and 52-week high / low" : "Key levels · no FX options OI on file") + "</text>";
     }
     walls.forEach(function (w) { if (w[2] === "l") return; var y = ys(w[1]); if (y < PT || y > VH - PB) return; s += '<line x1="' + xa.toFixed(1) + '" x2="' + X1 + '" y1="' + y.toFixed(1) + '" y2="' + y.toFixed(1) + '" class="vc-wall ' + w[2] + '"/>'; });
     /* event gates */
@@ -203,7 +241,7 @@
     s += '<line x1="' + xa.toFixed(1) + '" x2="' + (VW - 60) + '" y1="' + ya.toFixed(1) + '" y2="' + ya.toFixed(1) + '" class="vc-pxline"/>';
     s += '<g class="vc-anchor" transform="translate(' + xa.toFixed(1) + " " + ya.toFixed(1) + ')"><circle class="vc-r1" r="9"/><circle class="vc-r2" r="9"/><circle class="vc-r3" r="17"/><circle class="vc-dot" r="5.5"/></g>';
     s += '<text x="' + xa.toFixed(1) + '" y="' + (ya + 30).toFixed(1) + '" class="vc-atag" text-anchor="middle">' + tag + "</text>";
-    s += '<g transform="translate(' + (VW - 58) + " " + (ya - 11).toFixed(1) + ')"><rect class="vc-axtag" width="56" height="22" rx="3"/><text class="vc-axtagt" x="28" y="15.5" text-anchor="middle">' + m.px.toFixed(4) + "</text></g>";
+    s += '<g transform="translate(' + (VW - 58) + " " + (ya - 11).toFixed(1) + ')"><rect class="vc-axtag" width="56" height="22" rx="3"/><text class="vc-axtagt" x="28" y="15.5" text-anchor="middle">' + m.px.toFixed(m.ix ? 0 : 4) + "</text></g>";
     m._hits = hits; m._live = live; m._F = F; m._cot = cotLast;
     return '<svg class="vc-svg" viewBox="0 0 ' + VW + " " + VH + '" role="img" aria-label="' + esc(NAME[m.k]) + ' dual volatility cone">' + s + badges + "</svg>";
   }
@@ -242,26 +280,30 @@
     return '<div class="vc-rail">' + reg +
       '<div class="vc-kvs">' + kv("EMA20", m.ma20 ? m.ma20.toFixed(d) : "—") + kv("EMA50", m.ma50 ? m.ma50.toFixed(d) : "—") + kv("EMA100", m.ma100 ? m.ma100.toFixed(d) : "—") +
         kv("10D 95% low", ci ? ci[0].toFixed(d) : "—") + kv("10D 95% high", ci ? ci[1].toFixed(d) : "—") + kv("10D 99% range", ci99 ? ci99[0].toFixed(d) + "–" + ci99[1].toFixed(d) : "—") +
-        (m.sdIv && m.sdRv ? kv("Implied vol", (m.sdIv * Math.sqrt(252) * 100).toFixed(1) + "%") + kv("Realised vol 30d", (m.sdRv * Math.sqrt(252) * 100).toFixed(1) + "%") +
+        (m.ix ? kv(m.ivName + " implied", m.iv != null ? m.iv.toFixed(2) + "%" : "—") + ["1m", "1y", "3y", "5y"].map(function (w) { return kv("Realised " + w.toUpperCase(), m.rvAnn[w] != null ? (+m.rvAnn[w]).toFixed(2) + "%" : "—"); }).join("") +
+          (m.sdIv && m.sdRv ? kv("IV − RV 1Y", '<span class="' + (m.sdIv > m.sdRv ? "up" : "dn") + '">' + ((m.sdIv - m.sdRv) >= 0 ? "+" : "−") + Math.abs((m.sdIv - m.sdRv) * Math.sqrt(252) * 100).toFixed(2) + " pts</span>") : "") : "") +
+        (!m.ix && m.sdIv && m.sdRv ? kv("Implied vol", (m.sdIv * Math.sqrt(252) * 100).toFixed(1) + "%") + kv("Realised vol 30d", (m.sdRv * Math.sqrt(252) * 100).toFixed(1) + "%") +
           kv("IV − RV", '<span class="' + (m.sdIv > m.sdRv ? "up" : "dn") + '">' + ((m.sdIv - m.sdRv) * Math.sqrt(252) * 100 >= 0 ? "+" : "−") + Math.abs((m.sdIv - m.sdRv) * Math.sqrt(252) * 100).toFixed(1) + " pts</span>") : "") + (m.gex != null ? kv("NET GEX", (m.gex < 0 ? "−$" : "$") + Math.abs(m.gex / 1e6).toFixed(0) + "M") : "") +
         kv("vs " + m.settleLab, ((m.px - m.settle) >= 0 ? "+" : "−") + Math.abs((m.px - m.settle) * m.unitMove).toFixed(1) + m.uLab) +
         (m.fx && m.sd ? kv("Realised vol " + m.win + "d", (m.sd * Math.sqrt(252) * 100).toFixed(1) + "%") : "") +
         (cot ? kv("COT " + md(cot.d), cot.px.toFixed(d)) + kv("Price vs COT", '<span class="' + (m.px >= cot.px ? "up" : "dn") + '">' + cotTxt + "</span>") : "") +
         (cot && cot.net != null ? kv("Funds net", (cot.net > 0 ? "+" : "") + cot.net.toLocaleString()) : "") + "</div>" +
+      (m.ix ? '<div class="vc-win"><span>σ basis</span>' + [["iv", "IV"], ["1y", "1Y"], ["3y", "3Y"], ["5y", "5Y"]].map(function (w) { return '<button type="button" data-vcb="' + w[0] + '" aria-pressed="' + (m.basis === w[0]) + '"' + (w[0] === "iv" && !m.sdIv ? " disabled" : "") + ">" + w[1] + "</button>"; }).join("") + "</div>" : "") +
       (m.fx ? '<div class="vc-win"><span>σ window</span>' + [20, 50, 100].map(function (w) { return '<button type="button" data-vcw="' + w + '" aria-pressed="' + (FXW === w) + '">' + w + "D</button>"; }).join("") + "</div>" : "") +
-      '<div class="vc-tgs">' + tg("dual", "Dual cone") + tg("walls", m.fx ? "Key levels" : "GEX / OI walls") + tg("ma", "EMA 20/50/100") + tg("events", "Event gates") + (m.cot && m.cot.length ? tg("cot", "CFTC price line") : "") + (m.sdIv && m.sdRv ? tg("rv", "σ: realised, not implied") : "") + "</div>" +
+      '<div class="vc-tgs">' + tg("dual", "Dual cone") + tg("walls", m.fx || m.ix ? "Key levels" : "GEX / OI walls") + tg("ma", "EMA 20/50/100") + tg("events", "Event gates") + (m.cot && m.cot.length ? tg("cot", "CFTC price line") : "") + (!m.ix && m.sdIv && m.sdRv ? tg("rv", "σ: realised, not implied") : "") + "</div>" +
       '<div class="vc-log"><b>Breach telemetry</b>' + (L2.length ? L2.slice(-6).reverse().map(function (x) { return "<div><span>" + HM.format(new Date(x.t)) + "</span>" + esc(x.txt) + "</div>"; }).join("") : '<div class="neu">No tests or breaches this session.</div>') + "</div></div>";
   }
   function head(m) {
-    var d = m.dec, ch = m.px - m.settle, pc = (m.px / m.settle - 1) * 100, fxm = root.DATA.fx && root.DATA.fx.feed && +root.DATA.fx.feed.mid;
+    var d = m.dec, ch = m.px - m.settle, pc = (m.px / m.settle - 1) * 100, fxm = !m.ix && root.DATA && root.DATA.fx && root.DATA.fx.feed && +root.DATA.fx.feed.mid;
     return '<div class="vc-head"><span class="vc-nm">AGRITRADE // ' + esc(NAME[m.k].toUpperCase()) + " " + esc(m.contract) + ' <i class="vc-st ' + m.state.toLowerCase() + '">' + m.state + "</i></span>" +
       '<span class="vc-hp"><b class="vc-roll" data-vcpx>' + m.px.toFixed(d) + "</b> <small>" + esc(m.unit) + '</small> <span class="' + (ch > 0 ? "up" : ch < 0 ? "dn" : "") + '">' + (ch >= 0 ? "+" : "−") + Math.abs(ch).toFixed(d) + " (" + (pc >= 0 ? "+" : "−") + Math.abs(pc).toFixed(2) + "%)</span></span>" +
-      (m.fx ? "" : '<span class="vc-hk">USD/CAD <b data-live="usdcad">' + (fxm ? fxm.toFixed(5) : "—") + "</b></span>") + '<span class="vc-hk">' + (m.fx ? "RVOL " + m.win + "D" : m.rvOn ? "RVOL 30D" : "CHAIN IV") + " <b>" + (m.sd ? (m.sd * Math.sqrt(252) * 100).toFixed(2) + "%" : "—") + "</b></span>" +
+      (m.fx || m.ix ? "" : '<span class="vc-hk">USD/CAD <b data-live="usdcad">' + (fxm ? fxm.toFixed(5) : "—") + "</b></span>") + '<span class="vc-hk">' + (m.ix ? (m.basis === "iv" ? m.ivName : "RVOL " + m.basis.toUpperCase()) : m.fx ? "RVOL " + m.win + "D" : m.rvOn ? "RVOL 30D" : "CHAIN IV") + " <b>" + (m.sd ? (m.sd * Math.sqrt(252) * 100).toFixed(2) + "%" : "—") + "</b></span>" +
       '<span class="vc-hk vc-cycle">CYCLE <b data-vccyc>01:00</b><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" class="vc-cbg"/><circle cx="12" cy="12" r="10" class="vc-cfg" pathLength="100"/></svg></span></div>';
   }
   function tileHTML(k) {
     var m = model(k); if (!m) return "";
     var svg = draw(m), L2 = logHits(m);
+    if (m.ix) return ixTile(m, svg, L2);
     var evs = Object.keys(m.ratios || {}).filter(function (x) { return m.ratios[x]; }).map(function (x) { return x + " days move " + m.ratios[x].r.toFixed(2) + "× a normal day (" + m.ratios[x].n + " reports in the history)"; }).join("; ");
     return '<div class="tile wide vcone-tile" data-vck="' + k + '" data-src="' + (m.fx ? "fx_spot" : "grains_quote") + '"><h2>Volatility cone <span class="h2note">— ' + NAME[k] + ": dual cone (settle vs live), event-stepped ±1–3σ, " + (m.fx ? "key levels" : "OI walls, gamma regime") + ", CFTC price line</span></h2>" +
       head(m) + (m.read ? '<p class="vc-read"><b>Level check</b> ' + esc(m.read) + "</p>" : "") + '<div class="vc-wrap">' + rail(m, L2) + '<div class="vc-main">' + svg + "</div></div>" + '<div class="vc-ruler">' + ruler(m) + "</div>" +
@@ -270,7 +312,36 @@
       (m.gex != null ? " · net GEX = Σ (call OI − put OI) × Black-76 gamma × 5,000 bu × F² × 1% (dealers assumed long calls, short puts)" : "") +
       " · beacons within " + m.thrLab + " of an MA, an OI wall / key level or the COT price · CFTC price = futures price on each COT report date</div></div>";
   }
+  function ixTile(m, svg, L2) {
+    var V = IXD.vol_cone.series[m.k] || {}, sel = '<div class="vc-ixs" role="group" aria-label="Index">' + IXK.map(function (k) { return '<button type="button" data-vcix="' + k + '" aria-pressed="' + (k === m.k) + '">' + NAME[k] + "</button>"; }).join("") + "</div>";
+    return '<section class="usm-card vcone-tile vcone-ix" data-vck="' + m.k + '"><div class="usm-rowh"><h3>Volatility cone <small>price action · ±1–3σ from implied vol or 1 / 3 / 5-year realised σ</small></h3>' + sel + "</div>" +
+      head(m) + '<div class="vc-wrap">' + rail(m, L2) + '<div class="vc-main">' + svg + "</div></div>" + '<div class="vc-ruler">' + ruler(m) + "</div>" +
+      '<div class="stamp">Cones = price × e<sup>±kσ√t</sup>, σ from the ' + esc(m.volLab) + "; amber wireframe from the " + esc(m.settleLab) + ", cyan fan from the latest delayed tick — ranges the σ implies, not forecasts" +
+      " · realised σ = std dev of daily log returns of " + esc(V.name || NAME[m.k]) + " closes over the last 21 / 252 / 756 / 1,260 sessions (5-year window from " + esc(V.first_date ? md(V.first_date) + " " + V.first_date.slice(0, 4) : "—") + "), annualised × √252" +
+      " · implied = CBOE " + esc(m.ivName) + " · US high-impact releases are marked as gates but not stepped (no event history measured)" +
+      " · beacons within 0.25% of an EMA or a 20-day / 52-week high or low · closes: Yahoo Finance via indices-data.json, as of " + esc(md(m.lastD)) + "</div></section>";
+  }
+  /* US Markets › Indexes: one cone card under the index performance table; tracker-ui re-renders #usmView on every poll,
+     so an observer puts the card back each time */
+  function usmOn() { var P = doc.getElementById("panel-usmkt"); return !!(P && P.classList.contains("active")); }
+  function mountIx() {
+    var U = doc.getElementById("usmView"); if (!U || !U.querySelector('[data-usmpv^="c2:"]')) return;
+    if (!IXD) { loadIx(); return; }
+    var old = U.querySelector(".vcone-ix"), m = model(IXSEL);
+    if (!m) { if (old) old.remove(); return; }
+    var w = doc.createElement("div"); w.innerHTML = tileHTML(IXSEL); var t = w.firstChild;
+    if (old) old.replaceWith(t); else { var first = U.querySelector(".usm-card"); if (first) first.after(t); else U.appendChild(t); }
+    LAST[IXSEL] = m.px;
+  }
+  var obs = null;
+  function watchUsm() {
+    var U = doc.getElementById("usmView"); if (!U || obs) return;
+    obs = new MutationObserver(function () { if (U.querySelector('[data-usmpv^="c2:"]') && !U.querySelector(".vcone-ix")) try { mountIx(); } catch (e) {} });
+    obs.observe(U, { childList: true });
+    try { mountIx(); } catch (e) {}
+  }
   function mount(k) {
+    if (IXK.indexOf(k) >= 0) { mountIx(); return; }
     var P = doc.getElementById("panel-" + k), S = P && P.querySelector('[data-subpanel="overview"]'); if (!S) return;
     var old = S.querySelector(":scope > .vcone-tile"), h = tileHTML(k); if (!h) { if (old) old.remove(); return; }
     var w = doc.createElement("div"); w.innerHTML = h; var t = w.firstChild;
@@ -290,7 +361,8 @@
     [].forEach.call(doc.querySelectorAll(".vc-cfg"), function (c) { c.style.strokeDashoffset = (100 - pct).toFixed(1); });
   }, 1000);
   setInterval(function () {
-    var A = doc.querySelector(".tab-panel.active .vcone-tile"); if (!A) return;
+    watchUsm(); if (usmOn()) loadIx();
+    var A = doc.querySelector(".tab-panel.active .vcone-tile") || (usmOn() && doc.querySelector("#usmView .vcone-ix")); if (!A) return;
     var k = A.getAttribute("data-vck"), m = model(k); if (!m) return;
     if (LAST[k] != null && Math.abs(m.px - LAST[k]) > 1e-9) {
       var svgEl = A.querySelector(".vc-svg"), html = draw(m), L2 = logHits(m);
@@ -307,19 +379,24 @@
     LAST[k] = m.px;
   }, 2000);
   doc.addEventListener("click", function (ev) {
+    var ix = ev.target.closest && ev.target.closest("[data-vcix],[data-vcb]");
+    if (ix) { if (ix.hasAttribute("data-vcix")) IXSEL = ix.getAttribute("data-vcix"); else IXB = ix.getAttribute("data-vcb"); save(); mountIx(); return; }
     var w = ev.target.closest && ev.target.closest("[data-vcw]");
     if (w) { FXW = +w.getAttribute("data-vcw"); save(); var PF = doc.getElementById("panel-fx"); if (PF && PF.querySelector(".vcone-tile")) mount("fx"); return; }
     var b = ev.target.closest && ev.target.closest("[data-vctg]"); if (!b) return;
     var k2 = b.getAttribute("data-vctg"); L[k2] = !L[k2]; save();
     KEYS.forEach(function (k) { var P = doc.getElementById("panel-" + k); if (P && P.querySelector(".vcone-tile")) mount(k); });
+    if (doc.querySelector("#usmView .vcone-ix")) mountIx();
   });
   KEYS.forEach(function (k) { var P = doc.getElementById("panel-" + k); if (P && P.innerHTML) try { mount(k); } catch (e) {} });
   var css = doc.createElement("style");
   css.textContent =
+    ".vcone-ix .usm-rowh{flex-wrap:wrap;gap:8px}.vc-ixs{display:flex;gap:6px;flex-wrap:wrap}.vc-ixs button{all:unset;cursor:pointer;padding:3px 10px;border:1px solid var(--line2,#2a3442);border-radius:999px;font:600 11.5px 'IBM Plex Mono',monospace}.vc-ixs button[aria-pressed=true]{background:#38b6c9;border-color:#38b6c9;color:#101825}.vc-ixs button:focus-visible,.vc-win button:focus-visible{outline:2px solid #38b6c9}" +
+    ".vc-win button[disabled]{opacity:.35;cursor:not-allowed}.vcone-ix .stamp{margin-top:8px}" +
     ".vc-win{display:flex;align-items:center;gap:6px;margin:10px 0 2px;font:600 11px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#8a97a8}.vc-win span{flex:1}" +
     ".vc-win button{all:unset;cursor:pointer;padding:3px 10px;border:1px solid #2a3442;border-radius:999px;color:#c9d4e2;font-weight:700}.vc-win button[aria-pressed=true]{background:#ffb84d;border-color:#ffb84d;color:#101825}" +
     ".vc-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 22px;border:1px solid #1a1a1a;border-bottom:0;border-radius:8px 8px 0 0;padding:10px 14px;background:#000;font-family:'JetBrains Mono','IBM Plex Mono',monospace}" +
-    ".vc-nm{font-size:14px;color:#e8eef4;letter-spacing:.04em;display:flex;align-items:center;gap:8px}.vc-st{font-style:normal;font-size:9px;font-weight:700;letter-spacing:.06em;border:1px solid;border-radius:3px;padding:0 4px}.vc-st.live{color:#3fb97f}.vc-st.delayed{color:#e8b93d}.vc-st.settle{color:#8f9db3}.vc-st.closed{color:#e0655f}" +
+    ".vc-nm{font-size:14px;color:#e8eef4;letter-spacing:.04em;display:flex;align-items:center;gap:8px}.vc-st{font-style:normal;font-size:9px;font-weight:700;letter-spacing:.06em;border:1px solid;border-radius:3px;padding:0 4px}.vc-st.live{color:#3fb97f}.vc-st.delayed{color:#e8b93d}.vc-st.settle{color:#8f9db3}.vc-st.closed{color:#e0655f}.vc-st.close{color:#8f9db3}" +
     ".vc-hp b{font-size:22px;font-weight:500;color:#fff;display:inline-block;font-variant-numeric:tabular-nums}.vc-hp small{color:#8a8a8a}.vc-hp .up{color:#3fb97f}.vc-hp .dn{color:#e0655f}.vc-roll.tick{animation:vcRoll .45s ease-out}@keyframes vcRoll{0%{transform:translateY(-60%);opacity:0}100%{transform:none;opacity:1}}" +
     ".vc-hk{font-size:12px;color:#8a8a8a}.vc-hk b{color:#e8eef4;font-weight:500}.vc-cycle{margin-left:auto;display:inline-flex;align-items:center;gap:8px}.vc-cycle svg{width:22px;height:22px;transform:rotate(-90deg)}.vc-cbg{fill:none;stroke:#222;stroke-width:2.5}.vc-cfg{fill:none;stroke:#38e0f0;stroke-width:2.5;stroke-dasharray:100;transition:stroke-dashoffset .95s linear;filter:drop-shadow(0 0 3px #38e0f0)}" +
     ".vc-read{margin:0;border:1px solid #1a1a1a;border-bottom:0;background:#000;padding:8px 14px;font-size:12.5px;line-height:1.5;color:#c9d4e2}.vc-read b{font:600 10px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#d9b46a;margin-right:6px}" +
@@ -352,5 +429,5 @@
     "@media (prefers-reduced-motion:reduce){.vc-r1,.vc-r2{animation:none;opacity:.4}.vc-cone,.vc-wire{transition:none}.vc-roll.tick{animation:none}}" +
     "@media (max-width:900px){.vc-wrap{grid-template-columns:1fr}.vc-rail{border-right:0;border-bottom:1px solid #1a1a1a}.vc-tgs{flex-direction:row;flex-wrap:wrap;gap:8px 16px}.vc-ruler{grid-template-columns:1fr}.vc-ru{border-left:0;border-top:1px solid #1a1a1a}.vc-ru:first-child{border-top:0}.vc-cycle{margin-left:0}}";
   doc.head.appendChild(css);
-  root.VCONE = { mount: mount, model: model };
+  root.VCONE = { mount: mount, model: model, mountIx: mountIx };
 })(window);
