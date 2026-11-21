@@ -704,6 +704,18 @@ def main():
                    "NIFTY": ("^INDIAVIX", opt_daily("^INDIAVIX", IST))}
         today = datetime.now(NY)
         body["weekly"] = weekly_block(wk_series, vix_map, (today - timedelta(days=today.weekday())).strftime("%Y-%m-%d"))
+        # volatility cones (owner, Nov 21 2026): last 120 daily closes per index + realised sigma (20/60 sessions) and the
+        # implied gauge, so the page can project the +/-1/2 sigma cone 21 sessions ahead the way the grain cones do
+        cones = {}
+        for k, rows_ in (("SPX", data["SPX"]), ("NDX", data["NDX"]), ("DJIA", data["DJIA"]), ("NIFTY", nifty)):
+            cl = [r_[4] for r_ in rows_]
+            lr = [math.log(cl[i] / cl[i - 1]) for i in range(1, len(cl))]
+            sd = lambda n: round(stdev(lr[-n:]), 6) if len(lr) >= n else None
+            iv = vix_map.get(k)
+            ivl = iv[1][-1][4] if iv and iv[1] else None
+            cones[k] = {"closes": [[r_[0], rnd(r_[4])] for r_ in rows_[-120:]], "sd20": sd(20), "sd60": sd(60), "sd250": sd(250),
+                        "iv": {"index": iv[0], "level": rnd(ivl), "date": iv[1][-1][0]} if ivl else None}
+        body["cones"] = cones
     except Exception as e:
         print(f"! weekly block skipped: {e}")
     try:
