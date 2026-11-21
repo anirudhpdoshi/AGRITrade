@@ -1136,7 +1136,7 @@ function rollTileHTML(key){
     '<div class="roll-stats"><h3>Roll statistics &amp; timing</h3><div class="rs-g">'+statRows+'</div></div>'+
     '<div class="roll-opt"><h3>Options open interest by month — for roll planning</h3>'+oiMonthsHTML(key).replace('<div class="oi-mt">What happened in each option month</div>','')+'<p class="note" style="margin:6px 0 0">Strike-by-strike view and change chart: <a href="#" data-secjump="'+key+':opt">Options data → Open interest by strike</a> (NEAR · FAR · BOTH)</p></div>'+
     '<div class="stamp" style="border:0;margin-top:4px;padding-top:8px">Latest session ('+esc(R.lastLabel)+') highlighted'+(/prelim/.test(R.lastLabel)?' · preliminary until the exchange final is confirmed (exchange preliminary — has matched the final within ~0.6% on this desk)':'')+
-      (R.oldPrelim.length?' · ᵖ '+esc(R.oldPrelim.join(', ').replace(/\s*\(?\b(IBKR|CME)\b\)?/g,''))+': exchange preliminary open interest, the desk uses the preliminary figure (it has matched the exchange final within ~0.6%) from our sources, so the preliminary figure is kept and marked':'')+'</div></div>'+
+      (R.oldPrelim.length?' · ᵖ '+esc(R.oldPrelim.join(', ').replace(/\s*\(?\b(IBKR|CME)\b\)?/g,''))+': exchange preliminary open interest, the desk uses the preliminary figure (it has matched the exchange final within ~0.6%) from our sources, so the preliminary figure is kept and marked':'')+'</div>'+
     '<div class="stamp">Per-contract open interest: rollover-card history through Oct 20, then the exchange daily bulletin (prelim = exchange preliminary OI, published ~10:30 pm ET on trade date; final ~10:30 am ET next day) · settles: CBOT daily settlements · behaviour rule: OI and price change of each contract that session</div></div>';
 }
 

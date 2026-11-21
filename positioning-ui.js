@@ -202,11 +202,13 @@
 
   /* USD/CAD: the desk's CAD positioning (leveraged-funds KPIs, CFTC CAD funds, sentiment & FX options) from the USD/CAD page */
   function mountFx(body) {
-    var F = doc.getElementById("panel-fx");
-    if (F && !F.innerHTML && typeof root.renderFX === "function") { try { root.renderFX(); } catch (e) {} }
+    var F = doc.getElementById("panel-fx"), s = dataStamp();
+    /* rebuild the USD/CAD page from the current data before cloning (owner, Nov 21 2026): a page rendered from the startup
+       snapshot was being cloned, so the CFTC panels showed "load on the next refresh" after the data had arrived */
+    if (F && typeof root.renderFX === "function" && (!F.innerHTML || seenStamp.fx !== s)) { seenStamp.fx = s; try { root.renderFX(); } catch (e) {} }
     var saved = (root.SUB && root.SUB.fx) || "overview";
     try { if (saved !== "deriv" && typeof root.setSub === "function") root.setSub("fx", "deriv"); } catch (e) {}
-    var nodes = cloneFrom("fx", "deriv", null);
+    var nodes = cloneFrom("fx", "deriv", function () { return true; });   /* every CAD tile, no sub-nav, none hidden */
     try { if (saved !== "deriv" && typeof root.setSub === "function") root.setSub("fx", saved); } catch (e) {}
     if (!nodes.length) { fallback(body, "USD/CAD positioning", "no CAD positioning in the dataset."); return; }
     appendAll(body, nodes);
