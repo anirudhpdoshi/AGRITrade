@@ -48,7 +48,7 @@ C = [
     [S_FERR, "ironore", "Iron ore", ["2601"], "t", None, 1, "iron ore", "$/dmt"],
     [S_FERR, "iron", "Iron (pig iron, DRI)", ["7201", "7203"], "t", None, 1, None, ""],
     [S_FERR, "steel", "Steel (semi-finished, flat, long)", STEEL, "t", None, 1, None, ""],
-    [S_BATT, "lithium", "Lithium (carbonate, oxide/hydroxide)", ["283691", "282520"], "t", None, 1, None, ""],
+    [S_BATT, "lithium", "Lithium (spodumene conc., carbonate, hydroxide)", ["253090", "283691", "282520"], "t", None, 1, None, ""],
     [S_BATT, "cobalt", "Cobalt", ["2605", "8105", "2822"], "t", None, 1, None, ""],
     [S_BATT, "graphite", "Graphite", ["250410", "250490", "380110"], "t", None, 1, None, ""],
     [S_BATT, "manganese", "Manganese", ["2602", "8111"], "t", None, 1, None, ""],
@@ -59,12 +59,12 @@ C = [
     [S_CRIT, "vanadium", "Vanadium", ["720292", "282530"], "t", None, 1, None, ""],
     [S_CRIT, "rareearths", "Rare earths", ["280530", "2846"], "t", None, 1, None, ""],
     [S_IND, "potash", "Potash", ["310420", "310430", "310490"], "t", None, 1, "potassium chloride", "$/t"],
-    [S_IND, "phosphate", "Phosphate (rock & fertilizer)", ["2510", "3103"], "t", None, 1, "phosphate rock", "$/t"],
+    [S_IND, "phosphate", "Phosphate (rock & fertilizer)", ["2510", "3103"], "t", None, 1, None, ""],
     [S_IND, "sulphur", "Sulphur", ["2503"], "t", None, 1, None, ""],
     [S_IND, "cement", "Cement", ["2523"], "t", None, 1, None, ""],
     [S_IND, "salt", "Salt", ["2501"], "t", None, 1, None, ""],
     [S_IND, "diamonds", "Diamonds", ["7102"], "ct", None, 1, None, ""],
-    [S_ENER, "coal", "Coal & coke", ["2701", "2704"], "t", None, 1, "coal, australian", "$/t"],
+    [S_ENER, "coal", "Coal & coke (mostly metallurgical)", ["2701", "2704"], "t", None, 1, None, ""],
     [S_ENER, "uranium", "Uranium (also a critical mineral)", ["261210", "284410"], "t", None, 1, None, ""],
 ]
 CODES = sorted({h for c in C for h in c[3]})
@@ -218,12 +218,17 @@ def corr_beta(x, y):
     return (round(sxy / math.sqrt(sxx * syy), 2) if sxx and syy else None), (round(sxy / sxx, 3) if sxx else None)
 
 
-ISO = {"USA": "United States", "GBR": "United Kingdom", "CHN": "China", "JPN": "Japan", "NLD": "Netherlands", "KOR": "South Korea", "DEU": "Germany",
-       "IND": "India", "CHE": "Switzerland", "HKG": "Hong Kong", "BEL": "Belgium", "NOR": "Norway", "MEX": "Mexico", "FRA": "France", "ITA": "Italy",
-       "BRA": "Brazil", "AUS": "Australia", "TWN": "Taiwan", "S19": "Taiwan", "ESP": "Spain", "FIN": "Finland", "SWE": "Sweden", "ARE": "UAE",
-       "SGP": "Singapore", "TUR": "Türkiye", "IDN": "Indonesia", "MYS": "Malaysia", "THA": "Thailand", "VNM": "Viet Nam", "PHL": "Philippines",
-       "BGD": "Bangladesh", "PAK": "Pakistan", "SAU": "Saudi Arabia", "ISR": "Israel", "POL": "Poland", "CHL": "Chile", "PER": "Peru", "COL": "Colombia",
-       "ZAF": "South Africa", "MAR": "Morocco", "EGY": "Egypt", "NZL": "New Zealand", "IRL": "Ireland", "AUT": "Austria", "DNK": "Denmark", "RUS": "Russia"}
+ISO = {"842": "United States", "826": "United Kingdom", "156": "China", "392": "Japan", "528": "Netherlands", "410": "South Korea", "276": "Germany",
+       "699": "India", "356": "India", "757": "Switzerland", "756": "Switzerland", "344": "Hong Kong", "56": "Belgium", "579": "Norway", "484": "Mexico", "251": "France",
+       "250": "France", "380": "Italy", "381": "Italy", "76": "Brazil", "36": "Australia", "490": "Taiwan", "158": "Taiwan", "724": "Spain", "246": "Finland", "752": "Sweden",
+       "784": "UAE", "702": "Singapore", "792": "Türkiye", "360": "Indonesia", "458": "Malaysia", "764": "Thailand", "704": "Viet Nam", "608": "Philippines",
+       "50": "Bangladesh", "586": "Pakistan", "682": "Saudi Arabia", "376": "Israel", "616": "Poland", "152": "Chile", "604": "Peru", "170": "Colombia",
+       "710": "South Africa", "711": "South Africa", "504": "Morocco", "818": "Egypt", "554": "New Zealand", "372": "Ireland", "40": "Austria", "208": "Denmark",
+       "643": "Russia", "32": "Argentina", "218": "Ecuador", "591": "Panama", "188": "Costa Rica", "320": "Guatemala", "862": "Venezuela", "203": "Czechia",
+       "348": "Hungary", "642": "Romania", "300": "Greece", "620": "Portugal", "634": "Qatar", "414": "Kuwait", "48": "Bahrain", "512": "Oman", "400": "Jordan",
+       "566": "Nigeria", "288": "Ghana", "404": "Kenya", "231": "Ethiopia", "144": "Sri Lanka", "496": "Mongolia", "398": "Kazakhstan", "804": "Ukraine",
+       "112": "Belarus", "233": "Estonia", "428": "Latvia", "440": "Lithuania", "705": "Slovenia", "703": "Slovakia", "191": "Croatia", "100": "Bulgaria",
+       "688": "Serbia", "8": "Albania", "352": "Iceland", "442": "Luxembourg", "470": "Malta", "196": "Cyprus", "784.0": "UAE", "899": "Areas n.e.s.", "0": "World"}
 
 
 def main():
@@ -283,7 +288,7 @@ def main():
                     k = iso or pc
                     dd[k] = dd.get(k, 0) + v
         dtot = sum(dd.values()) or 0
-        dest = [{"c": ISO.get(k, k), "iso": k, "usd_m": r(v / 1e6), "share": r(v / dtot * 100) if dtot else None}
+        dest = [{"c": ISO.get(str(k), "Code " + str(k)), "iso": k, "usd_m": r(v / 1e6), "share": r(v / dtot * 100) if dtot else None}
                 for k, v in sorted(dd.items(), key=lambda z: -z[1])[:8]]
         # prices
         ws = P["series"].get(cid, {})

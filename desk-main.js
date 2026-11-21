@@ -3379,7 +3379,8 @@ function fxSubnavHTML(){
     {id:'deriv', label:'Derivatives', ev:nextOf(ev.filter(function(e){ return cb.test(e.label); }).concat(cftc))},
     {id:'ysm', label:'Yield Spreads', ev:nextOf(ev, function(e){ return cb.test(e.label)||/Treasury|Bond|Auction|CPI|GDP|Employment|Payroll/i.test(e.label); })},
     {id:'rates', label:'Rates, Policy & Energy', ev:nextOf(ev, function(e){ return cb.test(e.label)||/Crude|Oil|Treasury|Bond|Auction/i.test(e.label); })},
-    {id:'fwd', label:'Forward Rates', ev:nextOf(ev, function(e){ return cb.test(e.label); })}
+    {id:'fwd', label:'Forward Rates', ev:nextOf(ev, function(e){ return cb.test(e.label); })},
+    {id:'metals', label:'Mineral Exports', ev:nextOf(ev, function(e){ return /Trade|Merchandise/i.test(e.label); })}
   ], live);
 }
 function renderFX(){
@@ -3517,7 +3518,8 @@ function renderFX(){
     /* macro sections now live on the Macro tab (renderMacro) */
     subWrap('fx','ysm', (window.YSM&&DATA.fx.ysm?YSM.html():T.yields)+ylLiveHTML())+
     subWrap('fx','rates', (window.YSM&&DATA.fx.ysm?'':T.yields)+T.energy.replace('class="tile wide"','class="tile"')+T.policy)+
-    subWrap('fx','fwd', '<div class="tile wide fxmx-tile" data-src="fx_spot"><div class="fxmx-head"><h2>Forward Rates Matrix<span class="h2note" style="display:none"> — 1M to 24M</span></h2><div class="fxmx-meta"><span class="fxmx-tg" id="fxmx-view"></span><span class="fxmx-tg" id="fxmx-inv"></span><span><b class="fxmx-g" id="fxmx-pair">USD / CAD forward curve</b> · covered-interest-parity outrights · theoretical</span><span class="fxmx-pill">SPOT REF <b id="fxmx-spot">—</b></span><span class="fxmx-pill">24M FORWARD <b id="fxmx-12">—</b></span></div></div><div id="fx-fwdmx" class="fxmx"></div><div class="stamp">Outright = spot × DF<sub>USD</sub> ÷ DF<sub>CAD</sub> from US Treasury and Government of Canada yields · points in pips (1 pip = 0.0001 CAD) · reprices on every live spot tick · not a dealer quote</div></div>'+T.forwards);
+    subWrap('fx','fwd', '<div class="tile wide fxmx-tile" data-src="fx_spot"><div class="fxmx-head"><h2>Forward Rates Matrix<span class="h2note" style="display:none"> — 1M to 24M</span></h2><div class="fxmx-meta"><span class="fxmx-tg" id="fxmx-view"></span><span class="fxmx-tg" id="fxmx-inv"></span><span><b class="fxmx-g" id="fxmx-pair">USD / CAD forward curve</b> · covered-interest-parity outrights · theoretical</span><span class="fxmx-pill">SPOT REF <b id="fxmx-spot">—</b></span><span class="fxmx-pill">24M FORWARD <b id="fxmx-12">—</b></span></div></div><div id="fx-fwdmx" class="fxmx"></div><div class="stamp">Outright = spot × DF<sub>USD</sub> ÷ DF<sub>CAD</sub> from US Treasury and Government of Canada yields · points in pips (1 pip = 0.0001 CAD) · reprices on every live spot tick · not a dealer quote</div></div>'+T.forwards)+
+    subWrap('fx','metals', window.METALS_UI?METALS_UI.html():'<div id="mxView" class="tile wide"><h2>Canada mineral &amp; metal exports</h2><p>Loading…</p></div>');
   html+='</div><aside class="rail">'+liveMonitorHTML()+fxAlertsHTML()+'</aside></div>';
   document.getElementById('panel-fx').innerHTML=html;
   if(window.FWD) FWD.mount();   /* rebuild the live forward-curve component inside the fresh tile */
@@ -3601,7 +3603,7 @@ var SECG={
     rates:[['ys','Yield spreads',/yield spreads/i],['en','Energy',/Energy/],['pol','Policy expectations',/Policy expectations/]]
   }
 };
-var SUBTHEME={ysm:'#ffb84d',reg:'#3fb97f',overview:'#38b6c9',deriv:'#a78bfa',macro:'#e8b93d',fund:'#e8b93d',rates:'#3fb97f',inputs:'#f08a5d',dash:'#e8b93d',cycle:'#a78bfa',trade:'#38b6c9',rel:'#3fb97f',cpi:'#e8a33d',prices:'#e8b93d'};
+var SUBTHEME={metals:'#e8b93d',ysm:'#ffb84d',reg:'#3fb97f',overview:'#38b6c9',deriv:'#a78bfa',macro:'#e8b93d',fund:'#e8b93d',rates:'#3fb97f',inputs:'#f08a5d',dash:'#e8b93d',cycle:'#a78bfa',trade:'#38b6c9',rel:'#3fb97f',cpi:'#e8a33d',prices:'#e8b93d'};
 var GTITLE={corn:'Corn · ZCZ26',wheat:'Wheat · ZWZ26',soybeans:'Soybeans · ZSF27',fx:'USD/CAD desk',macro:'Macro · US & Canada'};
 
 /* ---------- left-panel collapse, knowledge bank, per-menu guide ---------- */
