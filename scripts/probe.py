@@ -1,25 +1,15 @@
 """Ad-hoc source diagnostics (no secrets). Output lands on the sec-audit branch as probe.txt."""
 import requests, time
-B = "https://comtradeapi.un.org/public/v1/preview/C/A/HS"
-for q in [dict(reporterCode="124", period="2024", partnerCode="0", flowCode="X", cmdCode="7108"),
-          dict(reporterCode="124", period="2024", flowCode="X", cmdCode="7108"),
-          dict(reporterCode="124", period="2023,2024", partnerCode="0", flowCode="X", cmdCode="7108,7106"),
-          dict(reporterCode="124", period="2025", partnerCode="0", flowCode="X", cmdCode="7108"),
-          dict(reporterCode="124", period="2024", flowCode="X", cmdCode="7108", partnerCode=None)]:
-    q = {k: v for k, v in q.items() if v is not None}
+P = "https://agritrade-statcan.anirudh-p-doshi.workers.dev"
+time.sleep(5)
+for i in range(3):
     try:
-        r = requests.get(B, params=q, timeout=60); print("CT", q, r.status_code, r.text[:400].replace("\n", " "))
+        r = requests.post(P + "/wds/getCubeMetadata", json=[{"productId": 14100287}], timeout=40)
+        print("meta", r.status_code, r.text[:200].replace("\n", " ")); break
     except Exception as e:
-        print("CT ERR", e)
-    time.sleep(4)
-r = requests.get("https://comtradeapi.un.org/public/v1/preview/C/M/HS", params=dict(reporterCode="124", period="202608", partnerCode="0", flowCode="X", cmdCode="7108"), timeout=60)
-print("CTM", r.status_code, r.text[:300])
-for u in ["https://prod-natural-resources.azure.cloud.nrcan-rncan.gc.ca/maps-tools-publications/publications/mineral-trade",
-          "https://natural-resources.canada.ca/maps-tools-publications/publications/mineral-trade"]:
-    try:
-        r = requests.get(u, timeout=60, headers={"User-Agent": "Mozilla/5.0"}); print("NR", u, r.status_code, len(r.text))
-        import re
-        for h in sorted(set(re.findall(r'href="([^"]+)"', r.text))):
-            if re.search(r"xls|csv|trade|pdf|minerals", h, re.I): print("   ", h)
-    except Exception as e:
-        print("NR ERR", u, e)
+        print("ERR", e); time.sleep(10)
+r = requests.get(P + "/wds/getFullTableDownloadCSV/20100056/en", timeout=40); print("csv", r.status_code, r.text[:200])
+try:
+    u = r.json()["object"]; z = requests.get(P + "/file", params={"u": u}, timeout=120, stream=True); print("zip", z.status_code, z.headers.get("content-length"), z.headers.get("content-type"))
+except Exception as e:
+    print("zip ERR", e)
