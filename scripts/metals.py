@@ -200,6 +200,21 @@ def yahoo_daily():
             out[c[1]] = [(x.strftime("%Y-%m-%d"), float(v) * c[6]) for x, v in s.items()]
         except Exception:
             pass
+    # a symbol the batch download dropped is fetched on its own (a monthly average must never stand in for a missing daily price)
+    for c in C:
+        if c[5] and len(out.get(c[1]) or []) < 200:
+            for k in range(3):
+                try:
+                    s = UDC.yf().download(c[5], period="2y", interval="1d", auto_adjust=False, progress=False)["Close"].dropna()
+                    s = s.iloc[:, 0] if hasattr(s, "columns") else s
+                    if len(s) > 200:
+                        out[c[1]] = [(x.strftime("%Y-%m-%d"), float(v) * c[6]) for x, v in s.items()]
+                        break
+                except Exception as e:
+                    print(f"  yahoo {c[5]} retry {k + 1}: {str(e)[:100]}")
+                time.sleep(3 * (k + 1))
+            if len(out.get(c[1]) or []) < 200:
+                print(f"! no daily price for {c[2]} — falling back to the latest Pink Sheet month")
     return out
 
 
