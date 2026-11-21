@@ -266,55 +266,12 @@
           "<td>" + big(r.mcap) + '</td><td class="ue-sec" title="' + esc(r.ind) + '">' + esc(r.sector || "—") + "</td></tr>"; }).join("") +
       "</tbody></table></div>" + (L.length ? "" : '<p class="note">The watchlist is empty — edit scripts/data/earnings_watchlist.json.</p>') + "</div>";
   }
-  function profileCard() {
-    var C = (J.companies || {})[V.sel] || {}, p = C.profile, q = C.quote || {};
-    if (!V.sel) return "";
-    if (!p) return '<div class="tile"><h2>Company profile</h2><p class="note">' + (C.profile_error ? "⚠ " + esc(C.profile_error.msg) : "No profile stored for " + esc(V.sel) + " yet — the next run fetches it.") + "</p></div>";
-    var site = /^https?:\/\//.test(p.website || "") ? p.website : null, img = /^https:\/\//.test(p.image || "") ? p.image : null;
-    var desc = p.description || "", short = desc.length > 520 ? desc.slice(0, 520).replace(/\s+\S*$/, "") + "…" : desc;
-    return '<div class="tile"><h2>Company profile <span class="h2note">— FMP profile, cached 7 days · fetched ' + esc(ago(p.fetched_at)) + "</span></h2>" +
-      '<div class="ue-pf">' + (img ? '<img src="' + esc(img) + '" alt="" loading="lazy" onerror="this.remove()">' : "") +
-        "<div><h3>" + esc(p.companyName || V.sel) + "</h3><small>" + esc(V.sel) + " · " + esc(p.exchangeFullName || p.exchange || "") + (p.currency ? " · " + esc(p.currency) : "") + "</small></div></div>" +
-      '<dl class="ue-dl"><dt>Sector</dt><dd>' + esc(p.sector || "—") + "</dd><dt>Industry</dt><dd>" + esc(p.industry || "—") + "</dd><dt>CEO</dt><dd>" + esc(p.ceo || "—") +
-        "</dd><dt>Country</dt><dd>" + esc(p.country || "—") + "</dd><dt>Employees</dt><dd>" + (p.fullTimeEmployees ? num(+p.fullTimeEmployees, 0) : "—") +
-        "</dd><dt>Market cap</dt><dd>" + big(q.marketCap || p.marketCap) + "</dd><dt>Beta</dt><dd>" + num(p.beta, 2) + "</dd><dt>Last dividend</dt><dd>" + (p.lastDividend != null ? num(p.lastDividend, 2) : "—") +
-        "</dd><dt>50D / 200D avg</dt><dd>" + num(q.priceAvg50, 2) + " / " + num(q.priceAvg200, 2) + "</dd><dt>Listed since</dt><dd>" + esc(p.ipoDate || "—") + "</dd></dl>" +
-      (short ? '<p class="ue-desc">' + esc(short) + "</p>" : "") + (site ? '<a class="ue-btn" href="' + (window.safeUrl ? safeUrl(site) : "#") + '" target="_blank" rel="noopener noreferrer">Company site ↗</a>' : "") + "</div>";
-  }
   function todayNY() { return new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" }); }
   function dayLbl(d) { return new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric" }); }
   function daysTo(d) { return Math.round((Date.parse(d + "T12:00:00Z") - Date.parse(todayNY() + "T12:00:00Z")) / 864e5); }
   function nextReport(sym) {
     var C = J.calendar, t = todayNY(); if (!C || !C.rows) return null;
     return C.rows.filter(function (r) { return r.symbol === sym && r.date >= t; })[0] || null;
-  }
-  function earningsSlot() {
-    var C = J.calendar, ec = (J.endpoints || {})["earnings-calendar"];
-    if (ec && ec.status === "not_in_plan")
-      return '<div class="tile" style="margin-top:14px"><h2>Earnings dates &amp; results</h2><div class="ue-ph">The earnings calendar is not in this FMP plan, so there is nothing to show — see FMP plan coverage below.</div></div>';
-    if (!C || !C.fetched_at)
-      return '<div class="tile" style="margin-top:14px"><h2>Earnings dates &amp; results</h2><div class="ue-ph">Not fetched yet — the next run of the Action makes one earnings-calendar call for every ticker.</div></div>';
-    var t = todayNY(), W = C.rows.filter(function (r) { return r.w; }), up = W.filter(function (r) { return r.date >= t && r.epsActual == null; }),
-        past = W.filter(function (r) { return r.date <= t && (r.epsActual != null || r.revenueActual != null); }).reverse(),
-        pend = W.filter(function (r) { return r.date <= t && r.epsActual == null && r.revenueActual == null; });
-    var head = '<div class="tile" style="margin-top:14px"><h2>Earnings dates &amp; results <span class="h2note">— FMP earnings calendar ' + esc(C.from) + " to " + esc(C.to) + " · fetched " + esc(ago(C.fetched_at)) + "</span></h2>";
-    if (!W.length)
-      return head + '<div class="ue-ph">The calendar returned ' + (C.rows_total || 0) + " row" + (C.rows_total === 1 ? "" : "s") + " across " + (C.symbols_total || 0) +
-        " companies for this window, none of them on your watchlist. In earnings season that is thin: this FMP plan may cover only part of the calendar.</div></div>";
-    function surp(v) { return v == null ? '<span class="neu">—</span>' : sg(v, 1, "%"); }
-    return head +
-      '<div class="pi-l" style="margin:6px 0 2px">Next reports</div>' +
-      (up.length ? '<div class="tbl-scroll"><table class="ue-t"><thead><tr><th>Company</th><th>Date</th><th>In</th><th>When</th><th>EPS est.</th><th>Revenue est.</th></tr></thead><tbody>' +
-        up.map(function (r) { var n = daysTo(r.date); return '<tr data-uesym="' + esc(r.symbol) + '"><td><span class="ue-sym">' + esc(r.symbol) + "</span></td><td>" + esc(dayLbl(r.date)) + "</td><td>" +
-          (n === 0 ? '<b style="color:var(--amber)">today</b>' : n + " d") + "</td><td>" + esc(({ bmo: "before open", amc: "after close" })[r.time] || "—") + "</td><td>" + num(r.epsEstimated, 2) + "</td><td>" + big(r.revenueEstimated) + "</td></tr>"; }).join("") +
-        "</tbody></table></div>" : '<p class="note">No watchlist name reports in the next ' + 60 + " days.</p>") +
-      (pend.length ? '<p class="note" style="color:var(--amber)">Reported, actuals not in yet: ' + pend.map(function (r) { return esc(r.symbol) + " (" + esc(dayLbl(r.date)) + ")"; }).join(", ") + " — watched every 10 s for 2 min from the release slot, then every 30 s until the numbers are in.</p>" : "") +
-      '<div class="pi-l" style="margin:12px 0 2px">Recent results — actual vs estimate</div>' +
-      (past.length ? '<div class="tbl-scroll"><table class="ue-t"><thead><tr><th>Company</th><th>Date</th><th>EPS act.</th><th>EPS est.</th><th>Surprise</th><th>Revenue act.</th><th>Revenue est.</th><th>Surprise</th></tr></thead><tbody>' +
-        past.map(function (r) { return '<tr data-uesym="' + esc(r.symbol) + '"><td><span class="ue-sym">' + esc(r.symbol) + "</span></td><td>" + esc(dayLbl(r.date)) + "</td><td>" + num(r.epsActual, 2) + "</td><td>" + num(r.epsEstimated, 2) +
-          "</td><td>" + surp(r.eps_surprise_pct) + "</td><td>" + big(r.revenueActual) + "</td><td>" + big(r.revenueEstimated) + "</td><td>" + surp(r.rev_surprise_pct) + "</td></tr>"; }).join("") +
-        "</tbody></table></div>" : '<p class="note">No watchlist results in the last 3 weeks.</p>') +
-      '<div class="stamp">Surprise = (actual − estimate) ÷ |estimate|. Coverage this fetch: ' + (C.rows_total || 0) + " rows across " + (C.symbols_total || 0) + " companies. One call covers every ticker; it repeats at most daily, or hourly while a report is out without actuals.</div></div>";
   }
   function footer() {
     var pol = J.policy || {}, res = J.resolved || {}, rk = Object.keys(res);
@@ -472,7 +429,6 @@
      Passing the slot never counts as reported. Actuals: the company's press release on SEC EDGAR (GAAP, unaudited); estimates are
      labelled as estimates; a surprise is shown only where actual and estimate are on the same basis. */
   var EB = null;
-  function ebTab(t) { V.ebt = t; save(); }
   function mny(v) { return v == null ? "N/A" : (v < 0 ? "−" : "") + "$" + (Math.abs(v) >= 1e9 ? (Math.abs(v) / 1e9).toFixed(2) + "B" : (Math.abs(v) / 1e6).toFixed(0) + "M"); }
   function pc(v) { return v == null ? "N/A" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + "%"; }
   function cls3(v) { return v == null ? "" : v >= 1 ? "beat" : v <= -1 ? "miss" : "inl"; }
@@ -624,16 +580,6 @@
       '<div class="ut-detail" style="margin:14px 0 0;border-color:var(--line)"><div><div class="pi-l">Annual return by year</div>' + annualBars(S) + '<p class="note" style="font-size:12px;margin:4px 0 0">December close to prior December close. Dashed line = five-year average; the five bars behind it stay visible so one unusual year can’t hide.</p></div>' +
         "<div>" + (detail || '<div class="ue-ph">Click a month cell to see that month across all five years — its average, range and how often it was positive.</div>') + "</div></div>" +
       '<div class="stamp">' + esc((M && M.basis) || "") + " Source: " + esc((M && M.provider) || "") + ", updated " + esc(when(M && M.updated_at)) + ". Five years is a small sample (five observations per month): this describes the past and is not a forecast or a trading signal.</div></div>";
-  }
-  function companyView() {
-    if (!V.sel) return '<div class="tile"><div class="ue-ph">Search for a ticker above to open company intelligence.</div></div>';
-    var C = J.calendar, hist = C && C.rows ? C.rows.filter(function (r) { return r.symbol === V.sel; }) : [];
-    return profileCard() +
-      '<div class="tile" style="margin-top:14px"><h2>' + esc(V.sel) + " earnings in the calendar window</h2>" +
-      (hist.length ? '<div class="tbl-scroll"><table class="ue-t"><thead><tr><th>Date</th><th>Time</th><th>EPS act.</th><th>EPS est.</th><th>Result</th><th>Revenue act.</th><th>Revenue est.</th></tr></thead><tbody>' +
-        hist.map(function (r) { return "<tr><td>" + esc(dayLbl(r.date)) + "</td><td>" + tlbl(r.time) + "</td><td>" + num(r.epsActual, 2) + "</td><td>" + num(r.epsEstimated, 2) + "</td><td>" + verdict(r) + "</td><td>" + big(r.revenueActual) + "</td><td>" + big(r.revenueEstimated) + "</td></tr>"; }).join("") + "</tbody></table></div>"
-        : '<p class="note">' + esc(V.sel) + " has no event in the calendar window" + (C ? " (" + esc(C.from) + " → " + esc(C.to) + ")" : "") + ".</p>") + "</div>" +
-      '<div class="tile" style="margin-top:14px"><h2>Company research workspaces <span class="h2note">— phase 2</span></h2><div class="ue-ph">Statements, eight-quarter history, working capital, free cash flow, debt and financing cost, ratios, segments and rule-based interpretation will be built from SEC EDGAR filings for a pre-built company universe. Each opens with current position, eight-quarter history, industry comparison, interpretation and source evidence.</div></div>';
   }
   function render() {
     var act = document.activeElement, hadQ = act && act.hasAttribute && act.hasAttribute("data-utq"), pos = hadQ ? act.selectionStart : 0;

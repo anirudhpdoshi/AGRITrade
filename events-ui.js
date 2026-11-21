@@ -152,7 +152,6 @@
     }
     return best;
   }
-  function srcOf(e) { if (e.kind === "desk" || e.kind === "market") return "desk"; var L = e.t <= Date.now() ? landed(e) : null; return L && L.at && L.txt ? "actual" : "cal"; }
   /* calendar view (owner redesign): importance H/M/L, US + Canada only, one category filter, free-text search */
   function imp(e) { if (e.impact) return e.impact[0]; if (e.kind === "wasde" || e.kind === "contract") return "H"; if (/^(usda|cftc|ca|earn|energy)$/.test(e.kind)) return "M";
     if (e.kind === "cb") return e.high ? "H" : "M"; if (e.kind === "leg" || e.kind === "market") return e.high ? "M" : "L"; return "L"; }
@@ -379,15 +378,6 @@
       rows.map(function (r) { return "<tr><td>" + esc(r[1]) + "</td><td>" + hm(r[0]) + "</td><td>" + (r[2] ? new Date(r[2]).toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit", second: "2-digit" }) : '<span class="neu">waiting</span>') + '</td><td class="' + (r[3] == null ? "neu" : r[3] <= 5 ? "up" : r[3] <= 20 ? "neu" : "dn") + '">' + lagTxt(r[3]) + "</td><td>" + esc(r[4]) + "</td></tr>"; }).join("") + "</tbody></table></div>";
   }
   /* the next trading day's releases, so tomorrow-morning data (e.g. 8:30 GDP) is visible the evening before */
-  function tomorrowHTML(now) {
-    var t = now, nd = null;
-    for (var i = 1; i <= 4 && !nd; i++) { var L = todayEvents(now + i * 86400000).filter(pass).filter(function (e) { return e.kind !== "desk" && e.kind !== "market"; }); if (L.length) { nd = L; t = now + i * 86400000; } }
-    if (!nd) return "";
-    var key = V.tomAll ? nd : nd.filter(function (e) { return e.high || e.impact === "High" || e.impact === "Medium" || /^(usda|wasde|cftc|contract|ca)$/.test(e.kind); });
-    var rest = nd.length - key.length;
-    return '<div class="tile wide ev-tom"><h2>Coming up ' + (dayIso(t) === dayIso(now + 86400000) ? "tomorrow" : "next") + ' · ' + esc(shortDay(t)) + ' <span class="h2note">— ' + nd.length + ' scheduled' + (rest ? " · showing the " + key.length + " high/medium-impact and agri releases" : "") + '</span></h2>' +
-      '<div class="evlist">' + (key.length ? key : nd).map(function (e) { return row(e, now); }).join("") + "</div>" + (rest > 0 || V.tomAll ? '<button class="evhi" data-evtomall aria-pressed="' + !!V.tomAll + '">' + (V.tomAll ? "Show key releases only" : "Show all " + nd.length) + "</button>" : "") + "</div>";
-  }
   var lastDay = "";
   var RANGES = [["yday", "Yesterday", -1, 1], ["today", "Today", 0, 1], ["tom", "Tomorrow", 1, 1], ["d7", "Next 7 days", 0, 7], ["d14", "Next 14 days", 0, 14], ["custom", "Custom date", null, 1]];
   function rangeDays(id, now) { var r = RANGES.filter(function (x) { return x[0] === id; })[0] || RANGES[1], out = [];

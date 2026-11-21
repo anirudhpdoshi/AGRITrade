@@ -321,11 +321,25 @@ def main():
             vr = (avgvol / hb["volume"]) if avgvol and hb and hb["volume"] else 1.0
             imp = vb * vr * ratio
             est = {"implied_usd_m": r(imp), "erosion_usd_m": r(imp - vb), "price_effect_usd_m": r(vb * (ratio - 1)), "volume_effect_usd_m": r(vb * (vr - 1) * ratio),
-                   "erosion_cad_m": r((imp - vb) * usdcad) if usdcad else None, "volume_basis": "5-yr average" if vr != 1.0 else "2025 volume (no weight on file)"}
+                   "erosion_cad_m": r((imp - vb) * usdcad) if usdcad else None, "volume_basis": "5-yr average" if vr != 1.0 else "2025 volume (no weight on file)",
+                   "method": "price"}
+        # no price benchmark (owner, Nov 21 2026): expected annual value = average of the last 3 years' actual exports
+        l3 = [h["usd_m"] for h in hist[-3:] if h["usd_m"] is not None]
+        if est is None and vb and len(l3) == 3:
+            imp = sum(l3) / 3
+            est = {"implied_usd_m": r(imp), "erosion_usd_m": r(imp - vb), "price_effect_usd_m": None, "volume_effect_usd_m": None,
+                   "erosion_cad_m": r((imp - vb) * usdcad) if usdcad else None, "volume_basis": "3-yr average value (" + hist[-3]["y"] + "–" + hist[-1]["y"] + ")", "method": "avg3"}
         yoy = None
         if len(hist) >= 2 and hist[-1]["cad_m"] and hist[-2]["cad_m"]:
             yoy = {"from": hist[-2]["y"], "to": hist[-1]["y"], "chg_cad_m": r(hist[-1]["cad_m"] - hist[-2]["cad_m"]), "pct": r((hist[-1]["cad_m"] / hist[-2]["cad_m"] - 1) * 100)}
-        e = {"seg": seg, "id": cid, "name": name, "hs": codes, "vol_unit": unit, "history": hist, "avg_volume_5y": r(avgvol, 0),
+        # full-year projection (estimate): actual months so far + the 3-year average monthly run-rate for the months not yet reported
+        c3 = [h["cad_m"] for h in hist[-3:] if h["cad_m"] is not None]
+        proj = None
+        if ytd and len(c3) == 3 and cb:
+            rest = (12 - len(ytd)) / 12 * sum(c3) / 3
+            pv = (ytd_cad or 0) + rest
+            proj = {"cad_m": r(pv), "actual_months": len(ytd), "filled_cad_m": r(rest), "vs_base_cad_m": r(pv - cb), "pct": r((pv / cb - 1) * 100)}
+        e = {"seg": seg, "id": cid, "proj": proj, "name": name, "hs": codes, "vol_unit": unit, "history": hist, "avg_volume_5y": r(avgvol, 0),
              "monthly": monthly[-24:], "ytd": {"year": cy, "months": len(ytd), "through": ytd[-1]["p"] if ytd else None, "cad_m": r(ytd_cad) if ytd else None,
                                               "prior_cad_m": r(ytd_prev) if ytd_prev else None, "pct": r((ytd_cad / ytd_prev - 1) * 100) if ytd_prev else None},
              "yoy": yoy, "dest": dest, "dest_year": T.get("dest_year"),
@@ -364,7 +378,11 @@ def main():
     rx = [math.log(idx[i] / idx[i - 1]) for i in range(1, len(idx))]
     ry = [math.log(fxd[dates[i]] / fxd[dates[i - 1]]) for i in range(1, len(dates))]
     rho, beta = corr_beta(rx, ry)
-    priced = [e for e in out if e["est"]]
+    priced = [e for e in out if e["est"] and e["est"]["method"] == "price"]
+    avg3 = [e for e in out if e["est"] and e["est"]["method"] == "avg3"]
+    ero3 = sum(e["est"]["erosion_usd_m"] for e in avg3)
+    pj = [e for e in out if e["proj"]]
+    proj_tot = sum(e["proj"]["cad_m"] for e in pj); proj_base = sum(e["proj"]["cad_m"] - e["proj"]["vs_base_cad_m"] for e in pj)
     ero = sum(e["est"]["erosion_usd_m"] for e in priced)
     act = sum(next(h["usd_m"] for h in e["history"] if h["y"] == base) for e in priced)
     tot_base = T["total"].get(base)
@@ -378,7 +396,11 @@ def main():
                                             "src": "NRCan Mineral Trade information bulletin, May 2026 (Statistics Canada customs data)"}},
         "fx": {"usdcad": r(usdcad, 4), "date": FX[-1][0] if FX else None, "avg": {y: r(fxa[y], 4) for y in years if y in fxa},
                "series": [{"d": d, "v": r(v, 4)} for d, v in FX[-260:]]},
-        "impact": {"priced": [e["id"] for e in priced], "base_usd_m": r(act), "erosion_usd_m": r(ero), "erosion_cad_m": r(ero * usdcad) if usdcad else None,
+        "projection": {"year": str(now.year), "cad_m": r(proj_tot), "base_cad_m": r(proj_base), "chg_cad_m": r(proj_tot - proj_base), "pct": r((proj_tot / proj_base - 1) * 100) if proj_base else None,
+                       "commodities": len(pj), "method": "actual months to date + the 3-year average monthly run-rate for the months not yet reported"},
+        "impact": {"avg3": [e["id"] for e in avg3], "avg3_erosion_usd_m": r(ero3), "all_erosion_usd_m": r(ero + ero3), "all_erosion_cad_m": r((ero + ero3) * usdcad) if usdcad else None,
+                   "all_share_of_exports_pct": r((ero + ero3) / (tot_base / 1e6) * 100, 2) if tot_base else None,
+                   "priced": [e["id"] for e in priced], "base_usd_m": r(act), "erosion_usd_m": r(ero), "erosion_cad_m": r(ero * usdcad) if usdcad else None,
                    "share_of_exports_pct": r(ero / (tot_base / 1e6) * 100, 2) if tot_base else None,
                    "cad_link": {"corr": rho, "beta": beta, "days": len(rx), "weights": {k: r(v / W * 100) for k, v in idx_w.items()},
                                 "index": [{"d": d, "v": r(v, 2)} for d, v in zip(dates, idx)]}},
