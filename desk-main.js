@@ -527,6 +527,20 @@ function exportTileHTML(key){
 }
 
 /* ---------------- SVG chart builders ---------------- */
+function oiFocus(rows, ds, cp){
+  /* focus view (owner, Nov 21 2026): deep out-of-the-money tails with almost no open interest are trimmed so the bars that
+     matter are wide enough to read — each tail dropped holds under 3% of the month's OI; price and both walls always stay */
+  var shC=cp!=='put', shP=cp!=='call', v=function(r){ return (shC?r[1]:0)+(shP?r[2]:0); }, tot=rows.reduce(function(a,r){ return a+v(r); },0);
+  if(rows.length<=30||!tot) return {rows:rows, cut:0, share:0};
+  var lo=0, hi=rows.length-1, a=0, b=0;
+  while(lo<hi&&a+v(rows[lo])<=tot*0.03){ a+=v(rows[lo]); lo++; }
+  while(hi>lo&&b+v(rows[hi])<=tot*0.03){ b+=v(rows[hi]); hi--; }
+  var U=ds.wall_ref||ds.underlying;
+  rows.forEach(function(r,i){ if((U&&Math.abs(r[0]-U)<=(rows[1][0]-rows[0][0])*1.01)||(shC&&Math.abs(r[0]-ds.call_wall[0])<0.001)||(shP&&Math.abs(r[0]-ds.put_wall[0])<0.001)){ lo=Math.min(lo,i); hi=Math.max(hi,i); } });
+  lo=Math.max(0,lo-1); hi=Math.min(rows.length-1,hi+1);
+  var kept=rows.slice(lo,hi+1), ks=kept.reduce(function(x,r){ return x+v(r); },0);
+  return {rows:kept, cut:rows.length-kept.length, share:(1-ks/tot)*100, lo:rows[0][0], hi:rows[rows.length-1][0]};
+}
 function oiSVG(rows, ds, cp, prev, lab){
   cp=cp||'both'; var shC=cp!=='put', shP=cp!=='call';
   /* phone: a narrower viewBox keeps text at a readable size, and the strike range is cut to the area around price and the walls */
@@ -1205,7 +1219,8 @@ function oiTileHTML(key){
     var head='<div class="oi-mh"><b>'+esc(lab)+' monthly options</b> on '+esc(ds.contract||'')+' <span class="h2note">· standard monthly expiry'+(ex?' <b>'+esc(ex)+'</b>':'')+' (weeklies listed below) · '+(m==='near'?'near month':'far month')+' · '+esc(oiLabel(ds))+'</span></div>'+itmNote;
     head+='<div class="oi-chk-row">'+oiChkHTML(ds)+(oiPrevText(ds)?' · <span class="oi-prev">'+oiPrevText(ds)+'</span>':'')+'</div>';
     if(view==='chg') return head+(prev?oiDeltaSVG(ds, prev, cp, key, lab):'<p class="note oi-nochg">Change by strike for '+esc(lab)+' needs two pulls — the previous pull was not stored for this month yet. It appears after the next 8:23 ET daily options run.</p>');
-    return head+oiSVG(ds.rows, ds, cp, prev, lab);
+    var F=st.rng==='all'?{rows:ds.rows,cut:0}:oiFocus(ds.rows, ds, cp);
+    return head+oiSVG(F.rows, ds, cp, prev, lab)+(F.cut?'<p class="note oi-focus">Focused on '+fmt(F.rows[0][0],2)+'–'+fmt(F.rows[F.rows.length-1][0],2)+' · '+F.cut+' far-out strikes ('+fmt(F.lo,2)+'–'+fmt(F.hi,2)+' range) holding '+fmt(F.share,1)+'% of open interest are hidden — <a href="#" data-oiv="rng" data-v="all" data-k="'+key+'">show all strikes</a></p>':(st.rng==='all'&&ds.rows.length>30?'<p class="note oi-focus">All '+ds.rows.length+' strikes shown — <a href="#" data-oiv="rng" data-v="focus" data-k="'+key+'">focus on the active range</a></p>':''));
   }).join('');
   var leg=view==='chg'?'<span><span class="sw" style="background:var(--call)"></span>Calls added</span><span><span class="sw" style="background:#1f7a52"></span>Calls closed</span><span><span class="sw" style="background:var(--put)"></span>Puts added</span><span><span class="sw" style="background:#7a2f2b"></span>Puts closed</span>':
     (cp!=='put'?'<span><span class="sw" style="background:var(--call)"></span>Call OI</span><span><span class="sw" style="background:#ffd27a"></span>Call wall strike</span>':'')+(cp!=='call'?'<span><span class="sw" style="background:var(--put)"></span>Put OI</span><span><span class="sw" style="background:#ff9d97"></span>Put wall strike</span>':'');
@@ -3570,7 +3585,7 @@ document.querySelectorAll('.tab-btn[data-tab]').forEach(function(btn){
 });
 document.querySelector('main').addEventListener('click', function(ev){
   var o = ev.target.closest ? ev.target.closest('[data-oiv]') : null;
-  if(o){ var k=o.getAttribute('data-k'); OIV[k]=OIV[k]||{cp:'both',mon:'cur'}; OIV[k][o.getAttribute('data-oiv')]=o.getAttribute('data-v');
+  if(o){ if(o.tagName==='A') ev.preventDefault(); var k=o.getAttribute('data-k'); OIV[k]=OIV[k]||{cp:'both',mon:'cur'}; OIV[k][o.getAttribute('data-oiv')]=o.getAttribute('data-v');
     try{ localStorage.setItem('desk.oiv',JSON.stringify(OIV)); }catch(e){} document.getElementById('oi-'+k).innerHTML=oiTileHTML(k); return; }
   var b = ev.target.closest ? ev.target.closest('.toggle button') : null;
   if(!b || !b.hasAttribute('data-side')) return;   /* dashboard toggles have their own handler */

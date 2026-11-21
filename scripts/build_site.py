@@ -72,6 +72,14 @@ def stamp_version():
     page, n = re.subn(r'window\.DESK_BUILD="[^"]*"', 'window.DESK_BUILD="' + v + '"', page, count=1)
     if n != 1:
         sys.exit("ABORT: DESK_BUILD marker not found in index.html")
+    # latency (owner, Nov 21 2026): every script/stylesheet URL carries its own content hash, so browsers cache each file
+    # until it actually changes — the old "+Date.now()" re-downloaded ~1.3 MB of code on every visit
+    def fh(name):
+        f = ROOT / name
+        return hashlib.sha256(f.read_bytes()).hexdigest()[:10] if f.is_file() else v
+    page, n1 = re.subn(r'"([\w\-]+\.(?:js|css))\?v=[^"]*"\s*\+\s*Date\.now\(\)', lambda m: '"' + m.group(1) + "?v=" + fh(m.group(1)) + '"', page)
+    page, n2 = re.subn(r'((?:src|href)=")([\w\-]+\.(?:js|css))\?v=[^"]*"', lambda m: m.group(1) + m.group(2) + "?v=" + fh(m.group(2)) + '"', page)
+    print(f"::notice title=assets::{n1} dynamic + {n2} static script/style URLs content-hashed")
     (OUT / "index.html").write_text(page)
     (OUT / "version.json").write_text(json.dumps({"v": v}) + "\n")
     print("::notice title=version::" + v)

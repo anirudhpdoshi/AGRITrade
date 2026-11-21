@@ -1046,3 +1046,7 @@ table.pi-tab td{vertical-align:top}table.pi-tab small{display:block;color:var(--
 .evtr{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:8px}.evtr span{font:600 11px "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-right:4px}.evtr button{appearance:none;font:600 11.5px "IBM Plex Mono",monospace;padding:3px 9px;border-radius:12px;border:1px dashed var(--line2);background:transparent;color:var(--faint);cursor:pointer}.evtr button[aria-pressed=true]{border-style:solid;border-color:#2f6a80;color:#bfe3ec;background:#12283a}
 .evfi-go{cursor:pointer;border-radius:6px;margin:0 -6px;padding-left:6px;padding-right:6px;transition:background .15s}.evfi-go:hover,.evfi-go:focus-visible{background:rgba(56,182,201,.08);outline:none}
 .evfo{color:#7dd8e6;font-weight:500}.evfi-go:hover .evfo{text-decoration:underline}
+
+/* Nothing is cut (owner, Nov 21 2026): labels that used to end in "…" now wrap onto a second line instead. */
+.wmt-h b,.brk-nm b,.pm-tt,.pm-ti,.usm-ema span,.rail-title .hint,.kpi-s,.mcard .mk,.mcard .mc,.qt-sub,.qt-c,.sb-ev,.tn-t small,.w5n,.pi-ch,.kpi-v,.ma-c{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere}
+.kpi-v{line-height:1.15}.ma-c b,.ma-c i,.ma-c u{white-space:nowrap}
