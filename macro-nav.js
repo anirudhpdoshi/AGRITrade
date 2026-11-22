@@ -157,7 +157,7 @@
     var head = P.map(function (x) { return "<th>" + esc(lab(x)) + "</th>"; }).join("");
     var val = P.map(function (x, i) { return '<td class="' + (i === P.length - 1 ? "lt" : "") + '"><b>' + x[1].toFixed(d) + "</b></td>"; }).join("");
     var chg = P.map(function (x, i) { var pv = P[i - 1], ch = pv ? x[1] - pv[1] : null; if (ch != null && Math.abs(ch) < Math.pow(10, -d) / 2) ch = 0; return '<td class="' + (ch == null ? "" : ch > 0 ? "up" : ch < 0 ? "dn" : "") + '">' + (ch == null ? "—" : (ch > 0 ? "+" : ch < 0 ? "−" : "") + Math.abs(ch).toFixed(d)) + "</td>"; }).join("");
-    return '<div class="mn2-tw" data-mn2scroll><table class="mn2-tb"><thead><tr><th class="rh">Period</th>' + head + '</tr></thead><tbody><tr><th class="rh">Value</th>' + val + '</tr><tr><th class="rh">Change</th>' + chg + "</tr></tbody></table></div>";
+    return '<div class="mn2-tw" data-mn2scroll><table class="mn2-tb no-tx"><thead><tr><th class="rh">Period</th>' + head + '</tr></thead><tbody><tr><th class="rh">Value</th>' + val + '</tr><tr><th class="rh">Change</th>' + chg + "</tr></tbody></table></div>";
   }
   /* "what the latest release says": every line is computed from the numbers on file — no outside opinion */
   function readOut(m, cons, gd, cg) {
