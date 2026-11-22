@@ -26,6 +26,7 @@
   function f(v, d) { return v == null || !isFinite(v) ? "—" : (+v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }); }
   function kf(v) { return (+v).toFixed(2); }
   function oiF(v) { if (v == null) return "—"; return v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1) + "K" : String(v); }
+  function usd(v) { var a = Math.abs(v); return "$" + (a >= 1e9 ? (a / 1e9).toFixed(2) + "B" : a >= 1e6 ? (a / 1e6).toFixed(1) + "M" : a >= 1e3 ? (a / 1e3).toFixed(0) + "K" : a.toFixed(0)); }
   function sg(v, d) { return v == null || !isFinite(v) ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d); }
 
   function model(k) {
@@ -45,11 +46,16 @@
     var N = M.N, F = M.F, lim = S.rng === "all" ? Infinity : +S.rng / 100;
     var L = M.rows.filter(function (r) { return Math.abs(r.K / F - 1) <= lim && (!S.oi || r.coi + r.poi > 0); });
     var maxOI = Math.max.apply(null, L.map(function (r) { return Math.max(r.coi, r.poi); }).concat([1]));
+    /* the strike holding the most on each side, among the strikes shown (owner, Nov 22 2026):
+       gold = most open interest (contracts) · violet = most volume · cyan = most premium value held (OI × value × 5,000 bu) */
+    L.forEach(function (r) { r.cpv = r.C ? r.coi * r.C.px * 5000 : null; r.ppv = r.P ? r.poi * r.P.px * 5000 : null; });
+    var top = function (key) { var b = null; L.forEach(function (r) { if (r[key] != null && r[key] > 0 && (!b || r[key] > b[key])) b = r; }); return b ? b.K : null; };
+    var HI = { c: { oi: top("coi"), vol: top("cvol"), pv: top("cpv") }, p: { oi: top("poi"), vol: top("pvol"), pv: top("ppv") } };
     var cw = N.call_wall && N.call_wall[0], pw = N.put_wall && N.put_wall[0];
     var atm = L.length ? L.reduce(function (a, b) { return Math.abs(b.K - F) < Math.abs(a.K - F) ? b : a; }).K : null;
     var em = N.iv && M.T ? F * N.iv / 100 * Math.sqrt(M.T) : null;
     var GK = S.gk;
-    var cCols = (GK ? ["Vega ¢", "θ ¢/day", "Γ /10¢", "Δ"] : []).concat(["Vol", "OI Δ", "OI", "IV %", "Value ¢"]), pCols = cCols.slice().reverse();
+    var cCols = (GK ? ["Vega ¢", "θ ¢/day", "Γ /10¢", "Δ"] : []).concat(["Vol", "OI Δ", "OI", "Prem $", "IV %", "Value ¢"]), pCols = cCols.slice().reverse();
     var head = '<tr class="oc-sides"><th></th><th colspan="' + cCols.length + '">CALLS</th><th class="oc-k">STRIKE</th><th colspan="' + pCols.length + '">PUTS</th></tr>' +
       '<tr><th title="Strike vs futures">M %</th>' + cCols.map(function (c) { return "<th>" + c + "</th>"; }).join("") + '<th class="oc-k">$/bu</th>' + pCols.map(function (c) { return "<th>" + c + "</th>"; }).join("") + "</tr>";
     var bar = function (v, side) { var w = Math.round(v / maxOI * 100); return 'style="background:linear-gradient(to ' + (side === "c" ? "left" : "right") + ',rgba(' + (side === "c" ? "63,185,127" : "224,101,95") + ',.22) ' + w + '%,transparent ' + w + '%)"'; };
@@ -58,9 +64,10 @@
       switch (col) {
         case "Value ¢": return '<td class="oc-v">' + (X ? f(X.px * 100, 2) : "—") + "</td>";
         case "IV %": return "<td>" + (iv ? f(iv, 2) : "—") + "</td>";
-        case "OI": return "<td " + bar(oi, side) + ">" + oiF(oi) + "</td>";
+        case "OI": return '<td class="' + (HI[side].oi === r.K ? "oc-hi-oi" : "") + '" ' + bar(oi, side) + ">" + oiF(oi) + "</td>";
+        case "Prem $": var pv = side === "c" ? r.cpv : r.ppv; return '<td class="' + (HI[side].pv === r.K ? "oc-hi-pv" : "") + '" title="Premium value held = OI × model value × 5,000 bu">' + (pv == null ? "—" : usd(pv)) + "</td>";
         case "OI Δ": return '<td class="' + (d > 0 ? "up" : d < 0 ? "dn" : "") + '">' + (d == null ? "—" : d === 0 ? "0" : sg(d, 0)) + "</td>";
-        case "Vol": return "<td>" + (vol == null ? "—" : vol ? oiF(vol) : "0") + "</td>";
+        case "Vol": return '<td class="' + (HI[side].vol === r.K ? "oc-hi-vol" : "") + '">' + (vol == null ? "—" : vol ? oiF(vol) : "0") + "</td>";
         case "Δ": return "<td>" + (X ? f(X.d, 2) : "—") + "</td>";
         case "Γ /10¢": return "<td>" + (X ? f(X.g * 0.1, 3) : "—") + "</td>";
         case "θ ¢/day": return "<td>" + (X ? f(X.t * 100, 3) : "—") + "</td>";
@@ -91,6 +98,8 @@
       '<div class="oc-ctl">' + (M.legs.length > 1 ? "<span>Chain</span>" + seg("data-oc-leg", M.legs.map(function (l) { return [l, legName(l)]; }), M.leg) : "<span>Chain</span><b class=\"oc-one\">" + esc(legName(M.leg)) + "</b>") +
       "<span>Strikes</span>" + seg("data-oc-rng", [["all", "All"], ["20", "±20%"], ["10", "±10%"], ["5", "±5%"]], S.rng) +
       "<span>Show</span>" + seg("data-oc-oi", [["1", "With open interest"], ["0", "Every strike"]], S.oi ? "1" : "0") + seg("data-oc-gk", [["1", "Greeks"], ["0", "No Greeks"]], S.gk ? "1" : "0") + "</div>" +
+      '<div class="oc-leg"><span class="oc-hi-oi">Most open interest</span><span class="oc-hi-vol">Most volume</span><span class="oc-hi-pv">Most premium value held</span><small>per side, among the strikes shown · ' +
+        ["c", "p"].map(function (sd) { var H = HI[sd]; return (sd === "c" ? "Calls" : "Puts") + ": OI " + (H.oi != null ? kf(H.oi) : "—") + " · vol " + (H.vol != null ? kf(H.vol) : "—") + " · value " + (H.pv != null ? kf(H.pv) : "—"); }).join(" | ") + "</small></div>" +
       '<div class="tbl-scroll oc-wrap"><table class="oc-t no-tx zm-yes"><thead>' + head + "</thead><tbody>" + (L.length ? body : '<tr><td colspan="' + (cCols.length * 2 + 2) + '" class="na">No strikes in this range.</td></tr>') + "</tbody></table></div>" +
       '<p class="note">' + L.length + " strikes shown · calls OI " + oiF(tot.c) + " · puts OI " + oiF(tot.p) + (M.G[M.leg].note ? " · " + esc(M.G[M.leg].note) : "") + ". OI, OI Δ (vs the previous chain pull), volume and IV are the CME chain pull. " +
       "Value and Greeks are a Black-76 model on each strike's own IV and the futures price above (r = 4%), in cents per bushel — not exchange quotes; a strike without an IV shows “—”. " +
@@ -144,7 +153,9 @@
     "table.oc-t tr.oc-atm td.oc-k{background:#d9b46a;color:#101825}table.oc-t tr:hover td{background-color:rgba(255,255,255,.04)}" +
     "table.oc-t tr.oc-spot td{padding:3px 8px;text-align:center;background:rgba(217,180,106,.14);border-top:1px solid #d9b46a;border-bottom:1px solid #d9b46a;color:#d9b46a;font-weight:600}" +
     ".oc-w{font-style:normal;font:700 9px 'IBM Plex Mono',monospace;margin-left:4px;padding:0 3px;border-radius:3px;vertical-align:1px}.oc-w.c{background:rgba(63,185,127,.25);color:#3fb97f}.oc-w.p{background:rgba(224,101,95,.25);color:#ff8a84}" +
-    "table.oc-t tr.oc-atm td.oc-k .oc-w{background:#101825}";
+    "table.oc-t tr.oc-atm td.oc-k .oc-w{background:#101825}" +
+    "table.oc-t td.oc-hi-oi{box-shadow:inset 0 0 0 2px #e8b93d;color:#e8b93d!important;font-weight:700}table.oc-t td.oc-hi-vol{box-shadow:inset 0 0 0 2px #b18cff;color:#c9a3ff!important;font-weight:700}table.oc-t td.oc-hi-pv{box-shadow:inset 0 0 0 2px #38b6c9;color:#7dd8e6!important;font-weight:700}" +
+    ".oc-leg{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:-2px 0 8px;font-size:12px}.oc-leg span{padding:1px 8px;border-radius:4px;font-weight:600}.oc-leg span.oc-hi-oi{border:2px solid #e8b93d;color:#e8b93d}.oc-leg span.oc-hi-vol{border:2px solid #b18cff;color:#c9a3ff}.oc-leg span.oc-hi-pv{border:2px solid #38b6c9;color:#7dd8e6}.oc-leg small{color:var(--muted);font:11px 'IBM Plex Mono',monospace}";
   doc.head.appendChild(st);
   root.CHAIN_UI = { html: html, model: model };
 })();
