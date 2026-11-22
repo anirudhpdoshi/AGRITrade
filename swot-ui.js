@@ -87,6 +87,8 @@
   function esc(s) { return (typeof DeskCore !== "undefined" ? DeskCore : require("./core.js")).esc(s); }
   function nowET() { var d = new Date(), f = function (o) { return d.toLocaleString("en-CA", Object.assign({ timeZone: "America/Toronto" }, o)); }; return f({ year: "numeric", month: "2-digit", day: "2-digit" }) + "T" + f({ hour: "2-digit", minute: "2-digit", hourCycle: "h23" }); }
   function grain() { if (V.k) return V.k; try { var g = localStorage.getItem("desk.grain"); if (ORDER.indexOf(g) >= 0) return g; } catch (e) {} return "corn"; }
+  function hzNote() { var t = { day: "Day = the first settlement after each release", week: "Week = the first settlement 7 or more days after each release", month: "Month = the first settlement one calendar month or more after each release" }[V.h];
+    return '<div class="sw-hz">' + t + " · each item shows release date → that settlement date and the move since the release</div>"; }
   function seg(attr, list, on) { return '<div class="gr-slicer" role="group">' + list.map(function (x) { return '<button type="button" ' + attr + '="' + x[0] + '" aria-pressed="' + (x[0] === on) + '">' + x[1] + "</button>"; }).join("") + "</div>"; }
   function money(v, fx) { return fx ? (+v).toFixed(4) : (v * 100).toFixed(2) + "¢"; }
   function chg(c, fx) { var s = c.chg > 0 ? "+" : c.chg < 0 ? "−" : ""; return (fx ? s + (Math.abs(c.chg) * 1e4).toFixed(0) + " pips" : s + (Math.abs(c.chg) * 100).toFixed(2) + "¢") + " · " + s + Math.abs(c.pct).toFixed(2) + "%"; }
@@ -99,8 +101,13 @@
   }
   function itemHTML(it, fx) {
     var st = it.j && it.j.status ? ' · <span class="sw-st' + (/^Played/.test(it.j.status) ? " up" : /^Price disagreed/.test(it.j.status) ? " dn" : "") + '">' + esc(it.j.status) + "</span>" : "";
+    /* the dates behind the chosen horizon (owner, Nov 22 2026): released → the close that horizon measures, or when it is due */
+    var dt = "";
+    if (it.annDay) { var h = V.h, T = it.tr && it.tr[h], due = h === "day" ? "next close" : h === "week" ? day(addDays(it.annDay, 7)) : day(addMonth(it.annDay));
+      dt = ' <span class="sw-dt" title="' + (h === "day" ? "Day = first settlement after the release" : h === "week" ? "Week = first settlement 7 or more days after the release" : "Month = first settlement one calendar month or more after the release") + '">' +
+        day(it.annDay) + " → " + (T ? day(T.d) + (T.pct != null ? " " + (T.pct > 0 ? "+" : T.pct < 0 ? "−" : "") + Math.abs(T.pct).toFixed(1) + "%" : "") : "due " + due) + "</span>"; }
     var tag = it.tag ? ' · <span class="sw-tag ' + (it.tag === "Positive" ? "up" : it.tag === "Negative" ? "dn" : "") + '">' + it.tag + "</span>" : "", body = expand(it, fx);
-    return body ? '<details class="sw-it"><summary>' + esc(it.label) + tag + st + "</summary>" + body + "</details>" : '<div class="sw-it">' + esc(it.label) + tag + st + "</div>";
+    return body ? '<details class="sw-it"><summary>' + esc(it.label) + tag + st + dt + "</summary>" + body + "</details>" : '<div class="sw-it">' + esc(it.label) + tag + st + dt + "</div>";
   }
   function grid(items, fx, sub) {
     return '<div class="sw-grid">' + ["Strength", "Weakness", "Opportunity", "Threat"].map(function (b) { var L = items.filter(function (i) { return (i.j ? i.j.bucket : i.bucket) === b; });
@@ -113,7 +120,7 @@
     var played = I.filter(function (i) { return i.j && /^Played/.test(i.j.status); }).length, w = I.filter(function (i) { return (i.j ? i.j.bucket : i.bucket) === "Weakness"; }).length, s = I.filter(function (i) { return (i.j ? i.j.bucket : i.bucket) === "Strength"; }).length;
     var c = (D.grains[k].roll || [])[0];
     return '<div class="tile wide sw-win" id="sw-intel"><h2>Intel Brief - SWOT <span class="h2note">fed from the current dataset · price is ' + (c ? c.contract : "the front contract") + " settlement</span></h2>" +
-      '<div class="sw-ctl"><span>Commodity</span>' + seg("data-sw-k", ORDER.map(function (x) { return [x, NM[x]]; }), k) + "<span>Horizon</span>" + seg("data-sw-h", [["day", "Day"], ["week", "Week"], ["month", "Month"]], V.h) + "</div>" +
+      '<div class="sw-ctl"><span>Commodity</span>' + seg("data-sw-k", ORDER.map(function (x) { return [x, NM[x]]; }), k) + "<span>Horizon</span>" + seg("data-sw-h", [["day", "Day"], ["week", "Week"], ["month", "Month"]], V.h) + "</div>" + hzNote() +
       grid(I, false, { Strength: "No supportive item", Weakness: "No pressuring item", Opportunity: "No supportive outside factor", Threat: "No pressuring outside factor" }) +
       (UP.length ? '<div class="sw-up"><b>Coming up</b> — tagged when released: ' + UP.map(function (u) { return esc(u.label); }).join(" · ") + "</div>" : "") +
       '<div class="obs-box"><b>OBSERVATIONS</b><ul><li>' + NM[k] + ": " + w + " item" + (w === 1 ? "" : "s") + " in Weakness against " + s + " in Strength on the " + V.h + " view.</li><li>" + played + " item" + (played === 1 ? " has" : "s have") + " played out on the " + V.h + " horizon; click an item for its Day, Week and Month prices.</li></ul></div></div>";
