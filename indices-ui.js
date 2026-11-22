@@ -57,6 +57,7 @@
       ".ix-chips button[aria-pressed=\"true\"]{color:#101825;background:var(--amber);border-color:var(--amber)}" +
       ".ix-sec{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}" +
       "#panel-indices details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);margin:6px 0}" +
+      ".ixc{width:100%;height:auto;display:block;margin-top:6px}.ixc-tk{font:10.5px 'IBM Plex Mono',monospace;fill:var(--faint)}.ixc-pl{font:700 10.5px 'IBM Plex Mono',monospace}" +
       ".ixw-gap{flex:0 0 14px}.ixw-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:middle}" +
       "table.ixw-t td,table.ixw-cm td{vertical-align:top;line-height:1.35}table.ixw-t td b,table.ixw-cm td b{font-weight:600}table.ixw-t td small,table.ixw-cm td small{display:block;font-size:10.5px;color:var(--muted)}" +
       "table.ixw-t td small.up,table.ixw-t .up{color:var(--up,#4fd18b)}table.ixw-t td small.dn,table.ixw-t .dn{color:var(--down,#ff7b72)}table.ixw-t td.na,table.ixw-cm td.na{color:var(--faint)}" +
@@ -364,6 +365,44 @@
       '<p class="note">Correlated move = β × the driver\'s 1σ monthly move; β and r from ' + W.weeks_used + " weekly returns. The band beneath is the target's latest close ± that move.</p>" +
       (corrChart ? '<div class="ix-sec">Rolling correlation — Nifty vs the US</div>' + corrChart : "") + "</div>";
   }
+  /* ---------- volatility cones (owner, Nov 21 2026): each index's last 60 sessions and the ±1σ / ±2σ cone for the next 21 sessions
+     (one month), widening with the square root of time — realised σ (20- or 60-session) or the index's own implied-vol gauge ---------- */
+  var CK = "SPX", CB = "sd20"; try { CK = localStorage.getItem("desk.ix.ck") || "SPX"; CB = localStorage.getItem("desk.ix.cb") || "sd20"; } catch (e) {}
+  var CNAME = { SPX: "S&P 500", NDX: "Nasdaq-100", DJIA: "Dow Jones", NIFTY: "Nifty 50" };
+  function coneSection() {
+    var C = D.cones; if (!C || !C[CK]) return "";
+    var c = C[CK], cl = c.closes.slice(-60), last = cl[cl.length - 1][1], H = 21;
+    var sig = CB === "iv" && c.iv ? c.iv.level / 100 / Math.sqrt(252) : CB === "sd60" ? c.sd60 : c.sd20, basis = CB === "iv" && c.iv ? c.iv.index.replace("^", "") + " " + num(c.iv.level, 2) + " (implied)" : CB === "sd60" ? "60-session realised" : "20-session realised";
+    if (!sig) return "";
+    var band = function (k, t) { return last * Math.exp(k * sig * Math.sqrt(t)); };
+    var lo2 = band(-2, H), hi2 = band(2, H), V = cl.map(function (x) { return x[1]; }).concat([lo2, hi2]);
+    var mn = Math.min.apply(null, V), mx = Math.max.apply(null, V), pad = (mx - mn) * 0.06; mn -= pad; mx += pad;
+    var W = 900, Ht = 330, pl = 64, pr = 136, pt = 18, pb = 26, n = cl.length, tot = n - 1 + H;
+    var X = function (i) { return pl + i / tot * (W - pl - pr); }, Y = function (v) { return pt + (Ht - pt - pb) * (1 - (v - mn) / (mx - mn)); };
+    var s = "";
+    for (var g = 0; g <= 4; g++) { var v = mn + (mx - mn) * g / 4; s += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(v).toFixed(1) + '" y2="' + Y(v).toFixed(1) + '" stroke="var(--line)" stroke-dasharray="2 4"/><text x="' + (pl - 6) + '" y="' + (Y(v) + 3.5).toFixed(1) + '" text-anchor="end" class="ixc-tk">' + num(v, 0) + "</text>"; }
+    var poly = function (k1, k2, fill) { var a = "", b = ""; for (var t = 0; t <= H; t++) { a += (t ? "L" : "M") + X(n - 1 + t).toFixed(1) + " " + Y(band(k1, t)).toFixed(1); } for (var t2 = H; t2 >= 0; t2--) b += "L" + X(n - 1 + t2).toFixed(1) + " " + Y(band(k2, t2)).toFixed(1); return '<path d="' + a + b + 'Z" fill="' + fill + '"/>'; };
+    s += poly(2, -2, "rgba(56,182,201,.12)") + poly(1, -1, "rgba(56,182,201,.22)");
+    [-2, -1, 1, 2].forEach(function (k) { var d = ""; for (var t = 0; t <= H; t++) d += (t ? "L" : "M") + X(n - 1 + t).toFixed(1) + " " + Y(band(k, t)).toFixed(1); s += '<path d="' + d + '" fill="none" stroke="#38b6c9" stroke-width="1" stroke-dasharray="' + (Math.abs(k) === 2 ? "4 3" : "0") + '" opacity=".8"/>'; });
+    var pd = ""; cl.forEach(function (x, i) { pd += (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(x[1]).toFixed(1); });
+    s += '<path d="' + pd + '" fill="none" stroke="' + (COL[CK] || "#e8edf3") + '" stroke-width="2"/>';
+    s += '<line x1="' + X(n - 1).toFixed(1) + '" x2="' + X(n - 1).toFixed(1) + '" y1="' + pt + '" y2="' + (Ht - pb) + '" stroke="var(--muted)" stroke-dasharray="3 3"/>';
+    s += '<circle cx="' + X(n - 1).toFixed(1) + '" cy="' + Y(last).toFixed(1) + '" r="4" fill="' + (COL[CK] || "#fff") + '"/>';
+    /* end-of-cone labels as pills, stacked so they never overlap */
+    var tags = [[2, "+2σ"], [1, "+1σ"], [0, "Now"], [-1, "−1σ"], [-2, "−2σ"]].map(function (q) { var v2 = q[0] ? band(q[0], H) : last; return { t: q[1] + " " + num(v2, 0) + (q[0] ? " (" + (v2 >= last ? "+" : "−") + Math.abs((v2 / last - 1) * 100).toFixed(1) + "%)" : ""), y0: Y(v2), c: q[0] > 0 ? "#3fb97f" : q[0] < 0 ? "#ff7b72" : "#e8edf3" }; });
+    tags.forEach(function (g2, i) { g2.y = Math.max(g2.y0, i ? tags[i - 1].y + 16 : pt + 6); });
+    for (var j = tags.length - 1; j >= 0; j--) { var lim = j < tags.length - 1 ? tags[j + 1].y - 16 : Ht - pb - 6; if (tags[j].y > lim) tags[j].y = lim; }
+    tags.forEach(function (g2) { var x0 = W - pr + 6; s += '<rect x="' + x0 + '" y="' + (g2.y - 8).toFixed(1) + '" width="' + (pr - 8) + '" height="15" rx="3" fill="var(--panel,#0b1016)" stroke="' + g2.c + '"/><text x="' + (x0 + 5) + '" y="' + (g2.y + 3.5).toFixed(1) + '" class="ixc-pl" fill="' + g2.c + '">' + g2.t + "</text>"; });
+    [0, 20, 40, n - 1].forEach(function (i) { if (cl[i]) s += '<text x="' + X(i).toFixed(1) + '" y="' + (Ht - 8) + '" text-anchor="middle" class="ixc-tk">' + wkLbl(cl[i][0]) + "</text>"; });
+    s += '<text x="' + X(tot).toFixed(1) + '" y="' + (Ht - 8) + '" text-anchor="end" class="ixc-tk">+21 sessions</text>';
+    var chips = '<div class="ix-chips">' + ["SPX", "NDX", "DJIA", "NIFTY"].filter(function (k) { return C[k]; }).map(function (k) { return '<button type="button" data-ixck="' + k + '" aria-pressed="' + (CK === k) + '">' + CNAME[k] + "</button>"; }).join("") +
+      '<span class="ixw-gap"></span>' + [["sd20", "20D realised"], ["sd60", "60D realised"], ["iv", c.iv ? c.iv.index.replace("^", "") + " implied" : ""]].filter(function (b) { return b[1]; }).map(function (b) { return '<button type="button" data-ixcb="' + b[0] + '" aria-pressed="' + (CB === b[0]) + '">' + b[1] + "</button>"; }).join("") + "</div>";
+    var ann = function (sd) { return sd ? num(sd * Math.sqrt(252) * 100, 1) + "%" : "—"; };
+    var read = CNAME[CK] + " at " + num(last, CK === "NIFTY" ? 0 : 0) + " (" + wkLbl(cl[n - 1][0]) + "). On " + basis + " volatility (" + (CB === "iv" && c.iv ? num(c.iv.level, 1) + "% a year" : ann(sig) + " a year") + "), the one-month cone runs " +
+      num(band(-1, H), 0) + "–" + num(band(1, H), 0) + " at ±1σ (about 68% of outcomes) and " + num(lo2, 0) + "–" + num(hi2, 0) + " at ±2σ (about 95%). Realised: 20D " + ann(c.sd20) + " · 60D " + ann(c.sd60) + " · 1Y " + ann(c.sd250) + (c.iv ? " · implied " + num(c.iv.level, 1) + "%" : "") + ".";
+    return '<div class="tile"><h2>Volatility cones — next month <span class="h2note">— last 60 sessions and the ±1σ / ±2σ range for the next 21</span></h2>' + chips +
+      '<svg class="ixc" viewBox="0 0 ' + W + " " + Ht + '" role="img" aria-label="Volatility cone">' + s + '</svg><p class="ix-take">' + read + '</p><p class="note">Cone = last close × e^(±k·σ·√t), t in sessions. A statistical range from past (or implied) volatility, not a forecast.</p></div>';
+  }
   function footer() {
     return '<div class="tile"><div class="stamp">Source: ' + esc(D.provider) + ". " + esc(D.basis) +
       " S&amp;P 500 total return from ^SP500TR (valid: TR/price ratio rises smoothly); Nasdaq-100 total return not shown — Yahoo ^NDXT is unreliable; Dow total return unavailable (^DJITR has 1 day of history). " +
@@ -377,7 +416,7 @@
       return;
     }
     P.innerHTML = '<div class="tile" style="margin-bottom:14px"><h2>US Indices — since the election <span class="h2note">— ' + esc(D.meta.baseline) + " · to " + esc(D.meta.end_date) + "</span></h2></div>" +
-      weeklySection() + kpiStrip() + splitTile() + cumChart() + retChart() + volChart() + rollChart() + seasonSection() + riskTable() + niftySection() + footer();
+      weeklySection() + coneSection() + kpiStrip() + splitTile() + cumChart() + retChart() + volChart() + rollChart() + seasonSection() + riskTable() + niftySection() + footer();
   }
   function load() {
     return fetch("indices-data.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
@@ -393,6 +432,8 @@
       return [["world", "Markets &amp; sessions", !on && !uo], ["usmkt", "US Markets", uo], ["indices", "US Indices · weekly & Nifty", on]]; },
     go: function (id) { var b = doc.getElementById("tabbtn-" + id); if (b) b.click(); if (id === "indices") setTimeout(maybeLoad, 30); } };
   root.GNAV_CHIPS.world = WCH; root.GNAV_CHIPS.indices = WCH; root.GNAV_CHIPS.usmkt = WCH;
+  P.addEventListener("click", function (ev) { var c2 = ev.target.closest && ev.target.closest("[data-ixck],[data-ixcb]"); if (c2) { if (c2.dataset.ixck) CK = c2.dataset.ixck; if (c2.dataset.ixcb) CB = c2.dataset.ixcb;
+    try { localStorage.setItem("desk.ix.ck", CK); localStorage.setItem("desk.ix.cb", CB); } catch (e) {} var y2 = root.scrollY; render(); root.scrollTo(0, y2); return; } });
   P.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-ixwv],[data-ixwn]"); if (!b) return;
     if (b.dataset.ixwv) WV = b.dataset.ixwv; if (b.dataset.ixwn) WN = +b.dataset.ixwn;
     try { localStorage.setItem("desk.ix.wv", WV); localStorage.setItem("desk.ix.wn", String(WN)); } catch (e) {} var y = root.scrollY; render(); root.scrollTo(0, y); });

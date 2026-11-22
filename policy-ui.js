@@ -168,7 +168,7 @@
     var opts = L.slice(0, 60).map(function (x) { return '<option value="' + x.id + '"' + (x.id === d.id ? " selected" : "") + ">" + esc(x.bank.toUpperCase() + " · " + day(x.published_at) + " · " + x.speaker + " — " + x.title.slice(0, 70)) + "</option>"; }).join("");
     var g = d.guidance;
     return '<div class="tile wide"><h2>Transcript intelligence <span class="h2note">— what was said, what changed, what it may mean</span></h2><select class="pi-sel" data-pisel>' + opts + "</select>" +
-      '<div class="pi-doc"><div class="pi-dh">' + fl(J.banks[d.bank].cc) + " <b>" + esc(d.title) + '</b><div class="pi-sub">' + esc(bname(d.bank)) + " · " + esc(TYPE[d.type] || d.type) + " · " + esc(who(d)) + " · voting " + esc(d.voting_status.replace("_", " ").toLowerCase()) + " · " + d.words + " words" + "</div><div class=\"pi-ts\">🕑 Published <b>" + esc(new Date(d.published_at).toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })) + " ET</b> · read by the desk " + esc(new Date(d.fetched_at).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET" + (d.version > 1 ? " · reading v" + d.version : "") +
+      '<div class="pi-doc"><div class="pi-dh">' + fl(J.banks[d.bank].cc) + " <b>" + esc(d.title) + '</b> <button type="button" class="pi-say" data-pispeak="' + esc(d.id) + '" title="Listen: this document explained in plain words">🔊 Read aloud</button><div class="pi-sub">' + esc(bname(d.bank)) + " · " + esc(TYPE[d.type] || d.type) + " · " + esc(who(d)) + " · voting " + esc(d.voting_status.replace("_", " ").toLowerCase()) + " · " + d.words + " words" + "</div><div class=\"pi-ts\">🕑 Published <b>" + esc(new Date(d.published_at).toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })) + " ET</b> · read by the desk " + esc(new Date(d.fetched_at).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET" + (d.version > 1 ? " · reading v" + d.version : "") +
         "</div></div>" +
       '<div class="pi-3"><div><div class="pi-l">1 · What was said (rhetoric score)</div><div class="pi-big ' + lcls(d.label) + '">' + sgn(d.score) + " <small>" + esc(d.label) + "</small></div><div class=\"pi-sub\">hawkish weight " + d.hawk_n + " · dovish " + d.dove_n + " · confidence <b>" + esc(d.confidence.level) + "</b>" + (d.confidence.why.length ? " (" + esc(d.confidence.why.join(", ")) + ")" : "") + "</div></div>" +
         '<div><div class="pi-l">2 · What changed</div>' + (d.baseline.speaker ? '<div class="pi-sub">vs ' + esc(who(d)) + "’s own baseline (" + d.baseline.speaker.n + " item" + (d.baseline.speaker.n > 1 ? "s" : "") + " since " + esc(d.baseline.speaker.since) + (d.baseline.speaker.low_confidence ? ", thin — extended past 60 days" : "") + "): " + chg(d.baseline.speaker.change) + "</div>" : '<div class="pi-sub">first item on record for this speaker</div>') +
@@ -205,7 +205,7 @@
   function calMs(c) { var p = c.date.split("-"), h = (c.time || "12:00").split(":"); try { return window.zonedMs(+p[0], +p[1], +p[2], +h[0], +h[1], c.tz); } catch (e) { return Date.parse(c.date); } }
   function summaryHTML(d) {
     var S = d.summary || [];
-    return '<div class="mn-doc"><div class="mn-t"><a href="' + esc(d.url) + '" target="_blank" rel="noopener">' + esc(d.title) + "</a></div>" +
+    return '<div class="mn-doc"><div class="mn-t"><a href="' + esc(d.url) + '" target="_blank" rel="noopener">' + esc(d.title) + '</a> <button type="button" class="pi-say" data-pispeak="' + esc(d.id) + '" title="Listen: the minutes explained in plain words">🔊 Read aloud</button></div>' +
       '<div class="mn-m">Published ' + esc(new Date(d.published_at).toLocaleString("en-US", { timeZone: TZ, month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })) + " ET" +
       (d.label ? " · tone <b>" + esc(d.label) + "</b>" + (d.score != null ? " (" + (d.score > 0 ? "+" : "") + d.score + ")" : "") : "") + " · " + (d.words || 0).toLocaleString() + " words</div>" +
       (S.length ? '<ul class="mn-s">' + S.map(function (b) { return '<li><span class="mn-k">' + esc(b.topic) + "</span>“" + esc(b.text) + "”</li>"; }).join("") + "</ul>"
@@ -251,6 +251,65 @@
   setInterval(function () { if (P.classList.contains("active") || Date.now() - lastTry > (hot() ? 25000 : 300000)) poll(); }, hot() ? 30000 : 60000);
   setInterval(function () { if (hot() && Date.now() - lastTry > 25000) poll(); }, 30000);
   window.addEventListener("desk:unlock", function () { poll(true); });
+  /* ---------- read aloud (owner, Nov 21 2026): the selected statement, speech or minutes explained in plain words, spoken by
+     the browser's own voice (Web Speech API — nothing leaves the device). Pause, resume, stop and speed sit in a small player. ---------- */
+  var SP = { rate: 1, q: [], on: false, title: "" };
+  try { SP.rate = +localStorage.getItem("desk.pi.rate") || 1; } catch (e) {}
+  function words(v) { return v == null ? "" : (v > 0 ? "plus " : v < 0 ? "minus " : "") + Math.abs(v).toFixed(1); }
+  function explain(d) {
+    var L = [], tone = /HAWK/.test(d.label || "") ? "hawkish" : /DOV/.test(d.label || "") ? "dovish" : "neutral";
+    L.push(bname(d.bank) + ". " + (TYPE[d.type] || d.type) + (who(d) && who(d) !== "Committee" ? " by " + who(d) : "") + ": " + d.title + ". Published " + day(d.published_at) + ".");
+    if (d.label) L.push("Overall the language reads " + tone + ", with a rhetoric score of " + words(d.score) + "." +
+      (tone === "hawkish" ? " Hawkish means the bank leans toward keeping rates high, or raising them, to bring inflation down." : tone === "dovish" ? " Dovish means the bank leans toward lower rates to support growth and jobs." : " Neutral means the text does not lean clearly toward hikes or cuts."));
+    var bi = d.baseline && d.baseline.institution;
+    if (bi && bi.change != null && d.type !== "statement") L.push("Compared with the bank's last statement on " + day(bi.date + "T12:00:00Z") + ", the tone is " + (bi.change >= 1 ? "more hawkish" : bi.change <= -1 ? "more dovish" : "about the same") + ".");
+    var bs = d.baseline && d.baseline.speaker;
+    if (bs && bs.change != null) L.push("Against this speaker's own recent remarks, the tone is " + (bs.change >= 1 ? "firmer" : bs.change <= -1 ? "softer" : "unchanged") + ".");
+    (d.summary || []).forEach(function (x) { L.push("On " + String(x.topic).toLowerCase() + ": " + x.text); });
+    (d.dissent || []).slice(0, 2).forEach(function (x) { L.push("Disagreement on record: " + x.q); });
+    var g = d.guidance; if (g && g.next_action) L.push("What it may mean for the next decision: " + g.next_action + "." + (g.quote ? " The key line was: " + g.quote : ""));
+    L.push("This is a reading of the official text, not a forecast.");
+    return L.join(" ");
+  }
+  function chunks(t) { return (t.replace(/\s+/g, " ").match(/[^.!?]+[.!?]+["”’]?\s*|[^.!?]+$/g) || [t]).reduce(function (a, s2) { if (a.length && (a[a.length - 1] + s2).length < 220) a[a.length - 1] += s2; else a.push(s2); return a; }, []); }
+  function voice() { var V2 = (window.speechSynthesis.getVoices() || []); return V2.filter(function (v) { return /en[-_]CA/i.test(v.lang); })[0] || V2.filter(function (v) { return /en[-_]US/i.test(v.lang) && /natural|google|samantha|aria|jenny/i.test(v.name); })[0] || V2.filter(function (v) { return /^en/i.test(v.lang); })[0] || null; }
+  function player() {
+    var p = document.getElementById("pi-player");
+    if (!p) { p = document.createElement("div"); p.id = "pi-player"; document.body.appendChild(p);
+      p.addEventListener("click", function (ev) { var b = ev.target.closest("[data-pp]"); if (!b) return; var a = b.getAttribute("data-pp"), S = window.speechSynthesis;
+        if (a === "pause") S.pause(); else if (a === "resume") S.resume(); else if (a === "stop") stop(); else { SP.rate = +a; try { localStorage.setItem("desk.pi.rate", a); } catch (e) {} var rest = SP.q.slice(SP.i); stop(true); speakList(rest, SP.title); }
+        paintPlayer(); }); }
+    return p;
+  }
+  function paintPlayer() {
+    var p = player(), S = window.speechSynthesis; if (!SP.on) { p.hidden = true; return; }
+    p.hidden = false;
+    p.innerHTML = '<span class="pp-ic">🔊</span><span class="pp-t">' + esc(SP.title) + ' <small>' + Math.min(SP.i + 1, SP.q.length) + "/" + SP.q.length + "</small></span>" +
+      (S.paused ? '<button data-pp="resume">Resume</button>' : '<button data-pp="pause">Pause</button>') + '<button data-pp="stop">Stop</button>' +
+      [0.85, 1, 1.2].map(function (r) { return '<button data-pp="' + r + '" aria-pressed="' + (SP.rate === r) + '">' + r + "×</button>"; }).join("");
+  }
+  function stop(keep) { SP.on = false; SP.gen = (SP.gen || 0) + 1; try { window.speechSynthesis.cancel(); } catch (e) {} if (!keep) SP.q = []; paintPlayer(); }
+  function speakList(list, title) {
+    var S = window.speechSynthesis, gen = (SP.gen || 0) + 1; SP.gen = gen; SP.q = list; SP.i = 0; SP.on = true; SP.title = title; paintPlayer();
+    var next = function () { if (SP.gen !== gen) return; if (SP.i >= SP.q.length) { SP.on = false; paintPlayer(); return; }
+      var u = new SpeechSynthesisUtterance(SP.q[SP.i]); u.rate = SP.rate; var v = voice(); if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "en-CA";
+      u.onend = function () { if (SP.gen !== gen) return; SP.i++; paintPlayer(); next(); }; u.onerror = u.onend; S.speak(u); };
+    next();
+  }
+  function speakDoc(id) {
+    if (!("speechSynthesis" in window)) { var n = document.querySelector('[data-pispeak="' + id + '"]'); if (n) n.textContent = "Read-aloud is not supported in this browser"; return; }
+    var d = ((J && J.docs) || []).filter(function (x) { return x.id === id; })[0]; if (!d) return;
+    stop(); speakList(chunks(explain(d)), bname(d.bank) + " · " + (TYPE[d.type] || d.type) + " · " + day(d.published_at));
+  }
+  document.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-pispeak]"); if (!b) return; ev.preventDefault(); ev.stopPropagation(); speakDoc(b.getAttribute("data-pispeak")); }, true);
+  if ("speechSynthesis" in window) window.speechSynthesis.onvoiceschanged = function () {};
+  var spcss = document.createElement("style");
+  spcss.textContent = ".pi-say{all:unset;cursor:pointer;font-size:12px;font-weight:700;color:#ffb84d;border:1px solid rgba(255,184,77,.5);border-radius:999px;padding:2px 10px;margin-left:8px;vertical-align:middle;white-space:nowrap}.pi-say:hover{background:rgba(255,184,77,.12)}" +
+    "#pi-player{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9500;display:flex;align-items:center;gap:8px;background:#0b1016;border:1px solid #ffb84d;border-radius:999px;padding:8px 14px;box-shadow:0 10px 30px rgba(0,0,0,.6);max-width:calc(100vw - 32px)}" +
+    "#pi-player[hidden]{display:none}#pi-player .pp-t{font-size:13px;color:#e8edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:380px}#pi-player .pp-t small{color:#8a97a8;margin-left:4px}" +
+    "#pi-player button{all:unset;white-space:nowrap;cursor:pointer;font-size:12px;font-weight:700;color:#c9d4e2;border:1px solid #2a3442;border-radius:999px;padding:3px 10px}#pi-player button:hover,#pi-player button[aria-pressed=true]{border-color:#ffb84d;color:#ffb84d}";
+  document.head.appendChild(spcss);
+
   window.POLICY = { render: render, poll: poll, _data: function () { return J; }, minutesFor: minutesFor, summaryHTML: function (d) { return summaryHTML(d); },
     open: function (id) { if (id === "minutes" || id === "calendar" || id === "monitor") V.sub = id; else { V.doc = id; V.sub = "transcript"; } save(); render(); } };
   render(); if (window.DESK_LOCKED === false) poll(true);
