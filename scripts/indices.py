@@ -73,6 +73,8 @@ def rnd(v, d=2):
     return None if v is None else round(v, d)
 
 
+LONG_START = f"{datetime.now(timezone.utc).year - 11}-12-01"   # Dec of 11 years back -> Jan of 10 years back is the first full month
+
 def fetch_daily(sym, tz, start=START):
     """[(date, open, high, low, close)] with calendar dates in the market's own tz."""
     h = UDC.yf().Ticker(sym).history(start=start, interval="1d", auto_adjust=False)
@@ -220,6 +222,40 @@ def seasonality(monthly):
                 row[mm] = None
         table[y] = row
     return table
+
+
+def season_long(rows, vix_rows):
+    """Calendar-month seasonality over ~10 years (owner, Nov 22 2026): for every month since LONG_START —
+    return %, points, monthly sigma (std dev of daily returns x sqrt(21), in % and in points on the prior month-end close),
+    high-low range %, and the average daily VIX close. The running month is flagged partial."""
+    import calendar as _cal
+    by = {}
+    for r in rows:
+        by.setdefault(r[0][:7], []).append(r)
+    vby = {}
+    for r in vix_rows:
+        vby.setdefault(r[0][:7], []).append(r[4])
+    keys = sorted(by)
+    out = {}
+    for i, k in enumerate(keys):
+        if i == 0:
+            continue                       # needs the prior month-end close
+        sub, prev = by[k], by[keys[i - 1]][-1][4]
+        y, mm = k[:4], k[5:7]
+        closes = [prev] + [r[4] for r in sub]
+        dr = [closes[j] / closes[j - 1] - 1 for j in range(1, len(closes))]
+        sd = stdev(dr)
+        hi, lo, c = max(r[2] for r in sub), min(r[3] for r in sub), sub[-1][4]
+        last_wd = _cal.monthrange(int(y), int(mm))[1]
+        while _cal.weekday(int(y), int(mm), last_wd) >= 5:
+            last_wd -= 1
+        v = vby.get(k)
+        out.setdefault(y, {})[mm] = {"ret_pct": rnd((c / prev - 1) * 100), "pts": rnd(c - prev), "hl_pct": rnd((hi / lo - 1) * 100),
+                                     "sd_pct": rnd(sd * math.sqrt(21) * 100) if sd is not None else None,
+                                     "sd_pts": rnd(sd * math.sqrt(21) * prev) if sd is not None else None,
+                                     "vix_wa": rnd(sum(v) / len(v)) if v else None, "close": rnd(c),
+                                     "partial": sub[-1][0] < f"{y}-{mm}-{last_wd:02d}"}
+    return out
 
 
 def tr_block(rows, tr_rows, base_date, end_date):
@@ -696,6 +732,12 @@ def main():
         "rolling_vol": rolling,
         "nifty": nifty_block,
     }
+    try:   # 10-year seasonality: its own history pull; a failure here leaves the rest of the file intact
+        lv = fetch_daily("^VIX", NY_TZ, start=LONG_START)
+        body["season_long"] = {k: season_long(fetch_daily(US[k][0], NY_TZ, start=LONG_START), lv) for k in US}
+        body["season_long_meta"] = {"from": LONG_START, "vix": "CBOE VIX (^VIX) average daily close, used for all three indices"}
+    except Exception as e:
+        print(f"! 10-year seasonality skipped: {e}")
     try:
         wk_series = {k: (US[k][1], weekly_series(weekly_bars(data[k]))) for k in US}
         wk_series["NIFTY"] = ("Nifty 50 · INR", weekly_series(weekly_bars(nifty)))

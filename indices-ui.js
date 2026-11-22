@@ -242,12 +242,25 @@
      and an observation line under each year. One index at a time (pill filter). */
   var SEAK = "SPX"; try { SEAK = localStorage.getItem("desk.ix.seak") || "SPX"; } catch (e) {}
   var SM = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+  var SEAP = "el"; try { SEAP = localStorage.getItem("desk.ix.seap") || "el"; } catch (e) {}
   function seaCells(k) {
-    var S = D.seasonality[k] || {}, M = {}, out = {};
+    var out = {};
+    if (SEAP !== "el" && D.season_long && D.season_long[k]) {   /* 5 / 10 years: the long calendar-month history */
+      var L = D.season_long[k], cy = new Date().getFullYear(), n = +SEAP;
+      Object.keys(L).filter(function (y) { return +y >= cy - n; }).sort().forEach(function (y) { out[y] = {}; SM.forEach(function (mm) { var c = L[y][mm]; if (!c) return;
+        out[y][mm] = { ret: c.ret_pct, pts: c.pts, sdp: c.sd_pct, sdpts: c.sd_pts, hl: c.hl_pct, vix: c.vix_wa, part: c.partial }; }); });
+      return out;
+    }
+    var S = D.seasonality[k] || {}, M = {};
     ((D.indices[k] || {}).monthly || []).forEach(function (r) { if (r && r.month) M[r.month.replace("*", "")] = r; });
     Object.keys(S).sort().forEach(function (y) { out[y] = {}; SM.forEach(function (mm) { var c = S[y][mm]; if (!c) return; var r = M[y + "-" + mm] || {}, prev = c.close != null && c.pts != null ? c.close - c.pts : null;
       out[y][mm] = { ret: c.ret_pct, pts: c.pts, sdp: r.mo_vol_pct, sdpts: r.mo_vol_pct != null && prev ? r.mo_vol_pct / 100 * prev : null, hl: c.hl_pct, vix: c.vix_wa, part: c.partial }; }); });
     return out;
+  }
+  function yearTot(k, y, row) {
+    if (SEAP === "el") { var t = ((D.indices[k] || {}).year_totals || {})[y]; return t ? { ret: t.ret_pct, pts: t.pts } : null; }
+    var g = 1, p = 0, n = 0; SM.forEach(function (mm) { var c = row[mm]; if (c && c.ret != null) { g *= 1 + c.ret / 100; p += c.pts || 0; n++; } });
+    return n ? { ret: (g - 1) * 100, pts: p } : null;
   }
   var SROWS = [["ret", "Return %", function (v) { return sgn(v); }, true], ["pts", "Points", function (v) { return sgnPts(v).replace(" pts", ""); }, true],
     ["sdpts", "σ month · pts", function (v) { return "±" + num(v, 0); }, false], ["sdp", "σ month · %", function (v) { return "±" + num(v, 2) + "%"; }, false],
@@ -264,12 +277,12 @@
     var C = seaCells(k), yrs = Object.keys(C).sort(), x = D.indices[k] || {}, nowM = ("0" + (new Date().getMonth() + 1)).slice(-2);
     var head = '<tr><th>Year</th><th>Measure</th>' + SM.map(function (mm) { return "<th" + (mm === nowM ? ' class="now"' : "") + ">" + MON[+mm - 1] + "</th>"; }).join("") + "<th>Year</th></tr>";
     var body = yrs.map(function (y) {
-      var row = C[y], yt = (x.year_totals || {})[y];
+      var row = C[y], yt = yearTot(k, y, row);
       var trs = SROWS.map(function (R, i) {
         return '<tr class="' + (i === 0 ? "g0" : "") + '">' + (i === 0 ? '<td class="yr" rowspan="' + (SROWS.length + 1) + '">' + y + "</td>" : "") + '<td class="ms">' + R[1] + "</td>" +
           SM.map(function (mm) { var c = row[mm]; if (!c || c[R[0]] == null) return '<td class="na">—</td>'; var v = c[R[0]];
             return "<td" + (R[3] ? ' class="' + dirCls(v) + '" style="' + cellBg(R[0] === "ret" ? v : c.ret) + '"' : "") + ">" + R[2](v) + (c.part && i === 0 ? "*" : "") + "</td>"; }).join("") +
-          "<td>" + (yt && R[0] === "ret" ? '<b class="' + dirCls(yt.ret_pct) + '">' + sgn(yt.ret_pct) + "</b>" : yt && R[0] === "pts" ? sgnPts(yt.pts).replace(" pts", "") : "") + "</td></tr>";
+          "<td>" + (yt && R[0] === "ret" ? '<b class="' + dirCls(yt.ret) + '">' + sgn(yt.ret) + "</b>" : yt && R[0] === "pts" ? sgnPts(yt.pts).replace(" pts", "") : "") + "</td></tr>";
       }).join("");
       var ob = seaObs(k, y, row);
       return trs + '<tr class="obs"><td class="ms">Observation</td><td colspan="13">' + (ob || "Partial year — not enough full months.") + "</td></tr>";
@@ -284,14 +297,17 @@
     var nx = SM[(+nowM) % 12], an = function (mm) { var L = yrs.map(function (y) { var c = C[y][mm]; return c && !c.part ? c : null; }).filter(Boolean); if (!L.length) return null;
       var m = function (f) { return L.reduce(function (a, c) { return a + (c[f] || 0); }, 0) / L.length; }; return { n: L.length, ret: m("ret"), sdp: m("sdp"), vix: m("vix"), up: L.filter(function (c) { return c.ret > 0; }).length }; };
     var A = an(nowM), B = an(nx), take = [A ? MON[+nowM - 1] + " has averaged " + sgn(A.ret) + " (" + A.up + " of " + A.n + " up), σ ±" + num(A.sdp, 2) + "%, VIX " + num(A.vix, 1) : "", B ? "next, " + MON[+nx - 1] + " " + sgn(B.ret) + " (" + B.up + " of " + B.n + " up), σ ±" + num(B.sdp, 2) + "%" : ""].filter(Boolean).join("; ");
-    avg += '<tr class="obs avg"><td class="ms">Observation</td><td colspan="13">' + (take ? take + ". Only " + yrs.length + " years held — a tendency, not a pattern." : "") + "</td></tr>";
+    avg += '<tr class="obs avg"><td class="ms">Observation</td><td colspan="13">' + (take ? take + "." + (yrs.length < 6 ? " Only " + yrs.length + " years held — a tendency, not a pattern." : " Over " + yrs.length + " years.") : "") + "</td></tr>";
     return '<div class="tbl-scroll"><table class="ix-sea2 no-tx"><thead>' + head + "</thead><tbody>" + body + avg + "</tbody></table></div>";
   }
   function seasonSection() {
+    if (SEAP !== "el" && !D.season_long) SEAP = "el";
     var ks = ["SPX", "NDX", "DJIA"].filter(function (k) { return D.seasonality && D.seasonality[k]; }); if (!ks.length) return "";
     if (ks.indexOf(SEAK) < 0) SEAK = ks[0];
     return '<div class="tile"><h2>Seasonality <span class="h2note">— months as columns, each year a group of rows: return, points, monthly σ (points and %), high–low range, W.A. VIX, then the historical average · * = partial month</span></h2>' +
-      '<div class="ix-chips">' + ks.map(function (k) { return '<button type="button" data-ixsea="' + k + '" aria-pressed="' + (SEAK === k) + '">' + esc(NAME[k]) + "</button>"; }).join("") + "</div>" +
+      '<div class="ix-chips">' + ks.map(function (k) { return '<button type="button" data-ixsea="' + k + '" aria-pressed="' + (SEAK === k) + '">' + esc(NAME[k]) + "</button>"; }).join("") +
+      '<span class="ixw-gap"></span>' + [["el", "Since the election"], ["5", "5 years"], ["10", "10 years"]].map(function (q) { var off = q[0] !== "el" && !D.season_long;
+        return '<button type="button" data-ixseap="' + q[0] + '" aria-pressed="' + (SEAP === q[0] && !off) + '"' + (off ? ' disabled title="Loads with the next indices refresh"' : "") + ">" + q[1] + "</button>"; }).join("") + "</div>" +
       seasonTable(SEAK) + '<p class="note">σ month = standard deviation of that month\'s daily returns × √21 (in % and in index points on the prior month-end close). W.A. VIX = average daily VIX close in the month. High–low = the month\'s intraday range as % of its low.</p></div>';
   }
   function riskTable() {
@@ -480,7 +496,7 @@
       return [["world", "Markets &amp; sessions", !on && !uo], ["usmkt", "US Markets", uo], ["indices", "US Indices · weekly & Nifty", on]]; },
     go: function (id) { var b = doc.getElementById("tabbtn-" + id); if (b) b.click(); if (id === "indices") setTimeout(maybeLoad, 30); } };
   root.GNAV_CHIPS.world = WCH; root.GNAV_CHIPS.indices = WCH; root.GNAV_CHIPS.usmkt = WCH;
-  P.addEventListener("click", function (ev) { var q = ev.target.closest && ev.target.closest("[data-ixsea]"); if (!q) return; SEAK = q.dataset.ixsea; try { localStorage.setItem("desk.ix.seak", SEAK); } catch (e) {} var y = root.scrollY; render(); root.scrollTo(0, y); });
+  P.addEventListener("click", function (ev) { var q = ev.target.closest && ev.target.closest("[data-ixsea],[data-ixseap]"); if (!q || q.disabled) return; if (q.dataset.ixsea) SEAK = q.dataset.ixsea; if (q.dataset.ixseap) SEAP = q.dataset.ixseap; try { localStorage.setItem("desk.ix.seak", SEAK); localStorage.setItem("desk.ix.seap", SEAP); } catch (e) {} var y = root.scrollY; render(); root.scrollTo(0, y); });
   P.addEventListener("click", function (ev) { var t = ev.target.closest && ev.target.closest("[data-ixs]"); if (!t) return; IXS = t.dataset.ixs;
     try { localStorage.setItem("desk.ix.sec", IXS); } catch (e) {} render(); });
   P.addEventListener("click", function (ev) { var c2 = ev.target.closest && ev.target.closest("[data-ixck],[data-ixcb]"); if (c2) { if (c2.dataset.ixck) CK = c2.dataset.ixck; if (c2.dataset.ixcb) CB = c2.dataset.ixcb;
