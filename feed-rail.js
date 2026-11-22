@@ -11,6 +11,7 @@
   var TC = { corn: "#e8b93d", wheat: "#d9a066", soybeans: "#3fb97f", fx: "#38b6c9", macro: "#6ea8ff", cb: "#9b8cff", world: "#ff8a84", leg: "#c9a3ff", earn: "#f5c542", energy: "#f08a5d", metals: "#d4b25a", wires: "#9fb4cf" };
   var DEF = { corn: "corn", wheat: "wheat", soybeans: "soybeans", fx: "fx", world: "world", policy: "cb", earnings: "earn", briefing: "all", events: "all", intel: "agri" };
   var LOADED = Date.now();   /* news older than the page never pops a notification, however late the stored feed arrives */
+  var FM = "all"; try { FM = localStorage.getItem("desk.feedmode") || "all"; } catch (e) {}   /* All | Agri intel (owner, Nov 22 2026) */
   var pick = {}, seen = {}, firstPass = true, lastSig = "", lastCtx = "", lastPaint = 0, ONLY = true;
   try { ONLY = localStorage.getItem("desk.feedall") !== "1"; } catch (e) {}
   function esc(s) { return DeskCore.esc(s); }
@@ -88,7 +89,48 @@
     ["fx", "cb", "energy", "metals", "earn", "leg"].forEach(function (k) { if (t[k]) o.push(CHIP[k]); });
     if (!o.length && t.macro && m.k !== "wire") o.push("Macro");
     return o.slice(0, 3).map(function (c) { return '<i class="fs-c">' + c + "</i>"; }).join(""); }
+  /* Global Commodity Intelligence (intel.json, the Intelligence tab's feed) as feed rows: newest first, source, time, link,
+     the crops it touches and the desk's read of the price direction */
+  var BIAS = { bullish: ["▲ supportive", "up"], bearish: ["▼ pressure", "dn"], mixed: ["◆ mixed", ""], watch: ["● watch", ""] };
+  var CROPN = { corn: "Corn", soybeans: "Soybeans", wheat: "Wheat" };
+  function intelRows(days) {
+    var D = window.INTEL && INTEL._data && INTEL._data(); if (!D || !D.items) return [];
+    var lim = Date.now() - days * 864e5;
+    return D.items.filter(function (i) { var t = Date.parse(i.ts || i.seen || 0); return t && t >= lim && t <= Date.now() + 60000; }).map(function (i) {
+      var t = Date.parse(i.ts || i.seen), imp = i.impact || {}, ks = ["corn", "soybeans", "wheat"].filter(function (c) { return imp[c]; });
+      var b = ks.length ? imp[ks[0]].bias : null, bb = BIAS[b] || null;
+      return { intel: 1, t: t, id: "in|" + i.id, src: i.source || (i.verified ? "Official" : "Intel"), url: i.url, txt: i.title, verified: i.verified,
+        crops: ks.map(function (c) { return CROPN[c]; }), bias: bb, why: i.why || "", alert: i.alert || i.material, kc: i.kind === "data" && i.key ? i.key : null };
+    });
+  }
+  function intelLi(r, now) {
+    var tm = day(r.t) === day(now) ? hm(r.t) : new Date(r.t).toLocaleDateString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric" }) + " " + hm(r.t);
+    var chipsH = (r.crops.length === 3 ? ['<i class="fs-c">Grains</i>'] : r.crops.map(function (c) { return '<i class="fs-c">' + c + "</i>"; })).join("") + (r.verified ? '<i class="fs-c fs-v">Verified</i>' : "");
+    var body = r.url ? '<a class="fs-t" href="' + (window.safeUrl ? safeUrl(r.url) : "#") + '" target="_blank" rel="noopener noreferrer">' + esc(r.txt) + ' <span class="fs-ext">↗</span></a>' : '<div class="fs-t">' + esc(r.txt) + "</div>";
+    return '<li class="fs-i fs-in' + (r.alert ? " br" : "") + '" data-id="' + esc(r.id) + '" data-t="' + r.t + '"><div class="fs-h"><b>' + esc(r.src) + "</b>" + chipsH + "<span>" + tm + "</span></div>" + body +
+      (r.bias ? '<div class="fs-s">Agri read: <b class="' + r.bias[1] + '">' + r.bias[0] + "</b>" + (r.crops.length ? " · " + esc(r.crops.join(", ")) : "") + "</div>" : "") + (r.why ? '<div class="fs-why"><b>Why it matters</b> ' + esc(r.why) + "</div>" : "") + (r.n ? '<div class="fs-s">+' + r.n + " more report" + (r.n > 1 ? "s" : "") + " of the same story (" + esc(r.more.slice(0, 3).join(", ")) + ")</div>" : "") + "</li>";
+  }
+  function modeBar() {
+    var D = window.INTEL && INTEL._data && INTEL._data(), n = D && D.items ? intelRows(2).length : 0;
+    return '<div class="fr-modes" role="tablist" aria-label="Feed view"><button type="button" role="tab" data-frm="all" aria-selected="' + (FM === "all") + '">All</button><button type="button" role="tab" data-frm="agri" aria-selected="' + (FM === "agri") + '">Agri intel' + (n ? " <small>" + n + " in 48h</small>" : "") + "</button></div>";
+  }
+  function foldIntel(R) {   /* the same story from several outlets within 2 days is one row with "+N more reports" */
+    var K2 = [];
+    R.forEach(function (r) { var w = words(r.txt), hit = null;
+      for (var i = 0; i < K2.length && !hit; i++) { var o = K2[i]; if (Math.abs(o.t - r.t) > 1728e5) continue; var inter = w.filter(function (x) { return o._w.indexOf(x) >= 0; }).length, uni = w.length + o._w.length - inter; if (uni && inter / uni >= 0.45) hit = o; }
+      if (hit) { hit.n = (hit.n || 0) + 1; if (hit.more.indexOf(r.src) < 0) hit.more.push(r.src); } else { r._w = w; r.more = []; K2.push(r); } });
+    return K2;
+  }
+  function agriHTML() {
+    var now = Date.now(), R = intelRows(14).sort(function (a, b) { return b.t - a.t; }), seen2 = {};
+    R = foldIntel(R).slice(0, 120);
+    var D = window.INTEL && INTEL._data && INTEL._data();
+    return '<div class="fr-head"><span class="fr-title">Feed</span><span class="fr-live" title="When the intelligence server last ran"><i></i>intel · ' + (D && D.updated_at ? hm(Date.parse(D.updated_at)) : "—") + "</span></div>" + modeBar() +
+      '<ul class="fr-list fs">' + (R.length ? R.map(function (r) { return intelLi(r, now); }).join("") : '<li class="fr-empty">' + (D ? "No agri intelligence in the last 14 days." : "Loading global commodity intelligence…") + "</li>") + "</ul>" +
+      '<div class="fr-foot">Global Commodity Intelligence · last 14 days · newest first · official figures marked Verified · the agri read is rule-based, not a trading signal</div>';
+  }
   function cardHTML(ctx) {
+    if (FM === "agri") return agriHTML();
     var now = Date.now(), seen = {}, kept = [];
     var L = feed().filter(function (m) { return m.t <= now + 60000; }).slice().sort(function (a, b) { return b.t - a.t; });
     /* the same story from several sources within 3 hours is one row with "+N" (FEED-05/08) */
@@ -112,7 +154,15 @@
       var body = it.url ? '<a class="fs-t" href="' + (window.safeUrl ? safeUrl(it.url) : "#") + '" target="_blank" rel="noopener noreferrer">' + esc(it.txt) + "</a>" : '<div class="fs-t">' + esc(it.txt) + "</div>";
       return '<li class="fs-i' + (breaking(m) ? " br" : "") + tone(m, it.txt) + (go ? " go" : "") + '"' + go + ' data-id="' + esc(m.id) + '" data-t="' + m.t + '"><div class="fs-h"><b>' + esc(it.src) + "</b>" + chips(m) + "<span>" + tm + lag + "</span></div>" + body + extra + "</li>";
     }).join("");
-    return '<div class="fr-head"><span class="fr-title">Feed</span><span class="fr-live" title="Time of the last live update this page received"><i></i>live · ' + (window.DESK_WIRES && DESK_WIRES.at ? hm(Date.parse(DESK_WIRES.at)) : "—") + "</span></div>" +
+    /* All = the desk feed and the last 48 hours of agri intelligence, interleaved by time */
+    var IR = foldIntel(intelRows(2).sort(function (a, b) { return b.t - a.t; })), parts = rows ? rows.split(/(?=<li class="fs-i)/) : [];
+    if (IR.length) {
+      var have = {}; kept.forEach(function (K) { have[K.it.txt.toLowerCase().slice(0, 70)] = 1; });
+      var A = parts.map(function (h) { var m = /data-t="(\d+)"/.exec(h); return { t: m ? +m[1] : 0, h: h }; });
+      IR.forEach(function (r) { var k = r.txt.toLowerCase().slice(0, 70); if (have[k]) return; have[k] = 1; A.push({ t: r.t, h: intelLi(r, now) }); });
+      rows = A.sort(function (a, b) { return b.t - a.t; }).map(function (x) { return x.h; }).join("");
+    }
+    return '<div class="fr-head"><span class="fr-title">Feed</span><span class="fr-live" title="Time of the last live update this page received"><i></i>live · ' + (window.DESK_WIRES && DESK_WIRES.at ? hm(Date.parse(DESK_WIRES.at)) : "—") + "</span></div>" + modeBar() +
       '<ul class="fr-list fs">' + (rows || '<li class="fr-empty">Waiting for the first items…</li>') + "</ul>";
   }
 
@@ -167,6 +217,7 @@
     if (it && window.evCtxShow) { var id = it.getAttribute("data-id"), mt = META[id] || {}, go = it.getAttribute("data-evgo") || "", tb = go.split(/[:@]/)[0];
       var key = /^(corn|wheat|soybeans)$/.test(tb) ? tb : null, sh = key && window.DATA && DATA.grains[key] && DATA.grains[key].fan ? (DATA.grains[key].near || {}).contract : null;
       evCtxShow({ tab: tb, key: key, t: +it.getAttribute("data-t"), src: (it.querySelector(".fs-h b") || {}).textContent, txt: mt.txt || (it.querySelector(".fs-t") || {}).textContent, contract: mt.contract, shown: (window.DATA && key && DATA.grains[key].fan && DATA.grains[key].fan.contract) || sh }); }
+    var fm = e.target.closest && e.target.closest("[data-frm]"); if (fm) { e.preventDefault(); e.stopPropagation(); FM = fm.getAttribute("data-frm"); try { localStorage.setItem("desk.feedmode", FM); } catch (x) {} if (FM === "agri" && window.INTEL && INTEL.poll) INTEL.poll(); paint(true); return; }
     var b = e.target.closest && e.target.closest("[data-frf]"); if (b) { e.preventDefault(); e.stopPropagation(); pick[tab()] = b.getAttribute("data-frf"); paint(true); return; }
     var md = e.target.closest && e.target.closest("[data-frmode]"); if (md) { e.preventDefault(); e.stopPropagation(); ONLY = md.getAttribute("data-frmode") === "1"; try { localStorage.setItem("desk.feedall", ONLY ? "0" : "1"); } catch (x) {} paint(true); return; }
     if (e.target.closest && e.target.closest(".fr-close")) { setOpen(false); return; }
@@ -221,6 +272,10 @@
 
   var css = document.createElement("style");
   css.textContent =
+    ".fr-modes{display:flex;gap:6px;margin:6px 0 8px}.fr-modes button{all:unset;cursor:pointer;font-size:12.5px;font-weight:700;padding:4px 12px;border:1px solid var(--line2,#2a3442);border-radius:999px;color:var(--muted,#8a97a8)}" +
+    ".fr-modes button[aria-selected=true]{background:#ffb84d;border-color:#ffb84d;color:#101825}.fr-modes small{font-weight:600;opacity:.8;margin-left:4px}" +
+    ".fs-in .fs-ext{font-size:11px;opacity:.7}.fs-v{border-color:rgba(63,185,127,.6)!important;color:#3fb97f!important}.fs-s b.up{color:var(--green,#3fb97f)}.fs-s b.dn{color:var(--red,#ff6b6b)}" +
+    ".fr-foot{font-size:11px;color:var(--faint,#6b778a);padding:8px 2px 2px;line-height:1.4}" +
     "#evRail > .rail-card.ev-feed{display:none}" +
     ".fr-card{padding:12px 14px}.fr-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.fr-title{font:600 12.5px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}" +
     ".fr-live{font:11.5px 'IBM Plex Mono',monospace;color:#7dd8e6;display:flex;align-items:center;gap:5px}.fr-live i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(63,185,127,.18);animation:frp 2s infinite}@keyframes frp{50%{opacity:.4}}" +
