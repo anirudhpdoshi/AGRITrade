@@ -77,10 +77,11 @@
     if (/\bbeat\b|\bbeats\b/i.test(t) && !/\bmiss/i.test(t)) return " pos"; if (/\bmiss(es|ed)?\b/i.test(t) && !/\bbeat/i.test(t)) return " neg";
     var pm = t.match(/(^|[\s(])([+\u2212-])\d[\d.,]*\s?(%|bps?|pips|¢)/);   /* a printed signed move decides the colour; words only when there is none */
     if (pm) return pm[2] === "+" ? " pos" : " neg";
-    var up = /(^|[\s(])\+\d/.test(t) || /\b(surge|soar|jump|rall(y|ies)|gain|rise|rises|rose|climb|higher|boost|upgrade|record high|week high)/i.test(t),
-        dn = /(^|[\s(])[−-]\d/.test(t) || /\b(plunge|tumble|slump|sink|sank|drop|fall|falls|fell|decline|lower|cut|cuts|downgrade|crash|week low|lowest)/i.test(t);
+    var up = /(^|[\s(])\+\d/.test(t) || /\b(surge|soar|jump|rall(y|ies)|gain|rise|rises|rose|climb|higher|boost|upgrade|record high|week high|approv|agree(s|d|ment)|deal\b|ceasefire|truce|lifts? (a |the )?ban|eases?\b|recover|surplus|strong demand|exports? (up|rise))/i.test(t),
+        dn = /(^|[\s(])[−-]\d/.test(t) || /\b(plunge|tumble|slump|sink|sank|drop|fall|falls|fell|decline|lower|cut|cuts|downgrade|crash|week low|lowest|recall|warning|threat|attack|missile|strike[sd]?\b|ban(s|ned)?\b|sanction|tariff|halt|shortage|drought|flood|outbreak|default|deficit|layoff|bankrupt|probe|lawsuit|irregularit)/i.test(t);
     return up && !dn ? " pos" : dn && !up ? " neg" : "";
   }
+  function dot(t) { return t === " pos" ? '<i class="fs-dot pos" title="Positive"></i>' : t === " neg" ? '<i class="fs-dot neg" title="Negative"></i>' : '<i class="fs-dot" title="Neutral"></i>'; }
   var STOP = { the: 1, a: 1, an: 1, of: 1, in: 1, on: 1, to: 1, for: 1, and: 1, as: 1, at: 1, by: 1, with: 1, from: 1, is: 1, its: 1, after: 1, says: 1, said: 1 };
   function words(t) { return t.toLowerCase().replace(/[^a-z0-9% ]/g, " ").split(/\s+/).filter(function (w) { return w.length > 2 && !STOP[w]; }); }
   var CHIP = { corn: "Corn", wheat: "Wheat", soybeans: "Soybeans", fx: "USD/CAD", cb: "Central banks", energy: "Energy", metals: "Metals", earn: "Earnings", leg: "Legislation" };
@@ -107,7 +108,7 @@
     var tm = day(r.t) === day(now) ? hm(r.t) : new Date(r.t).toLocaleDateString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric" }) + " " + hm(r.t);
     var chipsH = (r.crops.length === 3 ? ['<i class="fs-c">Grains</i>'] : r.crops.map(function (c) { return '<i class="fs-c">' + c + "</i>"; })).join("") + (r.verified ? '<i class="fs-c fs-v">Verified</i>' : "");
     var body = r.url ? '<a class="fs-t" href="' + (window.safeUrl ? safeUrl(r.url) : "#") + '" target="_blank" rel="noopener noreferrer">' + esc(r.txt) + ' <span class="fs-ext">↗</span></a>' : '<div class="fs-t">' + esc(r.txt) + "</div>";
-    return '<li class="fs-i fs-in' + (r.alert ? " br" : "") + '" data-id="' + esc(r.id) + '" data-t="' + r.t + '"><div class="fs-h"><b>' + esc(r.src) + "</b>" + chipsH + "<span>" + tm + "</span></div>" + body +
+    return '<li class="fs-i fs-in' + (r.alert ? " br" : "") + '" data-id="' + esc(r.id) + '" data-t="' + r.t + '"><div class="fs-h">' + dot(r.bias ? (r.bias[1] === "up" ? " pos" : r.bias[1] === "dn" ? " neg" : "") : tone({ h: r.txt }, r.why || "")) + "<b>" + esc(r.src) + "</b>" + chipsH + "<span>" + tm + "</span></div>" + body +
       (r.bias ? '<div class="fs-s">Agri read: <b class="' + r.bias[1] + '">' + r.bias[0] + "</b>" + (r.crops.length ? " · " + esc(r.crops.join(", ")) : "") + "</div>" : "") + (r.why ? '<div class="fs-why"><b>Why it matters</b> ' + esc(r.why) + "</div>" : "") + (r.n ? '<div class="fs-s">+' + r.n + " more report" + (r.n > 1 ? "s" : "") + " of the same story (" + esc(r.more.slice(0, 3).join(", ")) + ")</div>" : "") + "</li>";
   }
   function modeBar() {
@@ -152,7 +153,7 @@
         (K.n ? '<div class="fs-s">+' + K.n + " more report" + (K.n > 1 ? "s" : "") + " of the same story" + (K.more.length ? " (" + esc(K.more.slice(0, 3).join(", ")) + ")" : "") + "</div>" : "");
       var go = !it.url && m.go ? ' data-evgo="' + esc(m.go) + '" role="link" tabindex="0"' : "";
       var body = it.url ? '<a class="fs-t" href="' + (window.safeUrl ? safeUrl(it.url) : "#") + '" target="_blank" rel="noopener noreferrer">' + esc(it.txt) + "</a>" : '<div class="fs-t">' + esc(it.txt) + "</div>";
-      return '<li class="fs-i' + (breaking(m) ? " br" : "") + tone(m, it.txt) + (go ? " go" : "") + '"' + go + ' data-id="' + esc(m.id) + '" data-t="' + m.t + '"><div class="fs-h"><b>' + esc(it.src) + "</b>" + chips(m) + "<span>" + tm + lag + "</span></div>" + body + extra + "</li>";
+      return '<li class="fs-i' + (breaking(m) ? " br" : "") + tone(m, it.txt) + (go ? " go" : "") + '"' + go + ' data-id="' + esc(m.id) + '" data-t="' + m.t + '"><div class="fs-h">' + dot(tone(m, it.txt)) + "<b>" + esc(it.src) + "</b>" + chips(m) + "<span>" + tm + lag + "</span></div>" + body + extra + "</li>";
     }).join("");
     /* All = the desk feed and the last 48 hours of agri intelligence, interleaved by time */
     var IR = foldIntel(intelRows(2).sort(function (a, b) { return b.t - a.t; })), parts = rows ? rows.split(/(?=<li class="fs-i)/) : [];
@@ -175,25 +176,21 @@
   }
   /* open drawer pushes the page instead of covering it (wide screens); on phones it stays an overlay */
   function setOpen(on) { if (!drawer) return; drawer.classList.toggle("open", !!on); document.body.classList.toggle("fr-push", !!on); try { localStorage.setItem("desk.feedOpen", on ? "1" : "0"); } catch (e) {} window.dispatchEvent(new Event("resize")); }
+  /* one docked right panel on every tab (owner, Nov 22 2026): expanded it pushes the page; contracted it is a slim "Feed" tab */
   function paint(force) {
-    var ctx = tab(), r = host(), html = cardHTML(ctx);
-    if (r) {
-      if (drawer) setOpen(false), dbtn && (dbtn.hidden = true);
-      var c = r.querySelector(":scope > .fr-card");
-      if (!c) { c = document.createElement("div"); c.className = "rail-card fr-card"; r.insertBefore(c, r.firstChild); }
-      if (force || c.getAttribute("data-ctx") !== ctx || c._h !== html) { c.innerHTML = html; c._h = html; c.setAttribute("data-ctx", ctx); }
-    } else {
-      if (!drawer) {
-        drawer = document.createElement("aside"); drawer.className = "fr-drawer fr-card"; document.body.appendChild(drawer);
-        dbtn = document.createElement("button"); dbtn.type = "button"; dbtn.className = "fr-dbtn"; dbtn.innerHTML = "Feed"; document.body.appendChild(dbtn);
-        dbtn.addEventListener("click", function () { setOpen(!drawer.classList.contains("open")); });
-      }
-      dbtn.hidden = false;
-      if (!drawer._init) { drawer._init = 1; try { if (localStorage.getItem("desk.feedOpen") === "1" && innerWidth >= 1000) setOpen(true); } catch (e) {} }
-      if (force || drawer._h !== html || drawer.getAttribute("data-ctx") !== ctx) { drawer.innerHTML = '<button class="fr-close" type="button" aria-label="Close feed">×</button>' + html; drawer._h = html; drawer.setAttribute("data-ctx", ctx); }
-      var nb = feed().filter(function (m) { return breaking(m) && Date.now() - m.t < 2 * 3600000; }).length;
-      dbtn.innerHTML = "Feed" + (nb ? ' <b>' + nb + "</b>" : "");
+    var ctx = tab(), html = cardHTML(ctx);
+    document.querySelectorAll(".rail > .fr-card").forEach(function (c) { c.remove(); });   /* no second copy inside page rails */
+    if (!drawer) {
+      drawer = document.createElement("aside"); drawer.className = "fr-drawer fr-card"; drawer.setAttribute("aria-label", "Feed"); document.body.appendChild(drawer);
+      dbtn = document.createElement("button"); dbtn.type = "button"; dbtn.className = "fr-dbtn"; dbtn.title = "Expand the feed"; document.body.appendChild(dbtn);
+      dbtn.addEventListener("click", function () { setOpen(!drawer.classList.contains("open")); });
     }
+    if (!drawer._init) { drawer._init = 1; var o = null; try { o = localStorage.getItem("desk.feedOpen"); } catch (e) {} setOpen(o == null ? innerWidth >= 1280 : o === "1" && innerWidth >= 1000); }
+    if (force || drawer._h !== html || drawer.getAttribute("data-ctx") !== ctx) { var sc = drawer.querySelector(".fr-list"), top = sc ? sc.scrollTop : 0;
+      drawer.innerHTML = '<button class="fr-close" type="button" aria-label="Contract feed" title="Contract the feed">⟩</button>' + html; drawer._h = html; drawer.setAttribute("data-ctx", ctx);
+      var sc2 = drawer.querySelector(".fr-list"); if (sc2) sc2.scrollTop = top; }
+    var nb = feed().filter(function (m) { return breaking(m) && Date.now() - m.t < 2 * 3600000; }).length;
+    dbtn.innerHTML = "⟨ Feed" + (nb ? ' <b>' + nb + "</b>" : "");
   }
   /* breaking items pop a red notification the moment they arrive (not for the items already stored when the page opens) */
   function watch() {
@@ -277,7 +274,7 @@
     ".fs-in .fs-ext{font-size:11px;opacity:.7}.fs-v{border-color:rgba(63,185,127,.6)!important;color:#3fb97f!important}.fs-s b.up{color:var(--green,#3fb97f)}.fs-s b.dn{color:var(--red,#ff6b6b)}" +
     ".fr-foot{font-size:11px;color:var(--faint,#6b778a);padding:8px 2px 2px;line-height:1.4}" +
     "#evRail > .rail-card.ev-feed{display:none}" +
-    ".fr-card{padding:12px 14px}.fr-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.fr-title{font:600 12.5px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}" +
+    ".fr-card{padding:12px 14px}.fr-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-right:28px}.fr-title{font:600 12.5px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}" +
     ".fr-live{font:11.5px 'IBM Plex Mono',monospace;color:#7dd8e6;display:flex;align-items:center;gap:5px}.fr-live i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(63,185,127,.18);animation:frp 2s infinite}@keyframes frp{50%{opacity:.4}}" +
     ".fr-chips{display:flex;flex-wrap:wrap;gap:5px;padding-bottom:8px;border-bottom:1px solid var(--line)}" +
     ".fr-chips button{appearance:none;font:600 11.5px 'IBM Plex Mono',monospace;padding:3px 8px;border-radius:12px;border:1px solid var(--line2);background:transparent;color:var(--muted);cursor:pointer}" +
@@ -297,12 +294,14 @@
     ".fs-why{font-size:12px;line-height:1.4;color:var(--muted);margin-top:4px}.fs-why b{font:700 9.5px 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#e8b93d;margin-right:4px}.fs-s{font-size:11px;color:var(--faint);margin-top:2px}" +
     ".fr-mode{display:inline-flex;border:1px solid var(--line2);border-radius:12px;overflow:hidden}.fr-mode button{appearance:none;border:0;background:transparent;color:var(--muted);font:600 11px 'IBM Plex Mono',monospace;padding:3px 8px;cursor:pointer}.fr-mode button[aria-pressed=true]{background:#e0453a;color:#fff}.fr-mode button[data-frmode='0'][aria-pressed=true]{background:#13304a}" +
     ".fr-al{margin-top:4px;display:grid;gap:3px;font-size:12.5px;font-weight:400;color:#d4deea}.fr-al i{display:inline-block;min-width:96px;font:normal 600 10.5px 'IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;color:#ff9d94;margin-right:6px}.fr-al a{color:#7dd8e6}" +
-    ".fs-i.pos{background:rgba(63,185,127,.14)!important}.fs-i.neg{background:rgba(224,101,95,.14)!important}" +
+    ".fs-dot{flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:#5b6677;align-self:center;margin-right:2px}.fs-dot.pos{background:#3fb97f;box-shadow:0 0 0 3px rgba(63,185,127,.2),0 0 8px rgba(63,185,127,.7)}.fs-dot.neg{background:#ff5d5d;box-shadow:0 0 0 3px rgba(255,93,93,.2),0 0 8px rgba(255,93,93,.7)}" +
     ".fr-imp{font:700 11px 'IBM Plex Mono',monospace;padding:0 6px;border-radius:4px}.fr-imp.bull{background:rgba(63,185,127,.2);color:#3fb97f}.fr-imp.bear{background:rgba(224,101,95,.2);color:#ff8a84}.fr-imp.mix{background:rgba(232,163,61,.18);color:#e8a33d}.fr-st{font:11px 'IBM Plex Mono',monospace;color:var(--muted)}" +
-    ".fr-drawer{position:fixed;top:0;right:0;bottom:0;width:min(380px,92vw);z-index:70;background:var(--panel);border-left:1px solid var(--line2);box-shadow:-10px 0 30px rgba(0,0,0,.45);transform:translateX(105%);transition:transform .25s ease;overflow:auto}" +
-    "body.fr-push{transition:padding-right .25s ease}@media (min-width:1000px){body.fr-push{padding-right:min(380px,92vw)}body.fr-push .fr-dbtn{right:min(380px,92vw)}}" +
+    ".fr-drawer{position:fixed;top:0;right:0;bottom:0;width:min(380px,92vw);z-index:70;display:flex;flex-direction:column;padding:14px 14px 10px;background:linear-gradient(160deg,rgba(28,40,58,.55),rgba(10,16,24,.62));-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);border-left:1px solid rgba(255,255,255,.12);box-shadow:-14px 0 40px rgba(0,0,0,.35),inset 1px 0 0 rgba(255,255,255,.06);transform:translateX(105%);transition:transform .25s ease;overflow:hidden}" +
+    ".fr-drawer .fr-list{flex:1 1 auto;min-height:0;overflow:auto;padding-right:4px}.fr-drawer .fs .fs-i{border-bottom-color:rgba(255,255,255,.08)}.fr-drawer .fs .fs-i:hover{background:rgba(255,255,255,.04)}" +
+    "html[data-theme=light] .fr-drawer{background:linear-gradient(160deg,rgba(255,255,255,.72),rgba(236,242,248,.78));border-left-color:rgba(0,0,0,.1)}html[data-theme=light] .fr-drawer .fs-t,html[data-theme=light] .fr-drawer .fs-h b{color:#18222f}" +
+    "body.fr-push #gnav{flex-wrap:wrap;row-gap:4px}body.fr-push{transition:padding-right .25s ease}@media (min-width:1000px){body.fr-push{padding-right:min(380px,92vw)}body.fr-push .fr-dbtn{right:min(380px,92vw)}}" +
     ".fr-drawer.open{transform:none}.fr-drawer .fr-list{max-height:none}.fr-close{position:absolute;top:8px;right:10px;appearance:none;border:0;background:transparent;color:var(--faint);font-size:20px;cursor:pointer}" +
-    ".fr-dbtn{position:fixed;right:0;top:45%;z-index:69;appearance:none;writing-mode:vertical-rl;transform:rotate(180deg);padding:12px 7px;border:1px solid var(--line2);border-right:0;border-radius:0 8px 8px 0;background:#13304a;color:#bfe3ec;font:600 12px 'IBM Plex Mono',monospace;letter-spacing:.12em;cursor:pointer}" +
+    ".fr-dbtn{position:fixed;right:0;top:45%;z-index:69;appearance:none;writing-mode:vertical-rl;transform:rotate(180deg);padding:12px 7px;border:1px solid var(--line2);border-right:0;border-radius:0 8px 8px 0;background:rgba(19,48,74,.7);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#bfe3ec;font:600 12px 'IBM Plex Mono',monospace;letter-spacing:.12em;cursor:pointer}body.fr-push .fr-dbtn{display:none}" +
     ".fr-dbtn b{writing-mode:horizontal-tb;display:inline-block;background:#e0453a;color:#fff;border-radius:8px;padding:0 5px;margin-top:6px;font-size:11px}";
   document.head.appendChild(css);
   window.FEEDRAIL = { paint: paint, tagsOf: tagsOf, breaking: breaking, itemOf: itemOf };

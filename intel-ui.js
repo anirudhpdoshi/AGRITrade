@@ -25,7 +25,7 @@
     get: function (k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
     set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   };
-  Object.assign(V, store.get(VIEW) || {}); V.open = "";
+  Object.assign(V, store.get(VIEW) || {}); V.open = ""; if (V.sub === "feed") V.sub = "ind";
   function save() { store.set(VIEW, { sub: V.sub, cat: V.cat, crop: V.crop, bias: V.bias, kind: V.kind, hot: V.hot }); }
 
   /* ---------- helpers ---------- */
@@ -186,7 +186,8 @@
      for when you return to the Feed. */
   function tabsHTML() {
     var it = items();
-    var subs = [["feed", "Feed", it.length], ["ind", "Official indicators", ((D && D.indicators) || []).length], ["cal", "Release calendar", ((D && D.calendar) || []).length], ["health", "Sources & health", ""], ["guide", "How to read this", ""]];
+    /* the headline feed runs in the background and lives in the right-hand Feed panel (owner, Nov 22 2026) — not a tab here */
+    var subs = [["ind", "Official indicators", ((D && D.indicators) || []).length], ["cal", "Release calendar", ((D && D.calendar) || []).length], ["health", "Sources & health", ""], ["guide", "How to read this", ""]];
     return subs.map(function (x) { return '<button type="button" role="tab" data-isub="' + x[0] + '" aria-selected="' + (V.sub === x[0]) + '"><span>' + x[1] + "</span>" + (x[2] === "" ? "" : ' <span class="n">' + x[2] + "</span>") + "</button>"; }).join("");
   }
   function slicerHTML() {
@@ -337,11 +338,11 @@
   function render() {
     if (!P.querySelector(".it")) P.innerHTML = '<div class="it"><div class="it-tabs" id="itTabs" role="tablist" aria-label="Intelligence reports"></div><div class="it-slicer" id="itSlicer" role="group" aria-label="Category"></div><div class="tile wide" id="itHead"></div><div id="itBody" class="it-main"></div></div>';
     document.getElementById("itTabs").innerHTML = tabsHTML();
-    document.getElementById("itSlicer").innerHTML = slicerHTML();
+    var SL = document.getElementById("itSlicer"); SL.hidden = true; SL.innerHTML = "";
     document.getElementById("itHead").innerHTML = headHTML();
     var B = document.getElementById("itBody");
     if (!D) { B.innerHTML = tier === 4 && err ? '<div class="tile wide"><div class="unreach">⚠ Sorry, we can’t be reached now <small>— the intelligence feed did not load and no copy is saved in this browser yet; retrying every minute</small></div></div>' : '<div class="tile wide"><p class="note">Loading intelligence feed…</p></div>'; return; }
-    B.innerHTML = V.sub === "ind" ? indHTML() : V.sub === "cal" ? calHTML() : V.sub === "health" ? healthHTML() : V.sub === "guide" ? guideHTML() : feedHTML();
+    B.innerHTML = V.sub === "ind" ? indHTML() : V.sub === "cal" ? calHTML() : V.sub === "health" ? healthHTML() : V.sub === "guide" ? guideHTML() : indHTML();
     if (window.MOTION) window.MOTION.scan();
   }
 
@@ -350,8 +351,8 @@
     var t = ev.target; if (!t.closest) return;
     if (t.closest("a")) return;
     var b = t.closest("[data-isub]"); if (b) { V.sub = b.getAttribute("data-isub"); save(); render(); return; }
-    b = t.closest("[data-icat]"); if (b) { V.sub = "feed"; V.cat = b.getAttribute("data-icat"); V.hot = false; save(); render(); return; }
-    b = t.closest("[data-ihot]"); if (b) { V.sub = "feed"; V.hot = !V.hot; if (V.hot && b.closest(".it-slicer")) V.cat = "all"; save(); render(); return; }
+    b = t.closest("[data-icat]"); if (b) { V.sub = "ind"; V.cat = b.getAttribute("data-icat"); V.hot = false; save(); render(); return; }
+    b = t.closest("[data-ihot]"); if (b) { V.sub = "ind"; V.hot = !V.hot; if (V.hot && b.closest(".it-slicer")) V.cat = "all"; save(); render(); return; }
     b = t.closest("[data-if]"); if (b) { V[b.getAttribute("data-if")] = b.getAttribute("data-v"); save(); render(); return; }
     b = t.closest("tr.r[data-iid]"); if (b) { var id = b.getAttribute("data-iid"); V.open = V.open === id ? "" : id; render(); return; }
   });
@@ -361,7 +362,7 @@
     V.q = q.value; var pos = q.selectionStart; render(); var n = P.querySelector("[data-iq]"); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} }
   });
   BTN.addEventListener("click", function () { render(); poll(); setTimeout(function () { markSeen(); badge(); }, 4000); });
-  setInterval(function () { if (window.DESK_LOCKED) return; if (active()) poll(); else if (Date.now() - lastTry > 600000) poll(); }, 30000);
+  setInterval(function () { if (window.DESK_LOCKED) return; if (active()) poll(); else if (Date.now() - lastTry > 300000) poll(); }, 30000);
   window.addEventListener("desk:unlock", function () { poll(true); });
   document.addEventListener("visibilitychange", function () { if (!document.hidden && active()) poll(); });
 
