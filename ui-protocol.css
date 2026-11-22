@@ -1,0 +1,25 @@
+/* ui-protocol.css — one navigation grammar across the desk (owner, Nov 22 2026). Loaded last; wins over per-page styles.
+   Level 1  top menu (#gnav)                      — unchanged
+   Level 2  page chips (#gsub)                    — unchanged
+   Level 3  REPORT TABS: switch between whole reports or sections inside a page — text tabs on one rule, amber underline on the
+            open one. Used by: Positioning reports, Intelligence tabs, Central-bank views, World sections, section rows, monitors.
+   Level 4  FILTERS & VIEW TOGGLES: narrow or re-express what is on screen (commodity, period, basis, view) — rounded pills,
+            amber outline on the chosen one (the desk's selected-state colour #d9b46a). Used by: commodity slicers, chips, segmented toggles, feed modes.
+   Nothing else may introduce a new tab or toggle look; new pages pick Level 3 or Level 4. */
+.pos-tabs,.it-tabs,.pi-nav,.w-tabs,.mon-tabs,.mn2-tabs,.st-nav{display:flex!important;flex-wrap:wrap;gap:0 2px!important;border-bottom:1px solid var(--line2,#2a3442)!important;margin:6px 0 14px!important;padding:0!important;background:none!important}
+.pos-tabs>button,.it-tabs>button,.pi-nav>button,.w-tabs>button,.mon-tabs>button,.mn2-tabs>button,.st-nav>button{appearance:none;background:transparent!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;
+  padding:8px 13px 9px!important;margin:0 0 -1px!important;font:600 13.5px 'IBM Plex Sans',system-ui,sans-serif!important;color:var(--muted,#8a97a8)!important;cursor:pointer;white-space:nowrap;box-shadow:none!important}
+.pos-tabs>button:hover,.it-tabs>button:hover,.pi-nav>button:hover,.w-tabs>button:hover,.mon-tabs>button:hover,.mn2-tabs>button:hover,.st-nav>button:hover{color:var(--ink,#e8edf3)!important}
+.pos-tabs>button:is([aria-selected=true],[aria-pressed=true],.on,.active),.it-tabs>button:is([aria-selected=true],[aria-pressed=true],.on,.active),.pi-nav>button:is([aria-selected=true],[aria-pressed=true],.on,.active),
+.w-tabs>button:is([aria-selected=true],[aria-pressed=true],.on,.active),.mon-tabs>button:is([aria-selected=true],[aria-pressed=true],.on,.active),.mn2-tabs>button:is([aria-selected=true],[aria-pressed=true],.on,.active),
+.st-nav>button:is([aria-selected=true],[aria-pressed=true],.on,.active){color:#d9b46a!important;border-bottom-color:#d9b46a!important;background:transparent!important}
+.it-tabs>button .n,.pi-nav>button .n{color:inherit!important;opacity:.7}
+
+.ix-chips,.fr-modes,.gr-slicer,.mc-tg,.seg,.it-slicer,.sec-chips{display:flex!important;flex-wrap:wrap;gap:6px!important;border:0!important;background:none!important;overflow:visible!important}
+.ix-chips>button,.fr-modes>button,.gr-slicer>button,.mc-tg>button,.seg>button,.it-slicer>button,.sec-chips>.sec-chip{appearance:none;background:transparent!important;border:1px solid var(--line2,#2a3442)!important;border-radius:999px!important;
+  padding:4px 13px!important;margin:0!important;font:600 12.5px 'IBM Plex Sans',system-ui,sans-serif!important;color:var(--muted,#8a97a8)!important;cursor:pointer;white-space:nowrap}
+.ix-chips>button:hover,.fr-modes>button:hover,.gr-slicer>button:hover,.mc-tg>button:hover,.seg>button:hover,.it-slicer>button:hover,.sec-chips>.sec-chip:hover{color:var(--ink,#e8edf3)!important;border-color:var(--muted,#8a97a8)!important}
+.ix-chips>button:is([aria-selected=true],[aria-pressed=true],.on),.fr-modes>button:is([aria-selected=true],[aria-pressed=true],.on),.gr-slicer>button:is([aria-selected=true],[aria-pressed=true],.on),
+.mc-tg>button:is([aria-selected=true],[aria-pressed=true],.on),.seg>button:is([aria-selected=true],[aria-pressed=true],.on),.it-slicer>button:is([aria-selected=true],[aria-pressed=true],.on),.sec-chips>.sec-chip[aria-pressed=true]{
+  background:rgba(217,180,106,.10)!important;border-color:#d9b46a!important;color:#d9b46a!important}
+.it-slicer>button[aria-pressed=true] .n,.sec-chips>.sec-chip[aria-pressed=true] small{color:inherit!important;background:rgba(217,180,106,.14)!important}
