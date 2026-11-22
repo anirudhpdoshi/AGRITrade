@@ -41,7 +41,10 @@
     ".pos-sel td{background:rgba(56,182,201,.08)}";
   doc.head.appendChild(css);
   var GR = ["corn", "soybeans", "wheat"], NAME = { corn: "Corn", soybeans: "Soybeans", wheat: "Wheat" };
-  var REPORTS = [["cftc", "CFTC Traders Positions"], ["exports", "Export Sales"], ["deriv", "Derivatives Positions"], ["oi", "Open Interest"]];
+  /* every report shows its own sections only (owner, Nov 22 2026): nothing appears under two tabs — CFTC, open interest and the
+     futures roll each have their own report; Derivatives Positions shows the rest of the derivatives page */
+  var REPORTS = [["cftc", "CFTC Traders Positions"], ["exports", "Export Sales"], ["deriv", "Derivatives Positions"], ["oi", "Open Interest"], ["roll", "Futures Roll & Carry"]];
+  var OWN = { cftc: ["cftc"], oi: ["oi"], roll: ["carry", "spc"] };
   var KEY = "desk.positioning", UNA = "—";
   var st = { report: "cftc", commodity: "corn" };
   try { var s = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; if (s.report) st.report = s.report; if (s.commodity) st.commodity = s.commodity; } catch (e) {}
@@ -149,7 +152,11 @@
      rows with their headlines, and every tile inside them. ---- */
   function mountDeriv(body, k) {
     var saved = ensureEnhanced(k, "deriv");
-    var nodes = cloneFrom(k, "deriv", null);
+    var mine = [].concat(OWN.cftc, OWN.oi, OWN.roll);
+    var nodes = cloneFrom(k, "deriv", function (ch) {
+      var s2 = ch.getAttribute("data-sec"), r2 = ch.getAttribute("data-prow");
+      return !(ch.classList && ch.classList.contains("roll-tile")) && mine.indexOf(s2) < 0 && mine.indexOf(r2) < 0; });
+    var no = 0; nodes.forEach(function (x) { var pn = x.querySelector && x.classList.contains("prow-h") && x.querySelector(".prow-n"); if (pn) pn.textContent = (++no) + " · " + pn.textContent.replace(/^\d+\s*·\s*/, ""); });
     restoreSub(k, saved);
     if (!nodes.length) { fallback(body, "Derivatives Positions", "no Derivatives section in the dataset for " + NAME[k] + "."); return; }
     appendAll(body, nodes);
@@ -161,11 +168,17 @@
      calendar spread, trader behaviour, FUTURES OI VALUE). ---- */
   function mountOi(body, k) {
     var saved = ensureEnhanced(k, "deriv");
-    var nodes = cloneFrom(k, "deriv", function (ch) {
-      return ch.getAttribute("data-sec") === "oi" || (ch.classList && ch.classList.contains("roll-tile"));
-    });
+    var nodes = cloneFrom(k, "deriv", function (ch) { return ch.getAttribute("data-sec") === "oi" && !(ch.classList && ch.classList.contains("roll-tile")); });
     restoreSub(k, saved);
     if (!nodes.length) { fallback(body, "Open Interest", "no open-interest tiles in the dataset for " + NAME[k] + "."); return; }
+    appendAll(body, nodes);
+  }
+  /* ---- Futures Roll & Carry: the roll tile (OI migration, day by day, roll statistics) and the curve & calendar tile ---- */
+  function mountRoll(body, k) {
+    var saved = ensureEnhanced(k, "deriv");
+    var nodes = cloneFrom(k, "deriv", function (ch) { return (ch.classList && ch.classList.contains("roll-tile")) || OWN.roll.indexOf(ch.getAttribute("data-sec")) >= 0; });
+    restoreSub(k, saved);
+    if (!nodes.length) { fallback(body, "Futures Roll & Carry", "no roll or carry tiles in the dataset for " + NAME[k] + "."); return; }
     appendAll(body, nodes);
   }
 
@@ -231,6 +244,7 @@
     if (st.report === "cftc") mountCftc(body, k, G);
     else if (st.report === "exports") mountExports(body, k);
     else if (st.report === "deriv") mountDeriv(body, k);
+    else if (st.report === "roll") mountRoll(body, k);
     else mountOi(body, k);
   }
 
