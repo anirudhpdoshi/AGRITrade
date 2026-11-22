@@ -12,7 +12,7 @@
     if (R.length < 2 || R.length > 24 || R.some(function (r) { return r.cells.length !== H.length || [].some.call(r.attributes, function (a) { return /^data-|^onclick$/.test(a.name); }); })) return;   /* interactive rows keep their layout */
     var th = '<tr><th class="tx-c0">' + H[0].innerHTML + "</th>" + R.map(function (r) { return '<th class="tx-p">' + r.cells[0].innerHTML + "</th>"; }).join("") + "</tr>";
     var rows = H.slice(1).map(function (h, j) {
-      return '<tr><th scope="row" class="tx-l">' + h.innerHTML + "</th>" + R.map(function (r) { var c = r.cells[j + 1]; return "<td" + (c.className ? ' class="' + c.className + '"' : "") + (c.title ? ' title="' + c.title.replace(/"/g, "&quot;") + '"' : "") + ">" + c.innerHTML + "</td>"; }).join("") + "</tr>";
+      return '<tr><th scope="row" class="tx-l">' + h.innerHTML + "</th>" + R.map(function (r) { var c = r.cells[j + 1]; return "<td" + (c.className ? ' class="' + c.className + '"' : "") + (c.title ? ' title="' + c.title.replace(/"/g, "&quot;") + '"' : "") + (c.getAttribute("style") ? ' style="' + c.getAttribute("style").replace(/"/g, "&quot;") + '"' : "") + ">" + c.innerHTML + "</td>"; }).join("") + "</tr>";
     }).join("");
     t.innerHTML = "<thead>" + th + "</thead><tbody>" + rows + "</tbody>"; t.setAttribute("data-tx", "1"); t.classList.add("tx-flip");
   }
