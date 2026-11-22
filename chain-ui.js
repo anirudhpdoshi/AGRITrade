@@ -110,7 +110,11 @@
     if (fresh) { sub.insertBefore(t, sub.firstElementChild); if (typeof root.buildSecNav === "function") try { buildSecNav(k); } catch (e) {} }
     else root.scrollTo(0, y);
   }
-  function tick() { GR.forEach(function (k) { var P = doc.getElementById("panel-" + k); if (P && P.classList.contains("active")) mount(k); }); }
+  function tick() {
+    GR.forEach(function (k) { var P = doc.getElementById("panel-" + k); if (P && P.classList.contains("active")) mount(k); });
+    /* copies placed by other pages (Positioning → Options Chain) */
+    doc.querySelectorAll(".oc-tile[data-oc-k]").forEach(function (t) { var h = html(t.getAttribute("data-oc-k")); if (h && t._h !== h) { t.innerHTML = h; t._h = h; } t.classList.toggle("oc-full", FULL); });
+  }
   doc.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("[data-oc-leg],[data-oc-rng],[data-oc-oi],[data-oc-gk],[data-oc-full]"); if (!b) return;
     if (b.hasAttribute("data-oc-full")) { FULL = !FULL; doc.querySelectorAll(".oc-tile").forEach(function (t) { t.classList.toggle("oc-full", FULL); t._k = ""; }); doc.documentElement.classList.toggle("oc-lock", FULL); if (FULL) S.gk = true; }

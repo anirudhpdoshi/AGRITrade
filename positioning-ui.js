@@ -43,8 +43,8 @@
   var GR = ["corn", "soybeans", "wheat"], NAME = { corn: "Corn", soybeans: "Soybeans", wheat: "Wheat" };
   /* every report shows its own sections only (owner, Nov 22 2026): nothing appears under two tabs — CFTC, open interest and the
      futures roll each have their own report; Derivatives Positions shows the rest of the derivatives page */
-  var REPORTS = [["cftc", "CFTC Traders Positions"], ["exports", "Export Sales"], ["deriv", "Derivatives Positions"], ["oi", "Open Interest"], ["roll", "Futures Roll & Carry"]];
-  var OWN = { cftc: ["cftc"], oi: ["oi"], roll: ["carry", "spc"] };
+  var REPORTS = [["cftc", "CFTC Traders Positions"], ["exports", "Export Sales"], ["deriv", "Derivatives Positions"], ["oi", "Open Interest"], ["chain", "Options Chain"], ["roll", "Futures Roll & Carry"]];
+  var OWN = { cftc: ["cftc"], oi: ["oi"], roll: ["carry", "spc"], chain: ["chain"] };
   var KEY = "desk.positioning", UNA = "—";
   var st = { report: "cftc", commodity: "corn" };
   try { var s = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; if (s.report) st.report = s.report; if (s.commodity) st.commodity = s.commodity; } catch (e) {}
@@ -152,7 +152,7 @@
      rows with their headlines, and every tile inside them. ---- */
   function mountDeriv(body, k) {
     var saved = ensureEnhanced(k, "deriv");
-    var mine = [].concat(OWN.cftc, OWN.oi, OWN.roll);
+    var mine = [].concat(OWN.cftc, OWN.oi, OWN.roll, OWN.chain);
     var nodes = cloneFrom(k, "deriv", function (ch) {
       var s2 = ch.getAttribute("data-sec"), r2 = ch.getAttribute("data-prow");
       return !(ch.classList && ch.classList.contains("roll-tile")) && mine.indexOf(s2) < 0 && mine.indexOf(r2) < 0; });
@@ -245,6 +245,7 @@
     else if (st.report === "exports") mountExports(body, k);
     else if (st.report === "deriv") mountDeriv(body, k);
     else if (st.report === "roll") mountRoll(body, k);
+    else if (st.report === "chain") { var h = root.CHAIN_UI && CHAIN_UI.html(k); body.innerHTML = h ? '<div class="tile wide oc-tile" data-oc-k="' + k + '">' + h + "</div>" : '<div class="tile wide"><h2>Options Chain</h2><p class="note">No options chain in the dataset for ' + esc(NAME[k] || k) + ".</p></div>"; }
     else mountOi(body, k);
   }
 
