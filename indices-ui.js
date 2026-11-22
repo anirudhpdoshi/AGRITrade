@@ -301,7 +301,7 @@
     return '<div class="ixw-rb"><span class="b2"></span><span class="b1" style="left:' + P(lo1) + ";right:calc(100% - " + P(hi1) + ');background:' + col + '33;border-color:' + col + '"></span><span class="c" style="left:' + P(c) + '"></span></div>' +
       '<div class="ixw-rl"><span>' + num(lo2, 0) + '</span><span>' + num(lo1, 0) + '</span><b>' + num(c, 0) + '</b><span>' + num(hi1, 0) + '</span><span>' + num(hi2, 0) + "</span></div>";
   }
-  function weeklySection() {
+  function weeklySection(part) {
     var W = D.weekly; if (!W || !W.series || !W.series.SPX) return "";
     var keys = WK_KEYS.filter(function (k) { return W.series[k] && W.series[k].weeks.length; });
     var weeks = W.series.SPX.weeks.slice(-WN).map(function (w) { return w.wk; });
@@ -356,14 +356,17 @@
       if (best) { var c = n[best], a = Math.abs(c.r); s += "Nifty tracks <b>" + esc(NAME[best]) + "</b> most closely over " + W.weeks_used + " weeks (r " + r2(c.r) + ", " + (a >= 0.7 ? "strong" : a >= 0.4 ? "moderate" : a >= 0.2 ? "weak" : "little") + " link): a typical ±" + num(c.driver_move_pct, 2) + "% month there carries ±" + num(Math.abs(c.move_pct), 2) + "% (±" + num(Math.abs(c.move_pts), 0) + " pts) into Nifty" + (c.beta < 0 ? " <b>in the opposite direction</b>" : "") + "; r² " + num(c.r2, 2) + " means the rest of Nifty's move is its own."; }
       return s;
     })();
-    return '<div class="tile"><h2>Weekly monitor — US indices vs Nifty 50 <span class="h2note">— ' + esc(W.window) + " · " + W.weeks_used + " complete weeks for σ, β and r</span></h2>" + chips +
-      '<div class="tbl-scroll"><table class="ix-t ixw-t no-tx"><thead>' + head + "</thead><tbody>" + body + '</tbody></table></div><p class="note">' + esc(note) + " Weeks run Monday–Friday; Nifty on IST dates, Nifty · USD = Nifty ÷ USD/INR.</p>" +
-      levelChart + '<p class="ix-take">' + take + "</p>" +
+    var hdr = function (t) { return '<div class="tile"><h2>' + t + ' <span class="h2note">— ' + esc(W.window) + " · " + W.weeks_used + " complete weeks for σ, β and r</span></h2>"; };
+    if (part === "exp") return hdr("Expected move — next month") + '<p class="ix-take">' + take + "</p>" +
       '<div class="ix-sec">Expected range — next month</div><div class="ix-kpis ixw-xs">' + cards + "</div>" +
-      '<p class="note">Realised: weekly σ of the last ' + W.weeks_used + " complete weeks × √" + num(W.month_weeks, 1) + " (one month ≈ 21 sessions), applied to the latest close. Implied: the index's own volatility gauge × √(21/252), shown where Yahoo carries one. A statistical band, not a forecast.</p>" +
-      '<div class="ix-sec">Correlated move expected next month</div><div class="tbl-scroll">' + cm + "</div>" +
+      '<p class="note">Realised: weekly σ of the last ' + W.weeks_used + " complete weeks × √" + num(W.month_weeks, 1) + " (one month ≈ 21 sessions), applied to the latest close. Implied: the index's own volatility gauge × √(21/252), shown where Yahoo carries one. A statistical band, not a forecast.</p></div>";
+    if (part === "corr") return hdr("Correlated move — next month") +
+      '<div class="tbl-scroll">' + cm + "</div>" +
       '<p class="note">Correlated move = β × the driver\'s 1σ monthly move; β and r from ' + W.weeks_used + " weekly returns. The band beneath is the target's latest close ± that move.</p>" +
       (corrChart ? '<div class="ix-sec">Rolling correlation — Nifty vs the US</div>' + corrChart : "") + "</div>";
+    return hdr("Weekly monitor — US indices vs Nifty 50") + chips +
+      '<div class="tbl-scroll"><table class="ix-t ixw-t no-tx"><thead>' + head + "</thead><tbody>" + body + '</tbody></table></div><p class="note">' + esc(note) + " Weeks run Monday–Friday; Nifty on IST dates, Nifty · USD = Nifty ÷ USD/INR.</p>" +
+      levelChart + "</div>";
   }
   /* ---------- volatility cones (owner, Nov 21 2026): each index's last 60 sessions and the ±1σ / ±2σ cone for the next 21 sessions
      (one month), widening with the square root of time — realised σ (20- or 60-session) or the index's own implied-vol gauge ---------- */
@@ -409,14 +412,24 @@
       "Nifty 50 on IST calendar dates (Yahoo ^NSEI timestamps are ~03:45 UTC). Volatility = std dev of daily returns × √252. Risk-free = mean 13-week T-bill yield over the period (" + num(D.meta.risk_free_pct, 2) + "%). " +
       "Updated " + esc(D.updated_at) + ". Describes the past; not a forecast or trading advice.</div></div>";
   }
+  /* one sub-menu per report (owner, Nov 22 2026): each section opens on its own instead of stacking down the page */
+  var IXNAV = [["wk", "Weekly monitor"], ["exp", "Expected move"], ["corr", "Correlated move"], ["cone", "Volatility cones"], ["elec", "Since the election"], ["sea", "Seasonality"], ["nifty", "Nifty 50"]];
+  var IXS = "wk"; try { IXS = localStorage.getItem("desk.ix.sec") || "wk"; } catch (e) {}
   function render() {
     css();
     if (!D) {
       P.innerHTML = '<div class="tile wide"><h2>US Indices — since the election</h2>' + (ERR ? '<p class="note">⚠ indices-data.json did not load (' + esc(ERR) + ') — the next daily refresh rewrites it.</p>' : '<p class="note">Loading…</p>') + "</div>";
       return;
     }
-    P.innerHTML = '<div class="tile" style="margin-bottom:14px"><h2>US Indices — since the election <span class="h2note">— ' + esc(D.meta.baseline) + " · to " + esc(D.meta.end_date) + "</span></h2></div>" +
-      weeklySection() + coneSection() + kpiStrip() + splitTile() + cumChart() + retChart() + volChart() + rollChart() + seasonSection() + riskTable() + niftySection() + footer();
+    var body = { wk: function () { return weeklySection("wk"); }, exp: function () { return weeklySection("exp"); }, corr: function () { return weeklySection("corr"); }, cone: coneSection,
+      elec: function () { return '<div class="tile" style="margin-bottom:14px"><h2>US Indices — since the election <span class="h2note">— ' + esc(D.meta.baseline) + " · to " + esc(D.meta.end_date) + "</span></h2></div>" +
+        kpiStrip() + splitTile() + cumChart() + retChart() + volChart() + rollChart() + riskTable(); },
+      sea: seasonSection, nifty: niftySection };
+    if (!body[IXS]) IXS = "wk";
+    var html = "";
+    try { html = body[IXS](); } catch (e) { html = ""; }
+    P.innerHTML = '<div class="ix-nav" role="tablist" aria-label="US Indices · weekly & Nifty">' + IXNAV.map(function (t) { return '<button type="button" role="tab" data-ixs="' + t[0] + '" aria-selected="' + (IXS === t[0]) + '">' + t[1] + "</button>"; }).join("") + "</div>" +
+      (html || '<div class="tile"><p class="note">This section has no data in the latest refresh.</p></div>') + footer();
   }
   function load() {
     return fetch("indices-data.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
@@ -432,6 +445,8 @@
       return [["world", "Markets &amp; sessions", !on && !uo], ["usmkt", "US Markets", uo], ["indices", "US Indices · weekly & Nifty", on]]; },
     go: function (id) { var b = doc.getElementById("tabbtn-" + id); if (b) b.click(); if (id === "indices") setTimeout(maybeLoad, 30); } };
   root.GNAV_CHIPS.world = WCH; root.GNAV_CHIPS.indices = WCH; root.GNAV_CHIPS.usmkt = WCH;
+  P.addEventListener("click", function (ev) { var t = ev.target.closest && ev.target.closest("[data-ixs]"); if (!t) return; IXS = t.dataset.ixs;
+    try { localStorage.setItem("desk.ix.sec", IXS); } catch (e) {} render(); });
   P.addEventListener("click", function (ev) { var c2 = ev.target.closest && ev.target.closest("[data-ixck],[data-ixcb]"); if (c2) { if (c2.dataset.ixck) CK = c2.dataset.ixck; if (c2.dataset.ixcb) CB = c2.dataset.ixcb;
     try { localStorage.setItem("desk.ix.ck", CK); localStorage.setItem("desk.ix.cb", CB); } catch (e) {} var y2 = root.scrollY; render(); root.scrollTo(0, y2); return; } });
   P.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-ixwv],[data-ixwn]"); if (!b) return;

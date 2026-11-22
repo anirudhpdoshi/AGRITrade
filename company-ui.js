@@ -860,6 +860,8 @@
   function SD(M) { var x = STR[M.co.ticker]; return x && x.d ? x.d : null; }
   function fl(M, end) { return end ? E.fiscalLabel(end, M.co.fiscalYearEnd).label : ""; }
   var EV = { k: "eps", v: "both" };
+  function m$(v) { if (v == null) return "—"; var a = Math.abs(v), s = v < 0 ? "−$" : "$"; return s + (a >= 1e9 ? (a / 1e9).toFixed(2) + "B" : a >= 1e6 ? (a / 1e6).toFixed(0) + "M" : a.toFixed(0)); }
+  function e$(v) { return v == null ? "—" : (v < 0 ? "−$" : "$") + Math.abs(v).toFixed(2); }
   function pc(v, d) { if (v == null) return "—"; var dd = d == null ? (Math.abs(v) < 0.1 && v !== 0 ? 2 : 1) : d; return (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(dd) + "%"; }
   /* the reported quarters (SEC, else the press release, else the source's own actuals) and the forward consensus, one column each */
   function estCols(M) {

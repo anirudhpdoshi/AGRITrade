@@ -6,13 +6,13 @@
    Level 4  FILTERS & VIEW TOGGLES: narrow or re-express what is on screen (commodity, period, basis, view) — rounded pills,
             amber outline on the chosen one (the desk's selected-state colour #d9b46a). Used by: commodity slicers, chips, segmented toggles, feed modes.
    Nothing else may introduce a new tab or toggle look; new pages pick Level 3 or Level 4. */
-.pos-tabs,.it-tabs,.pi-nav,.w-tabs,.mon-tabs,.mn2-tabs,.st-nav{display:flex!important;flex-wrap:wrap;gap:0 2px!important;border-bottom:1px solid var(--line2,#2a3442)!important;margin:6px 0 14px!important;padding:0!important;background:none!important}
-.pos-tabs>button,.it-tabs>button,.pi-nav>button,.w-tabs>button,.mon-tabs>button,.mn2-tabs>button,.st-nav>button{appearance:none;background:transparent!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;
+.pos-tabs,.it-tabs,.pi-nav,.w-tabs,.mon-tabs,.mn2-tabs,.st-nav,.ix-nav{display:flex!important;flex-wrap:wrap;gap:0 2px!important;border-bottom:1px solid var(--line2,#2a3442)!important;margin:6px 0 14px!important;padding:0!important;background:none!important}
+.pos-tabs>button,.it-tabs>button,.pi-nav>button,.w-tabs>button,.mon-tabs>button,.mn2-tabs>button,.st-nav>button,.ix-nav>button{appearance:none;background:transparent!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;
   padding:8px 13px 9px!important;margin:0 0 -1px!important;font:600 13.5px 'IBM Plex Sans',system-ui,sans-serif!important;color:var(--muted,#8a97a8)!important;cursor:pointer;white-space:nowrap;box-shadow:none!important}
-.pos-tabs>button:hover,.it-tabs>button:hover,.pi-nav>button:hover,.w-tabs>button:hover,.mon-tabs>button:hover,.mn2-tabs>button:hover,.st-nav>button:hover{color:var(--ink,#e8edf3)!important}
+.pos-tabs>button:hover,.it-tabs>button:hover,.pi-nav>button:hover,.w-tabs>button:hover,.mon-tabs>button:hover,.mn2-tabs>button:hover,.st-nav>button:hover,.ix-nav>button:hover{color:var(--ink,#e8edf3)!important}
 .pos-tabs>button:is([aria-selected=true],[aria-pressed=true],.on,.active),.it-tabs>button:is([aria-selected=true],[aria-pressed=true],.on,.active),.pi-nav>button:is([aria-selected=true],[aria-pressed=true],.on,.active),
 .w-tabs>button:is([aria-selected=true],[aria-pressed=true],.on,.active),.mon-tabs>button:is([aria-selected=true],[aria-pressed=true],.on,.active),.mn2-tabs>button:is([aria-selected=true],[aria-pressed=true],.on,.active),
-.st-nav>button:is([aria-selected=true],[aria-pressed=true],.on,.active){color:#d9b46a!important;border-bottom-color:#d9b46a!important;background:transparent!important}
+.st-nav>button:is([aria-selected=true],[aria-pressed=true],.on,.active),.ix-nav>button:is([aria-selected=true],[aria-pressed=true],.on,.active){color:#d9b46a!important;border-bottom-color:#d9b46a!important;background:transparent!important}
 .it-tabs>button .n,.pi-nav>button .n{color:inherit!important;opacity:.7}
 
 .ix-chips,.fr-modes,.gr-slicer,.mc-tg,.seg,.it-slicer,.sec-chips{display:flex!important;flex-wrap:wrap;gap:6px!important;border:0!important;background:none!important;overflow:visible!important}

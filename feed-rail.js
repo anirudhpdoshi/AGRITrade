@@ -305,5 +305,5 @@
     ".fr-dbtn{position:fixed;right:0;top:45%;z-index:69;appearance:none;writing-mode:vertical-rl;transform:rotate(180deg);padding:12px 7px;border:1px solid var(--line2);border-right:0;border-radius:0 8px 8px 0;background:#13304a;color:#bfe3ec;font:600 12px 'IBM Plex Mono',monospace;letter-spacing:.12em;cursor:pointer}" +
     ".fr-dbtn b{writing-mode:horizontal-tb;display:inline-block;background:#e0453a;color:#fff;border-radius:8px;padding:0 5px;margin-top:6px;font-size:11px}";
   document.head.appendChild(css);
-  window.FEEDRAIL = { paint: paint, tagsOf: tagsOf, breaking: breaking };
+  window.FEEDRAIL = { paint: paint, tagsOf: tagsOf, breaking: breaking, itemOf: itemOf };
 })();
