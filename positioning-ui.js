@@ -43,13 +43,14 @@
   var GR = ["corn", "soybeans", "wheat"], NAME = { corn: "Corn", soybeans: "Soybeans", wheat: "Wheat" };
   /* every report shows its own sections only (owner, Nov 22 2026): nothing appears under two tabs — CFTC, open interest and the
      futures roll each have their own report; Derivatives Positions shows the rest of the derivatives page */
-  var REPORTS = [["cftc", "CFTC Traders Positions"], ["exports", "Export Sales"], ["deriv", "Derivatives Positions"], ["oi", "Open Interest"], ["chain", "Options Chain"], ["roll", "Futures Roll & Carry"]];
+  var REPORTS = [["cftc", "CFTC Traders Positions"], ["exports", "Export Sales"], ["deriv", "Derivatives Positions"], ["chain", "Options Chain"],   /* Open Interest report hidden (owner, Nov 22 2026): the Options Chain carries OI per strike; mountOi kept */ ["roll", "Futures Roll & Carry"]];
   var OWN = { cftc: ["cftc"], oi: ["oi"], roll: ["carry", "spc"], chain: ["chain"] };
   var KEY = "desk.positioning", UNA = "—";
   var st = { report: "cftc", commodity: "corn" };
   try { var s = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; if (s.report) st.report = s.report; if (s.commodity) st.commodity = s.commodity; } catch (e) {}
   if (GR.indexOf(st.commodity) < 0) { try { st.commodity = JSON.parse(localStorage.getItem("desk.grain") || '"corn"') || "corn"; } catch (e) { st.commodity = "corn"; } }
   if (GR.indexOf(st.commodity) < 0 && st.commodity !== "fx") st.commodity = "corn";
+  if (st.report === "oi") st.report = "chain";
   if (!REPORTS.some(function (r) { return r[0] === st.report; })) st.report = "cftc";
   function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
   function esc(s) { return DeskCore.esc(s); }
