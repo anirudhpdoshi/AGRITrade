@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deploy_try.outputs.page_url || steps.deploy_retry.outputs.page_url || steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
         with: { ref: main }
@@ -37,5 +37,23 @@ jobs:
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: { path: _site }
+      # GitHub sometimes cannot find the just-uploaded artifact for a few seconds ("No artifacts named github-pages") —
+      # wait, then retry twice before calling it a failure
+      - name: Let the uploaded artifact register
+        run: sleep 10
+      - id: deploy_try
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+      - name: Wait before retry
+        if: steps.deploy_try.outcome == 'failure'
+        run: sleep 30
+      - id: deploy_retry
+        if: steps.deploy_try.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+      - name: Wait before last try
+        if: steps.deploy_try.outcome == 'failure' && steps.deploy_retry.outcome == 'failure'
+        run: sleep 60
       - id: deploy
+        if: steps.deploy_try.outcome == 'failure' && steps.deploy_retry.outcome == 'failure'
         uses: actions/deploy-pages@v4

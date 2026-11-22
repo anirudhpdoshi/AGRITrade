@@ -308,7 +308,7 @@
       '<div class="ix-chips">' + ks.map(function (k) { return '<button type="button" data-ixsea="' + k + '" aria-pressed="' + (SEAK === k) + '">' + esc(NAME[k]) + "</button>"; }).join("") +
       '<span class="ixw-gap"></span>' + [["el", "Since the election"], ["5", "5 years"], ["10", "10 years"]].map(function (q) { var off = q[0] !== "el" && !D.season_long;
         return '<button type="button" data-ixseap="' + q[0] + '" aria-pressed="' + (SEAP === q[0] && !off) + '"' + (off ? ' disabled title="Loads with the next indices refresh"' : "") + ">" + q[1] + "</button>"; }).join("") + "</div>" +
-      seasonTable(SEAK) + '<p class="note">σ month = standard deviation of that month\'s daily returns × √21 (in % and in index points on the prior month-end close). W.A. VIX = average daily VIX close in the month. High–low = the month\'s intraday range as % of its low.</p></div>';
+      seasonTable(SEAK) + '<p class="note">σ month = standard deviation of that month\'s daily returns × √21 (in % and in index points on the prior month-end close). W.A. VIX = average daily VIX close in the month' + (SEAP !== "el" ? ' (S&amp;P 500 VIX, shown for all three indices in the 5- and 10-year views)' : '') + '. High–low = the month\'s intraday range as % of its low.</p></div>';
   }
   function riskTable() {
     var rows = ["SPX", "NDX", "DJIA"].map(function (k) { var x = D.indices[k], dd = x.max_drawdown, ra = x.risk_adjusted;
