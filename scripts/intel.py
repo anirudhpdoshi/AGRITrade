@@ -837,7 +837,7 @@ def main():
     body["calendar"] = calendar((blocks.get("fao") or {}).get("next_release"), now_utc().date())
     body["indicators"] = [{"id": k, "name": IND[k]["name"], "cat": IND[k]["cat"], "unit": IND[k]["unit"], "src": used[k], "move": stats_move(s),
                            "spark": [round(s[m], 3) for m in sorted(s)[-24:]], "months": sorted(s)[-24:]} for k, s in merged.items()]
-    body["items"] = hist[:250]
+    body["items"] = hist[:400]   # the full 45-day history (data series always kept), so older agri items are not dropped
     body["run_seconds"] = round(time.time() - t0, 1)
 
     new_snaps = {k: dict(sorted(v.items())[-36:]) for k, v in merged.items()}

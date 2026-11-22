@@ -59,8 +59,9 @@ jobs:
               if [ $((m % 5)) -eq 2 ] && [ "$dow" -le 5 ] && [ "$h" -ge 13 ] && [ "$h" -le 22 ]; then fire breakouts.yml; fi
               # global-grains: 12:20 and 17:20 UTC weekdays (after CONAB / USDA morning releases and the noon-ET WASDE)
               if [ "$m" -eq 20 ] && [ "$dow" -le 5 ] && { [ "$h" -eq 12 ] || [ "$h" -eq 17 ]; }; then fire global-grains.yml; fi
-              # intel: :50 every hour, 10–22 UTC weekdays (institutional data + headlines)
-              if [ "$m" -eq 50 ] && [ "$dow" -le 5 ] && [ "$h" -ge 10 ] && [ "$h" -le 22 ]; then fire intel.yml; fi
+              # intel (institutional data + agri headlines): every 30 min at :20/:50 weekdays 10–22 UTC, hourly at :50 the rest of the weekday,
+              # every 2 hours at :50 on weekends — news does not stop on Saturday (owner, Nov 22 2026)
+              if { [ "$dow" -le 5 ] && { [ $((m % 30)) -eq 20 ] && [ "$h" -ge 10 ] && [ "$h" -le 22 ] || [ "$m" -eq 50 ]; }; } || { [ "$dow" -ge 6 ] && [ "$m" -eq 50 ] && [ $((h % 2)) -eq 0 ]; }; then fire intel.yml; fi
               # live-feed: :20 and :50, 12–22 UTC weekdays (off :00/:30/:45 so a hand-over never lands on a release or a central-bank decision)
               if [ $((m % 30)) -eq 20 ] && [ "$dow" -le 5 ] && [ "$h" -ge 12 ] && [ "$h" -le 22 ]; then fire live-feed.yml; fi
               # live-feed overnight too (newswires, central-bank press rooms, FX): :20/:50 outside 12–22 UTC, Sun 22:00 UTC → Sat 00:00 UTC

@@ -20,12 +20,12 @@
   var RAW = "https://raw.githubusercontent.com/" + REPO + "/intel/intel.json";
   var CACHE = "desk.intel.cache", VIEW = "desk.intel.view", SEEN = "desk.intel.seen";
   var D = null, tier = 0, etag = "", busy = false, lastTry = 0, lastOk = 0, err = "";
-  var V = { sub: "feed", cat: "all", crop: "all", bias: "all", kind: "all", hot: false, q: "", open: "" };
+  var V = { sub: "swot", cat: "all", crop: "all", bias: "all", kind: "all", hot: false, q: "", open: "" };
   var store = {
     get: function (k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
     set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   };
-  Object.assign(V, store.get(VIEW) || {}); V.open = ""; if (V.sub === "feed") V.sub = "ind";
+  Object.assign(V, store.get(VIEW) || {}); V.open = ""; if (V.sub === "feed" || !V.sub) V.sub = "swot";
   function save() { store.set(VIEW, { sub: V.sub, cat: V.cat, crop: V.crop, bias: V.bias, kind: V.kind, hot: V.hot }); }
 
   /* ---------- helpers ---------- */
@@ -54,7 +54,9 @@
   if (!document.getElementById("it-css")) {
     var css = document.createElement("style"); css.id = "it-css";
     css.textContent = [
-      ".it{display:flex;flex-direction:column;gap:14px;align-items:stretch}",
+      ".it{display:flex;flex-direction:column;gap:14px;align-items:stretch;order:1}",
+      "#panel-intel.active{display:flex!important;flex-direction:column;gap:14px}#panel-intel>.it{display:contents}#panel-intel #itTabs{order:1;margin-bottom:0}#panel-intel>*{order:2}#panel-intel #sw-intel{order:3}#panel-intel #itHead{order:4}#panel-intel #itBody{order:5}#panel-intel #itSlicer[hidden]{display:none!important}" +
+      "#panel-intel.it-on-swot #itHead,#panel-intel.it-on-swot #itBody,#panel-intel.it-on-swot>:not(.it):not(#sw-intel){display:none!important}#panel-intel:not(.it-on-swot) #sw-intel{display:none!important}",
       ".it-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px}",
       ".it-tabs button{appearance:none;font:700 13.5px 'IBM Plex Sans',sans-serif;color:var(--muted);background:transparent;border:1px solid var(--line2);border-radius:8px;padding:8px 14px;cursor:pointer}",
       ".it-tabs button:hover{color:#fff;background:#14213a}",
@@ -187,7 +189,7 @@
   function tabsHTML() {
     var it = items();
     /* the headline feed runs in the background and lives in the right-hand Feed panel (owner, Nov 22 2026) — not a tab here */
-    var subs = [["ind", "Official indicators", ((D && D.indicators) || []).length], ["cal", "Release calendar", ((D && D.calendar) || []).length], ["health", "Sources & health", ""], ["guide", "How to read this", ""]];
+    var subs = [["swot", "SWOT brief", ""], ["ind", "Official indicators", ((D && D.indicators) || []).length], ["cal", "Release calendar", ((D && D.calendar) || []).length], ["health", "Sources & health", ""], ["guide", "How to read this", ""]];
     return subs.map(function (x) { return '<button type="button" role="tab" data-isub="' + x[0] + '" aria-selected="' + (V.sub === x[0]) + '"><span>' + x[1] + "</span>" + (x[2] === "" ? "" : ' <span class="n">' + x[2] + "</span>") + "</button>"; }).join("");
   }
   function slicerHTML() {
@@ -338,6 +340,7 @@
   function render() {
     if (!P.querySelector(".it")) P.innerHTML = '<div class="it"><div class="it-tabs" id="itTabs" role="tablist" aria-label="Intelligence reports"></div><div class="it-slicer" id="itSlicer" role="group" aria-label="Category"></div><div class="tile wide" id="itHead"></div><div id="itBody" class="it-main"></div></div>';
     document.getElementById("itTabs").innerHTML = tabsHTML();
+    P.classList.toggle("it-on-swot", V.sub === "swot");   /* one menu for the whole page: SWOT brief + the four reports (owner, Nov 22 2026) */
     var SL = document.getElementById("itSlicer"); SL.hidden = true; SL.innerHTML = "";
     document.getElementById("itHead").innerHTML = headHTML();
     var B = document.getElementById("itBody");
