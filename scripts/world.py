@@ -241,7 +241,7 @@ def ma_block(dates, closes):
     e = len(closes) - 1
     return {"asof": dates[e], "close": round(closes[e], 6), "prev_close": round(closes[e - 1], 6), "prev_asof": dates[e - 1],
             "ma": {str(n): avg(n, e) for n in (20, 50, 100, 200)}, "prev_ma": {str(n): avg(n, e - 1) for n in (20, 50, 100, 200)},
-            "ema": {str(n): ema_last(closes, n) for n in (20, 50, 100, 200)}}
+            "ema": {str(n): ema_last(closes, n) for n in (9, 20, 50, 100, 200)}}
 
 
 def ema_last(closes, n):

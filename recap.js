@@ -94,6 +94,50 @@
     if (x.kind === "yield" || /Treasury|BoC|UST/.test(x.sym)) return name + " at " + fmt(x.last, 2) + " percent" + (x.chg != null ? ", " + (x.chg >= 0 ? "up " : "down ") + (function (b) { return b + (b === "1" ? " basis point" : " basis points"); })(Math.abs(x.chg * 100).toFixed(0)) : "");
     return name + " " + (p == null ? "at " + lv : (Math.abs(p) < 0.05 ? "flat at " : (p > 0 ? "up " : "down ") + Math.abs(p).toFixed(2) + " percent at ") + lv) + (/^Z[CSW]=F$/.test(x.sym) ? " cents a bushel" : /^(CL|GC)=F$/.test(x.sym) ? " dollars" : "");
   }
+
+  /* ---------- technicals: price vs 9- and 20-day EMA, and the levels the desk already holds ---------- */
+  function emaSeries(c, n) { if (!c || c.length < n + 5) return null; var k = 2 / (n + 1), e = c.slice(0, n).reduce(function (a, b) { return a + b; }, 0) / n; for (var i = n; i < c.length; i++) e += k * (c[i] - e); return e; }
+  function roll(e, n, px) { return e == null ? null : e + 2 / (n + 1) * (px - e); }
+  function rel(px, e, n, d) { if (e == null || !isFinite(e)) return null; var p = (px / e - 1) * 100; return (Math.abs(p) < 0.05 ? "right at" : px > e ? "above" : "below") + " its " + n + "-day EMA of " + fmt(e, d); }
+  function tone(a) { var up = a.filter(function (x) { return /above/.test(x); }).length, dn = a.filter(function (x) { return /below/.test(x); }).length;
+    return a.length < 2 ? "" : up === a.length ? " — short-term trend up" : dn === a.length ? " — short-term trend down" : " — mixed, between the two averages"; }
+  function technicals(M) {
+    var out = [], MON = { F: "January", G: "February", H: "March", J: "April", K: "May", M: "June", N: "July", Q: "August", U: "September", V: "October", X: "November", Z: "December" };
+    ["corn", "soybeans", "wheat"].forEach(function (c) {
+      try {
+        var g = DATA.grains[c], f = g.fan, L = +f.intraday[0], k = (g.roll && g.roll[0] && g.roll[0].contract) || "", T = (g.tail50 || []).map(Number).filter(isFinite);
+        if (!isFinite(L)) return;
+        var e9 = roll(emaSeries(T, 9), 9, L), e20 = f.ema20 != null ? roll(+f.ema20, 20, L) : roll(emaSeries(T, 20), 20, L);
+        var a = [rel(L, e9, 9, 4), rel(L, e20, 20, 4)].filter(Boolean); if (!a.length) return;
+        var lv = [];
+        if (f.put_wall && f.put_wall[0] != null) lv.push("support at the " + fmt(+f.put_wall[0], 2) + " put wall");
+        if (f.call_wall && f.call_wall[0] != null) lv.push("resistance at the " + fmt(+f.call_wall[0], 2) + " call wall");
+        if (f.r5 && f.r5.length === 2) lv.push("5-day expected range " + fmt(+f.r5[0], 2) + " to " + fmt(+f.r5[1], 2));
+        out.push(((MON[k.charAt(2)] || "") + " " + c).trim() + " at " + String(+L.toFixed(4)) + " is " + a.join(" and ") + tone(a) + "." + (lv.length ? " Levels: " + lv.join("; ") + "." : ""));
+      } catch (e) {}
+    });
+    [["^GSPC", "S&P 500"], ["^NDX", "Nasdaq-100"], ["^DJI", "the Dow"], ["^GSPTSE", "the TSX"], ["CAD=X", "US dollar–Canadian dollar"]].forEach(function (q) {
+      var i = M[q[0]]; if (!i || i.last == null || !i.ma || !i.ma.ema) return;
+      var E = i.ma.ema, live = i.ma.asof !== i.session_date, d = q[0] === "CAD=X" ? 4 : 0;
+      var em = function (n) { var e = E[String(n)]; return e == null ? null : live ? roll(e, n, i.last) : e; };
+      var a = [rel(i.last, em(9), 9, d), rel(i.last, em(20), 20, d)].filter(Boolean); if (!a.length) return;
+      var lv = [];
+      if (i.low != null && i.high != null) lv.push("last session " + fmt(i.low, d) + " to " + fmt(i.high, d));
+      if (i.w52 && i.w52.high != null) lv.push("52-week high " + fmt(i.w52.high, d) + ", " + fmt(i.w52.pct_from_high, 1) + " percent above");
+      if (i.w52 && i.w52.low != null) lv.push("52-week low " + fmt(i.w52.low, d));
+      out.push(q[1].charAt(0).toUpperCase() + q[1].slice(1) + " at " + fmt(i.last, d) + " is " + a.join(" and ") + tone(a) + "." + (lv.length ? " Levels: " + lv.join("; ") + "." : ""));
+    });
+    return out.length ? ["Trend check against the 9- and 20-day averages."].concat(out) : [];
+  }
+  /* ---------- events to watch: the next 7 days, high-impact first, desk housekeeping left out ---------- */
+  function when(t, now) { var dd = Math.round((Date.parse(dayKey(t)) - Date.parse(dayKey(now))) / 864e5);
+    return (dd === 0 ? "today" : dd === 1 ? "tomorrow" : new Date(t).toLocaleDateString("en-US", { timeZone: "America/Toronto", weekday: "long" })) + " at " + hm(t); }
+  function watch(now) {
+    var L = [], seen = {};
+    try { for (var d = 0; d < 7; d++) (EVENTS.on(now + d * 864e5) || []).forEach(function (e) { var lb = plain(e.label); if (!(e.t > now) || !lb || /refresh|on the desk|session opens|session closes|sits \(/i.test(lb) || seen[lb]) return; seen[lb] = 1; L.push(e); }); } catch (e) {}
+    var hi = L.filter(function (e) { return e.high; }).sort(function (a, b) { return a.t - b.t; }), lo = L.filter(function (e) { return !e.high; }).sort(function (a, b) { return a.t - b.t; });
+    return hi.slice(0, 8).concat(lo.slice(0, Math.max(0, 10 - Math.min(hi.length, 8)))).sort(function (a, b) { return a.t - b.t; });
+  }
   function script() {
     var S = [], now = Date.now(), M = worldMap();
     S.push("AGRI Trade desk recap, " + new Date(now).toLocaleString("en-US", { timeZone: "America/Toronto", weekday: "long", hour: "numeric", minute: "2-digit" }) + " Toronto time.");
@@ -111,6 +155,7 @@
     grp.forEach(function (g) { var p = g[1].map(function (s) { return say(M[s], names[s]); }).filter(Boolean); if (p.length) { anyPx = true; S.push(g[0] + ": " + p.join("; ") + "."); } });
     var ts = Object.keys(M).map(function (k) { return Date.parse(M[k].ts || 0) || 0; }).sort().pop();
     if (anyPx && ts) S.push("Prices as of " + hm(ts) + " Eastern" + (now - ts > 6 * 3600e3 ? ", the last close" : "") + ".");
+    S = S.concat(technicals(M));
     var F = feed().filter(function (m) { return m && m.t && dayKey(m.t) === dayKey(now) && m.t <= now + 60000; }).sort(function (a, b) { return b.t - a.t; });
     var brk = F.filter(isBreaking).map(function (m) { return info(m).txt; }).filter(Boolean);
     var rest = F.filter(function (m) { return !isBreaking(m) && /release|policy|alert|level|world/.test(m.k || ""); }).map(function (m) { return info(m).txt; }).filter(Boolean);
@@ -121,10 +166,8 @@
     if (I.length) S.push("Agri and market news in the last 24 hours: " + I.map(function (r) { return r.txt + (r.src ? ", from " + r.src : "") + (r.why ? ". Why it matters: " + r.why : ""); }).join(". ") + ".");
     var last = ls("desk.recap.heard", 0), ch = LOG.filter(function (x) { return x.t > last; });
     if (ch.length) { var by = {}; ch.forEach(function (x) { (by[x.s] = by[x.s] || []).push(x.n); }); S.push("What changed in the app since your last recap: " + Object.keys(by).map(function (k) { return k + ": " + by[k].slice(-3).join(" "); }).join(". ") + "."); }
-    var nx = [];
-    try { [0, 1].forEach(function (d) { (EVENTS.on(now + d * 864e5) || []).forEach(function (e) { if (e.t > now && e.label && !/refresh|on the desk/i.test(plain(e.label))) nx.push(e); }); }); } catch (e) {}
-    nx.sort(function (a, b) { return a.t - b.t; });
-    if (nx.length) S.push("Coming up: " + nx.slice(0, 4).map(function (e) { return plain(e.label) + " at " + hm(e.t) + (dayKey(e.t) !== dayKey(now) ? " tomorrow" : ""); }).join("; ") + ".");
+    var ew = watch(now);
+    if (ew.length) S.push("Events to watch: " + ew.map(function (e) { return plain(e.label) + ", " + when(e.t, now) + (e.high ? ", high impact" : ""); }).join("; ") + ".");
     S.push("End of recap.");
     return S.map(function (s) { return s.replace(/\$/g, " dollars ").replace(/&/g, " and ").replace(/\s+/g, " ").replace(/\.\./g, ".").trim(); });
   }
