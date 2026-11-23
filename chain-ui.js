@@ -69,9 +69,16 @@
     /* the strike holding the most on each side, among the strikes shown (owner, Nov 22 2026):
        gold = most open interest (contracts) · violet = most volume · cyan = most premium value held (OI × value × 5,000 bu) */
     L.forEach(function (r) { r.cpv = r.C ? r.coi * r.C.px * 5000 : null; r.ppv = r.P ? r.poi * r.P.px * 5000 : null; });
-    var top = function (key) { var b = null; L.forEach(function (r) { if (r[key] != null && r[key] > 0 && (!b || r[key] > b[key])) b = r; }); return b ? b.K : null; };
-    var HI = { c: { oi: top("coi"), vol: top("cvol"), pv: top("cpv") }, p: { oi: top("poi"), vol: top("pvol"), pv: top("ppv") } };
-    var cw = N.call_wall && N.call_wall[0], pw = N.put_wall && N.put_wall[0];
+    /* open interest and premium are ranked out of the money only — calls at/above the futures, puts at/below — the same side as
+       the walls (owner, Nov 23 2026). An in-the-money put's value is mostly intrinsic, so ranked over every strike the "most
+       premium" flag landed on a deep ITM strike (corn 5.00 put, ≈ $55M) — protection bought higher up, not support. */
+    var otm = function (r, key) { return key.charAt(0) === "c" ? r.K >= F : r.K <= F; };
+    var top = function (key, any) { var b = null; L.forEach(function (r) { if ((any || otm(r, key)) && r[key] != null && r[key] > 0 && (!b || r[key] > b[key])) b = r; }); return b ? b.K : null; };
+    var HI = { c: { oi: top("coi"), vol: top("cvol", true), pv: top("cpv") }, p: { oi: top("poi"), vol: top("pvol", true), pv: top("ppv") } };
+    /* walls against the same futures price the ladder shades by, so CW is never on an ITM call or PW on an ITM put */
+    var CW = null, PW = null; M.rows.forEach(function (r) { if (r.K >= F && r.coi > 0 && (!CW || r.coi > CW[1])) CW = [r.K, r.coi]; if (r.K <= F && r.poi > 0 && (!PW || r.poi > PW[1])) PW = [r.K, r.poi]; });
+    CW = CW || N.call_wall; PW = PW || N.put_wall;
+    var cw = CW && CW[0], pw = PW && PW[0];
     var atm = L.length ? L.reduce(function (a, b) { return Math.abs(b.K - F) < Math.abs(a.K - F) ? b : a; }).K : null;
     var em = N.iv && M.T ? F * N.iv / 100 * Math.sqrt(M.T) : null;
     var wd = function (w) { var d = w - F; return (d >= 0 ? "+" : "−") + Math.abs(d * 100).toFixed(1) + "¢ (" + (d >= 0 ? "+" : "−") + Math.abs(d / F * 100).toFixed(2) + "%) from spot"; };
@@ -99,7 +106,7 @@
     var body = "", spotDone = false;
     L.forEach(function (r) {
       if (!spotDone && r.K > F) { spotDone = true; body += spotRow(); }
-      var itmC = r.K < F, itmP = r.K > F, tags = (r.K === cw ? '<i class="oc-w c" title="Call wall: most call open interest">CW</i>' : "") + (r.K === pw ? '<i class="oc-w p" title="Put wall: most put open interest">PW</i>' : "");
+      var itmC = r.K < F, itmP = r.K > F, tags = (r.K === cw ? '<i class="oc-w c" title="Call wall: most call open interest at/above the futures">CW</i>' : "") + (r.K === pw ? '<i class="oc-w p" title="Put wall: most put open interest at/below the futures">PW</i>' : "");
       body += '<tr class="' + (r.K === atm ? "oc-atm" : "") + '"><td class="oc-m">' + sg((r.K / F - 1) * 100, 1) + "</td>" +
         cCols.map(function (c) { return cell(r, "c", c).replace("<td", '<td' + (itmC ? ' data-itm="1"' : "")); }).join("") +
         '<td class="oc-k">' + kf(r.K) + tags + "</td>" +
@@ -114,13 +121,13 @@
       '<h2>Options chain <span class="h2note">— ' + esc(N.chain || "") + " options on " + esc(N.contract || "") + " · " + esc(N.oi_label || "") + "</span></h2>" +
       '<div class="oc-kpis"><div><span>Futures</span><b>' + f(F, 4) + '</b></div><div><span>Expiry</span><b>' + esc(N.expires || "—") + "</b><small>" + M.dte + " days</small></div>" +
       "<div><span>ATM IV</span><b>" + f(N.iv, 2) + "%</b></div><div><span>Expected move to expiry · 1σ</span><b>±" + (em ? f(em, 4) : "—") + "</b><small>" + (em ? f(F - em, 4) + " – " + f(F + em, 4) : "") + "</small></div>" +
-      "<div><span>Put / call OI</span><b>" + f(N.pcr, 2) + "</b></div><div><span>Call wall</span><b>" + (cw != null ? f(cw, 2) : "—") + "</b><small>" + (N.call_wall ? oiF(N.call_wall[1]) + " OI" : "") + (cw != null ? " · " + wd(cw) : "") + "</small></div>" +
-      "<div><span>Put wall</span><b>" + (pw != null ? f(pw, 2) : "—") + "</b><small>" + (N.put_wall ? oiF(N.put_wall[1]) + " OI" : "") + (pw != null ? " · " + wd(pw) : "") + "</small></div></div>" +
+      "<div><span>Put / call OI</span><b>" + f(N.pcr, 2) + "</b></div><div><span>Call wall</span><b>" + (cw != null ? f(cw, 2) : "—") + "</b><small>" + (CW ? oiF(CW[1]) + " OI" : "") + (cw != null ? " · " + wd(cw) : "") + "</small></div>" +
+      "<div><span>Put wall</span><b>" + (pw != null ? f(pw, 2) : "—") + "</b><small>" + (PW ? oiF(PW[1]) + " OI" : "") + (pw != null ? " · " + wd(pw) : "") + "</small></div></div>" +
       '<div class="oc-ctl">' + (M.legs.length > 1 ? "<span>Chain</span>" + seg("data-oc-leg", M.legs.map(function (l) { return [l, legName(l)]; }), M.leg) : "<span>Chain</span><b class=\"oc-one\">" + esc(legName(M.leg)) + "</b>") +
       "<span>Strikes</span>" + seg("data-oc-rng", [["all", "All"], ["20", "±20%"], ["10", "±10%"], ["5", "±5%"]], S.rng) +
       "<span>Show</span>" + seg("data-oc-oi", [["1", "With open interest"], ["0", "Every strike"]], S.oi ? "1" : "0") + seg("data-oc-gk", [["1", "Greeks"], ["0", "No Greeks"]], S.gk ? "1" : "0") + seg("data-oc-gx", [["1", "Gamma curve"], ["0", "Ladder only"]], S.gx ? "1" : "0") + "</div>" +
       (S.gx ? gammaBlock(k, M, L) : "") +
-      '<div class="oc-leg"><span class="oc-hi-oi">Most open interest</span><span class="oc-hi-vol">Most volume</span><span class="oc-hi-pv">Most premium value held</span><small>per side, among the strikes shown · ' +
+      '<div class="oc-leg"><span class="oc-hi-oi">Most open interest</span><span class="oc-hi-vol">Most volume</span><span class="oc-hi-pv">Most premium value held</span><small>per side, among the strikes shown · open interest and value: out of the money only (calls above, puts below the futures) · ' +
         ["c", "p"].map(function (sd) { var H = HI[sd]; return (sd === "c" ? "Calls" : "Puts") + ": OI " + (H.oi != null ? kf(H.oi) : "—") + " · vol " + (H.vol != null ? kf(H.vol) : "—") + " · value " + (H.pv != null ? kf(H.pv) : "—"); }).join(" | ") + "</small></div>" +
       '<div class="tbl-scroll oc-wrap"><table class="oc-t no-tx zm-yes"><thead>' + head + "</thead><tbody>" + (L.length ? body : '<tr><td colspan="' + (cCols.length * 2 + 2) + '" class="na">No strikes in this range.</td></tr>') + "</tbody></table></div>" +
       '<p class="note">' + L.length + " strikes shown · calls OI " + oiF(tot.c) + " · puts OI " + oiF(tot.p) + (M.G[M.leg].note ? " · " + esc(M.G[M.leg].note) : "") + ". OI, OI Δ (vs the previous chain pull), volume and IV are the CME chain pull. " +
