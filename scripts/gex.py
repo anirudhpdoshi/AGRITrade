@@ -139,7 +139,9 @@ def build(key):
         atm = min(T, key=lambda r: abs(r[0] - S))
         ivs = [x for x in (atm[5], atm[6]) if x]
         aiv = round(sum(ivs) / len(ivs), 2) if ivs else round(V * 100, 2)
-        cw = max(T, key=lambda r: r[1]); pw = max(T, key=lambda r: r[2])
+        # walls out of the money only: call wall = most call OI at/above spot, put wall = most put OI at/below it (owner, Nov 23 2026)
+        up = [r for r in T if r[0] >= S] or T; dn = [r for r in T if r[0] <= S] or T
+        cw = max(up, key=lambda r: r[1]); pw = max(dn, key=lambda r: r[2])
         return {"net_gex_m": round(sum(v for _, v in net), 1), "flip": flip, "call_wall": [cw[0], cw[1]], "put_wall": [pw[0], pw[2]],
                 "atm_iv": aiv, "em": round(S * aiv / 100 * math.sqrt(max(dte, 1) / 365), 2) if aiv else None,
                 "em_week": round(S * aiv / 100 * math.sqrt(7 / 365), 2) if aiv else None}

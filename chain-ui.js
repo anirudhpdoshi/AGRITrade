@@ -41,10 +41,17 @@
         C: b76(F, K, T, r[3], true), P: b76(F, K, T, r[4], false) }; });
     return { G: G, N: N, leg: leg, legs: legs, F: F, Fsrc: Fsrc, T: T, dte: dte, rows: rows };
   }
+  /* walls against the futures price the ladder and the bell curve use: call wall = most call OI at/above it, put wall = most
+     put OI at/below it — so neither view can tag an in-the-money strike (owner, Nov 23 2026) */
+  function walls(M) {
+    var F = M.F, cw = null, pw = null;
+    M.rows.forEach(function (r) { if (r.K >= F && r.coi > 0 && (!cw || r.coi > cw[1])) cw = [r.K, r.coi]; if (r.K <= F && r.poi > 0 && (!pw || r.poi > pw[1])) pw = [r.K, r.poi]; });
+    return { cw: cw || M.N.call_wall, pw: pw || M.N.put_wall };
+  }
   /* gamma bell curve & dealer GEX profile for the strikes shown (owner, Nov 23 2026) */
   function gammaBlock(k, M, L) {
     if (!root.GAMMA_UI || !L.length) return "";
-    var N = M.N, F = M.F, iv = +N.iv || null, fb = 0;
+    var N = M.N, F = M.F, iv = +N.iv || null, fb = 0, WB = walls(M);
     var rows = L.map(function (r) {
       var gc = r.C ? r.C.g : (iv ? b76(F, r.K, M.T, iv, true) || {} : {}).g, gp = r.P ? r.P.g : (iv ? b76(F, r.K, M.T, iv, false) || {} : {}).g;
       if ((!r.C && r.coi) || (!r.P && r.poi)) fb++;
@@ -57,7 +64,7 @@
     var em = iv && M.T ? F * iv / 100 * Math.sqrt(M.T) : null;
     return '<div class="oc-gx"><h3 class="oc-gxh">Gamma bell curve &amp; dealer GEX profile <small>' + esc(N.chain || "") + " · " + M.dte + " days to expiry · strikes in the current filter</small></h3>" +
       GAMMA_UI.chart({ spot: F, spotLab: (N.contract || "") + " futures", dfmt: function (x) { return (x * 100).toFixed(1) + "¢"; }, rows: rows, iv: iv, normalIv: nIv, normalLab: "median of the last " + VH.length + " sessions held", T: M.T, horizon: "to expiry", em: em,
-        callWall: N.call_wall && N.call_wall[0], putWall: N.put_wall && N.put_wall[0], flip: flip, kfmt: function (x) { return (+x).toFixed(2); }, sfmt: function (x) { return (+x).toFixed(4).replace(/0+$/, "").replace(/\.$/, ""); } }) +
+        callWall: WB.cw && WB.cw[0], putWall: WB.pw && WB.pw[0], flip: flip, kfmt: function (x) { return (+x).toFixed(2); }, sfmt: function (x) { return (+x).toFixed(4).replace(/0+$/, "").replace(/\.$/, ""); } }) +
       '<p class="note">GEX per strike = Black-76 gamma (strike IV' + (fb ? "; " + fb + " strike" + (fb > 1 ? "s" : "") + " without an IV use the chain's ATM IV" : "") + ") × OI × 5,000 bu × futures² × 1%, in $ millions; calls count positive and puts negative (dealers assumed long calls, short puts — the usual convention, not a measured position). " +
       "The bell is the gamma of one option struck at each strike, at today's ATM IV and at the normal IV: wider = hedging flows spread over a wider price band. Gamma flip = where cumulative net GEX from the lowest strike changes sign.</p></div>";
   }
@@ -76,8 +83,7 @@
     var top = function (key, any) { var b = null; L.forEach(function (r) { if ((any || otm(r, key)) && r[key] != null && r[key] > 0 && (!b || r[key] > b[key])) b = r; }); return b ? b.K : null; };
     var HI = { c: { oi: top("coi"), vol: top("cvol", true), pv: top("cpv") }, p: { oi: top("poi"), vol: top("pvol", true), pv: top("ppv") } };
     /* walls against the same futures price the ladder shades by, so CW is never on an ITM call or PW on an ITM put */
-    var CW = null, PW = null; M.rows.forEach(function (r) { if (r.K >= F && r.coi > 0 && (!CW || r.coi > CW[1])) CW = [r.K, r.coi]; if (r.K <= F && r.poi > 0 && (!PW || r.poi > PW[1])) PW = [r.K, r.poi]; });
-    CW = CW || N.call_wall; PW = PW || N.put_wall;
+    var WL = walls(M), CW = WL.cw, PW = WL.pw;
     var cw = CW && CW[0], pw = PW && PW[0];
     var atm = L.length ? L.reduce(function (a, b) { return Math.abs(b.K - F) < Math.abs(a.K - F) ? b : a; }).K : null;
     var em = N.iv && M.T ? F * N.iv / 100 * Math.sqrt(M.T) : null;
@@ -202,7 +208,7 @@
     var VH = (M.G.vol_hist || []).map(function (x) { return +x[1]; }).filter(function (x) { return x > 0; }).sort(function (a, b) { return a - b; });
     var sT = iv && M.T ? iv / 100 * Math.sqrt(M.T) : null;
     return { k: k, F: F, contract: N.contract, chain: N.chain, dte: M.dte, iv: iv, normalIv: VH.length >= 10 ? VH[Math.floor(VH.length / 2)] : null, net: net, flip: flip,
-      callWall: N.call_wall && +N.call_wall[0], putWall: N.put_wall && +N.put_wall[0], pcr: N.pcr != null ? +N.pcr : null,
+      callWall: (function () { var w = walls(M).cw; return w && +w[0]; })(), putWall: (function () { var w = walls(M).pw; return w && +w[0]; })(), pcr: N.pcr != null ? +N.pcr : null,
       r68: sT ? [F * Math.exp(-sT), F * Math.exp(sT)] : null, addC: addC, addP: addP };
   }
   root.CHAIN_UI = { html: html, model: model, tick: tick, insight: insight };
