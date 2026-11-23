@@ -9,13 +9,16 @@
       ["corn", "deriv", "Derivatives", "Options & open interest by strike, futures roll day by day, CFTC funds, IV skew"],
       ["corn", "inputs", "Input costs", "Fertilizer, energy and freight behind the crop"],
       ["corn", "fund", "Fundamentals", "WASDE balance sheets, crop progress, exports"],
-      ["fx", "overview", "USD/CAD", "Spot, drivers, volatility cone (20/50/100-day σ), CFTC CAD positioning"],
+      ["corn", "prices", "Prices", "Futures curve, settles and spreads"],
+      ["fx", "overview", "USD/CAD", "Spot, drivers, expected move & forecast, CFTC CAD positioning"],
+      ["fx", "deriv", "USD/CAD derivatives", "CFTC CAD funds, forwards, sentiment & FX options"],
       ["fx", "ysm", "Yield spreads", "US vs Canada yields ON–30Y, SOFR/CORRA basis, curve and history"],
+      ["fx", "rates", "Rates, policy & energy", "Fed and BoC pricing, CORRA strip, oil and energy"],
       ["fx", "fwd", "Forward rates", "Forward points and outright forwards"],
       ["fx", "metals", "Mineral exports", "Canada's metal & mineral exports by segment, prices, FX impact"]],
     positioning: [["positioning", null, "Positioning / OI", "Open interest, CFTC funds, options walls and volatility — corn, wheat, soybeans, USD/CAD"]],
     macro: [["macro", "dash", "Dashboard", "US · Canada macro table and surprises"], ["macro", "cpi", "CPI deep dive", "Inflation components, US + Canada"],
-      ["macro", "cycle", "Cycle & Fed policy", "Growth, jobs map, policy path"], ["macro", "rates", "Rates, policy & energy", ""], ["macro", "trade", "Trade & fiscal", ""], ["macro", "rel", "Releases & consensus", ""]],
+      ["macro", "cycle", "Cycle & Fed policy", "Growth, jobs map, policy path"], ["macro", "trade", "Trade & fiscal", ""], ["macro", "rel", "Releases & consensus", ""]],
     world: [["world", null, "Markets & sessions", "Every exchange: map with index and commodity prices, sessions, movers, 52-week alerts"],
       ["usmkt", null, "US Markets", "S&P 500, Nasdaq, Dow, Russell with EMAs; snapshot, indexes, sectors, market cap"],
       ["indices", null, "US Indices · weekly & Nifty", "Weekly levels, wicks, returns, correlation, volatility cones, next-month ranges"]],
@@ -27,6 +30,7 @@
     breakouts: [["breakouts", null, "Breakouts", "Live day highs/lows, 52-week and moving-average breaks"]],
     health: [["health", null, "Health", "Data feeds, APIs and schedules — what is fresh and what is late"]]
   };
+  root.GNAV_MAP = M;   /* shared with shell-nav.js (left section menu) */
   var card = doc.createElement("div"); card.id = "gnav-hc"; card.hidden = true; card.setAttribute("role", "menu"); doc.body.appendChild(card);
   var tOpen = 0, tClose = 0, cur = null;
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
@@ -52,6 +56,9 @@
     if (ev.target.closest && ev.target.closest(".gnav-b")) { close(); return; }
     var i = ev.target.closest && ev.target.closest("#gnav-hc [data-hc]"); if (!i) return;
     var x = M[card.getAttribute("data-g")][+i.getAttribute("data-hc")]; close();
+    /* one navigation path (shell-nav.js): waits for the page to render before choosing its section, and a newer click
+       cancels an older one — the old fixed 60 / 120 ms timers could fire before a slow page existed or after a later click */
+    if (root.DESK_NAV) { DESK_NAV.go(x[0], x[1], card.getAttribute("data-g")); return; }
     var gb = doc.querySelector('.gnav-b[data-gnav="' + card.getAttribute("data-g") + '"]'); if (gb) gb.click();
     setTimeout(function () { var tb = doc.getElementById("tabbtn-" + x[0]); if (tb) tb.click();
       if (x[1]) setTimeout(function () { try { root.setSub(x[0], x[1]); } catch (e) {} }, 120); }, 60);

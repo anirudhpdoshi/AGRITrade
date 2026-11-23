@@ -579,7 +579,7 @@
     if (old && old.classList.contains("fxf-tile")) [].forEach.call(t.querySelectorAll("details"), function (d, i) { if (i in OPEN) d.open = OPEN[i]; });
     /* keep the desk's section-tab tags (sectabs.js) so the card stays in its section and keeps its shown/hidden state */
     if (old) { ["data-sec", "data-sec-lab"].forEach(function (a) { if (old.hasAttribute(a)) t.setAttribute(a, old.getAttribute(a)); }); if (old.classList.contains("st-off")) t.classList.add("st-off"); }
-    else { t.setAttribute("data-sec", "cone"); t.setAttribute("data-sec-lab", "Expected move & forecast"); }
+    /* no old card: leave it untagged so sectabs.js files it under its section and lists it in the section row */
     if (old) old.replaceWith(t); else { var first = [].filter.call(S.children, function (c) { return c.classList.contains("tile") && !/kpi-strip|dash-head/.test(c.className); })[0]; S.insertBefore(t, first || null); }
     LASTPX = spotNow().px; if (POP && ST.tab === "dash") showPop(t.querySelector(".fxf-pop"));
     /* first draw may happen while the card is hidden (width unknown): redraw once at the real width */

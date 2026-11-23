@@ -152,7 +152,14 @@ body.fxo .topbar h1{font-family:"JetBrains Mono","IBM Plex Mono",monospace;font-
 body.fxo .snapshot-banner,body.fxo .season-banner{background:#000!important}
 nav.tabs [data-gnav-of="grains"]{display:none!important}
 .fwd-legacy{display:none!important}   /* the 24-month matrix replaces it; kept in the page because the matrix reprices from its engine */
-@media (min-width:1021px){body.gr3 #panel-fx .qt-grid{grid-template-columns:repeat(7,minmax(0,1fr))!important}body.gr3 #panel-fx .qt-v{font-size:19px!important}body.gr3 #panel-fx .qt{padding:8px 9px!important}}
+@media (min-width:1021px){body.gr3 #panel-fx .qt-grid{grid-template-columns:repeat(auto-fit,minmax(122px,1fr))!important}body.gr3 #panel-fx .qt-v{font-size:19px!important}body.gr3 #panel-fx .qt{padding:8px 9px!important}}
+/* nothing cut when the feed or a menu narrows the page (owner, Nov 23 2026): quote cells and forward cells wrap to a new row
+   instead of squeezing; labels never break inside a word; prices never split */
+.qt-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 6px}.qt-h b,.qt-sub{white-space:nowrap;word-break:keep-all}
+.qt-v,.qt-box{white-space:nowrap}.qt{overflow:hidden}
+body.fxo .tab-panel.active .qt-v{font-size:clamp(17px,1.45vw,24px)!important}
+.fxmx{grid-template-columns:repeat(auto-fit,minmax(124px,1fr))!important}.fxmx-f{font-size:clamp(18px,1.6vw,26px)}
+.kpi-strip{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 .tq-p{overflow-x:auto}@media (max-width:760px){.tq-svg{min-width:860px}}
 /* no filled yellow buttons anywhere: the selected option is a gold outline */
 body.fxo .tab-panel.active button[aria-pressed="true"]:not(.gr-tile):not(.subbtn):not([data-pisub]):not(.vc-tg),body.fxo .tab-panel.active button.on:not(.ad-co-b):not(.subbtn):not(.pi-card),body.fxo #gsub .gsub-b[aria-pressed="true"]{background:rgba(217,180,106,.08)!important;color:#d9b46a!important;border-color:#d9b46a!important;box-shadow:none!important}
