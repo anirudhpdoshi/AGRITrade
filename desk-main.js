@@ -2848,7 +2848,7 @@ function renderGrain(key){ try{ oiSanitize(DATA); }catch(e){}
   var g=DATA.grains[key], meta=GMETA[key], f=g.fan, last=g.cftc[g.cftc.length-1], prev=g.cftc[g.cftc.length-2];
   var MA50=f.ma50||{corn:"5.10", soybeans:"12.75", wheat:"7.05"}[key];
   var wow = last.net - prev.net;
-  var html='<div class="layout"><div class="grid">'+grainSubnavHTML(key), OV=grainKpiHTML(key)+grainDashboardHTML(key), DV='', FU='';
+  var html='<div class="layout no-rail"><div class="grid">'+grainSubnavHTML(key), OV=grainKpiHTML(key)+grainDashboardHTML(key), DV='', FU='';
   /* the 10-day σ fan card was merged into the Volatility cone (volcone.js): one cone, implied or realised σ */
   /* export sales — 10-week trend */
   FU+=wasdeTableHTML(key)+exportTileHTML(key)+destTileHTML(key);
@@ -2883,7 +2883,9 @@ function renderGrain(key){ try{ oiSanitize(DATA); }catch(e){}
   var FH='<div class="tile wide geo-head"><div class="tile-head"><h2>'+meta.name+' fundamentals <span class="h2note">— pick a geography</span></h2><span class="toggle" role="group">'+gb('us',flag('us',11)+' US · USDA / WASDE')+gb('ca',flag('ca',11)+' CANADA · STATCAN')+gb('on',flag('ca',11)+' ONTARIO')+gb('br',(window.WORLD&&WORLD.flag?WORLD.flag('br',11):'')+' BRAZIL \u00b7 CONAB')+gb('world',(window.WORLD&&WORLD.flag?WORLD.flag('xx',11):'')+' WORLD \u00b7 USDA')+'</span></div></div>';
   FU=(geo==='br'||geo==='world')?FH+cropCompareHTML(key)+(window.GG?GG.exportsHTML(key)+GG.html(key,geo):'<div class="tile wide"><p class="note">Loading global grain data\u2026</p></div>'):FH+cropCompareHTML(key)+(window.GG&&window.SUB&&SUB[key]==='fund'?GG.exportsHTML(key):'<div class="tile wide"><h2>Export comparison <span class="h2note">\u2014 US \u00b7 Canada \u00b7 Brazil</span></h2><p class="note">Loads when Fundamentals is open\u2026</p></div>')+(geo==='us'?FU:canadaTileHTML(key,true)+canadaChartsHTML(key)+caCalendarHTML());
   html+=subWrap(key,'overview',OV)+subWrap(key,'deriv',DV)+subWrap(key,'fund',FU)+subWrap(key,'inputs',inputsHTML(key))+subWrap(key,'prices',(window.GPRICES?GPRICES.html(key):'<div class="tile wide"><p class="note">Loading forward months…</p></div>'));
-  html+='</div><aside class="rail">'+grainAlertsLiveHTML(key)+grainCalendarHTML(key)+newsRailHTML(NEWS[key], key)+'</aside></div>';
+  /* no right rail on the grain pages (owner, Nov 23 2026): Insights & Activity, Alerts, the USDA/Canada calendar card and the
+     news card are gone; the page takes the full width. Events and News keep their own menus. */
+  html+='</div></div>';
   document.getElementById('panel-'+key).innerHTML=html;
 }
 

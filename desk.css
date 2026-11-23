@@ -1070,3 +1070,5 @@ table.pi-tab td{vertical-align:top}table.pi-tab small{display:block;color:var(--
 .ov-leg{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 14px;font:12px 'IBM Plex Sans',system-ui,sans-serif;color:var(--muted);margin-top:2px}
 .ov-leg span{display:inline-flex;align-items:center;gap:5px}.ov-sw{width:12px;height:9px;background:#7cb342;display:inline-block}.ov-ls{width:18px;height:2.5px;display:inline-block;position:relative}
 .ov-note{text-align:center;font-size:11px;color:var(--faint);margin-top:2px}
+/* pages without a right rail (grain pages, owner Nov 23 2026): one full-width column at every width */
+.layout.no-rail,.layout.no-rail.has-secnav{grid-template-columns:minmax(0,1fr)!important}
