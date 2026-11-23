@@ -138,39 +138,67 @@
     var hi = L.filter(function (e) { return e.high; }).sort(function (a, b) { return a.t - b.t; }), lo = L.filter(function (e) { return !e.high; }).sort(function (a, b) { return a.t - b.t; });
     return hi.slice(0, 8).concat(lo.slice(0, Math.max(0, 10 - Math.min(hi.length, 8)))).sort(function (a, b) { return a.t - b.t; });
   }
+  /* the spoken recap: a short wire-style read, about a minute (owner, Nov 23 2026) */
+  function frac(c) { var q = Math.round((c - Math.floor(c)) * 4) % 4, w = Math.floor(c) + (Math.round((c - Math.floor(c)) * 4) === 4 ? 1 : 0); return { w: w, f: ["", " and a quarter", " and a half", " and three-quarters"][q] }; }
+  function centsWords(c) { var x = frac(Math.abs(c)); if (!x.w && !x.f) return "unchanged"; return (x.w === 0 ? (x.f === " and a half" ? "half a cent" : x.f === " and a quarter" ? "a quarter cent" : "three-quarters of a cent") : x.w === 1 ? "a cent" + x.f : x.w + x.f + " cents"); }
+  function pxWords(px) { var c = px * 100, x = frac(c); return Math.floor(x.w / 100) + "." + ("0" + (x.w % 100)).slice(-2) + x.f; }
+  /* desk shorthand → broadcast English */
+  var MONTHS = { F: "January", G: "February", H: "March", J: "April", K: "May", M: "June", N: "July", Q: "August", U: "September", V: "October", X: "November", Z: "December" }, CROP = { ZC: "corn", ZS: "soybeans", ZW: "wheat", ZM: "meal", ZL: "soyoil", KE: "KC wheat" };
+  function speak(t) {
+    t = String(t || "").replace(/\s*\([^)]*\)/g, "").replace(/;\s*\d+-min close.*$/i, "");
+    t = t.replace(/^(?:Corn|Soybeans|Wheat|Soymeal|Soyoil)?\s*\b(ZC|ZS|ZW|ZM|ZL|KE)([FGHJKMNQUVXZ])\d{2}\b/, function (m, c, mo) { return (MONTHS[mo] || "") + " " + (CROP[c] || c); });
+    t = t.replace(/\s+[—–-]\s+New intraday (high|low) ([\d.,]+)/i, " hits a new intraday $1 at $2");
+    t = t.replace(/\s*·\s*/g, ", ").replace(/\bm\/m\b/g, "month on month").replace(/\by\/y\b/g, "year on year").replace(/\bq\/q\b/g, "quarter on quarter").replace(/^(USD|CAD)\s+/, "").replace(/\bUSD\/CAD\b/g, "US dollar Canada");
+    return t.trim();
+  }
   function script() {
     var S = [], now = Date.now(), M = worldMap();
-    S.push("AGRI Trade desk recap, " + new Date(now).toLocaleString("en-US", { timeZone: "America/Toronto", weekday: "long", hour: "numeric", minute: "2-digit" }) + " Toronto time.");
-    var grp = [["Grains", ["ZC=F", "ZS=F", "ZW=F"]], ["Currency", ["CAD=X", "DX-Y.NYB"]], ["Stocks", ["^GSPC", "^NDX", "^DJI", "^GSPTSE"]], ["Energy and metals", ["CL=F", "GC=F"]], ["Rates", ["US Treasury 10Y"]]];
-    var names = {}, anyPx = false; KEY.forEach(function (k) { names[k[0]] = k[1]; });
-        /* grains: the desk's own front-month quote (same as the Grains tiles); World Markets' continuous future only as fallback */
-    var MON = { F: "January", G: "February", H: "March", J: "April", K: "May", M: "June", N: "July", Q: "August", U: "September", V: "October", X: "November", Z: "December" };
-    var gq = [["corn", "ZC=F"], ["soybeans", "ZS=F"], ["wheat", "ZW=F"]].map(function (c) {
-      try { var g = DATA.grains[c[0]], f = g.fan, L = +f.intraday[0], A = +f.anchor, k = (g.roll && g.roll[0] && g.roll[0].contract) || ""; if (!isFinite(L)) return say(M[c[1]], names[c[1]]);   /* same numbers as the Grains tile */
-        var pc = A ? (L / A - 1) * 100 : null, mo = MON[k.charAt(2)] || "";
-        return (mo ? mo + " " : "") + c[0] + " " + (pc == null ? "at " : Math.abs(pc) < 0.005 ? "unchanged at " : (pc > 0 ? "up " : "down ") + Math.abs(pc).toFixed(2) + " percent at ") + String(+L.toFixed(4)) + " dollars a bushel";
-      } catch (e) { return say(M[c[1]], names[c[1]]); } }).filter(Boolean);
-    if (gq.length) { anyPx = true; S.push("Grains: " + gq.join("; ") + "."); }
-    grp.shift();
-    grp.forEach(function (g) { var p = g[1].map(function (s) { return say(M[s], names[s]); }).filter(Boolean); if (p.length) { anyPx = true; S.push(g[0] + ": " + p.join("; ") + "."); } });
-    var ts = Object.keys(M).map(function (k) { return Date.parse(M[k].ts || 0) || 0; }).sort().pop();
-    if (anyPx && ts) S.push("Prices as of " + hm(ts) + " Eastern" + (now - ts > 6 * 3600e3 ? ", the last close" : "") + ".");
-    S = S.concat(technicals(M));
+    var hr = +new Date(now).toLocaleString("en-US", { timeZone: "America/Toronto", hour: "numeric", hour12: false });
+    S.push((hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening") + ". It's " + new Date(now).toLocaleString("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit" }) + " in Toronto. Here's the desk.");
+    /* grains: the desk's own front-month quotes, moves in cents */
+    var G = [["corn", "Corn"], ["soybeans", "Beans"], ["wheat", "Wheat"]].map(function (c) {
+      try { var g = DATA.grains[c[0]], f = g.fan, L = +f.intraday[0], A = +f.anchor; if (!isFinite(L) || !A) return null;
+        var e20 = f.ema20 != null ? +f.ema20 + 2 / 21 * (L - +f.ema20) : null;
+        return { n: c[1], L: L, ch: (L - A) * 100, pc: (L / A - 1) * 100, above: e20 != null ? L > e20 : null }; } catch (e) { return null; } }).filter(Boolean);
+    if (G.length) {
+      var up = G.filter(function (g) { return g.ch > 0.124; }).length, dn = G.filter(function (g) { return g.ch < -0.124; }).length, big = G.some(function (g) { return Math.abs(g.pc) >= 1.5; });
+      var mood = up === G.length ? (big ? "Grains are rallying" : "Grains are firmer") : dn === G.length ? (big ? "Grains are under pressure" : "Grains remain soft") : !up && !dn ? "Grains are little changed" : "Grains are mixed";
+      S.push(mood + ". " + G.map(function (g, i) { var w = centsWords(g.ch); return (i ? g.n.toLowerCase() : g.n) + (w === "unchanged" ? " unchanged" : (g.ch > 0 ? " up " : " down ") + w) + " at " + pxWords(g.L); }).join(", ") + ".");
+      var bel = G.filter(function (g) { return g.above === false; }).map(function (g) { return g.n.toLowerCase(); }), abv = G.filter(function (g) { return g.above === true; }).map(function (g) { return g.n.toLowerCase(); });
+      var lst = function (a) { return a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1]; };
+      if (bel.length && abv.length) S.push(lst(bel).replace(/^./, function (c) { return c.toUpperCase(); }) + " still below the 20-day average; " + lst(abv) + " holding above.");
+      else if (bel.length) S.push("All three still trade below their 20-day averages.");
+      else if (abv.length) S.push("All three hold above their 20-day averages.");
+    }
+    /* equities, dollar, energy, rates — one line each */
+    var pc = function (s) { var x = M[s]; return x && x.pct != null ? x.pct : null; };
+    var EQ = [["^GSPC", "the S and P"], ["^NDX", "the Nasdaq 100"], ["^DJI", "the Dow"]].filter(function (q) { return pc(q[0]) != null; });
+    if (EQ.length) { var u = EQ.filter(function (q) { return pc(q[0]) > 0.05; }).length, d = EQ.filter(function (q) { return pc(q[0]) < -0.05; }).length, mx = Math.max.apply(null, EQ.map(function (q) { return Math.abs(pc(q[0])); }));
+      var lead = u === EQ.length ? (mx >= 1.5 ? "Stocks are surging" : mx >= 0.5 ? "Stocks are higher" : "Stocks edge higher") : d === EQ.length ? (mx >= 1.5 ? "Stocks are sliding" : mx >= 0.5 ? "Stocks are lower" : "Stocks edge lower") : "Stocks are mixed";
+      S.push(lead + ", " + EQ.map(function (q) { var v = pc(q[0]); return q[1] + " " + (Math.abs(v) < 0.05 ? "flat" : (v > 0 ? "up " : "down ") + Math.abs(v).toFixed(1) + " percent"); }).join(", ") + "."); }
+    var cad = M["CAD=X"] || M["USDCAD=X"];
+    if (!cad && window.DATA && DATA.fx && DATA.fx.spot) {   /* the FX tile's live spot vs its reference close, else the snapshot mid */
+      var sp = DATA.fx.spot, el = document.getElementById("fx-spot-big"), lv = el ? parseFloat(el.textContent.replace(/[^\d.]/g, "")) : NaN, px = isFinite(lv) && lv > 0.5 ? lv : sp.mid;
+      cad = px ? { last: px, pct: sp.ref ? (px / sp.ref - 1) * 100 : sp.chg_pct } : null; }
+    if (cad && cad.last != null) S.push("The loonie is " + (cad.pct > 0.05 ? "weaker" : cad.pct < -0.05 ? "firmer" : "steady") + ", US dollar Canada at " + (+cad.last).toFixed(4) + ".");
+    var oth = [];
+    if (M["CL=F"] && M["CL=F"].pct != null) oth.push("crude " + (M["CL=F"].pct >= 0 ? "up " : "down ") + Math.abs(M["CL=F"].pct).toFixed(1) + " percent at " + (+M["CL=F"].last).toFixed(2));
+    if (M["GC=F"] && M["GC=F"].pct != null) oth.push("gold " + (M["GC=F"].pct >= 0 ? "up " : "down ") + Math.abs(M["GC=F"].pct).toFixed(1) + " percent");
+    var tn = M["US Treasury 10Y"]; if (tn && tn.last != null) oth.push("the ten-year at " + (+tn.last).toFixed(2) + " percent");
+    if (oth.length) S.push(oth.join(", ").replace(/^./, function (c) { return c.toUpperCase(); }) + ".");
+    /* headlines: what broke today, then the agri wire */
     var F = feed().filter(function (m) { return m && m.t && dayKey(m.t) === dayKey(now) && m.t <= now + 60000; }).sort(function (a, b) { return b.t - a.t; });
     var brk = F.filter(isBreaking).map(function (m) { return info(m).txt; }).filter(Boolean);
-    var rest = F.filter(function (m) { return !isBreaking(m) && /release|policy|alert|level|world/.test(m.k || ""); }).map(function (m) { return info(m).txt; }).filter(Boolean);
-    if (brk.length) S.push("Breaking today: " + brk.slice(0, 5).join(". ") + ".");
-    if (rest.length) S.push("Also on the desk today: " + rest.slice(0, 5).join(". ") + ".");
-    if (!brk.length && !rest.length) S.push("No breaking releases or alerts on the desk so far today.");
-    var I = intel(24).slice(0, 5);
-    if (I.length) S.push("Agri and market news in the last 24 hours: " + I.map(function (r) { return r.txt + (r.src ? ", from " + r.src : "") + (r.why ? ". Why it matters: " + r.why : ""); }).join(". ") + ".");
-    var last = ls("desk.recap.heard", 0), ch = LOG.filter(function (x) { return x.t > last; });
-    if (ch.length) { var by = {}; ch.forEach(function (x) { (by[x.s] = by[x.s] || []).push(x.n); }); S.push("What changed in the app since your last recap: " + Object.keys(by).map(function (k) { return k + ": " + by[k].slice(-3).join(" "); }).join(". ") + "."); }
-    var ew = watch(now);
-    if (ew.length) S.push("Events to watch: " + ew.map(function (e) { return plain(e.label) + ", " + when(e.t, now) + (e.high ? ", high impact" : ""); }).join("; ") + ".");
-    S.push("End of recap.");
-    return S.map(function (s) { return s.replace(/\$/g, " dollars ").replace(/&/g, " and ").replace(/\s+/g, " ").replace(/\.\./g, ".").trim(); });
+    if (brk.length) S.push("In the headlines: " + brk.slice(0, 2).map(speak).join(". Also, ") + ".");
+    var I = intel(24).slice(0, 2);
+    if (I.length) S.push("On the agri wire: " + I.map(function (r) { return r.txt.replace(/\s+-\s+[^-]+$/, ""); }).join(". And ") + ".");
+    /* what's next: the two nearest high-impact events */
+    var ew = watch(now).filter(function (e) { return e.high; }).slice(0, 2);
+    if (ew.length) S.push("Ahead: " + ew.map(function (e) { return speak(plain(e.label)) + ", " + when(e.t, now); }).join("; then ") + ".");
+    S.push("That's the desk.");
+    return S.map(function (x) { return x.replace(/\$/g, " dollars ").replace(/&/g, " and ").replace(/\s+/g, " ").replace(/\.\./g, ".").trim(); });
   }
+
 
   /* ---------- player ---------- */
   var SY = window.speechSynthesis, Q = [], qi = 0, playing = false, rate = ls(RATEK, 1);
