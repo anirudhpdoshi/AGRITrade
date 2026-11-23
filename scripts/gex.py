@@ -45,13 +45,15 @@ def bs_gamma(S, K, T, iv):
     return npdf(d1) / (S * iv * sq)
 
 
-def vol_median(tk):
+def vol_index(tk):
+    """(1-year median, latest close) of the index's own volatility index"""
     try:
         h = UDC.yf().Ticker(tk).history(period="1y", interval="1d", auto_adjust=False)["Close"].dropna()
-        return round(float(statistics.median(h.values)), 2) if len(h) > 100 else None
+        if len(h) > 100:
+            return round(float(statistics.median(h.values)), 2), round(float(h.iloc[-1]), 2)
     except Exception as e:
         print(f"  ! {tk}: {type(e).__name__}")
-        return None
+    return None, None
 
 
 def build(key):
@@ -67,6 +69,9 @@ def build(key):
         S = float(h.iloc[-1]) if len(h) else None
     if not S:
         raise ValueError("no spot")
+    v_med, v_now = vol_index(vix)
+    V = (v_now or v_med or 20.0) / 100
+    fb = [0, 0]     # contracts whose quoted IV was missing / implausible -> the volatility index level is used for gamma
     now = datetime.now(timezone.utc)
     today = now.date()
     rows, exps = {}, {}
@@ -87,9 +92,12 @@ def build(key):
                 if not K or abs(K / S - 1) > BAND:
                     continue
                 oi = o.get("openInterest"); oi = float(oi) if oi == oi and oi is not None else 0.0
-                iv = o.get("impliedVolatility"); iv = float(iv) if iv == iv and iv is not None and float(iv) > 0.01 else None
+                iv = o.get("impliedVolatility"); iv = float(iv) if iv == iv and iv is not None else None
+                fb[1] += 1
+                if not (iv and 0.4 * V <= iv <= 3.0 * V):   # Yahoo IV is unreliable off-hours and deep in the money
+                    iv = None; fb[0] += 1
                 vol = o.get("volume"); vol = float(vol) if vol == vol and vol is not None else 0.0
-                g = bs_gamma(S, K, T, iv)
+                g = bs_gamma(S, K, T, iv or V)
                 exps[e] = exps.get(e, 0) + 1
                 for win in ("w30", e):
                     r = rows.setdefault((win, K), {"K": K, "coi": 0, "poi": 0, "cg": 0.0, "pg": 0.0, "cgex": 0.0, "pgex": 0.0, "civ": [], "piv": [], "cvol": 0, "pvol": 0})
@@ -130,7 +138,7 @@ def build(key):
                 flip = k
         atm = min(T, key=lambda r: abs(r[0] - S))
         ivs = [x for x in (atm[5], atm[6]) if x]
-        aiv = round(sum(ivs) / len(ivs), 2) if ivs else None
+        aiv = round(sum(ivs) / len(ivs), 2) if ivs else round(V * 100, 2)
         cw = max(T, key=lambda r: r[1]); pw = max(T, key=lambda r: r[2])
         return {"net_gex_m": round(sum(v for _, v in net), 1), "flip": flip, "call_wall": [cw[0], cw[1]], "put_wall": [pw[0], pw[2]],
                 "atm_iv": aiv, "em": round(S * aiv / 100 * math.sqrt(max(dte, 1) / 365), 2) if aiv else None,
@@ -141,7 +149,8 @@ def build(key):
     T30, TN = table("w30"), table(near)
     return {"key": key, "name": name, "spot": round(S, 2), "ts": now.isoformat(timespec="seconds"), "symbol": ysym,
             "expiries": sorted(exps), "near": near, "near_dte": near_dte, "window_dte": far_dte,
-            "normal_iv": vol_median(vix), "normal_src": vix + " 1-year median",
+            "normal_iv": v_med, "normal_src": vix + " 1-year median", "vol_index": v_now, "vol_index_sym": vix,
+            "iv_fallback": {"n": fb[0], "of": fb[1]},
             "w30": {"rows": T30, **summary(T30, far_dte)}, "nearest": {"rows": TN, **summary(TN, near_dte)}}
 
 
