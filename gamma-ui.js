@@ -89,13 +89,58 @@
       "<div><em class=gx-k>Call wall</em><b>" + (o.callWall != null ? esc(o.kfmt(o.callWall)) : "—") + "</b><small>" + away(o.callWall) + "</small></div><div><em class=gx-k>Put wall</em><b>" + (o.putWall != null ? esc(o.kfmt(o.putWall)) : "—") + "</b><small>" + away(o.putWall) + "</small></div>" +
       "<div><em class=gx-k>ATM IV</em><b>" + (o.iv ? o.iv.toFixed(1) + "%" : "—") + "</b><small>" + (o.normalIv ? "normal " + o.normalIv.toFixed(1) + "% · " + (o.iv > o.normalIv * 1.15 ? "elevated: bell wider" : o.iv < o.normalIv * 0.87 ? "subdued: bell narrower" : "near normal") : "") + "</small></div>" +
       "<div class=gx-zr><em class=gx-k>Ranges " + esc(o.horizon || "") + "</em>" + (BANDS.length ? BANDS.slice().reverse().map(function (B) { return '<span class="gx-zrow ' + B.z[2] + '"><i></i>' + B.z[1] + " " + esc(o.sfmt(B.lo)) + " – " + esc(o.sfmt(B.hi)) + "</span>"; }).join("") : "<b>—</b>") + "</div></div>";
-    return read + '<svg viewBox="0 0 ' + W + " " + H + '" class="gx-svg" role="img" aria-label="Gamma bell curve and dealer GEX profile">' + out + "</svg>" + leg;
+    /* crosshair readout data (owner, Nov 23 2026): everything the label box shows, per strike, precomputed and formatted */
+    var XD = { k0: k0, k1: k1, PL: PL, PR: PR, W: W, H: H, PT: PT, PB: PB, S: S, T: o.T || 0, iv: o.iv || 0, niv: C0 ? o.normalIv : 0,
+      cw: o.callWall, pw: o.putWall, fl: o.flip, b: BANDS.map(function (B) { return [B.z[1], B.lo, B.hi]; }),
+      r: R.map(function (r) { var d = r.K - S; return [r.K, o.kfmt(r.K), r.net == null || !isFinite(r.net) ? null : money(r.net), r.coi || 0, r.poi || 0, r.civ || null, r.piv || null,
+        (d >= 0 ? "+" : "−") + o.dfmt(Math.abs(d)) + " (" + (d >= 0 ? "+" : "−") + Math.abs(d / S * 100).toFixed(2) + "%)", r.net || 0]; }) };
+    out += '<line class="gx-xh" x1="0" x2="0" y1="' + PT + '" y2="' + (H - PB) + '" visibility="hidden"/>';
+    return read + '<div class="gx-wrap"><svg viewBox="0 0 ' + W + " " + H + '" class="gx-svg" role="img" aria-label="Gamma bell curve and dealer GEX profile" data-gx="' + esc(JSON.stringify(XD)) + '">' + out + '</svg><div class="gx-tip" hidden></div></div>' + leg;
   }
+
+  /* crosshair: move the mouse (or drag a finger) across the chart — a line snaps to the nearest strike and a label box shows
+     that strike's numbers (owner, Nov 23 2026) */
+  function xhMove(e) {
+    var svg = e.target.closest && e.target.closest(".gx-svg");
+    [].forEach.call(doc.querySelectorAll(".gx-wrap"), function (w) { if (!svg || w !== svg.parentNode) xhHide(w); });
+    if (!svg) return;
+    var D = svg._gx; if (!D) { try { D = svg._gx = JSON.parse(svg.getAttribute("data-gx")); } catch (er) { return; } }
+    var bb = svg.getBoundingClientRect(), vx = (e.clientX - bb.left) * D.W / bb.width;
+    if (vx < D.PL - 8 || vx > D.W - D.PR + 8) { xhHide(svg.parentNode); return; }
+    var Xf = function (k) { return D.PL + (D.W - D.PL - D.PR) * (k - D.k0) / ((D.k1 - D.k0) || 1); };
+    var r = D.r.reduce(function (a, b) { return Math.abs(Xf(b[0]) - vx) < Math.abs(Xf(a[0]) - vx) ? b : a; }), x = Xf(r[0]);
+    var L = svg.querySelector(".gx-xh"); L.setAttribute("x1", x); L.setAttribute("x2", x); L.setAttribute("visibility", "visible");
+    var peak = D.iv ? g1(D.S, D.S, D.T, D.iv) : 0, gb = D.iv ? g1(D.S, r[0], D.T, D.iv) / (peak || 1) * 100 : null, gn = D.niv ? g1(D.S, r[0], D.T, D.niv) / (g1(D.S, D.S, D.T, D.niv) || 1) * 100 : null;
+    var zone = D.b.slice().reverse().filter(function (B) { return r[0] >= B[1] && r[0] <= B[2]; })[0];
+    var tag = r[0] === D.cw ? ' <i class="gx-tt cw">CALL WALL</i>' : r[0] === D.pw ? ' <i class="gx-tt pw">PUT WALL</i>' : "";
+    if (r[0] === D.fl) tag += ' <i class="gx-tt fl">GAMMA FLIP</i>';
+    var row = function (k, v, c) { return "<tr><td>" + k + '</td><td class="' + (c || "") + '">' + v + "</td></tr>"; };
+    var tip = svg.parentNode.querySelector(".gx-tip");
+    tip.innerHTML = "<b>Strike " + esc(r[1]) + "</b>" + tag + "<table>" +
+      row("vs spot", esc(r[7])) +
+      row("Net GEX", r[2] == null ? "—" : esc(r[2]) + " / 1%", r[8] > 0 ? "up" : r[8] < 0 ? "dn" : "") +
+      row("Call OI", r[3].toLocaleString("en-US")) + row("Put OI", r[4].toLocaleString("en-US")) +
+      row("Call IV", r[5] ? r[5].toFixed(2) + "%" : "—") + row("Put IV", r[6] ? r[6].toFixed(2) + "%" : "—") +
+      (gb != null ? row("Bell · current IV", gb.toFixed(0) + "% of peak") : "") + (gn != null ? row("Bell · normal IV", gn.toFixed(0) + "% of peak") : "") +
+      row("Range", zone ? "inside " + zone[0] : D.b.length ? "outside 99.5%" : "—") + "</table>";
+    tip.hidden = false;
+    var px = x / D.W * bb.width, wb = svg.parentNode.getBoundingClientRect(), tw = tip.offsetWidth;
+    tip.style.left = Math.max(0, Math.min(wb.width - tw, px + (px + 14 + tw > wb.width ? -tw - 14 : 14))) + "px";
+    tip.style.top = Math.max(0, Math.min(bb.height - tip.offsetHeight, e.clientY - bb.top - 20)) + "px";
+  }
+  function xhHide(w) { if (!w) return; var t = w.querySelector(".gx-tip"), L = w.querySelector(".gx-xh"); if (t) t.hidden = true; if (L) L.setAttribute("visibility", "hidden"); }
+  doc.addEventListener("pointermove", xhMove, { passive: true });
+  doc.addEventListener("pointerdown", xhMove, { passive: true });
+  doc.addEventListener("pointerleave", function () { [].forEach.call(doc.querySelectorAll(".gx-wrap"), xhHide); }, true);
 
   var st = doc.createElement("style");
   st.textContent =
     ".gx-read{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;margin:4px 0 10px}.gx-read>div{border:1px solid var(--line2);border-radius:8px;padding:5px 9px;min-width:0}" +
     ".gx-read .gx-k{display:block;font-style:normal;font:600 10.5px 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.gx-read b{font:600 15px 'IBM Plex Mono',monospace;color:var(--ink)}.gx-read b.up{color:#3fb97f}.gx-read b.dn{color:#ff6b62}.gx-read small{display:block;font-size:11px;color:var(--faint)}" +
+    ".gx-wrap{position:relative}.gx-svg{touch-action:pan-y;cursor:crosshair}.gx-xh{stroke:var(--ink,#e8edf3);stroke-width:1;opacity:.75;pointer-events:none}" +
+    ".gx-tip{position:absolute;z-index:5;pointer-events:none;min-width:190px;background:var(--panel,#0b1016);border:1px solid var(--line2,#2a3442);border-radius:8px;padding:7px 10px;box-shadow:0 6px 18px rgba(0,0,0,.45);font:12px 'IBM Plex Mono',monospace;color:var(--ink,#e8edf3)}" +
+    ".gx-tip table{border-collapse:collapse;margin-top:4px;width:100%}.gx-tip td{padding:1px 0;white-space:nowrap}.gx-tip td:first-child{color:var(--muted,#8a97a8);padding-right:12px}.gx-tip td:last-child{text-align:right}.gx-tip .up{color:#3fb97f}.gx-tip .dn{color:#ff6b62}" +
+    ".gx-tt{font-style:normal;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;border:1px solid}.gx-tt.cw{color:#5fd39a}.gx-tt.pw{color:#ff8a84}.gx-tt.fl{color:#c9a3ff}" +
     ".gx-svg{width:100%;height:auto;display:block}.gx-svg text{font-family:'IBM Plex Mono',monospace}" +
     ".gx-grid{stroke:var(--line);stroke-width:1}.gx-zero{stroke:var(--line2);stroke-width:1.2}.gx-yl{font-size:10.5px;fill:var(--muted)}.gx-ivl{fill:#e3c14d}.gx-xl{font-size:10.5px;fill:var(--muted);text-anchor:middle}.gx-ax{font-size:10.5px;fill:var(--faint);text-anchor:middle}" +
     ".gx-clip{font-size:10.5px;fill:#e3c14d;text-anchor:middle;font-weight:700}.gx-bar.pos{fill:rgba(63,185,127,.85)}.gx-bar.neg{fill:rgba(224,101,95,.85)}" +
