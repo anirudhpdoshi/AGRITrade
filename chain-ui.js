@@ -56,7 +56,7 @@
     var nIv = VH.length >= 10 ? VH[Math.floor(VH.length / 2)] : null;
     var em = iv && M.T ? F * iv / 100 * Math.sqrt(M.T) : null;
     return '<div class="oc-gx"><h3 class="oc-gxh">Gamma bell curve &amp; dealer GEX profile <small>' + esc(N.chain || "") + " · " + M.dte + " days to expiry · strikes in the current filter</small></h3>" +
-      GAMMA_UI.chart({ spot: F, rows: rows, iv: iv, normalIv: nIv, normalLab: "median of the last " + VH.length + " sessions held", T: M.T, horizon: "to expiry", em: em,
+      GAMMA_UI.chart({ spot: F, spotLab: (N.contract || "") + " futures", dfmt: function (x) { return (x * 100).toFixed(1) + "¢"; }, rows: rows, iv: iv, normalIv: nIv, normalLab: "median of the last " + VH.length + " sessions held", T: M.T, horizon: "to expiry", em: em,
         callWall: N.call_wall && N.call_wall[0], putWall: N.put_wall && N.put_wall[0], flip: flip, kfmt: function (x) { return (+x).toFixed(2); }, sfmt: function (x) { return (+x).toFixed(4).replace(/0+$/, "").replace(/\.$/, ""); } }) +
       '<p class="note">GEX per strike = Black-76 gamma (strike IV' + (fb ? "; " + fb + " strike" + (fb > 1 ? "s" : "") + " without an IV use the chain's ATM IV" : "") + ") × OI × 5,000 bu × futures² × 1%, in $ millions; calls count positive and puts negative (dealers assumed long calls, short puts — the usual convention, not a measured position). " +
       "The bell is the gamma of one option struck at each strike, at today's ATM IV and at the normal IV: wider = hedging flows spread over a wider price band. Gamma flip = where cumulative net GEX from the lowest strike changes sign.</p></div>";
@@ -74,6 +74,7 @@
     var cw = N.call_wall && N.call_wall[0], pw = N.put_wall && N.put_wall[0];
     var atm = L.length ? L.reduce(function (a, b) { return Math.abs(b.K - F) < Math.abs(a.K - F) ? b : a; }).K : null;
     var em = N.iv && M.T ? F * N.iv / 100 * Math.sqrt(M.T) : null;
+    var wd = function (w) { var d = w - F; return (d >= 0 ? "+" : "−") + Math.abs(d * 100).toFixed(1) + "¢ (" + (d >= 0 ? "+" : "−") + Math.abs(d / F * 100).toFixed(2) + "%) from spot"; };
     var GK = S.gk;
     var cCols = (GK ? ["Vega ¢", "θ ¢/day", "Γ /10¢", "Δ"] : []).concat(["Vol", "OI Δ", "OI", "Prem $", "IV %", "Value ¢"]), pCols = cCols.slice().reverse();
     var head = '<tr class="oc-sides"><th></th><th colspan="' + cCols.length + '">CALLS</th><th class="oc-k">STRIKE</th><th colspan="' + pCols.length + '">PUTS</th></tr>' +
@@ -113,8 +114,8 @@
       '<h2>Options chain <span class="h2note">— ' + esc(N.chain || "") + " options on " + esc(N.contract || "") + " · " + esc(N.oi_label || "") + "</span></h2>" +
       '<div class="oc-kpis"><div><span>Futures</span><b>' + f(F, 4) + '</b></div><div><span>Expiry</span><b>' + esc(N.expires || "—") + "</b><small>" + M.dte + " days</small></div>" +
       "<div><span>ATM IV</span><b>" + f(N.iv, 2) + "%</b></div><div><span>Expected move to expiry · 1σ</span><b>±" + (em ? f(em, 4) : "—") + "</b><small>" + (em ? f(F - em, 4) + " – " + f(F + em, 4) : "") + "</small></div>" +
-      "<div><span>Put / call OI</span><b>" + f(N.pcr, 2) + "</b></div><div><span>Call wall</span><b>" + (cw != null ? f(cw, 2) : "—") + "</b><small>" + (N.call_wall ? oiF(N.call_wall[1]) + " OI" : "") + "</small></div>" +
-      "<div><span>Put wall</span><b>" + (pw != null ? f(pw, 2) : "—") + "</b><small>" + (N.put_wall ? oiF(N.put_wall[1]) + " OI" : "") + "</small></div></div>" +
+      "<div><span>Put / call OI</span><b>" + f(N.pcr, 2) + "</b></div><div><span>Call wall</span><b>" + (cw != null ? f(cw, 2) : "—") + "</b><small>" + (N.call_wall ? oiF(N.call_wall[1]) + " OI" : "") + (cw != null ? " · " + wd(cw) : "") + "</small></div>" +
+      "<div><span>Put wall</span><b>" + (pw != null ? f(pw, 2) : "—") + "</b><small>" + (N.put_wall ? oiF(N.put_wall[1]) + " OI" : "") + (pw != null ? " · " + wd(pw) : "") + "</small></div></div>" +
       '<div class="oc-ctl">' + (M.legs.length > 1 ? "<span>Chain</span>" + seg("data-oc-leg", M.legs.map(function (l) { return [l, legName(l)]; }), M.leg) : "<span>Chain</span><b class=\"oc-one\">" + esc(legName(M.leg)) + "</b>") +
       "<span>Strikes</span>" + seg("data-oc-rng", [["all", "All"], ["20", "±20%"], ["10", "±10%"], ["5", "±5%"]], S.rng) +
       "<span>Show</span>" + seg("data-oc-oi", [["1", "With open interest"], ["0", "Every strike"]], S.oi ? "1" : "0") + seg("data-oc-gk", [["1", "Greeks"], ["0", "No Greeks"]], S.gk ? "1" : "0") + seg("data-oc-gx", [["1", "Gamma curve"], ["0", "Ladder only"]], S.gx ? "1" : "0") + "</div>" +

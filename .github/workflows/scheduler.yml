@@ -59,6 +59,8 @@ jobs:
               if [ $((m % 5)) -eq 2 ] && [ "$dow" -le 5 ] && [ "$h" -ge 13 ] && [ "$h" -le 22 ]; then fire breakouts.yml; fi
               # global-grains: 12:20 and 17:20 UTC weekdays (after CONAB / USDA morning releases and the noon-ET WASDE)
               if [ "$m" -eq 20 ] && [ "$dow" -le 5 ] && { [ "$h" -eq 12 ] || [ "$h" -eq 17 ]; }; then fire global-grains.yml; fi
+              # index gamma (GEX): every 30 min through the US session, 14:00–21:30 UTC weekdays (GitHub's own cron for gex.yml is unreliable)
+              if [ "$dow" -le 5 ] && [ "$h" -ge 14 ] && [ "$h" -le 21 ] && [ $((m % 30)) -eq 10 ]; then fire gex.yml; fi
               # intel (institutional data + agri headlines): every 30 min at :20/:50 weekdays 10–22 UTC, hourly at :50 the rest of the weekday,
               # every 2 hours at :50 on weekends — news does not stop on Saturday (owner, Nov 22 2026)
               if { [ "$dow" -le 5 ] && { [ $((m % 30)) -eq 20 ] && [ "$h" -ge 10 ] && [ "$h" -le 22 ] || [ "$m" -eq 50 ]; }; } || { [ "$dow" -ge 6 ] && [ "$m" -eq 50 ] && [ $((h % 2)) -eq 0 ]; }; then fire intel.yml; fi
