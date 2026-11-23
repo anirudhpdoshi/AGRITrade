@@ -1018,7 +1018,7 @@
     function tv(id, l) { return '<button data-cotv="' + id + '" aria-pressed="' + (TV === id) + '">' + l + "</button>"; }
     return '<div class="cx-top"><div class="cx-id"><span class="tk">' + esc(co.ticker) + "</span><div><b>" + esc(co.name) + "</b><small>" + esc(M.sector) + (co.sicDescription ? " · " + esc(co.sicDescription) : "") + " · latest quarter " + esc(q.fl.label) + " (" + esc(q.end) + ')<span class="cx-prof">' + PROFILE_NAME[profileOf(M)] + " tiles</span></small></div></div>" +
       '<div class="cx-vw" role="group" aria-label="Tile view"><span>Tiles</span>' + tv("chart", "Chart") + tv("table", "Table") + tv("both", "Both") + "</div></div>" +
-      results(M) + '<div class="tile">' +
+      results(M) + overview(M) + '<div class="tile">' +
       (M.model.note ? '<div class="ut-ask" style="margin:6px 0">' + esc(M.model.note) + "</div>" : "") +
       (function () { var TBL = [], KV = [], SEEN = {}, GEN = { snap: 1, "fin-is": 1, "fin-bs": 1, "fin-cf": 1 }; partsOf(M).forEach(function (p) {
         if (!p[1].some(function (c) { return BUILT[c[0]]; })) return;   /* whole group unavailable: hidden (owner, Nov 17 2026) */
@@ -1048,6 +1048,83 @@
         var arr = tb ? TBL : KV, hh = gl.toLowerCase() === String(c[1]).toLowerCase() ? h0 : h0.replace('<span class="t">', '<span class="cx-gl">' + esc(gl) + '</span><span class="t">'); arr.push(hh); if (k) SEEN[k] = [c[0], arr, hh]; }); });
         return '<div class="cx-grid cx-flow">' + TBL.join("") + KV.join("") + "</div>"; })() +
       '<div class="stamp">Cards draw on SEC EDGAR filings fetched live — nothing is stored. Tile shading: green = better than a year ago, red = worse (for costs, debt and days, lower is better). Tiles with no figures for this company are hidden.</div></div>';
+  }
+
+  /* ---------------- financial overview: reference-style cards (owner, Nov 22 2026) ----------------
+     Revenue · EBITDA + margin · Net income + margin · ROE & ROIC · Collection days · Cash & liquid funds vs gross debt ·
+     Free cash flow + margin · EPS. Last 5 fiscal years (a year counts only with all four quarters on file) or last 8 quarters.
+     Every figure comes from the SEC filings already loaded; a card with no figures for this company is not shown. */
+  var OVP = "fy"; try { OVP = localStorage.getItem("desk.co.ovp") || "fy"; } catch (e) {}
+  function ovRows(M) {
+    var Q = M.quarters, v = function (q, k) { var x = E.val(q, k); return x == null || !isFinite(x) ? null : x; };
+    var liq = function (q) { var c = v(q, "cash"); return c == null ? null : c + (v(q, "sti") || 0); };
+    var ebd = function (q) { var e = v(q, "ebitda"); return e; };
+    if (OVP === "q") return Q.slice(-8).map(function (q) { var r = v(q, "rev"), e = ebd(q), n = v(q, "ni"), f = v(q, "fcf");
+      return { lab: q.fl.label.replace(/^(Q\d) FY(\d\d)(\d\d)$/, "$1 FY$3").replace(/ FY20/, " FY"), rev: r, ebitda: e, ebitdam: e != null && r ? e / r * 100 : null, ni: n, nm: n != null && r ? n / r * 100 : null,
+        roe: v(q, "roe"), roic: v(q, "roic"), dso: v(q, "dso"), cash: liq(q), debt: v(q, "gdebt"), fcf: f, fcfm: f != null && r ? f / r * 100 : null, eps: v(q, "eps_d") }; });
+    var by = {}; Q.forEach(function (q) { (by[q.fl.fy] = by[q.fl.fy] || []).push(q); });
+    return Object.keys(by).sort().filter(function (y) { return by[y].length === 4; }).slice(-5).map(function (y) {
+      var B = by[y], last = B[3], sum = function (fn) { var t = 0; for (var i = 0; i < 4; i++) { var x = fn(B[i]); if (x == null) return null; t += x; } return t; };
+      var r = sum(function (q) { return v(q, "rev"); }), e = sum(ebd), n = sum(function (q) { return v(q, "ni"); }), f = sum(function (q) { return v(q, "fcf"); }), ep = sum(function (q) { return v(q, "eps_d"); });
+      var ds = B.map(function (q) { return v(q, "dso"); }).filter(function (x) { return x != null; });
+      return { lab: "FY" + String(y).slice(-2), rev: r, ebitda: e, ebitdam: e != null && r ? e / r * 100 : null, ni: n, nm: n != null && r ? n / r * 100 : null,
+        roe: v(last, "roe"), roic: v(last, "roic"), dso: ds.length === 4 ? ds.reduce(function (a, b) { return a + b; }, 0) / 4 : null, cash: liq(last), debt: v(last, "gdebt"),
+        fcf: f, fcfm: f != null && r ? f / r * 100 : null, eps: ep };
+    });
+  }
+  function ovM(v) { if (v == null) return "—"; var a = Math.abs(v), sg = v < 0 ? "−" : ""; return sg + (a >= 1e12 ? (a / 1e12).toFixed(2) + "T" : a >= 1e9 ? (a / 1e9).toFixed(a >= 1e11 ? 0 : 1) + "B" : a >= 1e6 ? (a / 1e6).toFixed(0) + "M" : a.toFixed(0)); }
+  /* bars (+ optional line on its own scale, labelled at each point) — the reference layout */
+  function ovChart(R, o) {
+    var n0 = R.length;
+    var W = 360, H = n0 > 5 ? 230 : 220, PL = 10, PR = 10, hasL = !!(o.lines && o.lines.length && o.bar), PT = hasL ? 82 : o.top ? 30 : 18, PB = 26, n = R.length, cw = (W - PL - PR) / n, bw = Math.min(46, cw * 0.62), FS = n > 5 ? 9.5 : 11.5;
+    var bv = R.map(function (r) { return o.bar ? r[o.bar] : null; }), hasBar = bv.some(function (x) { return x != null; });
+    var lo = Math.min(0, Math.min.apply(null, bv.filter(function (x) { return x != null; }).concat([0]))), hi = Math.max.apply(null, bv.filter(function (x) { return x != null; }).concat([1e-9]));
+    var by = function (x) { return PT + (H - PT - PB) * (1 - (x - lo) / ((hi - lo) || 1)); }, z = by(0), out = "";
+    out += '<line x1="' + PL + '" x2="' + (W - PR) + '" y1="' + z + '" y2="' + z + '" class="ov-ax"/>';
+    R.forEach(function (r, i) { var cx = PL + cw * i + cw / 2, x = bv[i];
+      if (hasBar && x != null) { var y = by(x), y0 = Math.min(y, z), h = Math.max(1.5, Math.abs(z - y));
+        out += '<rect x="' + (cx - bw / 2) + '" y="' + y0 + '" width="' + bw + '" height="' + h + '" rx="1.5" class="ov-bar' + (x < 0 ? " neg" : "") + '"><title>' + esc(r.lab) + " · " + esc(o.fmt(x)) + "</title></rect>";
+        var tx = o.fmt(x), fits = tx.length * FS * 0.58 <= bw + 2;
+        var below = y0 + h + FS + 2, clash = x < 0 && below > H - PB - 2;   /* a negative bar reaching the axis labels: label inside, at its foot */
+        if (clash) out += '<text x="' + cx + '" y="' + (y0 + h - 4) + '" class="ov-in" style="font-size:' + Math.min(FS, 9) + 'px">' + esc(tx) + "</text>";
+        else if (o.top || !fits) out += '<text x="' + cx + '" y="' + (x >= 0 ? y - 5 : below) + '" class="ov-top" style="font-size:' + FS + 'px">' + esc(tx) + "</text>";
+        else if (h >= FS + 6) out += '<text x="' + cx + '" y="' + (x >= 0 ? z - 6 : z + FS + 3) + '" class="ov-in" style="font-size:' + FS + 'px">' + esc(tx) + "</text>";
+        else out += '<text x="' + cx + '" y="' + (x >= 0 ? y - 5 : y + h + FS + 2) + '" class="ov-top" style="font-size:' + FS + 'px">' + esc(tx) + "</text>"; }
+      var pl = String(r.lab).split(" ");
+      out += pl.length > 1 && n > 5 ? '<text x="' + cx + '" y="' + (H - 15) + '" class="ov-x" style="font-size:' + FS + 'px">' + esc(pl[0]) + '<tspan x="' + cx + '" dy="11">' + esc(pl.slice(1).join(" ")) + "</tspan></text>"
+        : '<text x="' + cx + '" y="' + (H - 8) + '" class="ov-x">' + esc(r.lab) + "</text>"; });
+    (o.lines || []).forEach(function (L, li) {
+      var vals = R.map(function (r) { return r[L.k]; }), ok = vals.filter(function (x) { return x != null; }); if (!ok.length) return;
+      var all = []; (o.lines).forEach(function (L2) { R.forEach(function (r) { if (r[L2.k] != null) all.push(r[L2.k]); }); });
+      var l0 = Math.min.apply(null, all), l1 = Math.max.apply(null, all), pad = (l1 - l0) * 0.25 || Math.abs(l1) * 0.2 || 1;
+      var top = hasBar ? 6 : 10, bot = hasBar ? PT - 18 : H - PB - 12;   /* own band above the bars: line and bars never overlap */
+      var ly = function (x) { return top + 12 + (bot - top - 12) * (1 - (x - (l0 - pad)) / ((l1 - l0 + 2 * pad) || 1)); };
+      var pts = []; R.forEach(function (r, i) { if (r[L.k] != null) pts.push([PL + cw * i + cw / 2, ly(r[L.k]), r[L.k], r.lab]); });
+      out += '<polyline points="' + pts.map(function (p) { return p[0] + "," + p[1]; }).join(" ") + '" class="ov-ln" style="stroke:' + L.c + '"/>';
+      pts.forEach(function (p) { out += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="3.6" style="fill:' + L.c + '"><title>' + esc(p[3]) + " · " + esc(L.n) + " " + esc(L.f(p[2])) + '</title></circle><text x="' + p[0] + '" y="' + (p[1] + (li === 1 ? FS + 5 : -8)) + '" class="ov-lt" style="fill:' + L.c + ';font-size:' + FS + 'px">' + esc(L.f(p[2])) + "</text>"; });
+    });
+    return '<svg viewBox="0 0 ' + W + " " + H + '" class="ov-svg" role="img" aria-label="' + esc(o.title) + '">' + out + "</svg>";
+  }
+  function overview(M) {
+    var R = ovRows(M); if (!R.length) return "";
+    var pct = function (x) { return x.toFixed(Math.abs(x) < 10 ? 1 : 0) + "%"; }, usd = function (x) { return "$" + ovM(x).replace("−", "−"); }, usdS = function (x) { return (x < 0 ? "−$" : "$") + ovM(Math.abs(x)); };
+    var NAVY = "#1f2a5c", LIME = "#7cb342";
+    var C = [
+      { t: "Revenue", bar: "rev", top: true, fmt: usdS, leg: [["b", "Revenue"]] },
+      { t: "EBITDA", bar: "ebitda", fmt: usdS, lines: [{ k: "ebitdam", n: "Margin", c: NAVY, f: pct }], leg: [["b", "EBITDA"], ["l", "Margin", NAVY]] },
+      { t: "Net income", bar: "ni", fmt: usdS, lines: [{ k: "nm", n: "Margin", c: NAVY, f: pct }], leg: [["b", "Net income"], ["l", "Margin", NAVY]] },
+      { t: "ROE & ROIC (%)", lines: [{ k: "roic", n: "ROIC", c: NAVY, f: function (x) { return x.toFixed(0) + "%"; } }, { k: "roe", n: "ROE", c: "#9ccc65", f: function (x) { return x.toFixed(0) + "%"; } }], fmt: pct, leg: [["l", "ROIC", NAVY], ["l", "ROE", "#9ccc65"]], note: "trailing 12 months at period end" },
+      { t: "Collection days", bar: "dso", fmt: function (x) { return x.toFixed(0); }, leg: [["b", "Days sales outstanding"]] },
+      { t: "Cash, bank & liquid funds", bar: "cash", fmt: usdS, lines: [{ k: "debt", n: "Gross debt", c: NAVY, f: usdS }], leg: [["b", "Cash + short-term investments"], ["l", "Gross debt", NAVY]] },
+      { t: "Free cash flow", bar: "fcf", fmt: usdS, lines: [{ k: "fcfm", n: "FCF margin", c: NAVY, f: pct }], leg: [["b", "FCF"], ["l", "Margin", NAVY]] },
+      { t: "EPS (diluted)", bar: "eps", top: true, fmt: function (x) { return (x < 0 ? "−$" : "$") + Math.abs(x).toFixed(2); }, leg: [["b", "EPS"]] }
+    ].filter(function (c) { var keys = [c.bar].concat((c.lines || []).map(function (l) { return l.k; })).filter(Boolean); return keys.some(function (k) { return R.filter(function (r) { return r[k] != null; }).length >= 2; }); });
+    if (!C.length) return "";
+    var legend = function (c) { return '<div class="ov-leg">' + c.leg.map(function (l) { return l[0] === "b" ? '<span><i class="ov-sw"></i>' + esc(l[1]) + "</span>" : '<span><i class="ov-ls" style="background:' + l[2] + '"></i>' + esc(l[1]) + "</span>"; }).join("") + "</div>"; };
+    var seg = '<div class="seg ov-seg" role="group" aria-label="Period"><button type="button" data-coovp="fy" aria-pressed="' + (OVP === "fy") + '">Fiscal years</button><button type="button" data-coovp="q" aria-pressed="' + (OVP === "q") + '">Quarters</button></div>';
+    return '<div class="tile ov-wrap"><h2>Financial overview <span class="h2note">— ' + esc(M.co.name) + " · " + (OVP === "fy" ? "last " + R.length + " fiscal years (full years only)" : "last " + R.length + " quarters") + " · USD · SEC filings</span></h2>" + seg +
+      '<div class="ov-grid">' + C.map(function (c) { return '<div class="ov-card"><h3>' + esc(c.t) + "</h3>" + ovChart(R, { title: c.t, bar: c.bar, top: c.top, fmt: c.fmt, lines: c.lines }) + legend(c) + (c.note ? '<div class="ov-note">' + esc(c.note) + "</div>" : "") + "</div>"; }).join("") + "</div>" +
+      '<p class="note">EBITDA = operating income + D&amp;A. Margins = share of revenue. ROE = trailing net income ÷ average equity; ROIC = trailing after-tax EBIT ÷ (gross debt + equity − cash). Collection days = receivables ÷ revenue × days in period' + (OVP === "fy" ? " (average of the four quarters)" : "") + ". Cash = cash + short-term investments at period end. A card only shows when the company reports the figures.</p></div>";
   }
   function shell(M, id, body) {
     return '<div class="tile"><div class="cx-h"><button class="ue-btn" data-cocard="">‹ All cards</button><h2>' + esc(cardTitle(id)) + '</h2><span class="cx-sub">' + esc(M.co.ticker) + " · " + esc(M.co.name) + "</span></div>" + body + "</div>";
@@ -1656,6 +1733,7 @@
     var b = t.closest("[data-cogd]"); if (b && b.closest("#panel-earnings")) { var id0 = b.getAttribute("data-cogd"); GD = GD && GD.id === id0 ? null : { id: id0, k: b.getAttribute("data-cok") || (GD && GD.k) }; if (GD && !GD.k) GD = null; rerender(); return; }
     b = t.closest("[data-rsd]"); if (b) { var k0 = b.getAttribute("data-rsd"); RSD = RSD === k0 ? null : k0; rerender(); return; }
     b = t.closest("[data-esk],[data-esv]"); if (b) { if (b.hasAttribute("data-esk")) EV.k = b.getAttribute("data-esk"); else EV.v = b.getAttribute("data-esv"); rerender(); return; }
+    b = t.closest("[data-coovp]"); if (b) { OVP = b.getAttribute("data-coovp"); try { localStorage.setItem("desk.co.ovp", OVP); } catch (e) {} rerender(); return; }
     b = t.closest("[data-cotv]"); if (b) { TV = b.getAttribute("data-cotv"); try { localStorage.setItem("desk.coTiles", TV); } catch (e) {} rerender(); return; }
     b = t.closest("[data-mxtab]"); if (b && b.closest("#panel-earnings")) { MX = b.getAttribute("data-mxtab"); rerender(); return; }
     b = t.closest("[data-coretry]"); if (b) { delete MEM[b.getAttribute("data-coretry")]; rerender(); }
