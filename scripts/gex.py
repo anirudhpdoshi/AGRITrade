@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Index option gamma / dealer GEX profile (owner, Nov 23 2026) -> gex.json on the `gex` branch.
 
-Source: Cboe delayed option quotes (public JSON, ~15 min delayed) for S&P 500 (SPX + SPXW), Nasdaq-100 (NDX + NDXP) and
-Dow (DJX = Dow Jones Industrial Average / 100). Each quote carries open interest, IV and Cboe's own gamma.
+Source: Yahoo Finance option chains (delayed) — S&P 500 index options (^SPX), Nasdaq-100 index options (^NDX) and, for the
+Dow, the DIA ETF (tracks the Dow ÷ 100; Yahoo carries no Dow index chain). Each contract carries open interest, volume and IV;
+gamma is computed with Black-Scholes from that IV (Cboe's own feed refuses automated requests, so it is not used).
 
 Per strike, over the expirations inside the next 30 days (the hedging window) and, separately, the nearest expiry:
   call OI, put OI, call gamma, put gamma, call IV, put IV, call volume, put volume
@@ -14,7 +15,7 @@ strike where cumulative net GEX from the bottom crosses zero), call wall / put w
 'Normal regime' IV = the 1-year median of the index's own volatility index (VIX / VXN / VXD) from Yahoo.
 Run: python scripts/gex.py [--dry-run]
 """
-import json, math, os, re, sys, statistics, subprocess
+import json, math, os, sys, statistics, subprocess
 from datetime import datetime, timezone, date
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -22,22 +23,26 @@ import ud_common as UDC
 
 ROOT = UDC.ROOT
 WT = os.path.join(ROOT, ".gex-wt")
-IDX = {  # key: (cboe symbol, name, roots kept, spot scale to the index level, vol index)
-    "SPX": ("_SPX", "S&P 500", ("SPX", "SPXW"), 1.0, "^VIX"),
-    "NDX": ("_NDX", "Nasdaq-100", ("NDX", "NDXP"), 1.0, "^VXN"),
-    "DJX": ("_DJX", "Dow Jones (DJX = Dow ÷ 100)", ("DJX",), 1.0, "^VXD"),
+IDX = {  # key: (yahoo symbol, name, vol index for the 'normal regime')
+    "SPX": ("^SPX", "S&P 500", "^VIX"),
+    "NDX": ("^NDX", "Nasdaq-100", "^VXN"),
+    "DJX": ("DIA", "Dow Jones (DIA ETF = Dow ÷ 100)", "^VXD"),
 }
-SYM = re.compile(r"^([A-Z]+?)(\d{6})([CP])(\d{8})$")
 WIN_DAYS = 30
 BAND = 0.12          # strikes kept: spot ±12%
 
 
-def fetch(sym):
-    import requests
-    r = requests.get(f"https://cdn.cboe.com/api/global/delayed_quotes/options/{sym}.json", timeout=40,
-                     headers={"User-Agent": "Mozilla/5.0 (AGRITrade desk; gamma profile)", "Accept": "application/json"})
-    r.raise_for_status()
-    return r.json()
+def npdf(x):
+    return math.exp(-x * x / 2) / math.sqrt(2 * math.pi)
+
+
+def bs_gamma(S, K, T, iv):
+    """Black-Scholes gamma per 1 point of the underlying (r = 4%, no dividends — the shape and scale the hedging uses)"""
+    if not (iv and iv > 0 and T > 0 and S > 0 and K > 0):
+        return None
+    r, sq = 0.04, math.sqrt(T)
+    d1 = (math.log(S / K) + (r + iv * iv / 2) * T) / (iv * sq)
+    return npdf(d1) / (S * iv * sq)
 
 
 def vol_median(tk):
@@ -50,46 +55,53 @@ def vol_median(tk):
 
 
 def build(key):
-    sym, name, roots, scale, vix = IDX[key]
-    J = fetch(sym)
-    D = J.get("data") or {}
-    S = float(D.get("current_price") or D.get("close") or 0) * scale
+    ysym, name, vix = IDX[key]
+    T_ = UDC.yf().Ticker(ysym)
+    S = None
+    try:
+        S = float(T_.fast_info["last_price"])
+    except Exception:
+        pass
+    if not S:
+        h = T_.history(period="5d")["Close"].dropna()
+        S = float(h.iloc[-1]) if len(h) else None
     if not S:
         raise ValueError("no spot")
-    today = datetime.now(timezone.utc).date()
-    rows = {}     # (window, K) -> dict
-    exps = {}
-    for o in D.get("options") or []:
-        m = SYM.match(o.get("option", ""))
-        if not m or m.group(1) not in roots:
-            continue
-        ex = datetime.strptime(m.group(2), "%y%m%d").date()
+    now = datetime.now(timezone.utc)
+    today = now.date()
+    rows, exps = {}, {}
+    for e in (T_.options or []):
+        ex = date.fromisoformat(e)
         dte = (ex - today).days
         if dte < 0 or dte > WIN_DAYS:
             continue
-        K = int(m.group(4)) / 1000.0
-        if abs(K / S - 1) > BAND:
+        try:
+            ch = T_.option_chain(e)
+        except Exception as x:
+            print(f"  ! {ysym} {e}: {type(x).__name__}")
             continue
-        exps.setdefault(ex.isoformat(), 0)
-        exps[ex.isoformat()] += 1
-        side = m.group(3)
-        oi = float(o.get("open_interest") or 0)
-        g = o.get("gamma")
-        g = float(g) if g not in (None, "") else None
-        iv = o.get("iv")
-        iv = float(iv) * 100 if iv not in (None, "") and float(iv) > 0 else None
-        vol = float(o.get("volume") or 0)
-        for win in ("w30", ex.isoformat()):
-            r = rows.setdefault((win, K), {"K": K, "coi": 0, "poi": 0, "cg": 0.0, "pg": 0.0, "cgex": 0.0, "pgex": 0.0, "civ": [], "piv": [], "cvol": 0, "pvol": 0})
-            gex = (g or 0) * oi * 100 * S * S * 0.01
-            if side == "C":
-                r["coi"] += oi; r["cvol"] += vol; r["cgex"] += gex
-                if g is not None and oi: r["cg"] += g * oi
-                if iv: r["civ"].append((iv, oi + 1))
-            else:
-                r["poi"] += oi; r["pvol"] += vol; r["pgex"] += gex
-                if g is not None and oi: r["pg"] += g * oi
-                if iv: r["piv"].append((iv, oi + 1))
+        T = max((datetime(ex.year, ex.month, ex.day, 21, 0, tzinfo=timezone.utc) - now).total_seconds() / (365 * 86400), 0.5 / 365)
+        for side, df in (("C", ch.calls), ("P", ch.puts)):
+            for o in df.to_dict("records"):
+                K = float(o.get("strike") or 0)
+                if not K or abs(K / S - 1) > BAND:
+                    continue
+                oi = o.get("openInterest"); oi = float(oi) if oi == oi and oi is not None else 0.0
+                iv = o.get("impliedVolatility"); iv = float(iv) if iv == iv and iv is not None and float(iv) > 0.01 else None
+                vol = o.get("volume"); vol = float(vol) if vol == vol and vol is not None else 0.0
+                g = bs_gamma(S, K, T, iv)
+                exps[e] = exps.get(e, 0) + 1
+                for win in ("w30", e):
+                    r = rows.setdefault((win, K), {"K": K, "coi": 0, "poi": 0, "cg": 0.0, "pg": 0.0, "cgex": 0.0, "pgex": 0.0, "civ": [], "piv": [], "cvol": 0, "pvol": 0})
+                    gex = (g or 0) * oi * 100 * S * S * 0.01
+                    if side == "C":
+                        r["coi"] += oi; r["cvol"] += vol; r["cgex"] += gex
+                        if g is not None and oi: r["cg"] += g * oi
+                        if iv and iv < 3: r["civ"].append((iv * 100, oi + 1))
+                    else:
+                        r["poi"] += oi; r["pvol"] += vol; r["pgex"] += gex
+                        if g is not None and oi: r["pg"] += g * oi
+                        if iv and iv < 3: r["piv"].append((iv * 100, oi + 1))
     if not exps:
         raise ValueError("no expirations inside the window")
     near = min(exps)
@@ -127,7 +139,7 @@ def build(key):
     near_dte = max((date.fromisoformat(near) - today).days, 0)
     far_dte = max((date.fromisoformat(max(exps)) - today).days, 0)
     T30, TN = table("w30"), table(near)
-    return {"key": key, "name": name, "spot": round(S, 2), "ts": J.get("timestamp"), "roots": list(roots),
+    return {"key": key, "name": name, "spot": round(S, 2), "ts": now.isoformat(timespec="seconds"), "symbol": ysym,
             "expiries": sorted(exps), "near": near, "near_dte": near_dte, "window_dte": far_dte,
             "normal_iv": vol_median(vix), "normal_src": vix + " 1-year median",
             "w30": {"rows": T30, **summary(T30, far_dte)}, "nearest": {"rows": TN, **summary(TN, near_dte)}}
@@ -167,7 +179,7 @@ def main():
             print(f"! {k}: {errs[k]}")
     if not out:
         raise SystemExit("no index built")
-    body = {"updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "source": "Cboe delayed quotes (about 15 min delayed)",
+    body = {"updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "source": "Yahoo Finance option chains (delayed); gamma = Black-Scholes on each contract's IV",
             "window_days": WIN_DAYS, "band_pct": BAND * 100, "indices": out, "errors": errs}
     if "--dry-run" in sys.argv:
         return
