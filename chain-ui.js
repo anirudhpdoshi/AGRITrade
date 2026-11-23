@@ -8,7 +8,7 @@
 (function () {
   "use strict";
   var root = window, doc = document, GR = ["corn", "soybeans", "wheat"];
-  var S = { leg: "near", rng: "10", oi: true, gk: false };   /* compact by default: the centre column is narrow; Greeks and Full screen add room */
+  var S = { leg: "near", rng: "10", oi: true, gk: false, gx: true };   /* compact by default: the centre column is narrow; Greeks and Full screen add room */
   try { var sv = JSON.parse(localStorage.getItem("desk.chain") || "null"); if (sv) for (var k in sv) S[k] = sv[k]; } catch (e) {}
   function save() { try { localStorage.setItem("desk.chain", JSON.stringify(S)); } catch (e) {} }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
@@ -40,6 +40,26 @@
       return { K: K, coi: r[1] || 0, poi: r[2] || 0, civ: r[3], piv: r[4], cvol: r[5], pvol: r[6], dco: p ? (r[1] || 0) - (p[1] || 0) : null, dpo: p ? (r[2] || 0) - (p[2] || 0) : null,
         C: b76(F, K, T, r[3], true), P: b76(F, K, T, r[4], false) }; });
     return { G: G, N: N, leg: leg, legs: legs, F: F, Fsrc: Fsrc, T: T, dte: dte, rows: rows };
+  }
+  /* gamma bell curve & dealer GEX profile for the strikes shown (owner, Nov 23 2026) */
+  function gammaBlock(k, M, L) {
+    if (!root.GAMMA_UI || !L.length) return "";
+    var N = M.N, F = M.F, iv = +N.iv || null, fb = 0;
+    var rows = L.map(function (r) {
+      var gc = r.C ? r.C.g : (iv ? b76(F, r.K, M.T, iv, true) || {} : {}).g, gp = r.P ? r.P.g : (iv ? b76(F, r.K, M.T, iv, false) || {} : {}).g;
+      if ((!r.C && r.coi) || (!r.P && r.poi)) fb++;
+      var cg = gc ? gc * r.coi * 5000 * F * F * 0.01 / 1e6 : 0, pg = gp ? gp * r.poi * 5000 * F * F * 0.01 / 1e6 : 0;
+      return { K: r.K, net: cg - pg, civ: r.civ, piv: r.piv, coi: r.coi, poi: r.poi };
+    });
+    var cum = 0, flip = null; rows.forEach(function (r, i) { var p = cum; cum += r.net; if (i && ((p < 0 && cum >= 0) || (p > 0 && cum <= 0))) flip = r.K; });
+    var VH = (M.G.vol_hist || []).map(function (x) { return +x[1]; }).filter(function (x) { return x > 0; }).sort(function (a, b) { return a - b; });
+    var nIv = VH.length >= 10 ? VH[Math.floor(VH.length / 2)] : null;
+    var em = iv && M.T ? F * iv / 100 * Math.sqrt(M.T) : null;
+    return '<div class="oc-gx"><h3 class="oc-gxh">Gamma bell curve &amp; dealer GEX profile <small>' + esc(N.chain || "") + " · " + M.dte + " days to expiry · strikes in the current filter</small></h3>" +
+      GAMMA_UI.chart({ spot: F, rows: rows, iv: iv, normalIv: nIv, normalLab: "median of the last " + VH.length + " sessions held", T: M.T, horizon: "to expiry", em: em,
+        callWall: N.call_wall && N.call_wall[0], putWall: N.put_wall && N.put_wall[0], flip: flip, kfmt: function (x) { return (+x).toFixed(2); }, sfmt: function (x) { return (+x).toFixed(4).replace(/0+$/, "").replace(/\.$/, ""); } }) +
+      '<p class="note">GEX per strike = Black-76 gamma (strike IV' + (fb ? "; " + fb + " strike" + (fb > 1 ? "s" : "") + " without an IV use the chain's ATM IV" : "") + ") × OI × 5,000 bu × futures² × 1%, in $ millions; calls count positive and puts negative (dealers assumed long calls, short puts — the usual convention, not a measured position). " +
+      "The bell is the gamma of one option struck at each strike, at today's ATM IV and at the normal IV: wider = hedging flows spread over a wider price band. Gamma flip = where cumulative net GEX from the lowest strike changes sign.</p></div>";
   }
   function html(k) {
     var M = model(k); if (!M) return "";
@@ -97,7 +117,8 @@
       "<div><span>Put wall</span><b>" + (pw != null ? f(pw, 2) : "—") + "</b><small>" + (N.put_wall ? oiF(N.put_wall[1]) + " OI" : "") + "</small></div></div>" +
       '<div class="oc-ctl">' + (M.legs.length > 1 ? "<span>Chain</span>" + seg("data-oc-leg", M.legs.map(function (l) { return [l, legName(l)]; }), M.leg) : "<span>Chain</span><b class=\"oc-one\">" + esc(legName(M.leg)) + "</b>") +
       "<span>Strikes</span>" + seg("data-oc-rng", [["all", "All"], ["20", "±20%"], ["10", "±10%"], ["5", "±5%"]], S.rng) +
-      "<span>Show</span>" + seg("data-oc-oi", [["1", "With open interest"], ["0", "Every strike"]], S.oi ? "1" : "0") + seg("data-oc-gk", [["1", "Greeks"], ["0", "No Greeks"]], S.gk ? "1" : "0") + "</div>" +
+      "<span>Show</span>" + seg("data-oc-oi", [["1", "With open interest"], ["0", "Every strike"]], S.oi ? "1" : "0") + seg("data-oc-gk", [["1", "Greeks"], ["0", "No Greeks"]], S.gk ? "1" : "0") + seg("data-oc-gx", [["1", "Gamma curve"], ["0", "Ladder only"]], S.gx ? "1" : "0") + "</div>" +
+      (S.gx ? gammaBlock(k, M, L) : "") +
       '<div class="oc-leg"><span class="oc-hi-oi">Most open interest</span><span class="oc-hi-vol">Most volume</span><span class="oc-hi-pv">Most premium value held</span><small>per side, among the strikes shown · ' +
         ["c", "p"].map(function (sd) { var H = HI[sd]; return (sd === "c" ? "Calls" : "Puts") + ": OI " + (H.oi != null ? kf(H.oi) : "—") + " · vol " + (H.vol != null ? kf(H.vol) : "—") + " · value " + (H.pv != null ? kf(H.pv) : "—"); }).join(" | ") + "</small></div>" +
       '<div class="tbl-scroll oc-wrap"><table class="oc-t no-tx zm-yes"><thead>' + head + "</thead><tbody>" + (L.length ? body : '<tr><td colspan="' + (cCols.length * 2 + 2) + '" class="na">No strikes in this range.</td></tr>') + "</tbody></table></div>" +
@@ -125,11 +146,12 @@
     doc.querySelectorAll(".oc-tile[data-oc-k]").forEach(function (t) { var h = html(t.getAttribute("data-oc-k")); if (h && t._h !== h) { t.innerHTML = h; t._h = h; } t.classList.toggle("oc-full", FULL); });
   }
   doc.addEventListener("click", function (e) {
-    var b = e.target.closest && e.target.closest("[data-oc-leg],[data-oc-rng],[data-oc-oi],[data-oc-gk],[data-oc-full]"); if (!b) return;
+    var b = e.target.closest && e.target.closest("[data-oc-leg],[data-oc-rng],[data-oc-oi],[data-oc-gk],[data-oc-gx],[data-oc-full]"); if (!b) return;
     if (b.hasAttribute("data-oc-full")) { FULL = !FULL; doc.querySelectorAll(".oc-tile").forEach(function (t) { t.classList.toggle("oc-full", FULL); t._k = ""; }); doc.documentElement.classList.toggle("oc-lock", FULL); if (FULL) S.gk = true; }
     if (b.hasAttribute("data-oc-leg")) S.leg = b.getAttribute("data-oc-leg");
     if (b.hasAttribute("data-oc-rng")) S.rng = b.getAttribute("data-oc-rng");
     if (b.hasAttribute("data-oc-oi")) S.oi = b.getAttribute("data-oc-oi") === "1";
+    if (b.hasAttribute("data-oc-gx")) S.gx = b.getAttribute("data-oc-gx") === "1";
     if (b.hasAttribute("data-oc-gk")) S.gk = b.getAttribute("data-oc-gk") === "1";
     save(); tick();
   });
@@ -155,6 +177,7 @@
     ".oc-w{font-style:normal;font:700 9px 'IBM Plex Mono',monospace;margin-left:4px;padding:0 3px;border-radius:3px;vertical-align:1px}.oc-w.c{background:rgba(63,185,127,.25);color:#3fb97f}.oc-w.p{background:rgba(224,101,95,.25);color:#ff8a84}" +
     "table.oc-t tr.oc-atm td.oc-k .oc-w{background:#101825}" +
     "table.oc-t td.oc-hi-oi{box-shadow:inset 0 0 0 2px #e8b93d;color:#e8b93d!important;font-weight:700}table.oc-t td.oc-hi-vol{box-shadow:inset 0 0 0 2px #b18cff;color:#c9a3ff!important;font-weight:700}table.oc-t td.oc-hi-pv{box-shadow:inset 0 0 0 2px #38b6c9;color:#7dd8e6!important;font-weight:700}" +
+    ".oc-gx{border:1px solid var(--line2);border-radius:8px;padding:8px 10px 6px;margin:0 0 12px}.oc-gxh{margin:0 0 6px;font:600 13px 'IBM Plex Sans',sans-serif;color:var(--ink)}.oc-gxh small{font-weight:400;color:var(--muted);margin-left:6px}" +
     ".oc-leg{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:-2px 0 8px;font-size:12px}.oc-leg span{padding:1px 8px;border-radius:4px;font-weight:600}.oc-leg span.oc-hi-oi{border:2px solid #e8b93d;color:#e8b93d}.oc-leg span.oc-hi-vol{border:2px solid #b18cff;color:#c9a3ff}.oc-leg span.oc-hi-pv{border:2px solid #38b6c9;color:#7dd8e6}.oc-leg small{color:var(--muted);font:11px 'IBM Plex Mono',monospace}";
   doc.head.appendChild(st);
   root.CHAIN_UI = { html: html, model: model };
