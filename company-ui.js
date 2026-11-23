@@ -1108,12 +1108,12 @@
   function overview(M) {
     var R = ovRows(M); if (!R.length) return "";
     var pct = function (x) { return x.toFixed(Math.abs(x) < 10 ? 1 : 0) + "%"; }, usd = function (x) { return "$" + ovM(x).replace("−", "−"); }, usdS = function (x) { return (x < 0 ? "−$" : "$") + ovM(Math.abs(x)); };
-    var NAVY = "#1f2a5c", LIME = "#7cb342";
+    var NAVY = "#8fb0ff", LIME = "#7cb342";   /* drawn for the dark desk; the light theme inverts the page, so it mirrors (owner, Nov 22 2026) */
     var C = [
       { t: "Revenue", bar: "rev", top: true, fmt: usdS, leg: [["b", "Revenue"]] },
       { t: "EBITDA", bar: "ebitda", fmt: usdS, lines: [{ k: "ebitdam", n: "Margin", c: NAVY, f: pct }], leg: [["b", "EBITDA"], ["l", "Margin", NAVY]] },
       { t: "Net income", bar: "ni", fmt: usdS, lines: [{ k: "nm", n: "Margin", c: NAVY, f: pct }], leg: [["b", "Net income"], ["l", "Margin", NAVY]] },
-      { t: "ROE & ROIC (%)", lines: [{ k: "roic", n: "ROIC", c: NAVY, f: function (x) { return x.toFixed(0) + "%"; } }, { k: "roe", n: "ROE", c: "#9ccc65", f: function (x) { return x.toFixed(0) + "%"; } }], fmt: pct, leg: [["l", "ROIC", NAVY], ["l", "ROE", "#9ccc65"]], note: "trailing 12 months at period end" },
+      { t: "ROE & ROIC (%)", lines: [{ k: "roic", n: "ROIC", c: NAVY, f: function (x) { return x.toFixed(0) + "%"; } }, { k: "roe", n: "ROE", c: "#b5e07a", f: function (x) { return x.toFixed(0) + "%"; } }], fmt: pct, leg: [["l", "ROIC", NAVY], ["l", "ROE", "#b5e07a"]], note: "trailing 12 months at period end" },
       { t: "Collection days", bar: "dso", fmt: function (x) { return x.toFixed(0); }, leg: [["b", "Days sales outstanding"]] },
       { t: "Cash, bank & liquid funds", bar: "cash", fmt: usdS, lines: [{ k: "debt", n: "Gross debt", c: NAVY, f: usdS }], leg: [["b", "Cash + short-term investments"], ["l", "Gross debt", NAVY]] },
       { t: "Free cash flow", bar: "fcf", fmt: usdS, lines: [{ k: "fcfm", n: "FCF margin", c: NAVY, f: pct }], leg: [["b", "FCF"], ["l", "Margin", NAVY]] },
