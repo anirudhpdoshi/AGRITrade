@@ -1,4 +1,5 @@
 /* shell-nav.js — side section menu + quotes ribbon (owner, Nov 23 2026).
+   No side panel when a menu has a single page and no sections (owner, Nov 23 2026).
    Click a top-menu item and the desk re-flows: the Execution Tiles quote column glides up into a one-line ribbon above the
    page, and the menu's pages and sections drop in as a left panel, key by key (piano-style stagger). Works for every top
    menu. "Classic layout" at the foot of the panel puts the old layout back; the choice is remembered.
@@ -89,6 +90,8 @@
     });
     var html = '<div class="sn-h"><span>' + esc(gl || g) + '</span><i></i></div><div class="sn-keys">' + h + "</div>" +
       '<button type="button" class="sn-classic" data-snoff title="Put the quotes back on the left and the sections back on top">⇤ Classic layout</button>';
+    /* a menu with one page and no sections (Events, …) has nothing to choose: no side panel, the page takes the full width */
+    doc.body.classList.toggle("sn-solo", i <= 1);
     var sig = html.replace(/ style="--i:\d+"/g, "");
     if (sig !== lastSig || play) { nav.innerHTML = html; lastSig = sig; }
     if (play || g !== lastG) { nav.classList.remove("sn-play"); void nav.offsetWidth; if (!RM) nav.classList.add("sn-play"); }
@@ -109,7 +112,7 @@
 
   /* ---------- layout switch ---------- */
   function on() { return ON && MQ.matches; }
-  function apply() { doc.body.classList.toggle("sn", on()); if (!on()) [].forEach.call(doc.querySelectorAll("[data-sn-row]"), function (r) { r.classList.remove("sn-hide"); r.removeAttribute("data-sn-row"); }); }
+  function apply() { doc.body.classList.toggle("sn", on()); if (!on()) doc.body.classList.remove("sn-solo"); if (!on()) [].forEach.call(doc.querySelectorAll("[data-sn-row]"), function (r) { r.classList.remove("sn-hide"); r.removeAttribute("data-sn-row"); }); }
   function setOn(v, animate) {
     if (v === ON && doc.body.classList.contains("sn") === on()) { paint(true); return; }
     ON = v; try { localStorage.setItem(KEY, v ? "1" : "0"); } catch (e) {}
@@ -142,6 +145,7 @@
     " body.sn main{display:grid!important;grid-template-columns:214px minmax(0,1fr)!important;column-gap:16px;row-gap:0;align-items:start}" +
     " body.sn main>*{grid-column:2!important;min-width:0}" +
     " body.sn #sn{display:flex;flex-direction:column;gap:8px;grid-column:1!important;grid-row:1/span 80;position:sticky;top:calc(var(--strip-h,40px) + 76px);align-self:start;max-height:calc(100vh - var(--strip-h,40px) - 96px);overflow:auto;scrollbar-width:thin;padding:4px 2px 12px;view-transition-name:sn-panel}" +
+    " body.sn.sn-solo main{grid-template-columns:minmax(0,1fr)!important}body.sn.sn-solo main>*{grid-column:1/-1!important}body.sn.sn-solo #sn{display:none!important}body.sn.sn-solo #grains-head{grid-column:1/-1!important}" +
     " body.sn #gsub,body.sn.sn .tab-panel.active .subnav,body.sn.sn.fxo .tab-panel.active .subnav,body.sn.sn .tab-panel .sn-hide,body.sn.sn.fxo .tab-panel.active .sn-hide{display:none!important}" +
     /* quotes: left column → one-line ribbon on top */
     " body.sn #grains-head{grid-column:2!important;grid-row:auto!important;position:static!important;margin:0 0 12px;view-transition-name:sn-quotes}" +
