@@ -193,6 +193,21 @@
   E.pAbove = function (Hr, spot, L) { var lo = 1e-6, hi = 1 - 1e-6; for (var i = 0; i < 60; i++) { var m = (lo + hi) / 2; if (E.q(Hr, spot, m) < L) lo = m; else hi = m; } return 1 - (lo + hi) / 2; };
   E.pTouch = function (Hr, spot, L) { var pe = L >= spot ? E.pAbove(Hr, spot, L) : 1 - E.pAbove(Hr, spot, L); return Math.min(1, 2 * pe); };
 
+  /* ---------- implied-vol mapping (CME 6C / CVOL → USD/CAD) ----------
+     6C futures quote USD per CAD = 1 / USDCAD. Log returns of an inverse pair are the negative of each other, so volatility is
+     identical; a 6C call at strike K is a USD/CAD put at 1/K, so the USD/CAD 25Δ risk reversal is the 6C one with the sign
+     flipped and the butterfly is unchanged. CVOL (CAVL) is CME's 30-day implied-vol index on CAD/USD options → use it as ATM. */
+  E.map6C = function (q) {
+    q = q || {}; var o = { src: q.src || "" };
+    if (q.atm != null) o.atm = +q.atm;
+    if (q.call25 != null && q.put25 != null) { o.rr25 = +(q.put25 - q.call25).toFixed(3); o.call25 = +q.put25; o.put25 = +q.call25; if (q.atm != null) o.bf25 = +(((+q.call25 + +q.put25) / 2) - q.atm).toFixed(3); }
+    if (q.rr25 != null && o.rr25 == null) o.rr25 = -q.rr25;
+    if (q.strike != null) o.strike = 1 / q.strike;
+    return o;
+  };
+  /* expected move from an annualised vol (%) over h sessions: ±IV × √(h/252) */
+  E.ivMove = function (ivPct, spot, h) { var s = ivPct / 100 * Math.sqrt((h || 1) / 252); return { pct: s * 100, pips: spot * s * 1e4, lo: spot * Math.exp(-s), hi: spot * Math.exp(s) }; };
+
   root.FXF_ENGINE = E;
   if (typeof module !== "undefined" && module.exports) { module.exports = E; return; }
 
@@ -223,7 +238,17 @@
     return { dates: U.map(function (x) { return x[0]; }), close: U.map(function (x) { return +x[1]; }), wti: O.wti || [], dxy: O.dxy || [],
       spread: ysm.filter(function (x) { return x.us && x.ca && x.us["2Y"] != null && x.ca["2Y"] != null; }).map(function (x) { return [x.d, (x.us["2Y"] - x.ca["2Y"]) * 100]; }),
       cotz: (kp.z_hist || []).map(function (x) { return [addBiz(String(x[0]).slice(0, 10), 3), +x[1]]; }),   /* Tuesday positions, public Friday → usable from the Friday */
-      iv: fo.civ ? { call: +fo.civ, put: +fo.piv, rr: fo.rr, asof: fo.asof } : null, today: new Date().toISOString().slice(0, 10) };
+      iv: fo.civ || fo.atm || fo.cvol ? { call: +(fo.civ || fo.atm || fo.cvol), put: +(fo.piv || fo.atm || fo.cvol), rr: fo.rr25 != null ? fo.rr25 : fo.rr, asof: fo.asof } : null, today: new Date().toISOString().slice(0, 10) };
+  }
+  /* market-implied vol in use: a value you entered (per browser, ≤ 3 days old) if newer than the desk's stored pull */
+  var IVK = "desk.fxf.iv";
+  function ivMan() { try { var o = JSON.parse(localStorage.getItem(IVK) || "null"); return o && o.v > 0 && Date.now() - o.t < 3 * 864e5 ? o : null; } catch (e) { return null; } }
+  function ivNow() {
+    var fo = (root.DATA.fx || {}).fxopt || {}, m = ivMan(), atm = fo.atm || fo.cvol || (fo.civ && fo.piv ? (+fo.civ + +fo.piv) / 2 : null), at = fo.asof ? Date.parse(String(fo.asof).length <= 10 ? fo.asof + "T21:00:00Z" : fo.asof) : 0;
+    var d = atm ? { atm: +atm, t: at, src: fo.source || (fo.atm ? "ATM implied vol" : fo.cvol ? "CME CVOL (CAVL)" : "25Δ call/put average"), rr: fo.rr25 != null ? +fo.rr25 : fo.rr != null ? +fo.rr : null, bf: fo.bf25 != null ? +fo.bf25 : null, term: fo.term || null, man: false } : null;
+    var use = m && (!d || m.t > d.t) ? { atm: +m.v, t: m.t, src: m.src + " · entered by you", rr: null, bf: null, term: null, man: true } : d;
+    if (use) { use.age = (Date.now() - use.t) / 864e5; use.fresh = use.age <= 3; }
+    return use;
   }
   var CACHE = { key: "", res: null };
   function engine() {
@@ -289,6 +314,9 @@
     acc: ["Forecast accuracy", "Walk-forward back-test: at each past session the model forecast the h-session range with only the data available then, and we check what happened.",
       "Tells you how far to trust the bands. Coverage near 68% / 95% = honest bands.", "Coverage well below target = bands too narrow (danger). Above = too wide (conservative).",
       "Windows overlap (each 1M window shares 20 of 21 days with the next), so the effective number of independent tests is n ÷ h — shown as 'eff'.", "n = 210, h = 21 → about 10 independent months."],
+    daily: ["Daily expected move", "The one-session 1σ move: the model's daily σ (blended σ at the selected horizon ÷ √sessions) and, when an implied vol is available, the option market's: IV ÷ √252.",
+      "Sizes intraday stops and tells you whether today's move is ordinary: about two sessions in three stay inside it.", "A move of 2× the daily figure is a roughly 1-in-20 day; 3× is rare outside event days.",
+      "Assumes today is a normal session; CPI, jobs and central-bank days typically run 1.5–2× larger.", "IV 5.0% → 5.0 ÷ 15.87 = ±0.315% ≈ ±45 pips at 1.4377."],
     touch: ["Probability of touching a level", "Chance that price trades at the level at any time before the horizon, using the reflection principle: P(touch) ≈ 2 × P(close beyond it at the horizon).",
       "Stops and targets are hit by touches, not closes.", "A level at 1σ has roughly a 32% chance of closing beyond it but ~60%+ of being touched.",
       "Exact for a driftless random walk; approximate with skew or drift.", "P(close above R20) = 18% → P(touch) ≈ 36%."]
@@ -358,8 +386,11 @@
     NOW.bias = passed.length ? passed.length + " rule(s) passed at " + ST.hz + ": " + passed.map(function (D) { return D.name; }).join("; ") + "." : "No rule passed the out-of-sample test at " + ST.hz + ", so no direction is claimed.";
     NOW.regime = "RV20 " + pc(R.rv20, 2) + ", " + (R.rvPct == null ? "—" : Math.round(R.rvPct * 100) + "th") + " percentile of the last 250 sessions → " + R.regime + ".";
     NOW.conf = Hr.bt.n ? "1σ covered " + pc(Hr.bt.cov1) + " (target 68%), 2σ " + pc(Hr.bt.cov2) + " (target 95%), n " + Hr.bt.n + ", effective " + Math.round(Hr.bt.neff) + "." + (Hr.bt.cov1 < 0.6 ? " The bands have been too narrow at this horizon — in the back-test the 1σ range held the outcome only " + pc(Hr.bt.cov1) + " of the time, so read it as a ~" + Math.round(Hr.bt.cov1 * 20) * 5 + "% range, not 68%." : Hr.bt.cov1 > 0.76 ? " The bands have been wider than needed at this horizon (conservative)." : "") : "No back-test sample yet.";
+    var IV = ivNow(), d1 = Hr.sd / Math.sqrt(h), dm = { pct: d1 * 100, pips: sp.px * d1 * 1e4 }, im1 = IV ? E.ivMove(IV.atm, sp.px, 1) : null, imH = IV ? E.ivMove(IV.atm, sp.px, h) : null;
+    NOW.daily = "Model: ±" + dm.pct.toFixed(3) + "% (±" + Math.round(dm.pips) + " pips) for one session, from the blended σ at " + ST.hz + "." + (IV ? " Implied: " + IV.atm.toFixed(2) + "% ÷ √252 = ±" + im1.pct.toFixed(3) + "% (±" + Math.round(im1.pips) + " pips)" + (IV.fresh ? "." : " — but that vol is " + Math.round(IV.age) + " days old.") : " No implied vol on file — enter one from CVOL, Barchart or IBKR in pillar A.");
     var head = '<div class="fxf-cards">' +
-      card("move", "Expected move · " + ST.hz, "±" + pips((up + dn) / 2) + " <small>pips</small>", "±" + (sd * 100).toFixed(2) + "% · 1σ range " + f4(q16) + " – " + f4(q84) + (Math.abs(up - dn) * 1e4 >= 3 ? " · skewed: +" + pips(up) + " / −" + pips(dn) : " · symmetric")) +
+      card("daily", "Daily expected move", "±" + dm.pct.toFixed(2) + "<small>%</small>", "≈ ±" + Math.round(dm.pips) + " pips · today " + f4(sp.px * Math.exp(-d1)) + " – " + f4(sp.px * Math.exp(d1)) + (IV ? '<br><span class="' + (IV.fresh ? "" : "fxf-dim") + '">implied ±' + im1.pct.toFixed(2) + "% (" + IV.atm.toFixed(2) + "% vol" + (IV.fresh ? "" : ", " + Math.round(IV.age) + "d old") + ")</span>" : "<br>implied: not on file")) +
+      card("move", "Expected move · " + ST.hz, "±" + pips((up + dn) / 2) + " <small>pips</small>", "±" + (sd * 100).toFixed(2) + "% · 1σ range " + f4(q16) + " – " + f4(q84) + (Math.abs(up - dn) * 1e4 >= 3 ? " · skewed: +" + pips(up) + " / −" + pips(dn) : " · symmetric") + (IV && IV.fresh ? "<br>market-implied ±" + Math.round(imH.pips) + " pips (" + imH.pct.toFixed(2) + "%)" : "")) +
       card("bias", "Directional bias · " + ST.hz, '<span class="' + B[1] + '">' + B[0] + "</span>", passed.length ? "P(higher at " + ST.hz + ") " + pc(E.pAbove(Hr, sp.px, sp.px)) + " · " + passed.length + " of 6 rules validated" + (Hr.compHit && Hr.compHit.hit != null ? " · composite hit " + pc(Hr.compHit.hit) + " (eff n " + Math.round(Hr.compHit.neff) + ")" : "") : "No rule passed out of sample at " + ST.hz + " · magnitude ≠ direction") +
       card("regime", "Volatility regime", '<span class="fxf-rg ' + R.regime + '">' + R.regime.toUpperCase() + "</span>", "RV20 " + pc(R.rv20, 2) + " · " + (R.rvPct == null ? "—" : Math.round(R.rvPct * 100) + "th pct") + " of 250 sessions") +
       card("conf", "Forecast confidence", '<span class="fxf-cf ' + Hr.conf + '">' + Hr.conf.toUpperCase() + "</span>", "calibration at " + ST.hz + ": 1σ " + pc(Hr.bt.cov1) + " / 2σ " + pc(Hr.bt.cov2) + " · eff n " + Math.round(Hr.bt.neff || 0)) +
@@ -402,15 +433,21 @@
     var R = C.res, F = root.DATA.fx, dv = R.drv, n = C.I.close.length - 1, kp = (F.pos || {}).kpi || {}, pos = F.pos || {}, pol = F.policy || {}, c = C.I.close;
     var e20 = emaArr(c, 20)[n], e50 = emaArr(c, 50)[n], e100 = emaArr(c, 100)[n], er = (function () { var net = Math.abs(c[n] - c[n - 20]), p = 0; for (var i = n - 19; i <= n; i++) p += Math.abs(c[i] - c[i - 1]); return p ? net / p : null; })();
     var th = '<table class="fxf-t fxf-dt"><thead><tr><th>Rule</th><th>Now</th><th>Signal</th><th>OOS hit · ' + ST.hz + "</th><th>Status</th></tr></thead><tbody>";
-    var ivStale = R.ivAge != null && R.ivAge > 3, gl = R.garch;
+    var IV = ivNow(), ivStale = IV && !IV.fresh, gl = R.garch, ivAsof = IV ? new Date(IV.t).toISOString().slice(0, 10) : null;
     var tsr = [5, 21, 63].map(function (h) { var H2 = R.horizons[h === 5 ? "1W" : h === 21 ? "1M" : "3M"]; return (H2.sd / Math.sqrt(h) * Math.sqrt(252) * 100).toFixed(2) + "%"; });
-    var A = '<div class="fxf-kvs">' + kv("Implied vol (25Δ avg)", R.iv ? R.iv.toFixed(2) + "%" + (ivStale ? ' <span class="fxf-stale">stale · ' + esc(mdy(R.ivAsof)) + "</span>" : "") : "not on file") +
+    var A = '<div class="fxf-kvs">' + kv("Implied vol" + (IV ? " <small>" + esc(IV.src) + "</small>" : ""), IV ? IV.atm.toFixed(2) + "%" + (ivStale ? ' <span class="fxf-stale">stale · ' + esc(mdy(ivAsof)) + "</span>" : ' <small>' + esc(md(ivAsof)) + "</small>") : "not on file") +
+      kv("Daily expected move (implied)", IV ? "±" + E.ivMove(IV.atm, sp.px, 1).pct.toFixed(3) + "% · ±" + Math.round(E.ivMove(IV.atm, sp.px, 1).pips) + " pips" : "—") +
       kv("Realised vol 20D / 60D", pc(R.rv20, 2) + " / " + pc(R.rv60, 2)) +
-      kv("IV − RV20 premium", R.iv ? '<span class="' + cls(R.iv - R.rv20 * 100) + '">' + sg(R.iv - R.rv20 * 100, 2, " pts") + "</span>" + (ivStale ? " <small>(IV dated)</small>" : "") : "—") +
+      kv("IV − RV20 premium", IV ? '<span class="' + cls(IV.atm - R.rv20 * 100) + '">' + sg(IV.atm - R.rv20 * 100, 2, " pts") + "</span>" + (ivStale ? " <small>(IV dated)</small>" : "") : "—") +
       kv("Model term structure 1W / 1M / 3M", tsr.join(" / ") + " <small>" + (parseFloat(tsr[2]) > parseFloat(tsr[0]) ? "upward" : "downward") + "</small>") +
       kv("GARCH long-run vol", pc(R.garchLR, 2) + " <small>α " + gl.a + " β " + gl.b + "</small>") +
-      kv("25Δ risk reversal", R.rr != null ? sg(R.rr, 2, "%") + (ivStale ? ' <span class="fxf-stale">stale</span>' : "") : "not on file") +
-      kv("Blend weights · " + ST.hz, "EWMA " + pc(Hr.w.ewma) + " · GARCH " + pc(Hr.w.garch) + " · Hist sim " + pc(Hr.w.hs) + " · Implied 0%") + "</div>";
+      kv("25Δ risk reversal <small>USD/CAD terms</small>", IV && IV.rr != null ? sg(IV.rr, 2, "%") + (ivStale ? ' <span class="fxf-stale">stale</span>' : "") : "not on file") +
+      kv("25Δ butterfly", IV && IV.bf != null ? sg(IV.bf, 2, "%") : "not on file") +
+      (IV && IV.term ? kv("Implied term structure", esc(IV.term.map(function (x) { return x.tenor + " " + (+x.atm).toFixed(2) + "%"; }).join(" · "))) : "") +
+      kv("Blend weights · " + ST.hz, "EWMA " + pc(Hr.w.ewma) + " · GARCH " + pc(Hr.w.garch) + " · Hist sim " + pc(Hr.w.hs) + " · Implied 0%") + "</div>" +
+      '<form class="fxf-ivf" data-fxfiv><span>Fresh implied vol</span><input name="v" type="number" step="0.01" min="0.5" max="40" placeholder="e.g. 5.10" aria-label="Implied vol, % annualised"><select name="src" aria-label="Source">' +
+        ["CME CVOL (CAVL)", "Barchart 6C ATM", "Investing.com 1M ATM", "IBKR 6C ATM", "IVolatility", "Other"].map(function (x) { return "<option>" + x + "</option>"; }).join("") + '</select><button type="submit">Use</button>' +
+        (ivMan() ? '<button type="button" data-fxfivx>Clear mine</button>' : "") + "<small>kept in this browser for 3 days; the desk's stored pull wins when newer · sources below the pillars</small></form>";
     var sp2 = C.I.spread.length ? C.I.spread[C.I.spread.length - 1] : null;
     var B = '<div class="fxf-kvs">' + kv("US–CA 2Y spread", sp2 ? sp2[1].toFixed(0) + " bp <small>" + md(sp2[0]) + "</small>" : "—") +
       kv("Fed next meeting", pol.fed && pol.fed[0] ? md(pol.fed[0].meeting) + " · " + esc((pol.fed[0].ranges || []).map(function (r) { return r.label + " " + r.prob_pct + "%"; }).join(", ")) : "—") +
@@ -426,7 +463,18 @@
     function pil(k, t, sub, body, open) { return '<details class="fxf-pil"' + (open ? " open" : "") + "><summary><b>" + k + "</b> " + t + " " + ib(k) + "<span>" + sub + "</span></summary>" + body + "</details>"; }
     return '<div class="fxf-st2">Forecast drivers · four pillars</div><div class="fxf-pils">' +
       pil("A", "Volatility & options", "sizes the cone" + (ivStale ? " · implied data dated " + md(R.ivAsof) : ""), A, true) + pil("B", "Macro fundamentals", "spread · oil · USD · central banks", B, true) +
-      pil("C", "Market positioning", "CFTC TFF leveraged funds", Cc, false) + pil("D", "Technical structure", "trend · levels · regime", Dd, false) + "</div>";
+      pil("C", "Market positioning", "CFTC TFF leveraged funds", Cc, false) + pil("D", "Technical structure", "trend · levels · regime", Dd, false) + "</div>" +
+      '<details class="fxf-sec"><summary>Implied-vol sources &amp; mapping<span>where to get USD/CAD implied vol, latency and cost, and how CME 6C quotes convert to USD/CAD</span></summary>' + srcTable() + "</details>";
+  }
+  function srcTable() {
+    var S = [["CME CVOL (CAVL)", "30-day implied-vol index on CAD/USD options", "End of day free; intraday paid", "cmegroup.com · DataMine", "Free view", "Use directly as ATM vol — vol of CAD/USD = vol of USD/CAD"],
+      ["Barchart", "6C option chain: strike-by-strike IV and Greeks", "10–15 min delayed", "Web tables (CSV on paid tiers)", "Free", "6C strike K = USD/CAD 1/K · 6C call = USD/CAD put · flip the RR sign"],
+      ["Investing.com", "USD/CAD options chain, IV, deltas", "Delayed / streaming widget", "Web", "Free", "Already in USD/CAD terms"],
+      ["Interactive Brokers", "Live 6C futures-option IV in TWS; reqHistoricalData with OPTION_IMPLIED_VOLATILITY", "Live with CME data subscription", "TWS & API", "Low monthly exchange fee", "Same as Barchart (6C). The desk's read-only connector could not resolve the CAD futures underlying, so it is not automated yet"],
+      ["CME Greeks & IV API", "Greeks and IV snapshots", "Every 5 min", "REST / streaming", "Commercial", "6C → invert as above"],
+      ["IVolatility", "Futures-option chains, vol surfaces, API", "15-min delayed or live", "Web & API", "Paid", "6C → invert as above"]];
+    return '<table class="fxf-t fxf-src"><thead><tr><th>Provider</th><th>What you get</th><th>Latency</th><th>Access</th><th>Cost</th><th>Mapping to USD/CAD</th></tr></thead><tbody>' + S.map(function (r) { return "<tr>" + r.map(function (c) { return "<td>" + esc(c) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table>" +
+      '<p class="fxf-note">Daily expected move = IV ÷ √252 (e.g. 5.0% → ±0.315%, ≈ ±45 pips at 1.4377). h-session move = IV × √(h/252). FX options trade over the counter; listed 6C options on CME are the public proxy. USD/CAD 25Δ RR = 6C 25Δ put vol − 6C 25Δ call vol.</p>';
   }
   function kv(a, b) { return '<div class="fxf-kv"><span>' + a + "</span><b>" + b + "</b></div>"; }
   function f2last(S) { return S && S.length ? (+S[S.length - 1][1]).toFixed(2) + " <small>" + md(S[S.length - 1][0]) + "</small>" : "—"; }
@@ -449,7 +497,7 @@
       "<li><b>Statistical σ:</b> EWMA λ 0.94; GARCH(1,1) α " + R.garch.a + ", β " + R.garch.b + " (fitted on the first 150 sessions for the back-test, refitted on all for today); historical simulation over the trailing 250 sessions. Weights ∝ 1 / MSE of each model's variance forecast on the trailing 250 completed origins (" + Hr.wn + " used at " + ST.hz + ").</li>" +
       "<li><b>Shape:</b> skew " + SH.skew.toFixed(2) + " (±" + (2 * SH.seS).toFixed(2) + " for significance) → " + (SH.useS ? "applied" : "not significant, not applied") + "; excess kurtosis " + SH.kurt.toFixed(2) + " (±" + (2 * SH.seK).toFixed(2) + ") → " + (SH.useK ? "applied (fatter tails)" : "not applied") + ". Cornish–Fisher, scaled to the horizon.</li>" +
       "<li><b>Direction:</b> six rules fixed from theory, scored out of sample on every origin; a rule votes only if its hit rate beats 50% at one-sided 95% on n ÷ h effective windows. Drift = 0 unless the vote is directional and its composite hit rate > 55%; then half the historical sign-matched mean move.</li>" +
-      "<li><b>Market-implied:</b> stored 25Δ call/put IV and risk reversal from " + esc(mdy(R.ivAsof)) + " — shown, weighted 0% (no IV history to validate; dated). No ATM vol, butterflies or term structure from options are stored.</li>" +
+      (function () { var IV = ivNow(); return "<li><b>Market-implied:</b> " + (IV ? esc(IV.src) + " " + IV.atm.toFixed(2) + "% as of " + esc(mdy(new Date(IV.t).toISOString().slice(0, 10))) + (IV.fresh ? "" : " (dated)") : "none on file") + " — drives the implied daily and horizon moves shown beside the model's, weighted 0% in the blend until a daily IV history exists to validate it (the desk now appends each pull to fx.fxopt_hist). Sources and the 6C → USD/CAD mapping are in pillar A.</li>"; })() +
       "<li><b>Not on file:</b> FX options open interest, CFTC asset-manager positioning, an event-day history for USD/CAD (event days are marked, not stepped). Spread history covers " + I.spread.length + " sessions; CFTC z-scores " + I.cotz.length + " weeks.</li>" +
       "<li><b>Sources:</b> Bank of Canada (closes) · Yahoo Finance (WTI, DXY, live mid) · US Treasury and Bank of Canada (2Y yields) · CFTC TFF (positioning) · CME CORRA and FedWatch-style pricing (policy) · desk economic calendar. Educational only, not advice.</li></ul></details>";
   }
@@ -477,6 +525,7 @@
         ["What is volatility skew?", "The way implied vol changes across strikes. In USD/CAD, demand for protection against a CAD sell-off usually makes USD-call vol richer than USD-put vol."],
         ["What is a butterfly?", "Average of the 25Δ call and put vols minus ATM vol — the price of the tails (convexity). High butterflies = markets pay up for large moves either way."],
         ["What does the term structure reveal?", "Implied vol by expiry. Upward sloping = calm now, uncertainty later (normal). Inverted = stress or a known event close in."],
+        ["Where do I get USD/CAD implied vol, and how do 6C options map?", "Spot FX options trade over the counter, so the public sources are CME CAD/USD futures options (6C), CME's CVOL index (CAVL), Barchart and Investing.com (free, delayed), and IBKR, CME's API or IVolatility (live / paid). 6C quotes USD per CAD — the inverse of USD/CAD. Volatility is the same for both; a 6C call at K is a USD/CAD put at 1/K, so flip the sign of the risk reversal. Daily expected move = IV ÷ √252."],
         ["What can't open interest tell you?", "Open interest counts contracts outstanding; it has no price of volatility in it. It can show where positioning clusters (pins), but you cannot infer implied vol, skew or expected moves from OI alone. The desk stores no FX options OI."]]) +
       L(4, "Understanding macro drivers", [
         ["Interest-rate differentials", "When US 2-year yields rise relative to Canada's, holding USD earns more and USD/CAD tends to rise. The 2Y is used because it tracks expected central-bank policy over the next two years."],
@@ -517,7 +566,7 @@
     return '<div class="tile wide vcone-tile fxf-tile" data-vck="fxf" data-src="fx_spot"><h2>USD/CAD — Expected move &amp; forecast <span class="h2note">— how far it could move, which way the evidence leans, what drives it, what would prove it wrong, how accurate it has been</span></h2>' +
       '<div class="fxf-tabs" role="tablist"><button type="button" role="tab" data-fxft="dash" aria-selected="' + (ST.tab === "dash") + '">Forecast Dashboard</button><button type="button" role="tab" data-fxft="kc" aria-selected="' + (ST.tab === "kc") + '">Knowledge Centre</button></div>' +
       '<div class="fxf-body">' + (ST.tab === "kc" ? kc(C, sp) : dash(C, sp)) + "</div>" +
-      '<div class="stamp">Closes through ' + esc(mdy(C.res.last)) + " (Bank of Canada) · spot " + esc(sp.src) + " " + esc(sp.ts ? TS.format(new Date(sp.ts)) + " ET" : "") + " · options " + esc(mdy(C.res.ivAsof)) + " · CFTC " + esc(md(((root.DATA.fx.pos || {}).kpi || {}).date)) + " · estimates from a statistical model, not advice</div><div class=\"fxf-pop\" hidden></div></div>";
+      '<div class="stamp">Closes through ' + esc(mdy(C.res.last)) + " (Bank of Canada) · spot " + esc(sp.src) + " " + esc(sp.ts ? TS.format(new Date(sp.ts)) + " ET" : "") + " · options " + (function () { var IV = ivNow(); return IV ? esc(mdy(new Date(IV.t).toISOString().slice(0, 10))) + (IV.man ? " (yours)" : "") : "none"; })() + " · CFTC " + esc(md(((root.DATA.fx.pos || {}).kpi || {}).date)) + " · estimates from a statistical model, not advice</div><div class=\"fxf-pop\" hidden></div></div>";
   }
   var LASTPX = null, OPEN = {}, POP = null;
   function showPop(pop) { if (!pop || !POP) return; pop.innerHTML = infoHTML(POP.k, NOW[POP.k]) + '<button type="button" class="fxf-x" aria-label="Close">×</button>'; pop.style.left = POP.left + "px"; pop.style.top = POP.top + "px"; pop.hidden = false; }
@@ -554,6 +603,14 @@
     save(); rerender();
   });
   doc.addEventListener("click", function (ev) { if (ev.target.classList && ev.target.classList.contains("fxf-x")) { ev.target.parentNode.hidden = true; POP = null; } });
+  /* implied vol entered on the card (per browser) */
+  doc.addEventListener("submit", function (ev) {
+    var f = ev.target.closest && ev.target.closest("[data-fxfiv]"); if (!f) return; ev.preventDefault();
+    var v = parseFloat(f.v.value); if (!(v > 0.5 && v < 40)) { f.v.focus(); return; }
+    try { localStorage.setItem(IVK, JSON.stringify({ v: v, src: f.src.value, t: Date.now() })); } catch (e) {}
+    rerender();
+  });
+  doc.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("[data-fxfivx]")) { try { localStorage.removeItem(IVK); } catch (e) {} rerender(); } });
   doc.addEventListener("keydown", function (ev) { if (ev.key === "Escape") { var p = doc.querySelector(".fxf-tile .fxf-pop"); if (p) p.hidden = true; POP = null; } });
   setInterval(function () {
     var P = doc.getElementById("panel-fx"); if (!P || !P.classList.contains("active") || !P.querySelector(".fxf-tile") || ST.tab !== "dash") return;
@@ -571,7 +628,7 @@
     ".fxf-tile{position:relative;container-type:inline-size;--fb:#05080c;--fl:#1c2430;--fm:#8a97a8;--fi:#e8eef4;--fc:#38e0c0}html[data-theme=light] .fxf-tile{--fb:#fff;--fl:#d8dee6;--fm:#5b6676;--fi:#111a24}" +
     ".fxf-tabs{display:flex;flex-wrap:wrap;gap:0 2px;border-bottom:1px solid var(--line2,#2a3442);margin:6px 0 14px}.fxf-tabs>button{appearance:none;background:transparent;border:0;border-bottom:2px solid transparent;border-radius:0;padding:8px 13px 9px;margin:0 0 -1px;font:600 13.5px 'IBM Plex Sans',system-ui,sans-serif;color:var(--muted,#8a97a8);cursor:pointer}" +
     ".fxf-tabs>button:hover{color:var(--ink,#e8edf3)}.fxf-tabs>button[aria-selected=true]{color:#d9b46a;border-bottom-color:#d9b46a}.fxf-tabs>button:focus-visible{outline:2px solid #d9b46a}" +
-    ".fxf-cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:10px}.fxf-card{border:1px solid var(--fl);border-radius:8px;padding:10px 12px;background:var(--fb);min-width:0}" +
+    ".fxf-cards{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-bottom:10px}.fxf-card{border:1px solid var(--fl);border-radius:8px;padding:10px 12px;background:var(--fb);min-width:0}" +
     ".fxf-cl{display:flex;align-items:center;gap:6px;font:600 10.5px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--fm)}.fxf-cv{font:500 20px 'JetBrains Mono','IBM Plex Mono',monospace;color:var(--fi);margin:6px 0 4px;line-height:1.15}.fxf-cv small{font-size:12px;color:var(--fm)}" +
     ".fxf-cs{font-size:11.5px;line-height:1.4;color:var(--fm)}.fxf-tile .up{color:#3fb97f}.fxf-tile .dn{color:#e0655f}.fxf-tile .neu{color:var(--fm)}" +
     ".fxf-rg,.fxf-cf{font-size:15px;font-weight:700;letter-spacing:.06em;border:1px solid;border-radius:5px;padding:2px 8px}.fxf-rg.low{color:#38b6c9}.fxf-rg.normal{color:#3fb97f}.fxf-rg.elevated{color:#ffb020}.fxf-rg.extreme{color:#e0655f}.fxf-cf.high{color:#3fb97f}.fxf-cf.medium{color:#ffb020}.fxf-cf.low{color:#e0655f}" +
@@ -602,7 +659,9 @@
     ".fxf-kc{display:flex;flex-direction:column;gap:8px}.fxf-kci{margin:0 0 4px;color:var(--fm);font-size:13px}.fxf-les>summary{font-size:14px}.fxf-ln{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1px solid #d9b46a;color:#d9b46a;font:700 11px 'JetBrains Mono',monospace}" +
     ".fxf-q{border-top:1px solid var(--fl);padding:8px 0}.fxf-q b{color:var(--fi);font-size:13px}.fxf-q p{margin:4px 0 0;font-size:13px;line-height:1.6;color:var(--fm)}.fxf-kcg{font-size:12px;line-height:1.6;color:var(--fm);border:1px dashed var(--fl);border-radius:8px;padding:10px 12px}.fxf-kcg b{color:var(--fi);margin-right:6px}" +
     ".fxf-cvs{font-size:14px;line-height:1.3;display:block}" +
-    "@container (max-width:1000px){.fxf-cards{grid-template-columns:repeat(3,minmax(0,1fr))}}@container (max-width:720px){.fxf-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.fxf-pils,.fxf-sc{grid-template-columns:1fr}.fxf-evl{columns:1}.fxf-spot{margin-left:0}}" +
+    ".fxf-dim{color:#ffb020}.fxf-ivf{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0 4px;font-size:12px;color:var(--fm)}.fxf-ivf input,.fxf-ivf select{background:var(--fb);color:var(--fi);border:1px solid var(--line2,#2a3442);border-radius:6px;padding:4px 6px;font:12px 'JetBrains Mono',monospace}.fxf-ivf input{width:72px}.fxf-ivf button{appearance:none;background:transparent;border:1px solid #d9b46a;color:#d9b46a;border-radius:999px;padding:3px 10px;font:600 12px 'IBM Plex Sans',sans-serif;cursor:pointer}" +
+    ".fxf-src td{white-space:normal;font-family:'IBM Plex Sans',sans-serif;text-align:left!important;vertical-align:top}.fxf-src th{text-align:left!important}.fxf-src td:first-child{font-weight:600;white-space:nowrap}" +
+    "@container (max-width:1150px){.fxf-cards{grid-template-columns:repeat(3,minmax(0,1fr))}}@container (max-width:720px){.fxf-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.fxf-pils,.fxf-sc{grid-template-columns:1fr}.fxf-evl{columns:1}.fxf-spot{margin-left:0}}" +
     "@container (max-width:380px){.fxf-cards{grid-template-columns:1fr}}";
   doc.head.appendChild(css);
 })(typeof window !== "undefined" ? window : globalThis);

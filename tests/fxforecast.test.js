@@ -33,5 +33,10 @@ console.log("direction scoring");
 t("a perfect-foresight rule passes; its inverse fails", () => { const c = W.c, h = 5, s = c.map((x, i) => i + h < c.length ? Math.sign(c[i + h] - x) : 0); assert.ok(E.scoreDriver(s, c, h, 0).pass); assert.ok(!E.scoreDriver(s.map(x => -x), c, h, 0).pass); });
 t("too few effective windows never passes", () => { const c = W.c.slice(0, 60), s = c.map((x, i) => i + 21 < c.length ? Math.sign(c[i + 21] - x) : 0); assert.ok(!E.scoreDriver(s, c, 21, 0).pass); });
 
+console.log("implied-vol mapping (6C → USD/CAD)");
+t("6C 25Δ RR flips sign; butterfly unchanged; strike inverts", () => { const m = E.map6C({ atm: 5.0, call25: 5.3, put25: 5.1, strike: 0.70 }); close(m.rr25, -0.2, 1e-9); close(m.bf25, 0.2, 1e-9); close(m.strike, 1 / 0.7, 1e-12); close(m.atm, 5.0, 0); });
+t("daily expected move = IV / sqrt(252)", () => { const d = E.ivMove(5.0, 1.4377, 1); close(d.pct, 5 / Math.sqrt(252), 1e-9); close(d.pips, 1.4377 * 0.05 / Math.sqrt(252) * 1e4, 1e-6); });
+t("21-session move = IV × sqrt(21/252)", () => close(E.ivMove(5.0, 1.4, 21).pct, 5 * Math.sqrt(21 / 252), 1e-9));
+
 console.log("\n" + (n - fail) + "/" + n + " passed");
 process.exit(fail ? 1 : 0);
