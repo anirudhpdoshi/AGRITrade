@@ -170,6 +170,22 @@
       else if (bel.length) S.push("All three still trade below their 20-day averages.");
       else if (abv.length) S.push("All three hold above their 20-day averages.");
     }
+    /* drivers (owner, Nov 23 2026): the textbook links the desk can see today — dollar, crude, equities and the agri wire.
+       Each line fires only when its own signal is present and points the same way as the grain move; stated as a factor,
+       not as a proven cause. */
+    var drv = [], pct = function (s) { var x = M[s]; return x && x.pct != null ? +x.pct : null; };
+    var gUp = G.length && G.filter(function (g) { return g.ch > 0.124; }).length > G.length / 2, gDn = G.length && G.filter(function (g) { return g.ch < -0.124; }).length > G.length / 2;
+    var dx = pct("DX-Y.NYB"), cl = pct("CL=F"), sp = pct("^GSPC"), corn = G.filter(function (g) { return g.n === "Corn"; })[0], beans = G.filter(function (g) { return g.n === "Beans"; })[0], wheat = G.filter(function (g) { return g.n === "Wheat"; })[0];
+    if (dx != null && dx >= 0.25 && gDn) drv.push("A firmer dollar, up " + dx.toFixed(1) + " percent, is a headwind, making US grain dearer for overseas buyers");
+    else if (dx != null && dx <= -0.25 && gUp) drv.push("A softer dollar, down " + Math.abs(dx).toFixed(1) + " percent, is lending support to US export demand");
+    else if (dx != null && dx >= 0.25 && gUp) drv.push("Grains are gaining despite a firmer dollar");
+    if (cl != null && Math.abs(cl) >= 1.5 && corn && ((cl < 0 && corn.ch < 0) || (cl > 0 && corn.ch > 0))) drv.push((cl < 0 ? "Weaker" : "Stronger") + " crude, " + (cl < 0 ? "down " : "up ") + Math.abs(cl).toFixed(1) + " percent, " + (cl < 0 ? "drags on" : "lifts") + " corn and soyoil through the ethanol and biofuel link");
+    else if (cl != null && Math.abs(cl) >= 3 && corn) drv.push("Corn is ignoring a " + Math.abs(cl).toFixed(1) + " percent " + (cl < 0 ? "drop" : "jump") + " in crude");
+    var I24 = intel(24).map(function (r) { return r.txt; }).join(" | ");
+    if (beans && /china/i.test(I24) && /soy/i.test(I24)) drv.push(beans.ch > 0.124 ? "Beans are taking support from the China trade headlines" : beans.ch < -0.124 ? "Doubts over Chinese purchases are keeping a lid on beans" : "Beans are weighing the China trade headlines");
+    if (wheat && /(black sea|russia|ukrain)/i.test(I24)) drv.push("Black Sea headlines remain in focus for wheat");
+    if (sp != null && Math.abs(sp) >= 1.5 && G.length) drv.push(gUp && sp > 0 ? "Broad risk appetite is spilling into the ags" : sp > 0 && !gUp ? "Grains are not sharing the risk-on mood in equities" : sp < 0 && gDn ? "Risk-off selling across markets adds to the pressure" : "Grains are holding up despite the selloff in stocks");
+    if (drv.length) S.push(drv.slice(0, 3).join(". ") + ".");
     /* equities, dollar, energy, rates — one line each */
     var pc = function (s) { var x = M[s]; return x && x.pct != null ? x.pct : null; };
     var EQ = [["^GSPC", "the S and P"], ["^NDX", "the Nasdaq 100"], ["^DJI", "the Dow"]].filter(function (q) { return pc(q[0]) != null; });
@@ -180,7 +196,7 @@
     if (!cad && window.DATA && DATA.fx && DATA.fx.spot) {   /* the FX tile's live spot vs its reference close, else the snapshot mid */
       var sp = DATA.fx.spot, el = document.getElementById("fx-spot-big"), lv = el ? parseFloat(el.textContent.replace(/[^\d.]/g, "")) : NaN, px = isFinite(lv) && lv > 0.5 ? lv : sp.mid;
       cad = px ? { last: px, pct: sp.ref ? (px / sp.ref - 1) * 100 : sp.chg_pct } : null; }
-    if (cad && cad.last != null) S.push("The loonie is " + (cad.pct > 0.05 ? "weaker" : cad.pct < -0.05 ? "firmer" : "steady") + ", US dollar Canada at " + (+cad.last).toFixed(4) + ".");
+    if (cad && cad.last != null) S.push("The loonie is " + (cad.pct > 0.05 ? "weaker" : cad.pct < -0.05 ? "firmer" : "steady") + ", US dollar Canada at " + (+cad.last).toFixed(4) + (cad.pct > 0.3 ? ", which lifts Canadian cash prices in local terms" : cad.pct < -0.3 ? ", which trims Canadian cash prices in local terms" : "") + ".");
     var oth = [];
     if (M["CL=F"] && M["CL=F"].pct != null) oth.push("crude " + (M["CL=F"].pct >= 0 ? "up " : "down ") + Math.abs(M["CL=F"].pct).toFixed(1) + " percent at " + (+M["CL=F"].last).toFixed(2));
     if (M["GC=F"] && M["GC=F"].pct != null) oth.push("gold " + (M["GC=F"].pct >= 0 ? "up " : "down ") + Math.abs(M["GC=F"].pct).toFixed(1) + " percent");
