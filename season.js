@@ -62,7 +62,7 @@
   css.textContent = ".topbar.ss-on{background:linear-gradient(100deg,var(--ss1) 0%,rgba(10,15,22,0) 70%);border-radius:0 0 14px 14px;padding-bottom:10px;position:relative}" +
     ".topbar.ss-on h1{background:linear-gradient(90deg,#fff 40%,var(--ss2));-webkit-background-clip:text;background-clip:text;color:transparent}" +
     ".ss-bar{display:flex;align-items:center;gap:10px;margin-top:8px;padding:6px 10px 6px 8px;border:1px solid color-mix(in srgb,var(--ss2) 45%,transparent);border-left:3px solid var(--ss2);border-radius:8px;background:color-mix(in srgb,var(--ss1) 70%,transparent);max-width:980px;font-size:13px;color:var(--ink)}" +
-    ".ss-em{font-size:20px;line-height:1;animation:ssb 3.2s ease-in-out infinite}@keyframes ssb{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px) rotate(-6deg)}}" +
+    ".ss-em{font-size:20px;line-height:1;animation:ssb 3.2s ease-in-out 2}@keyframes ssb{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px) rotate(-6deg)}}" +
     ".ss-t{flex:1;min-width:0;line-height:1.4}.ss-t b{color:var(--ss2);font-weight:700}.ss-s{color:var(--muted);margin-left:6px;white-space:nowrap}" +
     ".ss-x{appearance:none;border:0;background:transparent;color:var(--faint);font-size:16px;cursor:pointer;padding:0 4px}.ss-x:hover{color:var(--ink)}" +
     "@media (prefers-reduced-motion:reduce){.ss-em{animation:none}}@media (max-width:760px){.ss-s{display:block;margin:2px 0 0}}";

@@ -97,9 +97,11 @@
   }
   /* scan only the cards that actually changed (was: the whole page, ~50k nodes, after every live tick) */
   var timer = 0, busy = false, dirty = new Set(), CARD = ".tile, .rail-card, .pm-card, .qt";
-  function later() { if (timer) return; timer = setTimeout(function () { timer = 0; busy = true;
+  function flush() { if (timer) { clearTimeout(timer); timer = 0; } busy = true;
     try { var L = []; dirty.forEach(function (c) { if (c.isConnected && c.offsetParent !== null) L.push(c); }); dirty.clear();
-      if (L.length) scan({ querySelectorAll: function () { return L; } }); } catch (e) {} busy = false; }, 400); }
+      if (L.length) scan({ querySelectorAll: function () { return L; } }); } catch (e) {} busy = false; }
+  function later() { if (timer) return; timer = setTimeout(flush, 400); }
+  window.GLOSSARY_FLUSH = flush;   /* run now, in the same frame as a redraw (steady.js) */
   new MutationObserver(function (M) {
     if (busy) return;
     M.forEach(function (m) {

@@ -140,8 +140,10 @@
   }
   function mount(P, id, html) {
     if (!P || !P.classList.contains("active")) return; var old = doc.getElementById(id), h = html(); if (!h) return;
+    if (old && old.parentNode === P && P.firstChild === old && old._h === h) return;   /* unchanged: no redraw (owner, Nov 23 2026 — no shivering) */
     var tmp = doc.createElement("div"); tmp.innerHTML = h; var el = tmp.firstChild, opn = old ? [].map.call(old.querySelectorAll("details[open] > summary"), function (s) { return s.textContent; }) : [];
     [].forEach.call(el.querySelectorAll("details > summary"), function (s) { if (opn.indexOf(s.textContent) >= 0) s.parentNode.open = true; });
+    el._h = h;
     if (old && old.parentNode === P) P.replaceChild(el, old); else { if (old) old.remove(); P.insertBefore(el, P.firstChild); }
   }
   var PI = doc.getElementById("panel-intel"), PB = doc.getElementById("panel-briefing"), busy = 0;

@@ -12,7 +12,8 @@
   var RM = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var css = document.createElement("style");
   css.textContent =
-    "[data-tick]{border-radius:4px;transition:background-color .25s ease-out,color .25s ease-out}" +
+    "[data-tick]{border-radius:4px;font-variant-numeric:tabular-nums;transition:background-color .25s ease-out,color .25s ease-out}" +
+    ".countdown,.qt-age,.ss-clk,.hero-cd{font-variant-numeric:tabular-nums}" +
     ".tk-up{animation:tkup .45s ease-out}.tk-dn{animation:tkdn .45s ease-out}" +
     "@keyframes tkup{0%{background:rgba(63,185,127,.55);color:#eafff3}35%{background:rgba(63,185,127,.35)}100%{background:transparent}}" +
     "@keyframes tkdn{0%{background:rgba(224,101,95,.55);color:#fff0ef}35%{background:rgba(224,101,95,.35)}100%{background:transparent}}" +
@@ -42,7 +43,10 @@
   function val(el) { var t = (el.getAttribute("data-v") || el.textContent || "").replace(/[^0-9.\-−]/g, "").replace("−", "-"); var v = parseFloat(t); return isFinite(v) ? v : null; }
 
   /* 2 rolling digits: stack old/new digit and slide in the direction of the move */
+  /* rolling digits are off (owner, Nov 23 2026): the stacked digit box changed the line height for 260 ms on every tick, which made
+     prices and the rows around them shiver. The directional flash stays; digits are tabular so values never change width. */
   function roll(el, oldT, newT, up) {
+    return;
     if (RM || !oldT || oldT.length !== newT.length) return;
     var h = "", changed = false;
     for (var i = 0; i < newT.length; i++) {

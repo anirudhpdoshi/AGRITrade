@@ -34,7 +34,7 @@
     var legs = ["near", "far"].filter(function (l) { return G[l] && G[l].rows && G[l].rows.length; }); if (!legs.length) return null;
     var leg = legs.indexOf(S.leg) >= 0 ? S.leg : legs[0], N = G[leg];
     var q = G.quotes && N.contract && G.quotes[N.contract], F = q && q.px ? +q.px : +N.underlying, Fsrc = q && q.px ? "delayed quote " + (q.label || "") : "underlying at chain pull";
-    var T = N.expires ? Math.max(0, (Date.parse(N.expires + "T13:15:00-06:00") - Date.now()) / (365 * 864e5)) : 0, dte = Math.max(0, Math.ceil(T * 365));
+    var T = N.expires ? Math.max(0, (Date.parse(N.expires + "T13:15:00-06:00") - Math.floor(Date.now() / 36e5) * 36e5) / (365 * 864e5))   /* time to expiry stepped hourly: values do not re-draw the table every few seconds */ : 0, dte = Math.max(0, Math.ceil(T * 365));
     var prev = {}; ((N.rows_prev && N.rows_prev.rows) || []).forEach(function (r) { prev[r[0]] = r; });
     var rows = N.rows.map(function (r) { var K = +r[0], p = prev[K];
       return { K: K, coi: r[1] || 0, poi: r[2] || 0, civ: r[3], piv: r[4], cvol: r[5], pvol: r[6], dco: p ? (r[1] || 0) - (p[1] || 0) : null, dpo: p ? (r[2] || 0) - (p[2] || 0) : null,
@@ -180,5 +180,5 @@
     ".oc-gx{border:1px solid var(--line2);border-radius:8px;padding:8px 10px 6px;margin:0 0 12px}.oc-gxh{margin:0 0 6px;font:600 13px 'IBM Plex Sans',sans-serif;color:var(--ink)}.oc-gxh small{font-weight:400;color:var(--muted);margin-left:6px}" +
     ".oc-leg{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:-2px 0 8px;font-size:12px}.oc-leg span{padding:1px 8px;border-radius:4px;font-weight:600}.oc-leg span.oc-hi-oi{border:2px solid #e8b93d;color:#e8b93d}.oc-leg span.oc-hi-vol{border:2px solid #b18cff;color:#c9a3ff}.oc-leg span.oc-hi-pv{border:2px solid #38b6c9;color:#7dd8e6}.oc-leg small{color:var(--muted);font:11px 'IBM Plex Mono',monospace}";
   doc.head.appendChild(st);
-  root.CHAIN_UI = { html: html, model: model };
+  root.CHAIN_UI = { html: html, model: model, tick: tick };
 })();

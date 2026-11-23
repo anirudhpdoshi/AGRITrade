@@ -107,6 +107,7 @@
   /* tighter red line where a missed run matters: the daily OI snapshot is red once a business day is skipped */
   var HARD = { options: 1.6, fxopt: 2 };
   var NAME2 = { options: "Options/OI", fxopt: "FX options IV" };
+  window.DESK_PILLS = function () { try { paintPills(); } catch (e) {} };
   function paintPills() {
     var now = Date.now();
     document.querySelectorAll("[data-src]").forEach(function (tile) {
@@ -148,9 +149,9 @@
   function paintCountdowns() {
     var now = Date.now();
     document.querySelectorAll(".countdown[data-t]").forEach(function (el) {
-      var ms = +el.getAttribute("data-t") - now;
-      el.textContent = el.getAttribute("data-fmt") === "hms" && typeof window.hmsText === "function" ? window.hmsText(ms)
+      var ms = +el.getAttribute("data-t") - now, tx = el.getAttribute("data-fmt") === "hms" && typeof window.hmsText === "function" ? window.hmsText(ms)
         : typeof window.cdText === "function" ? window.cdText(ms) : dur(ms);
+      if (el.textContent !== tx) el.textContent = tx;   /* write only on change */
     });
   }
   function syncStripHeight() {

@@ -45,7 +45,7 @@
     var odd = []; W.rows.forEach(function (r, i) { [[1, "calls"], [2, "puts"]].forEach(function (c) { var nb = W.rows.slice(Math.max(0, i - 5), i + 6).filter(function (z) { return z !== r; }).map(function (z) { return z[c[0]]; }).sort(function (a, b) { return a - b; }); var md = nb[Math.floor(nb.length / 2)] || 0; if (r[c[0]] > 20000 && r[c[0]] > 8 * Math.max(md, 1)) odd.push(kf(r[0]) + " " + c[1] + " (" + r[c[0]].toLocaleString("en-US") + " OI)"); }); });
     var fbN = X.iv_fallback && X.iv_fallback.of ? Math.round(X.iv_fallback.n / X.iv_fallback.of * 100) : null;
     return '<div class="tile gex-tile"><h2>Index gamma bell curve &amp; dealer GEX profile <span class="h2note">— ' + esc(X.name) + " · spot " + sf(X.spot) + " · " + (S.w === "w30" ? "all expiries in the next " + G.window_days + " days (" + X.expiries.length + ")" : "nearest expiry " + esc(X.near)) +
-      " · updated " + ago(G.updated_at) + " ago</span></h2>" +
+      " · updated <span class=gex-age>" + ago(G.updated_at) + "</span> ago</span></h2>" +
       '<div class="oc-ctl"><span>Index</span>' + seg("data-gex-k", keys.map(function (k) { return [k, NAME[k]]; }), S.k) + "<span>Window</span>" + seg("data-gex-w", [["w30", "Next 30 days"], ["nearest", "Nearest expiry"]], S.w) + "</div>" +
       GAMMA_UI.chart({ spot: X.spot, rows: rows, iv: W.atm_iv, normalIv: X.normal_iv, normalLab: X.normal_src, T: Math.max(dte, 1) / 365, horizon: S.w === "w30" ? "to " + dte + " days" : "to expiry", em: W.em,
         callWall: W.call_wall && W.call_wall[0], putWall: W.put_wall && W.put_wall[0], flip: W.flip, kfmt: kf, sfmt: sf }) +
@@ -56,9 +56,9 @@
   }
   function paint() {
     var P = doc.getElementById("panel-usmkt"); if (!P || !P.classList.contains("active")) return;
-    var t = P.querySelector(":scope > .gex-tile"), h = html();
-    if (t && t._h === h) return;
-    var y = root.scrollY, box = doc.createElement("div"); box.innerHTML = h; var n = box.firstElementChild; n._h = h;
+    var t = P.querySelector(":scope > .gex-tile"), h = html(), key = h.replace(/<span class=gex-age>[^<]*<\/span>/, "");
+    if (t && t._h === key) { var a = t.querySelector(".gex-age"), m = h.match(/<span class=gex-age>([^<]*)<\/span>/); if (a && m && a.textContent !== m[1]) a.textContent = m[1]; return; }   /* only the age changed: no redraw */
+    var y = root.scrollY, box = doc.createElement("div"); box.innerHTML = h; var n = box.firstElementChild; n._h = key;
     if (t) t.replaceWith(n); else P.insertBefore(n, P.firstChild);
     root.scrollTo(0, y);
   }
