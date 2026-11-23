@@ -69,5 +69,6 @@
   });
   setInterval(function () { var P = doc.getElementById("panel-usmkt"); if (!P || !P.classList.contains("active")) return; if (Date.now() - last > 300000) load(); else paint(); }, 1500);
   var st = doc.createElement("style"); st.textContent = ".gex-odd{color:#e3c14d;font-weight:600}#panel-usmkt>.gex-tile{margin-bottom:12px}"; doc.head.appendChild(st);
+  setTimeout(function () { if (!G) load(); }, 9000);   /* light file: load once in the background so the audio recap can read it */
   root.GEX_UI = { load: load, _data: function () { return G; } };
 })();

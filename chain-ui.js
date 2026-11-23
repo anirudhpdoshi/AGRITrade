@@ -181,5 +181,22 @@
     ".oc-gx{border:1px solid var(--line2);border-radius:8px;padding:8px 10px 6px;margin:0 0 12px}.oc-gxh{margin:0 0 6px;font:600 13px 'IBM Plex Sans',sans-serif;color:var(--ink)}.oc-gxh small{font-weight:400;color:var(--muted);margin-left:6px}" +
     ".oc-leg{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:-2px 0 8px;font-size:12px}.oc-leg span{padding:1px 8px;border-radius:4px;font-weight:600}.oc-leg span.oc-hi-oi{border:2px solid #e8b93d;color:#e8b93d}.oc-leg span.oc-hi-vol{border:2px solid #b18cff;color:#c9a3ff}.oc-leg span.oc-hi-pv{border:2px solid #38b6c9;color:#7dd8e6}.oc-leg small{color:var(--muted);font:11px 'IBM Plex Mono',monospace}";
   doc.head.appendChild(st);
-  root.CHAIN_UI = { html: html, model: model, tick: tick };
+  /* options read for the audio recap (owner, Nov 23 2026): the facts the chain gives, over every strike of the near chain */
+  function insight(k) {
+    var M = model(k); if (!M) return null;
+    var N = M.N, F = M.F, iv = +N.iv || null, net = 0, cum = 0, flip = null, addC = null, addP = null;
+    M.rows.forEach(function (r, i) {
+      var gc = r.C ? r.C.g : iv ? (b76(F, r.K, M.T, iv, true) || {}).g : 0, gp = r.P ? r.P.g : iv ? (b76(F, r.K, M.T, iv, false) || {}).g : 0;
+      var v = ((gc || 0) * r.coi - (gp || 0) * r.poi) * 5000 * F * F * 0.01 / 1e6, p = cum; net += v; cum += v;
+      if (i && ((p < 0 && cum >= 0) || (p > 0 && cum <= 0))) flip = r.K;
+      if (r.dco != null && r.dco > 0 && (!addC || r.dco > addC.n)) addC = { K: r.K, n: r.dco };
+      if (r.dpo != null && r.dpo > 0 && (!addP || r.dpo > addP.n)) addP = { K: r.K, n: r.dpo };
+    });
+    var VH = (M.G.vol_hist || []).map(function (x) { return +x[1]; }).filter(function (x) { return x > 0; }).sort(function (a, b) { return a - b; });
+    var sT = iv && M.T ? iv / 100 * Math.sqrt(M.T) : null;
+    return { k: k, F: F, contract: N.contract, chain: N.chain, dte: M.dte, iv: iv, normalIv: VH.length >= 10 ? VH[Math.floor(VH.length / 2)] : null, net: net, flip: flip,
+      callWall: N.call_wall && +N.call_wall[0], putWall: N.put_wall && +N.put_wall[0], pcr: N.pcr != null ? +N.pcr : null,
+      r68: sT ? [F * Math.exp(-sT), F * Math.exp(sT)] : null, addC: addC, addP: addP };
+  }
+  root.CHAIN_UI = { html: html, model: model, tick: tick, insight: insight };
 })();

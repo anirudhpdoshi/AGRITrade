@@ -151,6 +151,44 @@
     t = t.replace(/\s*·\s*/g, ", ").replace(/\bm\/m\b/g, "month on month").replace(/\by\/y\b/g, "year on year").replace(/\bq\/q\b/g, "quarter on quarter").replace(/^(USD|CAD)\s+/, "").replace(/\bUSD\/CAD\b/g, "US dollar Canada");
     return t.trim();
   }
+
+  /* options read (owner, Nov 23 2026): what the chain says about where price can go — walls as support / resistance, dealer gamma
+     (moves fade or extend), implied vol against normal, put/call balance, where new open interest went — then one takeaway that
+     follows from those facts and the trend. Every clause comes from the desk's own chain; a missing input drops its clause. */
+  function optionsRead(G) {
+    var out = [], CU = window.CHAIN_UI; if (!CU || !CU.insight) return out;
+    var p2 = function (x) { return (+x).toFixed(2); };
+    [["corn", "Corn"], ["soybeans", "Beans"], ["wheat", "Wheat"]].forEach(function (c, ci) {
+      var I; try { I = CU.insight(c[0]); } catch (e) { I = null; } if (!I || !I.F) return;
+      var g = G.filter(function (x) { return x.n === c[1]; })[0], F = I.F, bits = [], pw = I.putWall, cw = I.callWall;
+      var dP = pw ? (F - pw) / F * 100 : null, dC = cw ? (cw - F) / F * 100 : null, where;
+      if (pw && dP != null && dP >= 0 && dP < 1.2) where = "sitting on put-wall support at " + p2(pw);
+      else if (cw && dC != null && dC >= 0 && dC < 1.2) where = "pressing call-wall resistance at " + p2(cw);
+      else if (pw && cw && F > pw && F < cw) where = "between " + p2(pw) + " support and " + p2(cw) + " resistance";
+      else if (pw && F < pw) where = "below the " + p2(pw) + " put wall";
+      else if (cw && F > cw) where = "above the " + p2(cw) + " call wall";
+      var shortG = I.net < 0, facts = [where, shortG ? "dealers short gamma" : "dealers long gamma"];
+      if (I.iv && I.normalIv) facts.push(I.iv > I.normalIv * 1.15 ? "vol elevated" : I.iv < I.normalIv * 0.87 ? "vol cheap" : "");
+      var pc = I.pcr, aP = I.addP && (!I.addC || I.addP.n > I.addC.n), aC = I.addC && (!I.addP || I.addC.n > I.addP.n);
+      facts.push(pc != null && pc >= 1.2 ? "puts in demand" : pc != null && pc <= 0.8 ? "calls in demand" : aP ? "fresh put buying at " + p2(I.addP.K) : aC ? "fresh call buying at " + p2(I.addC.K) : "");
+      /* the read: trend (20-day) + put/call balance first, new open interest only when the balance is neutral + walls + gamma */
+      var below = g && g.above === false, above = g && g.above === true;
+      var def = pc != null ? (pc >= 1.1 || (pc > 0.9 && aP)) : aP, con = pc != null ? (pc <= 0.9 || (pc < 1.1 && aC)) : aC, t;
+      if (below && def) t = "defensive; " + (pw ? "a close under " + p2(pw) + (shortG ? " could accelerate selling" : " should draw hedging buyers") : "rallies look sold");
+      else if (above && con) t = "constructive; " + (cw ? "a break of " + p2(cw) + (shortG ? " could run" : " may stall on dealer selling") : "dips look bought");
+      else if (!shortG && pw && cw) t = "range-bound, dealer hedging should hold it between the walls";
+      else t = "mixed; with short gamma, a break either way can run";
+      out.push(c[1] + " options: " + facts.filter(Boolean).join(", ") + ". Read: " + t + (I.r68 ? ". Sixty-eight percent range " + p2(I.r68[0]) + " to " + p2(I.r68[1]) : "") + ".");
+    });
+    /* equity index gamma, if the index file is loaded */
+    var X = window.GEX_UI && GEX_UI._data && GEX_UI._data(), sp = X && X.indices && X.indices.SPX && X.indices.SPX.w30;
+    if (sp && sp.net_gex_m != null) {
+      var S0 = X.indices.SPX.spot, pw2 = sp.put_wall && sp.put_wall[0], cw2 = sp.call_wall && sp.call_wall[0];
+      out.push("S and P options: dealers " + (sp.net_gex_m < 0 ? "short" : "long") + " gamma, so " + (sp.net_gex_m < 0 ? "swings can feed on themselves" : "hedging should cushion swings") +
+        (pw2 ? "; put wall at " + Math.round(pw2).toLocaleString("en-US") + ", " + Math.round(Math.abs(S0 - pw2)) + " points " + (S0 >= pw2 ? "below" : "above") : "") + (cw2 ? "; call wall at " + Math.round(cw2).toLocaleString("en-US") : "") + ".");
+    }
+    return out.length ? ["The options picture."].concat(out) : [];
+  }
   function script() {
     var S = [], now = Date.now(), M = worldMap();
     var hr = +new Date(now).toLocaleString("en-US", { timeZone: "America/Toronto", hour: "numeric", hour12: false });
@@ -186,6 +224,7 @@
     if (wheat && /(black sea|russia|ukrain)/i.test(I24)) drv.push("Black Sea headlines remain in focus for wheat");
     if (sp != null && Math.abs(sp) >= 1.5 && G.length) drv.push(gUp && sp > 0 ? "Broad risk appetite is spilling into the ags" : sp > 0 && !gUp ? "Grains are not sharing the risk-on mood in equities" : sp < 0 && gDn ? "Risk-off selling across markets adds to the pressure" : "Grains are holding up despite the selloff in stocks");
     if (drv.length) S.push(drv.slice(0, 3).join(". ") + ".");
+    S = S.concat(optionsRead(G));
     /* equities, dollar, energy, rates — one line each */
     var pc = function (s) { var x = M[s]; return x && x.pct != null ? x.pct : null; };
     var EQ = [["^GSPC", "the S and P"], ["^NDX", "the Nasdaq 100"], ["^DJI", "the Dow"]].filter(function (q) { return pc(q[0]) != null; });
