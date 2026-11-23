@@ -3438,7 +3438,7 @@ var SECG={
     rel:[['rel','Latest releases',/Latest releases|releases/i]]
   },
   fx:{
-    overview:[['snap','Snapshot',/kpi-strip/],['cone','Volatility cone',/vcone-tile/],['live','Live USD/CAD',/live-fx/],['spot','Spot & key levels',/spot & key levels/i],['daily','Daily chart',/daily closes/i],['model','Model view',/Model view/],['ask','Ask Claude',/ask-tile/]],
+    overview:[['snap','Snapshot',/kpi-strip/],['cone','Expected move & forecast',/vcone-tile/],['live','Live USD/CAD',/live-fx/],['spot','Spot & key levels',/spot & key levels/i],['daily','Daily chart',/daily closes/i],['model','Model view',/Model view/],['ask','Ask Claude',/ask-tile/]],
     deriv:[['pos','Positioning KPIs',/poskpi|ckwrap/],['fwd','Forward rates',/Forward rates|Forward curve/],['cftc','CFTC CAD funds',/cftc_fx|CFTC CAD/],['sent','Sentiment & FX options',/Retail sentiment/]],
     macro:[['live','Live USD/CAD',/live-fx/],['dash','Macro dashboard',/macro dashboard/i],['tf','Trade & fiscal',/Trade & fiscal/i],['cycle','Cycle composites',/Cycle composites/],['fed','Fed policy',/Fed policy intelligence/],['allind','All indicators',/All macro indicators/],['rel','Latest releases',/Latest releases/]],
     ysm:[['ysm','Spread monitor',/ysm-tile|US–Canada yield spreads/],['ust','US Treasury live',/US Treasury yields/]],

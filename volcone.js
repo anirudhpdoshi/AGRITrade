@@ -342,6 +342,8 @@
   }
   function mount(k) {
     if (IXK.indexOf(k) >= 0) { mountIx(); return; }
+    /* USD/CAD: the Expected move & forecast card (fxforecast.js, owner Nov 23 2026) replaces the cone on FX › Overview */
+    if (k === "fx" && root.FXF) { root.FXF.mount(); return; }
     var P = doc.getElementById("panel-" + k), S = P && P.querySelector('[data-subpanel="overview"]'); if (!S) return;
     var old = S.querySelector(":scope > .vcone-tile"), h = tileHTML(k); if (!h) { if (old) old.remove(); return; }
     var w = doc.createElement("div"); w.innerHTML = h; var t = w.firstChild;
