@@ -234,7 +234,7 @@
     ".pb-t{position:relative;box-shadow:inset 2px 0 0 rgba(143,157,179,.35);transition:background-color .12s,border-color .12s}.pb-t b,.pb-t i{font-variant-numeric:tabular-nums}" +
     ".pb-t.up{background:rgba(63,185,127,.08);border-color:rgba(63,185,127,.30);box-shadow:inset 2px 0 0 #3fb97f}.pb-t.up i{color:#3fb97f}.pb-t.dn{background:rgba(255,107,98,.08);border-color:rgba(255,107,98,.30);box-shadow:inset 2px 0 0 #ff6b62}.pb-t.dn i{color:#ff6b62}" +
     ".pb-t u,.pb-t s{text-decoration:none}.pb-ar{font-size:7.5px;margin-right:2px;vertical-align:1px}" +
-    ".pb-t{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:6px}.pb-t span{grid-column:1;grid-row:1}.pb-t .pb-pc{grid-column:2;grid-row:1;justify-self:end;font:600 9px 'IBM Plex Mono',monospace;font-style:normal;color:var(--muted);white-space:nowrap;align-self:center}" +
+    ".pb-t{display:grid;grid-template-columns:auto auto;justify-content:center;text-align:center;column-gap:6px}.pb-t b,.pb-t i{justify-self:center}.pb-t span{grid-column:1;grid-row:1}.pb-t .pb-pc{grid-column:2;grid-row:1;justify-self:end;font:600 9px 'IBM Plex Mono',monospace;font-style:normal;color:var(--muted);white-space:nowrap;align-self:center}" +
     ".pb-t b{grid-column:1/3;grid-row:2}.pb-t i{grid-column:1/3;grid-row:3}.pb-t.up .pb-pc{color:#3fb97f}.pb-t.dn .pb-pc{color:#ff6b62}#pulse-bar .pb-t.sel .pb-pc{color:#34425c}" +
     ".pb-btn:hover{border-color:rgba(255,255,255,.32);background-color:rgba(255,255,255,.06)}.pb-t.up.pb-btn:hover{background-color:rgba(63,185,127,.14)}.pb-t.dn.pb-btn:hover{background-color:rgba(255,107,98,.14)}" +
     /* selected: the tile inverts (navy on light here; the light theme's page inversion turns it into white on deep navy) */
