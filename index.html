@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>/* one clock for the whole desk (owner, Nov 23 2026): every date/time shown is Eastern Time, whatever the viewer's computer is set to */
+(function(){var Z="America/Toronto",D=Date.prototype;function w(f){return function(l,o){o=Object.assign({},o||{});if(!o.timeZone)o.timeZone=Z;return f.call(this,l||"en-US",o);};}
+D.toLocaleString=w(D.toLocaleString);D.toLocaleTimeString=w(D.toLocaleTimeString);D.toLocaleDateString=w(D.toLocaleDateString);
+var F=Intl.DateTimeFormat;function G(l,o){o=Object.assign({},o||{});if(!o.timeZone)o.timeZone=Z;return new F(l||"en-US",o);}G.prototype=F.prototype;G.supportedLocalesOf=F.supportedLocalesOf;try{Intl.DateTimeFormat=G;}catch(e){}})();</script>
 <script>try{if(localStorage.getItem("desk.theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}
 /* desk zoom (− / % / + in the header): applied before first paint so the page never jumps */
 try{var dz=+localStorage.getItem("desk.zoom");if(dz>=0.6&&dz<=1.3&&dz!==1)document.documentElement.style.zoom=dz;}catch(e){}</script>

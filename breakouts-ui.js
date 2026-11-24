@@ -12,8 +12,8 @@
   try { var sv = JSON.parse(localStorage.getItem("desk.brk") || "{}"); if (sv.cls) V.cls = sv.cls; if (sv.kind) V.kind = sv.kind; if (sv.view) V.view = sv.view; if (sv.avg) V.avg = sv.avg; } catch (e) {}
   function save() { try { localStorage.setItem("desk.brk", JSON.stringify({ cls: V.cls, kind: V.kind, view: V.view, avg: V.avg })); } catch (e) {} }
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
-  var ET = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit", hour12: false }),
-    ETS = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit", second: "2-digit" });
+  var ET = new Intl.DateTimeFormat("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit" }),
+    ETS = new Intl.DateTimeFormat("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit", second: "2-digit" });
   var CLS = [["all", "All"], ["sp100", "S&P 100"], ["watch", "Watchlist"], ["index", "Indexes"], ["fx", "Currencies"]];
   var KIND = [["all", "All events"], ["hl", "Day highs / lows"], ["w52", "52-week"], ["ma", "SMA crossings"], ["ema", "EMA crossings"], ["close", "Closing breaks & crossovers"]];
   var KMAP = { day_high: "hl", day_low: "hl", w52_high: "w52", w52_low: "w52", ma_px: "ma", ma_close: "close", ma_cross: "close", ema_px: "ema", ema_close: "close", ema_cross: "close" };
@@ -192,7 +192,7 @@
     ".brk-bar input{flex:1 1 220px;min-width:0;background:#000;border:1px solid #2a2a2a;border-radius:6px;color:#e8eef4;padding:6px 10px;font:13px 'Libre Franklin',system-ui,sans-serif}" +
     ".brk-pause{all:unset;cursor:pointer;border:1px solid #2a2a2a;border-radius:6px;padding:5px 12px;font:12px 'JetBrains Mono','IBM Plex Mono',monospace;color:#c9d4e2}.brk-pause:hover{border-color:#555}" +
     ".brk-lay{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}.brk-main{min-width:0}" +
-    ".brk-feed{list-style:none;margin:0;padding:0;border:1px solid #1a1a1a;border-radius:8px}.brk-e{display:grid;grid-template-columns:52px 92px 150px minmax(0,1fr) 150px;gap:10px;align-items:center;padding:7px 12px;border-bottom:1px solid #111;font-size:13px}" +
+    ".brk-feed{list-style:none;margin:0;padding:0;border:1px solid #1a1a1a;border-radius:8px}.brk-e{display:grid;grid-template-columns:64px 92px 150px minmax(0,1fr) 150px;gap:10px;align-items:center;padding:7px 12px;border-bottom:1px solid #111;font-size:13px}" +
     ".brk-e:last-child{border-bottom:0}.brk-e time{font:12px 'JetBrains Mono','IBM Plex Mono',monospace;color:#8a8a8a}.brk-e.u{box-shadow:inset 3px 0 0 #3fb97f}.brk-e.d{box-shadow:inset 3px 0 0 #e0655f}" +
     ".brk-e.new{animation:brkNew 2.5s ease-out}@keyframes brkNew{0%{background:rgba(217,180,106,.25)}100%{background:transparent}}" +
     ".brk-tag{font:700 9.5px 'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:.04em;border-radius:3px;padding:2px 6px;text-align:center;color:#000}.brk-tag.u{background:#3fb97f}.brk-tag.d{background:#e0655f}" +
@@ -216,7 +216,7 @@
     ".brk-st td.vd{text-align:left}.brk-st td.vd i{color:#777}.vd.bull,.vd.bull2{color:#3fb97f}.vd.bear,.vd.bear2{color:#e0655f}.vd.mix{color:#e8b93d}.vd.bull2 b,.vd.bear2 b{font-weight:700}" +
     "@media (max-width:760px){#panel-breakouts{padding-right:0}}" +
     "@media (max-width:980px){.brk-lay{grid-template-columns:1fr}}" +
-    "@media (max-width:640px){.brk-e{grid-template-columns:44px minmax(0,1fr) auto;grid-template-areas:'t n p' 't g g' 't x x'}.brk-e time{grid-area:t}.brk-tag{grid-area:g;justify-self:start}.brk-nm{grid-area:n}.brk-tx{grid-area:x}.brk-px{grid-area:p}.brk-bar .brk-seg{overflow-x:auto;flex-wrap:nowrap}}";
+    "@media (max-width:640px){.brk-e{grid-template-columns:58px minmax(0,1fr) auto;grid-template-areas:'t n p' 't g g' 't x x'}.brk-e time{grid-area:t}.brk-tag{grid-area:g;justify-self:start}.brk-nm{grid-area:n}.brk-tx{grid-area:x}.brk-px{grid-area:p}.brk-bar .brk-seg{overflow-x:auto;flex-wrap:nowrap}}";
   doc.head.appendChild(css);
   root.BREAKOUTS = { poll: poll, data: function () { return B; }, repaint: function () { if (!V.paused) paint(); } };
 })(window);
