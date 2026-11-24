@@ -1,0 +1,25 @@
+name: Price history (5y daily)
+# Five-year daily closes for every Market pulse tile -> history.json on the `history` branch.
+# Once a day after the US close (fired by scheduler.yml) and on demand.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: history
+  cancel-in-progress: false
+jobs:
+  history:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+      - run: pip install -r scripts/requirements.txt
+      - name: Fetch 5y daily closes, publish history.json
+        run: python scripts/history.py

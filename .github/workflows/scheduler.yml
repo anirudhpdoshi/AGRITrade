@@ -64,6 +64,8 @@ jobs:
               if [ "$dow" -le 5 ] && { { [ "$h" -ge 15 ] && [ "$h" -le 20 ] && [ "$m" -eq 15 ]; } || { [ "$h" -eq 21 ] && [ "$m" -eq 25 ]; } || { [ "$h" -eq 23 ] && [ "$m" -eq 5 ]; }; }; then fire mcap-refresh.yml; fi
               # index gamma (GEX): every 30 min through the US session, 14:00–21:30 UTC weekdays (GitHub's own cron for gex.yml is unreliable)
               if [ "$dow" -le 5 ] && [ "$h" -ge 14 ] && [ "$h" -le 21 ] && [ $((m % 30)) -eq 10 ]; then fire gex.yml; fi
+              # 5-year daily price history for the Market pulse charts: after the US close and again early morning (FRED / BoC post overnight)
+              if { [ "$h" -eq 22 ] || [ "$h" -eq 13 ]; } && [ "$m" -eq 20 ]; then fire history.yml; fi
               # intel (institutional data + agri headlines): every 30 min at :20/:50 weekdays 10–22 UTC, hourly at :50 the rest of the weekday,
               # every 2 hours at :50 on weekends — news does not stop on Saturday (owner, Nov 22 2026)
               if { [ "$dow" -le 5 ] && { [ $((m % 30)) -eq 20 ] && [ "$h" -ge 10 ] && [ "$h" -le 22 ] || [ "$m" -eq 50 ]; }; } || { [ "$dow" -ge 6 ] && [ "$m" -eq 50 ] && [ $((h % 2)) -eq 0 ]; }; then fire intel.yml; fi
