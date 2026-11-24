@@ -25,6 +25,23 @@
   function cls(v) { return v > 0 ? "up" : v < 0 ? "dn" : "neu"; }
   var DESKS = [["us", "🇺🇸", "United States"], ["ca", "🇨🇦", "Canada"], ["both", "↔", "Both economies"]];
   var SEC = [["policy", "Central bank & rates"], ["politics", "Politics & government"], ["economy", "Economy & data"], ["trade", "Trade & tariffs"], ["energy_ag", "Energy & agriculture"]];
+  var POLSEC = { policy: 1, politics: 1 }, SEEN = {}, NEW = {};
+  /* Central bank & rates and Politics & government live on the Policy page (owner, Nov 23 2026) */
+  var PP = document.getElementById("panel-policy"), PBTN = document.getElementById("tabbtn-policy"), polH = "";
+  function policyTile() {
+    if (!PP || !J) return;
+    var d = J.desks[V.desk] || J.desks.ca, sec = d.sections || {}, L = SEC.filter(function (s) { return POLSEC[s[0]] && sec[s[0]] && sec[s[0]].length; });
+    polH = L.length ? '<div class="tile wide br-pol"><h3 class="br-s">Central bank, rates &amp; politics — ' + esc(d.name) + ' <span class="h2note">North America briefing wire · updated ' + ago(J.updated_at) + '</span></h3><div class="br-grid">' +
+      L.map(function (s) { return '<div class="br-sec"><h3 class="br-s">' + s[1] + '</h3><ul class="br-list">' + sec[s[0]].slice().sort(function (a, b) { return Date.parse(b.ts) - Date.parse(a.ts); }).slice(0, 6).map(function (c) { return story(c, 0, false); }).join("") + "</ul></div>"; }).join("") + "</div></div>" : "";
+    mountPol();
+  }
+  function mountPol() {
+    if (!PP) return; var el = PP.querySelector(":scope > .br-polw");
+    if (!polH) { if (el) el.remove(); return; }
+    if (!el) { el = document.createElement("div"); el.className = "br-polw"; PP.appendChild(el); }
+    if (el._h !== polH) { el.innerHTML = polH; el._h = polH; }
+  }
+  if (PP) new MutationObserver(function () { if (polH && !PP.querySelector(":scope > .br-polw")) mountPol(); }).observe(PP, { childList: true });
   var TAGN = { rates: ["Rates", "#6ea8ff"], cad: ["CAD", "#e8a33d"], grains: ["Grains", "#3fb97f"], energy: ["Energy", "#f0a35e"], trade: ["Trade", "#c9a3ff"] };
 
   /* ---------- data ---------- */
@@ -37,16 +54,16 @@
       .catch(function () { return fetch(RAW + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { if (!r.ok) throw r.status; tier = 2; return r.json(); }); })
       .then(function (j) { if (j && j.desks) { J = j; err = ""; store.set(CACHE, j); } })
       .catch(function () { if (!J) { J = store.get(CACHE); tier = J ? 3 : 0; } err = "The briefing could not be refreshed — " + (J ? "showing the last copy kept in this browser" : "retrying"); })
-      .then(function () { busy = false; if (BTN.getAttribute("aria-selected") === "true") render(); });
+      .then(function () { busy = false; if (BTN.getAttribute("aria-selected") === "true" || (PBTN && PBTN.getAttribute("aria-selected") === "true")) render(); });
   }
 
   /* ---------- pieces ---------- */
   function tagHTML(t) { return (t || []).map(function (k) { var n = TAGN[k]; return n ? '<span class="br-tag" style="--tc:' + n[1] + '">' + n[0] + "</span>" : ""; }).join(""); }
   function story(c, i, big) {
-    return '<li class="br-st' + (big ? " big" : "") + '">' + (big ? '<span class="br-n">' + (i + 1) + "</span>" : "") + '<div class="br-sb">' +
+    return '<li class="br-st' + (big ? " big" : "") + (big && NEW[c.url] ? " br-new" : "") + '">' + (big ? '<span class="br-n">' + (i + 1) + "</span>" : "") + '<div class="br-sb">' +
       '<a class="br-h" href="' + (window.safeUrl ? safeUrl(c.url) : "#") + '" target="_blank" rel="noopener noreferrer">' + esc(c.title) + "</a>" +
       '<div class="br-m">Wire' + (c.n > 1 ? ' <span class="br-cnt">+' + (c.n - 1) + " more report" + (c.n > 2 ? "s" : "") + "</span>" : "") +
-      " · " + ago(c.ts) + (c.section && big ? " · " + esc((SEC.filter(function (s) { return s[0] === c.section; })[0] || [0, ""])[1]) : "") + " " + tagHTML(c.tags) + (c.note ? ' · <i>' + esc(c.note) + "</i>" : "") + "</div>" +
+      " · " + (big ? '<time class="br-ts">' + et(Date.parse(c.ts), true) + " ET</time> · " : "") + ago(c.ts) + (c.section && big ? " · " + esc((SEC.filter(function (s) { return s[0] === c.section; })[0] || [0, ""])[1]) : "") + " " + tagHTML(c.tags) + (c.note ? ' · <i>' + esc(c.note) + "</i>" : "") + "</div>" +
       (big && c.why ? '<div class="br-why"><b>Desk read</b> ' + esc(c.why) + "</div>" : "") + "</div></li>";
   }
   /* as-of on the pulse: the newest of its inputs, with its age (UI-FIX-05) */
@@ -138,22 +155,28 @@
       '<div class="br-upd">Updated ' + et(Date.parse(J.updated_at)) + " ET · " + ago(J.updated_at) + " · last " + (J.window_h || 48) + " h of reporting, refreshed every 30 min" +
       (tier === 3 ? ' · <b class="dn">cached copy — network failed</b>' : "") + (err && tier !== 3 ? ' · <b class="dn">' + esc(err) + "</b>" : "") + "</div></div>" +
       '<div class="br-sw" role="tablist">' + DESKS.map(function (x) { return '<button role="tab" data-brdesk="' + x[0] + '" aria-selected="' + (V.desk === x[0]) + '"><span>' + x[1] + "</span> " + x[2] + "</button>"; }).join("") + "</div></div></div>";
-    var top = '<div class="tile wide"><h3 class="br-s">Top developments — ' + esc(d.name) + ' <span class="h2note">ranked by how widely each story is carried and how recent it is</span></h3>' +
-      (d.top && d.top.length ? '<ol class="br-list">' + d.top.map(function (c, i) { return story(c, i, true); }).join("") + "</ol>" : '<p class="note">No stories in the last ' + (J.window_h || 48) + " h.</p>") + "</div>";
-    var grid = '<div class="br-grid">' + SEC.filter(function (s) { return sec[s[0]] && sec[s[0]].length; }).map(function (s) {
+    var TL = (d.top || []).slice().sort(function (a, b) { return Date.parse(b.ts) - Date.parse(a.ts); }), key = V.desk;
+    NEW = {}; if (SEEN[key]) TL.forEach(function (c) { if (!SEEN[key][c.url]) NEW[c.url] = 1; });
+    SEEN[key] = {}; TL.forEach(function (c) { SEEN[key][c.url] = 1; });
+    var top = '<div class="tile wide"><h3 class="br-s">Top developments — ' + esc(d.name) + ' <span class="h2note">latest first · date and time in ET · new stories roll in at the top</span></h3>' +
+      (TL.length ? '<ol class="br-list">' + TL.map(function (c, i) { return story(c, i, true); }).join("") + "</ol>" : '<p class="note">No stories in the last ' + (J.window_h || 48) + " h.</p>") + "</div>";
+    var grid = '<div class="br-grid">' + SEC.filter(function (s) { return !POLSEC[s[0]] && sec[s[0]] && sec[s[0]].length; }).map(function (s) {
       return '<div class="tile br-sec"><h3 class="br-s">' + s[1] + '</h3><ul class="br-list">' + sec[s[0]].slice(0, 5).map(function (c) { return story(c, 0, false); }).join("") + "</ul></div>"; }).join("") + "</div>";
     var prov = d.provinces ? '<div class="tile wide"><h3 class="br-s">Provinces — one line each</h3><div class="br-prov">' + Object.keys(d.provinces).map(function (k) {
       var p = d.provinces[k], c = p.items && p.items[0];
       return '<div class="br-pr"><b>' + esc(p.name) + "</b>" + (c ? '<a href="' + (window.safeUrl ? safeUrl(c.url) : "#") + '" target="_blank" rel="noopener noreferrer">' + esc(c.title) + '</a><small>' + ago(c.ts) + "</small>" : '<span class="note">No story in the last ' + (J.window_h || 48) + " h</span>") + "</div>"; }).join("") + "</div></div>" : "";
     var foot = '<p class="br-foot">Headlines link to the outlet’s own article. The same story from several reports counts once (+n more reports). Tags show what each story touches on this desk. ' +
       '“Desk read” is a rule-based note from the headline wording — context for the desk, not reporting and not a forecast.</p>';
-    P.innerHTML = head + '<div class="layout br-lay"><div class="main">' + top + legHTML(V.desk) + prov + grid + foot + '</div><aside class="rail">' + pulse() + calendar(V.desk) + "</aside></div>";
+    policyTile();
+    if (BTN.getAttribute("aria-selected") !== "true") return;
+    P.innerHTML = head + '<div class="layout br-lay"><div class="main">' + top + legHTML(V.desk) + prov + grid + foot + '</div><aside class="rail">' + calendar(V.desk) + "</aside></div>";
   }
   P.addEventListener("click", function (e) { var b = e.target.closest("[data-brdesk]"); if (b) { V.desk = b.getAttribute("data-brdesk"); store.set(VIEW, V); render(); } });
   BTN.addEventListener("click", function () { if (!J) J = store.get(CACHE); render(); load(); });
   window.addEventListener("desk:unlock", function () { load(); });
-  setInterval(function () { if (BTN.getAttribute("aria-selected") === "true") load(); }, 5 * 60000);
-  setInterval(function () { if (BTN.getAttribute("aria-selected") === "true" && J) render(); }, 60000);   /* 'x min ago' and the pulse stay live */
+  if (PBTN) PBTN.addEventListener("click", function () { if (!J) J = store.get(CACHE); if (J) policyTile(); load(); });
+  setInterval(function () { if (BTN.getAttribute("aria-selected") === "true" || (PBTN && PBTN.getAttribute("aria-selected") === "true")) load(); }, 5 * 60000);
+  setInterval(function () { if (J && (BTN.getAttribute("aria-selected") === "true" || (PBTN && PBTN.getAttribute("aria-selected") === "true"))) render(); }, 60000);   /* 'x min ago' and the pulse stay live */
 
   var css = document.createElement("style");
   css.textContent =
@@ -172,6 +195,8 @@
     ".br-kg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.br-k{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 9px}.br-kn{font:11px 'IBM Plex Mono',monospace;color:var(--faint)}.br-kv{font:600 16px 'IBM Plex Mono',monospace}.br-kc{font:11.5px 'IBM Plex Mono',monospace}" +
     ".br-cal{list-style:none;margin:8px 0 0;padding:0}.br-cal li{display:grid;grid-template-columns:96px 1fr;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}.br-cal li.hi .br-cw{color:#fff;font-weight:600}" +
     ".br-ct{font:11.5px 'IBM Plex Mono',monospace;color:var(--amber)}.br-cw small{display:block;font:11px 'IBM Plex Mono',monospace;color:var(--faint);font-weight:400}.br-cc{font:600 10.5px 'IBM Plex Mono',monospace;color:var(--cyan)}.br-go{margin:8px 0 0;font-size:12.5px}" +
+    ".br-ts{color:#7dd8e6}.br-st.br-new{animation:brIn .7s cubic-bezier(.2,.8,.2,1)}@keyframes brIn{from{opacity:0;transform:translateY(-14px);background:rgba(125,216,230,.14)}to{opacity:1;transform:none;background:transparent}}" +
+    ".br-polw{margin-top:14px}.br-pol .br-grid{margin-top:4px}@media (prefers-reduced-motion:reduce){.br-st.br-new{animation:none}}" +
     ".br-foot{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint);line-height:1.6;margin:12px 2px 0}" +
     ".br-lgw{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:18px}.br-lg h4{margin:0 0 8px;font-size:13.5px}.br-sit{display:flex;flex-wrap:wrap;gap:4px 16px;font:12px 'IBM Plex Mono',monospace;color:var(--muted);margin-bottom:8px}.br-sit b{color:var(--ink)}" +
     ".br-fl{font-size:13px;color:var(--muted);margin-bottom:8px;line-height:1.5}.br-fl b{color:var(--ink)}.br-hh{font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:10px 0 2px}" +
@@ -180,5 +205,5 @@
     "@media (max-width:760px){.br-lgw{grid-template-columns:1fr}.br-grid{grid-template-columns:1fr}.br-title{font-size:18px}}";
   document.head.appendChild(css);
   window.BRIEFING = { render: render, load: load, _data: function () { return J; } };
-  if (BTN.getAttribute("aria-selected") === "true") { J = store.get(CACHE); render(); load(); }
+  if (BTN.getAttribute("aria-selected") === "true" || (PBTN && PBTN.getAttribute("aria-selected") === "true")) { J = store.get(CACHE); if (J) render(); load(); }
 })();
