@@ -47,7 +47,7 @@
     var read = Q ? "Over the " + (P === "week" ? "week" : "month") + " (" + md(Q.from) + " → " + md(Q.to) + ") US listed companies " + (Q.chg >= 0 ? "added <b class=up>" : "lost <b class=dn>") + bn(Math.abs(Q.chg)) + "</b> (" + pc(Q.pct) + "). " +
       Q.up + " of " + Q.companies + " companies rose. The ten biggest losers account for " + bn(Q.losers.reduce(function (a, x) { return a + x.chg; }, 0), true) + "; the ten biggest gainers " + bn(Q.gainers.reduce(function (a, x) { return a + x.chg; }, 0), true) + "." : "";
     return '<section id="mcapView" class="usm-card mc">' +
-      '<div class="usm-rowh"><h3>US market cap · listed companies <small>' + esc(D.universe.name) + " · " + D.universe.used + " companies · " + (D.intraday ? "intraday " + md(D.asof) + " (delayed, until the close)" : "as of " + md(D.asof) + " close") + "</small></h3>" + tg + "</div>" +
+      '<div class="usm-rowh"><h3>US market cap · listed companies <small>' + esc(D.universe.name) + " · " + D.universe.used + " companies · " + (D.intraday ? '<b class="mc-est">estimate · market open</b> ' + md(D.asof) + ", delayed prices as of " + new Date(D.updated_at).toLocaleTimeString("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit" }) + " ET · refreshed hourly, final after the 4 PM close" : "as of " + md(D.asof) + " close") + "</small></h3>" + tg + "</div>" +
       '<div class="mc-ks">' + kp("Total market cap", bn(D.total), "S&P 500 constituents") + kp("This week", bn(Wk && Wk.chg, true), pc(Wk && Wk.pct) + " · last 5 sessions", cl(Wk && Wk.chg)) +
       kp("This month", bn(M && M.chg, true), pc(M && M.pct) + " · last 21 sessions", cl(M && M.chg)) + kp("Up weeks", up + " of " + D.weekly.length, "weeks with a gain") + "</div>" +
       '<h4 class="mc-h">Weekly gain and loss <small>$ change in total market cap, Mon–Fri weeks; current week to date</small></h4>' + bars(D.weekly) +
@@ -59,7 +59,7 @@
   }
   doc.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-mcp]"); if (!b) return; P = b.getAttribute("data-mcp"); try { localStorage.setItem("desk.mcap.p", P); } catch (e) {} var v = doc.getElementById("mcapView"); if (v) v.outerHTML = html(); });
   var st = doc.createElement("style");
-  st.textContent = ".mc .usm-rowh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.mc-tg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}" +
+  st.textContent = ".mc-est{color:#e3c14d;font-weight:700;text-transform:none}.mc .usm-rowh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.mc-tg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}" +
     ".mc-tg button{all:unset;cursor:pointer;padding:6px 16px;font-weight:700;font-size:13px;color:var(--muted)}.mc-tg button[aria-pressed=true]{background:#ffb84d;color:#101825}" +
     ".mc-ks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0}.mc-k{border:1px solid var(--line2);border-radius:8px;padding:10px 12px}.mc-k span{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}" +
     ".mc-k b{display:block;font:600 22px 'IBM Plex Mono',monospace;margin:3px 0}.mc-k small{color:var(--faint);font-size:11.5px}.mc .up,.mc b.up{color:var(--green)}.mc .dn,.mc b.dn{color:var(--red)}" +
