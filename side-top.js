@@ -53,32 +53,33 @@
   /* change line: ▲/▼ absolute (and %) — colour carries direction, the arrow carries it too for colour-blind reading */
   function chg(c, abs, pct) { if (abs == null && pct == null) return ""; var ar = c === "up" ? "▲" : c === "dn" ? "▼" : "";
     return ar + (abs != null ? abs + (pct != null ? " (" + pct + ")" : "") : pct); }
-  function T(n, v, c, s, extra, tip) { return '<div class="pb-t ' + (c || "flat") + (extra || "") + '"' + (tip ? ' title="' + esc(tip) + '"' : "") + "><span>" + n + "</span><b>" + v + "</b><i>" + (s || "&nbsp;") + "</i></div>"; }
+  /* every tile opens its price chart (pricechart.js): data-pc = chart key, data-pv = the live value for the chart's last point */
+  function T(n, v, c, s, extra, tip, key, raw) { return '<div class="pb-t ' + (c || "flat") + (extra || "") + (key ? " pb-btn" : "") + '"' + (key ? ' data-pc="' + key + '" role="button" tabindex="0"' + (raw != null && isFinite(raw) ? ' data-pv="' + raw + '"' : "") : "") + (tip ? ' title="' + esc(tip) + '"' : "") + "><span>" + n + "</span><b>" + v + "</b><i>" + (s || "&nbsp;") + "</i></div>"; }
   function grp(name, tiles) { return tiles ? '<div class="pb-g"><em>' + name + '</em><div class="pb-r">' + tiles + "</div></div>" : ""; }
   function wt(id, n, d, pre) { var x = wi(id); if (!x || x.last == null) return ""; var c = cls(x.pct);
-    return T(n, (pre || "") + nf(x.last, d), c, chg(c, null, sg(x.pct, 2, "%")), "", x.name + " · " + (x.provider || "delayed") + (x.ts ? " · " + hm(Date.parse(x.ts)) : "")); }
+    return T(n, (pre || "") + nf(x.last, d), c, chg(c, null, sg(x.pct, 2, "%")), "", x.name + " · " + (x.provider || "delayed") + (x.ts ? " · " + hm(Date.parse(x.ts)) : "") + " · click for the price chart", id, x.last); }
   function bar() {
     var D = root.DATA; if (!D) return "";
     var fx = D.fx || {}, Y = fx.yields_live || {}, x = fx.fxcross || {}, P = fx.policy || {};
     var gr = GR.map(function (q) { var g = grain(q[0]); if (!g) return ""; var c = cls(g.ch);
-      return '<button type="button" class="pb-t pb-btn ' + c + (isOn(q[0]) ? " on" : "") + '" data-st-grain="' + q[0] + '" title="Open ' + q[1] + " " + esc(g.c) + ' — keeps the report you are on' + (g.ch == null ? "" : " · " + sg(g.ch, 2, "¢") + " today") + '"><span>' + q[1] + " " + esc(g.c) + "</span><b>" + nf(g.px, 4) + "</b><i>" +
+      return '<button type="button" class="pb-t pb-btn ' + c + (isOn(q[0]) ? " on" : "") + '" data-pc="' + q[0] + '" data-pv="' + g.px + '" title="' + q[1] + " " + esc(g.c) + ' — click for the price chart' + (g.ch == null ? "" : " · " + sg(g.ch, 2, "¢") + " today") + '"><span>' + q[1] + " " + esc(g.c) + "</span><b>" + nf(g.px, 4) + "</b><i>" +
         (g.ch == null ? "&nbsp;" : chg(c, sg(g.ch, 2, "¢"), null)) + "</i></button>"; }).join("");
     var el = doc.getElementById("fx-spot-big"), lv = el ? parseFloat(el.textContent.replace(/[^\d.]/g, "")) : NaN, bsx = root.PRICE_SYNC && PRICE_SYNC.best && PRICE_SYNC.best("CAD=X");
     var spot = isFinite(lv) && lv > 0.5 ? lv : (bsx && bsx.px) || (fx.feed && +fx.feed.mid), ref = fx.spot && +fx.spot.ref, ch = spot && ref ? (spot / ref - 1) * 100 : null, cc = cls(ch);
-    gr += (spot ? '<div class="pb-t pb-btn ' + cc + '" data-st-grain="fx" role="button" tabindex="0" title="USD/CAD — open it on the Grains page"><span>USD/CAD</span><b>' + nf(spot, 4) + "</b><i>" + chg(cc, null, sg(ch, 2, "%")) + "</i></div>" : "") +
-      (x.dxy != null ? T("DXY", nf(+x.dxy, 2), cls(+x.dxy_chg), chg(cls(+x.dxy_chg), null, sg(+x.dxy_chg, 2, "%")), "", "US Dollar Index") : "");
+    gr += (spot ? '<div class="pb-t pb-btn ' + cc + '" data-pc="usdcad" data-pv="' + spot + '" role="button" tabindex="0" title="USD/CAD — click for the price chart"><span>USD/CAD</span><b>' + nf(spot, 4) + "</b><i>" + chg(cc, null, sg(ch, 2, "%")) + "</i></div>" : "") +
+      (x.dxy != null ? T("DXY", nf(+x.dxy, 2), cls(+x.dxy_chg), chg(cls(+x.dxy_chg), null, sg(+x.dxy_chg, 2, "%")), "", "US Dollar Index", "dxy", +x.dxy) : "");
     var E = fx.energy || [], ew = function (nm) { return E.filter(function (e) { return e.name === nm; })[0]; };
-    var eT = function (n, e, tip) { if (!e || e.last == null) return ""; var c = cls(+e.pct); return T(n, "$" + nf(+e.last, 2), c, chg(c, null, sg(+e.pct, 2, "%")), "", tip || e.name); };
+    var eT = function (n, e, tip, key) { if (!e || e.last == null) return ""; var c = cls(+e.pct); return T(n, "$" + nf(+e.last, 2), c, chg(c, null, sg(+e.pct, 2, "%")), "", tip || e.name, key, +e.last); };
     var wti = wi("wti"), brent = wi("brent");
-    var cru = (wti ? wt("wti", "WTI", 2, "$") : eT("WTI", ew("WTI Crude"))) + (brent ? wt("brent", "Brent", 2, "$") : eT("Brent", ew("Brent Crude"))) +
-      eT("WCS", ew("Western Canadian Select"), "Western Canadian Select · " + ((ew("Western Canadian Select") || {}).delay || "")) + wt("natgas", "Nat gas", 3, "$");
-    if (wti && brent && wti.last && brent.last) cru += T("Brent–WTI", "$" + nf(brent.last - wti.last, 2), "flat", "spread", " pb-dv", "Brent minus WTI");
+    var cru = (wti ? wt("wti", "WTI", 2, "$") : eT("WTI", ew("WTI Crude"), "", "wti")) + (brent ? wt("brent", "Brent", 2, "$") : eT("Brent", ew("Brent Crude"), "", "brent")) +
+      eT("WCS", ew("Western Canadian Select"), "Western Canadian Select · " + ((ew("Western Canadian Select") || {}).delay || ""), "wcs") + wt("natgas", "Nat gas", 3, "$");
+    if (wti && brent && wti.last && brent.last) cru += T("Brent–WTI", "$" + nf(brent.last - wti.last, 2), "flat", "spread", " pb-dv", "Brent minus WTI", "brentwti", brent.last - wti.last);
     var fedM = /(\d{3})-(\d{3})/.exec(P.fed_range || ""), boc = P.boc_decided && P.boc_decided.rate != null ? P.boc_decided.rate : P.corra_now;
-    var pol = (fedM ? T("Fed funds", (+fedM[1] / 100).toFixed(2) + "–" + (+fedM[2] / 100).toFixed(2) + "%", "flat", "target") : "") + (boc != null ? T("BoC", nf(+boc, 2) + "%", "flat", "overnight") : "");
+    var pol = (fedM ? T("Fed funds", (+fedM[1] / 100).toFixed(2) + "–" + (+fedM[2] / 100).toFixed(2) + "%", "flat", "target", "", "Fed funds target range", "fed", +fedM[2] / 100) : "") + (boc != null ? T("BoC", nf(+boc, 2) + "%", "flat", "overnight", "", "Bank of Canada policy rate", "boc", +boc) : "");
     var ust = ["3M", "1Y", "2Y", "5Y", "10Y", "20Y", "30Y"].map(function (t) { var y = Y[t]; if (!y || y.y == null) return ""; var c = cls(y.chg_bp);
-      return T(t, nf(+y.y, 3) + "%", c, chg(c, sg(y.chg_bp, 1, " bp"), null), "", "US " + t + " · " + (y.src || "") + (y.label ? " · " + y.label : "")); }).join("");
+      return T(t, nf(+y.y, 3) + "%", c, chg(c, sg(y.chg_bp, 1, " bp"), null), "", "US " + t + " · " + (y.src || "") + (y.label ? " · " + y.label : ""), "ust" + t, +y.y); }).join("");
     var c2 = Y["2Y"], c10 = Y["10Y"], c3 = Y["3M"];
-    if (c2 && c10 && c2.y != null && c10.y != null) { var sp = (c10.y - c2.y) * 100; ust += T("2s10s", (sp >= 0 ? "+" : "−") + nf(Math.abs(sp), 1) + " bp", "flat", sp < 0 ? "inverted" : "positive", " pb-dv", "10Y minus 2Y — below zero = inverted curve" + (c3 && c3.y != null ? " · 3M10Y " + ((c10.y - c3.y) * 100).toFixed(1) + " bp" : "")); }
+    if (c2 && c10 && c2.y != null && c10.y != null) { var sp = (c10.y - c2.y) * 100; ust += T("2s10s", (sp >= 0 ? "+" : "−") + nf(Math.abs(sp), 1) + " bp", "flat", sp < 0 ? "inverted" : "positive", " pb-dv", "10Y minus 2Y — below zero = inverted curve" + (c3 && c3.y != null ? " · 3M10Y " + ((c10.y - c3.y) * 100).toFixed(1) + " bp" : ""), "s2s10s", sp); }
     var gold = wi("gold"), silver = wi("silver");
     var pm = wt("gold", "Gold", 1, "$") + wt("silver", "Silver", 3, "$") + wt("platinum", "Platinum", 1, "$") + wt("palladium", "Palladium", 1, "$");
     if (gold && silver && gold.last && silver.last) pm = pm.replace('title="' + esc(gold.name), 'title="Gold/silver ratio ' + nf(gold.last / silver.last, 1) + "× · " + esc(gold.name));   /* ratio lives in the gold tile's tooltip to keep the band at two rows */
@@ -86,12 +87,12 @@
       return T(n, q.kind === "spread" ? nf(q.last, 1) + " bp" : nf(q.last, 3) + "%", c, chg(c, sg(bp, 1, " bp"), null), q.kind === "spread" ? " pb-dv" : "", tip || q.name); };
     var pair = function (a, b, n, sp, tip) { var A = wi(a), Bq = wi(b); if (!A || !Bq || A.last == null || Bq.last == null) return "";
       var ca = sp ? A.chg : A.chg * 100, cb = sp ? Bq.chg : Bq.chg * 100, c = cls((ca || 0) + (cb || 0));
-      return T(n, sp ? nf(A.last, 0) + " / " + nf(Bq.last, 0) + " bp" : nf(A.last, 2) + " / " + nf(Bq.last, 2) + "%", c, sg(ca, 1, "") + " / " + sg(cb, 1, " bp"), sp ? " pb-dv" : "", tip); };
+      return T(n, sp ? nf(A.last, 0) + " / " + nf(Bq.last, 0) + " bp" : nf(A.last, 2) + " / " + nf(Bq.last, 2) + "%", c, sg(ca, 1, "") + " / " + sg(cb, 1, " bp"), sp ? " pb-dv" : "", tip, a, A.last); };
     var can = pair("ca2y", "ca10y", "CA 2Y / 10Y", false, "Government of Canada 2Y and 10Y yields · change in bp") + pair("usca2y", "usca10y", "US–CA 2Y / 10Y", true, "US minus Canada yield gap, 2Y and 10Y — wider = more USD/CAD support");
     var vix = wi("vix"), cu = wi("copper"), rk = "";
-    if (vix && vix.last != null) { var vc = vix.pct > 0 ? "dn" : vix.pct < 0 ? "up" : "flat"; rk += T("VIX", nf(vix.last, 2), vc, (vix.pct > 0 ? "▲" : vix.pct < 0 ? "▼" : "") + sg(vix.pct, 2, "%"), "", "S&P 500 implied volatility — rising VIX = risk-off (shown red)"); }
+    if (vix && vix.last != null) { var vc = vix.pct > 0 ? "dn" : vix.pct < 0 ? "up" : "flat"; rk += T("VIX", nf(vix.last, 2), vc, (vix.pct > 0 ? "▲" : vix.pct < 0 ? "▼" : "") + sg(vix.pct, 2, "%"), "", "S&P 500 implied volatility — rising VIX = risk-off (shown red)", "vix", vix.last); }
     if (cu && gold && cu.last && gold.last) { var r = cu.last / gold.last * 1000, r0 = cu.prev_close && gold.prev_close ? cu.prev_close / gold.prev_close * 1000 : null, rc = cls(r0 ? r - r0 : null);
-      rk += T("Cu/Gold", nf(r, 3), rc, r0 ? chg(rc, null, sg((r / r0 - 1) * 100, 2, "%")) : "×1000", " pb-dv", "Copper ($/lb) ÷ gold ($/oz) × 1000 — rising = growth optimism, falling = defensive"); }
+      rk += T("Cu/Gold", nf(r, 3), rc, r0 ? chg(rc, null, sg((r / r0 - 1) * 100, 2, "%")) : "×1000", " pb-dv", "Copper ($/lb) ÷ gold ($/oz) × 1000 — rising = growth optimism, falling = defensive", "cugold", r); }
     return grp("Grains &amp; FX", gr) + grp("Crude &amp; gas", cru) + grp("Policy", pol) + grp("Risk", rk) + grp("US Treasuries", ust) + grp("Precious metals", pm) + grp("Canada", can);
   }
   function mountBar() {
