@@ -187,7 +187,7 @@
     if (!ts.length) return "";
     var mx = Math.max.apply(null, ts), mn = Math.min.apply(null, ts), now = Date.now();
     var t = function (ms) { return new Date(ms).toLocaleString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); };
-    var txt = "as of " + t(mx) + " ET · " + ago(now - mx) + " ago" + (mx - mn > 3600000 ? " · oldest " + t(mn) + " (" + ago(now - mn) + ")" : "");
+    var txt = "as of " + t(mx) + " ET · " + ago(now - mx) + " ago" + (mx - mn > 3600000 ? " · oldest " + t(mn) + " ET (" + ago(now - mn) + ")" : "");
     return '<span class="wasof' + (cls ? " " + cls : "") + '" title="Source bar times from the provider, shown in Toronto time. Closed markets show their last session close.">' + txt + "</span>";
   }
   function rowHTML(i) {

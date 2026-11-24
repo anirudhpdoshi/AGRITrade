@@ -403,7 +403,7 @@
     var byDay = {}; list.forEach(function (e) { (byDay[dayIso(e.t)] = byDay[dayIso(e.t)] || []).push(e); });
     var days = Object.keys(byDay).sort();
     var nextBar = nxt ? '<div class="ev-next">Next · ' + (dayIso(nxt.t) !== today ? esc(shortDay(nxt.t)) + " " : "") + hm(nxt.t) + " ET · " + flagOf(nxt) + "<b>" + esc(nxt.label.replace(/^(USD|CAD) /, "")) + '</b> · in <span class="countdown" data-t="' + nxt.t + '" data-fmt="hms">' + hms(nxt.t - now) + "</span></div>" : "";
-    var head = "<thead><tr><th>Time</th><th>Country</th><th>Importance</th><th>Event</th><th>Actual</th><th title='Consensus forecast as published on the Forex Factory weekly calendar feed; blank when none is published'>Forecast</th><th>Previous</th><th>Status</th></tr></thead>";
+    var head = "<thead><tr><th>Time (ET)</th><th>Country</th><th>Importance</th><th>Event</th><th>Actual</th><th title='Consensus forecast as published on the Forex Factory weekly calendar feed; blank when none is published'>Forecast</th><th>Previous</th><th>Status</th></tr></thead>";
     var body = days.length ? days.map(function (d) { var L = byDay[d], t0 = L[0].t;
         return '<div class="tile wide ev-day"><h2>' + esc(new Date(t0).toLocaleDateString("en-US", { timeZone: TZ, month: "short", day: "numeric", year: "numeric" })) + (d === today ? " (Today)" : d === dayIso(now + 86400000) ? " (Tomorrow)" : d === dayIso(now - 86400000) ? " (Yesterday)" : " (" + esc(wdOf(t0)) + ")") +
           ' <span class="h2note">— ' + L.length + " event" + (L.length > 1 ? "s" : "") + ' · Toronto time</span></h2><div class="tbl-scroll"><table class="ev-tbl">' + head + "<tbody>" + L.map(function (e) { return row(e, now); }).join("") + "</tbody></table></div></div>"; }).join("")

@@ -73,10 +73,11 @@
   }
   function head() {
     var up = B ? Date.parse(B.updated_at) : 0, age = up ? Math.round((Date.now() - up) / 60000) : null, nx = nextRun(), s = Math.max(0, Math.round((nx - Date.now()) / 1000));
-    var wk = new Date().getUTCDay() % 6 === 0;
-    return '<div class="brk-hd"><span class="brk-t">Breakouts</span><span class="brk-chip dl">DELAYED ~15 MIN</span>' +
+    var ep = {}; new Intl.DateTimeFormat("en-US", { timeZone: "America/Toronto", weekday: "short", hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(new Date()).forEach(function (x) { ep[x.type] = x.value; });
+    var em = (+ep.hour) * 60 + (+ep.minute), wk = ep.weekday === "Sat" || ep.weekday === "Sun", off = !wk && (em < 480 || em >= 1080);   /* engine: weekdays 8:00–18:00 ET */
+    return '<div class="brk-hd"><span class="brk-t">Breakouts</span><span class="brk-chip dl">DELAYED ~15 MIN</span><span class="brk-k">all times ET (Toronto / New York)</span>' +
       (B ? '<span class="brk-k">last run <b>' + ETS.format(new Date(up)) + " ET</b>" + (age != null ? " · " + age + " min ago" : "") + "</span>" : '<span class="brk-k">loading…</span>') +
-      (wk ? '<span class="brk-k">weekend — engine resumes Monday 8:00 ET</span>' : '<span class="brk-k">next check <b data-brkcd>' + Math.floor(s / 60) + ":" + ("0" + s % 60).slice(-2) + "</b></span>") +
+      (wk ? '<span class="brk-k">weekend — engine resumes Monday 8:00 AM ET</span>' : off ? '<span class="brk-k">engine paused — resumes ' + (em >= 1080 && ep.weekday === "Fri" ? "Monday" : em >= 1080 ? "tomorrow" : "today") + ' 8:00 AM ET</span>' : '<span class="brk-k">next check <b data-brkcd>' + Math.floor(s / 60) + ":" + ("0" + s % 60).slice(-2) + "</b></span>") +
       (err ? '<span class="brk-chip er">fetch failed — retrying</span>' : "") +
       '<span class="brk-sp"></span><span class="brk-k">' + (B ? B.items.length + " names · " + (B.events || []).length + " events today" : "") + "</span></div>";
   }

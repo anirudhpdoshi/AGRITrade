@@ -162,7 +162,7 @@
     return a >= 1e12 ? (v / 1e12).toFixed(2) + "T" : a >= 1e9 ? (v / 1e9).toFixed(1) + "B" : a >= 1e6 ? (v / 1e6).toFixed(1) + "M" : a >= 1e3 ? (v / 1e3).toFixed(0) + "K" : String(v); }
   function sg(v, d, suf) { if (v == null || isNaN(v)) return '<span class="neu">—</span>';
     return '<span class="' + (v > 0 ? "up" : v < 0 ? "dn" : "neu") + '">' + (v > 0 ? "+" : v < 0 ? "−" : "") + num(Math.abs(v), d) + (suf || "") + "</span>"; }
-  function when(isoS) { return isoS ? new Date(isoS).toLocaleString("en-US", { timeZone: TZ, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "—"; }
+  function when(isoS) { return isoS ? new Date(isoS).toLocaleString("en-US", { timeZone: TZ, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " ET" : "—"; }
   function ago(isoS) { if (!isoS) return "—"; var m = (Date.now() - Date.parse(isoS)) / 60000;
     return m < 1 ? "just now" : m < 60 ? Math.round(m) + " min ago" : m < 2880 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " d ago"; }
   function rangeBar(lo, hi, v) { if (lo == null || hi == null || v == null || hi <= lo) return "—";
