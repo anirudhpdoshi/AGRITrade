@@ -1,4 +1,4 @@
-/* side-top.js — the frozen top of the right-hand panel (owner, Nov 23 2026), above the feed:
+/* side-top.js — Market pulse band under the menu (Nov 24 2026) + the frozen top of the right-hand panel (owner, Nov 23 2026), above the feed:
      1. Market pulse — Corn · Soybeans · Wheat as their own tiles (click one: that commodity across the reports), then USD/CAD,
         US 10Y and 2Y, US–CA 10Y spread, WTI, DXY, Fed funds, BoC rate — the desk's own data, as the Overview pulse had it
      2. Key events — the next high- and medium-impact releases and central-bank dates, rolling one line at a time
@@ -45,6 +45,53 @@
     return '<section class="st-sec"><div class="st-h"><b>Market pulse</b><span>desk data</span></div><div class="st-gs">' + tiles + '</div><div class="st-ks">' + ks + "</div></section>";
   }
 
+  /* ---------- 1b. market pulse as a full-width band under the menu (owner, Nov 24 2026):
+     Grains · FX · US Treasuries (every tenor + curve) · Crude · Precious metals · Policy, each tile tinted by today's move ---------- */
+  function wi(id) { try { var W = root.WORLD && WORLD._data(); return W && W.instruments.filter(function (x) { return x.id === id; })[0] || null; } catch (e) { return null; } }
+  function T(n, v, c, s, extra, tip) { return '<div class="pb-t ' + (c || "flat") + (extra || "") + '"' + (tip ? ' title="' + esc(tip) + '"' : "") + "><span>" + n + "</span><b>" + v + "</b><i>" + (s || "&nbsp;") + "</i></div>"; }
+  function grp(name, tiles) { return tiles ? '<div class="pb-g"><em>' + name + '</em><div class="pb-r">' + tiles + "</div></div>" : ""; }
+  function wt(id, n, d, pre) { var x = wi(id); if (!x || x.last == null) return ""; return T(n, (pre || "") + nf(x.last, d), cls(x.pct), sg(x.pct, 2, "%"), "", x.name + " · " + (x.provider || "delayed") + " · " + (x.ts ? hm(Date.parse(x.ts)) : "")); }
+  function bar() {
+    var D = root.DATA; if (!D) return "";
+    var fx = D.fx || {}, Y = fx.yields_live || {}, x = fx.fxcross || {}, P = fx.policy || {};
+    var gr = GR.map(function (q) { var g = grain(q[0]); if (!g) return "";
+      return '<button type="button" class="pb-t pb-btn ' + cls(g.ch) + (isOn(q[0]) ? " on" : "") + '" data-st-grain="' + q[0] + '" title="Open ' + q[1] + ' — keeps the report you are on"><span>' + q[1] + " <small>" + esc(g.c) + "</small></span><b>" + nf(g.px, 4) + "</b><i>" + (g.ch == null ? "&nbsp;" : sg(g.ch, 2, "¢") + " " + sg(g.pct, 2, "%")) + "</i></button>"; }).join("");
+    var el = doc.getElementById("fx-spot-big"), lv = el ? parseFloat(el.textContent.replace(/[^\d.]/g, "")) : NaN, bsx = root.PRICE_SYNC && PRICE_SYNC.best && PRICE_SYNC.best("CAD=X");
+    var spot = isFinite(lv) && lv > 0.5 ? lv : (bsx && bsx.px) || (fx.feed && +fx.feed.mid), ref = fx.spot && +fx.spot.ref, ch = spot && ref ? (spot / ref - 1) * 100 : null;
+    var fxt = (spot ? '<div class="pb-t pb-btn ' + cls(ch) + '" data-st-grain="fx" role="button" tabindex="0"><span>USD/CAD</span><b>' + nf(spot, 4) + "</b><i>" + sg(ch, 2, "%") + "</i></div>" : "") +
+      (x.dxy != null ? T("DXY", nf(+x.dxy, 2), cls(+x.dxy_chg), sg(+x.dxy_chg, 2, "%")) : "");
+    var TEN = ["3M", "1Y", "2Y", "5Y", "10Y", "20Y", "30Y"], ust = TEN.map(function (t) { var y = Y[t]; return y && y.y != null ? T(t, nf(+y.y, 3) + "%", cls(y.chg_bp), sg(y.chg_bp, 1, " bp"), "", "US " + t + " · " + (y.src || "") + (y.label ? " · " + y.label : "")) : ""; }).join("");
+    var c2 = Y["2Y"], c10 = Y["10Y"], c3 = Y["3M"];
+    if (c2 && c10 && c2.y != null && c10.y != null) { var sp = (c10.y - c2.y) * 100, spc = c10.chg_bp != null && c2.chg_bp != null ? c10.chg_bp - c2.chg_bp : null;
+      ust += T("2s10s", (sp >= 0 ? "+" : "−") + nf(Math.abs(sp), 1) + " bp", cls(spc), spc == null ? (sp < 0 ? "inverted" : "") : sg(spc, 1, " bp"), " pb-dv", "10Y minus 2Y — below zero = inverted curve"); }
+    if (c3 && c10 && c3.y != null && c10.y != null) { var sq = (c10.y - c3.y) * 100; ust += T("3M10Y", (sq >= 0 ? "+" : "−") + nf(Math.abs(sq), 1) + " bp", "flat", sq < 0 ? "inverted" : "positive", " pb-dv", "10Y minus 3-month bill — the recession-signal spread"); }
+    var E = fx.energy || [], ew = function (nm) { return E.filter(function (e) { return e.name === nm; })[0]; };
+    var wti = wi("wti"), brent = wi("brent"), wcs = ew("Western Canadian Select");
+    var cru = (wti ? wt("wti", "WTI", 2, "$") : ew("WTI Crude") ? T("WTI", "$" + nf(+ew("WTI Crude").last, 2), cls(+ew("WTI Crude").pct), sg(+ew("WTI Crude").pct, 2, "%")) : "") +
+      (brent ? wt("brent", "Brent", 2, "$") : ew("Brent Crude") ? T("Brent", "$" + nf(+ew("Brent Crude").last, 2), cls(+ew("Brent Crude").pct), sg(+ew("Brent Crude").pct, 2, "%")) : "") +
+      (wcs ? T("WCS", "$" + nf(+wcs.last, 2), cls(+wcs.pct), sg(+wcs.pct, 2, "%"), "", "Western Canadian Select · " + (wcs.delay || "")) : "") + wt("natgas", "Nat gas", 3, "$");
+    if (wti && brent && wti.last && brent.last) cru += T("Brent–WTI", "$" + nf(brent.last - wti.last, 2), "flat", "spread", " pb-dv", "Brent minus WTI");
+    var gold = wi("gold"), silver = wi("silver");
+    var pm = wt("gold", "Gold", 1, "$") + wt("silver", "Silver", 3, "$") + wt("platinum", "Platinum", 1, "$") + wt("palladium", "Palladium", 1, "$");
+    if (gold && silver && gold.last && silver.last) pm += T("Gold/Silver", nf(gold.last / silver.last, 1) + "×", "flat", "ratio", " pb-dv", "ounces of silver per ounce of gold");
+    var fedM = /(\d{3})-(\d{3})/.exec(P.fed_range || ""), boc = P.boc_decided && P.boc_decided.rate != null ? P.boc_decided.rate : P.corra_now;
+    var pol = (fedM ? T("Fed funds", (+fedM[1] / 100).toFixed(2) + "–" + (+fedM[2] / 100).toFixed(2) + "%", "flat", "target") : "") + (boc != null ? T("BoC", nf(+boc, 2) + "%", "flat", "overnight") : "");
+    return grp("Grains", gr) + grp("FX", fxt) + grp("Crude &amp; gas", cru) + grp("Policy", pol) + grp("US Treasuries", ust) + grp("Precious metals", pm);
+  }
+  function mountBar() {
+    var g = doc.getElementById("gnav"); if (!g) return;
+    var B = doc.getElementById("pulse-bar");
+    if (!B) { B = doc.createElement("div"); B.id = "pulse-bar"; B.setAttribute("aria-label", "Market pulse"); g.parentNode.insertBefore(B, g.nextSibling); }
+    var top = (parseFloat(getComputedStyle(g).top) || 0) + g.offsetHeight; if (B._top !== top) { B.style.top = top + "px"; B._top = top; }
+    var h = bar(); if (B._h !== h) { var sl = B.scrollLeft; B.innerHTML = h; B._h = h; B.scrollLeft = sl; fit(B); }
+    if (B._w !== innerWidth + "|" + doc.body.className.length) { B._w = innerWidth + "|" + doc.body.className.length; fit(B); }
+  }
+  doc.addEventListener("wheel", function (e) { var B = e.target.closest && e.target.closest("#pulse-bar.pb-scroll"); if (!B || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; B.scrollLeft += e.deltaY; e.preventDefault(); }, { passive: false });
+  function fit(B) {   /* up to two rows wrap; narrower screens get one row that scrolls sideways, so the frozen band never eats the page */
+    B.classList.remove("pb-scroll"); var tops = {}; [].forEach.call(B.children, function (g) { tops[Math.round(g.offsetTop)] = 1; });
+    if (Object.keys(tops).length > 2) B.classList.add("pb-scroll");
+  }
+
   /* ---------- 2. key events, rolling, with a countdown to the next one ---------- */
   var EVI = 0, NEXT = null;
   function cd(t) { var s = Math.max(0, Math.round((t - Date.now()) / 1000)), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
@@ -84,11 +131,12 @@
   /* ---------- mount inside the feed drawer, above the feed ---------- */
   var lastBr = "";
   function paint() {
-    var host = doc.querySelector(".fr-drawer .fr-top"); if (!host) return;
-    var p = pulse(), e = events(), b = breakouts();
+    var host = doc.querySelector(".fr-drawer .fr-top"); if (!host) { mountBar(); return; }
+    mountBar();
+    var p = "", e = events(), b = breakouts();
     var P = host.querySelector(".st-w1"), Ev = host.querySelector(".st-w2"), Br = host.querySelector(".st-w3");
     if (!P) { host.innerHTML = '<div class="st-w1"></div><div class="st-w2"></div><div class="st-w3"></div>'; P = host.querySelector(".st-w1"); Ev = host.querySelector(".st-w2"); Br = host.querySelector(".st-w3"); }
-    if (P._h !== p) { P.innerHTML = p; P._h = p; }
+    if (P._h !== p) { P.innerHTML = p; P._h = p; P.style.display = p ? "" : "none"; }
     var ek = e.replace(/(data-st-cd="\d+">)[^<]*/, "$1");   /* the countdown ticks on its own — not a reason to redraw */
     if (Ev._h !== ek) { Ev.innerHTML = e; Ev._h = ek; EVI = 0; }
     if (Br._h !== b) { var first = !Br._h; Br.innerHTML = b; Br._h = b; var top = Br.querySelector(".st-brl li"); if (top && !first && top.getAttribute("data-st-id") !== lastBr) top.classList.add("st-new"); lastBr = top ? top.getAttribute("data-st-id") : ""; }
@@ -128,6 +176,13 @@
     ".st-cdl{font:700 9.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}.st-cdt{font:700 13px 'IBM Plex Mono',monospace;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}.st-cdn{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
     ".st-imp{font:700 8.5px 'IBM Plex Mono',monospace;font-style:normal;padding:1px 4px;border-radius:3px;flex:0 0 auto;letter-spacing:.04em}.st-evl li.ih .st-imp{background:#ff5a52;color:#fff}.st-evl li.im .st-imp{background:#e3a33a;color:#1a1a1a}.st-evl li.il .st-imp{background:rgba(143,157,179,.3);color:var(--muted)}" +
     ".st-evl li.ih time{color:#ff7a72}" +
+    "#pulse-bar{position:sticky;z-index:40;display:flex;flex-wrap:wrap;gap:5px 12px;align-items:stretch;padding:6px 12px 7px;margin:0 0 8px;background:rgba(8,12,18,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line2);border-top:1px solid var(--line)}" +
+    "#pulse-bar.pb-scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}#pulse-bar:empty{display:none}.pb-g{display:flex;flex-direction:column;gap:3px;flex:0 0 auto}.pb-g>em{font:700 9.5px 'IBM Plex Mono',monospace;font-style:normal;letter-spacing:.12em;text-transform:uppercase;color:#d9b46a;padding-left:2px}" +
+    ".pb-r{display:flex;gap:4px}.pb-t{appearance:none;min-width:0;text-align:left;border:1px solid rgba(255,255,255,.10);border-radius:6px;padding:2px 6px;background:rgba(255,255,255,.03);color:var(--ink);display:flex;flex-direction:column;line-height:1.25;font:inherit}" +
+    ".pb-t span{font:600 9.5px 'IBM Plex Mono',monospace;color:var(--faint);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}.pb-t span small{font-size:9px;color:var(--faint)}.pb-t b{font:700 12.5px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;white-space:nowrap}" +
+    ".pb-t i{font:normal 10px 'IBM Plex Mono',monospace;color:var(--muted);white-space:nowrap}.pb-t.up{background:rgba(63,185,127,.13);border-color:rgba(63,185,127,.42)}.pb-t.up i{color:#3fb97f}.pb-t.dn{background:rgba(255,107,98,.13);border-color:rgba(255,107,98,.42)}.pb-t.dn i{color:#ff6b62}" +
+    ".pb-t.pb-dv{border-style:dashed}.pb-btn{cursor:pointer}.pb-btn:hover{border-color:#d9b46a}.pb-btn.on{box-shadow:inset 0 -2px 0 #d9b46a;border-color:#d9b46a}" +
+    "body.locked #pulse-bar{display:none}" +
     ".st-none{margin:0;font-size:11.5px;color:var(--muted)}" +
     "@media (prefers-reduced-motion:reduce){.st-evl{transition:none}.st-brl li.st-new{animation:none}}";
   doc.head.appendChild(st);
