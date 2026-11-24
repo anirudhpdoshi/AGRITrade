@@ -152,10 +152,15 @@ def build(key):
     scale = None
     if key == "DJX":   # DIA tracks the Dow ÷ ~100: the exact ratio today, so the page can show Dow index levels
         try:
-            dj = UDC.yf().Ticker("^DJI").history(period="5d")["Close"].dropna()
-            dh = T_.history(period="5d")["Close"].dropna()
-            if len(dj) and len(dh):
-                scale = round(float(dj.iloc[-1]) / float(dh.iloc[-1]), 4)
+            # both legs from the same 5-minute bar time (daily bars can lag a session for one and not the other)
+            dj = UDC.yf().Ticker("^DJI").history(period="2d", interval="5m")["Close"].dropna()
+            dh = T_.history(period="2d", interval="5m")["Close"].dropna()
+            common = dj.index.intersection(dh.index)
+            if len(common):
+                t = common[-1]
+                scale = round(float(dj.loc[t]) / float(dh.loc[t]), 4)
+            if scale and not 95 <= scale <= 105:
+                print(f"  ! Dow scale {scale} out of range — not used"); scale = None
         except Exception as e:
             print(f"  ! Dow scale: {type(e).__name__}")
     return {"key": key, "name": name, "spot": round(S, 2), "scale": scale, "ts": now.isoformat(timespec="seconds"), "symbol": ysym,

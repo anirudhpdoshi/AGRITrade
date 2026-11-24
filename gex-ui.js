@@ -50,7 +50,7 @@
        World Markets quotes); DIA's own option strikes stay in the tooltip notes */
     var sc = 1;
     if (dj) { sc = X.scale || 0; if (!sc) { try { var Wd = root.WORLD && WORLD._data && WORLD._data(), dji = Wd && (Wd.instruments || []).filter(function (i) { return i.sym === "^DJI"; })[0], dia = Wd && (Wd.instruments || []).filter(function (i) { return i.sym === "DIA"; })[0];
-      if (dji && dia && dia.last) sc = dji.last / dia.last; else if (dji && X.spot) sc = dji.last / X.spot; } catch (e) {} } if (!sc || sc < 50 || sc > 150) sc = 100; }
+      if (dji && dia && dia.last) sc = dji.last / dia.last; else if (dji && X.spot) sc = dji.last / X.spot; } catch (e) {} } if (!sc || sc < 95 || sc > 105) sc = 100; }
     var kfD = function (x) { return (+x).toLocaleString("en-US", { maximumFractionDigits: 0 }); };
     var fbN = X.iv_fallback && X.iv_fallback.of ? Math.round(X.iv_fallback.n / X.iv_fallback.of * 100) : null;
     return '<div class="tile gex-tile"><h2>Index gamma bell curve &amp; dealer GEX profile <span class="h2note">— ' + esc(dj ? "Dow Jones Industrial Average · from DIA options" : X.name) + " · spot " + sf(X.spot * sc) + " · " + (S.w === "w30" ? "all expiries in the next " + G.window_days + " days (" + X.expiries.length + ")" : "nearest expiry " + esc(X.near)) +
