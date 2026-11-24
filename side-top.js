@@ -55,7 +55,7 @@
     var D = root.DATA; if (!D) return "";
     var fx = D.fx || {}, Y = fx.yields_live || {}, x = fx.fxcross || {}, P = fx.policy || {};
     var gr = GR.map(function (q) { var g = grain(q[0]); if (!g) return "";
-      return '<button type="button" class="pb-t pb-btn ' + cls(g.ch) + (isOn(q[0]) ? " on" : "") + '" data-st-grain="' + q[0] + '" title="Open ' + q[1] + ' — keeps the report you are on"><span>' + q[1] + " <small>" + esc(g.c) + "</small></span><b>" + nf(g.px, 4) + "</b><i>" + (g.ch == null ? "&nbsp;" : sg(g.ch, 2, "¢") + " " + sg(g.pct, 2, "%")) + "</i></button>"; }).join("");
+      return '<button type="button" class="pb-t pb-btn ' + cls(g.ch) + (isOn(q[0]) ? " on" : "") + '" data-st-grain="' + q[0] + '" title="Open ' + q[1] + " " + esc(g.c) + ' — keeps the report you are on' + (g.ch == null ? "" : " · " + sg(g.ch, 2, "¢") + " today") + '"><span>' + q[1] + "</span><b>" + nf(g.px, 4) + "</b><i>" + (g.ch == null ? "&nbsp;" : sg(g.pct, 2, "%")) + "</i></button>"; }).join("");
     var el = doc.getElementById("fx-spot-big"), lv = el ? parseFloat(el.textContent.replace(/[^\d.]/g, "")) : NaN, bsx = root.PRICE_SYNC && PRICE_SYNC.best && PRICE_SYNC.best("CAD=X");
     var spot = isFinite(lv) && lv > 0.5 ? lv : (bsx && bsx.px) || (fx.feed && +fx.feed.mid), ref = fx.spot && +fx.spot.ref, ch = spot && ref ? (spot / ref - 1) * 100 : null;
     var fxt = (spot ? '<div class="pb-t pb-btn ' + cls(ch) + '" data-st-grain="fx" role="button" tabindex="0"><span>USD/CAD</span><b>' + nf(spot, 4) + "</b><i>" + sg(ch, 2, "%") + "</i></div>" : "") +
@@ -76,21 +76,39 @@
     if (gold && silver && gold.last && silver.last) pm += T("Gold/Silver", nf(gold.last / silver.last, 1) + "×", "flat", "ratio", " pb-dv", "ounces of silver per ounce of gold");
     var fedM = /(\d{3})-(\d{3})/.exec(P.fed_range || ""), boc = P.boc_decided && P.boc_decided.rate != null ? P.boc_decided.rate : P.corra_now;
     var pol = (fedM ? T("Fed funds", (+fedM[1] / 100).toFixed(2) + "–" + (+fedM[2] / 100).toFixed(2) + "%", "flat", "target") : "") + (boc != null ? T("BoC", nf(+boc, 2) + "%", "flat", "overnight") : "");
-    return grp("Grains", gr) + grp("FX", fxt) + grp("Crude &amp; gas", cru) + grp("Policy", pol) + grp("US Treasuries", ust) + grp("Precious metals", pm);
+    /* Canada curve and the US–Canada gaps that drive USD/CAD */
+    var wy = function (id, n, tip) { var q = wi(id); if (!q || q.last == null) return ""; var bp = q.kind === "spread" ? q.chg : q.chg != null ? q.chg * 100 : null;
+      return T(n, q.kind === "spread" ? nf(q.last, 1) + " bp" : nf(q.last, 3) + "%", cls(bp), sg(bp, 1, " bp"), q.kind === "spread" ? " pb-dv" : "", tip || q.name); };
+    var can = wy("ca2y", "CA 2Y") + wy("ca10y", "CA 10Y") + wy("usca2y", "US–CA 2Y", "US 2Y minus Canada 2Y — wider = more USD/CAD support") + wy("usca10y", "US–CA 10Y", "US 10Y minus Canada 10Y");
+    /* risk gauges: VIX (rising = risk-off, so red) and copper/gold (growth vs fear) */
+    var vix = wi("vix"), cu = wi("copper"), rk = "";
+    if (vix && vix.last != null) rk += T("VIX", nf(vix.last, 2), vix.pct > 0 ? "dn" : vix.pct < 0 ? "up" : "flat", sg(vix.pct, 2, "%"), "", "S&P 500 implied volatility — rising VIX = risk-off (shown red)");
+    if (cu && gold && cu.last && gold.last) { var r = cu.last / gold.last * 1000, r0 = cu.prev_close && gold.prev_close ? cu.prev_close / gold.prev_close * 1000 : null;
+      rk += T("Cu/Gold", nf(r, 3), cls(r0 ? r - r0 : null), r0 ? sg((r / r0 - 1) * 100, 2, "%") : "×1000", " pb-dv", "Copper ($/lb) ÷ gold ($/oz) × 1000 — rising = growth optimism, falling = defensive"); }
+    return grp("Grains", gr) + grp("FX", fxt) + grp("Crude", cru) + grp("US Treasuries", ust) + grp("Canada", can) + grp("Metals", pm) + grp("Risk", rk) + grp("Policy", pol);
   }
   function mountBar() {
     var g = doc.getElementById("gnav"); if (!g) return;
     var B = doc.getElementById("pulse-bar");
     if (!B) { B = doc.createElement("div"); B.id = "pulse-bar"; B.setAttribute("aria-label", "Market pulse"); g.parentNode.insertBefore(B, g.nextSibling); }
     var top = (parseFloat(getComputedStyle(g).top) || 0) + g.offsetHeight; if (B._top !== top) { B.style.top = top + "px"; B._top = top; }
-    var h = bar(); if (B._h !== h) { var sl = B.scrollLeft; B.innerHTML = h; B._h = h; B.scrollLeft = sl; fit(B); }
-    if (B._w !== innerWidth + "|" + doc.body.className.length) { B._w = innerWidth + "|" + doc.body.className.length; fit(B); }
+    if (!B.querySelector(".pb-in")) B.innerHTML = '<button type="button" class="pb-ar l" data-pb="-1" aria-label="Scroll left">‹</button><div class="pb-in"></div><button type="button" class="pb-ar r" data-pb="1" aria-label="Scroll right">›</button>';
+    var I = B.querySelector(".pb-in"), h = bar(); if (I._h !== h) { var sl = I.scrollLeft; I.innerHTML = h; I._h = h; I.scrollLeft = sl; }
+    edges(B, I);
   }
-  doc.addEventListener("wheel", function (e) { var B = e.target.closest && e.target.closest("#pulse-bar.pb-scroll"); if (!B || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; B.scrollLeft += e.deltaY; e.preventDefault(); }, { passive: false });
-  function fit(B) {   /* up to two rows wrap; narrower screens get one row that scrolls sideways, so the frozen band never eats the page */
-    B.classList.remove("pb-scroll"); var tops = {}; [].forEach.call(B.children, function (g) { tops[Math.round(g.offsetTop)] = 1; });
-    if (Object.keys(tops).length > 2) B.classList.add("pb-scroll");
-  }
+  /* slow ticker: drifts right ~24 px/s so every tile comes past; pauses on hover / touch / after any manual scroll, rewinds at the end */
+  var PB = { hold: 0, last: 0, wait: 0 };
+  setInterval(function () {
+    var I = doc.querySelector("#pulse-bar .pb-in"); if (!I || doc.hidden || I.scrollWidth <= I.clientWidth + 4 || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var now = Date.now(); if (I.matches(":hover") || now < PB.hold || now < PB.wait) return;
+    if (I.scrollLeft + I.clientWidth >= I.scrollWidth - 2) { PB.wait = now + 3000; setTimeout(function () { I.scrollTo({ left: 0, behavior: "smooth" }); PB.wait = Date.now() + 2500; }, 3000); return; }
+    I.style.scrollBehavior = "auto"; I.scrollLeft += 1; I.style.scrollBehavior = "";
+  }, 42);
+  ["wheel", "touchstart", "mousedown", "keydown"].forEach(function (t) { doc.addEventListener(t, function (e) { if (e.target.closest && e.target.closest("#pulse-bar")) PB.hold = Date.now() + 15000; }, { passive: true }); });
+  function edges(B, I) { B.classList.toggle("at-l", I.scrollLeft < 4); B.classList.toggle("at-r", I.scrollLeft + I.clientWidth >= I.scrollWidth - 4); }
+  doc.addEventListener("click", function (e) { var a = e.target.closest && e.target.closest("[data-pb]"); if (!a) return; var I = doc.querySelector("#pulse-bar .pb-in"); if (I) I.scrollBy({ left: +a.getAttribute("data-pb") * I.clientWidth * 0.8, behavior: "smooth" }); });
+  doc.addEventListener("scroll", function (e) { if (e.target && e.target.classList && e.target.classList.contains("pb-in")) edges(e.target.parentNode, e.target); }, true);
+  doc.addEventListener("wheel", function (e) { var B = e.target.closest && e.target.closest("#pulse-bar .pb-in"); if (!B || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; B.scrollLeft += e.deltaY; e.preventDefault(); }, { passive: false });
 
   /* ---------- 2. key events, rolling, with a countdown to the next one ---------- */
   var EVI = 0, NEXT = null;
@@ -176,11 +194,14 @@
     ".st-cdl{font:700 9.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}.st-cdt{font:700 13px 'IBM Plex Mono',monospace;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}.st-cdn{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
     ".st-imp{font:700 8.5px 'IBM Plex Mono',monospace;font-style:normal;padding:1px 4px;border-radius:3px;flex:0 0 auto;letter-spacing:.04em}.st-evl li.ih .st-imp{background:#ff5a52;color:#fff}.st-evl li.im .st-imp{background:#e3a33a;color:#1a1a1a}.st-evl li.il .st-imp{background:rgba(143,157,179,.3);color:var(--muted)}" +
     ".st-evl li.ih time{color:#ff7a72}" +
-    "#pulse-bar{position:sticky;z-index:40;display:flex;flex-wrap:wrap;gap:5px 12px;align-items:stretch;padding:6px 12px 7px;margin:0 0 8px;background:rgba(8,12,18,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line2);border-top:1px solid var(--line)}" +
-    "#pulse-bar.pb-scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}#pulse-bar:empty{display:none}.pb-g{display:flex;flex-direction:column;gap:3px;flex:0 0 auto}.pb-g>em{font:700 9.5px 'IBM Plex Mono',monospace;font-style:normal;letter-spacing:.12em;text-transform:uppercase;color:#d9b46a;padding-left:2px}" +
-    ".pb-r{display:flex;gap:4px}.pb-t{appearance:none;min-width:0;text-align:left;border:1px solid rgba(255,255,255,.10);border-radius:6px;padding:2px 6px;background:rgba(255,255,255,.03);color:var(--ink);display:flex;flex-direction:column;line-height:1.25;font:inherit}" +
-    ".pb-t span{font:600 9.5px 'IBM Plex Mono',monospace;color:var(--faint);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}.pb-t span small{font-size:9px;color:var(--faint)}.pb-t b{font:700 12.5px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;white-space:nowrap}" +
-    ".pb-t i{font:normal 10px 'IBM Plex Mono',monospace;color:var(--muted);white-space:nowrap}.pb-t.up{background:rgba(63,185,127,.13);border-color:rgba(63,185,127,.42)}.pb-t.up i{color:#3fb97f}.pb-t.dn{background:rgba(255,107,98,.13);border-color:rgba(255,107,98,.42)}.pb-t.dn i{color:#ff6b62}" +
+    "#pulse-bar{position:sticky;z-index:40;display:flex;align-items:stretch;margin:0 0 8px;background:rgba(8,12,18,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line2);border-top:1px solid var(--line);box-shadow:0 6px 14px -10px rgba(0,0,0,.6)}" +
+    "#pulse-bar:empty{display:none}.pb-in{flex:1 1 auto;min-width:0;display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding:4px 4px;scroll-behavior:smooth}.pb-in::-webkit-scrollbar{display:none}" +
+    ".pb-ar{flex:0 0 22px;appearance:none;border:0;background:rgba(255,255,255,.04);color:#d9b46a;font:700 18px/1 'IBM Plex Mono',monospace;cursor:pointer}.pb-ar:hover{background:rgba(217,180,106,.15)}#pulse-bar.at-l .pb-ar.l,#pulse-bar.at-r .pb-ar.r{opacity:.25;pointer-events:none}" +
+    ".pb-g{display:flex;align-items:stretch;gap:3px;flex:0 0 auto}.pb-g>em{align-self:center;max-width:56px;font:700 8.5px/1.15 'IBM Plex Mono',monospace;font-style:normal;letter-spacing:.06em;text-transform:uppercase;color:#d9b46a;text-align:right;padding-right:4px;border-right:1px solid rgba(217,180,106,.35)}" +
+    ".pb-r{display:flex;gap:3px}.pb-t{appearance:none;min-width:0;text-align:left;border:1px solid rgba(255,255,255,.10);border-radius:5px;padding:2px 6px 1px;background:rgba(255,255,255,.03);color:var(--ink);display:grid;grid-template-columns:auto auto;column-gap:6px;line-height:1.2;font:inherit}" +
+    ".pb-t span{grid-column:1;font:600 9px 'IBM Plex Mono',monospace;color:var(--faint);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}.pb-t span small{font-size:8.5px;color:var(--faint)}" +
+    ".pb-t i{grid-column:2;grid-row:1;text-align:right;font:normal 9.5px 'IBM Plex Mono',monospace;color:var(--muted);white-space:nowrap}.pb-t b{grid-column:1/3;font:700 12.5px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;white-space:nowrap}" +
+    ".pb-t.up{background:rgba(63,185,127,.13);border-color:rgba(63,185,127,.42)}.pb-t.up i{color:#3fb97f}.pb-t.dn{background:rgba(255,107,98,.13);border-color:rgba(255,107,98,.42)}.pb-t.dn i{color:#ff6b62}" +
     ".pb-t.pb-dv{border-style:dashed}.pb-btn{cursor:pointer}.pb-btn:hover{border-color:#d9b46a}.pb-btn.on{box-shadow:inset 0 -2px 0 #d9b46a;border-color:#d9b46a}" +
     "body.locked #pulse-bar{display:none}" +
     ".st-none{margin:0;font-size:11.5px;color:var(--muted)}" +
