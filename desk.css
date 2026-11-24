@@ -1111,3 +1111,5 @@ table.fmx-t .mx-h td{text-align:left;position:static}
 table.fmx-t thead th{vertical-align:bottom}
 /* pages without a right rail (Grains, USD/CAD, Macro) take the full width (Nov 24 2026) */
 .layout:not(:has(> aside)){grid-template-columns:minmax(0,1fr)!important}
+/* one banner only (owner, Nov 24 2026): the Market pulse band at the top. Per-page quote strips ("Feed checked …") and the breaking-news banner are not shown. */
+.subnav-live,#brk-banner{display:none!important}

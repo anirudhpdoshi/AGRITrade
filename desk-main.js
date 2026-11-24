@@ -3366,7 +3366,7 @@ function renderFX(){
     subWrap('fx','overview', fxKpiHTML()+liveFxHTML()+T.spot+T.closes+T.model+askTileHTML('fx'))+
     subWrap('fx','deriv', positioningKpiHTML('fx')+T.cftc+T.sentiment.replace('class="tile"','class="tile wide"'))+
     /* macro sections now live on the Macro tab (renderMacro) */
-    subWrap('fx','ysm', (window.YSM&&DATA.fx.ysm?YSM.html():T.yields)+ylLiveHTML())+
+    subWrap('fx','ysm', (window.YSM&&DATA.fx.ysm?YSM.html():T.yields))+   /* live yield strip removed (Nov 24 2026): the Market pulse band carries the whole curve */
     subWrap('fx','rates', (window.YSM&&DATA.fx.ysm?'':T.yields)+T.energy.replace('class="tile wide"','class="tile"')+T.policy)+
     subWrap('fx','fwd', '<div class="tile wide fxmx-tile" data-src="fx_spot"><div class="fxmx-head"><h2>Forward Rates Matrix<span class="h2note" style="display:none"> — 1M to 24M</span></h2><div class="fxmx-meta"><span class="fxmx-tg" id="fxmx-view"></span><span class="fxmx-tg" id="fxmx-inv"></span><span><b class="fxmx-g" id="fxmx-pair">USD / CAD forward curve</b> · covered-interest-parity outrights · theoretical</span><span class="fxmx-pill">SPOT REF <b id="fxmx-spot">—</b></span><span class="fxmx-pill">24M FORWARD <b id="fxmx-12">—</b></span></div></div><div id="fx-fwdmx" class="fxmx"></div><div class="stamp">Outright = spot × DF<sub>USD</sub> ÷ DF<sub>CAD</sub> from US Treasury and Government of Canada yields · points in pips (1 pip = 0.0001 CAD) · reprices on every live spot tick · not a dealer quote</div></div>'+T.forwards)+
     subWrap('fx','metals', window.METALS_UI?METALS_UI.html():'<div id="mxView" class="tile wide"><h2>Canada mineral &amp; metal exports</h2><p>Loading…</p></div>');
