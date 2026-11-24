@@ -134,7 +134,13 @@ def main():
     for s in px:
         for d, _ in px[s]:
             cnt[d] = cnt.get(d, 0) + 1
+    print("  closes per date (last 4):", [(d, cnt[d]) for d in sorted(cnt)[-4:]], "of", len(rows))
     days = sorted(d for d, n in cnt.items() if n >= 0.9 * len(rows))
+    # the newest session counts once most of the universe has printed (intraday Yahoo bars arrive symbol by symbol);
+    # the few still missing carry their last close forward, as for any gap
+    lastd = max(cnt) if cnt else None
+    if lastd and lastd not in days and cnt[lastd] >= 0.6 * len(rows):
+        days.append(lastd)
     if len(days) < 30:
         raise SystemExit(f"too few sessions ({len(days)})")
     # each company's cap on each session; a missing close carries the last one forward
