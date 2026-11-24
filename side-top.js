@@ -137,7 +137,8 @@
   function breakouts() {
     var B = root.BREAKOUTS && BREAKOUTS.data && BREAKOUTS.data(), E = (B && B.events || []).slice().sort(function (a, b) { return Date.parse(b.t) - Date.parse(a.t); }).slice(0, 3);
     return '<section class="st-sec st-br"><div class="st-h"><b>Breakouts</b><span>live · <a href="#" data-st-go="breakouts">open</a></span></div>' +
-      (E.length ? '<ul class="st-brl">' + E.map(function (e) { return '<li class="' + (e.dir > 0 ? "u" : "d") + '" data-st-id="' + esc(e.id) + '"><time>' + hm(Date.parse(e.t)) + "</time><b>" + esc(e.s) + "</b><span>" + esc(String(e.txt || "").replace(/^\S+\s+—\s+/, "")) + "</span></li>"; }).join("") + "</ul>"
+      (E.length ? '<ul class="st-brl">' + E.map(function (e) { var nmv = (BREAKOUTS.name && BREAKOUTS.name(e)) || e.n || e.s;   /* the name, not the ticker (owner, Nov 24 2026) */
+        return '<li class="' + (e.dir > 0 ? "u" : "d") + '" data-st-id="' + esc(e.id) + '" title="' + esc(e.s) + '"><time>' + hm(Date.parse(e.t)) + "</time><b>" + esc(nmv) + "</b><span>" + esc(String(e.txt || "").replace(/^\S+\s+—\s+/, "")) + "</span></li>"; }).join("") + "</ul>"
         : '<p class="st-none">No breakouts yet today — the scanner runs every 5 min, 8 AM–6 PM ET on weekdays.</p>') + "</section>";
   }
 
@@ -181,7 +182,7 @@
     ".st-evw{height:22px;overflow:hidden;position:relative}.st-evl{list-style:none;margin:0;padding:0;transition:transform .55s cubic-bezier(.3,.7,.2,1)}.st-evl li{height:22px;display:flex;gap:7px;align-items:center;font-size:12px;white-space:nowrap}" +
     ".st-evl time{font:600 10.5px 'IBM Plex Mono',monospace;color:var(--cyan);flex:0 0 auto}.st-evl li.hi time{color:#e3c14d}.st-evl span{overflow:hidden;text-overflow:ellipsis;color:var(--ink)}" +
     ".st-brl{list-style:none;margin:0;padding:0}.st-brl li{display:grid;grid-template-columns:auto auto 1fr;gap:2px 6px;align-items:baseline;font-size:11.5px;line-height:1.35;border-left:2px solid transparent;padding:3px 0 3px 6px}" +
-    ".st-brl li.u{border-left-color:#3fb97f}.st-brl li.d{border-left-color:#ff6b62}.st-brl time{font:10.5px 'IBM Plex Mono',monospace;color:var(--faint)}.st-brl b{font:700 11px 'IBM Plex Mono',monospace}.st-brl span{color:var(--ink);white-space:normal;overflow-wrap:anywhere}.st-brl time{white-space:nowrap}.st-brl b{white-space:nowrap}" +
+    ".st-brl li.u{border-left-color:#3fb97f}.st-brl li.d{border-left-color:#4f8cff}.st-brl li.u b,.st-brl li.u span{color:#3fb97f}.st-brl li.d b,.st-brl li.d span{color:#6ea2ff}.st-brl time{font:10.5px 'IBM Plex Mono',monospace;color:var(--faint)}.st-brl b{font:700 11px 'IBM Plex Mono',monospace}.st-brl span{color:var(--ink);white-space:normal;overflow-wrap:anywhere}.st-brl time{white-space:nowrap}.st-brl b{white-space:nowrap}" +
     ".st-brl li.st-new{animation:stIn .6s ease-out}@keyframes stIn{from{opacity:0;background:rgba(217,180,106,.25)}to{opacity:1;background:transparent}}" +
     ".st-g.up{background:rgba(63,185,127,.13);border-color:rgba(63,185,127,.45)}.st-g.dn{background:rgba(255,107,98,.13);border-color:rgba(255,107,98,.45)}" +
     ".st-k{border-radius:6px;padding:3px 5px;border:1px solid transparent}.st-k.up{background:rgba(63,185,127,.12);border-color:rgba(63,185,127,.35)}.st-k.dn{background:rgba(255,107,98,.12);border-color:rgba(255,107,98,.35)}.st-k.flat{background:rgba(255,255,255,.03)}" +

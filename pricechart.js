@@ -18,32 +18,34 @@
   /* tile key -> chart: history series, how to show it, sibling keys (switcher), linked desk pages */
   var GRP = { grains: ["corn", "soybeans", "wheat"], crude: ["wti", "brent", "natgas", "brentwti"], ust: ["ust3M", "ust1Y", "ust2Y", "ust5Y", "ust10Y", "ust20Y", "ust30Y", "s2s10s"],
     metals: ["gold", "silver", "platinum", "palladium"], canada: ["ca2y", "ca10y", "usca2y", "usca10y"], risk: ["vix", "cugold"], policy: ["fed", "boc"], fx: ["usdcad", "dxy"] };
-  var GRAIN_PAGES = function (k) { return [["Overview", k, "overview", "grains"], ["Derivatives", k, "deriv", "grains"], ["Input costs", k, "inputs", "grains"], ["Fundamentals", k, "fund", "grains"], ["Forward prices", k, "prices", "grains"], ["Positioning / OI", "positioning", null, "positioning"], ["Seasonality & intel", "intel", null, "intel"]]; };
-  var FX_PAGES = [["USD/CAD overview", "fx", "overview", "grains"], ["Derivatives", "fx", "deriv", "grains"], ["Yield spreads", "fx", "ysm", "grains"], ["Rates, policy & energy", "fx", "rates", "grains"], ["Forward rates", "fx", "fwd", "grains"]];
+  /* link = [label, page, sub, menu, selector clicked once the page is up] — every link lands on the same market it was opened from */
+  var PICK = function (k) { return '#grains-head [data-grain-pick="' + k + '"]'; }, WG = function (g) { return '[data-wgrp="' + g + '"]'; };
+  var GRAIN_PAGES = function (k) { var N = { corn: "Corn", soybeans: "Soybeans", wheat: "Wheat" }[k]; return [[N + " · overview", k, "overview", "grains"], [N + " · derivatives", k, "deriv", "grains"], [N + " · input costs", k, "inputs", "grains"], [N + " · fundamentals", k, "fund", "grains"], [N + " · forward prices", k, "prices", "grains"], [N + " · positioning / OI", "positioning", null, "positioning", PICK(k)], ["World markets · grains & softs", "world", null, "world", WG("grains")]]; };
+  var FX_PAGES = [["USD/CAD · overview", "fx", "overview", "grains"], ["USD/CAD · derivatives", "fx", "deriv", "grains"], ["USD/CAD · yield spreads", "fx", "ysm", "grains"], ["USD/CAD · rates, policy & energy", "fx", "rates", "grains"], ["USD/CAD · forward rates", "fx", "fwd", "grains"], ["USD/CAD · positioning / OI", "positioning", null, "positioning", PICK("fx")], ["World markets · USD/CAD & the dollar", "world", null, "world", WG("usd")]];
   var C = {
     corn: { s: "corn", n: "Corn", u: "$/bu", d: 4, g: "grains", p: GRAIN_PAGES("corn") }, soybeans: { s: "soybeans", n: "Soybeans", u: "$/bu", d: 4, g: "grains", p: GRAIN_PAGES("soybeans") },
     wheat: { s: "wheat", n: "Wheat", u: "$/bu", d: 4, g: "grains", p: GRAIN_PAGES("wheat") },
-    usdcad: { s: "usdcad", n: "USD/CAD", u: "CAD per USD", d: 4, g: "fx", p: FX_PAGES }, dxy: { s: "dxy", n: "US Dollar Index (DXY)", u: "index", d: 2, g: "fx", p: [["World markets", "world", null, "world"], ["USD/CAD overview", "fx", "overview", "grains"]] },
-    wti: { s: "wti", n: "WTI crude", u: "$/bbl", d: 2, g: "crude", p: [["Rates, policy & energy", "fx", "rates", "grains"], ["Input costs (corn)", "corn", "inputs", "grains"], ["World markets", "world", null, "world"]] },
-    brent: { s: "brent", n: "Brent crude", u: "$/bbl", d: 2, g: "crude", p: [["Rates, policy & energy", "fx", "rates", "grains"], ["World markets", "world", null, "world"]] },
-    natgas: { s: "natgas", n: "Natural gas (Henry Hub)", u: "$/MMBtu", d: 3, g: "crude", p: [["Input costs (fertilizer)", "corn", "inputs", "grains"], ["World markets", "world", null, "world"]] },
-    brentwti: { s: "brentwti", n: "Brent − WTI spread", u: "$/bbl", d: 2, g: "crude", p: [["Rates, policy & energy", "fx", "rates", "grains"]] },
-    wcs: { s: null, n: "Western Canadian Select", u: "$/bbl", d: 2, g: "crude", p: [["Rates, policy & energy", "fx", "rates", "grains"]] },
-    fed: { s: "fed_hi", n: "Fed funds target (upper bound)", u: "%", d: 2, g: "policy", p: [["Policy · stance monitor", "policy", null, "policy"], ["Macro", "macro", null, "macro"]] },
-    boc: { s: "boc", n: "Bank of Canada policy rate", u: "%", d: 2, g: "policy", p: [["Policy · stance monitor", "policy", null, "policy"], ["Macro", "macro", null, "macro"]] },
-    vix: { s: "vix", n: "VIX", u: "index", d: 2, g: "risk", p: [["US markets", "usm", null, "usm"], ["World markets", "world", null, "world"]] },
-    cugold: { s: "cugold", n: "Copper / gold ratio (×1000)", u: "ratio", d: 3, g: "risk", p: [["World markets", "world", null, "world"], ["Mineral exports", "fx", "metals", "grains"]] },
-    gold: { s: "gold", n: "Gold", u: "$/oz", d: 1, g: "metals", p: [["Mineral exports", "fx", "metals", "grains"], ["World markets", "world", null, "world"]] },
-    silver: { s: "silver", n: "Silver", u: "$/oz", d: 3, g: "metals", p: [["Mineral exports", "fx", "metals", "grains"], ["World markets", "world", null, "world"]] },
-    platinum: { s: "platinum", n: "Platinum", u: "$/oz", d: 1, g: "metals", p: [["Mineral exports", "fx", "metals", "grains"], ["World markets", "world", null, "world"]] },
-    palladium: { s: "palladium", n: "Palladium", u: "$/oz", d: 1, g: "metals", p: [["Mineral exports", "fx", "metals", "grains"], ["World markets", "world", null, "world"]] },
-    ca2y: { s: "ca2y", n: "Canada 2Y yield", u: "%", d: 3, g: "canada", p: [["Yield spreads", "fx", "ysm", "grains"], ["Policy", "policy", null, "policy"]] },
-    ca10y: { s: "ca10y", n: "Canada 10Y yield", u: "%", d: 3, g: "canada", p: [["Yield spreads", "fx", "ysm", "grains"], ["Policy", "policy", null, "policy"]] },
-    usca2y: { s: "usca2y", n: "US − Canada 2Y gap", u: "bp", d: 1, g: "canada", p: [["Yield spreads", "fx", "ysm", "grains"], ["USD/CAD overview", "fx", "overview", "grains"]] },
-    usca10y: { s: "usca10y", n: "US − Canada 10Y gap", u: "bp", d: 1, g: "canada", p: [["Yield spreads", "fx", "ysm", "grains"], ["USD/CAD overview", "fx", "overview", "grains"]] },
-    s2s10s: { s: "s2s10s", n: "US 2s10s curve", u: "bp", d: 1, g: "ust", p: [["US Treasury", "treasury", null, "treasury"], ["Yield spreads", "fx", "ysm", "grains"]] }
+    usdcad: { s: "usdcad", n: "USD/CAD", u: "CAD per USD", d: 4, g: "fx", p: FX_PAGES }, dxy: { s: "dxy", n: "US Dollar Index (DXY)", u: "index", d: 2, g: "fx", p: [["World markets · USD/CAD & the dollar", "world", null, "world", WG("usd")], ["World markets · DXY components", "world", null, "world", WG("majors")], ["USD/CAD · overview", "fx", "overview", "grains"]] },
+    wti: { s: "wti", n: "WTI crude", u: "$/bbl", d: 2, g: "crude", p: [["USD/CAD · rates, policy & energy", "fx", "rates", "grains"], ["Corn · input costs", "corn", "inputs", "grains"], ["World markets · energy & fertilizer", "world", null, "world", WG("energy")]] },
+    brent: { s: "brent", n: "Brent crude", u: "$/bbl", d: 2, g: "crude", p: [["USD/CAD · rates, policy & energy", "fx", "rates", "grains"], ["World markets · energy & fertilizer", "world", null, "world", WG("energy")]] },
+    natgas: { s: "natgas", n: "Natural gas (Henry Hub)", u: "$/MMBtu", d: 3, g: "crude", p: [["Corn · input costs (fertilizer)", "corn", "inputs", "grains"], ["World markets · energy & fertilizer", "world", null, "world", WG("energy")]] },
+    brentwti: { s: "brentwti", n: "Brent − WTI spread", u: "$/bbl", d: 2, g: "crude", p: [["USD/CAD · rates, policy & energy", "fx", "rates", "grains"], ["World markets · energy & fertilizer", "world", null, "world", WG("energy")]] },
+    wcs: { s: null, n: "Western Canadian Select", u: "$/bbl", d: 2, g: "crude", p: [["USD/CAD · rates, policy & energy", "fx", "rates", "grains"]] },
+    fed: { s: "fed_hi", n: "Fed funds target (upper bound)", u: "%", d: 2, g: "policy", p: [["Policy · Fed & BoC stance monitor", "policy", null, "policy"], ["World markets · Fed path & Treasuries", "world", null, "world", WG("ust")], ["US Treasury", "treasury", null, "treasury"]] },
+    boc: { s: "boc", n: "Bank of Canada policy rate", u: "%", d: 2, g: "policy", p: [["Policy · Fed & BoC stance monitor", "policy", null, "policy"], ["World markets · US–Canada rate gap", "world", null, "world", WG("spread")], ["USD/CAD · yield spreads", "fx", "ysm", "grains"]] },
+    vix: { s: "vix", n: "VIX", u: "index", d: 2, g: "risk", p: [["World markets · fear gauge (VIX)", "world", null, "world", WG("vol")], ["World markets · US markets", "usmkt", null, "world"]] },
+    cugold: { s: "cugold", n: "Copper / gold ratio (×1000)", u: "ratio", d: 3, g: "risk", p: [["World markets · China & industrial metals", "world", null, "world", WG("indmet")], ["World markets · precious metals", "world", null, "world", WG("precious")]] },
+    gold: { s: "gold", n: "Gold", u: "$/oz", d: 1, g: "metals", p: [["World markets · precious metals", "world", null, "world", WG("precious")], ["USD/CAD · mineral exports", "fx", "metals", "grains"]] },
+    silver: { s: "silver", n: "Silver", u: "$/oz", d: 3, g: "metals", p: [["World markets · precious metals", "world", null, "world", WG("precious")], ["USD/CAD · mineral exports", "fx", "metals", "grains"]] },
+    platinum: { s: "platinum", n: "Platinum", u: "$/oz", d: 1, g: "metals", p: [["World markets · precious metals", "world", null, "world", WG("precious")], ["USD/CAD · mineral exports", "fx", "metals", "grains"]] },
+    palladium: { s: "palladium", n: "Palladium", u: "$/oz", d: 1, g: "metals", p: [["World markets · precious metals", "world", null, "world", WG("precious")], ["USD/CAD · mineral exports", "fx", "metals", "grains"]] },
+    ca2y: { s: "ca2y", n: "Canada 2Y yield", u: "%", d: 3, g: "canada", p: [["USD/CAD · yield spreads", "fx", "ysm", "grains"], ["World markets · US–Canada rate gap", "world", null, "world", WG("spread")], ["Policy · Fed & BoC stance monitor", "policy", null, "policy"]] },
+    ca10y: { s: "ca10y", n: "Canada 10Y yield", u: "%", d: 3, g: "canada", p: [["USD/CAD · yield spreads", "fx", "ysm", "grains"], ["World markets · US–Canada rate gap", "world", null, "world", WG("spread")], ["Policy · Fed & BoC stance monitor", "policy", null, "policy"]] },
+    usca2y: { s: "usca2y", n: "US − Canada 2Y gap", u: "bp", d: 1, g: "canada", p: [["USD/CAD · yield spreads", "fx", "ysm", "grains"], ["World markets · US–Canada rate gap", "world", null, "world", WG("spread")], ["Policy · Fed & BoC stance monitor", "policy", null, "policy"]] },
+    usca10y: { s: "usca10y", n: "US − Canada 10Y gap", u: "bp", d: 1, g: "canada", p: [["USD/CAD · yield spreads", "fx", "ysm", "grains"], ["World markets · US–Canada rate gap", "world", null, "world", WG("spread")], ["Policy · Fed & BoC stance monitor", "policy", null, "policy"]] },
+    s2s10s: { s: "s2s10s", n: "US 2s10s curve", u: "bp", d: 1, g: "ust", p: [["US Treasury", "treasury", null, "treasury"], ["World markets · Fed path & Treasuries", "world", null, "world", WG("ust")], ["USD/CAD · yield spreads", "fx", "ysm", "grains"]] }
   };
-  ["3M", "1Y", "2Y", "5Y", "10Y", "20Y", "30Y"].forEach(function (t) { C["ust" + t] = { s: "ust" + t, n: "US " + t + " Treasury yield", u: "%", d: 3, g: "ust", p: [["US Treasury", "treasury", null, "treasury"], ["Yield spreads", "fx", "ysm", "grains"], ["Macro", "macro", null, "macro"]] }; });
+  ["3M", "1Y", "2Y", "5Y", "10Y", "20Y", "30Y"].forEach(function (t) { C["ust" + t] = { s: "ust" + t, n: "US " + t + " Treasury yield", u: "%", d: 3, g: "ust", p: [["US Treasury", "treasury", null, "treasury"], ["World markets · Fed path & Treasuries", "world", null, "world", WG("ust")], ["USD/CAD · yield spreads", "fx", "ysm", "grains"]] }; });
   var SHORT = { corn: "Corn", soybeans: "Soybeans", wheat: "Wheat", usdcad: "USD/CAD", dxy: "DXY", wti: "WTI", brent: "Brent", natgas: "Nat gas", brentwti: "Brent−WTI", fed: "Fed funds", boc: "BoC",
     vix: "VIX", cugold: "Cu/Gold", gold: "Gold", silver: "Silver", platinum: "Platinum", palladium: "Palladium", ca2y: "CA 2Y", ca10y: "CA 10Y", usca2y: "US−CA 2Y", usca10y: "US−CA 10Y", s2s10s: "2s10s",
     ust3M: "3M", ust1Y: "1Y", ust2Y: "2Y", ust5Y: "5Y", ust10Y: "10Y", ust20Y: "20Y", ust30Y: "30Y" };
@@ -116,7 +118,7 @@
     var k = V.k, c = C[k]; if (!c) return "";
     var sw = (GRP[c.g] || [k]).map(function (x) { return '<button type="button" data-pck="' + x + '" aria-pressed="' + (x === k) + '">' + SHORT[x] + "</button>"; }).join("");
     var nav = '<nav class="pc-nav"><div class="pc-nh">' + esc(c.n) + '</div><button type="button" class="pc-back" data-pcx>← Back</button>' +
-      c.p.map(function (p, i) { return '<button type="button" class="pc-link" style="animation-delay:' + (i * 55) + 'ms" data-pcgo="' + p.slice(1).map(function (v) { return v || ""; }).join("|") + '">' + esc(p[0]) + "</button>"; }).join("") + "</nav>";
+      c.p.map(function (p, i) { return '<button type="button" class="pc-link" style="animation-delay:' + (i * 55) + 'ms" data-pcgo="' + esc(p.slice(1).map(function (v) { return v || ""; }).join("|")) + '">' + esc(p[0]) + "</button>"; }).join("") + "</nav>";
     var S = series(k), body;
     if (!c.s) body = '<div class="pc-main"><p class="note">The desk has no free daily history for ' + esc(c.n) + " — the live quote is in the band above.</p></div>";
     else if (!H) body = '<div class="pc-main"><p class="note">' + (err || "Loading five years of daily prices…") + "</p></div>";
@@ -148,7 +150,10 @@
     if (e.target.closest("[data-pcx]")) { close(); return; }
     if ((b = e.target.closest("[data-pcgo]"))) { var p = b.getAttribute("data-pcgo").split("|"), k = V.k; close();
       if (/^(corn|soybeans|wheat)$/.test(k)) { try { localStorage.setItem("desk.grain", k); } catch (x) {} }
+      if (/^(corn|soybeans|wheat)$/.test(p[0])) { var gb0 = doc.querySelector('[data-gnav="grains"]'); if (gb0) gb0.click(); var tb0 = doc.getElementById("tabbtn-" + p[0]); if (tb0) tb0.click(); }   /* DESK_NAV keeps the grain on screen — pin the one asked for */
       if (root.DESK_NAV && DESK_NAV.go) DESK_NAV.go(p[0], p[1] || null, p[2] || null); else { var g = doc.querySelector('[data-gnav="' + p[2] + '"]'); if (g) g.click(); }
+      if (p[3]) { var n = 0; (function then() { var el = /grains-head/.test(p[3]) ? doc.querySelector(p[3]) : [].filter.call(doc.querySelectorAll(p[3]), function (x) { return !x.closest("#pc-view"); }).sort(function (a, b) { return (b.offsetParent ? 1 : 0) - (a.offsetParent ? 1 : 0); })[0];   /* land on the same market: pick it on the page */
+        if (el) { if (el.getAttribute("aria-pressed") !== "true" && el.getAttribute("aria-selected") !== "true") el.click(); } else if (++n < 30) setTimeout(then, 150); })(); }
       scrollTo(0, 0); return; }
     if (e.target.closest("#gnav [data-gnav], .tabs [role=tab]")) close();   /* any menu click leaves the chart */
   }, true);

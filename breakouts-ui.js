@@ -219,7 +219,7 @@
     "@media (max-width:980px){.brk-lay{grid-template-columns:1fr}}" +
     "@media (max-width:640px){.brk-e{grid-template-columns:72px minmax(0,1fr) auto;grid-template-areas:'t n p' 't g g' 't x x'}.brk-e time{grid-area:t}.brk-tag{grid-area:g;justify-self:start}.brk-nm{grid-area:n}.brk-tx{grid-area:x}.brk-px{grid-area:p}.brk-bar .brk-seg{overflow-x:auto;flex-wrap:nowrap}}";
   doc.head.appendChild(css);
-  root.BREAKOUTS = { poll: poll, data: function () { return B; }, repaint: function () { if (!V.paused) paint(); } };
+  root.BREAKOUTS = { poll: poll, data: function () { return B; }, name: nm, repaint: function () { if (!V.paused) paint(); } };
 })(window);
 /* "Open Breakouts →" buttons elsewhere on the desk */
 document.addEventListener("click", function (ev) { var b = ev.target.closest && ev.target.closest("[data-gnav-go]"); if (!b) return; var g = document.querySelector('[data-gnav="' + b.getAttribute("data-gnav-go") + '"]'); if (g) g.click(); });
