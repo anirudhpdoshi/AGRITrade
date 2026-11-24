@@ -39,23 +39,30 @@
         if (r.civ) { z.cs += r.civ * (r.coi + 1); z.cw += r.coi + 1; } if (r.piv) { z.ps += r.piv * (r.poi + 1); z.pw += r.poi + 1; } });
       rows = Object.keys(B).map(function (k) { var z = B[k]; return { K: z.K, coi: z.coi, poi: z.poi, net: z.net, civ: z.cw ? z.cs / z.cw : null, piv: z.pw ? z.ps / z.pw : null }; }); }
     var dte = S.w === "w30" ? X.window_dte : X.near_dte;
-    var NAME = { SPX: "S&P 500", NDX: "Nasdaq-100", DJX: "Dow (DIA)" };
+    var NAME = { SPX: "S&P 500", NDX: "Nasdaq-100", DJX: "Dow Jones" };
     var seg = function (attr, list, on) { return '<div class="gr-slicer" role="group">' + list.map(function (x) { return '<button type="button" ' + attr + '="' + x[0] + '" aria-pressed="' + (x[0] === on) + '">' + x[1] + "</button>"; }).join("") + "</div>"; };
     /* a strike whose OI is far above its neighbours dominates the profile — flag it so it can be checked against a broker */
-    var odd = []; W.rows.forEach(function (r, i) { [[1, "calls"], [2, "puts"]].forEach(function (c) { var nb = W.rows.slice(Math.max(0, i - 5), i + 6).filter(function (z) { return z !== r; }).map(function (z) { return z[c[0]]; }).sort(function (a, b) { return a - b; }); var md = nb[Math.floor(nb.length / 2)] || 0; if (r[c[0]] > 20000 && r[c[0]] > 8 * Math.max(md, 1)) odd.push(kf(r[0]) + " " + c[1] + " (" + r[c[0]].toLocaleString("en-US") + " OI)"); }); });
+    var odd = []; W.rows.forEach(function (r, i) { [[1, "calls"], [2, "puts"]].forEach(function (c) { var nb = W.rows.slice(Math.max(0, i - 5), i + 6).filter(function (z) { return z !== r; }).map(function (z) { return z[c[0]]; }).sort(function (a, b) { return a - b; }); var md = nb[Math.floor(nb.length / 2)] || 0; if (r[c[0]] > 20000 && r[c[0]] > 8 * Math.max(md, 1)) odd.push((dj ? "DIA " : "") + kf(r[0]) + " " + c[1] + " (" + r[c[0]].toLocaleString("en-US") + " OI)"); }); });
     /* walls out of the money only, against this spot: most call OI at/above, most put OI at/below (owner, Nov 23 2026) */
     var OW = (function () { var c = null, p = null; (W.rows || []).forEach(function (r) { if (r[0] >= X.spot && r[1] > 0 && (!c || r[1] > c[1])) c = r; if (r[0] <= X.spot && r[2] > 0 && (!p || r[2] > p[2])) p = r; });
       return { cw: c ? c[0] : W.call_wall && W.call_wall[0], pw: p ? p[0] : W.put_wall && W.put_wall[0] }; })();
+    /* the Dow chart in Dow index points (owner, Nov 23 2026): DIA strikes × today's Dow ÷ DIA ratio (from the server; else from the
+       World Markets quotes); DIA's own option strikes stay in the tooltip notes */
+    var sc = 1;
+    if (dj) { sc = X.scale || 0; if (!sc) { try { var Wd = root.WORLD && WORLD._data && WORLD._data(), dji = Wd && (Wd.instruments || []).filter(function (i) { return i.sym === "^DJI"; })[0], dia = Wd && (Wd.instruments || []).filter(function (i) { return i.sym === "DIA"; })[0];
+      if (dji && dia && dia.last) sc = dji.last / dia.last; else if (dji && X.spot) sc = dji.last / X.spot; } catch (e) {} } if (!sc || sc < 50 || sc > 150) sc = 100; }
+    var kfD = function (x) { return (+x).toLocaleString("en-US", { maximumFractionDigits: 0 }); };
     var fbN = X.iv_fallback && X.iv_fallback.of ? Math.round(X.iv_fallback.n / X.iv_fallback.of * 100) : null;
-    return '<div class="tile gex-tile"><h2>Index gamma bell curve &amp; dealer GEX profile <span class="h2note">— ' + esc(X.name) + " · spot " + sf(X.spot) + " · " + (S.w === "w30" ? "all expiries in the next " + G.window_days + " days (" + X.expiries.length + ")" : "nearest expiry " + esc(X.near)) +
+    return '<div class="tile gex-tile"><h2>Index gamma bell curve &amp; dealer GEX profile <span class="h2note">— ' + esc(dj ? "Dow Jones Industrial Average · from DIA options" : X.name) + " · spot " + sf(X.spot * sc) + " · " + (S.w === "w30" ? "all expiries in the next " + G.window_days + " days (" + X.expiries.length + ")" : "nearest expiry " + esc(X.near)) +
       " · updated <span class=gex-age>" + ago(G.updated_at) + "</span> ago</span></h2>" +
       '<div class="oc-ctl"><span>Index</span>' + seg("data-gex-k", keys.map(function (k) { return [k, NAME[k]]; }), S.k) + "<span>Window</span>" + seg("data-gex-w", [["w30", "Next 30 days"], ["nearest", "Nearest expiry"]], S.w) + "</div>" +
-      GAMMA_UI.chart({ spot: X.spot, spotLab: dj ? "DIA (Dow ÷ 100)" : X.name + " index", dfmt: function (x) { return (dj ? (+x).toFixed(2) : (+x).toLocaleString("en-US", { maximumFractionDigits: 0 })) + " pts"; }, rows: rows, iv: W.atm_iv, normalIv: X.normal_iv, normalLab: X.normal_src, T: Math.max(dte, 1) / 365, horizon: S.w === "w30" ? "to " + dte + " days" : "to expiry", em: W.em,
-        callWall: OW.cw, putWall: OW.pw, flip: W.flip, kfmt: kf, sfmt: sf }) +
+      GAMMA_UI.chart({ spot: X.spot * sc, spotLab: dj ? "Dow Jones Industrial Average" : X.name + " index", dfmt: function (x) { return (+x).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " pts"; },
+        rows: rows.map(function (r) { return { K: r.K * sc, coi: r.coi, poi: r.poi, civ: r.civ, piv: r.piv, net: r.net }; }), iv: W.atm_iv, normalIv: X.normal_iv, normalLab: X.normal_src, T: Math.max(dte, 1) / 365, horizon: S.w === "w30" ? "to " + dte + " days" : "to expiry", em: W.em && W.em * sc,
+        callWall: OW.cw && OW.cw * sc, putWall: OW.pw && OW.pw * sc, flip: W.flip && W.flip * sc, kfmt: dj ? kfD : kf, sfmt: sf }) +
       '<p class="note">' + esc(G.source) + ". Strikes within ±" + G.band_pct + "% of spot. GEX per strike = gamma × open interest × 100 × spot² × 1%, in $ millions; calls positive, puts negative (dealers assumed long calls / short puts — the usual convention, not a measured position)." +
       (fbN != null ? " " + fbN + "% of contracts had no usable quoted IV (common outside US hours), so their gamma uses " + (fbN > 50 ? "(and the IV skew line is hidden) " : "") + esc(X.vol_index_sym) + " " + (X.vol_index != null ? X.vol_index.toFixed(2) : "") + "." : "") +
-      (bw ? " Bars group strikes into " + kf(bw) + "-point bands." : "") + (odd.length ? ' <b class="gex-odd">Unusually large open interest: ' + esc(odd.sort(function (a, b) { return +b.replace(/.*\(([\d,]+) OI\).*/, "$1").replace(/,/g, "") - +a.replace(/.*\(([\d,]+) OI\).*/, "$1").replace(/,/g, ""); }).slice(0, 4).join(", ")) + " — it dominates the bars; worth checking against your broker.</b>" : "") +
-      (dj ? " Dow levels are DIA prices (Dow ÷ 100)." : "") + " Normal regime = " + esc(X.normal_src) + ". Open interest is as of the prior close.</p></div>";
+      (bw ? " Bars group strikes into " + (dj ? kfD(bw * sc) : kf(bw)) + "-point bands." : "") + (odd.length ? ' <b class="gex-odd">Unusually large open interest: ' + esc(odd.sort(function (a, b) { return +b.replace(/.*\(([\d,]+) OI\).*/, "$1").replace(/,/g, "") - +a.replace(/.*\(([\d,]+) OI\).*/, "$1").replace(/,/g, ""); }).slice(0, 4).join(", ")) + " — it dominates the bars; worth checking against your broker.</b>" : "") +
+      (dj ? " Dow levels: DIA ETF option strikes × " + sc.toFixed(2) + " (today's Dow ÷ DIA), so walls and ranges read in Dow points; a DIA strike of 495 ≈ Dow " + kfD(495 * sc) + "." : "") + " Normal regime = " + esc(X.normal_src) + ". Open interest is as of the prior close.</p></div>";
   }
   function paint() {
     var P = doc.getElementById("panel-usmkt"); if (!P || !P.classList.contains("active")) return;

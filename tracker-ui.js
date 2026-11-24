@@ -645,6 +645,7 @@
   setInterval(function () { if (P.classList.contains("active") && !document.hidden) paintLock(); }, 15000);
   /* one snapshot drives every count on the tab: repaint everything the moment the World feed lands (UI-FIX-01/04) */
   window.addEventListener("desk:world", function () { if (P.classList.contains("active")) paintLive(); });
+  document.addEventListener("desk:market", function () { if (P.classList.contains("active")) { paintLive(); if (cat !== "c1") view(); } });   /* Indexes / Sectors land */
   document.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("[data-usmworld]") && window.WORLD) WORLD.poll(true); });
   setTimeout(function () { if (!W() && P.classList.contains("active")) paintLive(); }, 10500);
   window.USM = { go: go, closeCo: function () { if (sel && sel.t === "s") { sel = null; paintE(); crumbs(); } } };

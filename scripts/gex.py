@@ -149,7 +149,16 @@ def build(key):
     near_dte = max((date.fromisoformat(near) - today).days, 0)
     far_dte = max((date.fromisoformat(max(exps)) - today).days, 0)
     T30, TN = table("w30"), table(near)
-    return {"key": key, "name": name, "spot": round(S, 2), "ts": now.isoformat(timespec="seconds"), "symbol": ysym,
+    scale = None
+    if key == "DJX":   # DIA tracks the Dow ÷ ~100: the exact ratio today, so the page can show Dow index levels
+        try:
+            dj = UDC.yf().Ticker("^DJI").history(period="5d")["Close"].dropna()
+            dh = T_.history(period="5d")["Close"].dropna()
+            if len(dj) and len(dh):
+                scale = round(float(dj.iloc[-1]) / float(dh.iloc[-1]), 4)
+        except Exception as e:
+            print(f"  ! Dow scale: {type(e).__name__}")
+    return {"key": key, "name": name, "spot": round(S, 2), "scale": scale, "ts": now.isoformat(timespec="seconds"), "symbol": ysym,
             "expiries": sorted(exps), "near": near, "near_dte": near_dte, "window_dte": far_dte,
             "normal_iv": v_med, "normal_src": vix + " 1-year median", "vol_index": v_now, "vol_index_sym": vix,
             "iv_fallback": {"n": fb[0], "of": fb[1]},

@@ -61,7 +61,9 @@
     var every = Math.max(1, Math.ceil(R.length / 11));
     R.forEach(function (r, i) { if (i % every) return; out += '<text x="' + X(r.K) + '" y="' + (H - PB + 16) + '" class="gx-xl">' + esc(o.kfmt(r.K)) + "</text>"; });
     /* pins */
+    var used = [];   /* labels that would collide move up a row */
     var pin = function (k, lab, cls, row) { if (k == null || k < k0 || k > k1) return; var x = X(k);
+      while (used.some(function (u) { return u[1] === row && Math.abs(u[0] - x) < lab.length * 6.5; })) row++; used.push([x, row]);
       out += '<line x1="' + x + '" x2="' + x + '" y1="' + PT + '" y2="' + (H - PB) + '" class="gx-pin ' + cls + '"/><text x="' + x + '" y="' + (PT - 6 - row * 12) + '" class="gx-pl ' + cls + '">' + esc(lab) + "</text>"; };
     pin(o.putWall, "Put wall " + o.kfmt(o.putWall), "pw", 0);
     pin(o.callWall, "Call wall " + o.kfmt(o.callWall), "cw", 0);

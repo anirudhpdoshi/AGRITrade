@@ -183,7 +183,9 @@
   function poll(force, bg) {
     if (window.DESK_LOCKED || busy) return; if (!force && Date.now() - lastTry < 60000) return; lastTry = Date.now(); busy = true;
     if (bg) {   /* background check from other tabs: raw copy only, so it never uses the GitHub API allowance the live feed needs */
-      raw("earnings.json").then(function (j) { if (j) J = j; }).catch(function () {}).then(function () { busy = false; try { mergeLive(window.DESK_EARN_LIVE); notify(); } catch (e) {} });
+      /* market.json too: World Markets → US Markets (Indexes, Sectors) reads it while the Earnings tab is closed (owner, Nov 23 2026) */
+      Promise.all([raw("earnings.json").then(function (j) { if (j) J = j; }).catch(function () {}), raw("market.json").then(function (j) { if (j) M = j; }).catch(function () {})])
+        .then(function () { busy = false; try { mergeLive(window.DESK_EARN_LIVE); notify(); } catch (e) {} try { document.dispatchEvent(new Event("desk:market")); } catch (e) {} });
       return;
     }
     if (window.WORLD && WORLD.poll) try { WORLD.poll(); } catch (e) {}

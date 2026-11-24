@@ -121,6 +121,33 @@ def closes(syms):
     return out
 
 
+def latest_session(syms, have):
+    """Yahoo's daily bars can lag a whole session behind (the Nov 23 2026 close was missing at 9 PM ET) while its 5-minute
+    bars are current. For each symbol: if the newest 5-minute bar is on a New York date after its last daily bar, that bar's
+    close is today's price (delayed intraday, or the official close once the session is over)."""
+    out, ny = {}, ZoneInfo("America/New_York")
+    for i in range(0, len(syms), 100):
+        part = syms[i:i + 100]
+        try:
+            d = UDC.yf().download(part, period="2d", interval="5m", group_by="ticker", auto_adjust=False, progress=False, threads=True, prepost=False)
+        except Exception as e:
+            print(f"  ! 5-min batch {i}: {type(e).__name__}")
+            continue
+        for s in part:
+            try:
+                c = (d[s]["Close"] if len(part) > 1 else d["Close"]).dropna()
+                if not len(c):
+                    continue
+                ts = c.index[-1]
+                day = (ts.tz_convert(ny) if ts.tzinfo else ts).strftime("%Y-%m-%d")
+                last = have.get(s)
+                if not last or day > last[-1][0]:
+                    out[s] = (day, float(c.iloc[-1]))
+            except Exception:
+                pass
+    return out
+
+
 def r1(x, n=1):
     return None if x is None else round(x, n)
 
@@ -129,6 +156,11 @@ def main():
     U = universe()
     rows = [r for r in U["rows"] if r.get("sh")]
     px = closes([r["s"] for r in rows])
+    add = latest_session([r["s"] for r in rows], px)
+    for s_, v in add.items():
+        px.setdefault(s_, []).append(v)
+    if add:
+        print(f"  newest session from 5-minute bars: {len(add)} symbols, {sorted(set(v[0] for v in add.values()))}")
     # the session calendar: dates on which at least 90% of the universe printed a close
     cnt = {}
     for s in px:

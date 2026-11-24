@@ -181,10 +181,24 @@ def seasonality(me, years, current_ym):
 
 
 # ---------------------------------------------------------------- network + publish
+def _ny_day(ts):
+    from zoneinfo import ZoneInfo
+    return (ts.tz_convert(ZoneInfo("America/New_York")) if ts.tzinfo else ts).strftime("%Y-%m-%d")
+
+
 def fetch(sym, start):
     import yfinance as yf
-    h = yf.Ticker(sym).history(start=start, interval="1d", auto_adjust=False)
-    return [(i.strftime("%Y-%m-%d"), float(c)) for i, c in zip(h.index, h["Close"]) if c == c]
+    t = yf.Ticker(sym)
+    h = t.history(start=start, interval="1d", auto_adjust=False)
+    out = [(i.strftime("%Y-%m-%d"), float(c)) for i, c in zip(h.index, h["Close"]) if c == c]
+    # Yahoo's daily bars can lag a session behind its 5-minute bars (Nov 23 2026): take the newer session from the 5-minute series
+    try:
+        m = t.history(period="2d", interval="5m", auto_adjust=False)["Close"].dropna()
+        if len(m) and (not out or _ny_day(m.index[-1]) > out[-1][0]):
+            out.append((_ny_day(m.index[-1]), float(m.iloc[-1])))
+    except Exception:
+        pass
+    return out
 
 
 def sh(*a, cwd=ROOT, check=True):
@@ -237,12 +251,24 @@ def build_breadth():
     sec = {r["Symbol"]: r["GICS Sector"] for r in rows}
     yahoo = {s.replace(".", "-"): s for s in sec}
     d = yf.download(list(yahoo), start=(datetime.now(timezone.utc) - timedelta(days=400)).strftime("%Y-%m-%d"), end=(datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%d"), interval="1d", auto_adjust=False, progress=False, threads=4)["Close"]
+    try:   # newest session from 5-minute bars when the daily bars lag (see fetch)
+        m5 = yf.download(list(yahoo), period="2d", interval="5m", auto_adjust=False, progress=False, threads=4)["Close"]
+    except Exception:
+        m5 = None
     out = []
     for y, s in yahoo.items():
         if y not in d:
             continue
         col = d[y].dropna()
-        r = breadth_row(s, sec[s], [(i.strftime("%Y-%m-%d"), float(v)) for i, v in col.items()])
+        ser = [(i.strftime("%Y-%m-%d"), float(v)) for i, v in col.items()]
+        try:
+            if m5 is not None and y in m5:
+                c5 = m5[y].dropna()
+                if len(c5) and (not ser or _ny_day(c5.index[-1]) > ser[-1][0]):
+                    ser.append((_ny_day(c5.index[-1]), float(c5.iloc[-1])))
+        except Exception:
+            pass
+        r = breadth_row(s, sec[s], ser)
         if r:
             out.append(r)
     dates = [r["d"] for r in out]
