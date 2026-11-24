@@ -1072,3 +1072,16 @@ table.pi-tab td{vertical-align:top}table.pi-tab small{display:block;color:var(--
 .ov-note{text-align:center;font-size:11px;color:var(--faint);margin-top:2px}
 /* pages without a right rail (grain pages, owner Nov 23 2026): one full-width column at every width */
 .layout.no-rail,.layout.no-rail.has-secnav{grid-template-columns:minmax(0,1fr)!important}
+/* Overview macro correlation table — 7 fixed columns (owner, Nov 23 2026) */
+.sw7{table-layout:fixed;width:100%;min-width:1060px}
+.sw7 th,.sw7 td{vertical-align:middle;padding:9px 10px}
+.sw7 .c1{text-align:left}.sw7 .c2{text-align:right;font-variant-numeric:tabular-nums}.sw7 .cc{text-align:center}.sw7 .c7{text-align:right}
+.sw7 .sw-dn{font-weight:600;color:var(--ink);line-height:1.35}.sw7 .sw-dt{font:11.5px 'IBM Plex Mono',monospace;color:var(--cyan);margin-top:2px}
+.sw7 .sw-av{font:600 13px 'IBM Plex Mono',monospace;white-space:nowrap}.sw7 .sw-pr{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint);font-weight:400}
+.sw7 .sw-it summary{font-size:11.5px;color:var(--muted);margin-top:3px}
+.sw-bd{display:inline-block;font:600 11px 'IBM Plex Mono',monospace;padding:2px 7px;border-radius:5px;border:1px solid currentColor;white-space:normal;line-height:1.3;margin-top:3px}
+.sw-bd.up,.sw-bd.beat{color:#3fb97f;background:rgba(63,185,127,.08)}.sw-bd.dn,.sw-bd.miss{color:#ff6b62;background:rgba(255,107,98,.08)}
+.sw-bd.neu,.sw-bd.inline{color:#8f9db3;background:rgba(143,157,179,.06)}.sw-bd.flag{color:#E8C33A;background:rgba(232,195,58,.08)}.sw-bd.mix{color:#d9b46a;background:rgba(217,180,106,.08)}
+.sw-bk{font:600 12px 'IBM Plex Mono',monospace}.sw-bk.sw-strength,.sw-bk.sw-opportunity{color:#3fb97f}.sw-bk.sw-weakness{color:#ff6b62}.sw-bk.sw-threat{color:#E8C33A}
+.sw7 .sw-st{font-size:11px;color:var(--faint);font-weight:400}
+.sw7 td,.sw7 th{white-space:normal;overflow-wrap:anywhere}

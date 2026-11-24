@@ -72,9 +72,9 @@
   function calendarHTML() {
     var now = Date.now(), rows = (J.calendar || []).filter(function (c) { return V.bank === "all" || c.bank === V.bank; });
     return '<div class="tile wide"><h2>Policy calendar <span class="h2note">— decisions, minutes and reports · official schedules as of ' + esc(J.calendar_asof) + ' (schedules can change; the source page is rechecked on each build)</span></h2>' +
-      '<div class="tbl-scroll"><table class="oi-mtab pi-tab"><thead><tr><th>Bank</th><th>Date</th><th>Local time</th><th>Toronto (ET)</th><th>Event</th><th>Countdown</th></tr></thead><tbody>' +
+      '<div class="tbl-scroll"><table class="oi-mtab pi-tab"><thead><tr><th>Bank</th><th>Date (ET)</th><th>Bank local time</th><th>Time (ET)</th><th>Event</th><th>Countdown</th></tr></thead><tbody>' +
       rows.map(function (c) { var t = calTime(c), past = t ? t < now : Date.parse(c.date + "T23:59:00Z") < now;
-        return '<tr class="' + (past ? "pi-past" : "") + '"><td>' + fl(J.banks[c.bank].cc) + " " + esc(bname(c.bank)) + "</td><td>" + esc(new Date(c.date + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })) + "</td><td>" +
+        return '<tr class="' + (past ? "pi-past" : "") + '"><td>' + fl(J.banks[c.bank].cc) + " " + esc(bname(c.bank)) + "</td><td>" + esc(t ? new Date(t).toLocaleDateString("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric" }) : new Date(c.date + "T12:00:00Z").toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric" })) + "</td><td>" +
           (c.time ? esc(c.time) + " <small>" + esc(({ "Europe/Berlin": "Frankfurt", "Europe/Frankfurt": "Frankfurt" })[c.tz] || c.tz.split("/")[1].replace("_", " ")) + "</small>" : "time TBA") + "</td><td>" + (t ? new Date(t).toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" }) : "—") + "</td><td>" + esc(c.what) +
           (c.kind === "decision" ? ' <span class="evc" style="--ec:#e8b93d">DECISION</span>' : "") + "</td><td>" + (t && !past ? '<span class="countdown" data-t="' + t + '">' + (window.cdText ? cdText(t - now) : "") + "</span>" : past ? "done" : "") + "</td></tr>"; }).join("") +
       "</tbody></table></div></div>";
@@ -226,14 +226,15 @@
 
   function render() {
     if (!J) { P.innerHTML = '<div class="tile wide">' + (err ? '<div class="unreach">⚠ Sorry, we can’t be reached now <small>— policy intelligence did not load; retrying every minute</small></div>' : '<p class="note">Loading policy intelligence…</p>') + "</div>"; return; }
-    var subs = [["monitor", "Stance monitor"], ["minutes", "Minutes & summaries"], ["transcript", "Transcript intelligence"], ["calendar", "Policy calendar"], ["markets", "Policy & markets"]];
+    var subs = [["monitor", "Stance monitor"], ["minutes", "Minutes & summaries"], ["transcript", "Transcript intelligence"], ["calendar", "Policy calendar"], ["markets", "Policy & markets"], ["wire", "North America wire"], ["parliament", "Parliament of Canada"], ["congress", "U.S. Congress"]];
+    var BR = { wire: 1, parliament: 1, congress: 1 }, brH = BR[V.sub] ? ((window.BRIEFING && BRIEFING.policyHTML && BRIEFING.policyHTML(V.sub)) || '<div class="tile wide"><p class="note">Loading the North America briefing…</p></div>') : "";
     var src = Object.keys(J.status || {}).map(function (b) { var s = J.status[b], ok = Object.keys(s.sources || {}).filter(function (u) { return s.sources[u] === 200; }).length, n = Object.keys(s.sources || {}).length;
       return esc(b.toUpperCase()) + " " + ok + "/" + n; }).join(" · ");
     P.innerHTML = '<div class="pi-lay"><aside class="pi-left"><div class="gr-col-h">Central Banks</div>' + strip() +
       '<button class="pi-card pi-all ' + (V.bank === "all" ? "on" : "") + '" data-pib="all"><div class="pi-ch">All banks</div><div class="pi-sub">Fed · ECB · BoE · BoC · BoJ</div></button></aside><div class="pi-main"><div class="tile wide pi-head"><h2>Central bank policy intelligence <span class="h2note">— read from the banks’ own sites</span></h2>' +
       '<div class="pi-nav">' + subs.map(function (s) { var nw = s[0] === "minutes" ? newOf().some(function (d) { return d.type === "minutes"; }) : s[0] === "monitor" || s[0] === "transcript" ? newOf().length > 0 : false; return '<button data-pisub="' + s[0] + '" aria-pressed="' + (V.sub === s[0]) + '">' + s[1] + (nw ? " " + DOT : "") + "</button>"; }).join("") +
 '</div><div class="stamp">Updated ' + esc(new Date(J.updated_at).toLocaleString("en-US", { timeZone: TZ, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + " ET</div></div>" +
-      (V.sub !== "transcript" ? freshHTML() : "") + (V.sub === "minutes" ? minutesHTML() : V.sub === "calendar" ? calendarHTML() : V.sub === "transcript" ? transcriptHTML() : V.sub === "markets" ? marketsHTML() : monitorHTML()) +
+      (V.sub !== "transcript" && !BR[V.sub] ? freshHTML() : "") + (BR[V.sub] ? brH : V.sub === "minutes" ? minutesHTML() : V.sub === "calendar" ? calendarHTML() : V.sub === "transcript" ? transcriptHTML() : V.sub === "markets" ? marketsHTML() : monitorHTML()) +
       '<div class="tile wide"><div class="stamp">Method: ' + esc(J.method || "") + " Evidence is quoted word-for-word with its paragraph number and the official link; voting status is shown only where it is certain for that date (BoC decides by consensus).</div></div></div></div>";
   }
   P.addEventListener("click", function (ev) {

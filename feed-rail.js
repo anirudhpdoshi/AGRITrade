@@ -15,7 +15,7 @@
   var pick = {}, seen = {}, firstPass = true, lastSig = "", lastCtx = "", lastPaint = 0, ONLY = true;
   try { ONLY = localStorage.getItem("desk.feedall") !== "1"; } catch (e) {}
   function esc(s) { return DeskCore.esc(s); }
-  function hm(t) { return HF.format(new Date(t)); }
+  function hm(t) { return HF.format(new Date(t)) + " ET"; }   /* every time on the desk is Eastern (owner, Nov 23 2026) */
   var DF = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto", year: "numeric", month: "2-digit", day: "2-digit" }), HF = new Intl.DateTimeFormat("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit" });
   function day(t) { return DF.format(new Date(t)); }
   function tab() { var a = document.querySelector(".tab-panel.active"); return a ? a.id.replace("panel-", "") : "corn"; }
@@ -233,7 +233,7 @@
     return GO[g] || "";
   }
   var GO = { corn: "corn:overview", wheat: "wheat:overview", soybeans: "soybeans:overview", fx: "fx:overview", energy: "fx:rates", metals: "world", world: "world", cb: "policy", macro: "briefing", earn: "earnings" };
-  function etHM(iso) { var t = Date.parse(iso); return isNaN(t) ? "" : hm(t) + " ET"; }
+  function etHM(iso) { var t = Date.parse(iso); return isNaN(t) ? "" : hm(t); }
   function alertHTML(a) {
     var imp = /^Bullish/.test(a.impact) ? "bull" : /^Bearish/.test(a.impact) ? "bear" : "mix";
     return "<b>[" + (a.kind === "news" ? "BREAKING" : "PRICE ALERT") + "] – " + esc(a.head.replace(/^(BREAKING|PRICE ALERT) – /, "")) + "</b>" +

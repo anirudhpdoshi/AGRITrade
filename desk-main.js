@@ -2739,10 +2739,16 @@ function omTime(ms){ var o={timeZone:'America/Toronto'}, today=new Date(ms).toLo
 function qtPx(v, dec, pre){ var t=(pre||'')+fmt(v,dec), f=dec>=4?1:0, n=dec>=2?2:1, i=t.length-f-n; return '<span class="qt-bf">'+t.slice(0,i)+'</span><span class="qt-pp">'+t.slice(i,t.length-f)+'</span>'+(f?'<span class="qt-fr">'+t.slice(t.length-f)+'</span>':''); }
 /* market sessions (ET): FX Sun 5pm–Fri 5pm · CBOT grains day 9:30–2:20 + overnight 8pm–8:45am · CME Globex energy/dollar index Sun 6pm–Fri 5pm with a 5–6pm break · CBOE Treasury yield indices weekdays 8am–5pm */
 window.MKT=(function(){
-  function et(t){ var p={}; new Intl.DateTimeFormat('en-US',{timeZone:'America/Toronto',weekday:'short',hour:'numeric',minute:'numeric',hourCycle:'h23'}).formatToParts(new Date(t||Date.now())).forEach(function(x){ p[x.type]=x.value; }); return {wd:p.weekday, m:(+p.hour)*60+(+p.minute)}; }
+  function et(t){ var p={}; new Intl.DateTimeFormat('en-US',{timeZone:'America/Toronto',weekday:'short',year:'numeric',month:'2-digit',day:'2-digit',hour:'numeric',minute:'numeric',hourCycle:'h23'}).formatToParts(new Date(t||Date.now())).forEach(function(x){ p[x.type]=x.value; }); return {wd:p.weekday, m:(+p.hour)*60+(+p.minute), d:p.year+'-'+p.month+'-'+p.day}; }
   var WK=['Mon','Tue','Wed','Thu','Fri'];
+  /* CBOT grain holidays (CME holiday calendar): closed all day, no overnight session the evening before; early close 12:05 CT = 13:05 ET */
+  var G_SHUT={'2026-11-26':1,'2026-12-25':1,'2027-01-01':1,'2027-01-18':1,'2027-02-15':1,'2027-03-26':1}, G_EARLY={'2026-11-27':785,'2026-12-24':785};
+  function nextD(d){ var x=new Date(d+'T12:00:00Z'); x.setUTCDate(x.getUTCDate()+1); return x.toISOString().slice(0,10); }
+  function prevD(d){ var x=new Date(d+'T12:00:00Z'); x.setUTCDate(x.getUTCDate()-1); return x.toISOString().slice(0,10); }
   return { fx:function(t){ var p=et(t); return !(p.wd==='Sat'||(p.wd==='Fri'&&p.m>=1020)||(p.wd==='Sun'&&p.m<1020)); },
-    grain:function(t){ var p=et(t); return (WK.indexOf(p.wd)>=0&&p.m>=570&&p.m<860)||(['Sun','Mon','Tue','Wed','Thu'].indexOf(p.wd)>=0&&p.m>=1200)||(WK.indexOf(p.wd)>=0&&p.m<525); },
+    grain:function(t){ var p=et(t); if(G_SHUT[p.d]) return false;
+      var dayEnd=G_EARLY[p.d]||860, noNight=G_SHUT[prevD(p.d)]||G_EARLY[p.d];   /* the session after a holiday opens at 9:30 ET, no overnight */
+      return (WK.indexOf(p.wd)>=0&&p.m>=570&&p.m<dayEnd)||(['Sun','Mon','Tue','Wed','Thu'].indexOf(p.wd)>=0&&p.m>=1200&&!G_SHUT[nextD(p.d)]&&!G_EARLY[nextD(p.d)])||(WK.indexOf(p.wd)>=0&&p.m<525&&!noNight); },
     fut:function(t){ var p=et(t); if(p.wd==='Sat'||(p.wd==='Sun'&&p.m<1080)||(p.wd==='Fri'&&p.m>=1020)) return false; return !(p.m>=1020&&p.m<1080); },
     bond:function(t){ var p=et(t); return WK.indexOf(p.wd)>=0&&p.m>=480&&p.m<1020; } };
 })();

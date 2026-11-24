@@ -25,23 +25,53 @@
   function cls(v) { return v > 0 ? "up" : v < 0 ? "dn" : "neu"; }
   var DESKS = [["us", "🇺🇸", "United States"], ["ca", "🇨🇦", "Canada"], ["both", "↔", "Both economies"]];
   var SEC = [["policy", "Central bank & rates"], ["politics", "Politics & government"], ["economy", "Economy & data"], ["trade", "Trade & tariffs"], ["energy_ag", "Energy & agriculture"]];
-  var POLSEC = { policy: 1, politics: 1 }, SEEN = {}, NEW = {};
-  /* Central bank & rates and Politics & government live on the Policy page (owner, Nov 23 2026) */
-  var PP = document.getElementById("panel-policy"), PBTN = document.getElementById("tabbtn-policy"), polH = "";
-  function policyTile() {
-    if (!PP || !J) return;
-    var d = J.desks[V.desk] || J.desks.ca, sec = d.sections || {}, L = SEC.filter(function (s) { return POLSEC[s[0]] && sec[s[0]] && sec[s[0]].length; });
-    polH = L.length ? '<div class="tile wide br-pol"><h3 class="br-s">Central bank, rates &amp; politics — ' + esc(d.name) + ' <span class="h2note">North America briefing wire · updated ' + ago(J.updated_at) + '</span></h3><div class="br-grid">' +
-      L.map(function (s) { return '<div class="br-sec"><h3 class="br-s">' + s[1] + '</h3><ul class="br-list">' + sec[s[0]].slice().sort(function (a, b) { return Date.parse(b.ts) - Date.parse(a.ts); }).slice(0, 6).map(function (c) { return story(c, 0, false); }).join("") + "</ul></div>"; }).join("") + "</div></div>" : "";
-    mountPol();
+  /* Overview = a broadsheet (owner, Nov 23 2026): 3-bullet desk synthesis, a 3-item Next-up strip, 2-headline snapshots.
+     Full wire + central bank & rates + politics -> Policy › North America wire; Parliament / Congress -> their own Policy
+     submenus; the full catalyst calendar -> Events; Trade & tariffs -> Macro › Trade & fiscal; Energy & agriculture -> Grains › Fundamentals. */
+  var POLSEC = { policy: 1, politics: 1 }, SEEN = {}, NEW = {}, polU = "";
+  var PP = document.getElementById("panel-policy"), PBTN = document.getElementById("tabbtn-policy");
+  function desk() { return J && (J.desks[V.desk] || J.desks.ca); }
+  function byTime(L) { return (L || []).slice().sort(function (a, b) { return Date.parse(b.ts) - Date.parse(a.ts); }); }
+  function secList(k, n, title, note) {
+    var d = desk(), L = d && d.sections && byTime(d.sections[k]); if (!L || !L.length) return "";
+    return '<div class="tile br-sec"><h3 class="br-s">' + title + (note ? ' <span class="h2note">' + note + "</span>" : "") + '</h3><ul class="br-list">' + L.slice(0, n).map(function (c) { return story(c, 0, false); }).join("") + "</ul></div>";
   }
-  function mountPol() {
-    if (!PP) return; var el = PP.querySelector(":scope > .br-polw");
-    if (!polH) { if (el) el.remove(); return; }
-    if (!el) { el = document.createElement("div"); el.className = "br-polw"; PP.appendChild(el); }
-    if (el._h !== polH) { el.innerHTML = polH; el._h = polH; }
+  function policyHTML(sub) {
+    if (!J) return "";
+    var d = desk(), sw = '<div class="br-sw br-sw-s" role="tablist">' + DESKS.map(function (x) { return '<button role="tab" data-brdesk="' + x[0] + '" aria-selected="' + (V.desk === x[0]) + '"><span>' + x[1] + "</span> " + x[2] + "</button>"; }).join("") + "</div>";
+    if (sub === "parliament" || sub === "congress") {
+      var L = J.legislation, ok = sub === "parliament" ? L && L.ca : L && L.us;
+      return '<div class="tile wide">' + (ok ? legPart(sub === "parliament" ? "ca" : "us", "all", 20) : '<p class="note">No ' + (sub === "parliament" ? "parliamentary" : "congressional") + " data in the latest briefing.</p>") +
+        '<div class="stamp">Official ' + (sub === "parliament" ? "House of Commons / LEGISinfo" : "Congress.gov / House floor") + " data · briefing updated " + et(Date.parse(J.updated_at)) + " ET</div></div>";
+    }
+    var TL = byTime(d.top);
+    var top = '<div class="tile wide"><h3 class="br-s">Top developments — full wire · ' + esc(d.name) + ' <span class="h2note">latest first · ET · new stories roll in at the top</span></h3>' + sw +
+      (TL.length ? '<ol class="br-list">' + TL.map(function (c, i) { return story(c, i, true); }).join("") + "</ol>" : '<p class="note">No stories in the last ' + (J.window_h || 48) + " h.</p>") + "</div>";
+    return top + '<div class="br-grid">' + secList("policy", 8, "Central bank &amp; rates") + secList("politics", 8, "Politics &amp; government") + "</div>";
   }
-  if (PP) new MutationObserver(function () { if (polH && !PP.querySelector(":scope > .br-polw")) mountPol(); }).observe(PP, { childList: true });
+  /* full catalyst calendar (Events), Trade & tariffs (Macro), Energy & agriculture (Grains) — kept in place across redraws */
+  var SPOTS = [
+    { id: "br-cal-ev", host: function () { return document.querySelector("#panel-events.active #evRail") || document.querySelector("#panel-events.active .ev-lay"); }, first: true,
+      html: function () { return calendar("both", 20, true); } },
+    { id: "br-trade-mx", host: function () { return document.querySelector("#panel-macro.active .mn2-main") || document.querySelector('#panel-macro.active [data-subpanel="trade"]'); },
+      html: function () { return secList("trade", 10, "Trade &amp; tariffs — wire", "North America briefing · latest first · ET"); } },
+    { id: "br-ea-gr", host: function () { return document.querySelector('.tab-panel.active:is(#panel-corn,#panel-wheat,#panel-soybeans) [data-subpanel="fund"]'); },
+      html: function () { return secList("energy_ag", 10, "Energy &amp; agriculture — wire", "North America briefing · latest first · ET"); } }
+  ];
+  function spots() {
+    if (!J) return;
+    SPOTS.forEach(function (S) {
+      var H = S.host(), el = document.getElementById(S.id); if (!H) return;
+      var h = S.html(); if (!h) { if (el) el.remove(); return; }
+      if (!el || el.parentNode !== H) { if (el) el.remove(); el = document.createElement("div"); el.id = S.id; el.className = "br-spot"; if (S.first) H.insertBefore(el, H.firstChild); else H.appendChild(el); }
+      if (el._h !== h) { el.innerHTML = h; el._h = h; }
+      if (el.getAttribute("data-sec") !== "*") el.setAttribute("data-sec", "*");   /* always shown — not one of the page's section tabs */
+      if (el.classList.contains("st-off") || el.classList.contains("sec-off")) el.classList.remove("st-off", "sec-off");
+    });
+  }
+  var spotQ = 0;
+  new MutationObserver(function () { if (spotQ) return; spotQ = 1; setTimeout(function () { spotQ = 0; spots(); }, 400); })
+    .observe(document.querySelector("main") || document.body, { childList: true, subtree: true });
   var TAGN = { rates: ["Rates", "#6ea8ff"], cad: ["CAD", "#e8a33d"], grains: ["Grains", "#3fb97f"], energy: ["Energy", "#f0a35e"], trade: ["Trade", "#c9a3ff"] };
 
   /* ---------- data ---------- */
@@ -54,7 +84,7 @@
       .catch(function () { return fetch(RAW + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { if (!r.ok) throw r.status; tier = 2; return r.json(); }); })
       .then(function (j) { if (j && j.desks) { J = j; err = ""; store.set(CACHE, j); } })
       .catch(function () { if (!J) { J = store.get(CACHE); tier = J ? 3 : 0; } err = "The briefing could not be refreshed — " + (J ? "showing the last copy kept in this browser" : "retrying"); })
-      .then(function () { busy = false; if (BTN.getAttribute("aria-selected") === "true" || (PBTN && PBTN.getAttribute("aria-selected") === "true")) render(); });
+      .then(function () { busy = false; render(); });
   }
 
   /* ---------- pieces ---------- */
@@ -66,27 +96,7 @@
       " · " + (big ? '<time class="br-ts">' + et(Date.parse(c.ts), true) + " ET</time> · " : "") + ago(c.ts) + (c.section && big ? " · " + esc((SEC.filter(function (s) { return s[0] === c.section; })[0] || [0, ""])[1]) : "") + " " + tagHTML(c.tags) + (c.note ? ' · <i>' + esc(c.note) + "</i>" : "") + "</div>" +
       (big && c.why ? '<div class="br-why"><b>Desk read</b> ' + esc(c.why) + "</div>" : "") + "</div></li>";
   }
-  /* as-of on the pulse: the newest of its inputs, with its age (UI-FIX-05) */
-  function pulseAsOf(D) { var A = (D.meta && D.meta.asof) || {}, t = [D.fx.feed && D.fx.feed.ts, A.yields_live || A.fx_spot, A.energy].filter(Boolean).map(Date.parse).filter(isFinite);
-    if (!t.length) return "as of —"; var m = Math.max.apply(null, t), a = Math.round((Date.now() - m) / 60000);
-    return "as of " + new Date(m).toLocaleTimeString("en-US", { timeZone: "America/Toronto", hour: "numeric", minute: "2-digit" }) + " ET · " + (a < 60 ? a + " min" : Math.round(a / 60) + " h") + " old"; }
-  function pulse() {
-    var D = window.DATA; if (!D || !D.fx) return "";
-    var fx = D.fx, Y = fx.yields_live || {}, y10 = Y["10Y"] || {}, y2 = Y["2Y"] || {}, w = (fx.energy || [])[0] || {}, x = fx.fxcross || {}, P = fx.policy || {};
-    var bsx = window.PRICE_SYNC && PRICE_SYNC.best("CAD=X"), spot = (bsx && bsx.px) || +fx.feed.mid, ch = (spot / fx.spot.ref - 1) * 100;
-    var fedM = /(\d{3})-(\d{3})/.exec(P.fed_range || ""), boc = P.boc_decided && P.boc_decided.rate != null ? P.boc_decided.rate : P.corra_now;
-    function k(n, v, c, sub) { return '<div class="br-k"><div class="br-kn">' + n + '</div><div class="br-kv">' + v + '</div><div class="br-kc ' + (c || "") + '">' + (sub || "") + "</div></div>"; }
-    return '<div class="rail-card br-card"><div class="rail-title"><span>Markets pulse</span><span class="hint">desk data · ' + pulseAsOf(D) + '</span></div><div class="br-kg">' +
-      k("USD/CAD", nf(spot, 4), cls(ch), sg(ch, 2, "%")) +
-      (y10.y != null ? k("US 10Y", nf(+y10.y, 3) + "%", cls(y10.chg_bp), sg(y10.chg_bp, 1, " bp")) : "") +
-      (y10.sp_ca != null ? k("US–CA 10Y", nf(+y10.sp_ca, 1) + " bp", "", "spread") : "") +
-      (y2.y != null ? k("US 2Y", nf(+y2.y, 3) + "%", cls(y2.chg_bp), sg(y2.chg_bp, 1, " bp")) : "") +
-      (w.last != null ? k("WTI", "$" + nf(+w.last, 2), cls(w.pct), sg(+w.pct, 2, "%")) : "") +
-      (x.dxy != null ? k("DXY", nf(+x.dxy, 2), cls(+x.dxy_chg), sg(+x.dxy_chg, 2, "%")) : "") +
-      (fedM ? k("Fed funds", (+fedM[1] / 100).toFixed(2) + "–" + (+fedM[2] / 100).toFixed(2) + "%", "", "target range") : "") +
-      (boc != null ? k("BoC rate", nf(+boc, 2) + "%", "", "overnight target") : "") + "</div></div>";
-  }
-  function calendar(desk) {
+  function calRows(desk) {
     var D = window.DATA, now = Date.now(), end = now + 7 * 864e5, rows = [], ccy = desk === "us" ? ["USD"] : desk === "ca" ? ["CAD"] : ["USD", "CAD"];
     ((D && D.fx && D.fx.events) || []).forEach(function (e) {
       var t = typeof window.evEpoch === "function" ? window.evEpoch(e) : NaN;
@@ -105,12 +115,15 @@
       var p = b.returns.split("-"), t = Date.UTC(+p[0], +p[1] - 1, +p[2], 15); if (t >= now && t <= now + 45 * 864e5) rows.push({ t: t, cc: "CAD", w: "House of Commons returns", sub: "after the break from " + b.from.slice(5), hi: false }); });
     if (LG && desk !== "ca" && LG.us) (LG.us.hearings || []).forEach(function (h) { var t = Date.parse(h.date); if (t >= now && t <= end && (h.topics || []).length) rows.push({ t: t, cc: "USD", w: h.title.slice(0, 90), sub: h.chamber + " hearing", hi: false }); });
     rows.sort(function (a, b) { return a.t - b.t; });
-    var seen = {}; rows = rows.filter(function (r) { var k = r.w + Math.round(r.t / 6e5); if (seen[k]) return false; seen[k] = 1; return true; }).slice(0, 12);
-    return '<div class="rail-card br-card"><div class="rail-title"><span>Catalyst calendar</span><span class="hint">next 7 days · central banks 45 days</span></div>' +
+    var seen = {}; return rows.filter(function (r) { var k = r.w + Math.round(r.t / 6e5); if (seen[k]) return false; seen[k] = 1; return true; });
+  }
+  function calendar(desk, n, full) {
+    var rows = calRows(desk).slice(0, n || 12);
+    return '<div class="rail-card br-card"><div class="rail-title"><span>Catalyst calendar' + (full ? " — US &amp; Canada" : "") + '</span><span class="hint">next 7 days · central banks, Parliament 45 days · ET</span></div>' +
       (rows.length ? '<ul class="br-cal">' + rows.map(function (r) {
         return '<li class="' + (r.hi ? "hi" : "") + '"><span class="br-ct">' + et(r.t, true) + '</span><span class="br-cw"><span class="br-cc">' + r.cc + "</span> " + esc(r.w) + (r.sub ? "<small>" + esc(r.sub) + "</small>" : "") + "</span></li>"; }).join("") + "</ul>"
         : '<p class="note">Nothing high- or medium-impact scheduled in the next 7 days on the calendar loaded so far (the weekly calendar refreshes Sunday).</p>') +
-      '<p class="br-go"><a href="#" data-evgo="events:">Full calendar in Events →</a></p></div>';
+      (full ? "" : '<p class="br-go"><a href="#" data-evgo="events:">Full calendar in Events →</a></p>') + "</div>";
   }
 
   /* ---------- legislation ---------- */
@@ -121,11 +134,11 @@
       '<div class="br-bs">' + (us ? esc(b.action) + " · " + dd(b.date) : esc(b.stage || b.status) + (b.last ? " · " + dd(b.last) : "") + (b.gov ? ' · <b>Government bill</b>' : "") + (b.assent ? ' · <b class="up">Royal assent</b>' : "")) +
       (b.law ? ' · <b class="up">Law</b>' : "") + " " + tpc(b.topics) + "</div></div></li>";
   }
-  function legHTML(desk) {
+  function legPart(which, desk, nmax) {
     var L = J && J.legislation; if (!L) return "";
     var parts = [], filt = function (b) { return desk !== "both" || b.topics.some(function (t) { return /Trade|Agric|Energy|Border/.test(t); }); };
-    if (desk !== "us" && L.ca) {
-      var C = L.ca.calendar, cb = (L.ca.bills || []).filter(filt).slice(0, desk === "both" ? 5 : 10), cal = "";
+    if (which === "ca" && L.ca) {
+      var C = L.ca.calendar, cb = (L.ca.bills || []).filter(filt).slice(0, nmax || 10), cal = "";
       if (C) {
         var nx = C.next && C.next[0], wb = (C.breaks || []).filter(function (b) { return /-12-|-01-/.test(b.from); })[0], br = (C.breaks || [])[0];
         cal = '<div class="br-sit"><span>' + (C.sitting_today ? '<b class="up">House of Commons sits today</b>' : nx ? "Commons next sits <b>" + dd(nx, true) + "</b>" : "No sitting days published") + "</span>" +
@@ -135,48 +148,68 @@
       parts.push('<div class="br-lg"><h4>🇨🇦 Parliament of Canada' + (L.ca.session ? " · session " + esc(L.ca.session) : "") + "</h4>" + cal +
         (cb.length ? '<ul class="br-list">' + cb.map(function (b) { return billRow(b, false); }).join("") + "</ul>" : '<p class="note">No bills ' + (desk === "both" ? "on trade, agriculture, energy or the border " : "") + "moved in the last 14 days.</p>") + "</div>");
     }
-    if (desk !== "ca" && L.us) {
-      var U = L.us, fl = U.floor, ub = (U.bills || []).filter(filt).slice(0, desk === "both" ? 5 : 10), hr = (U.hearings || []).filter(function (h) { return desk !== "both" || h.topics.length; }).slice(0, 6);
+    if (which === "us" && L.us) {
+      var U = L.us, fl = U.floor, ub = (U.bills || []).filter(filt).slice(0, nmax || 10), hr = (U.hearings || []).filter(function (h) { return desk !== "both" || h.topics.length; }).slice(0, 6);
       var flH = fl && !fl.stale && fl.items.length ? '<div class="br-fl"><b>House floor ' + (fl.week ? "this week" : dd(fl.date, true)) + ":</b> " + fl.items.slice(0, 8).map(function (i) { return esc(i.code) + " " + esc(i.title); }).join(" · ") + "</div>"
         : '<div class="br-sit"><span>House floor: ' + (fl && fl.stale ? "no schedule since " + dd(fl.date) + " — the House is not sitting" : "no floor schedule published for this week") + "</span></div>";
       parts.push('<div class="br-lg"><h4>🇺🇸 U.S. Congress</h4>' + flH +
         (hr.length ? '<div class="br-hh">Upcoming committee hearings</div><ul class="br-list">' + hr.map(function (h) { return '<li class="br-bl"><span class="br-bc">' + dd(h.date, true) + '</span><div><span class="br-bt">' + esc(h.title) + '</span><div class="br-bs">' + esc(h.chamber) + (h.committee ? " · " + esc(h.committee) : "") + " " + tpc(h.topics) + "</div></div></li>"; }).join("") + "</ul>" : "") +
         '<div class="br-hh">Bills with action in the last 10 days</div>' + (ub.length ? '<ul class="br-list">' + ub.map(function (b) { return billRow(b, true); }).join("") + "</ul>" : '<p class="note">' + (U.errors && U.errors.congress ? "Congress.gov key not set." : "No significant bill actions in the last 10 days.") + "</p>") + "</div>");
     }
-    return parts.length ? '<div class="tile wide"><h3 class="br-s">Legislation — what is moving and when they sit <span class="h2note">official parliamentary and congressional data</span></h3><div class="br-lgw">' + parts.join("") + "</div></div>" : "";
+    return parts.join("");
   }
 
   /* ---------- render ---------- */
   function render() {
-    if (!J) { P.innerHTML = '<div class="tile wide"><h2>North America briefing</h2><p class="note">' + (err || "Loading the briefing…") + "</p></div>"; return; }
+    if (!J) { var r0 = P.querySelector(":scope > #br-root"); if (!r0) { r0 = document.createElement("div"); r0.id = "br-root"; P.appendChild(r0); } r0.innerHTML = '<div class="tile wide"><h2>North America briefing</h2><p class="note">' + (err || "Loading the briefing…") + "</p></div>"; r0._h = ""; return; }
     var d = J.desks[V.desk] || J.desks.ca, sec = d.sections || {};
     var head = '<div class="tile wide br-head"><div class="br-ht"><div><div class="br-kick">North America briefing</div><h2 class="br-title">' +
       new Date().toLocaleDateString("en-US", { timeZone: "America/Toronto", weekday: "long", month: "long", day: "numeric", year: "numeric" }) + '</h2>' +
       '<div class="br-upd">Updated ' + et(Date.parse(J.updated_at)) + " ET · " + ago(J.updated_at) + " · last " + (J.window_h || 48) + " h of reporting, refreshed every 30 min" +
       (tier === 3 ? ' · <b class="dn">cached copy — network failed</b>' : "") + (err && tier !== 3 ? ' · <b class="dn">' + esc(err) + "</b>" : "") + "</div></div>" +
       '<div class="br-sw" role="tablist">' + DESKS.map(function (x) { return '<button role="tab" data-brdesk="' + x[0] + '" aria-selected="' + (V.desk === x[0]) + '"><span>' + x[1] + "</span> " + x[2] + "</button>"; }).join("") + "</div></div></div>";
-    var TL = (d.top || []).slice().sort(function (a, b) { return Date.parse(b.ts) - Date.parse(a.ts); }), key = V.desk;
+    var TL = byTime(d.top), key = V.desk;
     NEW = {}; if (SEEN[key]) TL.forEach(function (c) { if (!SEEN[key][c.url]) NEW[c.url] = 1; });
     SEEN[key] = {}; TL.forEach(function (c) { SEEN[key][c.url] = 1; });
-    var top = '<div class="tile wide"><h3 class="br-s">Top developments — ' + esc(d.name) + ' <span class="h2note">latest first · date and time in ET · new stories roll in at the top</span></h3>' +
-      (TL.length ? '<ol class="br-list">' + TL.map(function (c, i) { return story(c, i, true); }).join("") + "</ol>" : '<p class="note">No stories in the last ' + (J.window_h || 48) + " h.</p>") + "</div>";
-    var grid = '<div class="br-grid">' + SEC.filter(function (s) { return !POLSEC[s[0]] && sec[s[0]] && sec[s[0]].length; }).map(function (s) {
-      return '<div class="tile br-sec"><h3 class="br-s">' + s[1] + '</h3><ul class="br-list">' + sec[s[0]].slice(0, 5).map(function (c) { return story(c, 0, false); }).join("") + "</ul></div>"; }).join("") + "</div>";
+    /* desk synthesis: the three most significant stories (the briefing's own ranking — breadth of coverage and recency), each with its desk read */
+    var S3 = (d.top || []).slice(0, 3);
+    var syn = '<div class="tile wide br-syn"><h3 class="br-s">Top developments — desk synthesis · ' + esc(d.name) + ' <span class="h2note">the 3 most significant stories · full wire in <a href="#" data-brgo="policy:wire">Policy › North America wire →</a></span></h3>' +
+      (S3.length ? '<ul class="br-syl">' + S3.map(function (c) { return '<li' + (NEW[c.url] ? ' class="br-new"' : "") + '><a class="br-h" href="' + (window.safeUrl ? safeUrl(c.url) : "#") + '" target="_blank" rel="noopener noreferrer">' + esc(c.title) + "</a>" +
+        '<span class="br-m"><time class="br-ts">' + et(Date.parse(c.ts), true) + " ET</time>" + (c.n > 1 ? ' · <span class="br-cnt">' + c.n + " reports</span>" : "") + " " + tagHTML(c.tags) + "</span>" + (c.why ? '<span class="br-why"><b>Desk read</b> ' + esc(c.why) + "</span>" : "") + "</li>"; }).join("") + "</ul>"
+        : '<p class="note">No stories in the last ' + (J.window_h || 48) + " h.</p>") + "</div>";
+    var nx = calRows(V.desk).slice(0, 3);
+    var next = '<div class="tile wide br-next"><span class="br-nxh">Next up</span>' + (nx.length ? nx.map(function (r) { return '<span class="br-nxi' + (r.hi ? " hi" : "") + '"><time>' + et(r.t, true) + ' ET</time><span class="br-cc">' + r.cc + "</span> " + esc(r.w) + "</span>"; }).join("")
+      : '<span class="note">Nothing high- or medium-impact in the next 7 days on the loaded calendar.</span>') + '<a href="#" data-evgo="events:" class="br-nxa">Full calendar in Events →</a></div>';
+    function snap(k, title, go, where) { var L = byTime(sec[k]).slice(0, 2); if (!L.length) return "";
+      return '<div class="tile br-sec br-snap"><h3 class="br-s">' + title + ' <span class="h2note"><a href="#" data-brgo="' + go + '">full column in ' + where + ' →</a></span></h3><ul class="br-list">' + L.map(function (c) { return story(c, 0, false); }).join("") + "</ul></div>"; }
+    var grid = '<div class="br-grid">' + snap("trade", "Trade &amp; tariffs", "macro:", "Macro") + snap("energy_ag", "Energy &amp; agriculture", "grains:fund", "Grains › Fundamentals") + snap("economy", "Economy &amp; data", "policy:wire", "Policy") + "</div>";
     var prov = d.provinces ? '<div class="tile wide"><h3 class="br-s">Provinces — one line each</h3><div class="br-prov">' + Object.keys(d.provinces).map(function (k) {
       var p = d.provinces[k], c = p.items && p.items[0];
-      return '<div class="br-pr"><b>' + esc(p.name) + "</b>" + (c ? '<a href="' + (window.safeUrl ? safeUrl(c.url) : "#") + '" target="_blank" rel="noopener noreferrer">' + esc(c.title) + '</a><small>' + ago(c.ts) + "</small>" : '<span class="note">No story in the last ' + (J.window_h || 48) + " h</span>") + "</div>"; }).join("") + "</div></div>" : "";
-    var foot = '<p class="br-foot">Headlines link to the outlet’s own article. The same story from several reports counts once (+n more reports). Tags show what each story touches on this desk. ' +
-      '“Desk read” is a rule-based note from the headline wording — context for the desk, not reporting and not a forecast.</p>';
-    policyTile();
-    if (BTN.getAttribute("aria-selected") !== "true") return;
-    P.innerHTML = head + '<div class="layout br-lay"><div class="main">' + top + legHTML(V.desk) + prov + grid + foot + '</div><aside class="rail">' + calendar(V.desk) + "</aside></div>";
+      return '<div class="br-pr"><b>' + esc(p.name) + "</b>" + (c ? '<a href="' + (window.safeUrl ? safeUrl(c.url) : "#") + '" target="_blank" rel="noopener noreferrer">' + esc(c.title) + '</a><small>' + et(Date.parse(c.ts), true) + " ET</small>" : '<span class="note">No story in the last ' + (J.window_h || 48) + " h</span>") + "</div>"; }).join("") + "</div></div>" : "";
+    var foot = '<p class="br-foot">Headlines link to the outlet’s own article. The same story from several reports counts once. “Desk read” is a rule-based note from the headline wording — context for the desk, not reporting and not a forecast. All times Eastern.</p>';
+    spots();
+    if (PP && PP.classList.contains("active") && window.POLICY && POLICY.render && polU !== J.updated_at + V.desk) { polU = J.updated_at + V.desk; var y = window.scrollY; POLICY.render(); window.scrollTo(0, y); }
+    var html = head + syn + next + grid + prov + foot, root = P.querySelector(":scope > #br-root");
+    if (!root) { root = document.createElement("div"); root.id = "br-root"; P.appendChild(root); [].forEach.call(P.children, function (c) { if (c !== root && c.id !== "sw-us") c.remove(); }); }
+    if (root._h !== html) { root.innerHTML = html; root._h = html; }
   }
-  P.addEventListener("click", function (e) { var b = e.target.closest("[data-brdesk]"); if (b) { V.desk = b.getAttribute("data-brdesk"); store.set(VIEW, V); render(); } });
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-brdesk]");
+    if (b && (P.contains(b) || (PP && PP.contains(b)))) { V.desk = b.getAttribute("data-brdesk"); store.set(VIEW, V); polU = ""; render(); return; }
+    var g = e.target.closest && e.target.closest("[data-brgo]"); if (!g) return; e.preventDefault();
+    var p = g.getAttribute("data-brgo").split(":"), page = p[0], sub = p[1];
+    if (page === "policy") { try { var pv = JSON.parse(localStorage.getItem("desk.policyView") || "{}"); pv.sub = sub; localStorage.setItem("desk.policyView", JSON.stringify(pv)); } catch (x) {}
+      var nb = document.querySelector('[data-gnav="policy"]'); if (nb) nb.click(); setTimeout(function () { var s2 = PP && PP.querySelector('[data-pisub="' + sub + '"]'); if (s2) s2.click(); window.scrollTo(0, 0); }, 120); return; }
+    if (page === "grains") { var cur = document.querySelector(".tab-panel.active"), gk = "corn"; try { gk = localStorage.getItem("desk.grain") || "corn"; } catch (x) {}
+      if (window.DESK_NAV && DESK_NAV.go) DESK_NAV.go(/^(corn|wheat|soybeans)$/.test(gk) ? gk : "corn", sub, "grains");
+      var n = 0; (function toTile() { var t = document.getElementById("br-ea-gr"); if (t && t.offsetHeight) t.scrollIntoView({ block: "start", behavior: "smooth" }); else if (++n < 20) setTimeout(toTile, 150); })(); return; }
+    if (window.DESK_NAV && DESK_NAV.go) DESK_NAV.go(page, sub, page);
+  });
   BTN.addEventListener("click", function () { if (!J) J = store.get(CACHE); render(); load(); });
   window.addEventListener("desk:unlock", function () { load(); });
-  if (PBTN) PBTN.addEventListener("click", function () { if (!J) J = store.get(CACHE); if (J) policyTile(); load(); });
-  setInterval(function () { if (BTN.getAttribute("aria-selected") === "true" || (PBTN && PBTN.getAttribute("aria-selected") === "true")) load(); }, 5 * 60000);
-  setInterval(function () { if (J && (BTN.getAttribute("aria-selected") === "true" || (PBTN && PBTN.getAttribute("aria-selected") === "true"))) render(); }, 60000);   /* 'x min ago' and the pulse stay live */
+  if (PBTN) PBTN.addEventListener("click", function () { if (!J) J = store.get(CACHE); polU = ""; load(); });
+  setInterval(function () { load(); }, 5 * 60000);   /* Overview, Policy, Events, Macro and Grains all carry pieces of the briefing now */
+  setInterval(function () { if (J && BTN.getAttribute("aria-selected") === "true") render(); }, 60000);   /* 'x min ago' stays live */
 
   var css = document.createElement("style");
   css.textContent =
@@ -196,7 +229,11 @@
     ".br-cal{list-style:none;margin:8px 0 0;padding:0}.br-cal li{display:grid;grid-template-columns:96px 1fr;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}.br-cal li.hi .br-cw{color:#fff;font-weight:600}" +
     ".br-ct{font:11.5px 'IBM Plex Mono',monospace;color:var(--amber)}.br-cw small{display:block;font:11px 'IBM Plex Mono',monospace;color:var(--faint);font-weight:400}.br-cc{font:600 10.5px 'IBM Plex Mono',monospace;color:var(--cyan)}.br-go{margin:8px 0 0;font-size:12.5px}" +
     ".br-ts{color:#7dd8e6}.br-st.br-new{animation:brIn .7s cubic-bezier(.2,.8,.2,1)}@keyframes brIn{from{opacity:0;transform:translateY(-14px);background:rgba(125,216,230,.14)}to{opacity:1;transform:none;background:transparent}}" +
-    ".br-polw{margin-top:14px}.br-pol .br-grid{margin-top:4px}@media (prefers-reduced-motion:reduce){.br-st.br-new{animation:none}}" +
+    ".br-syl{list-style:none;margin:0;padding:0;counter-reset:syn}.br-syl li{counter-increment:syn;position:relative;padding:10px 0 10px 34px;border-bottom:1px dashed var(--line);display:flex;flex-direction:column;gap:3px;font-family:'Libre Franklin',system-ui,sans-serif}.br-syl li:last-child{border-bottom:0}" +
+    ".br-syl li::before{content:counter(syn);position:absolute;left:0;top:11px;width:24px;height:24px;border-radius:50%;background:#13304a;color:#7dd8e6;font:600 12.5px 'IBM Plex Mono',monospace;display:grid;place-items:center}.br-syl .br-h{font-size:15.5px}.br-syl li.br-new{animation:brIn .7s cubic-bezier(.2,.8,.2,1)}" +
+    ".br-next{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding:10px 16px}.br-nxh{font:700 11px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#d9b46a}.br-nxi{font-size:13px;color:var(--ink);display:inline-flex;gap:6px;align-items:baseline}" +
+    ".br-nxi time{font:600 11.5px 'IBM Plex Mono',monospace;color:var(--cyan)}.br-nxi.hi time{color:#e3c14d}.br-nxa{margin-left:auto;font-size:12.5px}.br-sw-s{margin:0 0 8px}.br-spot{margin:0 0 14px}.br-spot .rail-card{margin:0}" +
+    "@media (prefers-reduced-motion:reduce){.br-st.br-new{animation:none}}" +
     ".br-foot{font:11.5px 'IBM Plex Mono',monospace;color:var(--faint);line-height:1.6;margin:12px 2px 0}" +
     ".br-lgw{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:18px}.br-lg h4{margin:0 0 8px;font-size:13.5px}.br-sit{display:flex;flex-wrap:wrap;gap:4px 16px;font:12px 'IBM Plex Mono',monospace;color:var(--muted);margin-bottom:8px}.br-sit b{color:var(--ink)}" +
     ".br-fl{font-size:13px;color:var(--muted);margin-bottom:8px;line-height:1.5}.br-fl b{color:var(--ink)}.br-hh{font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:10px 0 2px}" +
@@ -204,6 +241,6 @@
     ".br-bs{font-size:12px;color:var(--faint);margin-top:2px}.br-bs b{font-weight:600;color:var(--muted)}.br-tp{display:inline-block;font:600 10.5px 'IBM Plex Mono',monospace;padding:0 6px;border-radius:4px;border:1px solid var(--line2);color:var(--muted);margin-left:3px}" +
     "@media (max-width:760px){.br-lgw{grid-template-columns:1fr}.br-grid{grid-template-columns:1fr}.br-title{font-size:18px}}";
   document.head.appendChild(css);
-  window.BRIEFING = { render: render, load: load, _data: function () { return J; } };
-  if (BTN.getAttribute("aria-selected") === "true" || (PBTN && PBTN.getAttribute("aria-selected") === "true")) { J = store.get(CACHE); if (J) render(); load(); }
+  window.BRIEFING = { render: render, load: load, policyHTML: policyHTML, _data: function () { return J; } };
+  J = store.get(CACHE); if (J) render(); if (!window.DESK_LOCKED) load();
 })();

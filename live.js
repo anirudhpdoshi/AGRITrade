@@ -81,7 +81,8 @@
     var dayOpen = ["Mon", "Tue", "Wed", "Thu", "Fri"].indexOf(wd) >= 0 && mins >= 570 && mins < 860;
     var night = ((["Sun", "Mon", "Tue", "Wed", "Thu"].indexOf(wd) >= 0 && mins >= 1200) ||
                  (["Mon", "Tue", "Wed", "Thu", "Fri"].indexOf(wd) >= 0 && mins < 525));
-    if (dayOpen) return { state: "on", label: "CBOT day session · closes 2:20pm ET" };
+    if (window.MKT && MKT.grain && !MKT.grain(now)) return { state: "off", label: dayOpen || night ? "CBOT grains closed · holiday schedule" : "CBOT grains closed" };   /* CME holidays / early closes */
+    if (dayOpen) return { state: "on", label: "CBOT day session · closes " + (window.MKT && MKT.grain && !MKT.grain(now + Math.max(0, (13 * 60 + 6 - mins)) * 6e4) && mins < 13 * 60 + 5 ? "1:05pm ET (early close)" : "2:20pm ET") };
     if (night) return { state: "warm", label: "CBOT overnight session" };
     return { state: "off", label: "CBOT grains closed" };
   }
