@@ -1,4 +1,5 @@
-/* nav-hover.js — hover a top-menu item to see what it holds (owner, Nov 21 2026).
+/* nav-hover.js — menu map for the side panel; the hover card is switched off (owner, Nov 23 2026).
+   Was: hover a top-menu item to see what it holds (owner, Nov 21 2026).
    A small card opens under the menu button listing that section's pages and what each one shows; every line is a link.
    Opens after a short pause so a passing mouse does not flash cards; keyboard focus opens it too. */
 (function (root) {
@@ -44,13 +45,8 @@
     card.style.left = x + "px"; card.style.top = (r.bottom + 6 + root.scrollY) + "px";
   }
   function close() { card.hidden = true; cur = null; }
-  doc.addEventListener("mouseover", function (ev) {
-    var b = ev.target.closest && ev.target.closest(".gnav-b[data-gnav]");
-    if (b) { clearTimeout(tClose); if (cur !== b) { clearTimeout(tOpen); tOpen = setTimeout(function () { open(b); }, 220); } return; }
-    if (ev.target.closest && ev.target.closest("#gnav-hc")) { clearTimeout(tClose); return; }
-    clearTimeout(tOpen); if (!card.hidden) { clearTimeout(tClose); tClose = setTimeout(close, 180); }
-  });
-  doc.addEventListener("focusin", function (ev) { var b = ev.target.closest && ev.target.closest(".gnav-b[data-gnav]"); if (b) open(b); });
+  /* no hover card (owner, Nov 23 2026): a menu's pages and sections are listed only in the side panel, after the menu is
+     clicked (shell-nav.js). Hovering or tabbing onto a menu no longer opens a drop-down list. */
   doc.addEventListener("keydown", function (ev) { if (ev.key === "Escape") close(); });
   doc.addEventListener("click", function (ev) {
     if (ev.target.closest && ev.target.closest(".gnav-b")) { close(); return; }

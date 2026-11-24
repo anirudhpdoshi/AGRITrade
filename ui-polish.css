@@ -1,0 +1,42 @@
+/* ui-polish.css — app-wide spacing, alignment and sizing consistency (owner, Nov 23 2026). Loaded last.
+   Found by rendering every page and section at 1440 / 1280 / 1024 / 768 / 390 px and measuring overflow, overlaps and
+   card / heading / table variants. Only layout is touched: data, wording, colours and behaviour are unchanged. */
+
+/* 1 · section tab rows (Evidence · Snapshot & KPIs …, CFTC · Export sales …) always span the full width of the grid they sit in.
+   They were taking one grid cell, so a five-tab row wrapped into a narrow two-line box beside an empty column. */
+.pos-tabs,.it-tabs,.pi-nav,.w-tabs,.mon-tabs,.mn2-tabs,.st-nav,.ix-nav{grid-column:1/-1}
+
+/* 2 · a wide table or chart inside a card never pushes the page sideways: grid / flex children may shrink below their content,
+   and the content scrolls inside its own card instead */
+.tab-panel .grid>*,.tab-panel .layout>*,.tab-panel [class*="-pair"]>*{min-width:0}
+.tab-panel .tile svg:not([width]){max-width:100%}
+/* AI Debt: chart + breakdown pair stacks under 1250 px — it stacked at the table's full width (577 px on a 390 px phone) */
+@media (max-width:1250px){.a2-pair{grid-template-columns:minmax(0,1fr)!important}.a2-pt{overflow-x:auto}.a2-pc svg{max-width:100%;height:auto}}
+
+/* 3 · top menu: one line on desktop and laptop. When the feed is open and the twelve menus do not fit, the row scrolls sideways
+   (wheel / trackpad) instead of dropping one menu onto a second line; Recap and Pop out stay pinned at the right edge. */
+@media (min-width:1021px){
+  .gnav{flex-wrap:nowrap!important;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;align-items:center}
+  .gnav::-webkit-scrollbar{display:none}
+  .gnav>.gnav-b{flex:0 0 auto;white-space:nowrap}
+  .gnav>.rc-btn,.gnav>.po-b{flex:0 0 auto;position:sticky;z-index:2;background:var(--bg,#000)!important}
+  .gnav>.rc-btn{margin-left:auto!important;right:88px;box-shadow:-18px 0 14px -4px var(--bg,#000)}
+  .gnav>.po-b{right:4px}
+}
+@media (min-width:1021px) and (max-width:1599px){.gnav>.gnav-b{padding-left:11px!important;padding-right:11px!important}}
+
+/* 4 · phone header: the Dark / Light switch sat 18 px low (desktop offset) and overlapped the zoom control */
+@media (max-width:700px){.theme-sw{top:auto!important;right:auto!important}}
+
+/* 5 · one corner radius for boxes inside cards (were 8, 9 and 10 px side by side); cards themselves stay 6 px */
+.gx-next,.mpanel,.nr-b,.sw-b,.obs-box,.a2-k{border-radius:8px}
+
+/* 6 · card titles: the same gap under every card heading (was 0, 4 or 10 px) */
+.tab-panel .tile>h2:first-child{margin-bottom:8px}
+.tab-panel .tile>h2:first-child+.h2note,.tab-panel .tile>h2:first-child+p.note{margin-top:-4px}
+
+/* 7 · data tables: one body size (were 12, 12.5, 13 and 13.5 px); the options chain keeps its compact size */
+.tab-panel.active table:not(.oc-t):not(.gx-tip table){font-size:12.5px}
+
+/* 8 · card grids: the same 14 px gutter everywhere; a card that also carried a 14 px bottom margin inside a grid doubled it */
+.tab-panel .grid>.tile{margin-bottom:0}

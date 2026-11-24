@@ -87,7 +87,7 @@
     var cw = CW && CW[0], pw = PW && PW[0];
     var atm = L.length ? L.reduce(function (a, b) { return Math.abs(b.K - F) < Math.abs(a.K - F) ? b : a; }).K : null;
     var em = N.iv && M.T ? F * N.iv / 100 * Math.sqrt(M.T) : null;
-    var wd = function (w) { var d = w - F; return (d >= 0 ? "+" : "−") + Math.abs(d * 100).toFixed(1) + "¢ (" + (d >= 0 ? "+" : "−") + Math.abs(d / F * 100).toFixed(2) + "%) from spot"; };
+    var wd = function (w) { if (!(F > 0) || w == null) return ""; var d = w - F; return (d >= 0 ? "+" : "−") + Math.abs(d * 100).toFixed(1) + "¢ (" + (d >= 0 ? "+" : "−") + Math.abs(d / F * 100).toFixed(2) + "%) from spot"; };
     var GK = S.gk;
     var cCols = (GK ? ["Vega ¢", "θ ¢/day", "Γ /10¢", "Δ"] : []).concat(["Vol", "OI Δ", "OI", "Prem $", "IV %", "Value ¢"]), pCols = cCols.slice().reverse();
     var head = '<tr class="oc-sides"><th></th><th colspan="' + cCols.length + '">CALLS</th><th class="oc-k">STRIKE</th><th colspan="' + pCols.length + '">PUTS</th></tr>' +
@@ -127,8 +127,8 @@
       '<h2>Options chain <span class="h2note">— ' + esc(N.chain || "") + " options on " + esc(N.contract || "") + " · " + esc(N.oi_label || "") + "</span></h2>" +
       '<div class="oc-kpis"><div><span>Futures</span><b>' + f(F, 4) + '</b></div><div><span>Expiry</span><b>' + esc(N.expires || "—") + "</b><small>" + M.dte + " days</small></div>" +
       "<div><span>ATM IV</span><b>" + f(N.iv, 2) + "%</b></div><div><span>Expected move to expiry · 1σ</span><b>±" + (em ? f(em, 4) : "—") + "</b><small>" + (em ? f(F - em, 4) + " – " + f(F + em, 4) : "") + "</small></div>" +
-      "<div><span>Put / call OI</span><b>" + f(N.pcr, 2) + "</b></div><div><span>Call wall</span><b>" + (cw != null ? f(cw, 2) : "—") + "</b><small>" + (CW ? oiF(CW[1]) + " OI" : "") + (cw != null ? " · " + wd(cw) : "") + "</small></div>" +
-      "<div><span>Put wall</span><b>" + (pw != null ? f(pw, 2) : "—") + "</b><small>" + (PW ? oiF(PW[1]) + " OI" : "") + (pw != null ? " · " + wd(pw) : "") + "</small></div></div>" +
+      "<div><span>Put / call OI</span><b>" + f(N.pcr, 2) + "</b></div><div><span>Call wall</span><b>" + (cw != null ? f(cw, 2) : "—") + "</b><small>" + (CW ? oiF(CW[1]) + " OI" : "") + (wd(cw) ? " · " + wd(cw) : "") + "</small></div>" +
+      "<div><span>Put wall</span><b>" + (pw != null ? f(pw, 2) : "—") + "</b><small>" + (PW ? oiF(PW[1]) + " OI" : "") + (wd(pw) ? " · " + wd(pw) : "") + "</small></div></div>" +
       '<div class="oc-ctl">' + (M.legs.length > 1 ? "<span>Chain</span>" + seg("data-oc-leg", M.legs.map(function (l) { return [l, legName(l)]; }), M.leg) : "<span>Chain</span><b class=\"oc-one\">" + esc(legName(M.leg)) + "</b>") +
       "<span>Strikes</span>" + seg("data-oc-rng", [["all", "All"], ["20", "±20%"], ["10", "±10%"], ["5", "±5%"]], S.rng) +
       "<span>Show</span>" + seg("data-oc-oi", [["1", "With open interest"], ["0", "Every strike"]], S.oi ? "1" : "0") + seg("data-oc-gk", [["1", "Greeks"], ["0", "No Greeks"]], S.gk ? "1" : "0") + seg("data-oc-gx", [["1", "Gamma curve"], ["0", "Ladder only"]], S.gx ? "1" : "0") + "</div>" +
@@ -147,11 +147,13 @@
     var t = sub.querySelector(":scope > .oc-tile"), h = html(k);
     if (!h) { if (t) t.remove(); return; }
     var key = h.length + "|" + h.slice(-400);
-    if (t && t._k === key) { if (sub.firstElementChild !== t && !t._placed) { sub.insertBefore(t, sub.firstElementChild); t._placed = 1; } return; }
+    /* the chain sits at the top of the section, under the section tab row when there is one (owner, Nov 23 2026) */
+    var top = function () { var n = sub.querySelector(":scope > .st-nav"); return n ? n.nextElementSibling : sub.firstElementChild; };
+    if (t && t._k === key) { if (top() !== t && !t._placed) { sub.insertBefore(t, top()); t._placed = 1; } return; }
     var fresh = !t;
     if (!t) { t = doc.createElement("div"); t.className = "tile wide oc-tile" + (FULL ? " oc-full" : ""); t.setAttribute("data-src", "options"); }
     var y = root.scrollY; t.innerHTML = h; t._k = key;
-    if (fresh) { sub.insertBefore(t, sub.firstElementChild); if (typeof root.buildSecNav === "function") try { buildSecNav(k); } catch (e) {} }
+    if (fresh) { sub.insertBefore(t, top()); if (typeof root.buildSecNav === "function") try { buildSecNav(k); } catch (e) {} }
     else root.scrollTo(0, y);
   }
   function tick() {
