@@ -57,25 +57,34 @@
      Grains · FX · US Treasuries (every tenor + curve) · Crude · Precious metals · Policy, each tile tinted by today's move ---------- */
   function wi(id) { try { var W = root.WORLD && WORLD._data(); return W && W.instruments.filter(function (x) { return x.id === id; })[0] || null; } catch (e) { return null; } }
   /* change line: ▲/▼ absolute (and %) — colour carries direction, the arrow carries it too for colour-blind reading */
+  /* movement line: "▲ +58.18 pts · +0.80%" — absolute move in the asset's own unit against the previous close, then %.
+     Either part is left out when the data does not carry it; nothing is derived from a guess. */
   function chg(c, abs, pct) { if (abs == null && pct == null) return ""; var ar = c === "up" ? "▲" : c === "dn" ? "▼" : "";
-    return ar + (abs != null ? abs + (pct != null ? " (" + pct + ")" : "") : pct); }
+    var a = (ar ? '<u class="pb-ar">' + ar + "</u>" : "");
+    return abs != null && abs !== "" && pct != null ? a + abs + "\u0001" + pct : a + (abs != null && abs !== "" ? abs : pct); }
+  /* % sits top-right on the name line, the absolute move under the price — same three lines, no extra width */
+  function tail(s) { s = s || "&nbsp;"; var k = s.indexOf("\u0001"); return k < 0 ? "<i>" + s + "</i>" : '<em class="pb-pc">' + s.slice(k + 1) + "</em><i>" + s.slice(0, k) + "</i>"; }
+  function mv(abs, d, unit, pre) { return abs == null || !isFinite(abs) ? null : (abs > 0 ? "+" : abs < 0 ? "−" : "") + (pre || "") + nf(Math.abs(abs), d) + (unit || "").replace(/^ /, "\u2009"); }
+  var SELK = ""; try { SELK = localStorage.getItem("desk.pb.sel") || ""; } catch (e) {}
   /* every tile opens its price chart (pricechart.js): data-pc = chart key, data-pv = the live value for the chart's last point */
-  function T(n, v, c, s, extra, tip, key, raw) { return '<div class="pb-t ' + (c || "flat") + (extra || "") + (key ? " pb-btn" : "") + '"' + (key ? ' data-pc="' + key + '" role="button" tabindex="0"' + (raw != null && isFinite(raw) ? ' data-pv="' + raw + '"' : "") : "") + (tip ? ' title="' + esc(tip) + '"' : "") + "><span>" + n + "</span><b>" + v + "</b><i>" + (s || "&nbsp;") + "</i></div>"; }
+  function T(n, v, c, s, extra, tip, key, raw) { return '<div class="pb-t ' + (c || "flat") + (extra || "") + (key ? " pb-btn" : "") + (key && key === SELK ? " sel" : "") + '"' + (key ? ' data-pc="' + key + '" role="button" tabindex="0"' + (raw != null && isFinite(raw) ? ' data-pv="' + raw + '"' : "") : "") + (tip ? ' title="' + esc(tip) + '"' : "") + "><span>" + n + "</span><b>" + v + "</b>" + tail(s) + "</div>"; }
   function grp(name, tiles) { return tiles ? '<div class="pb-g"><em>' + name + '</em><div class="pb-r">' + tiles + "</div></div>" : ""; }
-  function wt(id, n, d, pre) { var x = wi(id); if (!x || x.last == null) return ""; var c = cls(x.pct);
-    return T(n, (pre || "") + nf(x.last, d), c, chg(c, null, sg(x.pct, 2, "%")), "", x.name + " · " + (x.provider || "delayed") + (x.ts ? " · " + hm(Date.parse(x.ts)) : "") + " · click for the price chart", id, x.last); }
+  function wt(id, n, d, pre, unit) { var x = wi(id); if (!x || x.last == null) return ""; var c = cls(x.pct);
+    var ab = x.chg != null && x.prev_close != null ? mv(+x.chg, d, unit || "", unit ? "" : pre) : null;
+    return T(n, (pre || "") + nf(x.last, d), c, chg(c, ab, sg(x.pct, 2, "%")), "", x.name + " · " + (x.provider || "delayed") + (x.ts ? " · " + hm(Date.parse(x.ts)) : "") + " · click for the price chart", id, x.last); }
   function bar() {
     var D = root.DATA; if (!D) return "";
     var fx = D.fx || {}, Y = fx.yields_live || {}, x = fx.fxcross || {}, P = fx.policy || {};
     var gr = GR.map(function (q) { var g = grain(q[0]); if (!g) return ""; var c = cls(g.ch);
-      return '<button type="button" class="pb-t pb-btn ' + c + (isOn(q[0]) ? " on" : "") + '" data-pc="' + q[0] + '" data-pv="' + g.px + '" title="' + q[1] + " " + esc(g.c) + ' — click for the price chart' + (g.ch == null ? "" : " · " + sg(g.ch, 2, "¢") + " today") + '"><span>' + q[1] + " " + esc(g.c) + "</span><b>" + nf(g.px, 4) + "</b><i>" +
-        (g.ch == null ? "&nbsp;" : chg(c, sg(g.ch, 2, "¢"), null)) + "</i></button>"; }).join("");
+      return '<button type="button" class="pb-t pb-btn ' + c + (SELK === q[0] ? " sel" : "") + '" data-pc="' + q[0] + '" data-pv="' + g.px + '" title="' + q[1] + " " + esc(g.c) + ' — click for the price chart' + (g.ch == null ? "" : " · " + sg(g.ch, 2, "¢") + " today") + '"><span>' + q[1] + " " + esc(g.c) + "</span><b>" + nf(g.px, 4) + "</b>" +
+        tail(g.ch == null ? "" : chg(c, mv(g.ch, 2, "¢"), sg(g.pct, 2, "%"))) + "</button>"; }).join("");
     var el = doc.getElementById("fx-spot-big"), lv = el ? parseFloat(el.textContent.replace(/[^\d.]/g, "")) : NaN, bsx = root.PRICE_SYNC && PRICE_SYNC.best && PRICE_SYNC.best("CAD=X");
     var spot = isFinite(lv) && lv > 0.5 ? lv : (bsx && bsx.px) || (fx.feed && +fx.feed.mid), ref = fx.spot && +fx.spot.ref, ch = spot && ref ? (spot / ref - 1) * 100 : null, cc = cls(ch);
-    gr += (spot ? '<div class="pb-t pb-btn ' + cc + '" data-pc="usdcad" data-pv="' + spot + '" role="button" tabindex="0" title="USD/CAD — click for the price chart"><span>USD/CAD</span><b>' + nf(spot, 4) + "</b><i>" + chg(cc, null, sg(ch, 2, "%")) + "</i></div>" : "") +
-      (x.dxy != null ? T("DXY", nf(+x.dxy, 2), cls(+x.dxy_chg), chg(cls(+x.dxy_chg), null, sg(+x.dxy_chg, 2, "%")), "", "US Dollar Index", "dxy", +x.dxy) : "");
+    var ucw = wi("usdcad"), pcl = ucw && ucw.prev_close ? +ucw.prev_close : ref; if (spot && pcl) { ch = (spot / pcl - 1) * 100; cc = cls(ch); }
+    gr += (spot ? '<div class="pb-t pb-btn ' + cc + (SELK === "usdcad" ? " sel" : "") + '" data-pc="usdcad" data-pv="' + spot + '" role="button" tabindex="0" title="USD/CAD — click for the price chart"><span>USD/CAD</span><b>' + nf(spot, 4) + "</b>" + tail(chg(cc, pcl ? mv((spot - pcl) * 1e4, 1, " pips") : null, sg(ch, 2, "%"))) + "</div>" : "") +
+      (wi("dxy") ? wt("dxy", "DXY", 2, "", " pts") : x.dxy != null ? T("DXY", nf(+x.dxy, 2), cls(+x.dxy_chg), chg(cls(+x.dxy_chg), null, sg(+x.dxy_chg, 2, "%")), "", "US Dollar Index", "dxy", +x.dxy) : "");
     var E = fx.energy || [], ew = function (nm) { return E.filter(function (e) { return e.name === nm; })[0]; };
-    var eT = function (n, e, tip, key) { if (!e || e.last == null) return ""; var c = cls(+e.pct); return T(n, "$" + nf(+e.last, 2), c, chg(c, null, sg(+e.pct, 2, "%")), "", tip || e.name, key, +e.last); };
+    var eT = function (n, e, tip, key) { if (!e || e.last == null) return ""; var c = cls(+e.pct); return T(n, "$" + nf(+e.last, 2), c, chg(c, e.chg != null ? mv(+e.chg, 2, "", "$") : null, sg(+e.pct, 2, "%")), "", tip || e.name, key, +e.last); };
     var wti = wi("wti"), brent = wi("brent");
     var cru = (wti ? wt("wti", "WTI", 2, "$") : eT("WTI", ew("WTI Crude"), "", "wti")) + (brent ? wt("brent", "Brent", 2, "$") : eT("Brent", ew("Brent Crude"), "", "brent")) +
       eT("WCS", ew("Western Canadian Select"), "Western Canadian Select · " + ((ew("Western Canadian Select") || {}).delay || ""), "wcs") + wt("natgas", "Nat gas", 3, "$");
@@ -83,7 +92,8 @@
     var fedM = /(\d{3})-(\d{3})/.exec(P.fed_range || ""), boc = P.boc_decided && P.boc_decided.rate != null ? P.boc_decided.rate : P.corra_now;
     var pol = (fedM ? T("Fed funds", (+fedM[1] / 100).toFixed(2) + "–" + (+fedM[2] / 100).toFixed(2) + "%", "flat", "target", "", "Fed funds target range", "fed", +fedM[2] / 100) : "") + (boc != null ? T("BoC", nf(+boc, 2) + "%", "flat", "overnight", "", "Bank of Canada policy rate", "boc", +boc) : "");
     var ust = ["3M", "1Y", "2Y", "5Y", "10Y", "20Y", "30Y"].map(function (t) { var y = Y[t]; if (!y || y.y == null) return ""; var c = cls(y.chg_bp);
-      return T(t, nf(+y.y, 3) + "%", c, chg(c, sg(y.chg_bp, 1, " bp"), null), "", "US " + t + " · " + (y.src || "") + (y.label ? " · " + y.label : ""), "ust" + t, +y.y); }).join("");
+      var py = y.chg_bp != null ? +y.y - y.chg_bp / 100 : null;
+      return T(t, nf(+y.y, 3) + "%", c, chg(c, mv(+y.chg_bp, 1, " bp"), py ? sg((+y.y / py - 1) * 100, 2, "%") : null), "", "US " + t + " · " + (y.src || "") + (y.label ? " · " + y.label : ""), "ust" + t, +y.y); }).join("");
     var c2 = Y["2Y"], c10 = Y["10Y"], c3 = Y["3M"];
     if (c2 && c10 && c2.y != null && c10.y != null) { var sp = (c10.y - c2.y) * 100; ust += T("2s10s", (sp >= 0 ? "+" : "−") + nf(Math.abs(sp), 1) + " bp", "flat", sp < 0 ? "inverted" : "positive", " pb-dv", "10Y minus 2Y — below zero = inverted curve" + (c3 && c3.y != null ? " · 3M10Y " + ((c10.y - c3.y) * 100).toFixed(1) + " bp" : ""), "s2s10s", sp); }
     var gold = wi("gold"), silver = wi("silver");
@@ -93,15 +103,23 @@
       return T(n, q.kind === "spread" ? nf(q.last, 1) + " bp" : nf(q.last, 3) + "%", c, chg(c, sg(bp, 1, " bp"), null), q.kind === "spread" ? " pb-dv" : "", tip || q.name); };
     var pair = function (a, b, n, sp, tip) { var A = wi(a), Bq = wi(b); if (!A || !Bq || A.last == null || Bq.last == null) return "";
       var ca = sp ? A.chg : A.chg * 100, cb = sp ? Bq.chg : Bq.chg * 100, c = cls((ca || 0) + (cb || 0));
-      return T(n, sp ? nf(A.last, 0) + " / " + nf(Bq.last, 0) + " bp" : nf(A.last, 2) + " / " + nf(Bq.last, 2) + "%", c, sg(ca, 1, "") + " / " + sg(cb, 1, " bp"), sp ? " pb-dv" : "", tip, a, A.last); };
+      return T(n, sp ? nf(A.last, 0) + " / " + nf(Bq.last, 0) + " bp" : nf(A.last, 2) + " / " + nf(Bq.last, 2) + "%", c, chg(c, ca != null && cb != null ? mv(ca, 1, "") + " / " + mv(cb, 1, " bp") : null, null), sp ? " pb-dv" : "", tip, a, A.last); };
     var can = pair("ca2y", "ca10y", "CA 2Y / 10Y", false, "Government of Canada 2Y and 10Y yields · change in bp") + pair("usca2y", "usca10y", "US–CA 2Y / 10Y", true, "US minus Canada yield gap, 2Y and 10Y — wider = more USD/CAD support");
     var vix = wi("vix"), cu = wi("copper"), rk = "";
-    if (vix && vix.last != null) { var vc = vix.pct > 0 ? "dn" : vix.pct < 0 ? "up" : "flat"; rk += T("VIX", nf(vix.last, 2), vc, (vix.pct > 0 ? "▲" : vix.pct < 0 ? "▼" : "") + sg(vix.pct, 2, "%"), "", "S&P 500 implied volatility — rising VIX = risk-off (shown red)", "vix", vix.last); }
+    if (vix && vix.last != null) { var vc = vix.pct > 0 ? "dn" : vix.pct < 0 ? "up" : "flat"; rk += T("VIX", nf(vix.last, 2), vc, chg(vix.pct > 0 ? "up" : vix.pct < 0 ? "dn" : "", vix.chg != null && vix.prev_close != null ? mv(+vix.chg, 2, " pts") : null, sg(vix.pct, 2, "%")), "", "S&P 500 implied volatility — rising VIX = risk-off (shown red)", "vix", vix.last); }
     if (cu && gold && cu.last && gold.last) { var r = cu.last / gold.last * 1000, r0 = cu.prev_close && gold.prev_close ? cu.prev_close / gold.prev_close * 1000 : null, rc = cls(r0 ? r - r0 : null);
       rk += T("Cu/Gold", nf(r, 3), rc, r0 ? chg(rc, null, sg((r / r0 - 1) * 100, 2, "%")) : "×1000", " pb-dv", "Copper ($/lb) ÷ gold ($/oz) × 1000 — rising = growth optimism, falling = defensive", "cugold", r); }
-    var eq = wt("spx", "S&amp;P 500", 2) + wt("ixic", "Nasdaq", 2) + wt("dji", "Dow", 2) + wt("rut", "Russell 2000", 2);   /* US indices (owner, Nov 24 2026) */
+    var eq = wt("spx", "S&amp;P 500", 2, "", " pts") + wt("ixic", "Nasdaq", 2, "", " pts") + wt("dji", "Dow", 2, "", " pts") + wt("rut", "Russell 2000", 2, "", " pts");   /* US indices (owner, Nov 24 2026) */
     return grp("Grains &amp; FX", gr) + grp("Crude &amp; gas", cru) + grp("Policy", pol) + grp("US indices &amp; risk", eq + rk) + grp("US Treasuries", ust) + grp("Precious metals", pm) + grp("Canada", can);
   }
+  /* selected tile: stays selected until another tile is picked; clicking it again changes nothing (no redraw, no movement) */
+  doc.addEventListener("click", function (e) {
+    var t = e.target.closest && e.target.closest("#pulse-bar [data-pc]"); if (!t) return;
+    var k = t.getAttribute("data-pc"); if (k === SELK) return;
+    SELK = k; try { localStorage.setItem("desk.pb.sel", k); } catch (x) {}
+    [].forEach.call(doc.querySelectorAll("#pulse-bar .pb-t.sel"), function (x) { x.classList.remove("sel"); }); t.classList.add("sel");
+    var B = doc.getElementById("pulse-bar"); if (B) B._h = "";   /* next paint bakes the selection into the markup */
+  }, true);
   function mountBar() {
     var g = doc.getElementById("gnav"); if (!g) return;
     var B = doc.getElementById("pulse-bar");
@@ -213,8 +231,17 @@
     ".pb-r{display:flex;gap:3px}.pb-t{appearance:none;min-width:0;text-align:left;border:1px solid rgba(255,255,255,.10);border-radius:6px;padding:2px 5px 3px;background:rgba(255,255,255,.035);color:var(--ink);display:flex;flex-direction:column;gap:1px;line-height:1.2;font:inherit}" +
     ".pb-t span{font:600 8.5px 'IBM Plex Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}.pb-t b{font:700 12.5px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink)}" +
     ".pb-t i{font:600 9.5px 'IBM Plex Mono',monospace;font-style:normal;color:var(--faint);white-space:nowrap}" +
-    ".pb-t.up{background:rgba(63,185,127,.12);border-color:rgba(63,185,127,.40)}.pb-t.up i,.pb-t.up span{color:#3fb97f}.pb-t.dn{background:rgba(255,107,98,.12);border-color:rgba(255,107,98,.40)}.pb-t.dn i{color:#ff6b62}" +
-    ".pb-t.flat{background:rgba(143,157,179,.07);border-color:rgba(143,157,179,.22)}.pb-t.pb-dv{border-style:dashed}.pb-btn{cursor:pointer}.pb-btn:hover{border-color:#d9b46a}.pb-btn.on{box-shadow:inset 0 -2px 0 #d9b46a;border-color:#d9b46a}" +
+    ".pb-t{position:relative;box-shadow:inset 2px 0 0 rgba(143,157,179,.35);transition:background-color .12s,border-color .12s}.pb-t b,.pb-t i{font-variant-numeric:tabular-nums}" +
+    ".pb-t.up{background:rgba(63,185,127,.08);border-color:rgba(63,185,127,.30);box-shadow:inset 2px 0 0 #3fb97f}.pb-t.up i{color:#3fb97f}.pb-t.dn{background:rgba(255,107,98,.08);border-color:rgba(255,107,98,.30);box-shadow:inset 2px 0 0 #ff6b62}.pb-t.dn i{color:#ff6b62}" +
+    ".pb-t u,.pb-t s{text-decoration:none}.pb-ar{font-size:7.5px;margin-right:2px;vertical-align:1px}" +
+    ".pb-t{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:6px}.pb-t span{grid-column:1;grid-row:1}.pb-t .pb-pc{grid-column:2;grid-row:1;justify-self:end;font:600 9px 'IBM Plex Mono',monospace;font-style:normal;color:var(--muted);white-space:nowrap;align-self:center}" +
+    ".pb-t b{grid-column:1/3;grid-row:2}.pb-t i{grid-column:1/3;grid-row:3}.pb-t.up .pb-pc{color:#3fb97f}.pb-t.dn .pb-pc{color:#ff6b62}#pulse-bar .pb-t.sel .pb-pc{color:#34425c}" +
+    ".pb-btn:hover{border-color:rgba(255,255,255,.32);background-color:rgba(255,255,255,.06)}.pb-t.up.pb-btn:hover{background-color:rgba(63,185,127,.14)}.pb-t.dn.pb-btn:hover{background-color:rgba(255,107,98,.14)}" +
+    /* selected: the tile inverts (navy on light here; the light theme's page inversion turns it into white on deep navy) */
+    "#pulse-bar .pb-t.sel,#pulse-bar .pb-t.sel:hover{background:#e9eef6;border-color:#e9eef6}#pulse-bar .pb-t.sel span{color:#34425c}#pulse-bar .pb-t.sel b{color:#0b1730}#pulse-bar .pb-t.sel i{color:#0b1730}" +
+    "#pulse-bar .pb-t.sel.up{box-shadow:inset 2px 0 0 #0f9d58}#pulse-bar .pb-t.sel.up .pb-ar{color:#0f9d58}#pulse-bar .pb-t.sel.dn{box-shadow:inset 2px 0 0 #d93025}#pulse-bar .pb-t.sel.dn .pb-ar{color:#d93025}" +
+    "#pulse-bar .pb-t.sel::after{content:'SELECTED';position:absolute;top:-6px;left:50%;transform:translateX(-50%);font:700 6.5px/8px 'IBM Plex Mono',monospace;letter-spacing:.08em;padding:0 3px;border-radius:2px;background:#0b1730;color:#e9eef6;pointer-events:none}" +
+    ".pb-t.flat{background:rgba(143,157,179,.07);border-color:rgba(143,157,179,.22)}.pb-t.pb-dv{border-style:dashed}.pb-btn{cursor:pointer}" +
     "body.locked #pulse-bar{display:none}#status-strip{display:none!important}.topbar h1,.topbar .sub{display:none!important}#grains-head{display:none!important}body.gr3 main{display:block!important}" +
     ".st-none{margin:0;font-size:11.5px;color:var(--muted)}" +
     "@media (prefers-reduced-motion:reduce){.st-evl{transition:none}.st-brl li.st-new{animation:none}}";

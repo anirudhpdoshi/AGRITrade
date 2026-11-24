@@ -141,10 +141,9 @@
     var E = doc.getElementById("pc-view"), m = doc.querySelector("main");
     if (!E) { E = doc.createElement("section"); E.id = "pc-view"; E.className = "no-tx"; m.parentNode.insertBefore(E, m); }
     E._h = ""; doc.body.classList.add("pc-open"); paint(); scrollTo(0, 0);
-    [].forEach.call(doc.querySelectorAll("#pulse-bar [data-pc]"), function (t) { t.classList.toggle("on", t.getAttribute("data-pc") === k); });
     load(paint);
   }
-  function close() { V.k = null; doc.body.classList.remove("pc-open"); [].forEach.call(doc.querySelectorAll("#pulse-bar [data-pc].on"), function (t) { t.classList.remove("on"); }); }
+  function close() { V.k = null; doc.body.classList.remove("pc-open");  }
   doc.addEventListener("click", function (e) {
     var t = e.target.closest && e.target.closest("#pulse-bar [data-pc]");
     if (t) { e.preventDefault(); e.stopPropagation(); var tk = t.getAttribute("data-pc");
