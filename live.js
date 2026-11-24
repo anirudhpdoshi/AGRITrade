@@ -156,7 +156,7 @@
     });
   }
   function syncStripHeight() {
-    var el = $("status-strip");
+    var el = $("pulse-bar") || $("status-strip");   /* the Market pulse band replaced the status strip as the frozen top (Nov 24 2026) */
     if (el && el.offsetHeight !== stripH) { stripH = el.offsetHeight; document.documentElement.style.setProperty("--strip-h", stripH + "px"); }
   }
   var stripH = -1;

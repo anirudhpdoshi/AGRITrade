@@ -61,11 +61,11 @@
     var D = root.DATA; if (!D) return "";
     var fx = D.fx || {}, Y = fx.yields_live || {}, x = fx.fxcross || {}, P = fx.policy || {};
     var gr = GR.map(function (q) { var g = grain(q[0]); if (!g) return ""; var c = cls(g.ch);
-      return '<button type="button" class="pb-t pb-btn ' + c + (isOn(q[0]) ? " on" : "") + '" data-st-grain="' + q[0] + '" title="Open ' + q[1] + " " + esc(g.c) + ' — keeps the report you are on"><span>' + q[1] + " " + esc(g.c) + "</span><b>" + nf(g.px, 4) + "</b><i>" +
-        (g.ch == null ? "&nbsp;" : chg(c, sg(g.ch, 2, "¢"), sg(g.pct, 2, "%"))) + "</i></button>"; }).join("");
+      return '<button type="button" class="pb-t pb-btn ' + c + (isOn(q[0]) ? " on" : "") + '" data-st-grain="' + q[0] + '" title="Open ' + q[1] + " " + esc(g.c) + ' — keeps the report you are on' + (g.ch == null ? "" : " · " + sg(g.ch, 2, "¢") + " today") + '"><span>' + q[1] + " " + esc(g.c) + "</span><b>" + nf(g.px, 4) + "</b><i>" +
+        (g.ch == null ? "&nbsp;" : chg(c, sg(g.ch, 2, "¢"), null)) + "</i></button>"; }).join("");
     var el = doc.getElementById("fx-spot-big"), lv = el ? parseFloat(el.textContent.replace(/[^\d.]/g, "")) : NaN, bsx = root.PRICE_SYNC && PRICE_SYNC.best && PRICE_SYNC.best("CAD=X");
     var spot = isFinite(lv) && lv > 0.5 ? lv : (bsx && bsx.px) || (fx.feed && +fx.feed.mid), ref = fx.spot && +fx.spot.ref, ch = spot && ref ? (spot / ref - 1) * 100 : null, cc = cls(ch);
-    gr += (spot ? '<div class="pb-t pb-btn ' + cc + '" data-st-grain="fx" role="button" tabindex="0" title="USD/CAD — open it on the Grains page"><span>USD/CAD</span><b>' + nf(spot, 4) + "</b><i>" + chg(cc, ref ? sg(spot - ref, 4) : null, sg(ch, 2, "%")) + "</i></div>" : "") +
+    gr += (spot ? '<div class="pb-t pb-btn ' + cc + '" data-st-grain="fx" role="button" tabindex="0" title="USD/CAD — open it on the Grains page"><span>USD/CAD</span><b>' + nf(spot, 4) + "</b><i>" + chg(cc, null, sg(ch, 2, "%")) + "</i></div>" : "") +
       (x.dxy != null ? T("DXY", nf(+x.dxy, 2), cls(+x.dxy_chg), chg(cls(+x.dxy_chg), null, sg(+x.dxy_chg, 2, "%")), "", "US Dollar Index") : "");
     var E = fx.energy || [], ew = function (nm) { return E.filter(function (e) { return e.name === nm; })[0]; };
     var eT = function (n, e, tip) { if (!e || e.last == null) return ""; var c = cls(+e.pct); return T(n, "$" + nf(+e.last, 2), c, chg(c, null, sg(+e.pct, 2, "%")), "", tip || e.name); };
@@ -78,25 +78,28 @@
     var ust = ["3M", "1Y", "2Y", "5Y", "10Y", "20Y", "30Y"].map(function (t) { var y = Y[t]; if (!y || y.y == null) return ""; var c = cls(y.chg_bp);
       return T(t, nf(+y.y, 3) + "%", c, chg(c, sg(y.chg_bp, 1, " bp"), null), "", "US " + t + " · " + (y.src || "") + (y.label ? " · " + y.label : "")); }).join("");
     var c2 = Y["2Y"], c10 = Y["10Y"], c3 = Y["3M"];
-    if (c2 && c10 && c2.y != null && c10.y != null) { var sp = (c10.y - c2.y) * 100; ust += T("2s10s", (sp >= 0 ? "+" : "−") + nf(Math.abs(sp), 1) + " bp", "flat", sp < 0 ? "inverted" : "positive", " pb-dv", "10Y minus 2Y — below zero = inverted curve"); }
-    if (c3 && c10 && c3.y != null && c10.y != null) { var sq = (c10.y - c3.y) * 100; ust += T("3M10Y", (sq >= 0 ? "+" : "−") + nf(Math.abs(sq), 1) + " bp", "flat", sq < 0 ? "inverted" : "positive", " pb-dv", "10Y minus 3-month bill — the recession-signal spread"); }
+    if (c2 && c10 && c2.y != null && c10.y != null) { var sp = (c10.y - c2.y) * 100; ust += T("2s10s", (sp >= 0 ? "+" : "−") + nf(Math.abs(sp), 1) + " bp", "flat", sp < 0 ? "inverted" : "positive", " pb-dv", "10Y minus 2Y — below zero = inverted curve" + (c3 && c3.y != null ? " · 3M10Y " + ((c10.y - c3.y) * 100).toFixed(1) + " bp" : "")); }
     var gold = wi("gold"), silver = wi("silver");
     var pm = wt("gold", "Gold", 1, "$") + wt("silver", "Silver", 3, "$") + wt("platinum", "Platinum", 1, "$") + wt("palladium", "Palladium", 1, "$");
-    if (gold && silver && gold.last && silver.last) pm += T("Gold/Silver", nf(gold.last / silver.last, 1) + "×", "flat", "ratio", " pb-dv", "ounces of silver per ounce of gold");
+    if (gold && silver && gold.last && silver.last) pm = pm.replace('title="' + esc(gold.name), 'title="Gold/silver ratio ' + nf(gold.last / silver.last, 1) + "× · " + esc(gold.name));   /* ratio lives in the gold tile's tooltip to keep the band at two rows */
     var wy = function (id, n, tip) { var q = wi(id); if (!q || q.last == null) return ""; var bp = q.kind === "spread" ? q.chg : q.chg != null ? q.chg * 100 : null, c = cls(bp);
       return T(n, q.kind === "spread" ? nf(q.last, 1) + " bp" : nf(q.last, 3) + "%", c, chg(c, sg(bp, 1, " bp"), null), q.kind === "spread" ? " pb-dv" : "", tip || q.name); };
-    var can = wy("ca2y", "CA 2Y") + wy("ca10y", "CA 10Y") + wy("usca2y", "US–CA 2Y", "US 2Y minus Canada 2Y — wider = more USD/CAD support") + wy("usca10y", "US–CA 10Y", "US 10Y minus Canada 10Y");
+    var pair = function (a, b, n, sp, tip) { var A = wi(a), Bq = wi(b); if (!A || !Bq || A.last == null || Bq.last == null) return "";
+      var ca = sp ? A.chg : A.chg * 100, cb = sp ? Bq.chg : Bq.chg * 100, c = cls((ca || 0) + (cb || 0));
+      return T(n, sp ? nf(A.last, 0) + " / " + nf(Bq.last, 0) + " bp" : nf(A.last, 2) + " / " + nf(Bq.last, 2) + "%", c, sg(ca, 1, "") + " / " + sg(cb, 1, " bp"), sp ? " pb-dv" : "", tip); };
+    var can = pair("ca2y", "ca10y", "CA 2Y / 10Y", false, "Government of Canada 2Y and 10Y yields · change in bp") + pair("usca2y", "usca10y", "US–CA 2Y / 10Y", true, "US minus Canada yield gap, 2Y and 10Y — wider = more USD/CAD support");
     var vix = wi("vix"), cu = wi("copper"), rk = "";
     if (vix && vix.last != null) { var vc = vix.pct > 0 ? "dn" : vix.pct < 0 ? "up" : "flat"; rk += T("VIX", nf(vix.last, 2), vc, (vix.pct > 0 ? "▲" : vix.pct < 0 ? "▼" : "") + sg(vix.pct, 2, "%"), "", "S&P 500 implied volatility — rising VIX = risk-off (shown red)"); }
     if (cu && gold && cu.last && gold.last) { var r = cu.last / gold.last * 1000, r0 = cu.prev_close && gold.prev_close ? cu.prev_close / gold.prev_close * 1000 : null, rc = cls(r0 ? r - r0 : null);
       rk += T("Cu/Gold", nf(r, 3), rc, r0 ? chg(rc, null, sg((r / r0 - 1) * 100, 2, "%")) : "×1000", " pb-dv", "Copper ($/lb) ÷ gold ($/oz) × 1000 — rising = growth optimism, falling = defensive"); }
-    return grp("Grains &amp; FX", gr) + grp("Crude &amp; gas", cru) + grp("Policy", pol) + grp("US Treasuries", ust) + grp("Precious metals", pm) + grp("Canada", can) + grp("Risk", rk);
+    return grp("Grains &amp; FX", gr) + grp("Crude &amp; gas", cru) + grp("Policy", pol) + grp("Risk", rk) + grp("US Treasuries", ust) + grp("Precious metals", pm) + grp("Canada", can);
   }
   function mountBar() {
     var g = doc.getElementById("gnav"); if (!g) return;
     var B = doc.getElementById("pulse-bar");
-    if (!B) { B = doc.createElement("div"); B.id = "pulse-bar"; B.className = "no-nf no-tx"; B.setAttribute("aria-label", "Market pulse"); g.parentNode.insertBefore(B, g.nextSibling); }
-    var top = (parseFloat(getComputedStyle(g).top) || 0) + g.offsetHeight; if (B._top !== top) { B.style.top = top + "px"; B._top = top; }
+    /* the band sits above the menu and is frozen at the very top; the menu freezes right under it (live.js sizes --strip-h from the band) */
+    if (!B) { B = doc.createElement("div"); B.id = "pulse-bar"; B.className = "no-nf no-tx"; B.setAttribute("aria-label", "Market pulse"); }
+    if (B.nextSibling !== g) g.parentNode.insertBefore(B, g);
     var h = bar(); if (B._h !== h) { B.innerHTML = h; B._h = h; }
   }
 
@@ -185,15 +188,15 @@
     ".st-cdl{font:700 9.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}.st-cdt{font:700 13px 'IBM Plex Mono',monospace;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}.st-cdn{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
     ".st-imp{font:700 8.5px 'IBM Plex Mono',monospace;font-style:normal;padding:1px 4px;border-radius:3px;flex:0 0 auto;letter-spacing:.04em}.st-evl li.ih .st-imp{background:#ff5a52;color:#fff}.st-evl li.im .st-imp{background:#e3a33a;color:#1a1a1a}.st-evl li.il .st-imp{background:rgba(143,157,179,.3);color:var(--muted)}" +
     ".st-evl li.ih time{color:#ff7a72}" +
-    "#pulse-bar{position:sticky;z-index:40;display:flex;flex-wrap:wrap;gap:8px 0;align-items:flex-start;padding:8px 12px 10px;margin:0 0 10px;background:var(--bg,#05080c);border-bottom:1px solid var(--line2);box-shadow:0 8px 16px -12px rgba(0,0,0,.7)}" +
-    "#pulse-bar:empty{display:none}.pb-g{display:flex;flex-direction:column;gap:5px;flex:0 0 auto;padding:0 10px;border-left:1px solid var(--line)}.pb-g:first-child{border-left:0;padding-left:0}" +
-    ".pb-g>em{font:700 11.5px 'IBM Plex Mono',monospace;font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:#d9b46a;border-left:3px solid #d9b46a;padding-left:6px;line-height:1.1}" +
-    ".pb-r{display:flex;gap:4px}.pb-t{appearance:none;min-width:70px;text-align:left;border:1px solid rgba(255,255,255,.10);border-radius:7px;padding:4px 8px 5px;background:rgba(255,255,255,.035);color:var(--ink);display:flex;flex-direction:column;gap:1px;line-height:1.2;font:inherit}" +
-    ".pb-t span{font:600 10px 'IBM Plex Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}.pb-t b{font:700 14.5px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink)}" +
-    ".pb-t i{font:600 10.5px 'IBM Plex Mono',monospace;font-style:normal;color:var(--faint);white-space:nowrap}" +
+    "#pulse-bar{position:sticky;top:0;z-index:42;display:flex;flex-wrap:wrap;gap:6px 0;align-items:flex-start;padding:6px 16px 7px;margin:0;background:var(--bg,#05080c);border-bottom:1px solid var(--line2);box-shadow:0 8px 16px -12px rgba(0,0,0,.7)}" +
+    "#pulse-bar:empty{display:none}.pb-g{display:flex;flex-direction:column;gap:3px;flex:0 0 auto;padding:0 6px;border-left:1px solid var(--line)}.pb-g:first-child{border-left:0;padding-left:0}" +
+    ".pb-g>em{font:700 10px 'IBM Plex Mono',monospace;font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:#d9b46a;border-left:3px solid #d9b46a;padding-left:6px;line-height:1.1}" +
+    ".pb-r{display:flex;gap:3px}.pb-t{appearance:none;min-width:0;text-align:left;border:1px solid rgba(255,255,255,.10);border-radius:6px;padding:2px 5px 3px;background:rgba(255,255,255,.035);color:var(--ink);display:flex;flex-direction:column;gap:1px;line-height:1.2;font:inherit}" +
+    ".pb-t span{font:600 8.5px 'IBM Plex Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}.pb-t b{font:700 12.5px 'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink)}" +
+    ".pb-t i{font:600 9.5px 'IBM Plex Mono',monospace;font-style:normal;color:var(--faint);white-space:nowrap}" +
     ".pb-t.up{background:rgba(63,185,127,.12);border-color:rgba(63,185,127,.40)}.pb-t.up i,.pb-t.up span{color:#3fb97f}.pb-t.dn{background:rgba(255,107,98,.12);border-color:rgba(255,107,98,.40)}.pb-t.dn i{color:#ff6b62}" +
     ".pb-t.flat{background:rgba(143,157,179,.07);border-color:rgba(143,157,179,.22)}.pb-t.pb-dv{border-style:dashed}.pb-btn{cursor:pointer}.pb-btn:hover{border-color:#d9b46a}.pb-btn.on{box-shadow:inset 0 -2px 0 #d9b46a;border-color:#d9b46a}" +
-    "body.locked #pulse-bar{display:none}#grains-head{display:none!important}body.gr3 main{display:block!important}" +
+    "body.locked #pulse-bar{display:none}#status-strip{display:none!important}.topbar h1,.topbar .sub{display:none!important}#grains-head{display:none!important}body.gr3 main{display:block!important}" +
     ".st-none{margin:0;font-size:11.5px;color:var(--muted)}" +
     "@media (prefers-reduced-motion:reduce){.st-evl{transition:none}.st-brl li.st-new{animation:none}}";
   doc.head.appendChild(st);
