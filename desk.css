@@ -1085,3 +1085,21 @@ table.pi-tab td{vertical-align:top}table.pi-tab small{display:block;color:var(--
 .sw-bk{font:600 12px 'IBM Plex Mono',monospace}.sw-bk.sw-strength,.sw-bk.sw-opportunity{color:#3fb97f}.sw-bk.sw-weakness{color:#ff6b62}.sw-bk.sw-threat{color:#E8C33A}
 .sw7 .sw-st{font-size:11px;color:var(--faint);font-weight:400}
 .sw7 td,.sw7 th{white-space:normal;overflow-wrap:anywhere}
+/* earnings bars: newest period in indigo, earlier in muted slate; labels inside (white) on tall bars, above (slate) on short (owner, Nov 23 2026) */
+.ov-svg{overflow:visible}.ov-svg .ov-bar{fill:#94A3B8}.ov-svg .ov-bar.ov-last{fill:#4F46E5}.ov-svg .ov-bar.neg{fill:#d0675f}.ov-svg .ov-bar.neg.ov-last{fill:#EF4444}
+.ov-svg .ov-in2{fill:#fff;font-weight:700}.ov-svg .ov-top2{fill:#CBD5E1;font-weight:600}.ov-svg .ov-xl{font-weight:800;fill:var(--ink)}
+.ov-sw{background:#94A3B8}
+/* earnings bridge: comparative table + PAT waterfall */
+.eb-tog{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line2);border-radius:10px;margin:2px 0 12px;background:rgba(255,255,255,.03)}
+.eb-tog button{appearance:none;border:0;background:transparent;color:var(--muted);font:600 12.5px 'IBM Plex Sans',system-ui,sans-serif;padding:7px 12px;border-radius:8px;cursor:pointer}
+.eb-tog button[aria-pressed=true]{background:#4F46E5;color:#fff}
+.eb-tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:860px}
+.eb-tbl th,.eb-tbl td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.eb-tbl th{font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);vertical-align:bottom}.eb-tbl th small{display:block;text-transform:none;letter-spacing:0;color:var(--muted);font-weight:400}
+.eb-tbl .l{text-align:left;font-family:'IBM Plex Sans',system-ui,sans-serif}.eb-tbl td{font-family:'IBM Plex Mono',monospace;color:var(--ink)}.eb-tbl td.l{font-weight:600}
+.eb-tbl td.up{color:#34D399}.eb-tbl td.dn{color:#F87171}.eb-tbl tr.eb-pat td{background:rgba(79,70,229,.10);font-weight:700}
+.eb-pill{display:inline-block;font:700 11px 'IBM Plex Sans',system-ui,sans-serif;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.eb-pill.up{color:#34D399;background:rgba(5,150,105,.16)}.eb-pill.dn{color:#F87171;background:rgba(220,38,38,.16)}.eb-pill.neu{color:var(--muted);background:rgba(255,255,255,.05)}
+.eb-wf{margin-top:16px}.eb-wf h3{margin:0 0 6px;font-size:14px}.eb-svg{width:100%;height:auto;max-height:320px;display:block;overflow:visible}
+.eb-svg text{font-family:'IBM Plex Sans',system-ui,sans-serif;text-anchor:middle;font-size:12px}.eb-svg .eb-in{fill:#fff;font-weight:700}.eb-svg .eb-out{fill:#CBD5E1;font-weight:600}
+.eb-svg .ov-x{fill:var(--muted);font-weight:600;font-size:11.5px}.eb-svg .eb-xl{font-weight:800;fill:var(--ink)}.eb-svg .ov-ax{stroke:var(--line2)}.eb-svg .eb-cn{stroke:var(--faint);stroke-dasharray:3 3}

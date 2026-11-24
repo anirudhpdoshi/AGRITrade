@@ -1018,7 +1018,7 @@
     function tv(id, l) { return '<button data-cotv="' + id + '" aria-pressed="' + (TV === id) + '">' + l + "</button>"; }
     return '<div class="cx-top"><div class="cx-id"><span class="tk">' + esc(co.ticker) + "</span><div><b>" + esc(co.name) + "</b><small>" + esc(M.sector) + (co.sicDescription ? " · " + esc(co.sicDescription) : "") + " · latest quarter " + esc(q.fl.label) + " (" + esc(q.end) + ')<span class="cx-prof">' + PROFILE_NAME[profileOf(M)] + " tiles</span></small></div></div>" +
       '<div class="cx-vw" role="group" aria-label="Tile view"><span>Tiles</span>' + tv("chart", "Chart") + tv("table", "Table") + tv("both", "Both") + "</div></div>" +
-      results(M) + overview(M) + '<div class="tile">' +
+      results(M) + bridge(M) + overview(M) + '<div class="tile">' +
       (M.model.note ? '<div class="ut-ask" style="margin:6px 0">' + esc(M.model.note) + "</div>" : "") +
       (function () { var TBL = [], KV = [], SEEN = {}, GEN = { snap: 1, "fin-is": 1, "fin-bs": 1, "fin-cf": 1 }; partsOf(M).forEach(function (p) {
         if (!p[1].some(function (c) { return BUILT[c[0]]; })) return;   /* whole group unavailable: hidden (owner, Nov 17 2026) */
@@ -1072,27 +1072,27 @@
         fcf: f, fcfm: f != null && r ? f / r * 100 : null, eps: ep };
     });
   }
-  function ovM(v) { if (v == null) return "—"; var a = Math.abs(v), sg = v < 0 ? "−" : ""; return sg + (a >= 1e12 ? (a / 1e12).toFixed(2) + "T" : a >= 1e9 ? (a / 1e9).toFixed(a >= 1e11 ? 0 : 1) + "B" : a >= 1e6 ? (a / 1e6).toFixed(0) + "M" : a.toFixed(0)); }
+  function ovM(v) { if (v == null) return "—"; var a = Math.abs(v), sg = v < 0 ? "−" : ""; return sg + (a >= 1e12 ? (a / 1e12).toFixed(1) + "T" : a >= 1e9 ? (a / 1e9).toFixed(1) + "B" : a >= 1e6 ? (a / 1e6).toFixed(1) + "M" : a >= 1e3 ? (a / 1e3).toFixed(1) + "K" : a.toFixed(1)); }   /* compact, one decimal */
   /* bars (+ optional line on its own scale, labelled at each point) — the reference layout */
   function ovChart(R, o) {
     var n0 = R.length;
     var W = 360, H = n0 > 5 ? 230 : 220, PL = 10, PR = 10, hasL = !!(o.lines && o.lines.length && o.bar), PT = hasL ? 82 : o.top ? 30 : 18, PB = 26, n = R.length, cw = (W - PL - PR) / n, bw = Math.min(46, cw * 0.62), FS = n > 5 ? 9.5 : 11.5;
     var bv = R.map(function (r) { return o.bar ? r[o.bar] : null; }), hasBar = bv.some(function (x) { return x != null; });
     var lo = Math.min(0, Math.min.apply(null, bv.filter(function (x) { return x != null; }).concat([0]))), hi = Math.max.apply(null, bv.filter(function (x) { return x != null; }).concat([1e-9]));
+    hi = hi > 0 ? hi * 1.2 : hi; lo = lo < 0 ? lo * 1.2 : lo;   /* 20% headroom: labels above the tallest bar never clip */
+    var LAST = R.length - 1;   /* the newest period is drawn in the accent colour, earlier ones muted */
     var by = function (x) { return PT + (H - PT - PB) * (1 - (x - lo) / ((hi - lo) || 1)); }, z = by(0), out = "";
     out += '<line x1="' + PL + '" x2="' + (W - PR) + '" y1="' + z + '" y2="' + z + '" class="ov-ax"/>';
     R.forEach(function (r, i) { var cx = PL + cw * i + cw / 2, x = bv[i];
       if (hasBar && x != null) { var y = by(x), y0 = Math.min(y, z), h = Math.max(1.5, Math.abs(z - y));
-        out += '<rect x="' + (cx - bw / 2) + '" y="' + y0 + '" width="' + bw + '" height="' + h + '" rx="1.5" class="ov-bar' + (x < 0 ? " neg" : "") + '"><title>' + esc(r.lab) + " · " + esc(o.fmt(x)) + "</title></rect>";
-        var tx = o.fmt(x), fits = tx.length * FS * 0.58 <= bw + 2;
-        var below = y0 + h + FS + 2, clash = x < 0 && below > H - PB - 2;   /* a negative bar reaching the axis labels: label inside, at its foot */
-        if (clash) out += '<text x="' + cx + '" y="' + (y0 + h - 4) + '" class="ov-in" style="font-size:' + Math.min(FS, 9) + 'px">' + esc(tx) + "</text>";
-        else if (o.top || !fits) out += '<text x="' + cx + '" y="' + (x >= 0 ? y - 5 : below) + '" class="ov-top" style="font-size:' + FS + 'px">' + esc(tx) + "</text>";
-        else if (h >= FS + 6) out += '<text x="' + cx + '" y="' + (x >= 0 ? z - 6 : z + FS + 3) + '" class="ov-in" style="font-size:' + FS + 'px">' + esc(tx) + "</text>";
-        else out += '<text x="' + cx + '" y="' + (x >= 0 ? y - 5 : y + h + FS + 2) + '" class="ov-top" style="font-size:' + FS + 'px">' + esc(tx) + "</text>"; }
+        out += '<rect x="' + (cx - bw / 2) + '" y="' + y0 + '" width="' + bw + '" height="' + h + '" rx="1.5" class="ov-bar' + (x < 0 ? " neg" : "") + (i === LAST ? " ov-last" : "") + '"><title>' + esc(r.lab) + " · " + esc(o.fmt(x)) + "</title></rect>";
+        /* label: inside the top of the bar (white, bold) when the bar is at least 25% of the axis; otherwise just above it (slate) */
+        var tx = o.fmt(x), lf = Math.max(7, Math.min(FS, (cw - 2) / (tx.length * 0.58))), big = h >= (H - PT - PB) * 0.25 && tx.length * lf * 0.6 <= bw + 6;   /* label shrinks to its column: neighbours never collide */
+        if (big) out += '<text x="' + cx + '" y="' + (x >= 0 ? y0 + lf + 4 : y0 + h - 5) + '" class="ov-in2" style="font-size:' + lf.toFixed(1) + 'px">' + esc(tx) + "</text>";
+        else out += '<text x="' + cx + '" y="' + (x >= 0 ? y0 - 5 : y0 + h + lf + 2) + '" class="ov-top2" style="font-size:' + lf.toFixed(1) + 'px">' + esc(tx) + "</text>"; }
       var pl = String(r.lab).split(" ");
-      out += pl.length > 1 && n > 5 ? '<text x="' + cx + '" y="' + (H - 15) + '" class="ov-x" style="font-size:' + FS + 'px">' + esc(pl[0]) + '<tspan x="' + cx + '" dy="11">' + esc(pl.slice(1).join(" ")) + "</tspan></text>"
-        : '<text x="' + cx + '" y="' + (H - 8) + '" class="ov-x">' + esc(r.lab) + "</text>"; });
+      out += pl.length > 1 && n > 5 ? '<text x="' + cx + '" y="' + (H - 15) + '" class="ov-x' + (i === LAST ? " ov-xl" : "") + '" style="font-size:' + FS + 'px">' + esc(pl[0]) + '<tspan x="' + cx + '" dy="11">' + esc(pl.slice(1).join(" ")) + "</tspan></text>"
+        : '<text x="' + cx + '" y="' + (H - 8) + '" class="ov-x' + (i === LAST ? " ov-xl" : "") + '">' + esc(r.lab) + "</text>"; });
     (o.lines || []).forEach(function (L, li) {
       var vals = R.map(function (r) { return r[L.k]; }), ok = vals.filter(function (x) { return x != null; }); if (!ok.length) return;
       var all = []; (o.lines).forEach(function (L2) { R.forEach(function (r) { if (r[L2.k] != null) all.push(r[L2.k]); }); });
@@ -1105,9 +1105,81 @@
     });
     return '<svg viewBox="0 0 ' + W + " " + H + '" class="ov-svg" role="img" aria-label="' + esc(o.title) + '">' + out + "</svg>";
   }
+  /* ---------------- earnings bridge (owner, Nov 23 2026): comparative table + PAT attribution waterfall, one QoQ / YoY toggle ---------------- */
+  var BRG = "yoy"; try { BRG = localStorage.getItem("desk.co.brg") || "yoy"; } catch (e) {}
+  function cmp1(v) { if (v == null || !isFinite(v)) return "—"; var a = Math.abs(v), s = v < 0 ? "−" : ""; return s + "$" + (a >= 1e9 ? (a / 1e9).toFixed(1) + "B" : a >= 1e6 ? (a / 1e6).toFixed(1) + "M" : a >= 1e3 ? (a / 1e3).toFixed(1) + "K" : a.toFixed(1)); }
+  function bridge(M) {
+    M = M.base || M;
+    var Q = M.quarters, n = Q.length; if (n < 2) return "";
+    var q = Q[n - 1], p = Q[n - 2], y = null;
+    for (var j = n - 2; j >= 0; j--) { var d = (Date.parse(q.end) - Date.parse(Q[j].end)) / 864e5; if (d >= 350 && d <= 380) { y = Q[j]; break; } if (d > 380) break; }
+    var v = function (x, k) { var r = x ? E.val(x, k) : null; return r == null || !isFinite(r) ? null : r; };
+    /* derived lines: gross profit, total operating expenses (gross profit − operating income) */
+    var g = function (x, k) {
+      if (!x) return null;
+      if (k === "cogs") { var c = v(x, "cogs"); return c != null ? c : v(x, "rev") != null && v(x, "gp") != null ? v(x, "rev") - v(x, "gp") : null; }
+      if (k === "opx") { var gp = v(x, "gp"), oi = v(x, "opinc"); return gp != null && oi != null ? gp - oi : v(x, "opex"); }
+      if (k === "gm" || k === "opm" || k === "nm") { var num = v(x, k === "gm" ? "gp" : k === "opm" ? "opinc" : "ni"), r = v(x, "rev"); return num != null && r ? num / r * 100 : null; }
+      return v(x, k);
+    };
+    /* fiscal year-to-date: this FY's quarters through the latest vs the same quarters of the prior FY */
+    var fy = q.fl.fy, qn = q.fl.q, cur = Q.filter(function (x) { return x.fl.fy === fy && x.fl.q <= qn; }), pri = Q.filter(function (x) { return x.fl.fy === fy - 1 && x.fl.q <= qn; });
+    var ytd = function (L, k) { if (L.length !== qn) return null; var t = 0; for (var i = 0; i < L.length; i++) { var x = g(L[i], k); if (x == null) return null; t += x; } return t; };
+    var ytdM = function (L, k) { var num = ytd(L, k === "gm" ? "gp" : k === "opm" ? "opinc" : "ni"), r = ytd(L, "rev"); return num != null && r ? num / r * 100 : null; };
+    var ROWS = [["rev", "Revenue", 0], ["cogs", "Cost of revenue (COGS)", -1], ["gp", "Gross profit", 0], ["gm", "Gross margin", 2], ["opx", "Operating expenses", -1], ["opinc", "Operating income", 0], ["opm", "Operating margin", 2],
+      ["intexp", "Interest expense", -1], ["pretax", "Pre-tax income", 0], ["tax", "Income tax", -1], ["ni", "Net income (PAT)", 0], ["nm", "Net margin", 2], ["eps_d", "Diluted EPS", 3]];
+    var base = BRG === "qoq" ? p : y;
+    var pctc = function (a, b) { return a == null || b == null || b === 0 ? null : (a / b - 1) * 100 * (b < 0 ? -1 : 1); };
+    var fp = function (x) { return x == null || !isFinite(x) ? "—" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(1) + "%"; };
+    var fb = function (x) { return x == null || !isFinite(x) ? "—" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.round(Math.abs(x) * 100).toLocaleString("en-US") + " bps"; };
+    var fval = function (k, x, t) { return x == null ? "—" : t === 2 ? x.toFixed(1) + "%" : t === 3 ? (x < 0 ? "−$" : "$") + Math.abs(x).toFixed(2) : cmp1(x); };
+    var cls = function (d, t) { if (d == null || !isFinite(d) || Math.abs(d) < 1e-9) return ""; return (t === -1 ? -d : d) > 0 ? "up" : "dn"; };
+    var body = ROWS.map(function (R0) {
+      var k = R0[0], t = R0[2], a = g(q, k), b = g(p, k), c = g(y, k); if (a == null && b == null && c == null) return "";
+      var mg = t === 2, dq = mg ? (a != null && b != null ? a - b : null) : pctc(a, b), dy = mg ? (a != null && c != null ? a - c : null) : pctc(a, c);
+      var ya = mg ? ytdM(cur, k) : ytd(cur, k), yb = mg ? ytdM(pri, k) : ytd(pri, k), dyt = mg ? (ya != null && yb != null ? ya - yb : null) : (k === "eps_d" ? null : pctc(ya, yb));
+      var bv = g(base, k), bd = a == null || bv == null ? null : mg ? a - bv : a - bv, st = cls(bd, t);
+      var badge = st ? '<span class="eb-pill ' + st + '">' + (st === "up" ? "Beat" : "Below") + " " + (BRG === "qoq" ? "QoQ" : "YoY") + "</span>" : '<span class="eb-pill neu">' + (bd == null ? "n/a" : "Flat") + "</span>";
+      var F = mg ? fb : fp;
+      return '<tr class="' + (k === "ni" ? "eb-pat" : "") + '"><td class="l">' + R0[1] + "</td><td>" + fval(k, a, t) + "</td><td>" + fval(k, b, t) + "</td><td>" + fval(k, c, t) + '</td><td class="' + cls(dq, t) + '">' + F(dq) + '</td><td class="' + cls(dy, t) + '">' + F(dy) + '</td><td class="' + cls(dyt, t) + '">' + F(dyt) + "</td><td>" + badge + "</td></tr>";
+    }).join("");
+    if (!body) return "";
+    /* PAT attribution: base PAT -> latest PAT, exact dollars; anything not separately tagged lands in FX / other */
+    var wf = "", pa = g(q, "ni"), pb = g(base, "ni");
+    if (base && pa != null && pb != null) {
+      var D = function (k, sign) { var a = g(q, k), b = g(base, k); return a == null || b == null ? null : (a - b) * sign; };
+      var steps = [["Revenue", D("rev", 1)], ["COGS", D("cogs", -1)], ["OpEx", D("opx", -1)], ["Interest", D("intexp", -1)], ["Tax", D("tax", -1)]].filter(function (x) { return x[1] != null; });
+      var known = steps.reduce(function (s0, x) { return s0 + x[1]; }, 0), other = (pa - pb) - known;
+      if (Math.abs(other) > 1) steps.push(["FX / other", other]);
+      wf = waterfall(base.fl.label, pb, steps, q.fl.label, pa);
+    }
+    var tog = '<div class="eb-tog" role="group" aria-label="Bridge basis"><button type="button" data-cobrg="yoy" aria-pressed="' + (BRG === "yoy") + '">Bridge vs. Same Qtr Last Year (YoY)</button><button type="button" data-cobrg="qoq" aria-pressed="' + (BRG === "qoq") + '">Bridge vs. Last Quarter (QoQ)</button></div>';
+    return '<div class="tile eb-wrap"><h2>Earnings bridge <span class="h2note">— ' + esc(M.co.name) + " · " + esc(q.fl.label) + " vs " + esc(p.fl.label) + (y ? " and " + esc(y.fl.label) : "") + " · USD · SEC 10-Q/10-K</span></h2>" + tog +
+      '<div class="tbl-scroll"><table class="eb-tbl no-tx no-nf"><thead><tr><th class="l">Line item</th><th>Latest Qtr<small>' + esc(q.fl.label) + "</small></th><th>Prior Qtr (QoQ)<small>" + esc(p.fl.label) + "</small></th><th>Same Qtr LY (YoY)<small>" + (y ? esc(y.fl.label) : "—") + "</small></th><th>QoQ %</th><th>YoY %</th><th>FY YTD YoY %<small>Q1–Q" + qn + " FY" + String(fy).slice(2) + "</small></th><th>Status</th></tr></thead><tbody>" + body + "</tbody></table></div>" +
+      (wf || (base ? "" : '<p class="note">No same quarter last year in the filings, so the YoY bridge cannot be drawn — switch to QoQ.</p>')) +
+      '<p class="note">Margins move in basis points (1 bp = 0.01 pp). For cost lines lower is better, so a falling cost shows as a beat. Operating expenses = gross profit − operating income. FX / other = the part of the PAT change not explained by the tagged lines (other income, FX, minority interest, discontinued items). FY YTD shows only when every quarter of both years is filed.</p></div>';
+  }
+  function waterfall(bl, b0, steps, ll, b1) {
+    var W = 720, H = 280, PL = 12, PR = 12, PT = 30, PB = 40, cols = [[bl + " PAT", b0, "base"]].concat(steps.map(function (x) { return [x[0], x[1], x[1] >= 0 ? "pos" : "neg"]; })).concat([[ll + " PAT", b1, "last"]]);
+    var run = 0, bars = cols.map(function (c, i) { if (c[2] === "base") { run = c[1]; return { lo: Math.min(0, c[1]), hi: Math.max(0, c[1]), c: c }; } if (c[2] === "last") return { lo: Math.min(0, c[1]), hi: Math.max(0, c[1]), c: c };
+      var a = run; run += c[1]; return { lo: Math.min(a, run), hi: Math.max(a, run), c: c }; });
+    var mn = Math.min.apply(null, bars.map(function (b) { return b.lo; }).concat([0])), mx = Math.max.apply(null, bars.map(function (b) { return b.hi; }).concat([0]));
+    mx = mx > 0 ? mx * 1.2 : mx; mn = mn < 0 ? mn * 1.2 : mn;   /* 20% headroom for the labels */
+    var cw = (W - PL - PR) / cols.length, bw = Math.min(64, cw * 0.62), Y = function (x) { return PT + (H - PT - PB) * (1 - (x - mn) / ((mx - mn) || 1)); };
+    var COL = { base: "#64748B", pos: "#10B981", neg: "#EF4444", last: "#4F46E5" }, out = '<line x1="' + PL + '" x2="' + (W - PR) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" class="ov-ax"/>';
+    bars.forEach(function (b, i) { var cx = PL + cw * i + cw / 2, y0 = Y(b.hi), h = Math.max(1.5, Y(b.lo) - Y(b.hi)), c = b.c, val = c[2] === "pos" || c[2] === "neg" ? (c[1] >= 0 ? "+" : "") + cmp1(c[1]) : cmp1(c[1]);
+      out += '<rect x="' + (cx - bw / 2) + '" y="' + y0 + '" width="' + bw + '" height="' + h + '" rx="2" style="fill:' + COL[c[2]] + '"><title>' + esc(c[0]) + " · " + esc(val) + "</title></rect>";
+      if (i < bars.length - 1) { var lv = c[2] === "base" ? c[1] : c[1] >= 0 ? b.hi : b.lo; out += '<line x1="' + (cx + bw / 2) + '" x2="' + (cx + cw - bw / 2) + '" y1="' + Y(lv) + '" y2="' + Y(lv) + '" class="eb-cn"/>'; }
+      var inside = h >= (H - PT - PB) * 0.25;
+      out += inside ? '<text x="' + cx + '" y="' + (y0 + 15) + '" class="eb-in">' + esc(val) + "</text>" : '<text x="' + cx + '" y="' + (y0 - 6) + '" class="eb-out">' + esc(val) + "</text>";
+      out += '<text x="' + cx + '" y="' + (H - PB + 16) + '" class="ov-x' + (c[2] === "last" ? " eb-xl" : "") + '">' + esc(c[0]) + "</text>"; });
+    return '<div class="eb-wf"><h3>PAT attribution — ' + esc(bl) + " → " + esc(ll) + ' <span class="h2note">change ' + ((b1 - b0) >= 0 ? "+" : "") + esc(cmp1(b1 - b0)) + "</span></h3>" +
+      '<svg viewBox="0 0 ' + W + " " + H + '" class="eb-svg" role="img" aria-label="PAT bridge" style="overflow:visible">' + out + "</svg>" +
+      '<div class="ov-leg"><span><i class="ov-sw" style="background:#64748B"></i>Starting PAT</span><span><i class="ov-sw" style="background:#10B981"></i>Adds to PAT</span><span><i class="ov-sw" style="background:#EF4444"></i>Drag on PAT</span><span><i class="ov-sw" style="background:#4F46E5"></i>Latest PAT</span></div></div>';
+  }
   function overview(M) {
     var R = ovRows(M); if (!R.length) return "";
-    var pct = function (x) { return x.toFixed(Math.abs(x) < 10 ? 1 : 0) + "%"; }, usd = function (x) { return "$" + ovM(x).replace("−", "−"); }, usdS = function (x) { return (x < 0 ? "−$" : "$") + ovM(Math.abs(x)); };
+    var pct = function (x) { return x.toFixed(1) + "%"; }, usd = function (x) { return "$" + ovM(x).replace("−", "−"); }, usdS = function (x) { return (x < 0 ? "−$" : "$") + ovM(Math.abs(x)); };
     var NAVY = "#8fb0ff", LIME = "#7cb342";   /* drawn for the dark desk; the light theme inverts the page, so it mirrors (owner, Nov 22 2026) */
     var C = [
       { t: "Revenue", bar: "rev", top: true, fmt: usdS, leg: [["b", "Revenue"]] },
@@ -1120,7 +1192,7 @@
       { t: "EPS (diluted)", bar: "eps", top: true, fmt: function (x) { return (x < 0 ? "−$" : "$") + Math.abs(x).toFixed(2); }, leg: [["b", "EPS"]] }
     ].filter(function (c) { var keys = [c.bar].concat((c.lines || []).map(function (l) { return l.k; })).filter(Boolean); return keys.some(function (k) { return R.filter(function (r) { return r[k] != null; }).length >= 2; }); });
     if (!C.length) return "";
-    var legend = function (c) { return '<div class="ov-leg">' + c.leg.map(function (l) { return l[0] === "b" ? '<span><i class="ov-sw"></i>' + esc(l[1]) + "</span>" : '<span><i class="ov-ls" style="background:' + l[2] + '"></i>' + esc(l[1]) + "</span>"; }).join("") + "</div>"; };
+    var legend = function (c) { return '<div class="ov-leg">' + c.leg.map(function (l) { return l[0] === "b" ? '<span><i class="ov-sw"></i>' + esc(l[1]) + '</span><span><i class="ov-sw" style="background:#4F46E5"></i>Latest ' + (OVP === "fy" ? "year" : "quarter") + "</span>" : '<span><i class="ov-ls" style="background:' + l[2] + '"></i>' + esc(l[1]) + "</span>"; }).join("") + "</div>"; };
     var seg = '<div class="seg ov-seg" role="group" aria-label="Period"><button type="button" data-coovp="fy" aria-pressed="' + (OVP === "fy") + '">Fiscal years</button><button type="button" data-coovp="q" aria-pressed="' + (OVP === "q") + '">Quarters</button></div>';
     return '<div class="tile ov-wrap"><h2>Financial overview <span class="h2note">— ' + esc(M.co.name) + " · " + (OVP === "fy" ? "last " + R.length + " fiscal years (full years only)" : "last " + R.length + " quarters") + " · USD · SEC filings</span></h2>" + seg +
       '<div class="ov-grid">' + C.map(function (c) { return '<div class="ov-card"><h3>' + esc(c.t) + "</h3>" + ovChart(R, { title: c.t, bar: c.bar, top: c.top, fmt: c.fmt, lines: c.lines }) + legend(c) + (c.note ? '<div class="ov-note">' + esc(c.note) + "</div>" : "") + "</div>"; }).join("") + "</div>" +
@@ -1733,6 +1805,7 @@
     var b = t.closest("[data-cogd]"); if (b && b.closest("#panel-earnings")) { var id0 = b.getAttribute("data-cogd"); GD = GD && GD.id === id0 ? null : { id: id0, k: b.getAttribute("data-cok") || (GD && GD.k) }; if (GD && !GD.k) GD = null; rerender(); return; }
     b = t.closest("[data-rsd]"); if (b) { var k0 = b.getAttribute("data-rsd"); RSD = RSD === k0 ? null : k0; rerender(); return; }
     b = t.closest("[data-esk],[data-esv]"); if (b) { if (b.hasAttribute("data-esk")) EV.k = b.getAttribute("data-esk"); else EV.v = b.getAttribute("data-esv"); rerender(); return; }
+    b = t.closest("[data-cobrg]"); if (b) { BRG = b.getAttribute("data-cobrg"); try { localStorage.setItem("desk.co.brg", BRG); } catch (e) {} rerender(); return; }
     b = t.closest("[data-coovp]"); if (b) { OVP = b.getAttribute("data-coovp"); try { localStorage.setItem("desk.co.ovp", OVP); } catch (e) {} rerender(); return; }
     b = t.closest("[data-cotv]"); if (b) { TV = b.getAttribute("data-cotv"); try { localStorage.setItem("desk.coTiles", TV); } catch (e) {} rerender(); return; }
     b = t.closest("[data-mxtab]"); if (b && b.closest("#panel-earnings")) { MX = b.getAttribute("data-mxtab"); rerender(); return; }
