@@ -134,11 +134,20 @@
   }
 
   /* ---------- 3. breakouts, three lines ---------- */
+  /* one-line read: "Crossed below its 200-day MA (615.15) — provisional…" -> "▼ Below 200D MA 615.15 *" (full text in the tooltip) */
+  function brShort(t, dir) {
+    var ar = dir > 0 ? "▲ " : dir < 0 ? "▼ " : "", pv = /provisional/i.test(t) ? " *" : "", m;
+    t = t.replace(/\s*—\s*provisional.*$/i, "");
+    if ((m = /^(Crossed|Closed) (above|below) its (\d+)-day (EMA|MA)\s*\(([^)]+)\)/i.exec(t))) return ar + (m[1] === "Closed" ? "Closed " + m[2] : m[2][0].toUpperCase() + m[2].slice(1)) + " " + m[3] + "D " + m[4].toUpperCase() + " " + m[5] + pv;
+    if ((m = /^New (day|52-week|intraday) (high|low)\s*([\d.,]+)?/i.exec(t))) return ar + (m[1] === "52-week" ? "52W " : "Day ") + m[2] + (m[3] ? " " + m[3] : "") + pv;
+    return ar + t + pv;
+  }
   function breakouts() {
     var B = root.BREAKOUTS && BREAKOUTS.data && BREAKOUTS.data(), E = (B && B.events || []).slice().sort(function (a, b) { return Date.parse(b.t) - Date.parse(a.t); }).slice(0, 3);
-    return '<section class="st-sec st-br"><div class="st-h"><b>Breakouts</b><span>live · <a href="#" data-st-go="breakouts">open</a></span></div>' +
+    return '<section class="st-sec st-br"><div class="st-h"><b>Breakouts</b><span title="* = provisional until the close · hover a line for the full text">* until close · live · <a href="#" data-st-go="breakouts">open</a></span></div>' +
       (E.length ? '<ul class="st-brl">' + E.map(function (e) { var nmv = (BREAKOUTS.name && BREAKOUTS.name(e)) || e.n || e.s;   /* the name, not the ticker (owner, Nov 24 2026) */
-        return '<li class="' + (e.dir > 0 ? "u" : "d") + '" data-st-id="' + esc(e.id) + '" title="' + esc(e.s) + '"><time>' + hm(Date.parse(e.t)) + "</time><b>" + esc(nmv) + "</b><span>" + esc(String(e.txt || "").replace(/^\S+\s+—\s+/, "")) + "</span></li>"; }).join("") + "</ul>"
+        var full = String(e.txt || "").replace(/^\S+\s+—\s+/, "");
+        return '<li class="' + (e.dir > 0 ? "u" : "d") + '" data-st-id="' + esc(e.id) + '" title="' + esc(nmv + " (" + e.s + ") — " + full) + '"><time>' + hm(Date.parse(e.t)) + "</time><b>" + esc(nmv) + "</b><span>" + esc(brShort(full, e.dir)) + "</span></li>"; }).join("") + "</ul>"
         : '<p class="st-none">No breakouts yet today — the scanner runs every 5 min, 8 AM–6 PM ET on weekdays.</p>') + "</section>";
   }
 
@@ -181,7 +190,8 @@
     ".st-k b{display:block;font:600 12px 'IBM Plex Mono',monospace;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}.st-k i{display:block;font:normal 10px 'IBM Plex Mono',monospace;color:var(--faint);white-space:nowrap}.st-kp{cursor:pointer}.st-kp:hover b{color:#d9b46a}" +
     ".st-evw{height:22px;overflow:hidden;position:relative}.st-evl{list-style:none;margin:0;padding:0;transition:transform .55s cubic-bezier(.3,.7,.2,1)}.st-evl li{height:22px;display:flex;gap:7px;align-items:center;font-size:12px;white-space:nowrap}" +
     ".st-evl time{font:600 10.5px 'IBM Plex Mono',monospace;color:var(--cyan);flex:0 0 auto}.st-evl li.hi time{color:#e3c14d}.st-evl span{overflow:hidden;text-overflow:ellipsis;color:var(--ink)}" +
-    ".st-brl{list-style:none;margin:0;padding:0}.st-brl li{display:grid;grid-template-columns:auto auto 1fr;gap:2px 6px;align-items:baseline;font-size:11.5px;line-height:1.35;border-left:2px solid transparent;padding:3px 0 3px 6px}" +
+    ".st-brl{list-style:none;margin:0;padding:0}.st-brl li{display:grid;grid-template-columns:auto minmax(0,max-content) minmax(0,1fr);gap:6px;align-items:baseline;font-size:11.5px;line-height:1.4;border-left:2px solid transparent;padding:3px 0 3px 6px;white-space:nowrap}" +
+    ".st-brl li b{max-width:120px;overflow:hidden;text-overflow:ellipsis}.st-brl li span{overflow:hidden!important;text-overflow:ellipsis;white-space:nowrap!important}" +
     ".st-brl li.u{border-left-color:#3fb97f}.st-brl li.d{border-left-color:#4f8cff}.st-brl li.u b,.st-brl li.u span{color:#3fb97f}.st-brl li.d b,.st-brl li.d span{color:#6ea2ff}.st-brl time{font:10.5px 'IBM Plex Mono',monospace;color:var(--faint)}.st-brl b{font:700 11px 'IBM Plex Mono',monospace}.st-brl span{color:var(--ink);white-space:normal;overflow-wrap:anywhere}.st-brl time{white-space:nowrap}.st-brl b{white-space:nowrap}" +
     ".st-brl li.st-new{animation:stIn .6s ease-out}@keyframes stIn{from{opacity:0;background:rgba(217,180,106,.25)}to{opacity:1;background:transparent}}" +
     ".st-g.up{background:rgba(63,185,127,.13);border-color:rgba(63,185,127,.45)}.st-g.dn{background:rgba(255,107,98,.13);border-color:rgba(255,107,98,.45)}" +
