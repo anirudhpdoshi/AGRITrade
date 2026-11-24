@@ -18,6 +18,12 @@
   /* ---------- 1. market pulse ---------- */
   var GR = [["corn", "Corn"], ["soybeans", "Soybeans"], ["wheat", "Wheat"]];
   /* the old Execution Tiles strip is hidden (owner, Nov 24 2026) — its buttons still carry the commodity-switch logic, so the band drives them */
+  root.PULSE_PICK = function (k) {
+    var gk = k === "usdcad" ? "fx" : k, cur = active(); if (!/^(corn|soybeans|wheat|fx)$/.test(gk)) return false;
+    if (["corn", "soybeans", "wheat", "fx", "positioning"].indexOf(cur) < 0 && !(cur === "intel" && gk !== "fx")) return false;
+    var b = doc.querySelector('#grains-head [data-grain-pick="' + gk + '"]'); if (!b) return false;
+    b.click(); setTimeout(paint, 150); return true;   /* sub-page and section stay as they are (nav-ui keeps the sub, sectabs keeps the section) */
+  };
   function onGrainPage() { return doc.body.classList.contains("gr3"); }
   function vis(k) { return onGrainPage() ? doc.querySelector('#grains-head [data-grain-pick="' + k + '"]') : null; }
   function isOn(k) { var b = vis(k); return b ? b.getAttribute("aria-pressed") === "true" || b.classList.contains("on") || b.classList.contains("sel") : active() === k; }
@@ -93,7 +99,8 @@
     if (vix && vix.last != null) { var vc = vix.pct > 0 ? "dn" : vix.pct < 0 ? "up" : "flat"; rk += T("VIX", nf(vix.last, 2), vc, (vix.pct > 0 ? "▲" : vix.pct < 0 ? "▼" : "") + sg(vix.pct, 2, "%"), "", "S&P 500 implied volatility — rising VIX = risk-off (shown red)", "vix", vix.last); }
     if (cu && gold && cu.last && gold.last) { var r = cu.last / gold.last * 1000, r0 = cu.prev_close && gold.prev_close ? cu.prev_close / gold.prev_close * 1000 : null, rc = cls(r0 ? r - r0 : null);
       rk += T("Cu/Gold", nf(r, 3), rc, r0 ? chg(rc, null, sg((r / r0 - 1) * 100, 2, "%")) : "×1000", " pb-dv", "Copper ($/lb) ÷ gold ($/oz) × 1000 — rising = growth optimism, falling = defensive", "cugold", r); }
-    return grp("Grains &amp; FX", gr) + grp("Crude &amp; gas", cru) + grp("Policy", pol) + grp("Risk", rk) + grp("US Treasuries", ust) + grp("Precious metals", pm) + grp("Canada", can);
+    var eq = wt("spx", "S&amp;P 500", 2) + wt("ixic", "Nasdaq", 2) + wt("dji", "Dow", 2) + wt("rut", "Russell 2000", 2);   /* US indices (owner, Nov 24 2026) */
+    return grp("Grains &amp; FX", gr) + grp("Crude &amp; gas", cru) + grp("Policy", pol) + grp("US indices &amp; risk", eq + rk) + grp("US Treasuries", ust) + grp("Precious metals", pm) + grp("Canada", can);
   }
   function mountBar() {
     var g = doc.getElementById("gnav"); if (!g) return;

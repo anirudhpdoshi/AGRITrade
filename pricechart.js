@@ -49,6 +49,10 @@
   var SHORT = { corn: "Corn", soybeans: "Soybeans", wheat: "Wheat", usdcad: "USD/CAD", dxy: "DXY", wti: "WTI", brent: "Brent", natgas: "Nat gas", brentwti: "Brent−WTI", fed: "Fed funds", boc: "BoC",
     vix: "VIX", cugold: "Cu/Gold", gold: "Gold", silver: "Silver", platinum: "Platinum", palladium: "Palladium", ca2y: "CA 2Y", ca10y: "CA 10Y", usca2y: "US−CA 2Y", usca10y: "US−CA 10Y", s2s10s: "2s10s",
     ust3M: "3M", ust1Y: "1Y", ust2Y: "2Y", ust5Y: "5Y", ust10Y: "10Y", ust20Y: "20Y", ust30Y: "30Y" };
+  ["spx", "ixic", "dji", "rut"].forEach(function (k) { C[k] = { s: k, n: { spx: "S&P 500", ixic: "Nasdaq Composite", dji: "Dow Jones Industrial Average", rut: "Russell 2000" }[k], u: "index", d: 2, g: "eq",
+    p: [["World markets · US & Canada stocks", "world", null, "world", WG("namer")], ["World markets · US markets (sectors)", "usmkt", null, "world"], ["Breakouts · indexes", "breakouts", null, "breakouts"]] }; });
+  GRP.eq = ["spx", "ixic", "dji", "rut", "vix"]; C.vix.g = "eq";
+  SHORT.spx = "S&P 500"; SHORT.ixic = "Nasdaq"; SHORT.dji = "Dow"; SHORT.rut = "Russell";
   var RANGES = [["1M", 31], ["3M", 92], ["1Y", 366], ["3Y", 1096], ["5Y", 1827]];
   var MAS = [[20, "#e3c14d"], [50, "#38b6c9"], [100, "#b98bf0"], [200, "#ff8a5c"]];
 
@@ -142,7 +146,11 @@
   }
   function close() { V.k = null; doc.body.classList.remove("pc-open"); [].forEach.call(doc.querySelectorAll("#pulse-bar [data-pc].on"), function (t) { t.classList.remove("on"); }); }
   doc.addEventListener("click", function (e) {
-    var t = e.target.closest && e.target.closest("#pulse-bar [data-pc]"); if (t) { e.preventDefault(); e.stopPropagation(); open(t.getAttribute("data-pc")); return; }
+    var t = e.target.closest && e.target.closest("#pulse-bar [data-pc]");
+    if (t) { e.preventDefault(); e.stopPropagation(); var tk = t.getAttribute("data-pc");
+      /* on a grain / USD/CAD / Positioning page a grain or USD/CAD tile switches the commodity in place — same report, same section */
+      if (!V.k && root.PULSE_PICK && PULSE_PICK(tk)) return;
+      open(tk); return; }
     if (!V.k) return;
     var b;
     if ((b = e.target.closest("[data-pck]"))) { open(b.getAttribute("data-pck")); return; }
@@ -155,7 +163,7 @@
       if (p[3]) { var n = 0; (function then() { var el = /grains-head/.test(p[3]) ? doc.querySelector(p[3]) : [].filter.call(doc.querySelectorAll(p[3]), function (x) { return !x.closest("#pc-view"); }).sort(function (a, b) { return (b.offsetParent ? 1 : 0) - (a.offsetParent ? 1 : 0); })[0];   /* land on the same market: pick it on the page */
         if (el) { if (el.getAttribute("aria-pressed") !== "true" && el.getAttribute("aria-selected") !== "true") el.click(); } else if (++n < 30) setTimeout(then, 150); })(); }
       scrollTo(0, 0); return; }
-    if (e.target.closest("#gnav [data-gnav], .tabs [role=tab]")) close();   /* any menu click leaves the chart */
+    if (e.target.closest("#gnav [data-gnav], .tabs [role=tab], #sn, .subbtn, [data-sub], .st-b, .sn-b, .tab-btn")) close();   /* any menu / side-menu / sub-menu click leaves the chart */
   }, true);
   doc.addEventListener("keydown", function (e) { if (e.key === "Escape" && V.k) close(); if ((e.key === "Enter" || e.key === " ") && e.target.closest && e.target.closest("#pulse-bar [data-pc]")) { e.preventDefault(); open(e.target.closest("[data-pc]").getAttribute("data-pc")); } });
   /* crosshair readout */

@@ -24,6 +24,7 @@ YAHOO = {   # tile key: (yahoo symbol, name, decimals)
     "wti": ("CL=F", "WTI crude (NYMEX front month, $/bbl)", 2), "brent": ("BZ=F", "Brent crude (ICE front month, $/bbl)", 2), "natgas": ("NG=F", "Natural gas (Henry Hub, $/MMBtu)", 3),
     "gold": ("GC=F", "Gold (COMEX, $/oz)", 1), "silver": ("SI=F", "Silver (COMEX, $/oz)", 3), "platinum": ("PL=F", "Platinum (NYMEX, $/oz)", 1),
     "palladium": ("PA=F", "Palladium (NYMEX, $/oz)", 1), "copper": ("HG=F", "Copper (COMEX, $/lb)", 4), "vix": ("^VIX", "VIX (S&P 500 implied volatility)", 2),
+    "spx": ("^GSPC", "S&P 500", 2), "ixic": ("^IXIC", "Nasdaq Composite", 2), "dji": ("^DJI", "Dow Jones Industrial Average", 2), "rut": ("^RUT", "Russell 2000", 2),
 }
 UST = {"3M": "3 Mo", "1Y": "1 Yr", "2Y": "2 Yr", "5Y": "5 Yr", "10Y": "10 Yr", "20Y": "20 Yr", "30Y": "30 Yr"}   # US Treasury daily par yield curve CSV columns
 FRED = {"fed_hi": "DFEDTARU", "fed_lo": "DFEDTARL"}
