@@ -3370,7 +3370,9 @@ function renderFX(){
     subWrap('fx','rates', (window.YSM&&DATA.fx.ysm?'':T.yields)+T.energy.replace('class="tile wide"','class="tile"')+T.policy)+
     subWrap('fx','fwd', '<div class="tile wide fxmx-tile" data-src="fx_spot"><div class="fxmx-head"><h2>Forward Rates Matrix<span class="h2note" style="display:none"> — 1M to 24M</span></h2><div class="fxmx-meta"><span class="fxmx-tg" id="fxmx-view"></span><span class="fxmx-tg" id="fxmx-inv"></span><span><b class="fxmx-g" id="fxmx-pair">USD / CAD forward curve</b> · covered-interest-parity outrights · theoretical</span><span class="fxmx-pill">SPOT REF <b id="fxmx-spot">—</b></span><span class="fxmx-pill">24M FORWARD <b id="fxmx-12">—</b></span></div></div><div id="fx-fwdmx" class="fxmx"></div><div class="stamp">Outright = spot × DF<sub>USD</sub> ÷ DF<sub>CAD</sub> from US Treasury and Government of Canada yields · points in pips (1 pip = 0.0001 CAD) · reprices on every live spot tick · not a dealer quote</div></div>'+T.forwards)+
     subWrap('fx','metals', window.METALS_UI?METALS_UI.html():'<div id="mxView" class="tile wide"><h2>Canada mineral &amp; metal exports</h2><p>Loading…</p></div>');
-  html+='</div><aside class="rail">'+liveMonitorHTML()+fxAlertsHTML()+'</aside></div>';
+  /* no right rail on USD/CAD (owner, Nov 24 2026): Insights & Activity and the Live feed monitor are gone — Key events and the feed
+     live in the right-hand panel; the page takes the full width */
+  html+='</div></div>';
   document.getElementById('panel-fx').innerHTML=html;
   if(window.FWD) FWD.mount();   /* rebuild the live forward-curve component inside the fresh tile */
   FXT=T;
@@ -3407,7 +3409,7 @@ function renderMacro(){
     subWrap('macro','cycle', (window.cycleHTML?cycleHTML():'')+(window.fedIntelHTML?fedIntelHTML():''))+
     subWrap('macro','trade', tradeFiscalHTML())+
     subWrap('macro','rel', FXT.releases||'')+
-    '</div><aside class="rail">'+macroRailHTML()+'</aside></div>';
+    '</div></div>';   /* no right rail (Nov 24 2026): the next high-impact releases are in the right-hand panel's Key events */
   P.innerHTML=html;
 }
 

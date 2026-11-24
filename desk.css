@@ -1109,3 +1109,5 @@ table.fmx-t th,table.fmx-t td{text-align:right;padding:6px 12px;font-variant-num
 table.fmx-t th:first-child,table.fmx-t td:first-child{text-align:left;min-width:200px;position:sticky;left:0;background:var(--panel,#0b1118);z-index:1}
 table.fmx-t .mx-h td{text-align:left;position:static}
 table.fmx-t thead th{vertical-align:bottom}
+/* pages without a right rail (Grains, USD/CAD, Macro) take the full width (Nov 24 2026) */
+.layout:not(:has(> aside)){grid-template-columns:minmax(0,1fr)!important}
