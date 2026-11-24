@@ -26,7 +26,8 @@
     treasury: [["treasury", null, "US Treasury", "Debt, auctions, maturities and refinancing risk, release schedule"]],
     aidebt: [["aidebt", null, "AI Debt", "AI-company borrowing: issuers, instruments, funding mix, warning flags"]],
     events: [["events", null, "Events", "Today's and upcoming releases with countdowns and results"]],
-    intel: [["intel", null, "Global intel", "Commodity and macro intelligence feed"], ["policy", null, "Central banks & policy", "Fed, BoC and others: statements, minutes, votes — with read-aloud"]],
+    intel: [["intel", null, "Intelligence", "SWOT brief, official indicators, release calendar, sources & health"]],
+    policy: [["policy", null, "Central banks & policy", "Fed, BoC and others: statements, minutes, votes — with read-aloud"]],
     usm: [["earnings", null, "Earnings", "Search any US company: results, statements, management commentary"]],
     breakouts: [["breakouts", null, "Breakouts", "Live day highs/lows, 52-week and moving-average breaks"]],
     health: [["health", null, "Health", "Data feeds, APIs and schedules — what is fresh and what is late"]]

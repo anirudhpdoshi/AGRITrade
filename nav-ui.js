@@ -14,7 +14,8 @@
     ["treasury", "US Treasury", ["treasury"], "US government debt — borrowing, maturity & refinancing risk"],
     ["aidebt", "AI Debt", ["aidebt"], "AI-company debt raises, Jan 2021 – Nov 2026"],
     ["events", "Events", ["events"], "Today's and upcoming releases"],
-    ["intel", "Intelligence", ["intel", "policy"], "Global intel, central banks and policy"],
+    ["intel", "Intelligence", ["intel"], "Global intel: SWOT brief, official indicators, release calendar"],
+    ["policy", "Policy", ["policy"], "Central banks: Fed, BoC and others — statements, minutes, votes, read-aloud"],   /* own menu (owner, Nov 23 2026) */
     ["usm", "Earnings", ["earnings"], "Search a company — its earnings and financial analysis"],
     ["breakouts", "Breakouts", ["breakouts"], "Live stream: day highs/lows, 52-week, moving-average breaks — S&P 100, watchlist, indexes, FX"],
     ["health", "Health", ["health"], "Data, API and scheduler health"]

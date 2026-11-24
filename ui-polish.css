@@ -24,6 +24,8 @@
   .gnav>.po-b{right:4px}
 }
 @media (min-width:1021px) and (max-width:1599px){.gnav>.gnav-b{padding-left:11px!important;padding-right:11px!important}}
+/* thirteen menus since Policy became its own (owner, Nov 23 2026): tighter spacing so the whole row fits beside the open feed */
+@media (min-width:1021px) and (max-width:1799px){body.fr-push .gnav>.gnav-b{padding-left:8px!important;padding-right:8px!important;font-size:13px!important}}
 
 /* 4 · phone header: the Dark / Light switch sat 18 px low (desktop offset) and overlapped the zoom control */
 @media (max-width:700px){.theme-sw{top:auto!important;right:auto!important}}
