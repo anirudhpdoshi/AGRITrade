@@ -243,7 +243,7 @@
     /* selected: the tile inverts (navy on light here; the light theme's page inversion turns it into white on deep navy) */
     "#pulse-bar .pb-t.sel,#pulse-bar .pb-t.sel:hover{background:#e9eef6;border-color:#e9eef6}#pulse-bar .pb-t.sel span{color:#34425c}#pulse-bar .pb-t.sel b{color:#0b1730}#pulse-bar .pb-t.sel i{color:#0b1730}" +
     "#pulse-bar .pb-t.sel.up{box-shadow:inset 2px 0 0 #0f9d58}#pulse-bar .pb-t.sel.up .pb-ar{color:#0f9d58}#pulse-bar .pb-t.sel.dn{box-shadow:inset 2px 0 0 #d93025}#pulse-bar .pb-t.sel.dn .pb-ar{color:#d93025}" +
-    ".pb-t.pb-old{opacity:.78}.pb-t.pb-old::before{content:attr(data-last);position:absolute;top:-6px;right:3px;font:700 6.5px/8px 'IBM Plex Mono',monospace;letter-spacing:.06em;padding:0 3px;border-radius:2px;background:#5a6477;color:#eef2f8;pointer-events:none}#pulse-bar .pb-t.sel.pb-old{opacity:1}" +
+    "#pulse-bar .pb-t.pb-old{background:rgba(143,157,179,.10);border-color:rgba(143,157,179,.22);box-shadow:inset 2px 0 0 rgba(143,157,179,.35);filter:saturate(.25);opacity:.8}#pulse-bar .pb-t.sel.pb-old{filter:none;opacity:1}" +
     "#pulse-bar .pb-t.sel::after{content:'SELECTED';position:absolute;top:-6px;left:50%;transform:translateX(-50%);font:700 6.5px/8px 'IBM Plex Mono',monospace;letter-spacing:.08em;padding:0 3px;border-radius:2px;background:#0b1730;color:#e9eef6;pointer-events:none}" +
     ".pb-t.flat{background:rgba(143,157,179,.07);border-color:rgba(143,157,179,.22)}.pb-t.pb-dv{border-style:dashed}.pb-btn{cursor:pointer}" +
     "body.locked #pulse-bar{display:none}#status-strip{display:none!important}.topbar h1,.topbar .sub{display:none!important}#grains-head{display:none!important}body.gr3 main{display:block!important}" +
