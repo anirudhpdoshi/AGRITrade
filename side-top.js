@@ -113,7 +113,9 @@
       return T(n, sp ? nf(A.last, 0) + " / " + nf(Bq.last, 0) + " bp" : nf(A.last, 2) + " / " + nf(Bq.last, 2) + "%", c, chg(c, ca != null && cb != null ? mv(ca, 1, "") + " / " + mv(cb, 1, " bp") : null, null), sp ? " pb-dv" : "", tip, a, A.last); };
     var can = pair("ca2y", "ca10y", "CA 2Y / 10Y", false, "Government of Canada 2Y and 10Y yields · change in bp") + pair("usca2y", "usca10y", "US–CA 2Y / 10Y", true, "US minus Canada yield gap, 2Y and 10Y — wider = more USD/CAD support");
     var vix = wi("vix"), cu = wi("copper"), rk = "";
-    if (vix && vix.last != null) { var vc = vix.pct > 0 ? "dn" : vix.pct < 0 ? "up" : "flat"; rk += T("VIX", nf(vix.last, 2), vc, chg(vix.pct > 0 ? "up" : vix.pct < 0 ? "dn" : "", vix.chg != null && vix.prev_close != null ? mv(+vix.chg, 2, " pts") : null, sg(vix.pct, 2, "%")), "", "S&P 500 implied volatility — rising VIX = risk-off (shown red)", "vix", vix.last); }
+    /* VIX is a Cboe index: on a US exchange holiday its feed keeps printing — treat it like the other US quotes (last session) */
+    var usShut = root.MKT && MKT.us && !MKT.us() && wi("spx") && lastDay(wi("spx").ts);
+    if (vix && vix.last != null) { var vc = usShut ? "flat" : vix.pct > 0 ? "dn" : vix.pct < 0 ? "up" : "flat"; rk += T("VIX", nf(vix.last, 2), vc, chg(vix.pct > 0 ? "up" : vix.pct < 0 ? "dn" : "", vix.chg != null && vix.prev_close != null ? mv(+vix.chg, 2, " pts") : null, sg(vix.pct, 2, "%")), "", "S&P 500 implied volatility — rising VIX = risk-off (shown red)", "vix", vix.last).replace('class="pb-t ', usShut ? 'class="pb-t pb-old ' : 'class="pb-t '); }
     if (cu && gold && cu.last && gold.last) { var r = cu.last / gold.last * 1000, r0 = cu.prev_close && gold.prev_close ? cu.prev_close / gold.prev_close * 1000 : null, rc = cls(r0 ? r - r0 : null);
       rk += T("Cu/Gold", nf(r, 3), rc, r0 ? chg(rc, null, sg((r / r0 - 1) * 100, 2, "%")) : "×1000", " pb-dv", "Copper ($/lb) ÷ gold ($/oz) × 1000 — rising = growth optimism, falling = defensive", "cugold", r); }
     var eq = wt("spx", "S&amp;P 500", 2, "", " pts") + wt("ixic", "Nasdaq", 2, "", " pts") + wt("dji", "Dow", 2, "", " pts") + wt("rut", "Russell 2000", 2, "", " pts");   /* US indices (owner, Nov 24 2026) */
@@ -177,7 +179,8 @@
   function breakouts() {
     var B = root.BREAKOUTS && BREAKOUTS.data && BREAKOUTS.data(), E = (B && B.events || []).slice().sort(function (a, b) { return Date.parse(b.t) - Date.parse(a.t); }).slice(0, 3);
     return '<section class="st-sec st-br"><div class="st-h"><b>Breakouts</b><span title="* = provisional until the close · hover a line for the full text">* until close · live · <a href="#" data-st-go="breakouts">open</a></span></div>' +
-      (E.length ? '<ul class="st-brl">' + E.map(function (e) { var nmv = (BREAKOUTS.name && BREAKOUTS.name(e)) || e.n || e.s;   /* the name, not the ticker (owner, Nov 24 2026) */
+      (E.length ? '<ul class="st-brl">' + E.map(function (e) { var nmv = (BREAKOUTS.name && BREAKOUTS.name(e)) || e.n || e.s;
+        nmv = ({ "S&P/TSX Composite": "TSX", "Mexico IPC": "IPC", "Dow Jones Industrial": "Dow", "Nasdaq Composite": "Nasdaq", "Russell 2000": "Russell", "Euro Stoxx 50": "Stoxx 50", "Hang Seng": "HSI", "Nikkei 225": "Nikkei" })[nmv] || nmv.replace(/ (Composite|Industrial Average|Index)$/, "");   /* the name, not the ticker (owner, Nov 24 2026) */
         var full = String(e.txt || "").replace(/^\S+\s+—\s+/, "");
         return '<li class="' + (e.dir > 0 ? "u" : "d") + '" data-st-id="' + esc(e.id) + '" title="' + esc(nmv + " (" + e.s + ") — " + full) + '"><time>' + hm(Date.parse(e.t)) + "</time><b>" + esc(nmv) + "</b><span>" + esc(brShort(full, e.dir)) + "</span></li>"; }).join("") + "</ul>"
         : '<p class="st-none">No breakouts yet today — the scanner runs every 5 min, 8 AM–6 PM ET on weekdays.</p>') + "</section>";
@@ -249,7 +252,7 @@
     "#pulse-bar .pb-t.sel.up{box-shadow:inset 2px 0 0 #0f9d58}#pulse-bar .pb-t.sel.up .pb-ar{color:#0f9d58}#pulse-bar .pb-t.sel.dn{box-shadow:inset 2px 0 0 #d93025}#pulse-bar .pb-t.sel.dn .pb-ar{color:#d93025}" +
     ".pb-btn:focus-visible{outline:2px solid #d9b46a;outline-offset:1px}" +
     "@media (max-width:760px){#pulse-bar{position:relative;top:auto!important;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:6px 10px}#pulse-bar::-webkit-scrollbar{display:none}}" +
-    "#pulse-bar .pb-t.pb-old{background:rgba(143,157,179,.10);border-color:rgba(143,157,179,.22);box-shadow:inset 2px 0 0 rgba(143,157,179,.35);filter:saturate(.25);opacity:.8}#pulse-bar .pb-t.sel.pb-old{filter:none;opacity:1}" +
+    "#pulse-bar .pb-t.pb-old{background:rgba(143,157,179,.10);border-color:rgba(143,157,179,.22);box-shadow:inset 2px 0 0 rgba(143,157,179,.35);filter:saturate(.25);opacity:.8}#pulse-bar .pb-t.sel.pb-old{filter:none;opacity:1;background:#e9eef6;border-color:#e9eef6}" +
     "#pulse-bar .pb-t.sel::after{content:'SELECTED';position:absolute;top:-6px;left:50%;transform:translateX(-50%);font:700 6.5px/8px 'IBM Plex Mono',monospace;letter-spacing:.08em;padding:0 3px;border-radius:2px;background:#0b1730;color:#e9eef6;pointer-events:none}" +
     ".pb-t.flat{background:rgba(143,157,179,.07);border-color:rgba(143,157,179,.22)}.pb-t.pb-dv{border-style:dashed}.pb-btn{cursor:pointer}" +
     "body.locked #pulse-bar{display:none}#status-strip{display:none!important}.topbar h1,.topbar .sub{display:none!important}#grains-head{display:none!important}body.gr3 main{display:block!important}" +

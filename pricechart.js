@@ -53,6 +53,19 @@
     p: [["World markets · US & Canada stocks", "world", null, "world", WG("namer")], ["World markets · US markets (sectors)", "usmkt", null, "world"], ["Breakouts · indexes", "breakouts", null, "breakouts"]] }; });
   GRP.eq = ["spx", "ixic", "dji", "rut", "vix"]; C.vix.g = "eq";
   SHORT.spx = "S&P 500"; SHORT.ixic = "Nasdaq"; SHORT.dji = "Dow"; SHORT.rut = "Russell";
+  /* grain relationships (Nov 26 2026): from the same daily closes; no live point (oil and meal are not in the live feed) */
+  var GPX = function (k) { return GRAIN_PAGES(k).slice(0, 6); };
+  C.wheatcorn = { s: "wheatcorn", n: "Wheat − corn spread", u: "$/bu", d: 4, g: "grains", p: GPX("wheat").slice(0, 1).concat(GPX("corn").slice(0, 1)) };
+  C.soycorn = { s: "soycorn", n: "Soybean / corn ratio", u: "ratio", d: 3, g: "grains", p: GPX("soybeans").slice(0, 1).concat(GPX("corn").slice(0, 1)) };
+  C.crush = { s: "crush", n: "Soybean board crush", u: "$/bu", d: 2, g: "grains", p: [["Soybeans · overview", "soybeans", "overview", "grains"], ["Soybeans · fundamentals", "soybeans", "fund", "grains"], ["Soybeans · positioning / OI", "positioning", null, "positioning", PICK("soybeans")]] };
+  C.soyoil = { s: "soyoil", n: "Soybean oil", u: "¢/lb", d: 2, g: "grains", p: C.crush.p };
+  C.soymeal = { s: "soymeal", n: "Soybean meal", u: "$/short ton", d: 1, g: "grains", p: C.crush.p };
+  GRP.grains = ["corn", "soybeans", "wheat", "wheatcorn", "soycorn", "crush", "soyoil", "soymeal"];
+  SHORT.wheatcorn = "Wheat−Corn"; SHORT.soycorn = "Soy/Corn"; SHORT.crush = "Crush"; SHORT.soyoil = "Soy oil"; SHORT.soymeal = "Soy meal";
+  /* bushels per tonne (CGC / USDA): for the cash price in C$/t */
+  var BUT = { corn: 39.3679, soybeans: 36.7437, wheat: 36.7437 };
+  function store(key, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(key) || "null"); localStorage.setItem(key, JSON.stringify(v)); } catch (e) { return null; } }
+  var ALERTS = store("desk.pc.alerts") || {}, BASIS = store("desk.pc.basis") || {}, OV = store("desk.pc.ov") || { seas: false };
   var RANGES = [["1M", 31], ["3M", 92], ["1Y", 366], ["3Y", 1096], ["5Y", 1827]];
   var MAS = [[20, "#e3c14d"], [50, "#38b6c9"], [100, "#b98bf0"], [200, "#ff8a5c"]];
 
@@ -82,6 +95,8 @@
     for (var i = i0; i < d.length; i++) { P.push([Date.parse(d[i][0] + "T12:00:00Z"), d[i][1]]); MAS.forEach(function (m) { var v = ma(d, i, m[0]); M[m[0]].push(v == null ? null : [P[P.length - 1][0], v]); }); }
     if (P.length < 2) return '<p class="note">Not enough history for this range.</p>';
     var all = P.map(function (p) { return p[1]; }); MAS.forEach(function (m) { M[m[0]].forEach(function (p) { if (p) all.push(p[1]); }); });
+    var SE = OV.seas && days <= 366 ? seasonal(d, P) : null, bs = BUT[k] && BASIS[k] != null ? BASIS[k] / 100 : null, CA = bs != null ? P.map(function (p) { return [p[0], p[1] + bs]; }) : null, AL = ALERTS[k] || [];
+    if (SE) SE.forEach(function (p) { all.push(p[1]); }); if (CA) CA.forEach(function (p) { all.push(p[1]); }); AL.forEach(function (a) { all.push(a.lv); });
     var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all), pad = (hi - lo) * 0.08 || Math.abs(hi) * 0.02 || 1; lo -= pad; hi += pad;
     var W = 900, Hh = 380, L = 58, R = 64, T = 14, B = 30, x = function (t) { return L + (t - P[0][0]) / (P[P.length - 1][0] - P[0][0]) * (W - L - R); }, y = function (v) { return T + (hi - v) / (hi - lo) * (Hh - T - B); };
     var path = function (A) { var s = "", on = false; A.forEach(function (p) { if (!p) { on = false; return; } s += (on ? "L" : "M") + x(p[0]).toFixed(1) + "," + y(p[1]).toFixed(1); on = true; }); return s; };
@@ -89,7 +104,9 @@
     var xt = "", ticks = 6; for (var z = 0; z <= ticks; z++) { var tt = P[0][0] + (P[P.length - 1][0] - P[0][0]) * z / ticks; xt += '<text x="' + x(tt) + '" y="' + (Hh - 9) + '" class="pc-xl">' + new Date(tt).toLocaleDateString("en-US", days > 200 ? { month: "short", year: "2-digit", timeZone: "UTC" } : { month: "short", day: "numeric", timeZone: "UTC" }) + "</text>"; }
     var up = P[P.length - 1][1] >= P[0][1], last = P[P.length - 1];
     var area = path(P) + "L" + x(last[0]).toFixed(1) + "," + (Hh - B) + "L" + x(P[0][0]).toFixed(1) + "," + (Hh - B) + "Z";
-    var mal = MAS.map(function (m) { return '<path d="' + path(M[m[0]]) + '" class="pc-ma" style="stroke:' + m[1] + '"/>'; }).join("");
+    var mal = MAS.map(function (m) { return '<path d="' + path(M[m[0]]) + '" class="pc-ma" style="stroke:' + m[1] + '"/>'; }).join("") +
+      (SE ? '<path d="' + path(SE) + '" class="pc-seas"/>' : "") + (CA ? '<path d="' + path(CA) + '" class="pc-cash"/>' : "") +
+      AL.map(function (a) { return '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(a.lv) + '" y2="' + y(a.lv) + '" class="pc-al' + (a.hit ? " hit" : "") + '"/><text x="' + (L + 4) + '" y="' + (y(a.lv) - 4) + '" class="pc-alt">🔔 ' + (a.dir > 0 ? "above " : "below ") + nf(a.lv, c.d) + "</text>"; }).join("");
     return '<svg viewBox="0 0 ' + W + " " + Hh + '" class="pc-svg xh-off" data-pc-chart="' + k + '" preserveAspectRatio="none">' + g + xt +
       '<path d="' + area + '" class="pc-area ' + (up ? "up" : "dn") + '"/>' + mal + '<path d="' + path(P) + '" class="pc-px ' + (up ? "up" : "dn") + '"/>' +
       '<circle cx="' + x(last[0]) + '" cy="' + y(last[1]) + '" r="4" class="pc-dot ' + (up ? "up" : "dn") + '"/><rect x="' + (W - R + 4) + '" y="' + (y(last[1]) - 10) + '" width="' + (R - 6) + '" height="20" rx="4" class="pc-tag ' + (up ? "up" : "dn") + '"/>' +
@@ -97,6 +114,56 @@
       '<line class="pc-xh" x1="0" x2="0" y1="' + T + '" y2="' + (Hh - B) + '" style="display:none"/></svg>' +
       '<div class="pc-tip" style="display:none"></div>' +
       '<script type="application/json" class="pc-data">' + JSON.stringify({ P: P, M: MAS.map(function (m) { return M[m[0]].map(function (p) { return p ? p[1] : null; }); }), L: L, R: R, W: W, d: c.d }).replace(/</g, "\\u003c") + "</script>";
+  }
+  /* seasonal: the same calendar window in each of the past 5 years, as % paths from the window's start, averaged and laid
+     on the current range's starting price — "what this time of year usually does", not a forecast */
+  function seasonal(d, P) {
+    var span = P[P.length - 1][0] - P[0][0], paths = [], byT = d.map(function (r) { return [Date.parse(r[0] + "T12:00:00Z"), r[1]]; });
+    for (var yb = 1; yb <= 5; yb++) {
+      var s0 = P[0][0] - yb * 365.25 * 864e5, s1 = s0 + span, seg = byT.filter(function (p) { return p[0] >= s0 && p[0] <= s1; });
+      if (seg.length > 10) paths.push(seg.map(function (p) { return [(p[0] - s0) / span, p[1] / seg[0][1] - 1]; }));
+    }
+    if (paths.length < 3) return null;
+    var out = [], N = 60; for (var i = 0; i <= N; i++) { var f = i / N, v = 0;
+      paths.forEach(function (pp) { var j = 0; while (j < pp.length - 1 && pp[j + 1][0] < f) j++; v += pp[j][1]; });
+      out.push([P[0][0] + f * span, P[0][1] * (1 + v / paths.length)]); }
+    return out;
+  }
+  /* correlation of daily changes (returns; bp changes for rates) over the last n sessions, on common dates */
+  function corr(a, b, n, ra, rb) {
+    var B = {}; b.forEach(function (r) { B[r[0]] = r[1]; });
+    var x = [], y = []; for (var i = 1; i < a.length; i++) { var d0 = a[i - 1][0], d1 = a[i][0]; if (B[d0] == null || B[d1] == null) continue;
+      x.push(ra ? a[i][1] - a[i - 1][1] : a[i][1] / a[i - 1][1] - 1); y.push(rb ? B[d1] - B[d0] : B[d1] / B[d0] - 1); }
+    x = x.slice(-n); y = y.slice(-n); if (x.length < n * 0.7) return null;
+    var mx = x.reduce(function (s0, v) { return s0 + v; }, 0) / x.length, my = y.reduce(function (s0, v) { return s0 + v; }, 0) / y.length, sxy = 0, sxx = 0, syy = 0;
+    for (var j = 0; j < x.length; j++) { sxy += (x[j] - mx) * (y[j] - my); sxx += (x[j] - mx) * (x[j] - mx); syy += (y[j] - my) * (y[j] - my); }
+    return sxx && syy ? sxy / Math.sqrt(sxx * syy) : null;
+  }
+  function corrHTML(k) {
+    var c = C[k], A = H.series[c.s]; if (!A) return "";
+    var isR = function (key) { var q = C[key]; return q && /%|bp/.test(q.u); };
+    var drv = ["usdcad", "dxy", "wti", "spx", "ust10Y", "gold"].filter(function (z) { return z !== k && C[z] && H.series[C[z].s]; });
+    var rows = drv.map(function (z) { var r30 = corr(A.d, H.series[C[z].s].d, 30, isR(k), isR(z)), r90 = corr(A.d, H.series[C[z].s].d, 90, isR(k), isR(z));
+      if (r30 == null && r90 == null) return "";
+      var cl = function (r) { return r == null ? "" : r > 0.3 ? "up" : r < -0.3 ? "dn" : ""; }, f = function (r) { return r == null ? "—" : (r >= 0 ? "+" : "−") + Math.abs(r).toFixed(2); };
+      return '<div class="pc-cr"><span>' + SHORT[z] + '</span><b class="' + cl(r30) + '">' + f(r30) + '</b><b class="' + cl(r90) + '">' + f(r90) + "</b></div>"; }).join("");
+    return rows ? '<div class="pc-sub">Correlation <small>daily moves · 30D / 90D</small></div><div class="pc-cr pc-crh"><span></span><i>30D</i><i>90D</i></div>' + rows +
+      '<div class="pc-src">+1 moves together, −1 moves opposite, near 0 unrelated. For context, not a trading signal.</div>' : "";
+  }
+  /* cash price from a basis the desk types in (¢/bu over/under the futures shown) — stays in this browser */
+  function cashHTML(k, last) {
+    if (!BUT[k]) return "";
+    var b = BASIS[k], fx = live("usdcad"), r = fx && fx.v, cash = b != null ? last + b / 100 : null;
+    return '<div class="pc-sub">Cash price <small>futures + your basis</small></div>' +
+      '<div class="pc-bs"><label>Basis ¢/bu <input type="number" step="0.25" inputmode="decimal" data-pcbasis="' + k + '" value="' + (b != null ? b : "") + '" placeholder="e.g. -35"></label></div>' +
+      (cash != null ? '<div class="pc-kv"><span>Cash (US$/bu)</span><b>' + nf(cash, 4) + "</b></div>" + (r ? '<div class="pc-kv"><span>Cash (C$/bu)</span><b>' + nf(cash * r, 4) + '</b></div><div class="pc-kv"><span>Cash (C$/t)</span><b>' + nf(cash * r * BUT[k], 2) + "</b></div>" : "") +
+        '<div class="pc-src">Chart dashed line = futures + basis ' + (b >= 0 ? "+" : "") + nf(b, 2) + "¢ (constant). USD/CAD " + (r ? nf(r, 4) : "—") + " from the band.</div>" : '<div class="pc-src">Type your local basis to see the cash bid in US$/bu, C$/bu and C$/t, and draw it on the chart.</div>');
+  }
+  function alertHTML(k) {
+    var L = ALERTS[k] || [], c = C[k];
+    return '<div class="pc-sub">Price alerts <small>this browser</small></div>' +
+      '<div class="pc-bs"><select data-pcadir="' + k + '"><option value="1">Above</option><option value="-1">Below</option></select><input type="number" step="any" data-pcalv="' + k + '" placeholder="level"><button type="button" data-pcadd="' + k + '">Add</button></div>' +
+      L.map(function (a, i) { return '<div class="pc-kv pc-alr' + (a.hit ? " hit" : "") + '"><span>🔔 ' + (a.dir > 0 ? "Above" : "Below") + " " + nf(a.lv, c.d) + (a.hit ? " · hit " + esc(a.hit) : "") + '</span><button type="button" data-pcdel="' + k + "|" + i + '" aria-label="Remove alert">×</button></div>'; }).join("");
   }
   function stats(k, S) {
     var c = C[k], d = S.d, n = d.length, last = d[n - 1][1], prev = n > 1 ? d[n - 2][1] : null, Lv = live(k);
@@ -111,7 +178,7 @@
       row(V.r + " change", first != null ? mv(last, first) : "—", first != null ? (last >= first ? "up" : "dn") : "") +
       row(V.r + " high", nf(Math.max.apply(null, rv), c.d)) + row(V.r + " low", nf(Math.min.apply(null, rv), c.d)) +
       row("52-week high", y1.length ? nf(Math.max.apply(null, y1), c.d) : "—") + row("52-week low", y1.length ? nf(Math.min.apply(null, y1), c.d) : "—") +
-      '<div class="pc-sub">Moving averages <small>daily closes</small></div>' + maRows +
+      '<div class="pc-sub">Moving averages <small>daily closes</small></div>' + maRows + cashHTML(k, last) + alertHTML(k) + corrHTML(k) +
       '<div class="pc-src">' + esc(S.src) + " · daily closes to " + esc(H.series[c.s].d[H.series[c.s].d.length - 1][0]) + (d[n - 1][2] ? " · last point = live tile value" : "") + "</div>";
   }
   function maChips(k, S) {
@@ -128,13 +195,16 @@
     if (!c.s) body = '<div class="pc-main"><p class="note">The desk has no free daily history for ' + esc(c.n) + " — the live quote is in the band above.</p></div>";
     else if (!H) body = '<div class="pc-main"><p class="note">' + (err || "Loading five years of daily prices…") + "</p></div>";
     else if (!S) body = '<div class="pc-main"><p class="note">No history for ' + esc(c.n) + " in the last server run" + (H.errors && H.errors[c.s] ? " (" + esc(H.errors[c.s]) + ")" : "") + ".</p></div>";
-    else body = '<div class="pc-main"><div class="pc-top"><div class="pc-sw">' + sw + '</div><div class="pc-rg">' + RANGES.map(function (r) { return '<button type="button" data-pcr="' + r[0] + '" aria-pressed="' + (V.r === r[0]) + '">' + r[0] + "</button>"; }).join("") + "</div></div>" +
-      '<div class="pc-chips">' + maChips(k, S) + '</div><div class="pc-cw">' + chart(k, S) + '</div><div class="pc-leg"><span><i class="pc-lp"></i>Price</span>' + MAS.map(function (m) { return '<span><i style="background:' + m[1] + '"></i>' + m[0] + "-day MA</span>"; }).join("") + "</div></div>" +
+    else body = '<div class="pc-main"><div class="pc-top"><div class="pc-sw">' + sw + '</div><div class="pc-rg">' + RANGES.map(function (r) { return '<button type="button" data-pcr="' + r[0] + '" aria-pressed="' + (V.r === r[0]) + '">' + r[0] + "</button>"; }).join("") +
+        '<button type="button" class="pc-ovb" data-pcov="seas" aria-pressed="' + !!OV.seas + '" title="Average path of the same weeks over the last 5 years (ranges up to 1Y)">5Y seasonal</button></div></div>' +
+      '<div class="pc-chips">' + maChips(k, S) + '</div><div class="pc-cw">' + chart(k, S) + '</div><div class="pc-leg"><span><i class="pc-lp"></i>Price</span>' + MAS.map(function (m) { return '<span><i style="background:' + m[1] + '"></i>' + m[0] + "-day MA</span>"; }).join("") +
+        (OV.seas ? '<span><i class="pc-ls"></i>5Y seasonal average</span>' : "") + (BUT[k] && BASIS[k] != null ? '<span><i class="pc-lc"></i>Cash (futures + basis)</span>' : "") + ((ALERTS[k] || []).length ? '<span><i class="pc-la"></i>Alert level</span>' : "") + "</div></div>" +
       '<aside class="pc-side">' + stats(k, S) + "</aside>";
     return nav + body;
   }
   function paint() {
     var E = doc.getElementById("pc-view"); if (!E || !V.k) return;
+    var ae = doc.activeElement; if (ae && ae.closest && ae.closest("#pc-view .pc-bs")) return;   /* never redraw under someone typing a basis or an alert level */
     var h = view(); if (E._h !== h) { E.innerHTML = h; E._h = h; }
   }
   function open(k) {
@@ -144,6 +214,21 @@
     E._h = ""; doc.body.classList.add("pc-open"); paint(); scrollTo(0, 0);
     load(paint);
   }
+  function repaint() { var E = doc.getElementById("pc-view"), ae = doc.activeElement; if (ae && ae.blur && E && E.contains(ae)) ae.blur(); if (E) E._h = ""; paint(); marks(); }
+  doc.addEventListener("change", function (e) { var t = e.target; if (!t.getAttribute) return; var k = t.getAttribute("data-pcbasis"); if (!k) return;
+    var v = parseFloat(t.value); if (isFinite(v)) BASIS[k] = v; else delete BASIS[k]; store("desk.pc.basis", BASIS); repaint(); });
+  /* alerts: checked against the live tile values; each fires once (toast + bell on the tile), stays listed as "hit" until removed */
+  function marks() { [].forEach.call(doc.querySelectorAll("#pulse-bar [data-pc]"), function (t) { var L = ALERTS[t.getAttribute("data-pc")] || []; t.classList.toggle("pb-al", L.some(function (a) { return !a.hit; })); t.classList.toggle("pb-alhit", L.some(function (a) { return a.hit; })); }); }
+  function toast(msg) { var T0 = doc.getElementById("pc-toasts"); if (!T0) { T0 = doc.createElement("div"); T0.id = "pc-toasts"; doc.body.appendChild(T0); }
+    var n = doc.createElement("div"); n.className = "pc-toast"; n.textContent = msg; n.title = "Click to dismiss"; n.onclick = function () { n.remove(); }; T0.appendChild(n); setTimeout(function () { n.remove(); }, 60000); }
+  function checkAlerts() {
+    var ch = false; Object.keys(ALERTS).forEach(function (k) { var Lv = live(k); if (!Lv || Lv.v == null) return;
+      ALERTS[k].forEach(function (a) { if (a.hit) return; if ((a.dir > 0 && Lv.v >= a.lv) || (a.dir < 0 && Lv.v <= a.lv)) {
+        a.hit = new Date().toLocaleString("en-US", { timeZone: "America/Toronto", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " ET"; ch = true;
+        toast("🔔 " + (C[k] ? C[k].n : k) + " " + (a.dir > 0 ? "above " : "below ") + nf(a.lv, C[k] ? C[k].d : 2) + " — now " + nf(Lv.v, C[k] ? C[k].d : 2) + " · " + a.hit); } }); });
+    if (ch) { store("desk.pc.alerts", ALERTS); if (V.k) repaint(); } marks();
+  }
+  setInterval(checkAlerts, 15000); setTimeout(checkAlerts, 6000);
   function close() { V.k = null; doc.body.classList.remove("pc-open");  }
   doc.addEventListener("click", function (e) {
     var t = e.target.closest && e.target.closest("#pulse-bar [data-pc]");
@@ -156,6 +241,10 @@
     if ((b = e.target.closest("[data-pck]"))) { open(b.getAttribute("data-pck")); return; }
     if ((b = e.target.closest("[data-pcr]"))) { V.r = b.getAttribute("data-pcr"); try { localStorage.setItem("desk.pc.range", V.r); } catch (x) {} doc.getElementById("pc-view")._h = ""; paint(); return; }
     if (e.target.closest("[data-pcx]")) { close(); return; }
+    if ((b = e.target.closest("[data-pcov]"))) { OV.seas = !OV.seas; store("desk.pc.ov", OV); repaint(); return; }
+    if ((b = e.target.closest("[data-pcadd]"))) { var ak = b.getAttribute("data-pcadd"), lvI = doc.querySelector('[data-pcalv="' + ak + '"]'), lv = parseFloat(lvI && lvI.value), dir = +(doc.querySelector('[data-pcadir="' + ak + '"]') || {}).value || 1;
+      if (isFinite(lv)) { (ALERTS[ak] = ALERTS[ak] || []).push({ lv: lv, dir: dir }); store("desk.pc.alerts", ALERTS); repaint(); } return; }
+    if ((b = e.target.closest("[data-pcdel]"))) { var dp = b.getAttribute("data-pcdel").split("|"); (ALERTS[dp[0]] || []).splice(+dp[1], 1); store("desk.pc.alerts", ALERTS); repaint(); return; }
     if ((b = e.target.closest("[data-pcgo]"))) { var p = b.getAttribute("data-pcgo").split("|"), k = V.k; close();
       if (/^(corn|soybeans|wheat)$/.test(k)) { try { localStorage.setItem("desk.grain", k); } catch (x) {} }
       if (/^(corn|soybeans|wheat)$/.test(p[0])) { var gb0 = doc.querySelector('[data-gnav="grains"]'); if (gb0) gb0.click(); var tb0 = doc.getElementById("tabbtn-" + p[0]); if (tb0) tb0.click(); }   /* DESK_NAV keeps the grain on screen — pin the one asked for */
@@ -204,6 +293,14 @@
     ".pc-sub{margin-top:6px;font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#d9b46a}.pc-sub small{text-transform:none;letter-spacing:0;color:var(--faint);font-weight:400}" +
     ".pc-ma-r{display:grid;grid-template-columns:12px 1fr auto;gap:2px 6px;align-items:center;font-size:12px;padding:3px 0}.pc-ma-r i{width:10px;height:3px;border-radius:2px}.pc-ma-r b{font:600 12px 'IBM Plex Mono',monospace}.pc-ma-r em{grid-column:2/4;font:600 11px 'IBM Plex Mono',monospace;font-style:normal}" +
     ".pc-ma-r.ab em{color:#3fb97f}.pc-ma-r.bl em{color:#ff6b62}.pc-src{margin-top:6px;font-size:11px;color:var(--faint);line-height:1.4}" +
+    ".pc-seas{fill:none;stroke:#d9b46a;stroke-width:1.4;stroke-dasharray:5 4;vector-effect:non-scaling-stroke;opacity:.85}.pc-cash{fill:none;stroke:#7dd8e6;stroke-width:1.4;stroke-dasharray:2 3;vector-effect:non-scaling-stroke}" +
+    ".pc-al{stroke:#e3a33a;stroke-width:1;stroke-dasharray:6 4;vector-effect:non-scaling-stroke}.pc-al.hit{stroke:#8f9db3}.pc-alt{fill:#e3a33a;font:600 10.5px 'IBM Plex Mono',monospace}" +
+    ".pc-ls{background:#d9b46a!important}.pc-lc{background:#7dd8e6!important}.pc-la{background:#e3a33a!important}.pc-ovb{margin-left:8px}.pc-rg .pc-ovb[aria-pressed=true]{background:rgba(217,180,106,.15);color:#d9b46a;border-color:#d9b46a}" +
+    ".pc-bs{display:flex;gap:4px;align-items:center;margin:3px 0}.pc-bs label{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted);width:100%}.pc-bs input,.pc-bs select{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--line2);color:var(--ink);border-radius:6px;padding:4px 6px;font:12px 'IBM Plex Mono',monospace}" +
+    ".pc-bs button,.pc-alr button{appearance:none;border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:6px;padding:4px 9px;cursor:pointer;font:600 12px 'IBM Plex Sans',sans-serif}.pc-alr.hit span{color:var(--faint)}" +
+    ".pc-cr{display:grid;grid-template-columns:1fr 52px 52px;gap:4px;font-size:12px;padding:2px 0}.pc-cr b{font:600 12px 'IBM Plex Mono',monospace;text-align:right}.pc-cr b.up{color:#3fb97f}.pc-cr b.dn{color:#ff6b62}.pc-crh i{font:600 10px 'IBM Plex Mono',monospace;color:var(--faint);text-align:right;font-style:normal}" +
+    "#pc-toasts{position:fixed;right:16px;bottom:16px;z-index:90;display:flex;flex-direction:column;gap:6px}.pc-toast{background:#1a2330;border:1px solid #e3a33a;color:var(--ink);border-radius:9px;padding:9px 12px;font:600 13px 'IBM Plex Sans',sans-serif;max-width:340px;cursor:pointer;animation:pcIn .3s ease-out}" +
+    "#pulse-bar .pb-t.pb-al::before{content:'🔔';position:absolute;top:-7px;left:2px;font-size:9px;line-height:1}#pulse-bar .pb-t.pb-alhit::before{content:'🔔';position:absolute;top:-7px;left:2px;font-size:9px;opacity:.45}" +
     "@media (max-width:1100px){body.pc-open #pc-view{grid-template-columns:1fr}.pc-nav{position:static;flex-direction:row;flex-wrap:wrap}.pc-side{position:static}}" +
     "@media (prefers-reduced-motion:reduce){.pc-link{animation:none}}";
   doc.head.appendChild(st);
