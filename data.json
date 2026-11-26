@@ -5018,7 +5018,7 @@
       }
      ],
      "asof": "2026-11-25",
-     "checked": "2026-11-26T06:45:25.857748-05:00",
+     "checked": "2026-11-26T09:45:27.854843-05:00",
      "src": "Yahoo daily settles per contract (CBOT, delayed); spread = near − far, ¢/bu"
     }
    },
@@ -11122,7 +11122,7 @@
       }
      ],
      "asof": "2026-11-25",
-     "checked": "2026-11-26T06:45:25.857748-05:00",
+     "checked": "2026-11-26T09:45:27.854843-05:00",
      "src": "Yahoo daily settles per contract (CBOT, delayed); spread = near − far, ¢/bu"
     }
    },
@@ -16520,7 +16520,7 @@
       }
      ],
      "asof": "2026-11-25",
-     "checked": "2026-11-26T06:45:25.857748-05:00",
+     "checked": "2026-11-26T09:45:27.854843-05:00",
      "src": "Yahoo daily settles per contract (CBOT, delayed); spread = near − far, ¢/bu"
     }
    }
@@ -16615,9 +16615,9 @@
    "fxcross": {
     "dxy": 103.81,
     "dxy_chg": 0.0,
-    "eurusd": 1.0988,
+    "eurusd": 1.0983,
     "usdjpy": 159.21,
-    "usdcad_ref": 1.4224
+    "usdcad_ref": 1.4234
    },
    "closes": [
     [
@@ -17807,7 +17807,7 @@
     "sigma_pct": 0.276,
     "train_pairs": 90,
     "origin_date": "2026-11-24",
-    "asof": "2026-11-26T06:45:25-05:00",
+    "asof": "2026-11-26T09:45:27-05:00",
     "features": [
      "2Y US-CA spread change (bps)",
      "DXY log return (%)",
@@ -17850,23 +17850,23 @@
      ]
     },
     "spot_base": 1.4296,
-    "spot_module_mid": 1.42322
+    "spot_module_mid": 1.4227
    },
    "bias": {
     "label": "Bearish USD/CAD",
-    "score": -0.581,
+    "score": -0.767,
     "drivers": [
      {
       "name": "2Y spread 1D change",
       "sign": -1,
       "weight": 1.0,
-      "detail": "-3.0 bps DoD (narrowing spread weighs on USD/CAD)"
+      "detail": "-2.0 bps DoD (narrowing spread weighs on USD/CAD)"
      },
      {
       "name": "10Y spread 1D change",
-      "sign": 0,
+      "sign": -1,
       "weight": 0.8,
-      "detail": "+0.0 bps DoD"
+      "detail": "-4.0 bps DoD (narrowing spread weighs on USD/CAD)"
      },
      {
       "name": "DXY 1D change",
@@ -17887,7 +17887,7 @@
       "detail": "funds net -20.1% of OI - extreme crowded short CAD, squeeze risk argues against chasing USD/CAD up"
      }
     ],
-    "asof": "2026-11-26T06:45:25-05:00",
+    "asof": "2026-11-26T09:45:27-05:00",
     "method": "sign-weighted driver score: sum(sign x weight) / sum(weight); |score| >= 0.15 conditional, >= 0.5 directional"
    },
    "levels": {
@@ -18232,10 +18232,10 @@
    ],
    "vwap_reason": "only one IG session pull stored; VWAP needs an intraday series (session VWAP slot per SPEC §11 once pulls accumulate)",
    "feed": {
-    "mid": 1.42238,
+    "mid": 1.4227,
     "bid": null,
     "ask": null,
-    "ts": "2026-11-26T09:30:00-05:00",
+    "ts": "2026-11-26T09:44:00-05:00",
     "source": "Yahoo Finance CAD=X (delayed mid, no dealable bid/ask)"
    },
    "releases": [
@@ -18375,18 +18375,6 @@
     }
    ],
    "intraday": [
-    [
-     "2026-11-25T18:35+00:00",
-     1.41989
-    ],
-    [
-     "2026-11-25T18:40+00:00",
-     1.41963
-    ],
-    [
-     "2026-11-25T18:45+00:00",
-     1.41946
-    ],
     [
      "2026-11-25T18:50+00:00",
      1.41953
@@ -19333,7 +19321,15 @@
     ],
     [
      "2026-11-26T14:30+00:00",
-     1.42238
+     1.4223
+    ],
+    [
+     "2026-11-26T14:35+00:00",
+     1.4226
+    ],
+    [
+     "2026-11-26T14:40+00:00",
+     1.4227
     ]
    ],
    "fwd_inputs": {
@@ -21983,10 +21979,10 @@
   },
   "meta": {
    "built_at": "2026-10-22T14:28:00-04:00",
-   "updated_at": "2026-11-26T09:30:24-05:00",
+   "updated_at": "2026-11-26T09:45:27-05:00",
    "updated_by": "GitHub Action refresh",
    "asof": {
-    "fx_spot": "2026-11-26T09:30:00-05:00",
+    "fx_spot": "2026-11-26T09:44:00-05:00",
     "fx_closes": "2026-11-25T16:30:00-04:00",
     "yields": "2026-11-25T17:00:00-04:00",
     "policy": "2026-11-26T09:30:24-05:00",
@@ -21998,23 +21994,23 @@
     "grains_settle": "2026-11-25T14:20:00-05:00",
     "grains_quote": "2026-11-25T14:15:00-05:00",
     "options": "2026-11-25T10:55:32-05:00",
-    "news": "2026-11-26T09:30:24-05:00",
+    "news": "2026-11-26T09:45:27-05:00",
     "calendar": "2026-11-26T09:30:24-05:00",
     "releases": "2026-11-16T08:30:00-05:00",
-    "macro": "2026-11-26T09:30:24-05:00",
-    "exports": "2026-11-26T09:30:24-05:00",
-    "wasde": "2026-11-26T03:41:32-05:00",
+    "macro": "2026-11-26T09:45:27-05:00",
+    "exports": "2026-11-26T09:45:27-05:00",
+    "wasde": "2026-11-26T09:45:27-05:00",
     "canada": "2026-11-18T02:46:44-05:00",
-    "ca_calendar": "2026-11-26T03:41:32-05:00",
+    "ca_calendar": "2026-11-26T09:45:27-05:00",
     "sd_hist": "2026-11-26T06:15:27-05:00",
     "inputs": "2026-11-26T03:41:32-05:00",
-    "ext": "2026-11-26T03:41:32-05:00",
+    "ext": "2026-11-26T09:45:27-05:00",
     "ca_retail": "2026-11-17T12:30:22-05:00",
     "fxopt": "2026-10-16T16:00:00-04:00",
-    "model": "2026-11-26T06:45:25-05:00",
+    "model": "2026-11-26T09:45:27-05:00",
     "policy_watch": "2026-10-28T14:00:21-04:00",
     "yields_live": "2026-11-26T09:30:00-05:00",
-    "optflow": "2026-11-26T09:30:24-05:00",
+    "optflow": "2026-11-26T09:45:27-05:00",
     "ust": "2026-11-25T21:58:27-05:00",
     "ust_dashboard": "2026-11-26T06:00:23-05:00",
     "options_final": "2026-11-25T10:55:32-05:00",
@@ -22068,16 +22064,16 @@
      "ust_dashboard"
     ],
     "failed": [],
-    "at": "2026-11-26T09:30:24-05:00"
+    "at": "2026-11-26T09:45:27-05:00"
    },
-   "releases_checked": "2026-11-26T06:45:25-05:00",
-   "exports_checked": "2026-11-26T09:30:24-05:00",
+   "releases_checked": "2026-11-26T09:45:27-05:00",
+   "exports_checked": "2026-11-26T09:45:27-05:00",
    "canada_dims": {
     "disp": [],
     "prices_on": []
    },
    "canada_checked": "2026-11-18T02:46:44-05:00",
-   "ca_calendar_checked": "2026-11-26T03:41:32-05:00",
+   "ca_calendar_checked": "2026-11-26T09:45:27-05:00",
    "canada_watch": "2026-11-17T13:00:26-05:00",
    "canada_new_release": {
     "tables": [
@@ -22144,20 +22140,19 @@
     ]
    },
    "ca_retail_checked": "2026-11-17T12:30:22-05:00",
-   "ext_checked": "2026-11-26T03:41:32-05:00",
+   "ext_checked": "2026-11-26T09:45:27-05:00",
    "calendar_checked": "2026-11-26T09:30:24-05:00",
    "fedodds_checked": "2026-11-26T09:30:24-05:00",
-   "model_checked": "2026-11-26T06:45:25-05:00",
+   "model_checked": "2026-11-26T09:45:27-05:00",
    "bea_status": {
-    "ok": false,
-    "at": "2026-11-26T09:30:24-05:00",
-    "why": "BEA T10101 unavailable (HTTP 503)"
+    "ok": true,
+    "at": "2026-11-26T09:45:27-05:00"
    },
    "bls_fast_at": "2026-11-13T13:15:25-05:00",
-   "wasde_checked": "2026-11-26T03:41:32-05:00",
+   "wasde_checked": "2026-11-26T09:45:27-05:00",
    "ust_dashboard_checked": "2026-11-26T06:00:23-05:00",
    "ust_dashboard_mts_checked": "2026-11-12T12:00:25-05:00",
-   "macro_checked": "2026-11-26T07:45:24-05:00",
+   "macro_checked": "2026-11-26T08:00:27-05:00",
    "canada_errors": [
     "32100359: 403 Client Error: Forbidden for url: https://www150.statcan.gc.ca/t1/wds/rest/getFullTableDownloadCSV/32100359/en | crops seen: [] | disp: []",
     "32100077: 403 Client Error: Forbidden for url: https://www150.statcan.gc.ca/t1/wds/rest/getFullTableDownloadCSV/32100077/en | products seen: []",
@@ -22170,8 +22165,9 @@
     "ca_ur": "ReadTimeout: HTTPSConnectionPool(host='www150.statcan.gc.ca', port=443): Read timed out. (read timeout=25)",
     "ca_gdp": "ReadTimeout: HTTPSConnectionPool(host='www150.statcan.gc.ca', port=443): Read timed out. (read timeout=25)",
     "ca_starts": "ReadTimeout: HTTPSConnectionPool(host='www150.statcan.gc.ca', port=443): Read timed out. (read timeout=25)",
-    "ca_mfg": "ReadTimeout: HTTPSConnectionPool(host='www150.statcan.gc.ca', port=443): Read timed out. (read timeout=25)",
+    "ca_permits": "ReadTimeout: HTTPSConnectionPool(host='www150.statcan.gc.ca', port=443): Read timed out. (read timeout=25)",
     "ca_whl": "ReadTimeout: HTTPSConnectionPool(host='www150.statcan.gc.ca', port=443): Read timed out. (read timeout=25)",
+    "ca_ippi": "ReadTimeout: HTTPSConnectionPool(host='www150.statcan.gc.ca', port=443): Read timed out. (read timeout=25)",
     "ca_vac": "ReadTimeout: HTTPSConnectionPool(host='www150.statcan.gc.ca', port=443): Read timed out. (read timeout=25)",
     "ca_gdpq": "ReadTimeout: HTTPSConnectionPool(host='www150.statcan.gc.ca', port=443): Read timed out. (read timeout=25)"
    }
@@ -27699,7 +27695,7 @@
       4.3
      ]
     ],
-    "src": "FRED A191RL1Q225SBEA",
+    "src": "BEA T10101",
     "long": [
      [
       "2020-10-01",
@@ -54726,7 +54722,7 @@
   },
   "optflow": {
    "corn": {
-    "asof": "2026-11-26T14:30:24.921895+00:00",
+    "asof": "2026-11-26T14:45:27.854843+00:00",
     "price": 4.395,
     "settle": 4.3975,
     "settle_date": "2026-11-25",
@@ -54740,12 +54736,12 @@
       "calls_oi": 6745,
       "puts_oi": 3062,
       "pcr": 0.45,
-      "em": 0.0431,
+      "em": 0.0429,
       "em_pct": 0.98,
-      "lo": 4.3519,
-      "hi": 4.4381,
-      "gex": -5959095,
-      "dex": -2455,
+      "lo": 4.3521,
+      "hi": 4.4379,
+      "gex": -5943848,
+      "dex": -2456,
       "has_vol": false,
       "vol_c": null,
       "vol_p": null,
@@ -54769,7 +54765,7 @@
         "poi": 919,
         "cvol": null,
         "pvol": null,
-        "gex": 12,
+        "gex": 11,
         "prem": 0,
         "voi": null
        },
@@ -54789,7 +54785,7 @@
         "poi": 196,
         "cvol": null,
         "pvol": null,
-        "gex": 16413,
+        "gex": 15602,
         "prem": 0,
         "voi": null
        },
@@ -54799,7 +54795,7 @@
         "poi": 1039,
         "cvol": null,
         "pvol": null,
-        "gex": -4180626,
+        "gex": -4169333,
         "prem": 0,
         "voi": null
        },
@@ -54819,7 +54815,7 @@
         "poi": 364,
         "cvol": null,
         "pvol": null,
-        "gex": -268172,
+        "gex": -263520,
         "prem": 0,
         "voi": null
        },
@@ -54829,7 +54825,7 @@
         "poi": 325,
         "cvol": null,
         "pvol": null,
-        "gex": -156137,
+        "gex": -152868,
         "prem": 0,
         "voi": null
        }
@@ -54841,7 +54837,7 @@
         "poi": 1039,
         "cvol": null,
         "pvol": null,
-        "gex": -4180626,
+        "gex": -4169333,
         "prem": 0,
         "voi": null
        },
@@ -54851,7 +54847,7 @@
         "poi": 89,
         "cvol": null,
         "pvol": null,
-        "gex": -791195,
+        "gex": -794623,
         "prem": 0,
         "voi": null
        },
@@ -54861,7 +54857,7 @@
         "poi": 113,
         "cvol": null,
         "pvol": null,
-        "gex": -579391,
+        "gex": -579118,
         "prem": 0,
         "voi": null
        },
@@ -54871,7 +54867,7 @@
         "poi": 364,
         "cvol": null,
         "pvol": null,
-        "gex": -268172,
+        "gex": -263520,
         "prem": 0,
         "voi": null
        },
@@ -54881,7 +54877,7 @@
         "poi": 325,
         "cvol": null,
         "pvol": null,
-        "gex": -156137,
+        "gex": -152868,
         "prem": 0,
         "voi": null
        }
@@ -54901,14 +54897,14 @@
       "em_pct": 8.27,
       "lo": 4.0317,
       "hi": 4.7583,
-      "gex": -45780308,
-      "dex": -113072,
+      "gex": -45785595,
+      "dex": -113075,
       "has_vol": true,
       "vol_c": 2667,
       "vol_p": 1920,
-      "prem_c": 249826,
-      "prem_p": 3916441,
-      "flip": 4.6498,
+      "prem_c": 249788,
+      "prem_p": 3916394,
+      "flip": 4.6499,
       "top_oi": [
        {
         "k": 5.0,
@@ -54916,8 +54912,8 @@
         "poi": 21112,
         "cvol": 584,
         "pvol": 909,
-        "gex": 4301317,
-        "prem": 2856282,
+        "gex": 4301059,
+        "prem": 2856255,
         "voi": 0.028
        },
        {
@@ -54926,8 +54922,8 @@
         "poi": 8858,
         "cvol": 113,
         "pvol": 19,
-        "gex": 7997650,
-        "prem": 59207,
+        "gex": 7997630,
+        "prem": 59203,
         "voi": 0.004
        },
        {
@@ -54936,8 +54932,8 @@
         "poi": 16855,
         "cvol": 195,
         "pvol": 0,
-        "gex": -4579799,
-        "prem": 67659,
+        "gex": -4579990,
+        "prem": 67651,
         "voi": 0.007
        },
        {
@@ -54946,7 +54942,7 @@
         "poi": 4241,
         "cvol": 236,
         "pvol": 30,
-        "gex": 596804,
+        "gex": 596571,
         "prem": 166298,
         "voi": 0.009
        },
@@ -54956,8 +54952,8 @@
         "poi": 8673,
         "cvol": 80,
         "pvol": 3,
-        "gex": 5195045,
-        "prem": 24049,
+        "gex": 5195167,
+        "prem": 24046,
         "voi": 0.003
        },
        {
@@ -54966,7 +54962,7 @@
         "poi": 447,
         "cvol": 59,
         "pvol": 0,
-        "gex": 20642,
+        "gex": 20626,
         "prem": 2,
         "voi": 0.003
        },
@@ -54976,8 +54972,8 @@
         "poi": 15283,
         "cvol": 154,
         "pvol": 55,
-        "gex": -10927040,
-        "prem": 132747,
+        "gex": -10927656,
+        "prem": 132738,
         "voi": 0.01
        },
        {
@@ -54998,8 +54994,8 @@
         "poi": 13376,
         "cvol": 2,
         "pvol": 44,
-        "gex": -13385485,
-        "prem": 33440,
+        "gex": -13386308,
+        "prem": 33438,
         "voi": 0.003
        },
        {
@@ -55008,8 +55004,8 @@
         "poi": 15283,
         "cvol": 154,
         "pvol": 55,
-        "gex": -10927040,
-        "prem": 132747,
+        "gex": -10927656,
+        "prem": 132738,
         "voi": 0.01
        },
        {
@@ -55018,8 +55014,8 @@
         "poi": 11231,
         "cvol": 0,
         "pvol": 55,
-        "gex": -10354268,
-        "prem": 27078,
+        "gex": -10354858,
+        "prem": 27076,
         "voi": 0.004
        },
        {
@@ -55028,7 +55024,7 @@
         "poi": 9739,
         "cvol": 0,
         "pvol": 14,
-        "gex": -10216820,
+        "gex": -10217438,
         "prem": 8424,
         "voi": 0.001
        },
@@ -55038,8 +55034,8 @@
         "poi": 8858,
         "cvol": 113,
         "pvol": 19,
-        "gex": 7997650,
-        "prem": 59207,
+        "gex": 7997630,
+        "prem": 59203,
         "voi": 0.004
        }
       ],
@@ -55050,8 +55046,8 @@
         "poi": 21112,
         "cvol": 584,
         "pvol": 909,
-        "gex": 4301317,
-        "prem": 2856282,
+        "gex": 4301059,
+        "prem": 2856255,
         "voi": 0.028
        },
        {
@@ -55060,8 +55056,8 @@
         "poi": 7457,
         "cvol": 0,
         "pvol": 406,
-        "gex": -6428955,
-        "prem": 132237,
+        "gex": -6429232,
+        "prem": 132222,
         "voi": 0.053
        },
        {
@@ -55070,7 +55066,7 @@
         "poi": 4241,
         "cvol": 236,
         "pvol": 30,
-        "gex": 596804,
+        "gex": 596571,
         "prem": 166298,
         "voi": 0.009
        },
@@ -55080,7 +55076,7 @@
         "poi": 4450,
         "cvol": 228,
         "pvol": 1,
-        "gex": 415491,
+        "gex": 415358,
         "prem": 5974,
         "voi": 0.014
        },
@@ -55090,8 +55086,8 @@
         "poi": 4377,
         "cvol": 0,
         "pvol": 220,
-        "gex": -2048215,
-        "prem": 24182,
+        "gex": -2048178,
+        "prem": 24177,
         "voi": 0.045
        },
        {
@@ -55100,8 +55096,8 @@
         "poi": 15283,
         "cvol": 154,
         "pvol": 55,
-        "gex": -10927040,
-        "prem": 132747,
+        "gex": -10927656,
+        "prem": 132738,
         "voi": 0.01
        },
        {
@@ -55110,8 +55106,8 @@
         "poi": 16855,
         "cvol": 195,
         "pvol": 0,
-        "gex": -4579799,
-        "prem": 67659,
+        "gex": -4579990,
+        "prem": 67651,
         "voi": 0.007
        },
        {
@@ -55120,8 +55116,8 @@
         "poi": 4539,
         "cvol": 162,
         "pvol": 0,
-        "gex": 44051,
-        "prem": 1807,
+        "gex": 44041,
+        "prem": 1806,
         "voi": 0.017
        }
       ],
@@ -55132,8 +55128,8 @@
         "poi": 7457,
         "cvol": 0,
         "pvol": 406,
-        "gex": -6428955,
-        "prem": 132237,
+        "gex": -6429232,
+        "prem": 132222,
         "voi": 0.053
        },
        {
@@ -55142,8 +55138,8 @@
         "poi": 4377,
         "cvol": 0,
         "pvol": 220,
-        "gex": -2048215,
-        "prem": 24182,
+        "gex": -2048178,
+        "prem": 24177,
         "voi": 0.045
        },
        {
@@ -55152,8 +55148,8 @@
         "poi": 21112,
         "cvol": 584,
         "pvol": 909,
-        "gex": 4301317,
-        "prem": 2856282,
+        "gex": 4301059,
+        "prem": 2856255,
         "voi": 0.028
        },
        {
@@ -55162,7 +55158,7 @@
         "poi": 1304,
         "cvol": 110,
         "pvol": 0,
-        "gex": 120788,
+        "gex": 120754,
         "prem": 639,
         "voi": 0.025
        },
@@ -55172,7 +55168,7 @@
         "poi": 404,
         "cvol": 121,
         "pvol": 0,
-        "gex": 20546,
+        "gex": 20533,
         "prem": 26,
         "voi": 0.022
        }
@@ -55192,13 +55188,13 @@
       "em_pct": 11.42,
       "lo": 4.1102,
       "hi": 5.1698,
-      "gex": -12904080,
+      "gex": -12904507,
       "dex": -8049,
       "has_vol": true,
       "vol_c": 214,
       "vol_p": 68,
-      "prem_c": 209385,
-      "prem_p": 52773,
+      "prem_c": 209377,
+      "prem_p": 52771,
       "flip": null,
       "top_oi": [
        {
@@ -55207,7 +55203,7 @@
         "poi": 9753,
         "cvol": 18,
         "pvol": 1,
-        "gex": -6454073,
+        "gex": -6454301,
         "prem": 19769,
         "voi": 0.002
        },
@@ -55217,7 +55213,7 @@
         "poi": 5301,
         "cvol": 6,
         "pvol": 0,
-        "gex": -1079854,
+        "gex": -1079892,
         "prem": 5646,
         "voi": 0.001
        },
@@ -55227,8 +55223,8 @@
         "poi": 1956,
         "cvol": 6,
         "pvol": 0,
-        "gex": 1330235,
-        "prem": 4508,
+        "gex": 1330278,
+        "prem": 4507,
         "voi": 0.001
        },
        {
@@ -55237,8 +55233,8 @@
         "poi": 2710,
         "cvol": 55,
         "pvol": 2,
-        "gex": 20543,
-        "prem": 36955,
+        "gex": 20544,
+        "prem": 36953,
         "voi": 0.01
        },
        {
@@ -55247,8 +55243,8 @@
         "poi": 3422,
         "cvol": 75,
         "pvol": 10,
-        "gex": -1782455,
-        "prem": 96056,
+        "gex": -1782518,
+        "prem": 96053,
         "voi": 0.018
        },
        {
@@ -55257,8 +55253,8 @@
         "poi": 2894,
         "cvol": 10,
         "pvol": 0,
-        "gex": -2134827,
-        "prem": 14130,
+        "gex": -2134897,
+        "prem": 14129,
         "voi": 0.003
        },
        {
@@ -55267,7 +55263,7 @@
         "poi": 2509,
         "cvol": 1,
         "pvol": 10,
-        "gex": -1758232,
+        "gex": -1758280,
         "prem": 6746,
         "voi": 0.004
        },
@@ -55277,7 +55273,7 @@
         "poi": 778,
         "cvol": 23,
         "pvol": 0,
-        "gex": 177384,
+        "gex": 177390,
         "prem": 19443,
         "voi": 0.013
        }
@@ -55289,7 +55285,7 @@
         "poi": 9753,
         "cvol": 18,
         "pvol": 1,
-        "gex": -6454073,
+        "gex": -6454301,
         "prem": 19769,
         "voi": 0.002
        },
@@ -55299,8 +55295,8 @@
         "poi": 2894,
         "cvol": 10,
         "pvol": 0,
-        "gex": -2134827,
-        "prem": 14130,
+        "gex": -2134897,
+        "prem": 14129,
         "voi": 0.003
        },
        {
@@ -55309,8 +55305,8 @@
         "poi": 3422,
         "cvol": 75,
         "pvol": 10,
-        "gex": -1782455,
-        "prem": 96056,
+        "gex": -1782518,
+        "prem": 96053,
         "voi": 0.018
        },
        {
@@ -55319,7 +55315,7 @@
         "poi": 2509,
         "cvol": 1,
         "pvol": 10,
-        "gex": -1758232,
+        "gex": -1758280,
         "prem": 6746,
         "voi": 0.004
        },
@@ -55329,8 +55325,8 @@
         "poi": 1956,
         "cvol": 6,
         "pvol": 0,
-        "gex": 1330235,
-        "prem": 4508,
+        "gex": 1330278,
+        "prem": 4507,
         "voi": 0.001
        }
       ],
@@ -55341,8 +55337,8 @@
         "poi": 3422,
         "cvol": 75,
         "pvol": 10,
-        "gex": -1782455,
-        "prem": 96056,
+        "gex": -1782518,
+        "prem": 96053,
         "voi": 0.018
        },
        {
@@ -55351,8 +55347,8 @@
         "poi": 2710,
         "cvol": 55,
         "pvol": 2,
-        "gex": 20543,
-        "prem": 36955,
+        "gex": 20544,
+        "prem": 36953,
         "voi": 0.01
        },
        {
@@ -55361,8 +55357,8 @@
         "poi": 783,
         "cvol": 20,
         "pvol": 28,
-        "gex": -362473,
-        "prem": 48683,
+        "gex": -362486,
+        "prem": 48682,
         "voi": 0.043
        },
        {
@@ -55371,7 +55367,7 @@
         "poi": 778,
         "cvol": 23,
         "pvol": 0,
-        "gex": 177384,
+        "gex": 177390,
         "prem": 19443,
         "voi": 0.013
        },
@@ -55381,7 +55377,7 @@
         "poi": 9753,
         "cvol": 18,
         "pvol": 1,
-        "gex": -6454073,
+        "gex": -6454301,
         "prem": 19769,
         "voi": 0.002
        },
@@ -55391,8 +55387,8 @@
         "poi": 334,
         "cvol": 0,
         "pvol": 17,
-        "gex": -253668,
-        "prem": 10221,
+        "gex": -253676,
+        "prem": 10220,
         "voi": 0.051
        },
        {
@@ -55401,7 +55397,7 @@
         "poi": 2509,
         "cvol": 1,
         "pvol": 10,
-        "gex": -1758232,
+        "gex": -1758280,
         "prem": 6746,
         "voi": 0.004
        },
@@ -55411,8 +55407,8 @@
         "poi": 2894,
         "cvol": 10,
         "pvol": 0,
-        "gex": -2134827,
-        "prem": 14130,
+        "gex": -2134897,
+        "prem": 14129,
         "voi": 0.003
        }
       ],
@@ -55423,8 +55419,8 @@
         "poi": 334,
         "cvol": 0,
         "pvol": 17,
-        "gex": -253668,
-        "prem": 10221,
+        "gex": -253676,
+        "prem": 10220,
         "voi": 0.051
        },
        {
@@ -55433,8 +55429,8 @@
         "poi": 783,
         "cvol": 20,
         "pvol": 28,
-        "gex": -362473,
-        "prem": 48683,
+        "gex": -362486,
+        "prem": 48682,
         "voi": 0.043
        },
        {
@@ -55443,8 +55439,8 @@
         "poi": 3422,
         "cvol": 75,
         "pvol": 10,
-        "gex": -1782455,
-        "prem": 96056,
+        "gex": -1782518,
+        "prem": 96053,
         "voi": 0.018
        },
        {
@@ -55453,7 +55449,7 @@
         "poi": 778,
         "cvol": 23,
         "pvol": 0,
-        "gex": 177384,
+        "gex": 177390,
         "prem": 19443,
         "voi": 0.013
        },
@@ -55463,8 +55459,8 @@
         "poi": 2710,
         "cvol": 55,
         "pvol": 2,
-        "gex": 20543,
-        "prem": 36955,
+        "gex": 20544,
+        "prem": 36953,
         "voi": 0.01
        }
       ],
@@ -55499,7 +55495,7 @@
        "divp": -0.11,
        "lc": "short calls",
        "lp": "steady",
-       "gex": -13385485,
+       "gex": -13386308,
        "role": "weak",
        "why": [
         "calls likely written — sellers cap this level",
@@ -55510,7 +55506,7 @@
        "in_em": true,
        "vol": 46,
        "prem_c": 1401,
-       "prem_p": 32039,
+       "prem_p": 32037,
        "p_touch": 99,
        "p_touch_1d": 92
       },
@@ -55530,7 +55526,7 @@
        "divp": 0.03,
        "lc": "steady",
        "lp": "long puts",
-       "gex": -10216820,
+       "gex": -10217438,
        "role": "support",
        "why": [
         "put-heavy below price",
@@ -55562,7 +55558,7 @@
        "divp": -0.03,
        "lc": "steady",
        "lp": "steady",
-       "gex": -5155623,
+       "gex": -5155932,
        "role": "weak",
        "why": [
         "traded through 9× in the last 20 sessions; closes held as support 4×, as resistance 5×"
@@ -55592,7 +55588,7 @@
        "divp": 0.01,
        "lc": "steady",
        "lp": "long puts",
-       "gex": -10354268,
+       "gex": -10354858,
        "role": "support",
        "why": [
         "put-heavy below price",
@@ -55603,7 +55599,7 @@
        "in_em": false,
        "vol": 55,
        "prem_c": null,
-       "prem_p": 27078,
+       "prem_p": 27076,
        "p_touch": 79,
        "p_touch_1d": 4
       },
@@ -55623,7 +55619,7 @@
        "divp": -0.2,
        "lc": "short calls",
        "lp": "short puts",
-       "gex": -10927040,
+       "gex": -10927656,
        "role": "weak",
        "why": [
         "calls likely written — sellers cap this level",
@@ -55633,8 +55629,8 @@
        "touch": 7,
        "in_em": false,
        "vol": 209,
-       "prem_c": 76671,
-       "prem_p": 56077,
+       "prem_c": 76664,
+       "prem_p": 56074,
        "p_touch": 78,
        "p_touch_1d": 3
       },
@@ -55654,7 +55650,7 @@
        "divp": -0.16,
        "lc": "short calls",
        "lp": "steady",
-       "gex": -4476727,
+       "gex": -4476953,
        "role": "weak",
        "why": [
         "calls likely written — sellers cap this level",
@@ -55664,9 +55660,9 @@
        "touch": 1,
        "in_em": false,
        "vol": 14,
-       "prem_c": 5868,
+       "prem_c": 5867,
        "prem_p": null,
-       "p_touch": 68,
+       "p_touch": 67,
        "p_touch_1d": 0
       },
       {
@@ -55685,7 +55681,7 @@
        "divp": 0.25,
        "lc": "steady",
        "lp": "steady",
-       "gex": -6428955,
+       "gex": -6429232,
        "role": "support",
        "why": [
         "put-heavy below price"
@@ -55695,7 +55691,7 @@
        "in_em": false,
        "vol": 406,
        "prem_c": null,
-       "prem_p": 132237,
+       "prem_p": 132222,
        "p_touch": 58,
        "p_touch_1d": 0
       },
@@ -55715,7 +55711,7 @@
        "divp": -0.28,
        "lc": "short calls",
        "lp": "steady",
-       "gex": -4579799,
+       "gex": -4579990,
        "role": "weak",
        "why": [
         "calls likely written — sellers cap this level"
@@ -55724,7 +55720,7 @@
        "touch": 0,
        "in_em": false,
        "vol": 195,
-       "prem_c": 67659,
+       "prem_c": 67651,
        "prem_p": null,
        "p_touch": 58,
        "p_touch_1d": 0
@@ -55745,7 +55741,7 @@
        "divp": -0.19,
        "lc": "steady",
        "lp": "steady",
-       "gex": 1390924,
+       "gex": 1390970,
        "role": "resistance",
        "why": [
         "call-heavy above price"
@@ -55775,7 +55771,7 @@
        "divp": -0.33,
        "lc": "closing",
        "lp": "steady",
-       "gex": 5195045,
+       "gex": 5195167,
        "role": "resistance",
        "why": [
         "call-heavy above price"
@@ -55784,7 +55780,7 @@
        "touch": 0,
        "in_em": false,
        "vol": 83,
-       "prem_c": 18779,
+       "prem_c": 18777,
        "prem_p": 5270,
        "p_touch": 42,
        "p_touch_1d": 0
@@ -55805,7 +55801,7 @@
        "divp": 0.0,
        "lc": "steady",
        "lp": "steady",
-       "gex": 4301317,
+       "gex": 4301059,
        "role": "resistance",
        "why": [
         "call-heavy above price"
@@ -55814,8 +55810,8 @@
        "touch": 0,
        "in_em": false,
        "vol": 1493,
-       "prem_c": 42542,
-       "prem_p": 2813741,
+       "prem_c": 42531,
+       "prem_p": 2813724,
        "p_touch": 12,
        "p_touch_1d": 0
       },
@@ -55835,7 +55831,7 @@
        "divp": -0.44,
        "lc": "steady",
        "lp": "closing",
-       "gex": 7997650,
+       "gex": 7997630,
        "role": "resistance",
        "why": [
         "call-heavy above price"
@@ -55844,8 +55840,8 @@
        "touch": 0,
        "in_em": false,
        "vol": 132,
-       "prem_c": 17773,
-       "prem_p": 41434,
+       "prem_c": 17770,
+       "prem_p": 41433,
        "p_touch": 29,
        "p_touch_1d": 0
       }
@@ -55924,8 +55920,8 @@
      "rolls": [
       "calls: 4.70 → 4.40 (≈564 contracts)"
      ],
-     "vanna": 460217363,
-     "charm": -176938639,
+     "vanna": 460179654,
+     "charm": -176946174,
      "prev_date": "2026-11-23",
      "top_calls": [
       [
@@ -56627,8 +56623,8 @@
       "lo": 4.3501,
       "hi": 4.4449,
       "pcr": 0.56,
-      "gex": -45780308,
-      "flip": 4.6498,
+      "gex": -45785595,
+      "flip": 4.6499,
       "contract": "ZCZ26"
      }
     ],
@@ -56681,7 +56677,7 @@
     }
    },
    "soybeans": {
-    "asof": "2026-11-26T14:30:24.921895+00:00",
+    "asof": "2026-11-26T14:45:27.854843+00:00",
     "price": 12.4325,
     "settle": 12.44,
     "settle_date": "2026-11-25",
@@ -56695,18 +56691,18 @@
       "calls_oi": 1492,
       "puts_oi": 1251,
       "pcr": 0.84,
-      "em": 0.0958,
+      "em": 0.0954,
       "em_pct": 0.77,
-      "lo": 12.3367,
-      "hi": 12.5283,
-      "gex": 11871332,
-      "dex": 1118,
+      "lo": 12.3371,
+      "hi": 12.5279,
+      "gex": 11864285,
+      "dex": 1119,
       "has_vol": false,
       "vol_c": null,
       "vol_p": null,
       "prem_c": null,
       "prem_p": null,
-      "flip": 12.1394,
+      "flip": 12.1396,
       "top_oi": [
        {
         "k": 12.3,
@@ -56714,7 +56710,7 @@
         "poi": 325,
         "cvol": null,
         "pvol": null,
-        "gex": 6341822,
+        "gex": 6315679,
         "prem": 0,
         "voi": null
        },
@@ -56724,7 +56720,7 @@
         "poi": 250,
         "cvol": null,
         "pvol": null,
-        "gex": 4066024,
+        "gex": 4081807,
         "prem": 0,
         "voi": null
        },
@@ -56734,7 +56730,7 @@
         "poi": 201,
         "cvol": null,
         "pvol": null,
-        "gex": 4753,
+        "gex": 4649,
         "prem": 0,
         "voi": null
        },
@@ -56744,7 +56740,7 @@
         "poi": 266,
         "cvol": null,
         "pvol": null,
-        "gex": -218,
+        "gex": -200,
         "prem": 0,
         "voi": null
        },
@@ -56764,7 +56760,7 @@
         "poi": 0,
         "cvol": null,
         "pvol": null,
-        "gex": 1462335,
+        "gex": 1465568,
         "prem": 0,
         "voi": null
        },
@@ -56774,7 +56770,7 @@
         "poi": 52,
         "cvol": null,
         "pvol": null,
-        "gex": -3384,
+        "gex": -3219,
         "prem": 0,
         "voi": null
        },
@@ -56796,7 +56792,7 @@
         "poi": 325,
         "cvol": null,
         "pvol": null,
-        "gex": 6341822,
+        "gex": 6315679,
         "prem": 0,
         "voi": null
        },
@@ -56806,7 +56802,7 @@
         "poi": 250,
         "cvol": null,
         "pvol": null,
-        "gex": 4066024,
+        "gex": 4081807,
         "prem": 0,
         "voi": null
        },
@@ -56816,7 +56812,7 @@
         "poi": 0,
         "cvol": null,
         "pvol": null,
-        "gex": 1462335,
+        "gex": 1465568,
         "prem": 0,
         "voi": null
        },
@@ -56826,7 +56822,7 @@
         "poi": 201,
         "cvol": null,
         "pvol": null,
-        "gex": 4753,
+        "gex": 4649,
         "prem": 0,
         "voi": null
        },
@@ -56836,7 +56832,7 @@
         "poi": 52,
         "cvol": null,
         "pvol": null,
-        "gex": -3384,
+        "gex": -3219,
         "prem": 0,
         "voi": null
        }
@@ -56852,17 +56848,17 @@
       "calls_oi": 117964,
       "puts_oi": 88224,
       "pcr": 0.75,
-      "em": 0.4648,
+      "em": 0.4647,
       "em_pct": 3.74,
-      "lo": 11.9677,
-      "hi": 12.8973,
-      "gex": 46184131,
-      "dex": -1753,
+      "lo": 11.9678,
+      "hi": 12.8972,
+      "gex": 46199406,
+      "dex": -1754,
       "has_vol": true,
       "vol_c": 2995,
       "vol_p": 299,
-      "prem_c": 2132374,
-      "prem_p": 43110,
+      "prem_c": 2131903,
+      "prem_p": 43090,
       "flip": 12.2946,
       "top_oi": [
        {
@@ -56871,8 +56867,8 @@
         "poi": 5426,
         "cvol": 835,
         "pvol": 2,
-        "gex": 41638450,
-        "prem": 660497,
+        "gex": 41646015,
+        "prem": 660352,
         "voi": 0.048
        },
        {
@@ -56881,8 +56877,8 @@
         "poi": 5807,
         "cvol": 3,
         "pvol": 0,
-        "gex": 19698896,
-        "prem": 1024,
+        "gex": 19700589,
+        "prem": 1023,
         "voi": 0.0
        },
        {
@@ -56891,8 +56887,8 @@
         "poi": 4798,
         "cvol": 470,
         "pvol": 1,
-        "gex": 9234848,
-        "prem": 94695,
+        "gex": 9234665,
+        "prem": 94643,
         "voi": 0.038
        },
        {
@@ -56901,8 +56897,8 @@
         "poi": 4533,
         "cvol": 143,
         "pvol": 2,
-        "gex": 17308579,
-        "prem": 184535,
+        "gex": 17311516,
+        "prem": 184512,
         "voi": 0.012
        },
        {
@@ -56911,8 +56907,8 @@
         "poi": 4655,
         "cvol": 869,
         "pvol": 0,
-        "gex": 8304789,
-        "prem": 529717,
+        "gex": 8306157,
+        "prem": 529570,
         "voi": 0.081
        },
        {
@@ -56921,8 +56917,8 @@
         "poi": 7863,
         "cvol": 1,
         "pvol": 2,
-        "gex": -21949429,
-        "prem": 2740,
+        "gex": -21949622,
+        "prem": 2739,
         "voi": 0.0
        },
        {
@@ -56931,8 +56927,8 @@
         "poi": 3594,
         "cvol": 397,
         "pvol": 3,
-        "gex": 8616087,
-        "prem": 405722,
+        "gex": 8617677,
+        "prem": 405653,
         "voi": 0.047
        },
        {
@@ -56941,8 +56937,8 @@
         "poi": 8291,
         "cvol": 1,
         "pvol": 20,
-        "gex": -6634064,
-        "prem": 5075,
+        "gex": -6630335,
+        "prem": 5074,
         "voi": 0.002
        }
       ],
@@ -56953,8 +56949,8 @@
         "poi": 5426,
         "cvol": 835,
         "pvol": 2,
-        "gex": 41638450,
-        "prem": 660497,
+        "gex": 41646015,
+        "prem": 660352,
         "voi": 0.048
        },
        {
@@ -56963,8 +56959,8 @@
         "poi": 7863,
         "cvol": 1,
         "pvol": 2,
-        "gex": -21949429,
-        "prem": 2740,
+        "gex": -21949622,
+        "prem": 2739,
         "voi": 0.0
        },
        {
@@ -56973,8 +56969,8 @@
         "poi": 5807,
         "cvol": 3,
         "pvol": 0,
-        "gex": 19698896,
-        "prem": 1024,
+        "gex": 19700589,
+        "prem": 1023,
         "voi": 0.0
        },
        {
@@ -56983,8 +56979,8 @@
         "poi": 4533,
         "cvol": 143,
         "pvol": 2,
-        "gex": 17308579,
-        "prem": 184535,
+        "gex": 17311516,
+        "prem": 184512,
         "voi": 0.012
        },
        {
@@ -56993,8 +56989,8 @@
         "poi": 4311,
         "cvol": 14,
         "pvol": 6,
-        "gex": -13051964,
-        "prem": 29130,
+        "gex": -13053025,
+        "prem": 29128,
         "voi": 0.003
        }
       ],
@@ -57005,8 +57001,8 @@
         "poi": 4655,
         "cvol": 869,
         "pvol": 0,
-        "gex": 8304789,
-        "prem": 529717,
+        "gex": 8306157,
+        "prem": 529570,
         "voi": 0.081
        },
        {
@@ -57015,8 +57011,8 @@
         "poi": 5426,
         "cvol": 835,
         "pvol": 2,
-        "gex": 41638450,
-        "prem": 660497,
+        "gex": 41646015,
+        "prem": 660352,
         "voi": 0.048
        },
        {
@@ -57025,8 +57021,8 @@
         "poi": 4798,
         "cvol": 470,
         "pvol": 1,
-        "gex": 9234848,
-        "prem": 94695,
+        "gex": 9234665,
+        "prem": 94643,
         "voi": 0.038
        },
        {
@@ -57035,8 +57031,8 @@
         "poi": 3594,
         "cvol": 397,
         "pvol": 3,
-        "gex": 8616087,
-        "prem": 405722,
+        "gex": 8617677,
+        "prem": 405653,
         "voi": 0.047
        },
        {
@@ -57045,8 +57041,8 @@
         "poi": 4533,
         "cvol": 143,
         "pvol": 2,
-        "gex": 17308579,
-        "prem": 184535,
+        "gex": 17311516,
+        "prem": 184512,
         "voi": 0.012
        },
        {
@@ -57055,8 +57051,8 @@
         "poi": 4739,
         "cvol": 101,
         "pvol": 40,
-        "gex": -8821575,
-        "prem": 179023,
+        "gex": -8822766,
+        "prem": 179003,
         "voi": 0.018
        },
        {
@@ -57065,8 +57061,8 @@
         "poi": 1842,
         "cvol": 94,
         "pvol": 0,
-        "gex": 1145336,
-        "prem": 13706,
+        "gex": 1145233,
+        "prem": 13697,
         "voi": 0.023
        },
        {
@@ -57075,8 +57071,8 @@
         "poi": 3989,
         "cvol": 0,
         "pvol": 86,
-        "gex": -8608573,
-        "prem": 6223,
+        "gex": -8606840,
+        "prem": 6218,
         "voi": 0.02
        }
       ],
@@ -57087,8 +57083,8 @@
         "poi": 4655,
         "cvol": 869,
         "pvol": 0,
-        "gex": 8304789,
-        "prem": 529717,
+        "gex": 8306157,
+        "prem": 529570,
         "voi": 0.081
        },
        {
@@ -57097,8 +57093,8 @@
         "poi": 5426,
         "cvol": 835,
         "pvol": 2,
-        "gex": 41638450,
-        "prem": 660497,
+        "gex": 41646015,
+        "prem": 660352,
         "voi": 0.048
        },
        {
@@ -57107,8 +57103,8 @@
         "poi": 3594,
         "cvol": 397,
         "pvol": 3,
-        "gex": 8616087,
-        "prem": 405722,
+        "gex": 8617677,
+        "prem": 405653,
         "voi": 0.047
        },
        {
@@ -57117,8 +57113,8 @@
         "poi": 4798,
         "cvol": 470,
         "pvol": 1,
-        "gex": 9234848,
-        "prem": 94695,
+        "gex": 9234665,
+        "prem": 94643,
         "voi": 0.038
        },
        {
@@ -57127,8 +57123,8 @@
         "poi": 849,
         "cvol": 0,
         "pvol": 34,
-        "gex": -220735,
-        "prem": 242,
+        "gex": -220543,
+        "prem": 241,
         "voi": 0.032
        }
       ],
@@ -57143,18 +57139,18 @@
       "calls_oi": 114637,
       "puts_oi": 65094,
       "pcr": 0.57,
-      "em": 0.878,
+      "em": 0.8779,
       "em_pct": 7.09,
-      "lo": 11.5095,
-      "hi": 13.2655,
-      "gex": 44472478,
-      "dex": 5238,
+      "lo": 11.5096,
+      "hi": 13.2654,
+      "gex": 44471363,
+      "dex": 5237,
       "has_vol": true,
       "vol_c": 243,
       "vol_p": 1393,
-      "prem_c": 292158,
-      "prem_p": 681387,
-      "flip": 12.0819,
+      "prem_c": 292132,
+      "prem_p": 681290,
+      "flip": 12.082,
       "top_oi": [
        {
         "k": 15.0,
@@ -57162,7 +57158,7 @@
         "poi": 36,
         "cvol": null,
         "pvol": null,
-        "gex": 1481114,
+        "gex": 1480543,
         "prem": 0,
         "voi": 0.0
        },
@@ -57172,7 +57168,7 @@
         "poi": 947,
         "cvol": null,
         "pvol": null,
-        "gex": 21976859,
+        "gex": 21977633,
         "prem": 0,
         "voi": 0.0
        },
@@ -57182,8 +57178,8 @@
         "poi": 3158,
         "cvol": 1,
         "pvol": 0,
-        "gex": 11742040,
-        "prem": 1515,
+        "gex": 11742749,
+        "prem": 1514,
         "voi": 0.0
        },
        {
@@ -57192,7 +57188,7 @@
         "poi": 196,
         "cvol": null,
         "pvol": null,
-        "gex": 7765616,
+        "gex": 7764673,
         "prem": 0,
         "voi": 0.0
        },
@@ -57202,8 +57198,8 @@
         "poi": 1857,
         "cvol": 18,
         "pvol": 0,
-        "gex": 12182608,
-        "prem": 18656,
+        "gex": 12183216,
+        "prem": 18654,
         "voi": 0.002
        },
        {
@@ -57212,7 +57208,7 @@
         "poi": 0,
         "cvol": null,
         "pvol": null,
-        "gex": 42066,
+        "gex": 42035,
         "prem": 0,
         "voi": 0.0
        },
@@ -57222,8 +57218,8 @@
         "poi": 4484,
         "cvol": 2,
         "pvol": 18,
-        "gex": -6664749,
-        "prem": 21387,
+        "gex": -6665072,
+        "prem": 21385,
         "voi": 0.003
        },
        {
@@ -57232,8 +57228,8 @@
         "poi": 2807,
         "cvol": 11,
         "pvol": 0,
-        "gex": 1539996,
-        "prem": 14859,
+        "gex": 1540086,
+        "prem": 14858,
         "voi": 0.002
        }
       ],
@@ -57244,7 +57240,7 @@
         "poi": 947,
         "cvol": null,
         "pvol": null,
-        "gex": 21976859,
+        "gex": 21977633,
         "prem": 0,
         "voi": 0.0
        },
@@ -57254,8 +57250,8 @@
         "poi": 1857,
         "cvol": 18,
         "pvol": 0,
-        "gex": 12182608,
-        "prem": 18656,
+        "gex": 12183216,
+        "prem": 18654,
         "voi": 0.002
        },
        {
@@ -57264,8 +57260,8 @@
         "poi": 3158,
         "cvol": 1,
         "pvol": 0,
-        "gex": 11742040,
-        "prem": 1515,
+        "gex": 11742749,
+        "prem": 1514,
         "voi": 0.0
        },
        {
@@ -57274,8 +57270,8 @@
         "poi": 5098,
         "cvol": 0,
         "pvol": 13,
-        "gex": -11283930,
-        "prem": 7359,
+        "gex": -11284266,
+        "prem": 7358,
         "voi": 0.002
        },
        {
@@ -57284,7 +57280,7 @@
         "poi": 196,
         "cvol": null,
         "pvol": null,
-        "gex": 7765616,
+        "gex": 7764673,
         "prem": 0,
         "voi": 0.0
        }
@@ -57296,8 +57292,8 @@
         "poi": 1594,
         "cvol": 0,
         "pvol": 1172,
-        "gex": -2825673,
-        "prem": 504575,
+        "gex": -2825717,
+        "prem": 504496,
         "voi": 0.569
        },
        {
@@ -57306,8 +57302,8 @@
         "poi": 1561,
         "cvol": 205,
         "pvol": 0,
-        "gex": 4312500,
-        "prem": 240234,
+        "gex": 4312734,
+        "prem": 240212,
         "voi": 0.046
        },
        {
@@ -57316,8 +57312,8 @@
         "poi": 2117,
         "cvol": 0,
         "pvol": 100,
-        "gex": -3568550,
-        "prem": 105915,
+        "gex": -3568743,
+        "prem": 105905,
         "voi": 0.032
        },
        {
@@ -57326,8 +57322,8 @@
         "poi": 4308,
         "cvol": 0,
         "pvol": 45,
-        "gex": -7412672,
-        "prem": 12510,
+        "gex": -7412578,
+        "prem": 12508,
         "voi": 0.009
        },
        {
@@ -57336,8 +57332,8 @@
         "poi": 3057,
         "cvol": 0,
         "pvol": 31,
-        "gex": -3991937,
-        "prem": 11213,
+        "gex": -3991954,
+        "prem": 11211,
         "voi": 0.007
        },
        {
@@ -57346,8 +57342,8 @@
         "poi": 4484,
         "cvol": 2,
         "pvol": 18,
-        "gex": -6664749,
-        "prem": 21387,
+        "gex": -6665072,
+        "prem": 21385,
         "voi": 0.003
        },
        {
@@ -57356,8 +57352,8 @@
         "poi": 1857,
         "cvol": 18,
         "pvol": 0,
-        "gex": 12182608,
-        "prem": 18656,
+        "gex": 12183216,
+        "prem": 18654,
         "voi": 0.002
        },
        {
@@ -57366,8 +57362,8 @@
         "poi": 5098,
         "cvol": 0,
         "pvol": 13,
-        "gex": -11283930,
-        "prem": 7359,
+        "gex": -11284266,
+        "prem": 7358,
         "voi": 0.002
        }
       ],
@@ -57378,8 +57374,8 @@
         "poi": 1594,
         "cvol": 0,
         "pvol": 1172,
-        "gex": -2825673,
-        "prem": 504575,
+        "gex": -2825717,
+        "prem": 504496,
         "voi": 0.569
        },
        {
@@ -57388,8 +57384,8 @@
         "poi": 1561,
         "cvol": 205,
         "pvol": 0,
-        "gex": 4312500,
-        "prem": 240234,
+        "gex": 4312734,
+        "prem": 240212,
         "voi": 0.046
        },
        {
@@ -57398,8 +57394,8 @@
         "poi": 2117,
         "cvol": 0,
         "pvol": 100,
-        "gex": -3568550,
-        "prem": 105915,
+        "gex": -3568743,
+        "prem": 105905,
         "voi": 0.032
        },
        {
@@ -57408,8 +57404,8 @@
         "poi": 4308,
         "cvol": 0,
         "pvol": 45,
-        "gex": -7412672,
-        "prem": 12510,
+        "gex": -7412578,
+        "prem": 12508,
         "voi": 0.009
        },
        {
@@ -57418,8 +57414,8 @@
         "poi": 3057,
         "cvol": 0,
         "pvol": 31,
-        "gex": -3991937,
-        "prem": 11213,
+        "gex": -3991954,
+        "prem": 11211,
         "voi": 0.007
        }
       ],
@@ -57454,7 +57450,7 @@
        "divp": -0.19,
        "lc": "steady",
        "lp": "steady",
-       "gex": 8616087,
+       "gex": 8617677,
        "role": "weak",
        "why": [
         "traded through 4× in the last 20 sessions; closes held as support 1×, as resistance 3×"
@@ -57463,7 +57459,7 @@
        "touch": 4,
        "in_em": true,
        "vol": 400,
-       "prem_c": 403161,
+       "prem_c": 403093,
        "prem_p": 2561,
        "p_touch": 94,
        "p_touch_1d": 76
@@ -57484,7 +57480,7 @@
        "divp": -0.25,
        "lc": "closing",
        "lp": "steady",
-       "gex": 41638450,
+       "gex": 41646015,
        "role": "weakening",
        "why": [
         "call-heavy above price",
@@ -57495,7 +57491,7 @@
        "touch": 0,
        "in_em": true,
        "vol": 837,
-       "prem_c": 658243,
+       "prem_c": 658098,
        "prem_p": 2254,
        "p_touch": 88,
        "p_touch_1d": 52
@@ -57516,7 +57512,7 @@
        "divp": -0.21,
        "lc": "closing",
        "lp": "short puts",
-       "gex": 17308579,
+       "gex": 17311516,
        "role": "weak",
        "why": [
         "puts likely written — sellers defend this level",
@@ -57526,7 +57522,7 @@
        "touch": 11,
        "in_em": false,
        "vol": 145,
-       "prem_c": 183290,
+       "prem_c": 183267,
        "prem_p": 1245,
        "p_touch": 77,
        "p_touch_1d": 21
@@ -57547,7 +57543,7 @@
        "divp": -0.46,
        "lc": "closing",
        "lp": "steady",
-       "gex": 8304789,
+       "gex": 8306157,
        "role": "resistance",
        "why": [
         "call-heavy above price"
@@ -57556,7 +57552,7 @@
        "touch": 0,
        "in_em": false,
        "vol": 869,
-       "prem_c": 529717,
+       "prem_c": 529570,
        "prem_p": null,
        "p_touch": 72,
        "p_touch_1d": 11
@@ -57577,7 +57573,7 @@
        "divp": -0.25,
        "lc": "steady",
        "lp": "short puts",
-       "gex": -8821575,
+       "gex": -8822766,
        "role": "support",
        "why": [
         "put-heavy below price",
@@ -57588,8 +57584,8 @@
        "touch": 10,
        "in_em": false,
        "vol": 141,
-       "prem_c": 161648,
-       "prem_p": 17375,
+       "prem_c": 161633,
+       "prem_p": 17370,
        "p_touch": 61,
        "p_touch_1d": 3
       },
@@ -57609,7 +57605,7 @@
        "divp": -0.22,
        "lc": "short calls",
        "lp": "steady",
-       "gex": 5495167,
+       "gex": 5495893,
        "role": "resistance",
        "why": [
         "call-heavy above price",
@@ -57619,7 +57615,7 @@
        "touch": 0,
        "in_em": false,
        "vol": 17,
-       "prem_c": 7857,
+       "prem_c": 7854,
        "prem_p": null,
        "p_touch": 57,
        "p_touch_1d": 1
@@ -57640,7 +57636,7 @@
        "divp": -0.19,
        "lc": "steady",
        "lp": "short puts",
-       "gex": -13051964,
+       "gex": -13053025,
        "role": "support",
        "why": [
         "put-heavy below price",
@@ -57651,8 +57647,8 @@
        "touch": 6,
        "in_em": false,
        "vol": 20,
-       "prem_c": 27378,
-       "prem_p": 1752,
+       "prem_c": 27376,
+       "prem_p": 1751,
        "p_touch": 47,
        "p_touch_1d": 0
       },
@@ -57672,7 +57668,7 @@
        "divp": -0.36,
        "lc": "short calls",
        "lp": "steady",
-       "gex": 19698896,
+       "gex": 19700589,
        "role": "resistance",
        "why": [
         "call-heavy above price",
@@ -57682,7 +57678,7 @@
        "touch": 0,
        "in_em": false,
        "vol": 3,
-       "prem_c": 1024,
+       "prem_c": 1023,
        "prem_p": null,
        "p_touch": 44,
        "p_touch_1d": 0
@@ -57703,7 +57699,7 @@
        "divp": -0.02,
        "lc": "steady",
        "lp": "short puts",
-       "gex": -21949429,
+       "gex": -21949622,
        "role": "support",
        "why": [
         "put-heavy below price",
@@ -57736,7 +57732,7 @@
        "divp": -0.38,
        "lc": "steady",
        "lp": "steady",
-       "gex": 927207,
+       "gex": 927234,
        "role": "resistance",
        "why": [
         "call-heavy above price"
@@ -57745,7 +57741,7 @@
        "touch": 0,
        "in_em": false,
        "vol": 36,
-       "prem_c": 9310,
+       "prem_c": 9306,
        "prem_p": null,
        "p_touch": 32,
        "p_touch_1d": 0
@@ -57766,7 +57762,7 @@
        "divp": -0.07,
        "lc": "steady",
        "lp": "short puts",
-       "gex": -11054296,
+       "gex": -11053338,
        "role": "support",
        "why": [
         "put-heavy below price",
@@ -57778,7 +57774,7 @@
        "in_em": false,
        "vol": 48,
        "prem_c": null,
-       "prem_p": 5748,
+       "prem_p": 5744,
        "p_touch": 24,
        "p_touch_1d": 0
       },
@@ -57798,7 +57794,7 @@
        "divp": -0.44,
        "lc": "closing",
        "lp": "steady",
-       "gex": 9234848,
+       "gex": 9234665,
        "role": "resistance",
        "why": [
         "call-heavy above price"
@@ -57807,7 +57803,7 @@
        "touch": 0,
        "in_em": false,
        "vol": 471,
-       "prem_c": 91667,
+       "prem_c": 91615,
        "prem_p": 3028,
        "p_touch": 23,
        "p_touch_1d": 0
@@ -57882,8 +57878,8 @@
       "calls: 13.00 → 13.20 (≈1,136 contracts)",
       "calls: 12.60 → 12.80 (≈879 contracts)"
      ],
-     "vanna": 330031569,
-     "charm": -291404759,
+     "vanna": 329959695,
+     "charm": -291449699,
      "prev_date": "2026-11-23",
      "top_calls": [
       [
@@ -58585,7 +58581,7 @@
       "lo": 12.3346,
       "hi": 12.5454,
       "pcr": 0.75,
-      "gex": 46184131,
+      "gex": 46199406,
       "flip": 12.2946,
       "contract": "ZSF27"
      }
@@ -58639,7 +58635,7 @@
     }
    },
    "wheat": {
-    "asof": "2026-11-26T14:30:24.921895+00:00",
+    "asof": "2026-11-26T14:45:27.854843+00:00",
     "price": 5.64,
     "settle": 5.655,
     "settle_date": "2026-11-25",
@@ -58653,18 +58649,18 @@
       "calls_oi": 1235,
       "puts_oi": 1568,
       "pcr": 1.27,
-      "em": 0.083,
-      "em_pct": 1.47,
-      "lo": 5.557,
-      "hi": 5.723,
-      "gex": -4416962,
-      "dex": -1440,
+      "em": 0.0826,
+      "em_pct": 1.46,
+      "lo": 5.5574,
+      "hi": 5.7226,
+      "gex": -4400738,
+      "dex": -1441,
       "has_vol": false,
       "vol_c": null,
       "vol_p": null,
       "prem_c": null,
       "prem_p": null,
-      "flip": 5.9269,
+      "flip": 5.9268,
       "top_oi": [
        {
         "k": 5.75,
@@ -58672,7 +58668,7 @@
         "poi": 1288,
         "cvol": null,
         "pvol": null,
-        "gex": -4199786,
+        "gex": -4186340,
         "prem": 0,
         "voi": null
        },
@@ -58692,7 +58688,7 @@
         "poi": 1,
         "cvol": null,
         "pvol": null,
-        "gex": 229,
+        "gex": 213,
         "prem": 0,
         "voi": null
        },
@@ -58702,7 +58698,7 @@
         "poi": 153,
         "cvol": null,
         "pvol": null,
-        "gex": -194534,
+        "gex": -192303,
         "prem": 0,
         "voi": null
        },
@@ -58712,7 +58708,7 @@
         "poi": 55,
         "cvol": null,
         "pvol": null,
-        "gex": -19528,
+        "gex": -19087,
         "prem": 0,
         "voi": null
        },
@@ -58722,7 +58718,7 @@
         "poi": 48,
         "cvol": null,
         "pvol": null,
-        "gex": -3223,
+        "gex": -3106,
         "prem": 0,
         "voi": null
        },
@@ -58732,7 +58728,7 @@
         "poi": 14,
         "cvol": null,
         "pvol": null,
-        "gex": -126,
+        "gex": -120,
         "prem": 0,
         "voi": null
        },
@@ -58754,7 +58750,7 @@
         "poi": 1288,
         "cvol": null,
         "pvol": null,
-        "gex": -4199786,
+        "gex": -4186340,
         "prem": 0,
         "voi": null
        },
@@ -58764,7 +58760,7 @@
         "poi": 153,
         "cvol": null,
         "pvol": null,
-        "gex": -194534,
+        "gex": -192303,
         "prem": 0,
         "voi": null
        },
@@ -58774,7 +58770,7 @@
         "poi": 55,
         "cvol": null,
         "pvol": null,
-        "gex": -19528,
+        "gex": -19087,
         "prem": 0,
         "voi": null
        },
@@ -58784,7 +58780,7 @@
         "poi": 48,
         "cvol": null,
         "pvol": null,
-        "gex": -3223,
+        "gex": -3106,
         "prem": 0,
         "voi": null
        },
@@ -58794,7 +58790,7 @@
         "poi": 1,
         "cvol": null,
         "pvol": null,
-        "gex": 229,
+        "gex": 213,
         "prem": 0,
         "voi": null
        }
@@ -58814,14 +58810,14 @@
       "em_pct": 12.41,
       "lo": 4.9403,
       "hi": 6.3397,
-      "gex": -10176636,
-      "dex": -14984,
+      "gex": -10177959,
+      "dex": -14985,
       "has_vol": true,
       "vol_c": 45,
       "vol_p": 212,
-      "prem_c": 28637,
-      "prem_p": 449860,
-      "flip": 6.1466,
+      "prem_c": 28633,
+      "prem_p": 449843,
+      "flip": 6.1467,
       "top_oi": [
        {
         "k": 6.0,
@@ -58829,8 +58825,8 @@
         "poi": 4835,
         "cvol": 0,
         "pvol": 21,
-        "gex": -3109593,
-        "prem": 54046,
+        "gex": -3109741,
+        "prem": 54044,
         "voi": 0.004
        },
        {
@@ -58839,7 +58835,7 @@
         "poi": 52,
         "cvol": null,
         "pvol": null,
-        "gex": 93935,
+        "gex": 93896,
         "prem": 0,
         "voi": 0.0
        },
@@ -58849,7 +58845,7 @@
         "poi": 680,
         "cvol": null,
         "pvol": null,
-        "gex": 1615316,
+        "gex": 1615275,
         "prem": 0,
         "voi": 0.0
        },
@@ -58859,7 +58855,7 @@
         "poi": 1473,
         "cvol": 5,
         "pvol": 0,
-        "gex": 555827,
+        "gex": 555841,
         "prem": 2695,
         "voi": 0.001
        },
@@ -58869,7 +58865,7 @@
         "poi": 314,
         "cvol": null,
         "pvol": null,
-        "gex": 592556,
+        "gex": 592482,
         "prem": 0,
         "voi": 0.0
        },
@@ -58879,7 +58875,7 @@
         "poi": 2442,
         "cvol": 0,
         "pvol": 0,
-        "gex": -2011142,
+        "gex": -2011260,
         "prem": 0,
         "voi": 0.0
        },
@@ -58889,7 +58885,7 @@
         "poi": 403,
         "cvol": null,
         "pvol": null,
-        "gex": 848385,
+        "gex": 848348,
         "prem": 0,
         "voi": 0.0
        },
@@ -58911,8 +58907,8 @@
         "poi": 4835,
         "cvol": 0,
         "pvol": 21,
-        "gex": -3109593,
-        "prem": 54046,
+        "gex": -3109741,
+        "prem": 54044,
         "voi": 0.004
        },
        {
@@ -58921,8 +58917,8 @@
         "poi": 2348,
         "cvol": 0,
         "pvol": 51,
-        "gex": -2201102,
-        "prem": 77073,
+        "gex": -2201236,
+        "prem": 77068,
         "voi": 0.022
        },
        {
@@ -58931,7 +58927,7 @@
         "poi": 2442,
         "cvol": 0,
         "pvol": 0,
-        "gex": -2011142,
+        "gex": -2011260,
         "prem": 0,
         "voi": 0.0
        },
@@ -58941,7 +58937,7 @@
         "poi": 680,
         "cvol": null,
         "pvol": null,
-        "gex": 1615316,
+        "gex": 1615275,
         "prem": 0,
         "voi": 0.0
        },
@@ -58951,8 +58947,8 @@
         "poi": 1742,
         "cvol": 0,
         "pvol": 79,
-        "gex": -1514098,
-        "prem": 145465,
+        "gex": -1514186,
+        "prem": 145458,
         "voi": 0.044
        }
       ],
@@ -58963,8 +58959,8 @@
         "poi": 1742,
         "cvol": 0,
         "pvol": 79,
-        "gex": -1514098,
-        "prem": 145465,
+        "gex": -1514186,
+        "prem": 145458,
         "voi": 0.044
        },
        {
@@ -58973,8 +58969,8 @@
         "poi": 1569,
         "cvol": 30,
         "pvol": 30,
-        "gex": -879926,
-        "prem": 109194,
+        "gex": -879962,
+        "prem": 109190,
         "voi": 0.031
        },
        {
@@ -58983,8 +58979,8 @@
         "poi": 2348,
         "cvol": 0,
         "pvol": 51,
-        "gex": -2201102,
-        "prem": 77073,
+        "gex": -2201236,
+        "prem": 77068,
         "voi": 0.022
        },
        {
@@ -58993,8 +58989,8 @@
         "poi": 4835,
         "cvol": 0,
         "pvol": 21,
-        "gex": -3109593,
-        "prem": 54046,
+        "gex": -3109741,
+        "prem": 54044,
         "voi": 0.004
        },
        {
@@ -59003,8 +58999,8 @@
         "poi": 601,
         "cvol": 1,
         "pvol": 11,
-        "gex": -345878,
-        "prem": 35576,
+        "gex": -345891,
+        "prem": 35575,
         "voi": 0.017
        },
        {
@@ -59013,8 +59009,8 @@
         "poi": 300,
         "cvol": 0,
         "pvol": 10,
-        "gex": 778626,
-        "prem": 27635,
+        "gex": 778660,
+        "prem": 27634,
         "voi": 0.006
        },
        {
@@ -59023,8 +59019,8 @@
         "poi": 1189,
         "cvol": 0,
         "pvol": 6,
-        "gex": -1023989,
-        "prem": 10012,
+        "gex": -1024051,
+        "prem": 10011,
         "voi": 0.005
        },
        {
@@ -59033,7 +59029,7 @@
         "poi": 771,
         "cvol": 4,
         "pvol": 2,
-        "gex": 530311,
+        "gex": 530327,
         "prem": 9062,
         "voi": 0.003
        }
@@ -59045,8 +59041,8 @@
         "poi": 1742,
         "cvol": 0,
         "pvol": 79,
-        "gex": -1514098,
-        "prem": 145465,
+        "gex": -1514186,
+        "prem": 145458,
         "voi": 0.044
        },
        {
@@ -59055,8 +59051,8 @@
         "poi": 1569,
         "cvol": 30,
         "pvol": 30,
-        "gex": -879926,
-        "prem": 109194,
+        "gex": -879962,
+        "prem": 109190,
         "voi": 0.031
        },
        {
@@ -59065,8 +59061,8 @@
         "poi": 2348,
         "cvol": 0,
         "pvol": 51,
-        "gex": -2201102,
-        "prem": 77073,
+        "gex": -2201236,
+        "prem": 77068,
         "voi": 0.022
        },
        {
@@ -59075,8 +59071,8 @@
         "poi": 601,
         "cvol": 1,
         "pvol": 11,
-        "gex": -345878,
-        "prem": 35576,
+        "gex": -345891,
+        "prem": 35575,
         "voi": 0.017
        },
        {
@@ -59085,7 +59081,7 @@
         "poi": 382,
         "cvol": 1,
         "pvol": 2,
-        "gex": -231210,
+        "gex": -231222,
         "prem": 5611,
         "voi": 0.006
        }
@@ -59105,13 +59101,13 @@
       "em_pct": 16.71,
       "lo": 4.9264,
       "hi": 6.9036,
-      "gex": -995338,
+      "gex": -995371,
       "dex": -1142,
       "has_vol": true,
       "vol_c": 2,
       "vol_p": 129,
       "prem_c": 3981,
-      "prem_p": 186331,
+      "prem_p": 186323,
       "flip": null,
       "top_oi": [
        {
@@ -59120,7 +59116,7 @@
         "poi": 1288,
         "cvol": 0,
         "pvol": 0,
-        "gex": -219071,
+        "gex": -219077,
         "prem": 0,
         "voi": 0.0
        },
@@ -59130,7 +59126,7 @@
         "poi": 661,
         "cvol": 0,
         "pvol": 0,
-        "gex": -382529,
+        "gex": -382543,
         "prem": 0,
         "voi": 0.0
        },
@@ -59140,7 +59136,7 @@
         "poi": 285,
         "cvol": 0,
         "pvol": 0,
-        "gex": -20181,
+        "gex": -20182,
         "prem": 0,
         "voi": 0.0
        },
@@ -59150,7 +59146,7 @@
         "poi": 83,
         "cvol": 0,
         "pvol": 0,
-        "gex": 67269,
+        "gex": 67272,
         "prem": 0,
         "voi": 0.0
        },
@@ -59160,7 +59156,7 @@
         "poi": 232,
         "cvol": 2,
         "pvol": 0,
-        "gex": -161791,
+        "gex": -161797,
         "prem": 3981,
         "voi": 0.008
        },
@@ -59170,8 +59166,8 @@
         "poi": 226,
         "cvol": 0,
         "pvol": 40,
-        "gex": -159920,
-        "prem": 65320,
+        "gex": -159926,
+        "prem": 65318,
         "voi": 0.177
        },
        {
@@ -59180,7 +59176,7 @@
         "poi": 95,
         "cvol": 0,
         "pvol": 0,
-        "gex": -12893,
+        "gex": -12894,
         "prem": 0,
         "voi": 0.0
        },
@@ -59190,8 +59186,8 @@
         "poi": 124,
         "cvol": 0,
         "pvol": 89,
-        "gex": -86572,
-        "prem": 121011,
+        "gex": -86575,
+        "prem": 121005,
         "voi": 0.712
        }
       ],
@@ -59202,7 +59198,7 @@
         "poi": 661,
         "cvol": 0,
         "pvol": 0,
-        "gex": -382529,
+        "gex": -382543,
         "prem": 0,
         "voi": 0.0
        },
@@ -59212,7 +59208,7 @@
         "poi": 1288,
         "cvol": 0,
         "pvol": 0,
-        "gex": -219071,
+        "gex": -219077,
         "prem": 0,
         "voi": 0.0
        },
@@ -59222,7 +59218,7 @@
         "poi": 232,
         "cvol": 2,
         "pvol": 0,
-        "gex": -161791,
+        "gex": -161797,
         "prem": 3981,
         "voi": 0.008
        },
@@ -59232,8 +59228,8 @@
         "poi": 226,
         "cvol": 0,
         "pvol": 40,
-        "gex": -159920,
-        "prem": 65320,
+        "gex": -159926,
+        "prem": 65318,
         "voi": 0.177
        },
        {
@@ -59242,8 +59238,8 @@
         "poi": 124,
         "cvol": 0,
         "pvol": 89,
-        "gex": -86572,
-        "prem": 121011,
+        "gex": -86575,
+        "prem": 121005,
         "voi": 0.712
        }
       ],
@@ -59254,8 +59250,8 @@
         "poi": 124,
         "cvol": 0,
         "pvol": 89,
-        "gex": -86572,
-        "prem": 121011,
+        "gex": -86575,
+        "prem": 121005,
         "voi": 0.712
        },
        {
@@ -59264,8 +59260,8 @@
         "poi": 226,
         "cvol": 0,
         "pvol": 40,
-        "gex": -159920,
-        "prem": 65320,
+        "gex": -159926,
+        "prem": 65318,
         "voi": 0.177
        },
        {
@@ -59274,7 +59270,7 @@
         "poi": 232,
         "cvol": 2,
         "pvol": 0,
-        "gex": -161791,
+        "gex": -161797,
         "prem": 3981,
         "voi": 0.008
        },
@@ -59294,7 +59290,7 @@
         "poi": 661,
         "cvol": 0,
         "pvol": 0,
-        "gex": -382529,
+        "gex": -382543,
         "prem": 0,
         "voi": 0.0
        },
@@ -59304,7 +59300,7 @@
         "poi": 95,
         "cvol": 0,
         "pvol": 0,
-        "gex": -12893,
+        "gex": -12894,
         "prem": 0,
         "voi": 0.0
        },
@@ -59314,7 +59310,7 @@
         "poi": 83,
         "cvol": 0,
         "pvol": 0,
-        "gex": 67269,
+        "gex": 67272,
         "prem": 0,
         "voi": 0.0
        },
@@ -59324,7 +59320,7 @@
         "poi": 285,
         "cvol": 0,
         "pvol": 0,
-        "gex": -20181,
+        "gex": -20182,
         "prem": 0,
         "voi": 0.0
        }
@@ -59336,8 +59332,8 @@
         "poi": 226,
         "cvol": 0,
         "pvol": 40,
-        "gex": -159920,
-        "prem": 65320,
+        "gex": -159926,
+        "prem": 65318,
         "voi": 0.177
        },
        {
@@ -59346,7 +59342,7 @@
         "poi": 232,
         "cvol": 2,
         "pvol": 0,
-        "gex": -161791,
+        "gex": -161797,
         "prem": 3981,
         "voi": 0.008
        },
@@ -59356,7 +59352,7 @@
         "poi": 661,
         "cvol": 0,
         "pvol": 0,
-        "gex": -382529,
+        "gex": -382543,
         "prem": 0,
         "voi": 0.0
        },
@@ -59366,7 +59362,7 @@
         "poi": 83,
         "cvol": 0,
         "pvol": 0,
-        "gex": 67269,
+        "gex": 67272,
         "prem": 0,
         "voi": 0.0
        },
@@ -59376,7 +59372,7 @@
         "poi": 285,
         "cvol": 0,
         "pvol": 0,
-        "gex": -20181,
+        "gex": -20182,
         "prem": 0,
         "voi": 0.0
        }
@@ -59412,7 +59408,7 @@
        "divp": -0.17,
        "lc": "steady",
        "lp": "steady",
-       "gex": -1485846,
+       "gex": -1485937,
        "role": "support",
        "why": [
         "put-heavy below price",
@@ -59443,7 +59439,7 @@
        "divp": 0.0,
        "lc": "steady",
        "lp": "steady",
-       "gex": -2201102,
+       "gex": -2201236,
        "role": "weak",
        "why": [
         "traded through 5× in the last 20 sessions; closes held as support 3×, as resistance 3×"
@@ -59453,7 +59449,7 @@
        "in_em": true,
        "vol": 51,
        "prem_c": null,
-       "prem_p": 77073,
+       "prem_p": 77068,
        "p_touch": 93,
        "p_touch_1d": 51
       },
@@ -59473,7 +59469,7 @@
        "divp": -0.11,
        "lc": "steady",
        "lp": "steady",
-       "gex": -1023989,
+       "gex": -1024051,
        "role": "weak",
        "why": [
         "traded through 5× in the last 20 sessions; closes held as support 2×, as resistance 3×"
@@ -59483,7 +59479,7 @@
        "in_em": false,
        "vol": 6,
        "prem_c": null,
-       "prem_p": 10012,
+       "prem_p": 10011,
        "p_touch": 88,
        "p_touch_1d": 23
       },
@@ -59503,7 +59499,7 @@
        "divp": -0.44,
        "lc": "steady",
        "lp": "steady",
-       "gex": -2011142,
+       "gex": -2011260,
        "role": "support",
        "why": [
         "put-heavy below price"
@@ -59533,7 +59529,7 @@
        "divp": 0.0,
        "lc": "steady",
        "lp": "steady",
-       "gex": -1514098,
+       "gex": -1514186,
        "role": "weak",
        "why": [
         "traded through 3× in the last 20 sessions; closes held as support 0×, as resistance 3×"
@@ -59543,7 +59539,7 @@
        "in_em": false,
        "vol": 79,
        "prem_c": null,
-       "prem_p": 145465,
+       "prem_p": 145458,
        "p_touch": 82,
        "p_touch_1d": 8
       },
@@ -59563,7 +59559,7 @@
        "divp": -0.09,
        "lc": "steady",
        "lp": "steady",
-       "gex": -652712,
+       "gex": -652747,
        "role": "weak",
        "why": [
         "traded through 9× in the last 20 sessions; closes held as support 5×, as resistance 4×"
@@ -59593,7 +59589,7 @@
        "divp": -0.13,
        "lc": "steady",
        "lp": "steady",
-       "gex": -3109593,
+       "gex": -3109741,
        "role": "weak",
        "why": [
         "traded through 10× in the last 20 sessions; closes held as support 2×, as resistance 8×"
@@ -59603,7 +59599,7 @@
        "in_em": false,
        "vol": 21,
        "prem_c": null,
-       "prem_p": 54046,
+       "prem_p": 54044,
        "p_touch": 62,
        "p_touch_1d": 0
       },
@@ -59623,7 +59619,7 @@
        "divp": -0.1,
        "lc": "steady",
        "lp": "steady",
-       "gex": 778626,
+       "gex": 778660,
        "role": "resistance",
        "why": [
         "call-heavy above price",
@@ -59634,7 +59630,7 @@
        "in_em": false,
        "vol": 10,
        "prem_c": null,
-       "prem_p": 27635,
+       "prem_p": 27634,
        "p_touch": 57,
        "p_touch_1d": 0
       },
@@ -59654,7 +59650,7 @@
        "divp": null,
        "lc": "steady",
        "lp": "steady",
-       "gex": 93935,
+       "gex": 93896,
        "role": "resistance",
        "why": [
         "call-heavy above price"
@@ -59684,7 +59680,7 @@
        "divp": 0.0,
        "lc": "steady",
        "lp": "steady",
-       "gex": 1615316,
+       "gex": 1615275,
        "role": "resistance",
        "why": [
         "call-heavy above price"
@@ -59747,8 +59743,8 @@
       }
      ],
      "rolls": [],
-     "vanna": 57334713,
-     "charm": -30849182,
+     "vanna": 57325334,
+     "charm": -30847794,
      "prev_date": "2026-11-23",
      "top_calls": [
       [
@@ -60450,8 +60446,8 @@
       "lo": 5.5635,
       "hi": 5.7465,
       "pcr": 0.53,
-      "gex": -10176636,
-      "flip": 6.1466,
+      "gex": -10177959,
+      "flip": 6.1467,
       "contract": "ZWZ26"
      }
     ],
@@ -127716,6 +127712,12 @@
     "https://news.google.com/rss/articles/CBMiqwFBVV95cUxOYi1NeVd1TjE2bThVQnZENVA5OGQySHE5TXIxQk9ZVWpGeTRkSm1qUzY0SElmTEtib2F5bU5peHJzd3NKQ29WeXRieTJIZld0czlJTVlXcjFXOE1lR3MzTVNSTW1wejdvSFZJZmM4b3pWTTJTQmZzc1FaeXJRY2hSbmpvYmdoQjNfMmloN0dXZDZXZ1hiY1Y5b3RFLXA0UmhSVnlKZkRreERYRzg?oc=5"
    ],
    [
+    "2026-11-26 08:03 UTC",
+    "www.profarmer.com",
+    "Lower crude prices test ethanol economics, but RFS floor supports corn grind",
+    "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNYXJFa0pFWjg2QVg1R3VmWm9VWEc0UVgyeWZneUI5Um9pdG9uM2Z1X1ViUUEyZk1Td0QzeGduak8zcEhnQVIwZy1FRW9SdVNETUxCVnVzdFhXREk5dE1Ycm9kb3BXdHEzU2RDb01ZQ3lYQ1RqZktrQklqd2Z5RzFiQTNSTDU3TU8zbEgxVGo4S1htcUZEZmN3STBzRlNzWUk2MHlZTHE4dHA3bWVxV1lROHBUWWdXRUZkX2dV?oc=5"
+   ],
+   [
     "2026-11-26 07:34 UTC",
     "commodity-board.com",
     "Corn Price EU, 26 Nov 2026: EUR 0.28/kg EXW Germany — CMB News",
@@ -127728,28 +127730,22 @@
     "https://news.google.com/rss/articles/CBMipwFBVV95cUxOd2k0SHlFX3VhZnRVRE1PRzdzVGhpQThycVpuaFdYVU91cHNWWFpDd1NGTUwtNUowZUZFVFZGT2FwZHdlUFA3eE5lNFZXNGtBdXZqWF9oQ3JPbHdYM1YydEYwM2R6RmQyUWtSTW80QWRpWTRLR3FTT3NHNTFUYXEtOXowclpkWlYyY2pjTE5vcFdEcDZSWE5UYzFIaG9ONlBNZXNlb1VfSQ?oc=5"
    ],
    [
+    "2026-11-26 05:00 UTC",
+    "www.bakingbusiness.com",
+    "2026 grain harvest wrapping up, but risks remain",
+    "https://news.google.com/rss/articles/CBMimAFBVV95cUxNT3ZxNERZT1NWdFg3dExyeVhXU2tUekNORUMyLUJfSExCbHpLWFJxME9LMEprTmctaG92YzlRb3FtNVkzSUhyWTFWZ3hIUjYxcW5CZEZETGtOYV9HRVZvTVlVN2c4NV8yYzZiVkhpSERsVWZiVl9zSWl5N2NldzdPZkFpNFRydnJwYTlwaW1nUzBPYnotbGx2Yw?oc=5"
+   ],
+   [
+    "2026-11-26 00:08 UTC",
+    "www.cmegroup.com",
+    "Soybean and Corn futures climb ahead of holiday as Wheat mixed.",
+    "https://news.google.com/rss/articles/CBMisAFBVV95cUxQc1k3dVBhUXQxVTdaNU1JWF9Fem5vRjREdXlFanpIaFlQai1XbmNHQW0xZnZwN0dZR3NZZDZCWDhUTDJ3Vmt3ZE9ONWgtaVBnRFBVdmFiRFN5ZlJhejM4ZGNpYWd4UFk4N1BvZ0VNWDZyekR2Y0dFczN2T3J2R3RscFFiZ1dMS3l1eDRGMlBoU0t5QTB2TXVwTHRaMlEzMTgtQTkxMFU1bGlwTzFyNHB4Vw?oc=5"
+   ],
+   [
     "2026-11-25 23:56 UTC",
     "www.agweb.com",
     "Corn, Soybeans and Meal Rally Pre-Holiday on Technical Buying: Cattle Crash",
     "https://news.google.com/rss/articles/CBMiogFBVV95cUxOTmc3ajRNcmVyZ3IzMDY0VjdyU2JYZmpUZ0dTcWxGTXU3bGhYdEVKM19HNFp4T2NxZmt2YnI1SUJDRnBVcVlNdjdGNzR3cExrWkZxWXd4ejdnRUFDQURJYnNMUVdQQkhBY0ZHcWVpQ2RaUnNScVZFTWo5T0xtdmoyTFVvRVRzSWtESHdsTHlhOW9nQW9uVlhDcUFhRWVLUHZ3QWc?oc=5"
-   ],
-   [
-    "2026-11-25 22:26 UTC",
-    "www.tradingview.com",
-    "Corn Rallies into Thanksgiving Break",
-    "https://news.google.com/rss/articles/CBMimwFBVV95cUxPNGQyMEJtMUdLYTZ5dlMzaEhPM2dOcnVYQk9GQVdPdFRCR2poXzFYU2dBR1J3VE82R2F2SV9Wc3FtSEh2b3o2bldkalpGdlgxMERLa011dUZvTEpkaTZ1V2pvMDI0YlRReWkzaTVzVGtjUnh1dUpmaFA0RzJaY2E2TThVTVBzV0ZDQWw1QlI2cHQ3RjVBMVBpSEVtWQ?oc=5"
-   ],
-   [
-    "2026-11-25 21:37 UTC",
-    "www.agrolatam.com",
-    "Grain Market Close: Corn and Soybeans Rally as China Boosts Demand",
-    "https://news.google.com/rss/articles/CBMiowFBVV95cUxOenpFUWlTcUJUVzVBbEkxTGVzV1lNU3FPc3JzSmJBWGRfcEFTdjJlY2I0ODlFMkV5bXpzNXAyNE1kXzhJekYyYzA1QnVJbVFMUXdpeVpFZUloSHd6SUs3enJfb3h6MFJSRERpSlBIdXRnT3FSd1hyMEFINk5sTWk2M04wM3BSN1pYY2ZhbGs2bmJPZi1UbVN2SmhMV3BILTZIeGVr?oc=5"
-   ],
-   [
-    "2026-11-25 18:14 UTC",
-    "www.tradingview.com",
-    "Corn Rallying Heading into Thanksgiving Break",
-    "https://news.google.com/rss/articles/CBMipwFBVV95cUxNR0lmY25JT3MyMGJBRVFMZUM1V0x2YkFyYkNtNm9QRGY0N1k3dzFlMzk4eDEwYzFhdDczQXB3SS1iZkNZLWplQjJaYTEteS1LV2Qycnp3NVFrRG1IdWFnVDRNZ2pCZHZXam8yZVB6eS16bGhZRUUyRmk2LXZiQlRtb1RHRmZOSUpWSFpVN3E4YzBVdFJLVmdnQjQtVGlLWnVPR0MzV1lVOA?oc=5"
    ]
   ],
   "wheat": [
@@ -127804,12 +127800,6 @@
   ],
   "soybeans": [
    [
-    "2026-11-26 13:20 UTC",
-    "ukragroconsult.com",
-    "Brazil increased soybean meal exports by 8.5% in October",
-    "https://news.google.com/rss/articles/CBMilgFBVV95cUxOdkJuUnpHa3VOdmlRU3d3TzhudTlEVEF5TzlaSndUTzZFdlhTclFZYzhNdmZ4dTM1T1BKNmNQZThiQ0ozeGFMbC1TQTV5X1kxTXRyM1JQUzJLMU9XZ0JOcFVfaTFDdElRbHlzSVZHamxqeE9PUDlrMzBVMnRiZ25qM3U0Mk5uVVFILVAybGlGSmVPajZpWFE?oc=5"
-   ],
-   [
     "2026-11-26 07:30 UTC",
     "commodity-board.com",
     "Soybean Price World, 26 Nov 2026: EUR 0.91/kg FOB — CMB News",
@@ -127828,28 +127818,34 @@
     "https://news.google.com/rss/articles/CBMilAFBVV95cUxNUGxoYlhDcHRTR3NCZjFkZW1PbEVRWlV2LU85azFNazJLT0NDSy1HdnVsZnQ5Ymt6RGtTNjRtTVdXcUNheHBub0JXUUtvWU9uMUhpSkJfalZwaWNoUEJUd2JOU2ZLLUY4OWZhNVFZVnR1UE96SmVDMDM1dnhUcF9nUkROUnhkeWIzNW9iaElFYmdYckdV?oc=5"
    ],
    [
-    "2026-11-26 00:08 UTC",
-    "www.cmegroup.com",
-    "Soybean and Corn futures climb ahead of holiday as Wheat mixed.",
-    "https://news.google.com/rss/articles/CBMisAFBVV95cUxQc1k3dVBhUXQxVTdaNU1JWF9Fem5vRjREdXlFanpIaFlQai1XbmNHQW0xZnZwN0dZR3NZZDZCWDhUTDJ3Vmt3ZE9ONWgtaVBnRFBVdmFiRFN5ZlJhejM4ZGNpYWd4UFk4N1BvZ0VNWDZyekR2Y0dFczN2T3J2R3RscFFiZ1dMS3l1eDRGMlBoU0t5QTB2TXVwTHRaMlEzMTgtQTkxMFU1bGlwTzFyNHB4Vw?oc=5"
-   ],
-   [
     "2026-11-25 22:26 UTC",
     "www.tradingview.com",
     "Soybeans Rally into the Holiday",
     "https://news.google.com/rss/articles/CBMilAFBVV95cUxOZmZFVnVaQ2lqcTcycTNJcjhidi1WbUdvUGJPVVN5cWRsNVlvWkR5LWhBMDZhVUQwblZVZTM4MkFQQTVDNzNtdWlfUUxIR0lQcURMMjVBS1F2d3VVX1hOQ043YVRabXNoOGFxMGQ1TzNqZlpqRU1MNDFBR1UyZnU5MFFBLTRDZlE3bHdzUjlZV21DMzdE?oc=5"
    ],
    [
-    "2026-11-25 22:01 UTC",
-    "www.country-guide.ca",
-    "CBOT Weekly: Soybeans rise, corn, wheat mostly steady",
-    "https://news.google.com/rss/articles/CBMijwFBVV95cUxQUUgwQ1pKYV9xZUJHNlYwXzNjb051YVNQS1RlRk5hRy1oWENNUTRJTzQ2QTU1R0UtNTNkTi1xVEZyNC1UcU1mTFdWQlV2aVo0bVJEN0x0NURPZjFGNWxJRi0xSld2c2RHc1VzRzRTTEs5allTWVl1ajZpMmVMZEVocHJGc2prV1VoQTVVSTF5UQ?oc=5"
-   ],
-   [
     "2026-11-25 21:37 UTC",
     "www.agrolatam.com",
     "Grain Market Close: Corn and Soybeans Rally as China Boosts Demand",
     "https://news.google.com/rss/articles/CBMiowFBVV95cUxOenpFUWlTcUJUVzVBbEkxTGVzV1lNU3FPc3JzSmJBWGRfcEFTdjJlY2I0ODlFMkV5bXpzNXAyNE1kXzhJekYyYzA1QnVJbVFMUXdpeVpFZUloSHd6SUs3enJfb3h6MFJSRERpSlBIdXRnT3FSd1hyMEFINk5sTWk2M04wM3BSN1pYY2ZhbGs2bmJPZi1UbVN2SmhMV3BILTZIeGVr?oc=5"
+   ],
+   [
+    "2026-11-25 20:51 UTC",
+    "www.czapp.com",
+    "Slowing Chinese Soybean Demand Growth Challenges Exporters",
+    "https://news.google.com/rss/articles/CBMinwFBVV95cUxPUThKUkZRQzV0MEVKV1E5SUNrVWt0aFRvMjdXMFQ5R0FlTXF0MzBMek5TQ0trT0RZNjV0TGVWb1dxeUhGMDhtOTZiMTJCQkt6N2l6dlNxQVpWSVdxR25ZdHJBWmJMbXBsQWpBbThrUW9ZalR0WThZNGcwMVRKZXkyYlV0T3BKek1oa3Q0VzdEZVlOZndkNmRWaUZXM0c3WWs?oc=5"
+   ],
+   [
+    "2026-11-25 18:56 UTC",
+    "oklahomafarmreport.com",
+    "ASA Warns New Tariffs Pose Additional Threat to Struggling U.S. Farm Economy",
+    "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9OTlhCeVVQTFlGNmlHYUJpUVVoaHJ5bk11eEozNUZpSzRISFZBMktxRTI2T0U0MHZkR2lzQUFqa0J3bTRoaXF0a2FaOWZxRWt1bWRhdV9DLTU1allNdlNB?oc=5"
+   ],
+   [
+    "2026-11-25 18:38 UTC",
+    "www.livemint.com",
+    "Soybeans rebound ahead of holiday as soymeal futures climb",
+    "https://news.google.com/rss/articles/CBMirwFBVV95cUxNd2p4WEthcHhTMkZ0amVmdlA2OFRwM2dmcU9LOG1xaXdUMUlYNzJVbGlWZlVidmdLUFFwWXVEeDl4RWdFdXFfTkV4M0dkbWtkMFV1UEtnN1pzQ3ZBdzBNbTZmNFJHNGpDODc5Ml9reXR6b21ZNFFVdjN2dXhQTHlfT2s2Y3F5Mm50bVh6alFrdjJjbmVyREJaU2dfZk5yb2hGSGw1TGdPckRYT25LWm5v0gG0AUFVX3lxTFBjT3VDdi0tUnJpcS1CQ1pHXzhXWlBiZ2FLamhlVGVsZmxlUTBtSE54MGwxSmxBUmR1WDZYUGxzRlF0c004cU9WNVl6RzRTczRiNDVRTUc1clhBSmsyNWxuR0haNVpxOVpZbXA1WHUtNzh3d2F6T3lNb0dUWm5Ebkd0OXc1SklENFVndFhFamVmZE1uVnVIOE1scG1aWjRYLWJIeEFSXzZ4VWZIY01OSzJUbDQ5Zw?oc=5"
    ]
   ],
   "fx": [
@@ -127866,18 +127862,6 @@
     "https://news.google.com/rss/articles/CBMixgFBVV95cUxQOGtKYnJzRnQyR29faDM4VlFkVHduUmNMS0tVOTJKRVFmSEtuQ2l2QUllc2RSdlU2OEJQSk9fZTlfS0h2aFA0Q1FqTWtGczVSZ2E3UmJzeWczRWlrS05XdFdxaHlPRzZwc0hYTlJBWWtyWnE1SEp6bW5mU2wyeGRxTjc3WV9LdjNEcEM0dXhMUG14LTBQcDMxNnNQbmdxbkloR21JNDRHVWJsMDdFYjB1Vk02cXlwQ201WE9paWs2VEtka180T3c?oc=5"
    ],
    [
-    "2026-11-26 11:50 UTC",
-    "www.arabictrader.com",
-    "Societe Generale: The Canadian dollar is poised for further gains against its US counterpart",
-    "https://news.google.com/rss/articles/CBMi2AFBVV95cUxNWTAzQkUzQjlrMlJuSmJHczRZRXJUZmpkNkNqeHRqUjJtNlM4TkNTNGpQSDRzeXIwVUpfaHZfNm10ZlhGWmFnamVGcDRkNk9oZjhqWVpsaUxUODM0LW1NQWxiOHR1NFliRHpHQTRIZEVOZXBKb0hiTy1waUVmT1ZNSFVQcHZ0MXZrOHU5Q3ppVnhJSUF6TnFybUxOVEdRdThyZTNoNjF0NVpKUFp2TUFsVTc1cDl5XzJ2Z2dnWmNYeTZsVktZb0xUSXkyWWhTZ2Fhd3EwUzdFZVY?oc=5"
-   ],
-   [
-    "2026-11-26 11:08 UTC",
-    "arabcanadanews.ca",
-    "Canada's key interest rate records 4.70%.. How do banks determine borrowing costs?",
-    "https://news.google.com/rss/articles/CBMiswFBVV95cUxNbU42RE1TRzZVZ2RVbHZSb0ZmeWRxcnlPQ1phRUtGMXNQN1RFdXUtZ2RtQ0RXdkxDZ213WEFlQ2ZSLUlhbFhBbFhnWk0tUjlhYUViVXBkelNlN0gybXhzR3h3RTNyU3NmQ205cTBTbGxkYjloelBpOV9mTXJDNXIwNE1OS09fRWxYc0hla2ZOSHlxM1JxQl9NdUl0NldCeHF1RTlteERiMTZEb0xJMjAtY1gyRQ?oc=5"
-   ],
-   [
     "2026-11-26 11:00 UTC",
     "www.bloomberg.com",
     "All of Canada’s Big Six Banks Now See December Rate Hike",
@@ -127890,24 +127874,36 @@
     "https://news.google.com/rss/articles/CBMivAFBVV95cUxPMS1zNDhOa19PS1ZsOE40VWctNDFyNkhkdHpsLUlMX2U1UWpMRFhtZTdOSHJiQUV2YXRxSnV5SEhEenRnYllRSzR6YWRVZDFvblRsUkJ6OEVWU2pvZ3BNZG1tN2MxM1czamt5ZXNNN3Q1ZGtDZ0FSOEhIU1FJWk1rZDYzdlVPeHQ1V3JxMmxQU0daeGNEMDN0eEk1WTB5Q2s2Qm5hN2dFVm45aWtQdzVLMnBSSXBlOTYyXzFFbg?oc=5"
    ],
    [
-    "2026-11-26 10:03 UTC",
-    "www.forex.com",
-    "USD/CAD Forecast: Canadian Dollar Remains Under Pressure After Inflation Data",
-    "https://news.google.com/rss/articles/CBMiwAFBVV95cUxObFRySmVIbGJoS3gtMkR0LUVBRmVQMC1GZndWeldOSm5TX09ZaXdrWEJsZVJ0WVU4ZmtGY01sOXUzcF95YmotbjN0WUZjWC1PdnJQT3AwTlA1M2s0djBCUEk4blJPY0JDamR3dFVFbXowODQ3WFZ2aW16ZWVqUVNWc09zb2ZhSEk4UUdVVDY1YnFibUoydkx3NU1HcndRRmhLNXZNVnlJeDlHSkxwVjl5TXNOd2RGekVhTTVhbXRvdUc?oc=5"
-   ],
-   [
     "2026-11-26 09:58 UTC",
     "www.fxstreet.com",
     "Canadian Dollar: Further gains against US Dollar eyed - Societe Generale",
     "https://news.google.com/rss/articles/CBMisgFBVV95cUxQSGNMa3AwV2ZmSVNxTUcydUhYbHZwV3hfNUk0QkM4UkR5ejAwb0tTck9zSlhSbFBVLW1PNEY2czNqc2pCSmZNRWd2NFRCbmhFM1hVTHFaRFRickhRd1l2OVY5YnVwRVFMQTdheEtYUV9ad0czOXp0QmF3VVc1UENIcmw1Nk1xRGNXSTQ4WExwVGhQOXA4cVk1MDZMUXJHdGxRV2J2YW95eHdwWHh0bzdPRmd3?oc=5"
+   ],
+   [
+    "2026-11-26 06:50 UTC",
+    "www.nerdwallet.com",
+    "Best High-Interest Savings Accounts in Canada for 2026",
+    "https://news.google.com/rss/articles/CBMihwFBVV95cUxNZWdiZnBIaHZKU3dycERudUZLUDF3bnNYcXVWMUVvbDFNdFlQS3U5aElqZmtQVXpJbS1KcHlvMnZPdGVUaU1nM1F0YW5XcVB5THNNMWE2TnRrSDY0dlZHa0dPQll6bGU4UFhmcHZnZ212SkhRdWxNLUxBcnI0RnQyQWVULTdnTzA?oc=5"
+   ],
+   [
+    "2026-11-26 06:10 UTC",
+    "www.mpamag.com",
+    "Canada mortgage rates face fresh hikes as BMO revises 2027 outlook",
+    "https://news.google.com/rss/articles/CBMizgFBVV95cUxNdVBhbG1QYlFldDNsUmo5OUJodlU3MnpkUWFWN0UxcU4xalh4akhVMmZkNm5LaWI4VGRQYUN6LWlNai1SSGEtNnp4MmhLTzk5WGVCemRBSWNndXFLdEQySklneUhOdlhUdDBjNzNaZVZUajllQk1ENGtMaGVnNV8zbW12UmlMSFBhYjZCcVp5YWpKcmRGc3RZMEp0UnN6N2tlVUVwSk0wWWl4Qjk0Q0ZaUEZFbFYzaDUwaEF6c0JUVnNHQll4WXVCa1VoT2d2dw?oc=5"
+   ],
+   [
+    "2026-11-26 05:46 UTC",
+    "www.fxstreet.com",
+    "Canadian Dollar pulls back from two-week high vs USD; rising oil prices to limit losses",
+    "https://news.google.com/rss/articles/CBMiyAFBVV95cUxPcmNtWnhUWVdPRjRQQ3hJcHlIS1lUU0V6X3d1dDBPd3oxaHQxZl9lV3JoMlFtV21ON05pUTJheUg2eUVlYkRocF9UNThYMHFmRng2ODROWENldFl3MHhuZElJQ1E5ZVdUMFQwNUgyZlVnaHhJdExEaUVEQzVPSlVwcjJ6UUR6bzVlVXVUOFctRGc4WG5nZUVSbHFhM3hfa1RLRG9kMzludTNWLUZkZ196TFd2bzBfc01XYlJ1VWJSMWlHcXpyVzNpUA?oc=5"
    ]
   ],
   "geo": [
    [
-    "2026-11-26 13:55 UTC",
-    "www.france24.com",
+    "2026-11-26 14:20 UTC",
+    "www.straitstimes.com",
     "Global maritime trade set for zero growth in 2026: UN",
-    "https://news.google.com/rss/articles/CBMioAFBVV95cUxOUkprRG9BVm5IMnhLX1BwTGVQal9rVjRGXzc3Rm5fN01fWnItTmtJUmVYaGN5T0k4QmJoWUY4dklDcFg3dHEydEEtV3drV0FZY2JXNTBvQkMtQl92WU42OHJLRVZQSFBoRFVFcUdmbFUzR1ZwUVVkMUh3eFBKRjNYM0dDcWJ6eTE4b0pueGYta2h2ZWUzaTI2ZWZYRVh3YkYy?oc=5"
+    "https://news.google.com/rss/articles/CBMimgFBVV95cUxNSU94Vy1DaW85bms2QWNrRUtxV1ByQks5alVUVTZoRklzN3hVbTA1UXA2WHctM0dtWGs2VXNyaDFZU1U1cHpDMmNRS1JGX1hUVHRIRnJ4TnQxMGV4T2swLWRYeEdrYzQ5aEdVZS1mRTJPMUdXRFl0Y21KMmkyNVdNM29ueDVtTUJsZUEyWkJqSTlWZGFlNkltYVlB?oc=5"
    ],
    [
     "2026-11-26 11:59 UTC",
@@ -127916,28 +127912,22 @@
     "https://news.google.com/rss/articles/CBMiuwFBVV95cUxOdlR1X3RzaXgzam1xdVNUb3VfcWNTNkJNZDFlQkkwRlJsYllFRmZWem1mRmxBd2pOdmpNR0YxOF8yMEN1ZmNIU0p3bW1XSENtMngwZnJjSWFLa2xsNGpnSWRIVWJ2MW9CWndQdFVVaEJLRkJmdUNHU3ZvemJmN3lPUW1VUGRzUlFVLThVcEh4SEZyNlQxMV8yQTE0ejlvcU1JTXdqZXpERXM1X0RPbmtXcnJtVmJQcWJnSVpZ?oc=5"
    ],
    [
+    "2026-11-26 11:37 UTC",
+    "news.frontierafricareports.com",
+    "Russia Rejects New Black Sea Grain Deal, Wheat Risk Premium Reawakens",
+    "https://news.google.com/rss/articles/CBMitgFBVV95cUxPTXAxR1dpX0Zza1h2ZlNsbGF0QUgxRXRiNDMxRF9QQ2tWQU1sXzRwdlo2dGxBM0dnUFpkZXlOY0hJRkxMLTJZUjlQTzdiVE1vdU5fRG0zU0JndUhhS0JZSlAxUUs0RnEzbVVzcHZ0NDFvSm9JWllhcnRIaWxUYUNSWVROazZ2NGFzaXQ0d1ZjR0xEemlvVHlHajNHNGRZVlV4Qk13UFdPdXhlSnkwMVNRSDVuMU1RQQ?oc=5"
+   ],
+   [
     "2026-11-26 11:00 UTC",
-    "www.scmp.com",
+    "amp.scmp.com",
     "Why Russia’s farm exports to China are booming despite US trade thaw",
-    "https://news.google.com/rss/articles/CBMiuwFBVV95cUxORHZFbHUzSGFSZEtPbmNiQkp6cHRsQ1ZQRDJPTzFXUnBNSXl1aFB4SzdNTnFfTG12VzJfV3RlWXZiN3Q0R2J6S2FWcEY3Y0lGX2E1SEcyLW9RMTZWbFhHY2RtbWJkeGdERVBBdTZLOEFoZmdEOTJtcEc0MlUyaVhaZXdxcWxTZEhpLUV1TnlkNWg4dzZ3LVVtMm5HeExPeWlWUlRMY2lBNkZiemEtNm0td2ktZUs1Znplekxn0gG7AUFVX3lxTE4yVlJjUENVc0pQQ1dfdDdlNzZvUDE2Nl9PeEJ0NDdHaUlNaW1ObGJnMTZCNUtmeTFxWlpicXgta1RxT0VPVHF5Z3NyMFZTbTlsNnc2LXlXT3lPbHNOSURhaGZFVXNsdmp1Rlo2azhCdEZNWmVSRkhVNE9MTjhJaXQtSHFQQ0NUdk5kOGVUbXRQU0l4azd4S1pyb0EzNDg2d1Z2bHRROUgzNnVjdUYtcTVtZTZGTGtVY0xIckE?oc=5"
+    "https://news.google.com/rss/articles/CBMiuwFBVV95cUxOMlZSY1BDVXNKUENXX3Q3ZTc2b1AxNjZfT3hCdDQ3R2lJTWltTmxiZzE2QjVLZnkxcVpaYnF4LWtUcU9FT1RxeWdzcjBWU205bDZ3Ni15V095T2xzTklEYWhmRVVzbHZqdUZaNms4QnRGTVplUkZIVTRPTE44SWl0LUhxUENDVHZOZDhlVG10UFNJeGs3eEtacm9BMzQ4NndWdmx0UTlIMzZ1Y3VGLXE1bWU2RkxrVWNMSHJB0gG7AUFVX3lxTE4yVlJjUENVc0pQQ1dfdDdlNzZvUDE2Nl9PeEJ0NDdHaUlNaW1ObGJnMTZCNUtmeTFxWlpicXgta1RxT0VPVHF5Z3NyMFZTbTlsNnc2LXlXT3lPbHNOSURhaGZFVXNsdmp1Rlo2azhCdEZNWmVSRkhVNE9MTjhJaXQtSHFQQ0NUdk5kOGVUbXRQU0l4azd4S1pyb0EzNDg2d1Z2bHRROUgzNnVjdUYtcTVtZTZGTGtVY0xIckE?oc=5"
    ],
    [
     "2026-11-25 23:58 UTC",
     "beinsure.com",
     "Black Sea and Danube marine insurance costs surge as reinsurers restrict cover",
     "https://news.google.com/rss/articles/CBMiggFBVV95cUxOQ3QwdndlX1IwTEQwNFp1dWNhdjh4OXR4T0VJUnhmRWFWVUoxUHZuTXdQTkdMcXdkMmV3cTc4Z28xY3ZyTEprdWdTeEZxc2JUZzdNallELWtzdE53MXdSTzMtNERTN3hKTUJDOVA0YVlrckVOX0wyV1hub3hJekNBc3BB?oc=5"
-   ],
-   [
-    "2026-11-25 17:36 UTC",
-    "www.ctvnews.ca",
-    "U.S. trade deal must ‘accommodate’ Canada, says Trump’s representative",
-    "https://news.google.com/rss/articles/CBMiuAFBVV95cUxQOWNUU01wV0xfM1BBMTVTYlZXM0RaUWVLeS10em1CYU5PNV9xU3ZwRmVvTG9rMjNLOHpJS2FZVlpVeW4xU1J6aXpfaml2ZjV3dW45R3B1OUZtOTd3Nzc5ZTU5bGt4SDFCWnR5U3lSQXp0WktJMDdmT1VWYlVFd3pCUEhQZENuSm1vZ010TjJNbzlUdzhhVkI0Nk5abG9YM2VZeF9na0NOZ0dqeGxINzRCNXNMTmdQaU41?oc=5"
-   ],
-   [
-    "2026-11-25 15:30 UTC",
-    "commodity-board.com",
-    "Wheat Prices Black Sea, 25 Nov 2026: Risk Premium Returns — CMB News",
-    "https://news.google.com/rss/articles/CBMinAFBVV95cUxOVnotZFZtQ0JCMHdtRnBxbjhuSHRSQ2dPalBoX0ktaF9vZkVicEYycmx6a3YtanZuN1BDV3NLRHZYekNKc2RhV1ZUQmg2TnFvblpzTFdEa3JJaTlnNzljbEQwRVpqWXpuQ200dXJDUl83NmJlc1pkWUluaU96dkVfNXFOQ2wwM3M2N0tqZW56N3RqUDZUQmt4SXc4ZDc?oc=5"
    ],
    [
     "2026-11-25 14:04 UTC",
@@ -127950,6 +127940,12 @@
     "www.agrolatam.com",
     "Trump's New Tariffs Threaten US Farmers as Trade Losses and Production Costs Mount",
     "https://news.google.com/rss/articles/CBMiuAFBVV95cUxNZDIzOS1mT0s1TkZoX20zejhsZFN0Y2FOWTQ4VFF4aFhkaFZvM1ZhWkVMYWlyNHg4N2JXWThpYXg0WWhsSm1jM1RlX3JyX3NuZTN2UUxzSENIOFduejhzMXVLQV9aNkJTc2NWeGxjbXhwSFJXdmtFUVpVNkhYUmdYOS1CN2pPNElrYllVZXoxeVpxdVd2Z2FpSklLS3Zjdkg3TGxPTGpKX21EcVhnSm02Zmx6b1h3RUVR?oc=5"
+   ],
+   [
+    "2026-11-25 12:36 UTC",
+    "www.world-grain.com",
+    "US harvest wraps up, but war and trade risks remain",
+    "https://news.google.com/rss/articles/CBMimAFBVV95cUxNS0lUZ2RGZmJwVm5jaWRjZ1pncDg1UjBhUkdkeG5YVzViZkhkbE1lRW1IdVhNclJWemRfSFl3V3JOZGs2cnBoU1NncEU3eXR2bFFMVDdBTlRLWkxJN2JoWllpZ3h0bVdoT1lUeDYtRHdhU0RsMHZPUWhpTjFTZDlwTG9heDFQdGZzb0x3RnNGSlU3cmdYZVpRdQ?oc=5"
    ]
   ],
   "macro": [
