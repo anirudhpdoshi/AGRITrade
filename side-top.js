@@ -94,7 +94,11 @@
     if (wti && brent && wti.last && brent.last) cru += T("Brent–WTI", "$" + nf(brent.last - wti.last, 2), "flat", "spread", " pb-dv", "Brent minus WTI", "brentwti", brent.last - wti.last);
     var fedM = /(\d{3})-(\d{3})/.exec(P.fed_range || ""), boc = P.boc_decided && P.boc_decided.rate != null ? P.boc_decided.rate : P.corra_now;
     var pol = (fedM ? T("Fed funds", (+fedM[1] / 100).toFixed(2) + "–" + (+fedM[2] / 100).toFixed(2) + "%", "flat", "target", "", "Fed funds target range", "fed", +fedM[2] / 100) : "") + (boc != null ? T("BoC", nf(+boc, 2) + "%", "flat", "overnight", "", "Bank of Canada policy rate", "boc", +boc) : "");
-    var ust = ["3M", "1Y", "2Y", "5Y", "10Y", "20Y", "30Y"].map(function (t) { var y = Y[t]; if (!y || y.y == null) return ""; var c = cls(y.chg_bp);
+    var TR = fx.treasury || {};
+    var ust = ["3M", "1Y", "2Y", "5Y", "10Y", "20Y", "30Y"].map(function (t) { var y = Y[t];
+      /* no live quote for this tenor (its futures proxy is shut, e.g. on a US holiday): show the latest official Treasury close, dulled, no move */
+      if ((!y || y.y == null) && TR[t] != null) return T(t, nf(+TR[t], 3) + "%", "flat", "close", " pb-old", "US " + t + " · latest official U.S. Treasury par yield (no live quote right now)", "ust" + t, +TR[t]);
+      if (!y || y.y == null) return ""; var c = cls(y.chg_bp);
       var py = y.chg_bp != null ? +y.y - y.chg_bp / 100 : null;
       return T(t, nf(+y.y, 3) + "%", c, chg(c, mv(+y.chg_bp, 1, " bp"), py ? sg((+y.y / py - 1) * 100, 2, "%") : null), "", "US " + t + " · " + (y.src || "") + (y.label ? " · " + y.label : ""), "ust" + t, +y.y); }).join("");
     var c2 = Y["2Y"], c10 = Y["10Y"], c3 = Y["3M"];
@@ -243,6 +247,8 @@
     /* selected: the tile inverts (navy on light here; the light theme's page inversion turns it into white on deep navy) */
     "#pulse-bar .pb-t.sel,#pulse-bar .pb-t.sel:hover{background:#e9eef6;border-color:#e9eef6}#pulse-bar .pb-t.sel span{color:#34425c}#pulse-bar .pb-t.sel b{color:#0b1730}#pulse-bar .pb-t.sel i{color:#0b1730}" +
     "#pulse-bar .pb-t.sel.up{box-shadow:inset 2px 0 0 #0f9d58}#pulse-bar .pb-t.sel.up .pb-ar{color:#0f9d58}#pulse-bar .pb-t.sel.dn{box-shadow:inset 2px 0 0 #d93025}#pulse-bar .pb-t.sel.dn .pb-ar{color:#d93025}" +
+    ".pb-btn:focus-visible{outline:2px solid #d9b46a;outline-offset:1px}" +
+    "@media (max-width:760px){#pulse-bar{position:relative;top:auto!important;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:6px 10px}#pulse-bar::-webkit-scrollbar{display:none}}" +
     "#pulse-bar .pb-t.pb-old{background:rgba(143,157,179,.10);border-color:rgba(143,157,179,.22);box-shadow:inset 2px 0 0 rgba(143,157,179,.35);filter:saturate(.25);opacity:.8}#pulse-bar .pb-t.sel.pb-old{filter:none;opacity:1}" +
     "#pulse-bar .pb-t.sel::after{content:'SELECTED';position:absolute;top:-6px;left:50%;transform:translateX(-50%);font:700 6.5px/8px 'IBM Plex Mono',monospace;letter-spacing:.08em;padding:0 3px;border-radius:2px;background:#0b1730;color:#e9eef6;pointer-events:none}" +
     ".pb-t.flat{background:rgba(143,157,179,.07);border-color:rgba(143,157,179,.22)}.pb-t.pb-dv{border-style:dashed}.pb-btn{cursor:pointer}" +

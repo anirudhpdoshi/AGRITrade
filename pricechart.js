@@ -63,6 +63,7 @@
       .then(function (j) { H = j; err = ""; busy = false; cb && cb(); }).catch(function () { err = "Price history is not available right now — retrying shortly."; busy = false; cb && cb(); setTimeout(function () { load(paint); }, 30000); });
   }
   function live(k) { var t = doc.querySelector('#pulse-bar [data-pc="' + k + '"]'); if (!t) return null;
+    if (t.classList.contains("pb-old")) return { v: null, chg: "", txt: "", up: false, dn: false, tip: "" };   /* market closed today: no point is added for today */
     var v = parseFloat(t.getAttribute("data-pv")), i = t.querySelector("i"), b = t.querySelector("b");
     return { v: isFinite(v) ? v : null, chg: i ? i.textContent : "", txt: b ? b.textContent : "", up: t.classList.contains("up"), dn: t.classList.contains("dn"), tip: t.getAttribute("title") || "" }; }
   function today() { return new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" }); }
