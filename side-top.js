@@ -119,7 +119,7 @@
     if (cu && gold && cu.last && gold.last) { var r = cu.last / gold.last * 1000, r0 = cu.prev_close && gold.prev_close ? cu.prev_close / gold.prev_close * 1000 : null, rc = cls(r0 ? r - r0 : null);
       rk += T("Cu/Gold", nf(r, 3), rc, r0 ? chg(rc, null, sg((r / r0 - 1) * 100, 2, "%")) : "×1000", " pb-dv", "Copper ($/lb) ÷ gold ($/oz) × 1000 — rising = growth optimism, falling = defensive", "cugold", r); }
     var eq = wt("spx", "S&amp;P 500", 2, "", " pts") + wt("ixic", "Nasdaq", 2, "", " pts") + wt("dji", "Dow", 2, "", " pts") + wt("rut", "Russell 2000", 2, "", " pts");   /* US indices (owner, Nov 24 2026) */
-    return grp("Grains &amp; FX", gr) + grp("Crude &amp; gas", cru) + grp("Policy", pol) + grp("US indices &amp; risk", eq + rk) + grp("US Treasuries", ust) + grp("Precious metals", pm) + grp("Canada", can);
+    return grp("Grains &amp; FX", gr) + grp("Crude &amp; gas", cru) + grp("Policy", pol) + grp("Canada", can) + grp("US indices &amp; risk", eq + rk) + grp("US Treasuries", ust) + grp("Precious metals", pm);
   }
   /* selected tile: stays selected until another tile is picked; clicking it again changes nothing (no redraw, no movement) */
   doc.addEventListener("click", function (e) {

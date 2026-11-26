@@ -1,0 +1,57 @@
+/* soft.css — the whole desk in the Market pulse band's soft, matte style (owner, Nov 26 2026).
+   Loaded last. Dark-native like everything else: the light theme is the page inversion, so it follows automatically.
+   Softer palette, hairline borders, gold-bar section heads, quiet tables and tabs, gentle green/red. */
+:root{
+  --bg:#070b11; --panel:#0c121a; --panel2:#0a1017; --line:#151e2a; --line2:#1c2736;
+  --ink:#e2e8f0; --muted:#a6b2c3; --faint:#8592a6;
+  --green:#74c99c; --red:#ec8f88; --cyan:#6ed2eb; --amber:#d9b46a; --call:#74c99c; --put:#ec8f88;
+}
+body{background:var(--bg)}
+
+/* cards: matte, hairline, no heavy shadows */
+.tile,.rail-card,.mcard,.dash-card,.ad-sec,.tq-p,.hl-sec,.pi-card,.ev-card,.w-card{
+  background:var(--panel)!important;border:1px solid rgba(255,255,255,.055)!important;border-radius:10px!important;box-shadow:none!important}
+.tile{padding:14px 16px}
+.layout[data-subt] .sub.on>.tile,.wlay #wBody>.tile{border-top:1px solid rgba(255,255,255,.055)!important}
+/* charts and colours inside cards a touch calmer */
+.tab-panel .tile{filter:saturate(.86)}
+
+/* section heads: the band's gold-bar label */
+.tile>h2,.tile>h3:first-child,.rail-title>span:first-child{font:600 11.5px/1.35 "IBM Plex Mono",ui-monospace,monospace!important;letter-spacing:.09em!important;text-transform:uppercase;
+  color:#cdb07a!important;border-left:2px solid rgba(217,180,106,.7);padding-left:8px;margin-bottom:10px}
+.tile>h2 .h2note,.tile>h3 .h2note{font:400 11px "IBM Plex Sans",system-ui,sans-serif!important;letter-spacing:.01em!important;text-transform:none;color:var(--faint)!important}
+
+/* text tones */
+.note,.stamp,.h2note,.sub-note,small{color:var(--faint)}
+.up,.pos{color:var(--green)!important}.dn,.neg{color:var(--red)!important}
+
+/* tables: quiet heads, hairline rows, tabular figures */
+table th{color:var(--faint)!important;font-weight:600;border-bottom:1px solid rgba(255,255,255,.07)!important;background:transparent}
+table td{border-bottom:1px solid rgba(255,255,255,.04)!important;font-variant-numeric:tabular-nums}
+table tbody tr:hover td{background:rgba(255,255,255,.022)}
+
+/* menus and tabs: soft underline, no boxes */
+.gnav .gbtn,.gnav [data-gnav]{color:var(--muted)}
+.gnav [data-gnav][aria-current=page],.gnav [data-gnav].on{color:#e9d3a2}
+.subnav .subbtn{color:var(--faint)!important}
+.subnav .subbtn[aria-selected=true]{color:#e9d3a2!important;border-bottom-color:rgba(217,180,106,.8)!important}
+.st-nav .st-b,.pos-tabs button,.it-tabs button,.w-tabs button,.mon-tabs button,.mn2-tabs button,.ix-nav button,.pi-nav button{border-color:rgba(255,255,255,.07)!important}
+.st-nav .st-b[aria-selected=true],.pos-tabs button[aria-pressed=true],.w-tabs button[aria-selected=true],.pi-nav button[aria-pressed=true]{
+  border-color:rgba(110,210,235,.7)!important;color:#d6f1f8!important;background:rgba(110,210,235,.08)!important;box-shadow:0 0 0 1px rgba(110,210,235,.18)}
+
+/* chips, badges, pills: soft tints */
+.badge,.chip,.pill,.age-pill,.tag{border-color:rgba(255,255,255,.1)!important}
+.sec-chip[aria-pressed=true]{border-color:rgba(110,210,235,.7)!important;background:rgba(110,210,235,.08)!important;color:#d6f1f8!important}
+
+/* inputs and buttons */
+input,select,textarea{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);color:var(--ink);border-radius:6px}
+button:focus-visible,a:focus-visible{outline:1px solid rgba(217,180,106,.9);outline-offset:1px}
+
+/* right-hand panel: same matte cards */
+.fr-drawer{background:var(--bg)!important;border-left:1px solid rgba(255,255,255,.05)!important}
+.st-sec{background:rgba(255,255,255,.02)!important;border:1px solid rgba(255,255,255,.055)!important}
+.st-h b{color:#cdb07a!important;border-left:2px solid rgba(217,180,106,.7);padding-left:6px}
+
+/* scrollbars */
+*{scrollbar-color:rgba(255,255,255,.12) transparent;scrollbar-width:thin}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:8px}::-webkit-scrollbar-track{background:transparent}
