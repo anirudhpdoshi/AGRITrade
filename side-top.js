@@ -67,16 +67,19 @@
   function mv(abs, d, unit, pre) { return abs == null || !isFinite(abs) ? null : (abs > 0 ? "+" : abs < 0 ? "−" : "") + (pre || "") + nf(Math.abs(abs), d) + (unit || "").replace(/^ /, "\u2009"); }
   var SELK = ""; try { SELK = localStorage.getItem("desk.pb.sel") || ""; } catch (e) {}
   /* every tile opens its price chart (pricechart.js): data-pc = chart key, data-pv = the live value for the chart's last point */
-  function T(n, v, c, s, extra, tip, key, raw) { return '<div class="pb-t ' + (c || "flat") + (extra || "") + (key ? " pb-btn" : "") + (key && key === SELK ? " sel" : "") + '"' + (key ? ' data-pc="' + key + '" role="button" tabindex="0"' + (raw != null && isFinite(raw) ? ' data-pv="' + raw + '"' : "") : "") + (tip ? ' title="' + esc(tip) + '"' : "") + "><span>" + n + "</span><b>" + v + "</b>" + tail(s) + "</div>"; }
+  function T(n, v, c, s, extra, tip, key, raw, ld) { return '<div class="pb-t ' + (c || "flat") + (extra || "") + (key ? " pb-btn" : "") + (key && key === SELK ? " sel" : "") + '"' + (ld ? ' data-last="LAST · ' + ld.toUpperCase() + '"' : "") + (key ? ' data-pc="' + key + '" role="button" tabindex="0"' + (raw != null && isFinite(raw) ? ' data-pv="' + raw + '"' : "") : "") + (tip ? ' title="' + esc(tip) + '"' : "") + "><span>" + n + "</span><b>" + v + "</b>" + tail(s) + "</div>"; }
   function grp(name, tiles) { return tiles ? '<div class="pb-g"><em>' + name + '</em><div class="pb-r">' + tiles + "</div></div>" : ""; }
-  function wt(id, n, d, pre, unit) { var x = wi(id); if (!x || x.last == null) return ""; var c = cls(x.pct);
+  function lastDay(ts) { if (!ts) return ""; var t = Date.parse(ts), a = new Date(t).toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
+    return a === new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" }) ? "" : new Date(t).toLocaleDateString("en-US", { timeZone: "America/Toronto", weekday: "short" }); }
+  function wt(id, n, d, pre, unit) { var x = wi(id); if (!x || x.last == null) return ""; var c = cls(x.pct), ld = lastDay(x.ts);
     var ab = x.chg != null && x.prev_close != null ? mv(+x.chg, d, unit || "", unit ? "" : pre) : null;
-    return T(n, (pre || "") + nf(x.last, d), c, chg(c, ab, sg(x.pct, 2, "%")), "", x.name + " · " + (x.provider || "delayed") + (x.ts ? " · " + hm(Date.parse(x.ts)) : "") + " · click for the price chart", id, x.last); }
+    /* not today's session (holiday, weekend, pre-open): the move shown is that session's, tagged LAST · day */
+    return T(n, (pre || "") + nf(x.last, d), c, chg(c, ab, sg(x.pct, 2, "%")), ld ? " pb-old" : "", x.name + " · " + (x.provider || "delayed") + (x.ts ? " · " + (ld ? ld + " " : "") + hm(Date.parse(x.ts)) : "") + (ld ? " · market closed — last session's move" : "") + " · click for the price chart", id, x.last, ld); }
   function bar() {
     var D = root.DATA; if (!D) return "";
     var fx = D.fx || {}, Y = fx.yields_live || {}, x = fx.fxcross || {}, P = fx.policy || {};
     var gr = GR.map(function (q) { var g = grain(q[0]); if (!g) return ""; var c = cls(g.ch);
-      return '<button type="button" class="pb-t pb-btn ' + c + (SELK === q[0] ? " sel" : "") + '" data-pc="' + q[0] + '" data-pv="' + g.px + '" title="' + q[1] + " " + esc(g.c) + ' — click for the price chart' + (g.ch == null ? "" : " · " + sg(g.ch, 2, "¢") + " today") + '"><span>' + q[1] + " " + esc(g.c) + "</span><b>" + nf(g.px, 4) + "</b>" +
+      return '<button type="button" class="pb-t pb-btn ' + c + (SELK === q[0] ? " sel" : "") + (root.MKT && MKT.grain && !MKT.grain() ? ' pb-old" data-last="CBOT CLOSED' : "") + '" data-pc="' + q[0] + '" data-pv="' + g.px + '" title="' + q[1] + " " + esc(g.c) + ' — click for the price chart' + (g.ch == null ? "" : " · " + sg(g.ch, 2, "¢") + " today") + '"><span>' + q[1] + " " + esc(g.c) + "</span><b>" + nf(g.px, 4) + "</b>" +
         tail(g.ch == null ? "" : chg(c, mv(g.ch, 2, "¢"), sg(g.pct, 2, "%"))) + "</button>"; }).join("");
     var el = doc.getElementById("fx-spot-big"), lv = el ? parseFloat(el.textContent.replace(/[^\d.]/g, "")) : NaN, bsx = root.PRICE_SYNC && PRICE_SYNC.best && PRICE_SYNC.best("CAD=X");
     var spot = isFinite(lv) && lv > 0.5 ? lv : (bsx && bsx.px) || (fx.feed && +fx.feed.mid), ref = fx.spot && +fx.spot.ref, ch = spot && ref ? (spot / ref - 1) * 100 : null, cc = cls(ch);
@@ -240,6 +243,7 @@
     /* selected: the tile inverts (navy on light here; the light theme's page inversion turns it into white on deep navy) */
     "#pulse-bar .pb-t.sel,#pulse-bar .pb-t.sel:hover{background:#e9eef6;border-color:#e9eef6}#pulse-bar .pb-t.sel span{color:#34425c}#pulse-bar .pb-t.sel b{color:#0b1730}#pulse-bar .pb-t.sel i{color:#0b1730}" +
     "#pulse-bar .pb-t.sel.up{box-shadow:inset 2px 0 0 #0f9d58}#pulse-bar .pb-t.sel.up .pb-ar{color:#0f9d58}#pulse-bar .pb-t.sel.dn{box-shadow:inset 2px 0 0 #d93025}#pulse-bar .pb-t.sel.dn .pb-ar{color:#d93025}" +
+    ".pb-t.pb-old{opacity:.78}.pb-t.pb-old::before{content:attr(data-last);position:absolute;top:-6px;right:3px;font:700 6.5px/8px 'IBM Plex Mono',monospace;letter-spacing:.06em;padding:0 3px;border-radius:2px;background:#5a6477;color:#eef2f8;pointer-events:none}#pulse-bar .pb-t.sel.pb-old{opacity:1}" +
     "#pulse-bar .pb-t.sel::after{content:'SELECTED';position:absolute;top:-6px;left:50%;transform:translateX(-50%);font:700 6.5px/8px 'IBM Plex Mono',monospace;letter-spacing:.08em;padding:0 3px;border-radius:2px;background:#0b1730;color:#e9eef6;pointer-events:none}" +
     ".pb-t.flat{background:rgba(143,157,179,.07);border-color:rgba(143,157,179,.22)}.pb-t.pb-dv{border-style:dashed}.pb-btn{cursor:pointer}" +
     "body.locked #pulse-bar{display:none}#status-strip{display:none!important}.topbar h1,.topbar .sub{display:none!important}#grains-head{display:none!important}body.gr3 main{display:block!important}" +

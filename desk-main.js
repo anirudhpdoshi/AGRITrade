@@ -2742,6 +2742,7 @@ window.MKT=(function(){
   function et(t){ var p={}; new Intl.DateTimeFormat('en-US',{timeZone:'America/Toronto',weekday:'short',year:'numeric',month:'2-digit',day:'2-digit',hour:'numeric',minute:'numeric',hourCycle:'h23'}).formatToParts(new Date(t||Date.now())).forEach(function(x){ p[x.type]=x.value; }); return {wd:p.weekday, m:(+p.hour)*60+(+p.minute), d:p.year+'-'+p.month+'-'+p.day}; }
   var WK=['Mon','Tue','Wed','Thu','Fri'];
   /* CBOT grain holidays (CME holiday calendar): closed all day, no overnight session the evening before; early close 12:05 CT = 13:05 ET */
+  var B_SHUT={'2026-11-26':1,'2026-12-25':1,'2027-01-01':1,'2027-01-18':1,'2027-02-15':1}, B_EARLY={'2026-11-27':840,'2026-12-24':840}, N_EARLY={'2026-11-27':780,'2026-12-24':780};
   var G_SHUT={'2026-11-26':1,'2026-12-25':1,'2027-01-01':1,'2027-01-18':1,'2027-02-15':1,'2027-03-26':1}, G_EARLY={'2026-11-27':785,'2026-12-24':785};
   function nextD(d){ var x=new Date(d+'T12:00:00Z'); x.setUTCDate(x.getUTCDate()+1); return x.toISOString().slice(0,10); }
   function prevD(d){ var x=new Date(d+'T12:00:00Z'); x.setUTCDate(x.getUTCDate()-1); return x.toISOString().slice(0,10); }
@@ -2750,7 +2751,10 @@ window.MKT=(function(){
       var dayEnd=G_EARLY[p.d]||860, noNight=G_SHUT[prevD(p.d)]||G_EARLY[p.d];   /* the session after a holiday opens at 9:30 ET, no overnight */
       return (WK.indexOf(p.wd)>=0&&p.m>=570&&p.m<dayEnd)||(['Sun','Mon','Tue','Wed','Thu'].indexOf(p.wd)>=0&&p.m>=1200&&!G_SHUT[nextD(p.d)]&&!G_EARLY[nextD(p.d)])||(WK.indexOf(p.wd)>=0&&p.m<525&&!noNight); },
     fut:function(t){ var p=et(t); if(p.wd==='Sat'||(p.wd==='Sun'&&p.m<1080)||(p.wd==='Fri'&&p.m>=1020)) return false; return !(p.m>=1020&&p.m<1080); },
-    bond:function(t){ var p=et(t); return WK.indexOf(p.wd)>=0&&p.m>=480&&p.m<1020; } };
+    /* US Treasuries (SIFMA): closed on US market holidays, 2pm ET early close the day after Thanksgiving and Christmas Eve */
+    bond:function(t){ var p=et(t); if(B_SHUT[p.d]) return false; return WK.indexOf(p.wd)>=0&&p.m>=480&&p.m<(B_EARLY[p.d]||1020); },
+    /* NYSE / Nasdaq cash session: closed on exchange holidays, 1pm ET early closes */
+    us:function(t){ var p=et(t); if(B_SHUT[p.d]) return false; return WK.indexOf(p.wd)>=0&&p.m>=570&&p.m<(N_EARLY[p.d]||960); } };
 })();
 /* Dealing ticket (owner design, Nov 7): two-sided only when the feed carries a real bid and ask; otherwise one mid ticket.
    Big figure small, pips large, fractional pip raised; colour = vs prior close; stats from the stored session. */
