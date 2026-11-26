@@ -24,6 +24,7 @@ YAHOO = {   # tile key: (yahoo symbol, name, decimals)
     "wti": ("CL=F", "WTI crude (NYMEX front month, $/bbl)", 2), "brent": ("BZ=F", "Brent crude (ICE front month, $/bbl)", 2), "natgas": ("NG=F", "Natural gas (Henry Hub, $/MMBtu)", 3),
     "gold": ("GC=F", "Gold (COMEX, $/oz)", 1), "silver": ("SI=F", "Silver (COMEX, $/oz)", 3), "platinum": ("PL=F", "Platinum (NYMEX, $/oz)", 1),
     "palladium": ("PA=F", "Palladium (NYMEX, $/oz)", 1), "copper": ("HG=F", "Copper (COMEX, $/lb)", 4), "vix": ("^VIX", "VIX (S&P 500 implied volatility)", 2),
+    "soyoil": ("ZL=F", "Soybean oil (CBOT, ¢/lb)", 2), "soymeal": ("ZM=F", "Soybean meal (CBOT, $/short ton)", 1),
     "spx": ("^GSPC", "S&P 500", 2), "ixic": ("^IXIC", "Nasdaq Composite", 2), "dji": ("^DJI", "Dow Jones Industrial Average", 2), "rut": ("^RUT", "Russell 2000", 2),
 }
 UST = {"3M": "3 Mo", "1Y": "1 Yr", "2Y": "2 Yr", "5Y": "5 Yr", "10Y": "10 Yr", "20Y": "20 Yr", "30Y": "30 Yr"}   # US Treasury daily par yield curve CSV columns
@@ -144,6 +145,16 @@ def main():
         S["brentwti"] = {"name": "Brent − WTI spread ($/bbl)", "src": "Yahoo BZ=F − CL=F", "dec": 2, "unit": "$", "d": diff(S["brent"]["d"], S["wti"]["d"], 1, 2)}
     if "copper" in S and "gold" in S:
         S["cugold"] = {"name": "Copper/gold ratio (×1000)", "src": "Yahoo HG=F ÷ GC=F", "dec": 3, "unit": "", "d": [[d, round(v / g * 1000, 4)] for (d, v), g in ((x, dict(S["gold"]["d"]).get(x[0])) for x in S["copper"]["d"]) if g]}
+    # grain relationships (owner, Nov 26 2026): board crush, wheat–corn spread, soy/corn ratio — all from the same daily closes
+    if all(k in S for k in ("soymeal", "soyoil", "soybeans")):
+        M, O = dict(S["soymeal"]["d"]), dict(S["soyoil"]["d"])
+        S["crush"] = {"name": "Soybean board crush ($/bu) = meal×0.022 + oil×0.11 − beans", "src": "Yahoo ZM=F, ZL=F, ZS=F daily closes", "dec": 2, "unit": "$",
+                      "d": [[d, round(M[d] * 0.022 + O[d] * 0.11 - v, 4)] for d, v in S["soybeans"]["d"] if d in M and d in O]}
+    if "wheat" in S and "corn" in S:
+        S["wheatcorn"] = {"name": "Wheat − corn spread ($/bu)", "src": "Yahoo ZW=F − ZC=F", "dec": 4, "unit": "$", "d": diff(S["wheat"]["d"], S["corn"]["d"], 1, 4)}
+    if "soybeans" in S and "corn" in S:
+        Cn = dict(S["corn"]["d"])
+        S["soycorn"] = {"name": "Soybean / corn price ratio", "src": "Yahoo ZS=F ÷ ZC=F", "dec": 3, "unit": "", "d": [[d, round(v / Cn[d], 4)] for d, v in S["soybeans"]["d"] if Cn.get(d)]}
     for k, v in S.items():
         print(f"{k:10s} {len(v['d']):5d} pts  {v['d'][0][0] if v['d'] else '-'} → {v['d'][-1][0] if v['d'] else '-'}")
     for k, e in errs.items():
