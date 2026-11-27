@@ -63,6 +63,7 @@ DRIVERS = [  # id, label, regex, markets it moves
     ("logistics", "Logistics (barge, rail, ports)", r"barge|mississippi|\brail\b|\bport\b|freight|strike|shipping lane", ["soybeans", "corn", "wheat", "canola"]),
     ("macro", "Macro risk (Fed, equities)", r"federal reserve|\bfed\b|interest rate|inflation|stocks? (rall|fell|slid)|wall street|recession", ["dxy", "usdcad", "wti"]),
 ]
+JUNK = r"price idx|specifications|volatility & greeks|options? prices|historical (data|prices)|steps to|how to |podcast|recipe|purple corn|quiz|webinar|obituar"
 BULL = r"rall(y|ies|ied)|surg|soar|jump|climb|gain|higher|\brises?\b|\brose\b|rebound|strong|tight|\bbuy|purchas|bullish|spike|advance|firm"
 BEAR = r"\bfall|\bfell\b|drop|slump|plung|slid|slide|lower|declin|weak|cancel|\bloss|pressure|glut|ample|bearish|retreat|tumbl|sink|sank|ease[sd]?\b"
 
@@ -175,7 +176,7 @@ def tag(h):
     tone = "up" if b > s else "down" if s > b else ""
     mk = set()
     for k, v in U.items():
-        if re.search(r"\b(" + {"soybeans": r"soy(bean)?s?\b(?! (meal|oil))", "soymeal": r"(soy(bean)? ?meal|soymeal)", "soyoil": r"(soy(bean)? ?oil|soyoil)",
+        if re.search(r"\b(" + {"soybeans": r"soy(bean)?s?\b(?! (meal|oil))", "soymeal": r"(soy(bean)? ?meal|soymeal|meal\b)", "soyoil": r"(soy(bean)? ?oil|soyoil)",
                                 "corn": "corn|maize", "wheat": "wheat", "canola": "canola|rapeseed", "wti": "crude|opec|brent|wti",
                                 "usdcad": "loonie|canadian dollar|usd/cad", "dxy": "dollar index|u\\.s\\. dollar|greenback"}[k] + r")", t):
             mk.add(k)
@@ -198,7 +199,7 @@ def headlines(S, errs):
                 except Exception as e:
                     errs["news:" + key] = str(e)[:120]
                 time.sleep(1.2)
-    out = [h for h in out if h["drivers"] or h["markets"]]
+    out = [h for h in out if (h["drivers"] or h["markets"]) and not re.search(JUNK, h["title"].lower())]
     out.sort(key=lambda h: h["ts"], reverse=True)
     return out
 
