@@ -179,7 +179,8 @@ def tag(h):
                                 "corn": "corn|maize", "wheat": "wheat", "canola": "canola|rapeseed", "wti": "crude|opec|brent|wti",
                                 "usdcad": "loonie|canadian dollar|usd/cad", "dxy": "dollar index|u\\.s\\. dollar|greenback"}[k] + r")", t):
             mk.add(k)
-    h.update({"drivers": drv, "tone": tone, "markets": sorted(mk)})
+    ag = bool(re.search(r"grain|crop|farm|agri|oilseed|soy|corn|wheat|canola|food|fertili|livestock|harvest|planting", t))
+    h.update({"drivers": drv, "tone": tone, "markets": sorted(mk), "ag": ag})
     return h
 
 
@@ -215,7 +216,8 @@ def flow(M, H, t):
         res[k] = {}
         for w, since in win.items():
             items = [h for h in H if datetime.fromisoformat(h["ts"]) >= since and
-                     (k in h["markets"] or (not set(h["markets"]) & AG and any(k in DM[dv] for dv in h["drivers"])))]
+                     (k in h["markets"] or (not set(h["markets"]) & AG and any(k in DM[dv] for dv in h["drivers"]) and (k not in AG or h["ag"])))]
+            items.sort(key=lambda h: (k not in h["markets"], -datetime.fromisoformat(h["ts"]).timestamp()))
             cnt = {}
             for h in items:
                 for dv in h["drivers"]:
@@ -224,7 +226,7 @@ def flow(M, H, t):
                         c["n"] += 1
                         if h["tone"]:
                             c[h["tone"]] += 1
-            res[k][w] = {"n": len(items), "drivers": sorted(cnt.values(), key=lambda c: -c["n"])[:5], "heads": [IX[id(h)] for h in items[:8]]}
+            res[k][w] = {"n": len(items), "drivers": sorted(cnt.values(), key=lambda c: -c["n"])[:5], "heads": [IX[id(h)] for h in items[:12]]}
     return res, settle
 
 
@@ -239,6 +241,12 @@ def main():
     S = UDC.requests.Session()
     H = headlines(S, errs)
     F, settle = flow(M, H, t)
+    used = sorted({i for k in F for w in F[k].values() for i in w["heads"]})
+    remap = {o: n for n, o in enumerate(used)}
+    for k in F:
+        for w in F[k].values():
+            w["heads"] = [remap[i] for i in w["heads"]]
+    H = [H[i] for i in used]
     for k, e in errs.items():
         print(f"! {k}: {e}")
     if not M:
