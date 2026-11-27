@@ -56,7 +56,7 @@
     css.textContent = [
       ".it{display:flex;flex-direction:column;gap:14px;align-items:stretch;order:1}",
       "#panel-intel.active{display:flex!important;flex-direction:column;gap:14px}#panel-intel>.it{display:contents}#panel-intel #itTabs{order:1;margin-bottom:0}#panel-intel>*{order:2}#panel-intel #sw-intel{order:3}#panel-intel #itHead{order:4}#panel-intel #itBody{order:5}#panel-intel #itSlicer[hidden]{display:none!important}" +
-      "#panel-intel.it-on-swot #itHead,#panel-intel.it-on-swot #itBody,#panel-intel.it-on-swot>:not(.it):not(#sw-intel){display:none!important}#panel-intel:not(.it-on-swot) #sw-intel{display:none!important}",
+      "#panel-intel.it-on-swot #itHead,#panel-intel.it-on-swot #itBody,#panel-intel.it-on-swot>:not(.it):not(#sw-intel):not(#cue-intel){display:none!important}#panel-intel:not(.it-on-swot) #sw-intel,#panel-intel:not(.it-on-swot) #cue-intel{display:none!important}",
       ".it-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px}",
       ".it-tabs button{appearance:none;font:700 13.5px 'IBM Plex Sans',sans-serif;color:var(--muted);background:transparent;border:1px solid var(--line2);border-radius:8px;padding:8px 14px;cursor:pointer}",
       ".it-tabs button:hover{color:#fff;background:#14213a}",

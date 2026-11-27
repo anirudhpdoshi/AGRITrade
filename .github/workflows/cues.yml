@@ -1,0 +1,25 @@
+name: Price cues (drivers → markets)
+# Pre-market and intraday cues: moves, levels, inflections and top-source headlines -> cues.json on the `cues` branch.
+# Every 30 min on weekdays 5 am–6 pm ET and Sunday evening (fired by scheduler.yml), and on demand.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: cues
+  cancel-in-progress: false
+jobs:
+  cues:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+      - run: pip install -r scripts/requirements.txt
+      - name: Build and publish cues.json
+        run: python scripts/cues.py
