@@ -14,9 +14,11 @@
   css.textContent =
     "[data-tick]{border-radius:4px;font-variant-numeric:tabular-nums;transition:background-color .25s ease-out,color .25s ease-out}" +
     ".countdown,.qt-age,.ss-clk,.hero-cd{font-variant-numeric:tabular-nums}" +
-    ".tk-up{animation:tkup .45s ease-out}.tk-dn{animation:tkdn .45s ease-out}" +
-    "@keyframes tkup{0%{background:rgba(63,185,127,.55);color:#eafff3}35%{background:rgba(63,185,127,.35)}100%{background:transparent}}" +
-    "@keyframes tkdn{0%{background:rgba(224,101,95,.55);color:#fff0ef}35%{background:rgba(224,101,95,.35)}100%{background:transparent}}" +
+    /* tick flash (owner, Nov 26 2026): a soft green / red wash on the value that changed, ~450 ms, back to its own background; no blinking */
+    ".tk-up,.tk-dn{border-radius:4px}.tk-up{animation:tkup .45s ease-out}.tk-dn{animation:tkdn .45s ease-out}" +
+    "@keyframes tkup{0%{background-color:rgba(116,201,156,.42)}30%{background-color:rgba(116,201,156,.28)}100%{background-color:rgba(116,201,156,0)}}" +
+    "@keyframes tkdn{0%{background-color:rgba(236,143,136,.42)}30%{background-color:rgba(236,143,136,.28)}100%{background-color:rgba(236,143,136,0)}}" +
+    ".fs-i.fs-tick{animation:fstick .6s ease-out}@keyframes fstick{0%{background-color:rgba(110,210,235,.16)}100%{background-color:rgba(110,210,235,0)}}" +
     ".rd{display:inline-block;height:1.15em;line-height:1.15em;overflow:hidden;vertical-align:bottom}" +
     ".rd>i{display:flex;flex-direction:column;font-style:normal;transition:transform .22s cubic-bezier(.2,.8,.2,1)}" +
     ".rd.up>i{transform:translateY(0)}.rd.up.go>i{transform:translateY(-50%)}" +
@@ -36,10 +38,11 @@
     ".n-newtag{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.08em;color:#0b1220;background:#38b6c9;border-radius:3px;padding:0 4px;margin-right:5px;vertical-align:1px}" +
     ".news-list li.n-hot{border-left:3px solid #e8a33d;padding-left:8px;animation:nslide .24s ease-out both,nhot .8s ease-out .25s 2}" +
     "@keyframes nhot{0%{background:rgba(232,163,61,.22)}100%{background:transparent}}" +
-    "@media (prefers-reduced-motion:reduce){[data-tick],.rd>i,.mv-dot{transition:none}.tk-up,.tk-dn,.mv-ring,.st-chg,.pulse-once,.pulse-crit,.news-list li.n-new,.news-list li.n-hot{animation:none}}";
+    "@media (prefers-reduced-motion:reduce){[data-tick],.rd>i,.mv-dot{transition:none}.fs-i.fs-tick,.tk-up,.tk-dn,.mv-ring,.st-chg,.pulse-once,.pulse-crit,.news-list li.n-new,.news-list li.n-hot{animation:none}}";
   document.head.appendChild(css);
 
-  var LAST = {}, TXT = {}, ST = {}, ALERTS = {}, seeded = false, queued = false, lastScan = 0;
+  var LAST = {}, TXT = {}, ST = {}, ALERTS = {}, FEED = {}, seeded = false, queued = false, lastScan = 0;
+  var AUTO = "#pulse-bar .pb-t b,.pc-big b,.kpi-v,.brk-px,.st-cdt-x,.gx-spot b,.mc-v,.ix-v,.tr-px,.cx-px";
   function val(el) { var t = (el.getAttribute("data-v") || el.textContent || "").replace(/[^0-9.\-−]/g, "").replace("−", "-"); var v = parseFloat(t); return isFinite(v) ? v : null; }
 
   /* 2 rolling digits: stack old/new digit and slide in the direction of the move */
@@ -119,6 +122,20 @@
       LAST[k] = v; TXT[k] = t;
     });
     qtScan();
+    /* 1b live values that carry no data-tick (Market pulse band, chart headline, KPI and breakout prices): keyed by their
+       nearest identified ancestor, so a full re-render still compares like with like */
+    document.querySelectorAll(AUTO).forEach(function (el) {
+      if (el.hasAttribute("data-tick") || el.closest("[data-tick]")) return;
+      var host = el.closest("[data-pc],[data-id],[data-sym],[data-k],[id]"), hk = host ? (host.getAttribute("data-pc") || host.getAttribute("data-id") || host.getAttribute("data-sym") || host.getAttribute("data-k") || host.id) : "";
+      if (!hk) return;
+      var k = "a|" + hk + "|" + el.className, v = val(el); if (v == null) return;
+      var p = LAST[k]; if (seeded && p != null && v !== p && el.offsetParent !== null) flash(el, v > p);
+      LAST[k] = v;
+    });
+    /* feeds: a newly arrived item gets one soft wash */
+    document.querySelectorAll(".fs-i[data-id]").forEach(function (li) { var id = li.getAttribute("data-id");
+      if (seeded && !FEED[id] && li.offsetParent !== null && !RM) { li.classList.add("fs-tick"); setTimeout(function () { li.classList.remove("fs-tick"); }, 700); }
+      FEED[id] = 1; });
     /* 5 gradual state change in signal tiles */
     document.querySelectorAll(".tile").forEach(function (tile) {
       var h = tile.querySelector("h2"); if (!h || !SIGNAL.test(h.textContent)) return;
@@ -184,5 +201,8 @@
   }
   ["renderAll", "renderGrain", "renderFX", "setSub"].forEach(wrap);
   window.MOTION = { scan: schedule, now: scan };
+  /* every module re-renders on its own clock — watch the page, batch to at most ~4 scans a second */
+  new MutationObserver(function (m) { for (var i = 0; i < m.length; i++) { var t = m[i].target; if (t.nodeType === 3) t = t.parentNode; if (t && t.closest && t.closest("#pc-toasts")) continue; schedule(); return; } })
+    .observe(document.body, { childList: true, subtree: true, characterData: true });
   hookCharts(); scan();
 })();
